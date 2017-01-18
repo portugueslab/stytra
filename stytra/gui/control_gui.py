@@ -52,7 +52,6 @@ class ProtocolControlWindow(QDialog):
             self.layout.addWidget(widget)
 
         self.setLayout(self.layout)
-        self.protocol = None
 
     def closeEvent(self, QCloseEvent):
         """ On closing the app, save where the window was

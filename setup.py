@@ -6,5 +6,5 @@ setup(name='stytra',
       author='Andreas Kist & Vilim Stich',
       author_email='vilim@neuro.mpg.de',
       packages=find_packages(),
-      install_requires=['PyQt5', 'pyqtgraph', 'pyklb', 'numpy', 'numba',
+      install_requires=['PyQt5', 'pyqtgraph', 'numpy', 'numba',
                         'matplotlib', 'pandas', 'qdarkstyle'])
