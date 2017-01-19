@@ -13,7 +13,8 @@ class Stimulus:
 
     def state(self):
         """ Returns a dictionary with stimulus features """
-        return dict(name=self.name)
+        return dict(name=self.name,
+                    duration=self.duration)
 
     def update(self):
         pass
@@ -38,17 +39,16 @@ class Flash(Stimulus):
                       self.imdata.strides[0], QImage.Format_RGB888)
 
     def state(self):
-        state_dict = super(Flash, self).state()
-        state_dict.update({'color': self.color,
-                           'random_feature': 1})
-
-        return state_dict
+        # Add flash features to general properties dictionary:
+        return dict(super(Flash, self).state(),
+                    color=self.color)
 
 
 class Pause(Flash):
     def __init__(self, *args, **kwargs):
         super(Pause, self).__init__(*args, color=(0, 0, 0), **kwargs)
         self.name = 'Pause'
+
 
 class DynamicStimulus(Stimulus):
     pass

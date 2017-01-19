@@ -33,7 +33,7 @@ class Protocol(QObject):
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
         self.current_stimulus.started = datetime.datetime.now()
-        # self.sig_stim_change.emit(0)
+        # self.sig_stim_change.emit(0) - not sure about commenting out this
 
     def timestep(self):
         self.t = (datetime.datetime.now() - self.t_start).total_seconds()  # Time from start in seconds
