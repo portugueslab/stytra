@@ -6,17 +6,31 @@ class Logger:
     """ This class handles writing and saving logs
 
     """
-    def __init__(self, destination, file_format='csv'):
+    def __init__(self, destination, stim_protocol, file_format='csv'):
+        """
+
+        :param destination: log file path (string)
+        :param stim_protocol: stimulation protocol (Protocol object)
+        :param file_format: log file format (string) (optional)
+        """
         self.destination = destination
         self.file_format = file_format
+        self.stim_protocol = stim_protocol
         self.log_behavior = []
         self.log_stimuli = []
+
+        # Connect the stim_change signal from the stimulation protocol to the update function
+        stim_protocol.sig_stim_change.connect(self.update_stimuli)
 
     def update_behavior(self, data):
         self.log_behavior.append(data)
 
-    def update_stimuli(self, data):
-        self.log_stimuli.append(data)
+    def update_stimuli(self):
+        # Append the dictionary of the current stimulus:
+        current_stim_dict = self.stim_protocol.stimuli[self.stim_protocol.i_current_stimulus].state()
+        self.log_stimuli.append(dict(current_stim_dict,
+                                     t_start=self.stim_protocol.t - self.stim_protocol.current_stimulus.elapsed,
+                                     t_stop=self.stim_protocol.t))
 
     def save(self):
         for log, logname in zip([self.log_behavior, self.log_stimuli],

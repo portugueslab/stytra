@@ -7,7 +7,6 @@ import json
 class ProtocolControlWindow(QDialog):
     def __init__(self, app, protocol, *args):
         """ Class for controlling the stimuli
-
         """
         super(ProtocolControlWindow, self).__init__(*args)
         self.app = app

@@ -62,7 +62,7 @@ class StimulusDisplayWindow(QDialog):
             stimulus.output_shape = self.dims
 
     def display_stimulus(self, i_stim):
-        if i_stim<0 or i_stim>=len(self.stimuli):
+        if i_stim < 0 or i_stim >= len(self.stimuli):
             self.widget_display.setImage(
                 qimage2ndarray.gray2qimage(np.zeros(self.dims)))
         else:
