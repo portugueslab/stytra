@@ -1,14 +1,15 @@
 import numpy as np
 from PyQt5.QtCore import QPoint, QRect
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 
 
 class GLStimDisplay(QOpenGLWidget):
     def __init__(self, *args):
-        super(GLStimDisplay, self).__init__(*args)
+        super().__init__(*args)
         self.img = None
+
 
     def setImage(self, img):
         self.img = img
@@ -19,6 +20,8 @@ class GLStimDisplay(QOpenGLWidget):
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.drawRect(QRect(0, 0, self.width(), self.height()))
         p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
         if self.img is not None:
             p.drawImage(QPoint(0, 0), self.img)
@@ -52,11 +55,10 @@ class StimulusDisplayWindow(QDialog):
         return self.dims
 
     def set_dims(self, box):
-        self.display_widget.setGeometry(
+        self.widget_display.setGeometry(
             *([int(k) for k in box.pos()] +
               [int(k) for k in box.size()]))
 
-    def update_dims(self):
         self.dims = (self.widget_display.height(), self.widget_display.width())
         for stimulus in self.stimuli:
             stimulus.output_shape = self.dims

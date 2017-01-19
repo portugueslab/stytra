@@ -5,12 +5,13 @@ import json
 
 
 class ProtocolControlWindow(QDialog):
-    def __init__(self, app, protocol, *args):
+    def __init__(self, app, protocol, display_window, *args):
         """ Class for controlling the stimuli
         """
-        super(ProtocolControlWindow, self).__init__(*args)
+        super().__init__(*args)
         self.app = app
         self.protocol = protocol
+        self.display_window = display_window
 
         self.widget_view = pg.GraphicsLayoutWidget()
         self.window_mover = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)
@@ -30,7 +31,7 @@ class ProtocolControlWindow(QDialog):
                                    disableAutoRange=True)
 
         self.button_update_display = QPushButton('Update display area')
-        # TODO write the connection
+        self.button_update_display.clicked.connect(self.update_ROI)
 
         self.button_calibrate = QPushButton('Calibrate')
         # TODO write the calibration, connect outside of __init__
@@ -51,6 +52,10 @@ class ProtocolControlWindow(QDialog):
             self.layout.addWidget(widget)
 
         self.setLayout(self.layout)
+
+    def update_ROI(self):
+        self.display_window.set_dims(self.roi_box)
+
 
     def closeEvent(self, QCloseEvent):
         """ On closing the app, save where the window was
