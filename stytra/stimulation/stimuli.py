@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt5.QtGui import QImage
-
+import qimage2ndarray
 
 class Stimulus:
     """ General class for a stimulus."""
@@ -30,13 +30,14 @@ class Flash(Stimulus):
         self.color = color
         self.name = 'Whole field'
         self.imdata = np.ones(self.output_shape + (3,), dtype=np.uint8) * \
-                np.array(self.color, dtype=np.uint8)[None, None, :]
+                      np.array(self.color, dtype=np.uint8)[None, None, :]
 
 
     def get_image(self):
-        return QImage(self.imdata.data, self.imdata.shape[1],
-                      self.imdata.shape[0],
-                      self.imdata.strides[0], QImage.Format_RGB888)
+        self.imdata = np.ones(self.output_shape + (3,), dtype=np.uint8) * \
+                      np.array(self.color, dtype=np.uint8)[None, None, :]
+
+        return qimage2ndarray.array2qimage(self.imdata)
 
     def state(self):
         # Add flash features to general properties dictionary:
@@ -52,6 +53,7 @@ class Pause(Flash):
 
 class DynamicStimulus(Stimulus):
     pass
+
 
 class ClosedLoopStimulus(DynamicStimulus):
     pass

@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     protocol.sig_timestep.connect(win.display_stimulus)
 
-    win_control = ProtocolControlWindow(app, protocol)
+    win_control = ProtocolControlWindow(app, protocol, win)
     win_control.show()
     win.show()
 
