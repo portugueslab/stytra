@@ -6,6 +6,8 @@ from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 
+#from stytra.triggering import PyboardConnection
+
 import qdarkstyle
 
 class StimulusPrinter:
@@ -20,6 +22,9 @@ if __name__ == '__main__':
 
     app = QApplication([])
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+    trigger_port = 'COM3'
+    ttl_freq = 30
 
     stim_duration = 0.5
     pause_duration = 1
@@ -38,10 +43,13 @@ if __name__ == '__main__':
     log = Logger('log.txt', protocol)
     printer = StimulusPrinter(stimuli)
     win_stim_disp = StimulusDisplayWindow(protocol)
-    #win_stim_control = StimulusControlSample(protocol)
+
+    #pyb = PyboardConnection(trigger_port)
+    #pyb.set_pulse_freq(ttl_freq)
 
     protocol.sig_stim_change.connect(printer.print_stim)
-
+    #protocol.sig_protocol_started(pyb.switch_on)
+    #protocol.sig_protocol_finished(pyb.switch_off)
 
     win_control = ProtocolControlWindow(app, protocol, win_stim_disp)
     win_control.show()
@@ -49,7 +57,6 @@ if __name__ == '__main__':
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_stim_disp.showFullScreen()
 
-    #win_stim_control.show()
 
     app.exec_()
     log.save()
