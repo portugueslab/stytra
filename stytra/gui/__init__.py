@@ -6,10 +6,13 @@ import qimage2ndarray
 
 
 class GLStimDisplay(QOpenGLWidget):
-    def __init__(self, *args):
+    def __init__(self, protocol, *args):
         super().__init__(*args)
         self.img = None
         self.calibrating = True
+
+        self.protocol = protocol
+        protocol.sig_timestep.connect(self.display_stimulus)
 
 
     def setImage(self, img):
@@ -37,56 +40,13 @@ class GLStimDisplay(QOpenGLWidget):
         if self.img is not None:
             p.drawImage(QPoint(0, 0), self.img)
 
-
-class StimulusDisplayWindow(QDialog):
-    def __init__(self, stimuli, window_geom=(100, 100, 600, 600), *args):
-        """ Class for fast scrolling through sequence of images and viewing
-        associated data
-
-        """
-        super(StimulusDisplayWindow, self).__init__(*args)
-        self.widget_display = GLStimDisplay(self)
-        self.widget_display.setMaximumSize(2000, 2000)
-        self.widget_display.setGeometry(*window_geom)
-
-        self.refresh_rate = 1
-
-        self.loc = np.array((0, 0))
-        self.dims = (self.widget_display.height(), self.widget_display.width())
-
-        self.setStyleSheet('background-color:black;')
-
-        self.stimuli = stimuli
-
-        for stimulus in self.stimuli:
-            stimulus.output_shape = self.dims
-
-    def get_current_dims(self):
-        self.dims = (self.widget_display.height(), self.widget_display.width())
-        return self.dims
-
-    def set_dims(self, box):
-        self.widget_display.setGeometry(
-            *([int(k) for k in box.pos()] +
-              [int(k) for k in box.size()]))
-
-        self.dims = (self.widget_display.height(), self.widget_display.width())
-        for stimulus in self.stimuli:
-            stimulus.output_shape = self.dims
-
-    #def update_dims(self):
-    #    self.dims = (self.widget_display.height(), self.widget_display.width())
-    #    for stimulus in self.stimuli:
-    #        stimulus.output_shape = self.dims
-
     def display_stimulus(self, i_stim):
-        if i_stim < 0 or i_stim >= len(self.stimuli):
-            self.widget_display.setImage(
+        self.dims = (self.height(), self.width())
+
+        if i_stim < 0 or i_stim >= len(self.protocol.stimuli):
+            self.setImage(
                 qimage2ndarray.gray2qimage(np.zeros(self.dims)))
         else:
-            print('sonovivo')
-            self.widget_display.setImage(self.stimuli[i_stim].get_image())
-        self.widget_display.update()
-
-
+            self.setImage(self.protocol.stimuli[i_stim].get_image())
+        self.update()
 
