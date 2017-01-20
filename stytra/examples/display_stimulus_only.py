@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QDialog
 from stytra.logging import Logger
 from stytra.stimulation.stimuli import Pause, Flash
 from stytra.stimulation import Protocol
-from stytra.gui import StimulusDisplayWindow
+from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 
 import qdarkstyle
@@ -37,12 +37,11 @@ if __name__ == '__main__':
 
     log = Logger('log.txt', protocol)
     printer = StimulusPrinter(stimuli)
-    win_stim_disp = StimulusDisplayWindow(stimuli)
-
+    win_stim_disp = StimulusDisplayWindow(protocol)
+    #win_stim_control = StimulusControlSample(protocol)
 
     protocol.sig_stim_change.connect(printer.print_stim)
 
-    protocol.sig_timestep.connect(win_stim_disp.display_stimulus)
 
     win_control = ProtocolControlWindow(app, protocol, win_stim_disp)
     win_control.show()
@@ -50,5 +49,8 @@ if __name__ == '__main__':
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_stim_disp.showFullScreen()
 
+    #win_stim_control.show()
+
     app.exec_()
     log.save()
+
