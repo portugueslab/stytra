@@ -63,11 +63,17 @@ class StimulusDisplayWindow(QDialog):
         for stimulus in self.stimuli:
             stimulus.output_shape = self.dims
 
+    #def update_dims(self):
+    #    self.dims = (self.widget_display.height(), self.widget_display.width())
+    #    for stimulus in self.stimuli:
+    #        stimulus.output_shape = self.dims
+
     def display_stimulus(self, i_stim):
         if i_stim < 0 or i_stim >= len(self.stimuli):
             self.widget_display.setImage(
                 qimage2ndarray.gray2qimage(np.zeros(self.dims)))
         else:
+            print('sonovivo')
             self.widget_display.setImage(self.stimuli[i_stim].get_image())
         self.widget_display.update()
 
