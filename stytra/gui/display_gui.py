@@ -10,6 +10,8 @@ class StimulusDisplayWindow(QDialog):
 
         """
         super().__init__(*args)
+
+        self.protocol = protocol
         self.widget_display = GLStimDisplay(protocol, self)
         self.widget_display.setMaximumSize(2000, 2000)
         self.widget_display.setGeometry(*window_geom)
@@ -20,8 +22,6 @@ class StimulusDisplayWindow(QDialog):
         self.dims = (self.widget_display.height(), self.widget_display.width())
 
         self.setStyleSheet('background-color:black;')
-
-        self.protocol = protocol
 
         for stimulus in self.protocol.stimuli:
             stimulus.output_shape = self.dims

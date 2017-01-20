@@ -10,6 +10,7 @@ class Protocol(QObject):
 
     sig_timestep = pyqtSignal(int)
     sig_stim_change = pyqtSignal(int)
+    sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
     def __init__(self, stimuli, dt):
@@ -33,6 +34,8 @@ class Protocol(QObject):
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
         self.current_stimulus.started = datetime.datetime.now()
+
+        self.sig_protocol_started.emit()
         # self.sig_stim_change.emit(0) - not sure about commenting out this
 
     def timestep(self):
