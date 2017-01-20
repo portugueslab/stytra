@@ -11,6 +11,7 @@ class GLStimDisplay(QOpenGLWidget):
         self.img = None
 
 
+
     def setImage(self, img):
         self.img = img
 
