@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt5.QtCore import QPoint, QRect
-from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 
@@ -9,7 +9,7 @@ class GLStimDisplay(QOpenGLWidget):
     def __init__(self, *args):
         super().__init__(*args)
         self.img = None
-
+        self.calibrating = True
 
 
     def setImage(self, img):
@@ -22,7 +22,17 @@ class GLStimDisplay(QOpenGLWidget):
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
-        p.drawRect(QRect(0, 0, self.width(), self.height()))
+        w = self.width()
+        h = self.height()
+        p.drawRect(QRect(-1, -1, w+2, h+2))
+        if self.calibrating:
+            p.setPen(QPen(QColor(255, 0, 0)))
+            p.drawRect(QRect(1, 1, w-2, h-2))
+            p.drawLine(w//4, h//2, w*3//4, h//2)
+            p.drawLine(w // 2, h *3 // 4, w // 2, h // 4)
+            p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
+            p.drawLine(w //2, h*3//4, w*3//4, h*3//4)
+
         p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
         if self.img is not None:
             p.drawImage(QPoint(0, 0), self.img)
