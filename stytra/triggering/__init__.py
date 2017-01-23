@@ -31,4 +31,43 @@ class PyboardConnection(SerialConnection):
         self.write('off')
 
     def set_pulse_freq(self, fn):
-        self.write(str(fn))
+        self.write('set'+str(fn))
+        #print('set'+str(fn))
+        #self.write('set20')
+
+
+import zmq
+from datetime import datetime
+
+class ZmqClient:
+    def __init__(self, tcp_address='tcp://192.168.233.156:5555'):
+        self.context = zmq.Context()
+        self.tcp_address = tcp_address
+
+        #  Socket to talk to server
+        print("Connecting to hello world server")
+        self.socket = self.context.socket(zmq.REQ)
+
+
+    def send(self, message=None):
+
+        self.socket.connect(self.tcp_address)
+        #self.socket.send(bytes(message))
+        self.socket.send(b"start")
+        #  Get the reply.
+        #return socket.recv()
+
+    def test_velocity(self):
+        sendtime = datetime.now()
+        for request in range(1):
+
+            socket.send(b"start")
+
+            #  Get the reply.
+            message = socket.recv()
+
+        rectime = datetime.now()
+        print("Latency is {:.2f}".format((rectime-sendtime).total_seconds()*1000))
+
+#class ZmqTrigger:
+#    def start
