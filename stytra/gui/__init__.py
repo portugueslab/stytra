@@ -3,7 +3,7 @@ from PyQt5.QtCore import QPoint, QRect
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
-
+from stytra.stimulation.stimuli import *
 
 class GLStimDisplay(QOpenGLWidget):
     def __init__(self, protocol, *args):
@@ -15,12 +15,11 @@ class GLStimDisplay(QOpenGLWidget):
         protocol.sig_timestep.connect(self.display_stimulus)
 
 
-    def setImage(self, img):
-        self.img = img
-
-    def calibrate(self):
-        p = QPainter(self)
-        p.drawLine()
+    def setImage(self, img=None):
+        if img is not None:
+            self.img = qimage2ndarray.array2qimage(img)
+        else:
+            self.img = None
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
@@ -43,10 +42,10 @@ class GLStimDisplay(QOpenGLWidget):
     def display_stimulus(self, i_stim):
         self.dims = (self.height(), self.width())
 
-        if i_stim < 0 or i_stim >= len(self.protocol.stimuli):
-            self.setImage(
-                qimage2ndarray.gray2qimage(np.zeros(self.dims)))
-        else:
-            self.setImage(self.protocol.stimuli[i_stim].get_image())
+        if isinstance(self.protocol.current_stimulus, ImageStimulus):
+            self.setImage(self.protocol.current_stimulus.get_image())
+        elif isinstance(self.protocol.current_stimulus, PainterStimulus):
+            p = QPainter(self)
+            self.protocol.current_stimulus.paint(p)
         self.update()
 
