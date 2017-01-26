@@ -45,9 +45,9 @@ class MetadataFish(Metadata):
     """Fish description metadata class
         """
     fish_age = param.Integer(default=6, bounds=(3, 7))
-    fish_genotype = param.ObjectSelector(default='Huc:GCaMP6f', objects=['Huc:GCaMP6f', 'Huc:GCaMP6s',
+    fish_genotype = param.ObjectSelector(default='TL', objects=['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                                                         'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
-                                                        'Fyn-tagRFP:PC:NLS-6s','Fyn-tagRFP:PC'])
+                                                        'Fyn-tagRFP:PC:NLS-6s','Fyn-tagRFP:PC'], check_on_set=False)
     fish_comments = param.String()
 
 

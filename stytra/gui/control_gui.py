@@ -42,12 +42,14 @@ class ProtocolControlWindow(QDialog):
         self.button_end = QPushButton('End protocol')
         self.button_end.clicked.connect(self.protocol.end)
 
+        self.button_metadata = QPushButton('Edit metadata')
+
         self.timer = None
         self.layout = QVBoxLayout()
         for widget in [
                        self.widget_view, self.button_update_display,
                        self.button_calibrate, self.button_start,
-                       self.button_end]:
+                       self.button_end, self.button_metadata]:
             self.layout.addWidget(widget)
 
         self.setLayout(self.layout)

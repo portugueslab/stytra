@@ -64,8 +64,8 @@ class MetadataGui(QWidget):
         """ Parse metadata from the GUI
         """
         for parameter in self.parameter_controls:
-            print((parameter.get_value()))
-
+            setattr(self.parameterized, parameter.name, parameter.get_value())
+        print(self.parameterized.get_param_values())
 
 class ParameterControl(QWidget):
     """
@@ -78,6 +78,7 @@ class ParameterControl(QWidget):
         """
         super().__init__(*args, **kwargs)
         assert isinstance(parameter, param.Parameter)  # Check input
+        self.name = name
         self.label = self._pretty_print(name)
         self.parameter = parameter
 
@@ -152,7 +153,8 @@ class ListControl(ParameterControl):
 
     def create_control_widget(self):
         control_widget = QComboBox()
-
+        if not self.parameter.check_on_set:
+            control_widget.setEditable(True)
         # Add list and set default:
         control_widget.addItems(self.parameter.objects)
         control_widget.setCurrentIndex(control_widget.findText(self.parameter.default))

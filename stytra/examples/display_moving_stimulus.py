@@ -5,10 +5,11 @@ from stytra.stimulation import Protocol
 from stytra.stimulation.backgrounds import noise_background
 import pandas as pd
 import numpy as np
-import deepdish.io as dio
 from stytra.gui import control_gui, display_gui
 from functools import partial
 import stytra.calibration as calibration
+import stytra.metadata as metadata
+from stytra.metadata.gui import MetadataGui
 
 if __name__ == '__main__':
 
@@ -31,7 +32,7 @@ if __name__ == '__main__':
         xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
         ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
 
-    bg = noise_background((1000, 1000), 10)
+    bg = noise_background((100, 100), 10)
 
     motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
     protocol = Protocol([MovingSeamless(background=bg, motion=motion,
@@ -49,7 +50,8 @@ if __name__ == '__main__':
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_stim_disp.showFullScreen()
 
-    dio.save('test_stim.h5', dict(motion=motion,
-              window_params=win_stim_disp.get_current_dims(),
-              background=bg))
+    fish_data = metadata.MetadataFish()
+    metawidget = MetadataGui(fish_data)
+    win_control.button_metadata.clicked.connect(metawidget.show)
+
     app.exec_()
