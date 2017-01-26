@@ -27,9 +27,7 @@ class GLStimDisplay(QOpenGLWidget):
         w = self.width()
         h = self.height()
         p.drawRect(QRect(-1, -1, w+2, h+2))
-        print('nocalib')
         if self.calibrating and self.calibration is not None:
-            print('calib')
             self.calibration(p, h, w)
 
         p.setRenderHint(QPainter.SmoothPixmapTransform, 1)

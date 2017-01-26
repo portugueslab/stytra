@@ -20,7 +20,6 @@ def paint_circles(p, h, w, dh=100, r=5):
     cw = w//2
     centres = [(cw-dw//2, ch+dh//2), (cw+dw//2, ch+dh//2),
                (cw - dw // 2, ch - dh // 2)]
-    print(centres)
     p.setBrush(QBrush(QColor(255, 0, 0)))
     for centre in centres:
         p.drawEllipse(QPoint(*centre), r, r)
