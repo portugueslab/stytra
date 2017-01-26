@@ -63,9 +63,13 @@ class MetadataGui(QWidget):
     def save_meta(self):
         """ Parse metadata from the GUI
         """
-        for parameter in self.parameter_controls:
-            setattr(self.parameterized, parameter.name, parameter.get_value())
-        print(self.parameterized.get_param_values())
+        for parameter_control in self.parameter_controls:
+            try:
+                setattr(self.parameterized, parameter_control.name, parameter_control.get_value())
+            except ValueError:
+                # TODO give some warning to the user that they set it incorrectly
+                parameter_control.setStyleSheet('background-color:(240, 120,100);')
+
 
 class ParameterControl(QWidget):
     """

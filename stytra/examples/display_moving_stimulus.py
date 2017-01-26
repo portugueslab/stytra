@@ -12,7 +12,6 @@ import stytra.metadata as metadata
 from stytra.metadata.gui import MetadataGui
 
 if __name__ == '__main__':
-
     app = QApplication([])
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
@@ -28,6 +27,7 @@ if __name__ == '__main__':
     vel_std = 5
     angles = np.random.uniform(0, 2*np.pi, n_vels)
     vels = np.random.randn(n_vels)*vel_std+vel_mean
+
     for i in range(n_vels):
         xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
         ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
@@ -54,4 +54,14 @@ if __name__ == '__main__':
     metawidget = MetadataGui(fish_data)
     win_control.button_metadata.clicked.connect(metawidget.show)
 
+
     app.exec_()
+
+
+def complete():
+    folder = './'
+    dc = metadata.DataCollector(fish_data)
+    dc.add_metadata('stimulation', 'window_shape',
+                    win_stim_disp.get_current_dims())
+
+    dc.save(folder)

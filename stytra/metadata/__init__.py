@@ -17,7 +17,7 @@ class DataCollector:
         for meta_object in list_meta_objects:
             self.dict_meta_objects[type(meta_object).__name__] = meta_object
 
-    def save_metadata(self, path_folder=''):
+    def save(self, path_folder=''):
         dict_for_saving=dict()
         for meta_object in self.dict_meta_objects:
             dict_for_saving[meta_object] = self.dict_meta_objects[meta_object].get_param_dict()
@@ -27,7 +27,8 @@ class DataCollector:
         filename = path_folder + timestamp + '.h5'
         dd.io.save(filename, dict_for_saving)
 
-    def add_metadata(self):
+    def add_metadata(self, category, name, value):
+
         pass
 
 
