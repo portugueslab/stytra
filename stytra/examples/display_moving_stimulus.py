@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 import deepdish.io as dio
 from stytra.gui import control_gui, display_gui
+from functools import partial
+import stytra.calibration as calibration
 
 if __name__ == '__main__':
 
@@ -37,6 +39,8 @@ if __name__ == '__main__':
                         dt=refresh_rate)
 
     win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
+    win_stim_disp.widget_display.calibration = partial(calibration.paint_circles,
+                                        dh=100, r=5)
 
     win_control = control_gui.ProtocolControlWindow(app, protocol, win_stim_disp)
     win_control.show()
