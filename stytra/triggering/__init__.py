@@ -54,8 +54,9 @@ class ZmqClient:
         self.socket.connect(self.tcp_address)
         #self.socket.send(bytes(message))
         self.socket.send(b"start")
+
         #  Get the reply.
-        #return socket.recv()
+        return socket.recv()
 
     def test_velocity(self):
         sendtime = datetime.now()

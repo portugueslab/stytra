@@ -1,7 +1,8 @@
-import numpy as np
-from PyQt4.QtGui import QApplication, QDialog, QGridLayout, \
-                        QLabel, QLineEdit, QCheckBox, QIntValidator, \
-                        QComboBox, QPushButton
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QApplication, QDialog, QGridLayout, \
+    QLabel, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtGui import QIntValidator
+import param
+from param.parameterized import classlist
 
 from os import getcwd
 import json
@@ -10,6 +11,7 @@ from glob import glob
 import re
 
 app = QApplication([])
+
 
 class Metadata (QDialog):
     """
@@ -20,9 +22,9 @@ class Metadata (QDialog):
         {
             'Framerate [fps]': int,
             'Piezo frequency': int,
-            'Readout mode': ['Continuous','Lightsheet'],
-            'Binning': ['1x1','2x2','4x4'],
-            'Trigger': ['Internal','External'],
+            'Readout mode': ['Continuous', 'Lightsheet'],
+            'Binning': ['1x1', '2x2', '4x4'],
+            'Trigger': ['Internal', 'External'],
             'Exposure time [ms]': int,
             'Laser power [mA]': int,
         },
@@ -82,6 +84,7 @@ class Metadata (QDialog):
             if type(v) == dict:
                 l = QLabel(k.upper())
                 self.l.addWidget(l, 0, column)
+
                 self.addBoxes(v, column, k)
 
             column += 1
@@ -105,7 +108,7 @@ class Metadata (QDialog):
                 tb = QLineEdit(self.getDefault(main_key, k))                
 
             elif v == int:
-                val = QIntValidator(0,100)
+                val = QIntValidator(50,100)
                 tb = QLineEdit(self.getDefault(main_key, k))
                 tb.setValidator(val)
 
