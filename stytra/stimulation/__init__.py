@@ -1,6 +1,10 @@
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 import datetime
+
+from builtins import print
+
 from stytra.stimulation.stimuli import DynamicStimulus
+
 
 class Protocol(QObject):
     """ Class that manages the stimulation protocol, includes a timer,

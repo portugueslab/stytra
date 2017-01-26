@@ -58,6 +58,5 @@ if __name__ == '__main__':
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_stim_disp.showFullScreen()
 
-
     app.exec_()
     log.save()

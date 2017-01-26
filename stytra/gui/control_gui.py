@@ -33,9 +33,8 @@ class ProtocolControlWindow(QDialog):
         self.button_update_display = QPushButton('Update display area')
         self.button_update_display.clicked.connect(self.update_ROI)
 
-        self.button_calibrate = QPushButton('Calibrate')
-        # TODO write the calibration, connect outside of __init__
-        #  to a method of the stimulus display window
+        self.button_calibrate = QPushButton('Show calibration')
+        self.button_calibrate.clicked.connect(self.toggle_calibration)
 
         self.button_start = QPushButton('Start protocol')
         self.button_start.clicked.connect(self.protocol.start)
@@ -68,3 +67,12 @@ class ProtocolControlWindow(QDialog):
                   open('window_props.json', 'w'))
         self.deleteLater()
         self.app.quit()
+
+    def toggle_calibration(self):
+        dispw = self.display_window.widget_display
+        dispw.calibrating = ~dispw.calibrating
+        if dispw.calibrating:
+            self.button_calibrate.setText('Hide calibration')
+        else:
+            self.button_calibrate.setText('Show calibration')
+        dispw.update()
