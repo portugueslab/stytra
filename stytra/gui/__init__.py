@@ -11,6 +11,7 @@ class GLStimDisplay(QOpenGLWidget):
         self.img = None
         self.calibrating = False
         self.calibration = None
+        self.dims = None
 
         self.protocol = protocol
         protocol.sig_timestep.connect(self.display_stimulus)
@@ -28,7 +29,7 @@ class GLStimDisplay(QOpenGLWidget):
         h = self.height()
         p.drawRect(QRect(-1, -1, w+2, h+2))
         if self.calibrating and self.calibration is not None:
-            self.calibration(p, h, w)
+            self.calibration.calibrate(p, h, w)
 
         p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
         if self.img is not None:
