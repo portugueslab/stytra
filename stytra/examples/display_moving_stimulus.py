@@ -40,8 +40,10 @@ if __name__ == '__main__':
                         dt=refresh_rate)
 
     win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
-    win_stim_disp.widget_display.calibration = partial(calibration.paint_circles,
-                                        dh=100, r=5)
+
+    calibrator = calibration.CircleCalibrator()
+
+    win_stim_disp.widget_display.calibration = calibrator
 
     win_control = control_gui.ProtocolControlWindow(app, protocol, win_stim_disp)
     win_control.show()
@@ -57,6 +59,11 @@ if __name__ == '__main__':
 
     app.exec_()
 
+
+def calibrate():
+    pass
+    # TODO send calibration message to camera
+    # process this image and get the matrices
 
 def complete():
     folder = './'
