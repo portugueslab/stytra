@@ -16,12 +16,12 @@ class Logger:
             print(new_dict)
         self.log.append(new_dict)
 
-    def save(self, file_format='csv'):
+    def save(self, destination='', file_format='csv'):
         log_df = pd.DataFrame(self.log)
 
-        filename = datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S")
+        filename = destination + datetime.datetime.now().strftime("%Y.%m.%d-%H.%M.%S")
         if file_format == 'csv':
-            log_df.to_csv(self.destination) # TODO make datestamped filename
+            log_df.to_csv(self.destination)
         elif file_format == 'HDF5':
             log_df.to_hdf(self.destination, 'log')
 
@@ -29,8 +29,8 @@ class Logger:
 class StimulusLogger(Logger):
     """ This class handles writing and saving logs for the stimulation protocol """
 
-    def __init__(self, stim_protocol, destination=None):
-        super().__init__()
+    def __init__(self, stim_protocol, destination=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         """Constructor
 
         :param stim_protocol: source to log with the class (Protocol object)
@@ -58,10 +58,7 @@ class StimulusLogger(Logger):
         self.add_to_log(dict(current_stim_dict, t_start=t_start, t_stop=t_stop))
 
     def send_to_collector(self):
-        #TODO
+        # TODO maybe
         # Something like
         # self.destination.add_entry('MetadataStimulus', 'protocol_log', self.log)
         pass
-
-
-

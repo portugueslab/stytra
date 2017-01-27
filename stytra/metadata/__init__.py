@@ -13,24 +13,20 @@ class DataCollector:
 
         :param list_meta_objects:
         """
-        self.dict_meta_objects = dict()
+        self.dict_data_objects = dict()
         for meta_object in list_meta_objects:
-            self.dict_meta_objects[type(meta_object).__name__] = meta_object
+            self.dict_data_objects[type(meta_object).__name__] = self.dict_data_objects[meta_object].get_param_dict()
 
     def save(self, path_folder=''):
-        dict_for_saving=dict()
-        for meta_object in self.dict_meta_objects:
-            dict_for_saving[meta_object] = self.dict_meta_objects[meta_object].get_param_dict()
-
-        print(dict_for_saving)
         timestamp = datetime.datetime.now().strftime("%Y.%m.%d_%H.%M.%S_metadata")
         filename = path_folder + timestamp + '.h5'
-        dd.io.save(filename, dict_for_saving)
+        dd.io.save(filename, self.dict_data_objects)
 
-    def add_metadata(self, category, name, value):
-
-        pass
-
+    def add_data_entry(self, category, name, value):
+        if category in self.dict_data_objects:
+            self.dict_data_objects[category][name] = value
+        else:
+            self.dict_data_objects[category] = {name: value}
 
 
 class Metadata(param.Parameterized):
@@ -66,8 +62,4 @@ class MetadataLightsheet(Metadata):
 
 if __name__ == '__main__':
     meta_collector_obj = DataCollector(MetadataFish(), MetadataLightsheet())
-    meta_collector_obj.save_metadata()
-
-
-
-
+    meta_collector_obj.save()
