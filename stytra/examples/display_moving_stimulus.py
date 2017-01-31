@@ -10,6 +10,7 @@ from functools import partial
 import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.metadata.gui import MetadataGui
+import zmq
 
 if __name__ == '__main__':
     app = QApplication([])
@@ -17,7 +18,7 @@ if __name__ == '__main__':
 
     n_vels = 10
     stim_duration = 10
-    refresh_rate =1/60.
+    refresh_rate = 1/60.
 
     t_break = np.arange(n_vels+1)*stim_duration
 
@@ -55,7 +56,6 @@ if __name__ == '__main__':
     fish_data = metadata.MetadataFish()
     metawidget = MetadataGui(fish_data)
     win_control.button_metadata.clicked.connect(metawidget.show)
-
 
     app.exec_()
 
