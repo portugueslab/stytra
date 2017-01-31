@@ -13,8 +13,11 @@ def FloatContol(QWidget):
 
 
 
-class CameraDisplayWidget(QWidget):
+class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None):
+        """ A widget to show the camera and display the controls
+
+        """
 
         super().__init__()
         self.camera_display_widget = pg.GraphicsLayoutWidget()
@@ -57,7 +60,7 @@ class CameraDisplayWidget(QWidget):
             pass
 
 
-class CameraTailSelection(CameraDisplayWidget):
+class CameraTailSelection(CameraViewWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.label = pg.TextItem('Select tail of the fish:\n' +

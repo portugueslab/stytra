@@ -57,7 +57,7 @@ class FrameDispatcher(Process):
                 if i == n_fps_frames-1:
                     current_time = datetime.now()
                     framerate = n_fps_frames/(current_time-previous_time).total_seconds()
-                    print('{:.2f} FPS'.format(framerate))
+                    # print('{:.2f} FPS'.format(framerate))
                     previous_time = current_time
                 i = (i+1) % n_fps_frames
                 if self.i == 0:
