@@ -52,7 +52,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
 
 
-class ProtocolControlWindow(QDialog):
+class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     def __init__(self, app, protocol, display_window, *args):
         """ Class for controlling the stimuli
