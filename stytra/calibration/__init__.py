@@ -4,6 +4,9 @@ import math
 import cv2
 import numpy as np
 
+class CalibrationException(Exception):
+    pass
+
 class Calibrator:
     def __init__(self):
         pass
@@ -60,7 +63,7 @@ class CircleCalibrator(Calibrator):
         # TODO check if blob detection is robust
         keypoints = blobdet.detect(255 - image)
         if len(keypoints) != 3:
-            raise Exception('3 points for calibration not found')
+            raise CalibrationException('3 points for calibration not found')
         kps = np.array([k.pt for k in keypoints])
 
         # Find the angles between the points
@@ -80,9 +83,8 @@ class CircleCalibrator(Calibrator):
         points_cam = self._find_triangle(image)
         points_proj = np.array(self.points)
 
-        x_proj = np.vstack([points_proj, np.ones(3)])
+        x_proj = np.vstack([points_proj.T, np.ones(3)])
+        x_cam = np.vstack([points_cam.T, np.ones(3)])
 
-        x_cam = np.vstack([points_cam, np.ones(3)])
-        self.proj_to_cam = points_cam @ np.linalg.inv(x_proj)
-        self.cam_to_proj = points_proj @ np.linalg.inv(x_cam)
-
+        self.proj_to_cam = points_cam.T @ np.linalg.inv(x_proj)
+        self.cam_to_proj = points_proj.T @ np.linalg.inv(x_cam)
