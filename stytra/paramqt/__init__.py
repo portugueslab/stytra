@@ -284,9 +284,6 @@ class ParameterGui(QWidget):
                     parameter_control.show()
                     validity_check = False
 
-        if validity_check:
-            self.close()
-
     @staticmethod
     def get_widget_type(param_obj):
         """

@@ -109,8 +109,8 @@ class DataCollector:
                 label = data_entry[1]
                 self.data_dict[category][label] = value
 
-        # HDF5 are saved as timestamped Y.m.d_H.M.S_metadata.h5 files:
-        timestamp = datetime.datetime.now().strftime("%Y.%m.%d_%H.%M.%S_metadata")
+        # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_metadata")
         filename = self.folder_path + timestamp + '.h5'
         dd.io.save(filename, self.data_dict)
 

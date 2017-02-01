@@ -14,6 +14,7 @@ import cv2
 import pyqtgraph as pg
 from stytra.hardware.cameras import XimeaCamera, FrameDispatcher
 from multiprocessing import Queue, Event
+from queue import Empty
 
 class Experiment:
 
@@ -45,8 +46,6 @@ class Experiment:
                                             duration=n_vels*stim_duration)],
                             dt=refresh_rate)
 
-        protocol.sig_protocol_started.connect(self.start_external)
-
         # camera stuff
         self.frame_queue = Queue()
         self.control_queue = Queue()
@@ -63,7 +62,7 @@ class Experiment:
         self.main_layout = QHBoxLayout()
         self.camera_view = camera_display.CameraViewWidget(self.gui_frame_queue,
                                                            self.control_queue,
-                                                           camera_rotation=1)
+                                                           camera_rotation=3)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
@@ -86,17 +85,24 @@ class Experiment:
         self.camera.start()
         self.frame_dispatcher.start()
 
-        app.exec_()
+        data_collector = DataCollector(('stimulus', 'log', protocol.log),
+                                       ('stimulus', 'window_shape', self.win_stim_disp.get_current_dims()),
+                                       folder_path=experiment_folder)
 
-    def start_external(self):
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        socket.connect("tcp://localhost:5555")
-        socket.send(b"start_recording")
+
+        app.exec_()
 
 
     def calibrate(self):
-        pass
+        try:
+            im = self.gui_frame_queue.get()
+            try:
+                self.calibrator.find_transform_matrix(im)
+                self.win_control.widget_view.display_calibration_pattern(self.calibrator)
+            except CalibrationException:
+                pass
+        except Empty:
+            pass
 
 
 

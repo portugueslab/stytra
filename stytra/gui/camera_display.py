@@ -57,8 +57,8 @@ class CameraViewWidget(QWidget):
     def update_image(self):
         try:
             im_in = self.camera_queue.get(timeout=0.001)
-            if self.camera_rotation ==1:
-                im_in = np.rot90(im_in)
+            if self.camera_rotation >= 1:
+                im_in = np.rot90(im_in, k=self.camera_rotation)
             self.image_item.setImage(im_in)
         except Empty:
             pass

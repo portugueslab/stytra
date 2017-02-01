@@ -41,8 +41,7 @@ class CircleCalibrator(Calibrator):
         ch = h//2
         cw = w//2
         # the three points sorted in ascending angle order (30, 60, 90)
-        centres = [(cw+d2w, ch+d2h), (cw - d2w, ch - d2h),
-                   (cw-d2w, ch+d2h)]
+        centres = [(cw-d2h, ch+d2w),(cw+d2h, ch+d2w), (cw - d2h, ch - d2w)]
         p.setBrush(QBrush(QColor(255, 0, 0)))
         for centre in centres:
             p.drawEllipse(QPoint(*centre), self.r, self.r)
