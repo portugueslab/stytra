@@ -46,8 +46,7 @@ class ProtocolControlWindow(QDialog):
 
         self.timer = None
         self.layout = QVBoxLayout()
-        for widget in [
-                       self.widget_view, self.button_update_display,
+        for widget in [self.widget_view, self.button_update_display,
                        self.button_calibrate, self.button_start,
                        self.button_end, self.button_metadata]:
             self.layout.addWidget(widget)

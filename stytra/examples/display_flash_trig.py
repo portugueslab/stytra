@@ -1,23 +1,21 @@
 from PyQt5.QtWidgets import QApplication, QDialog
 
-from stytra.logging import Logger
 from stytra.stimulation.stimuli import Pause, Flash
 from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.triggering import PyboardConnection
 from stytra.triggering import ZmqClient
+from stytra.metadata import DataCollector, MetadataFish, MetadataLightsheet, MetadataGeneral
 
 import qdarkstyle
 
 if __name__ == '__main__':
 
-    trigger_port = 'COM3'
-    ttl_freq = 30
+    experiment_folder = '/Users/luigipetrucco/Desktop/'
 
     stim_duration = 0.5
     pause_duration = 1
-    n_repeats = 5
+    n_repeats = 3
     flash_color = (255, 0, 0)
     refresh_rate = 1/60.
 
@@ -28,31 +26,43 @@ if __name__ == '__main__':
         stimuli.append(Pause(duration=pause_duration))
     protocol = Protocol(stimuli, refresh_rate)
 
-    # Prepare log (file and display)
-    log = Logger('log.txt', protocol)
-
-    #Set up connection with the pyboard
-    pyb = PyboardConnection(trigger_port)
-    pyb.set_pulse_freq(ttl_freq)
-
-    # Connect start and stop stimulus to start/stop board
-    protocol.sig_protocol_started.connect(pyb.switch_on)
-    protocol.sig_protocol_finished.connect(pyb.switch_off)
-
     #Set connection with the 'evil LabView' computer
-    zmq_conn = ZmqClient(tcp_address='tcp://192.168.233.156:5555')
-    protocol.sig_protocol_started.connect(zmq_conn.send)
+    #zmq_conn = ZmqClient(tcp_address='tcp://192.168.233.156:5555')
+    #protocol.sig_protocol_started.connect(zmq_conn.send)
 
     # Prepare control window and window for displaying the  stimulus
     app = QApplication([])
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
+    # Instantiate display window and control window:
     win_stim_disp = StimulusDisplayWindow(protocol)
     win_control = ProtocolControlWindow(app, protocol, win_stim_disp)
-    win_control.show()
+
+    # Take care of metadata:
+    general_data = MetadataGeneral(experiment_name='only_flashes', experimenter_name='Luigi Petrucco')
+    fish_data = MetadataFish()
+    imaging_data = MetadataLightsheet()
+    imaging_data.set_fix_value('scanning_profile', 'sawtooth')
+    imaging_data.set_fix_value('piezo_frequency', 1)
+    imaging_data.set_fix_value('piezo_amplitude', 1)
+
+    data_collector = DataCollector(fish_data,
+                                   imaging_data,
+                                   general_data,
+                                   ('stimulus', 'log', protocol.log),
+                                   ('stimulus', 'window_shape', win_stim_disp.get_current_dims()),
+                                   folder_path=experiment_folder)
+
+    win_control.button_metadata.clicked.connect(imaging_data.show_gui)
+    protocol.sig_protocol_finished.connect(data_collector.save)
+
+
+    # Display windows:
     win_stim_disp.show()
+    win_control.show()
+    win_control.windowHandle().setScreen(app.screens()[0])
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_stim_disp.showFullScreen()
 
     app.exec_()
-    log.save()
+

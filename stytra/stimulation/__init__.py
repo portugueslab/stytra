@@ -17,7 +17,7 @@ class Protocol(QObject):
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli, dt):
+    def __init__(self, stimuli, dt, log_print=True):
         """
         :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
         :param dt: frame rate in Hz (double)
@@ -31,6 +31,10 @@ class Protocol(QObject):
         self.current_stimulus = stimuli[0]
         self.timer = QTimer()
         self.dt = dt
+
+        # Log will be a list of stimuli states
+        self.log = []
+        self.log_print = log_print
 
     def start(self):
         self.t_start = datetime.datetime.now()
@@ -49,10 +53,10 @@ class Protocol(QObject):
 
         if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
             self.sig_stim_change.emit(self.i_current_stimulus)
+            self.update_log()
 
             if self.i_current_stimulus >= len(self.stimuli)-1:
                 self.end()
-                self.sig_protocol_finished.emit()
             else:
                 self.i_current_stimulus += 1
                 self.current_stimulus = self.stimuli[self.i_current_stimulus]
@@ -63,8 +67,19 @@ class Protocol(QObject):
             self.sig_stim_change.emit(self.i_current_stimulus)
 
     def end(self):
+        self.sig_protocol_finished.emit()
         self.timer.timeout.disconnect()
         self.timer.stop()
+
+    def update_log(self):
+        """This is coming directly from the Logger class and can be made better"""
+        # Update with the data of the current stimulus:
+        current_stim_dict = self.current_stimulus.get_state()
+        new_dict = dict(current_stim_dict,
+                             t_start=self.current_stimulus.started, t_stop=self.t)
+        if self.log_print:
+            print(new_dict)
+        self.log.append(new_dict)
 
 
 

@@ -45,7 +45,7 @@ class ZmqClient:
         self.tcp_address = tcp_address
 
         #  Socket to talk to server
-        print("Connecting to hello world server")
+        print('Connecting to:' + tcp_address)
         self.socket = self.context.socket(zmq.REQ)
 
 

@@ -9,7 +9,6 @@ from stytra.gui import control_gui, display_gui
 from functools import partial
 import stytra.calibration as calibration
 import stytra.metadata as metadata
-from stytra.metadata.gui import MetadataGui
 
 if __name__ == '__main__':
     app = QApplication([])
@@ -53,8 +52,7 @@ if __name__ == '__main__':
     win_stim_disp.showFullScreen()
 
     fish_data = metadata.MetadataFish()
-    metawidget = MetadataGui(fish_data)
-    win_control.button_metadata.clicked.connect(metawidget.show)
+    win_control.button_metadata.clicked.connect(fish_data.show_gui)
 
 
     app.exec_()

@@ -57,11 +57,6 @@ class Flash(ImageStimulus):
 
         return self._imdata
 
-    def state(self):
-        # Add flash features to general properties dictionary:
-        return dict(super(Flash, self).state(),
-                    color=self.color)
-
 
 class Pause(Flash):
     def __init__(self, *args, **kwargs):
