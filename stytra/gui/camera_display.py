@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSlider
 import pyqtgraph as pg
 from queue import Empty
 import numpy as np
-from stytra.metadata.gui import MetadataGui
+from stytra.paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
 
 def FloatContol(QWidget):
@@ -14,7 +14,7 @@ def FloatContol(QWidget):
 
 
 class CameraViewWidget(QWidget):
-    def __init__(self, camera_queue, control_queue=None):
+    def __init__(self, camera_queue, control_queue=None, camera_rotation=0):
         """ A widget to show the camera and display the controls
 
         """
@@ -22,7 +22,7 @@ class CameraViewWidget(QWidget):
         super().__init__()
         self.camera_display_widget = pg.GraphicsLayoutWidget()
 
-        self.display_area = pg.ViewBox()
+        self.display_area = pg.ViewBox(lockAspect=1, invertY=True)
         self.camera_display_widget.addItem(self.display_area)
         self.display_area.setRange(QRectF(0, 0, 640, 480), update=True,
                                    disableAutoRange=True)
@@ -34,6 +34,7 @@ class CameraViewWidget(QWidget):
         self.timer.timeout.connect(self.update_image)
         self.camera_queue = camera_queue
         self.control_queue = control_queue
+        self.camera_rotation =camera_rotation
         self.update_image()
 
         self.layout = QVBoxLayout()
@@ -41,7 +42,7 @@ class CameraViewWidget(QWidget):
         self.layout.addWidget(self.camera_display_widget)
         if control_queue is not None:
             self.metadata = MetadataCamera()
-            self.control_widget = MetadataGui(self.metadata)
+            self.control_widget = ParameterGui(self.metadata)
             self.layout.addWidget(self.control_widget)
             for control in self.control_widget.parameter_controls:
                 control.control_widget.valueChanged.connect(self.update_controls)
@@ -55,7 +56,10 @@ class CameraViewWidget(QWidget):
 
     def update_image(self):
         try:
-            self.image_item.setImage(self.camera_queue.get(timeout=0.001), levels=(0,30))
+            im_in = self.camera_queue.get(timeout=0.001)
+            if self.camera_rotation ==1:
+                im_in = np.rot90(im_in)
+            self.image_item.setImage(im_in)
         except Empty:
             pass
 

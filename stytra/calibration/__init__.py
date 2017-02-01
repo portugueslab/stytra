@@ -26,7 +26,7 @@ class CrossCalibrator(Calibrator):
 
 
 class CircleCalibrator(Calibrator):
-    def __init__(self, dh=80, r=5):
+    def __init__(self, dh=80, r=3):
         self.dh = dh
         self.r = r
         self.points = None

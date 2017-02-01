@@ -9,8 +9,7 @@ from stytra.gui import control_gui, display_gui, camera_display
 from functools import partial
 import stytra.calibration as calibration
 import stytra.metadata as metadata
-from stytra.metadata.gui import MetadataGui
-import zmq
+from stytra.paramqt import ParameterGui
 import cv2
 import pyqtgraph as pg
 from stytra.hardware.cameras import XimeaCamera, FrameDispatcher
@@ -62,7 +61,9 @@ class Experiment:
 
         self.win_main = QDialog()
         self.main_layout = QHBoxLayout()
-        self.camera_view = camera_display.CameraViewWidget(self.gui_frame_queue, self.control_queue)
+        self.camera_view = camera_display.CameraViewWidget(self.gui_frame_queue,
+                                                           self.control_queue,
+                                                           camera_rotation=1)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
@@ -78,7 +79,7 @@ class Experiment:
 
         self.fish_data = metadata.MetadataFish()
         self.stimulus_data = dict(background=bg, motion=motion)
-        metawidget = MetadataGui(self.fish_data)
+        metawidget = ParameterGui(self.fish_data)
         self.win_control.button_metadata.clicked.connect(metawidget.show)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
 
@@ -95,19 +96,7 @@ class Experiment:
 
 
     def calibrate(self):
-        context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        socket.connect("tcp://localhost:5555")
-        socket.send(b"calibrate")
-        calib_path = socket.recv().decode('ascii')
-        print(calib_path)
-        calib_img = cv2.imread(calib_path)
-        try:
-            self.calibrator.find_transform_matrix(calib_img)
-            self.win_control.widget_view.display_calibration_pattern(self.calibrator)
-
-        except calibration.CalibrationException:
-            print('Points not found')
+        pass
 
 
 
