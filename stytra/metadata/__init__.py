@@ -167,7 +167,7 @@ class MetadataLightsheet(Metadata):
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
 
 class MetadataCamera(Metadata):
-    exposure = param.Number(default = 1.0, bounds =[0.5, 50], doc='Exposure in milliseconds')
+    exposure = param.Number(default= 20.0, bounds =[0.5, 50], doc='Exposure in milliseconds')
     gain = param.Number(default=1.0, bounds = [0.1, 3], doc='Camera amplification gain')
 
 

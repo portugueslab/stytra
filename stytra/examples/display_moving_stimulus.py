@@ -16,15 +16,16 @@ from stytra.hardware.cameras import XimeaCamera, FrameDispatcher
 from multiprocessing import Queue, Event
 from queue import Empty
 
-class Experiment:
 
+class Experiment:
     def __init__(self):
+        experiment_folder = r'D:\vilim\fishrecordings\stytra'
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         n_vels = 10
         stim_duration = 10
-        refresh_rate =1/60.
+        refresh_rate = 1/60.
 
         t_break = np.arange(n_vels+1)*stim_duration
 
@@ -60,7 +61,7 @@ class Experiment:
 
         self.win_main = QDialog()
         self.main_layout = QHBoxLayout()
-        self.camera_view = camera_display.CameraViewWidget(self.gui_frame_queue,
+        self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
                                                            self.control_queue,
                                                            camera_rotation=3)
         self.main_layout.addWidget(self.camera_view)
@@ -85,21 +86,22 @@ class Experiment:
         self.camera.start()
         self.frame_dispatcher.start()
 
-        data_collector = DataCollector(('stimulus', 'log', protocol.log),
+        data_collector = metadata.DataCollector(('stimulus', 'log', protocol.log),
                                        ('stimulus', 'window_shape', self.win_stim_disp.get_current_dims()),
                                        folder_path=experiment_folder)
-
 
         app.exec_()
 
 
     def calibrate(self):
         try:
+            # we steal a frame from the GUI display queue to calibrate
             im = self.gui_frame_queue.get()
             try:
                 self.calibrator.find_transform_matrix(im)
                 self.win_control.widget_view.display_calibration_pattern(self.calibrator)
-            except CalibrationException:
+                self.camera_view.show_calibration(self.calibrator.points_cam)
+            except calibration.CalibrationException:
                 pass
         except Empty:
             pass

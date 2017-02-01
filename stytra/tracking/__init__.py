@@ -1,6 +1,6 @@
 from multiprocessing import Process
 from queue import Empty
-from stytra.tracking.track_tail import detect_tail
+from stytra.tracking.tail import detect_tail
 
 
 class TrackingProcess(Process):

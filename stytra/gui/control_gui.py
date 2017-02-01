@@ -29,7 +29,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.view_box.addItem(self.calibration_frame)
 
     def display_calibration_pattern(self, calibrator,
-                                    camera_resolution=(480,640),
+                                    camera_resolution=(640, 480),
                                     image=None):
         cw = camera_resolution[0]
         ch = camera_resolution[1]
