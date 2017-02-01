@@ -44,4 +44,3 @@ class GLStimDisplay(QOpenGLWidget):
             p = QPainter(self)
             self.protocol.current_stimulus.paint(p)
         self.update()
-

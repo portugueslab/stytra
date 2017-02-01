@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, \
-    QLabel, QLineEdit, QPushButton, QComboBox
+    QLabel, QLineEdit, QPushButton, QComboBox, QSlider
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 import param
 from param.parameterized import classlist
@@ -110,7 +110,8 @@ class ParameterControl(QWidget):
         # Create layout and add label to the control:
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.layout.addWidget(QLabel(self.label))
+        self.widget_label = QLabel(self.label)
+        self.layout.addWidget(self.widget_label)
 
         # Create control widget according to parameter type:
         self.control_widget = self.create_control_widget()
@@ -148,6 +149,32 @@ class NumericControl(ParameterControl):
         return float(self.control_widget.text())
 
 
+class NumericControlSlider(ParameterControl):
+    """ Widget for float parameters
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.control_widget.valueChanged.connect(self.update_label)
+        self.update_label()
+
+    def create_control_widget(self):
+        control_widget = QSlider(Qt.Horizontal)
+        control_widget.setValue(int((-self.parameter.bounds[0]+ self.parameter.default /\
+                     (self.parameter.bounds[1]-self.parameter.bounds[0])*1000)))
+        control_widget.setMaximum(1000)
+
+        return control_widget
+
+    def get_value(self):
+        return self.parameter.bounds[0]+ self.control_widget.value() /1000 * \
+                     (self.parameter.bounds[1]-self.parameter.bounds[0])
+
+    def update_label(self):
+        self.widget_label.setText(self.label+' {:.2f}'.format(self.get_value()))
+
+
+
 class IntegerControl(ParameterControl):
     """ Widget for integer parameters
         """
@@ -162,6 +189,22 @@ class IntegerControl(ParameterControl):
 
     def get_value(self):
         return int(self.control_widget.text())
+
+
+class IntegerControlSlider(NumericControlSlider):
+    def create_control_widget(self):
+        control_widget = QSlider(Qt.Horizontal)
+        control_widget.setValue(self.parameter.default)
+        control_widget.setMinimum(self.parameter.bounds[0])
+        control_widget.setMaximum(self.parameter.bounds[1])
+
+        return control_widget
+
+    def get_value(self):
+        return  self.control_widget.value()
+
+    def update_label(self):
+        self.widget_label.setText(self.label+' {}'.format(self.get_value()))
 
 
 class StringControl(ParameterControl):

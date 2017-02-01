@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import QPoint
 import cv2
 
+
 class Stimulus:
     """ General class for a stimulus."""
     def __init__(self, output_shape=(100, 100), duration=0.0):

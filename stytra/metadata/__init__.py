@@ -166,6 +166,10 @@ class MetadataLightsheet(Metadata):
     binning = param.ObjectSelector(default='2x2', objects=['1x1', '2x2', '4x4'])
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
 
+class MetadataCamera(Metadata):
+    exposure = param.Number(default = 1.0, bounds =[0.5, 50], doc='Exposure in miliseconds')
+    gain = param.Number(default=1.0, bounds = [0.1, 3], doc='Camera amplification gain')
+
 
 class MetadataGeneral(Metadata):
     """Fish description metadata class
