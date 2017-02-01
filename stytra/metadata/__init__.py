@@ -144,7 +144,7 @@ class Metadata(param.Parameterized):
 class MetadataFish(Metadata):
     """Fish description metadata class
     """
-    fish_age = param.Integer(default=6, bounds=(2, 9))
+    fish_age_days = param.Integer(default=6, bounds=(2, 9))
     fish_genotype = param.ObjectSelector(default='TL',
                                          objects=['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                                                   'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
@@ -157,8 +157,8 @@ class MetadataLightsheet(Metadata):
     """Lightsheet imaging description metadata class
     """
     imaging_type = param.String(default='lightsheet', constant=True)
-    frame_rate = param.Number(default=20, bounds=(1., 200.))
-    piezo_frequency = param.Number(default=0, bounds=(0., 10))
+    frame_rate_hz = param.Number(default=20, bounds=(1., 200.))
+    piezo_frequency_hz = param.Number(default=5, bounds=(0., 10))
     piezo_amplitude = param.Number(default=0, bounds=(0., 10))
     exposure_time_ms = param.Number(default=1, bounds=(0.1, 10))
     laser_power_mA = param.Number(default=23, bounds=(0.1, 100))
@@ -167,7 +167,7 @@ class MetadataLightsheet(Metadata):
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
 
 class MetadataCamera(Metadata):
-    exposure = param.Number(default = 1.0, bounds =[0.5, 50], doc='Exposure in miliseconds')
+    exposure = param.Number(default = 1.0, bounds =[0.5, 50], doc='Exposure in milliseconds')
     gain = param.Number(default=1.0, bounds = [0.1, 3], doc='Camera amplification gain')
 
 
