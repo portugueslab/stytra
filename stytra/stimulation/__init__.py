@@ -70,16 +70,31 @@ class Protocol(QObject):
         self.sig_protocol_finished.emit()
         self.timer.timeout.disconnect()
         self.timer.stop()
+        self.reset_log()
 
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
-                             t_start=self.current_stimulus.started, t_stop=self.t)
+                             t_start=self.t - self.current_stimulus.elapsed, t_stop=self.t)
         if self.log_print:
             print(new_dict)
         self.log.append(new_dict)
+
+    def reset_log(self):
+        self.t_start = None
+        self.t = 0
+        for stimulus in self.stimuli:
+            stimulus._started = None
+            stimulus.elapsed = 0.0
+
+        self.i_current_stimulus = 0
+        self.current_stimulus = self.stimuli[0]
+        self.timer = QTimer()
+
+        # Log will be a list of stimuli states
+        self.log = []
 
 
 

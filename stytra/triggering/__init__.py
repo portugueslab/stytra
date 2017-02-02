@@ -52,23 +52,34 @@ class ZmqClient:
     def send(self, message=None):
 
         self.socket.connect(self.tcp_address)
-        #self.socket.send(bytes(message))
-        self.socket.send(b"start")
+        self.socket.send(bytes(message))
 
         #  Get the reply.
-        return socket.recv()
+        return self.socket.recv()
 
-    def test_velocity(self):
-        sendtime = datetime.now()
-        for request in range(1):
+    # still untested
+    # def test_velocity(self):
+    #     sendtime = datetime.now()
+    #     for request in range(1):
+    #
+    #         socket.send(b"start")
+    #
+    #         #  Get the reply.
+    #         message = socket.recv()
+    #
+    #     rectime = datetime.now()
+    #     print("Latency is {:.2f}".format((rectime-sendtime).total_seconds()*1000))
 
-            socket.send(b"start")
 
-            #  Get the reply.
-            message = socket.recv()
+class ZmqLightsheetTrigger(ZmqClient):
+    def prepare(self):
+        self.send(b"prepare")
 
-        rectime = datetime.now()
-        print("Latency is {:.2f}".format((rectime-sendtime).total_seconds()*1000))
+    def start(self):
+        self.send(b"start")
 
-#class ZmqTrigger:
-#    def start
+    def stop(self):
+        self.send(b"stop")
+
+    def get_ls_data(self):
+        return self.send(b"")
