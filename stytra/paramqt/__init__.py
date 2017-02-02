@@ -175,7 +175,7 @@ class IntegerControl(ParameterControl):
 
 class StringControl(ParameterControl):
     """ Widget for string parameters
-        """
+    """
 
     def create_control_widget(self):
         control_widget = QLineEdit(str(self.parameter_val))
