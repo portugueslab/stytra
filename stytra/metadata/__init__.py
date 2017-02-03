@@ -221,8 +221,11 @@ class Metadata(param.Parameterized):
         setattr(self.params(obj), 'constant', True)
 
     def show_gui(self):
-        self.gui = ParameterGui(metadata_obj=self)
+        self.gui = self.get_gui(self)
         self.gui.show()
+
+    def get_gui(self, save_button=True):
+        return ParameterGui(metadata_obj=self, save_button=save_button)
 
 
 class MetadataFish(Metadata):

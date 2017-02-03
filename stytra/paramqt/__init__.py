@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, \
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication, QGridLayout, \
     QLabel, QLineEdit, QPushButton, QComboBox, QSlider
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
@@ -28,6 +28,9 @@ class ParameterControl(QWidget):
         self.parameter = parameter_obj
         self.parameter_val = getattr(parameterized_obj, name)
 
+        self.set_layout()
+
+    def set_layout(self):
         # Create layout and add label to the control:
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -57,19 +60,31 @@ class NumericControlSliderCombined(ParameterControl):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.numeric_control_widget = self.create_numeric_control_widget()
-        self.layout.addWidget(self.numeric_control_widget)
-        self.update_numeric()
 
+        self.update_numeric()
         self.control_widget.valueChanged.connect(self.update_numeric)
         self.numeric_control_widget.editingFinished.connect(self.update_slider)
+
+    def set_layout(self):
+        # Create layout and add label to the control:
+        self.layout = QGridLayout()
+        self.widget_label = QLabel(self.label)
+        self.layout.addWidget(self.widget_label, 0, 0)
+
+        # Create control widget according to parameter type:
+        self.control_widget = self.create_control_widget()
+        self.layout.addWidget(self.control_widget, 1, 0, 1, 2)
+
+        self.numeric_control_widget = self.create_numeric_control_widget()
+        self.layout.addWidget(self.numeric_control_widget, 0, 1)
+
+        self.setLayout(self.layout)
 
     def create_control_widget(self):
         slider_control_widget = QSlider(Qt.Horizontal)
         slider_control_widget.setValue(int((-self.parameter.bounds[0] + self.parameter_val /
                                             (self.parameter.bounds[1]-self.parameter.bounds[0])*10000)))
         slider_control_widget.setMaximum(10000)
-
 
         return slider_control_widget
 
@@ -81,7 +96,7 @@ class NumericControlSliderCombined(ParameterControl):
 
     def update_numeric(self):
         val = self.get_value()
-        self.numeric_control_widget.setText(str(round(val,2)))
+        self.numeric_control_widget.setText(str(round(val, 4)))
 
     def update_slider(self):
         val = self.get_numeric_value()
@@ -234,7 +249,7 @@ class ParameterGui(QWidget):
         param.ObjectSelector: ListControl
     }
 
-    def __init__(self, metadata_obj=None,  *args, **kwargs):
+    def __init__(self, metadata_obj=None,  save_button=True, *args, **kwargs):
         """ Constructor
 
         :param metadata_obj: Metadata object
@@ -242,20 +257,22 @@ class ParameterGui(QWidget):
 
         super().__init__(*args, **kwargs)
         self.layout = QVBoxLayout()
+        self.layout.setSpacing(0)
         self.setLayout(self.layout)
 
         self.parameter_controls = []
         self.metadata_obj = metadata_obj
 
         # Add controls for all the parameters:
-        for param_name in self.metadata_obj.params().keys():
+        for param_name in sorted(self.metadata_obj.params().keys()):
             if not param_name == 'name':
                 self.add_parameter_to_gui(param_name)
 
         # Connect ok button for saving data:
-        ok_butt = QPushButton("Save Metadata")
-        ok_butt.clicked.connect(self.save_meta)
-        self.layout.addWidget(ok_butt)
+        if save_button:
+            self.ok_button = QPushButton("Save Metadata")
+            self.ok_button.clicked.connect(self.save_meta)
+            self.layout.addWidget(self.ok_button)
 
     def add_parameter_to_gui(self, param_name):
         """ Add a new control to the widget.
@@ -274,15 +291,17 @@ class ParameterGui(QWidget):
     def save_meta(self):
         """ Parse metadata from the GUI and close it only if all are valid
         """
-        validity_check = True
+        correct_save_flag = True
         for parameter_control in self.parameter_controls:
             if not isinstance(parameter_control, StaticControl):
                 try:
                     setattr(self.metadata_obj, parameter_control.name, parameter_control.get_value())
                 except ValueError:
-                    parameter_control.setStyleSheet('background-color: rgb(120, 40, 40)')
+                    parameter_control.control_widget.setStyleSheet('background-color: rgb(120, 40, 40)')
                     parameter_control.show()
-                    validity_check = False
+                    correct_save_flag = False
+
+        return correct_save_flag
 
     @staticmethod
     def get_widget_type(param_obj):
