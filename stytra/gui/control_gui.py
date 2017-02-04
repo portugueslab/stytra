@@ -1,8 +1,8 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout
 import pyqtgraph as pg
-import json
 import numpy as np
+
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -18,13 +18,13 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.roi_box.addScaleHandle([1, 1], [0, 0])
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(QRectF(0, 0, display_size[0], display_size[1]),
-                      update=True, disableAutoRange=True)
-        self.view_box.addItem(pg.ROI(pos=(1, 1),size=(display_size[0]-1,
-                                               display_size[1]-1), movable=False,
-                                     pen=(80,80,80)),
+                               update=True, disableAutoRange=True)
+        self.view_box.addItem(pg.ROI(pos=(1, 1), size=(display_size[0]-1,
+                              display_size[1]-1), movable=False,
+                                     pen=(80, 80, 80)),
                               )
         self.calibration_points = pg.ScatterPlotItem()
-        self.calibration_frame = pg.PlotCurveItem(brush=(120,10,10), pen=(200,10,10), fill_level=1)
+        self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10), pen=(200, 10, 10), fill_level=1)
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
 
@@ -33,27 +33,27 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                                     image=None):
         cw = camera_resolution[0]
         ch = camera_resolution[1]
-        points_cam = np.array([[0,0],[0,cw],
-                                [ch, cw], [ch, 0], [0, 0]])
+        points_cam = np.array([[0, 0], [0, cw],
+                              [ch, cw], [ch, 0], [0, 0]])
 
-        points_cam = np.pad(points_cam, ((0,0), (0,1)),
+        points_cam = np.pad(points_cam, ((0, 0), (0, 1)),
                             mode='constant', constant_values=1)
-        points_calib = np.pad(calibrator.points, ((0,0), (0,1)),
-                            mode='constant', constant_values=1)
-        points_proj = (points_cam @ calibrator.cam_to_proj.T )
+        points_calib = np.pad(calibrator.points, ((0, 0), (0, 1)),
+                              mode='constant', constant_values=1)
+        points_proj = (points_cam @ calibrator.cam_to_proj.T)
         x0, y0 = self.roi_box.pos()
-        self.calibration_frame.setData(x = points_proj[:,0]+x0,
-                                       y = points_proj[:,1]+y0)
-        self.calibration_points.setData(x = points_calib[:,0]+x0,
-                                       y = points_calib[:,1]+y0)
+        self.calibration_frame.setData(x=points_proj[:, 0]+x0,
+                                       y=points_proj[:, 1]+y0)
+        self.calibration_points.setData(x=points_calib[:, 0]+x0,
+                                        y=points_calib[:, 1]+y0)
         if image is not None:
             pass
             # TODO place transforemd image
 
 
-
 class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
+
     def __init__(self, app, protocol, display_window, *args):
         """ Class for controlling the stimuli
         """
@@ -62,10 +62,22 @@ class ProtocolControlWindow(QWidget):
         self.protocol = protocol
         self.display_window = display_window
 
-        try:
-            ROI_desc = json.load(open('window_props.json', 'r'))
-        except FileNotFoundError:
-            ROI_desc = dict(pos=(10, 10), size=(100, 100))
+        ROI_desc = dict(pos=(10, 10),
+                        size=(100, 100))
+
+        # This part can be used for correctly display the  projectionViewer
+        # once the experiment folder parameter is passed to the window.
+        # Anyway, it would be better to take care of this from the DataCollector
+        # set_to_last_value method.
+
+        # import deepdish as dd
+        # import os
+        # experiment_folder = ''
+        # list_metadata = [fn for fn in os.listdir(experiment_folder) if fn.endswith('metadata.h5')]
+        # if len(list_metadata) > 0:
+        #   last_metadata = dd.io.load(experiment_folder + list_metadata[-1])
+        #   ROI_desc = dict(pos=last_metadata['stimulus']['window_pos'],
+        #                   size=last_metadata['stimulus']['window_size'])
 
         self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
 
@@ -109,9 +121,6 @@ class ProtocolControlWindow(QWidget):
         :param QCloseEvent:
         :return: None
         """
-        json.dump(dict(pos=[int(k) for k in self.roi_box.pos()], size=
-                       [int(k) for k in self.roi_box.size()]),
-                  open('window_props.json', 'w'))
         self.deleteLater()
         self.app.quit()
 

@@ -11,7 +11,7 @@ import qdarkstyle
 
 if __name__ == '__main__':
 
-    experiment_folder = '/Users/luigipetrucco/Desktop/'
+    experiment_folder = '/Users/luigipetrucco/Desktop/meta'
 
     stim_duration = 0.5
     pause_duration = 1
@@ -46,14 +46,19 @@ if __name__ == '__main__':
     imaging_data.set_fix_value('piezo_frequency', 1)
     imaging_data.set_fix_value('piezo_amplitude', 1)
 
+    provadict = dict(a=8, b=9)
+    print(win_control.widget_view.roi_box.state)
     data_collector = DataCollector(fish_data,
                                    imaging_data,
                                    general_data,
+                                   ('stimulus', provadict),
                                    ('stimulus', 'log', protocol.log),
-                                   ('stimulus', 'window_shape', win_stim_disp.get_current_dims()),
+                                   ('stimulus', 'window_pos', win_control.widget_view.roi_box.state, 'pos'),
+                                   ('stimulus', 'window_size', win_control.widget_view.roi_box.state, 'size'),
                                    folder_path=experiment_folder)
 
-    win_control.button_metadata.clicked.connect(imaging_data.show_gui)
+    print(win_control.widget_view.roi_box.state)
+    win_control.button_metadata.clicked.connect(fish_data.show_gui)
     protocol.sig_protocol_finished.connect(data_collector.save)
 
 
@@ -62,7 +67,9 @@ if __name__ == '__main__':
     win_control.show()
     win_control.windowHandle().setScreen(app.screens()[0])
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
+    win_control.widget_view.repaint()
     win_stim_disp.showFullScreen()
+    win_control.update_ROI()
 
     app.exec_()
 
