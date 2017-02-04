@@ -1,8 +1,13 @@
-from ximea import xiapi
+try:
+    from ximea import xiapi
+except ImportError:
+    pass
+
 from multiprocessing import Process, JoinableQueue, Queue, Event
 from queue import Empty
 import numpy as np
 from datetime import datetime
+import cv2
 
 class XimeaCamera(Process):
     def __init__(self, frame_queue=None, signal=None, control_queue=None):
@@ -35,6 +40,27 @@ class XimeaCamera(Process):
             self.cam.get_image(img)
             arr = np.array(img.get_image_data_numpy())
             self.q.put(arr)
+
+
+class VideoFileSource(Process):
+    """ A class to display videos from a file to test parts of
+    stytra without a camera available
+
+    """
+    def __init__(self, frame_queue=None, signal=None, source_file=None):
+        self.q = frame_queue
+        self.signal = signal
+        self.source_file = source_file
+
+
+    def run(self):
+        cap = cv2.VideoCapture(self.source_file)
+        ret = True
+        while ret:
+            ret, frame = cap.read()
+            self.q.put(frame[:, :, 0])
+
+
 
 
 class FrameDispatcher(Process):
