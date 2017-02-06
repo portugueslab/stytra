@@ -152,6 +152,7 @@ class DataCollector:
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_metadata")
         filename = self.folder_path + timestamp + '.h5'
+        print(filename)
         dd.io.save(filename, data_dict)
 
     def set_to_last_value(self, *args):

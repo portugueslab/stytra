@@ -81,13 +81,14 @@ class FrameDispatcher(Process):
      as well as dispatching a subset for display
 
     """
-    def __init__(self, frame_queue, gui_queue, output_queue=None,
+    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameters=None,
                  gui_framerate=30):
         super().__init__()
 
         self.frame_queue = frame_queue
         self.gui_queue = gui_queue
+        self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
         self.processing_function = processing_function
@@ -100,7 +101,7 @@ class FrameDispatcher(Process):
         i = 0
         current_framerate = 100
         every_x = 10
-        while True:
+        while not self.finished_signal.is_set():
             try:
                 frame = self.frame_queue.get(timeout=5)
                 if self.processing_function is not None:
@@ -159,14 +160,9 @@ class BgSepFrameDispatcher(FrameDispatcher):
         i_total = 0
         n_learn_background = 300
         n_every_bg = 400
-        while True:
+        while not self.finished_signal.is_set():
             try:
-                test = np.zeros((100, 100), dtype=np.uint8)
-                test[10:20, 10:20] = 255
-                ms, contours, orn = cv2.findContours(test.copy(),
-                                                     cv2.RETR_EXTERNAL,
-                                                     cv2.CHAIN_APPROX_NONE)
-                print('Cont ', len(contours))
+
                 frame = self.frame_queue.get(timeout=5)
                 # calculate the background
                 # if bgmodel is None:
@@ -180,16 +176,13 @@ class BgSepFrameDispatcher(FrameDispatcher):
                 # #     dif = update_bg(bgmodel, frame, alpha)
 
                 if i_total < n_learn_background or i % n_every_bg == 0:
-                    lr = 0.001
+                    lr = 0.01
                 else:
                     lr = 0
 
                 mask = bg_sub.apply(frame, learningRate=lr)
                 fishes = []
                 if self.processing_function is not None and i_total>n_learn_background:
-
-
-
                     fishes = self.processing_function(frame, mask.copy(),
                                                       params=self.processing_parameters)
                     self.output_queue.put(fishes)

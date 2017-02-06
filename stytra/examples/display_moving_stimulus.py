@@ -1,4 +1,5 @@
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QWidget, QSplitter
 import qdarkstyle
 from stytra.stimulation.stimuli import MovingSeamless, Flash
 from stytra.stimulation import Protocol
@@ -9,18 +10,19 @@ from stytra.gui import control_gui, display_gui, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.paramqt import ParameterGui
-from stytra.hardware.cameras import XimeaCamera, FrameDispatcher
+from stytra.hardware.cameras import XimeaCamera, FrameDispatcher, BgSepFrameDispatcher
 from multiprocessing import Queue, Event
 from queue import Empty
 
 
-class Experiment:
-    def __init__(self):
+class Experiment(QMainWindow):
+    def __init__(self, app):
+        super().__init__()
+        self.app = app
         experiment_folder = r'D:\vilim\fishrecordings\stytra'
-        app = QApplication([])
-        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-        dc = metadata.DataCollector(experiment_folder)
+
+        self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
         n_vels = 10
         stim_duration = 10
@@ -52,44 +54,46 @@ class Experiment:
         self.gui_frame_queue = Queue()
         self.finished_sig = Event()
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
-        self.frame_dispatcher = FrameDispatcher(self.frame_queue, self.gui_frame_queue)
+        self.frame_dispatcher = FrameDispatcher(self.frame_queue, self.gui_frame_queue, self.finished_sig)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
         self.win_stim_disp.widget_display.calibration = self.calibrator
 
-        self.win_main = QDialog()
-        self.main_layout = QHBoxLayout()
+        self.main_layout = QSplitter(Qt.Horizontal)
+        self.setCentralWidget(self.main_layout)
         self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
                                                           self.control_queue,
                                                           camera_rotation=3)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
-        self.win_control.update_ROI()
+        self.win_control.refresh_ROI()
         self.main_layout.addWidget(self.win_control)
-
-        self.win_main.setLayout(self.main_layout)
-        self.win_main.show()
 
         self.win_stim_disp.show()
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
-        dc.add_data_source('stimulation', 'display_params',
+        self.dc.add_data_source('stimulus', 'display_params',
                            self.win_stim_disp.display_params)
+        print(self.win_stim_disp.display_params)
         self.win_stim_disp.update_display_params()
+        self.win_control.reset_ROI()
 
         self.fish_data = metadata.MetadataFish()
         self.stimulus_data = dict(background=bg, motion=motion)
         metawidget = ParameterGui(self.fish_data)
         self.win_control.button_metadata.clicked.connect(metawidget.show)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
+        self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data)
+        self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
+        self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
+        self.win_control.button_end.clicked.connect(self.dc.save)
 
         self.camera.start()
         self.frame_dispatcher.start()
 
-        app.exec_()
-
+        self.show()
 
     def calibrate(self):
         try:
@@ -100,10 +104,27 @@ class Experiment:
                 self.win_control.widget_view.display_calibration_pattern(self.calibrator)
                 self.camera_view.show_calibration(self.calibrator.points_cam)
             except calibration.CalibrationException:
-                pass
+                if self.calibrator.proj_to_cam is not None:
+                    self.camera_view.show_calibration(self.calibrator.points_cam)
+                    self.camera_view.show_calibration(self.calibrator.points_cam)
         except Empty:
             pass
 
+    def closeEvent(self, QCloseEvent):
+        self.finished_sig.set()
+        self.dc.save()
+        self.frame_queue.close()
+        self.gui_frame_queue.close()
+        self.deleteLater()
+        self.app.closeAllWindows()
+        self.camera.join(timeout=1)
+        self.frame_dispatcher.terminate()
+        self.app.quit()
 
-if __name__=='__main__':
-    exp = Experiment()
+
+
+if __name__ == '__main__':
+    app = QApplication([])
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    exp = Experiment(app)
+    app.exec_()

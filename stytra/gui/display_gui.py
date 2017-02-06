@@ -20,7 +20,6 @@ class StimulusDisplayWindow(QDialog):
 
         self.update_display_params()
         self.loc = np.array((0, 0))
-        self.dims = (self.widget_display.height(), self.widget_display.width())
 
         self.setStyleSheet('background-color:black;')
 
@@ -28,15 +27,12 @@ class StimulusDisplayWindow(QDialog):
         self.set_dims(**self.display_params['window'])
         self.protocol.dt = self.display_params['refresh_rate']
 
-    def get_current_dims(self):
-        self.dims = (self.widget_display.height(), self.widget_display.width())
-        return self.dims
-
     def set_dims(self, pos, size):
         self.widget_display.setGeometry(
             *([int(k) for k in pos] +
               [int(k) for k in size]))
+        self.display_params['window']['size'] = size
+        self.display_params['window']['pos'] = pos
 
-        self.dims = (self.widget_display.height(), self.widget_display.width())
         for stimulus in self.protocol.stimuli:
-            stimulus.output_shape = self.dims
+            stimulus.output_shape = tuple(int(s+1) for s in size)

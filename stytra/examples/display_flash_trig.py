@@ -69,7 +69,7 @@ if __name__ == '__main__':
     win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_control.widget_view.repaint()
     win_stim_disp.showFullScreen()
-    win_control.update_ROI()
+    win_control.refresh_ROI()
 
     app.exec_()
 
