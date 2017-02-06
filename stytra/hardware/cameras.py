@@ -13,7 +13,6 @@ class XimeaCamera(Process):
         self.signal = signal
 
     def run(self):
-
         self.cam = xiapi.Camera()
         self.cam.open_device()
         img = xiapi.Image()
@@ -79,7 +78,7 @@ class FrameDispatcher(Process):
                 print('empty_queue')
                 break
 
-if __name__=='__main__':
+if __name__ == '__main__':
     from stytra.gui.camera_display import CameraDisplayWidget
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])

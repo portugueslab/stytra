@@ -107,15 +107,5 @@ class Experiment:
             pass
 
 
-
-    def consolidate_data(self):
-        dc = metadata.DataCollector(fish_data)
-        self.stimulus_data['window_shape'] = win_stim_disp.get_current_dims()
-        dc.add_metadata('stimulation', 'window_shape',
-                        win_stim_disp.get_current_dims())
-
-        dc.save(self.folder)
-
-
 if __name__=='__main__':
     exp = Experiment()
