@@ -6,12 +6,9 @@ from stytra.stimulation.backgrounds import noise_background
 import pandas as pd
 import numpy as np
 from stytra.gui import control_gui, display_gui, camera_display
-from functools import partial
 import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.paramqt import ParameterGui
-import cv2
-import pyqtgraph as pg
 from stytra.hardware.cameras import XimeaCamera, FrameDispatcher
 from multiprocessing import Queue, Event
 from queue import Empty
@@ -22,6 +19,8 @@ class Experiment:
         experiment_folder = r'D:\vilim\fishrecordings\stytra'
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+
+        dc = metadata.DataCollector(experiment_folder)
 
         n_vels = 10
         stim_duration = 10
@@ -62,8 +61,8 @@ class Experiment:
         self.win_main = QDialog()
         self.main_layout = QHBoxLayout()
         self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
-                                                           self.control_queue,
-                                                           camera_rotation=3)
+                                                          self.control_queue,
+                                                          camera_rotation=3)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
@@ -76,6 +75,9 @@ class Experiment:
         self.win_stim_disp.show()
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
+        dc.add_data_source('stimulation', 'display_params',
+                           self.win_stim_disp.display_params)
+        self.win_stim_disp.update_display_params()
 
         self.fish_data = metadata.MetadataFish()
         self.stimulus_data = dict(background=bg, motion=motion)
@@ -85,10 +87,6 @@ class Experiment:
 
         self.camera.start()
         self.frame_dispatcher.start()
-
-        data_collector = metadata.DataCollector(('stimulus', 'log', protocol.log),
-                                       ('stimulus', 'window_shape', self.win_stim_disp.get_current_dims()),
-                                       folder_path=experiment_folder)
 
         app.exec_()
 
@@ -105,16 +103,6 @@ class Experiment:
                 pass
         except Empty:
             pass
-
-
-
-    def consolidate_data(self):
-        dc = metadata.DataCollector(fish_data)
-        self.stimulus_data['window_shape'] = win_stim_disp.get_current_dims()
-        dc.add_metadata('stimulation', 'window_shape',
-                        win_stim_disp.get_current_dims())
-
-        dc.save(self.folder)
 
 
 if __name__=='__main__':

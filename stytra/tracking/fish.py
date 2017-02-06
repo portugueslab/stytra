@@ -120,16 +120,9 @@ def bgdif(x, y):
         return y-x
 
 
-def detect_fishes(frame, params, bg):
-    # find the difference between the fishes and the backgound, blur it a little
-    blurred = cv2.GaussianBlur(
-        bgdif(frame, bg), (3,3),
-        sigmaX=params['blurstd'])
-
-    # binarise to get fish contours
-    ret, binarized = cv2.threshold(blurred, params['thresh_dif'], 255,
-                                   cv2.THRESH_BINARY)
-    ms, contours, orn = cv2.findContours(binarized.copy(), cv2.RETR_EXTERNAL,
+def detect_fishes(frame, mask, params):
+    print(np.max(mask))
+    ms, contours, orn = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
                                          cv2.CHAIN_APPROX_NONE)
 
     # if there are no contours, report no fish in this frame
@@ -144,7 +137,7 @@ def detect_fishes(frame, params, bg):
             # work only on the part of the image containing the fish
             fx, fy, fw, fh = cv2.boundingRect(fish_contour)
             fish_frame = np.maximum(frame[fy:fy + fh, fx:fx + fw],
-                                    255 - binarized[fy:fy + fh, fx:fx + fw])
+                                    255 - mask[fy:fy + fh, fx:fx + fw])
             x, y, theta, tail_angles = detect_eyes_tail(fish_frame, params)
             if x < 0:
                 continue
@@ -153,3 +146,11 @@ def detect_fishes(frame, params, bg):
             # display_img_array(fish_frame, inverted=False)
 
     return measurements
+
+if __name__ == '__main__':
+    test = np.zeros((100,100), dtype=np.uint8)
+    test[10:20,10:20] = 255
+    ms, contours, orn = cv2.findContours(test.copy(),
+                                         cv2.RETR_EXTERNAL,
+                                         cv2.CHAIN_APPROX_NONE)
+    print(len(contours))
