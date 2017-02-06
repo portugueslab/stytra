@@ -4,7 +4,6 @@ import pyqtgraph as pg
 import numpy as np
 
 
-
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     def __init__(self, *args, display_size=(1280,800),ROI_desc=None,  **kwargs):
         super().__init__(*args, **kwargs)
@@ -53,6 +52,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
 class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
+    sig_closing = pyqtSignal()
 
     def __init__(self, app, protocol, display_window, *args):
         """ Class for controlling the stimuli
@@ -121,6 +121,7 @@ class ProtocolControlWindow(QWidget):
         :param QCloseEvent:
         :return: None
         """
+        self.sig_closing.emit()
         self.deleteLater()
         self.app.quit()
 

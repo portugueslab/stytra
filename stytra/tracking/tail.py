@@ -1,6 +1,7 @@
 import numpy as np
 from numba import jit
 
+
 @jit(nopython=True)
 def detect_segment(detect_angles, seglen, start, direction, image, idx=0):
     d_angles = direction + detect_angles

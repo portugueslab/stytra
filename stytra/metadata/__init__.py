@@ -114,7 +114,6 @@ class DataCollector:
         if len(args) > 4:
             ValueError('Too many arguments!')
 
-
         self.data_tuples.append(args)
 
     def get_full_dict(self):
