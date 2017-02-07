@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton
 import qdarkstyle
 
+
 from stytra.hardware.cameras import VideoFileSource, BgSepFrameDispatcher, FrameDispatcher
 from stytra.tracking.fish import detect_fishes
 from functools import partial

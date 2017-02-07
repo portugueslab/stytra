@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSlider
 import pyqtgraph as pg
 from queue import Empty
 import numpy as np
-from stytra.paramqt import ParameterGui
+from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
 
 

@@ -9,7 +9,7 @@ import numpy as np
 from stytra.gui import control_gui, display_gui, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
-from stytra.paramqt import ParameterGui
+from paramqt import ParameterGui
 from stytra.hardware.cameras import XimeaCamera, FrameDispatcher, BgSepFrameDispatcher
 from multiprocessing import Queue, Event
 from queue import Empty
@@ -19,7 +19,8 @@ class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        experiment_folder = r'D:\vilim\fishrecordings\stytra'
+        #experiment_folder = r'D:\vilim\fishrecordings\stytra'
+        experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
 
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
@@ -49,12 +50,12 @@ class Experiment(QMainWindow):
                             dt=refresh_rate)
 
         # camera stuff
-        self.frame_queue = Queue()
-        self.control_queue = Queue()
-        self.gui_frame_queue = Queue()
-        self.finished_sig = Event()
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
-        self.frame_dispatcher = FrameDispatcher(self.frame_queue, self.gui_frame_queue, self.finished_sig)
+        # self.frame_queue = Queue()
+        # self.control_queue = Queue()
+        # self.gui_frame_queue = Queue()
+        # self.finished_sig = Event()
+        # self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        # self.frame_dispatcher = FrameDispatcher(self.frame_queue, self.gui_frame_queue, self.finished_sig)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
@@ -62,10 +63,10 @@ class Experiment(QMainWindow):
 
         self.main_layout = QSplitter(Qt.Horizontal)
         self.setCentralWidget(self.main_layout)
-        self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
-                                                          self.control_queue,
-                                                          camera_rotation=3)
-        self.main_layout.addWidget(self.camera_view)
+        # self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
+        #                                                   self.control_queue,
+        #                                                   camera_rotation=3)
+        # self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
         self.win_control.refresh_ROI()
@@ -89,9 +90,9 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
         self.win_control.button_end.clicked.connect(self.dc.save)
-
-        self.camera.start()
-        self.frame_dispatcher.start()
+        #
+        # self.camera.start()
+        # self.frame_dispatcher.start()
 
         self.show()
 
@@ -117,7 +118,7 @@ class Experiment(QMainWindow):
         self.gui_frame_queue.close()
         self.deleteLater()
         self.app.closeAllWindows()
-        self.camera.join(timeout=1)
+        # self.camera.join(timeout=1)
         self.frame_dispatcher.terminate()
         self.app.quit()
 
