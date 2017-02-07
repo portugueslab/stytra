@@ -8,6 +8,7 @@ from queue import Empty
 import numpy as np
 from datetime import datetime
 import cv2
+from collections import deque
 
 from numba import jit
 
@@ -81,7 +82,7 @@ class FrameDispatcher(Process):
      as well as dispatching a subset for display
 
     """
-    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
+    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None, control_queue=None,
                  processing_function=None, processing_parameters=None,
                  gui_framerate=30):
         super().__init__()
@@ -94,6 +95,7 @@ class FrameDispatcher(Process):
         self.processing_function = processing_function
         self.processing_parameters = processing_parameters
         self.output_queue = output_queue
+        self.control_queue = None
 
     def run(self):
         previous_time = datetime.now()
@@ -142,7 +144,6 @@ class BgSepFrameDispatcher(FrameDispatcher):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
 
     def run(self):
@@ -206,8 +207,99 @@ class BgSepFrameDispatcher(FrameDispatcher):
                 print('empty_queue')
                 break
 
+class CompressingFrameDispatcher(FrameDispatcher):
+    def __init__(self, *args, output_filename, signal_start_rec, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.output_filename = output_filename
+        self.signal_start_rec = signal_start_rec
 
-if __name__=='__main__':
+    def run(self):
+        previous_time = datetime.now()
+        n_fps_frames = 10
+        i = 0
+        current_framerate = 100
+        every_x = 10
+
+        frame_0 = self.frame_queue.get(timeout=5)
+        n_previous_compare = 3
+        i_previous = 0
+        previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
+                                dtype=np.uint8)
+
+        fish_threshold = 70
+        motion_threshold = 300
+        frame_margin = 10
+
+        previous_images = deque()
+        n_previous_save = 200
+        n_next_save = 200
+        record_counter = 0
+
+        i_frame = 0
+        recording_state = False
+        fourcc = cv2.VideoWriter_fourcc(*'X264')
+        outfile = cv2.VideoWriter(self.output_filename, fourcc, 500., frame_0.shape[::-1])
+        while not self.finished_signal.is_set():
+            try:
+                # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
+                current_frame = self.frame_queue.get()
+                _, current_frame_thresh =  \
+                    cv2.threshold(current_frame, fish_threshold, 255, cv2.THRESH_BINARY)
+                # compare the thresholded frame to the previous ones, if there are enough differences
+                # because the fish moves, start recording to file
+
+                difsum = 0
+                n_crossed = 0
+                if i_frame >= n_previous_compare:
+
+                    for j in range(n_previous_compare):
+                        difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, frame_margin:- frame_margin,
+                                                          frame_margin:- frame_margin],
+                                                          current_frame_thresh[ frame_margin:- frame_margin,
+                                                          frame_margin:- frame_margin]))[0]
+                        if difsum > motion_threshold:
+                            n_crossed += 1
+                    if n_crossed == n_previous_compare:
+                        record_counter = n_next_save
+
+                    if record_counter > 0:
+                        if not recording_state:
+                            while previous_images:
+                                im = previous_images.pop()
+                                if self.signal_start_rec.is_set():
+                                    outfile.write(im)
+                        recording_state = True
+                    else:
+                        recording_state = False
+
+                i_frame += 1
+                previous_images.append(current_frame)
+                previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
+                if len(previous_images) > n_previous_save:
+                    previous_images.pop()
+
+                # calculate the framerate
+                if i == n_fps_frames - 1:
+                    current_time = datetime.now()
+                    current_framerate = n_fps_frames / (
+                        current_time - previous_time).total_seconds()
+                    every_x = max(int(current_framerate / self.gui_framerate),
+                                  1)
+                    # print('{:.2f} FPS'.format(framerate))
+                    previous_time = current_time
+                i = (i + 1) % n_fps_frames
+
+                if self.i == 0:
+                    self.gui_queue.put(np.vstack([current_frame_thresh, current_frame]))  # frame
+                    print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
+                        current_framerate, difsum, n_crossed))
+                self.i = (self.i + 1) % every_x
+            except Empty:
+                print('empty_queue')
+                break
+
+
+if __name__ == '__main__':
     from stytra.gui.camera_display import CameraDisplayWidget
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])
