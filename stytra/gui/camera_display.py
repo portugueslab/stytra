@@ -17,7 +17,7 @@ class CameraViewWidget(QWidget):
         super().__init__()
         self.camera_display_widget = pg.GraphicsLayoutWidget()
 
-        self.display_area = pg.ViewBox(lockAspect=1, invertY=True)
+        self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.camera_display_widget.addItem(self.display_area)
         self.display_area.setRange(QRectF(0, 0, 640, 640), update=True,
                                    disableAutoRange=True)
@@ -56,7 +56,7 @@ class CameraViewWidget(QWidget):
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
 
-            self.centre = np.array(im_in.shape)/2
+            self.centre = np.array(im_in.shape[::-1])/2
             self.image_item.setImage(im_in)
         except Empty:
             pass
@@ -83,9 +83,9 @@ class CameraViewCalib(CameraViewWidget):
         self.display_area.addItem(self.points_calib)
 
     def rotation_matrix(self):
-        an = (self.camera_rotation-1)*np.pi/2
+        an = (self.camera_rotation+1)*np.pi/2
         c, s = np.cos(an), np.sin(an)
-        rotmat = np.array([[-c, s],
+        rotmat = np.array([[c, -s],
                            [s,  c]])
         transform_mat = np.column_stack([rotmat, self.centre - rotmat@self.centre])
 
@@ -93,12 +93,16 @@ class CameraViewCalib(CameraViewWidget):
 
     def show_calibration(self, found_points):
         points_dicts = []
-        for point in found_points:
-            xn, yn = self.rotation_matrix() @ np.pad(point, (0,1), 'constant',
-                                                   constant_values=1.0)
-            points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
+        print('Found the calibration points, they are')
+        print(found_points)
+        if found_points is not None:
+            for i in range(3):
+                point = found_points[i]
+                xn, yn = self.rotation_matrix() @ np.pad(point, (0, 1), 'constant',
+                                                       constant_values=1.0)
+                points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
-        self.points_calib.setData(points_dicts)
+            self.points_calib.setData(points_dicts)
 
 
 if __name__=='__main__':

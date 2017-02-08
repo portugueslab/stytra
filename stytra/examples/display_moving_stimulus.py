@@ -15,6 +15,7 @@ from multiprocessing import Queue, Event
 from queue import Empty
 import datetime
 
+
 class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
@@ -24,6 +25,7 @@ class Experiment(QMainWindow):
 
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
+        # set up the stimuli
         n_vels = 10
         stim_duration = 10
         refresh_rate = 1/60.
@@ -44,15 +46,16 @@ class Experiment(QMainWindow):
         bg = noise_background((100, 100), 10)
 
         motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
-        protocol = Protocol([MovingSeamless(background=bg, motion=motion,
+        self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
                                             duration=n_vels*stim_duration)],
                             dt=refresh_rate)
 
-        # camera stuff
+        # queues for interprocess communication
         self.frame_queue = Queue()
         self.control_queue = Queue()
         self.gui_frame_queue = Queue()
         self.record_queue = Queue()
+        self.framestart_queue = Queue()
         self.finished_sig = Event()
         self.start_rec_sig = Event()
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
@@ -60,21 +63,23 @@ class Experiment(QMainWindow):
                                                       self.gui_frame_queue,
                                                       self.finished_sig,
                                                       output_queue=self.record_queue,
+                                                      framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig)
-        self.recorder = VideoWriter(r'D:\vilim\fishrecordings\stytra\test.avi', self.record_queue, self.finished_sig)
+        self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
+                                    self.record_queue, finished_signal=self.finished_sig)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
-        self.win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
+        self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
         self.win_stim_disp.widget_display.calibration = self.calibrator
 
         self.main_layout = QSplitter(Qt.Horizontal)
         self.setCentralWidget(self.main_layout)
         self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
                                                           self.control_queue,
-                                                          camera_rotation=3)
+                                                          camera_rotation=0)
         self.main_layout.addWidget(self.camera_view)
 
-        self.win_control = control_gui.ProtocolControlWindow(app, protocol, self.win_stim_disp)
+        self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
         self.win_control.refresh_ROI()
         self.main_layout.addWidget(self.win_control)
 
@@ -96,9 +101,9 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
         self.dc.add_data_source('behaviour', 'video_file', vidfile)
-        self.win_control.button_end.clicked.connect(self.dc.save)
-        protocol.sig_protocol_started.connect(self.start_rec_sig.set)
-        protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
+        self.protocol.sig_protocol_started.connect(self.start_rec_sig.set)
+        self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
+        self.protocol.sig_protocol_finished.connect(self.finishProtocol)
 
         self.camera.start()
         self.frame_dispatcher.start()
@@ -109,29 +114,51 @@ class Experiment(QMainWindow):
     def calibrate(self):
         try:
             # we steal a frame from the GUI display queue to calibrate
-            im = self.gui_frame_queue.get()
+            im = self.gui_frame_queue.get(timeout=1)
             try:
                 self.calibrator.find_transform_matrix(im)
                 self.win_control.widget_view.display_calibration_pattern(self.calibrator)
+                print(self.calibrator.points_cam)
                 self.camera_view.show_calibration(self.calibrator.points_cam)
             except calibration.CalibrationException:
+                print('Not transform matrix')
                 if self.calibrator.proj_to_cam is not None:
-                    self.camera_view.show_calibration(self.calibrator.points_cam)
+
                     self.camera_view.show_calibration(self.calibrator.points_cam)
         except Empty:
             pass
 
-    def closeEvent(self, QCloseEvent):
+
+    def finishProtocol(self):
         self.finished_sig.set()
-        self.dc.save()
         self.frame_queue.close()
         self.gui_frame_queue.close()
-        self.deleteLater()
-        self.app.closeAllWindows()
-        self.camera.join(timeout=1)
-        self.frame_dispatcher.terminate()
-        self.app.quit()
+        self.camera.join()
+        print('Camera joined')
+        self.frame_dispatcher.join(timeout=1)
+        print('Frame dispatcher terminated')
+        timedata = []
+        while True:
+            try:
+                frame, time = self.framestart_queue.get(timeout=1)
+                timedelta = (time-self.protocol.t_start).total_seconds()
+                timedata.append([frame, timedelta])
+                print('Added a thing')
+            except Empty:
+                break
+        timedata = pd.DataFrame(timedata)
+        print('{} breaks '.format(len(timedata)))
+        self.dc.add_data_source('behaviour', 'start_times', timedata)
+        self.dc.save()
 
+        self.recorder.join()
+        print('Recorder joined')
+
+
+    def closeEvent(self, QCloseEvent):
+        self.finishProtocol()
+        self.app.closeAllWindows()
+        self.app.quit()
 
 
 if __name__ == '__main__':

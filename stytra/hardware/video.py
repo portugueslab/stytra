@@ -6,7 +6,7 @@ except ImportError:
 from multiprocessing import Process, JoinableQueue, Queue, Event
 from queue import Empty
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import cv2
 from collections import deque
 
@@ -44,6 +44,7 @@ class XimeaCamera(Process):
             # TODO check if it does anything to add np.array
             arr = np.array(img.get_image_data_numpy())
             self.q.put(arr)
+        self.cam.close_device()
 
 
 class VideoFileSource(Process):
@@ -221,10 +222,10 @@ class VideoWriter(Process):
         n_fps_frames = 10
         i = 0
         previous_time = datetime.now()
-        while not self.finished_signal.is_set():
+        while True:
             try:
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
-                current_frame = self.input_queue.get()
+                current_frame = self.input_queue.get(timeout=1)
                 outfile.write(current_frame)
 
                 if i == n_fps_frames - 1:
@@ -237,8 +238,11 @@ class VideoWriter(Process):
                 i = (i + 1) % n_fps_frames
 
             except Empty:
-                pass
-
+                print('Empty and not finished')
+                if self.finished_signal.is_set():
+                    print('Empty and finished')
+                    break
+        print('Finished saving!')
         outfile.release()
 
 
@@ -302,10 +306,17 @@ class MovingFrameDispatcher(FrameDispatcher):
                     if record_counter > 0:
                         if self.signal_start_rec.is_set():
                             if not recording_state:
+                                frame_start = i_recorded
+                                i_previous = 0
                                 while previous_images:
                                     im = previous_images.pop()
                                     self.output_queue.put(im)
+                                    i_recorded += 1
+                                    i_previous += 1
+                                time_start = datetime.now() - timedelta(seconds=i_previous/current_framerate)
+                                self.framestart_queue.put((frame_start, time_start))
                             self.output_queue.put(current_frame)
+                            i_recorded += 1
                         recording_state = True
                         record_counter -= 1
                     else:
@@ -328,7 +339,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                 i = (i + 1) % n_fps_frames
 
                 if self.i == 0:
-                    self.gui_queue.put(np.vstack([current_frame, current_frame, current_frame_thresh]))  # frame
+                    self.gui_queue.put(current_frame)  # frame
                     print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
                         current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
