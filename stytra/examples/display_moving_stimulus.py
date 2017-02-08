@@ -10,17 +10,17 @@ from stytra.gui import control_gui, display_gui, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.paramqt import ParameterGui
-from stytra.hardware.cameras import XimeaCamera, FrameDispatcher, BgSepFrameDispatcher
+from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
 from multiprocessing import Queue, Event
 from queue import Empty
-
+import datetime
 
 class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
         experiment_folder = r'D:\vilim\fishrecordings\stytra'
-
+        vidfile = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.avi")
 
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
@@ -52,9 +52,16 @@ class Experiment(QMainWindow):
         self.frame_queue = Queue()
         self.control_queue = Queue()
         self.gui_frame_queue = Queue()
+        self.record_queue = Queue()
         self.finished_sig = Event()
+        self.start_rec_sig = Event()
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
-        self.frame_dispatcher = FrameDispatcher(self.frame_queue, self.gui_frame_queue, self.finished_sig)
+        self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
+                                                      self.gui_frame_queue,
+                                                      self.finished_sig,
+                                                      output_queue=self.record_queue,
+                                                      signal_start_rec=self.start_rec_sig)
+        self.recorder = VideoWriter(r'D:\vilim\fishrecordings\stytra\test.avi', self.record_queue, self.finished_sig)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(protocol)
@@ -75,7 +82,7 @@ class Experiment(QMainWindow):
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
         self.dc.add_data_source('stimulus', 'display_params',
-                           self.win_stim_disp.display_params)
+                                self.win_stim_disp.display_params)
         print(self.win_stim_disp.display_params)
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
@@ -88,10 +95,14 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data)
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
+        self.dc.add_data_source('behaviour', 'video_file', vidfile)
         self.win_control.button_end.clicked.connect(self.dc.save)
+        protocol.sig_protocol_started.connect(self.start_rec_sig.set)
+        protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
 
         self.camera.start()
         self.frame_dispatcher.start()
+        self.recorder.start()
 
         self.show()
 

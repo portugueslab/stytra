@@ -63,14 +63,14 @@ class VideoFileSource(Process):
         current_framerate = 100
         previous_time = datetime.now()
         n_fps_frames = 10
-        i=0
+        i = 0
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
             self.q.put(frame[:, :, 0])
             if i == n_fps_frames - 1:
                 current_time = datetime.now()
                 current_framerate = n_fps_frames / (
-                current_time - previous_time).total_seconds()
+                    current_time - previous_time).total_seconds()
 
                 # print('{:.2f} FPS'.format(current_framerate))
                 previous_time = current_time
@@ -130,12 +130,13 @@ def update_bg(bg, current, alpha):
     dif = np.empty_like(current)
     for i in range(current.shape[0]):
         for j in range(current.shape[1]):
-            bg[i, j] = bg[i, j] * am + current[i,j] * alpha
-            if bg[i, j] > current[i,j]:
-                dif[i, j] = bg[i, j] - current[i,j]
+            bg[i, j] = bg[i, j] * am + current[i, j] * alpha
+            if bg[i, j] > current[i, j]:
+                dif[i, j] = bg[i, j] - current[i, j]
             else:
-                dif[i, j] =current[i, j] -bg[i,j]
+                dif[i, j] = current[i, j] - bg[i, j]
     return dif
+
 
 class BgSepFrameDispatcher(FrameDispatcher):
     """ A frame dispatcher which additionaly separates the backgorund
@@ -144,7 +145,6 @@ class BgSepFrameDispatcher(FrameDispatcher):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def run(self):
         previous_time = datetime.now()
@@ -207,10 +207,47 @@ class BgSepFrameDispatcher(FrameDispatcher):
                 print('empty_queue')
                 break
 
-class CompressingFrameDispatcher(FrameDispatcher):
-    def __init__(self, *args, output_filename, signal_start_rec, **kwargs):
+
+class VideoWriter(Process):
+    def __init__(self, filename, input_queue, finished_signal):
+        super().__init__()
+        self.filename = filename
+        self.input_queue = input_queue
+        self.finished_signal = finished_signal
+
+    def run(self):
+        fc = cv2.VideoWriter_fourcc(*'H264')
+        outfile = cv2.VideoWriter(self.filename, -1, 25, (648, 488))
+        n_fps_frames = 10
+        i = 0
+        previous_time = datetime.now()
+        while not self.finished_signal.is_set():
+            try:
+                # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
+                current_frame = self.input_queue.get()
+                outfile.write(current_frame)
+
+                if i == n_fps_frames - 1:
+                    current_time = datetime.now()
+                    current_framerate = n_fps_frames / (
+                        current_time - previous_time).total_seconds()
+
+                    print('Saving framerate: {:.2f} FPS'.format(current_framerate))
+                    previous_time = current_time
+                i = (i + 1) % n_fps_frames
+
+            except Empty:
+                pass
+
+        outfile.release()
+
+
+class MovingFrameDispatcher(FrameDispatcher):
+    def __init__(self, *args, output_queue,
+                 framestart_queue, signal_start_rec, **kwargs):
         super().__init__(*args, **kwargs)
-        self.output_filename = output_filename
+        self.output_queue = output_queue
+        self.framestart_queue = framestart_queue
         self.signal_start_rec = signal_start_rec
 
     def run(self):
@@ -225,7 +262,6 @@ class CompressingFrameDispatcher(FrameDispatcher):
         i_previous = 0
         previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
                                 dtype=np.uint8)
-
         fish_threshold = 70
         motion_threshold = 300
         frame_margin = 10
@@ -237,8 +273,9 @@ class CompressingFrameDispatcher(FrameDispatcher):
 
         i_frame = 0
         recording_state = False
-        fourcc = cv2.VideoWriter_fourcc(*'X264')
-        outfile = cv2.VideoWriter(self.output_filename, fourcc, 500., frame_0.shape[::-1])
+
+        i_recorded = 0
+
         while not self.finished_signal.is_set():
             try:
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
@@ -255,7 +292,7 @@ class CompressingFrameDispatcher(FrameDispatcher):
                     for j in range(n_previous_compare):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, frame_margin:- frame_margin,
                                                           frame_margin:- frame_margin],
-                                                          current_frame_thresh[ frame_margin:- frame_margin,
+                                                          current_frame_thresh[frame_margin:- frame_margin,
                                                           frame_margin:- frame_margin]))[0]
                         if difsum > motion_threshold:
                             n_crossed += 1
@@ -263,12 +300,14 @@ class CompressingFrameDispatcher(FrameDispatcher):
                         record_counter = n_next_save
 
                     if record_counter > 0:
-                        if not recording_state:
-                            while previous_images:
-                                im = previous_images.pop()
-                                if self.signal_start_rec.is_set():
-                                    outfile.write(im)
+                        if self.signal_start_rec.is_set():
+                            if not recording_state:
+                                while previous_images:
+                                    im = previous_images.pop()
+                                    self.output_queue.put(im)
+                            self.output_queue.put(current_frame)
                         recording_state = True
+                        record_counter -= 1
                     else:
                         recording_state = False
 
@@ -283,14 +322,13 @@ class CompressingFrameDispatcher(FrameDispatcher):
                     current_time = datetime.now()
                     current_framerate = n_fps_frames / (
                         current_time - previous_time).total_seconds()
-                    every_x = max(int(current_framerate / self.gui_framerate),
-                                  1)
+                    every_x = max(int(current_framerate / self.gui_framerate), 1)
                     # print('{:.2f} FPS'.format(framerate))
                     previous_time = current_time
                 i = (i + 1) % n_fps_frames
 
                 if self.i == 0:
-                    self.gui_queue.put(np.vstack([current_frame_thresh, current_frame]))  # frame
+                    self.gui_queue.put(np.vstack([current_frame, current_frame, current_frame_thresh]))  # frame
                     print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
                         current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
