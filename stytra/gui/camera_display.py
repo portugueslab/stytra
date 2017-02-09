@@ -82,24 +82,14 @@ class CameraViewCalib(CameraViewWidget):
         self.points_calib = pg.ScatterPlotItem()
         self.display_area.addItem(self.points_calib)
 
-    def rotation_matrix(self):
-        an = (self.camera_rotation+1)*np.pi/2
-        c, s = np.cos(an), np.sin(an)
-        rotmat = np.array([[c, -s],
-                           [s,  c]])
-        transform_mat = np.column_stack([rotmat, self.centre - rotmat@self.centre])
+    def show_calibration(self, calibrator):
+        if calibrator.proj_to_cam is not None:
+            camera_points = np.pad(calibrator.points, ((0, 0), (0, 1)),
+                                   mode='constant', constant_values=1) @ calibrator.proj_to_cam.T
 
-        return transform_mat
-
-    def show_calibration(self, found_points):
-        points_dicts = []
-        print('Found the calibration points, they are')
-        print(found_points)
-        if found_points is not None:
-            for i in range(3):
-                point = found_points[i]
-                xn, yn = self.rotation_matrix() @ np.pad(point, (0, 1), 'constant',
-                                                       constant_values=1.0)
+            points_dicts = []
+            for point in camera_points:
+                xn, yn = point[::-1]
                 points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)

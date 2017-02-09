@@ -26,7 +26,7 @@ class Experiment(QMainWindow):
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
         # set up the stimuli
-        n_vels = 10
+        n_vels = 3
         stim_duration = 10
         refresh_rate = 1/60.
 
@@ -43,7 +43,7 @@ class Experiment(QMainWindow):
             xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
             ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
 
-        bg = noise_background((100, 100), 10)
+        bg = noise_background((800, 800), 4)
 
         motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
         self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
@@ -55,7 +55,9 @@ class Experiment(QMainWindow):
         self.control_queue = Queue()
         self.gui_frame_queue = Queue()
         self.record_queue = Queue()
+        self.diag_queue = Queue()
         self.framestart_queue = Queue()
+
         self.finished_sig = Event()
         self.start_rec_sig = Event()
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
@@ -64,7 +66,8 @@ class Experiment(QMainWindow):
                                                       self.finished_sig,
                                                       output_queue=self.record_queue,
                                                       framestart_queue=self.framestart_queue,
-                                                      signal_start_rec=self.start_rec_sig)
+                                                      signal_start_rec=self.start_rec_sig,
+                                                      diag_queue=self.diag_queue)
         self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
                                     self.record_queue, finished_signal=self.finished_sig)
 
@@ -100,7 +103,9 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data)
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
+        self.dc.add_data_source('stimulus', 'calibration_points', self.calibrator, 'points')
         self.dc.add_data_source('behaviour', 'video_file', vidfile)
+        print(self.calibrator.cam_to_proj)
         self.protocol.sig_protocol_started.connect(self.start_rec_sig.set)
         self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
         self.protocol.sig_protocol_finished.connect(self.finishProtocol)
@@ -109,6 +114,7 @@ class Experiment(QMainWindow):
         self.frame_dispatcher.start()
         self.recorder.start()
 
+        self.finished = False
         self.show()
 
     def calibrate(self):
@@ -119,28 +125,25 @@ class Experiment(QMainWindow):
                 self.calibrator.find_transform_matrix(im)
                 self.win_control.widget_view.display_calibration_pattern(self.calibrator)
                 print(self.calibrator.points_cam)
-                self.camera_view.show_calibration(self.calibrator.points_cam)
+                self.camera_view.show_calibration(self.calibrator)
             except calibration.CalibrationException:
-                print('Not transform matrix')
-                if self.calibrator.proj_to_cam is not None:
-
-                    self.camera_view.show_calibration(self.calibrator.points_cam)
+                print('No new transform matrix')
+                if self.calibrator.proj_to_cam is not None and self.calibrator.points is not None:
+                    self.camera_view.show_calibration(self.calibrator)
         except Empty:
             pass
 
 
     def finishProtocol(self):
         self.finished_sig.set()
-        self.frame_queue.close()
-        self.gui_frame_queue.close()
-        self.camera.join()
+        self.camera.join(timeout=3)
         print('Camera joined')
-        self.frame_dispatcher.join(timeout=1)
+        self.frame_dispatcher.join(timeout=3)
         print('Frame dispatcher terminated')
         timedata = []
         while True:
             try:
-                frame, time = self.framestart_queue.get(timeout=1)
+                frame, time = self.framestart_queue.get(timeout=0.01)
                 timedelta = (time-self.protocol.t_start).total_seconds()
                 timedata.append([frame, timedelta])
                 print('Added a thing')
@@ -151,12 +154,13 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('behaviour', 'start_times', timedata)
         self.dc.save()
 
-        self.recorder.join()
+        self.recorder.join(timeout=10)
         print('Recorder joined')
-
+        self.finished = True
 
     def closeEvent(self, QCloseEvent):
-        self.finishProtocol()
+        if not self.finished:
+            self.finishProtocol()
         self.app.closeAllWindows()
         self.app.quit()
 

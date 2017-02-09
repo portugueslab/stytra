@@ -5,7 +5,7 @@ import numpy as np
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
-    def __init__(self, *args, display_size=(1280,800),ROI_desc=None,  **kwargs):
+    def __init__(self, *args, display_size=(1280, 800),ROI_desc=None,  **kwargs):
         super().__init__(*args, **kwargs)
 
         self.view_box = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)

@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 from stytra.stimulation.stimuli import *
 
+
 class GLStimDisplay(QOpenGLWidget):
     def __init__(self, protocol, *args):
         super().__init__(*args)
@@ -29,7 +30,7 @@ class GLStimDisplay(QOpenGLWidget):
         h = self.height()
         p.drawRect(QRect(-1, -1, w+2, h+2))
         if self.calibrating and self.calibration is not None:
-            self.calibration.calibrate(p, h, w)
+            self.calibration.make_calibration_pattern(p, h, w)
 
         p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
         if self.img is not None:

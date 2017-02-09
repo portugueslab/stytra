@@ -13,12 +13,12 @@ class Calibrator:
     def __init__(self):
         pass
 
-    def calibrate(self, p, h, w):
+    def make_calibration_pattern(self, p, h, w):
         pass
 
 
 class CrossCalibrator(Calibrator):
-    def calibrate(self, p, h, w):
+    def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         p.drawLine(w // 4, h // 2, w * 3 // 4, h // 2)
@@ -28,6 +28,8 @@ class CrossCalibrator(Calibrator):
 
 
 class CircleCalibrator(Calibrator):
+    """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle
+    """
     def __init__(self, dh=80, r=3):
         self.dh = dh
         self.r = r
@@ -36,20 +38,25 @@ class CircleCalibrator(Calibrator):
         self.proj_to_cam = None
         self.cam_to_proj = None
 
-    def calibrate(self, p, h, w):
+    def make_calibration_pattern(self, p, h, w, draw=True):
         assert isinstance(p, QPainter)
-        p.setPen(QPen(QColor(255, 0, 0)))
+
         d2h = self.dh//2
         d2w = int(self.dh*math.sqrt(3))//2
         ch = h//2
         cw = w//2
         # the three points sorted in ascending angle order (30, 60, 90)
         centres = [(cw-d2h, ch+d2w), (cw+d2h, ch+d2w), (cw - d2h, ch - d2w)]
-        p.setBrush(QBrush(QColor(255, 0, 0)))
-        for centre in centres:
-            p.drawEllipse(QPoint(*centre), self.r, self.r)
         centres = np.array(centres)
-        self.points = centres[np.argsort(CircleCalibrator._find_angles(centres)),: ]
+        self.points = centres[np.argsort(CircleCalibrator._find_angles(centres)), :]
+
+        if draw:
+            p.setPen(QPen(QColor(255, 0, 0)))
+            p.setBrush(QBrush(QColor(255, 0, 0)))
+            for centre in centres:
+                p.drawEllipse(QPoint(*centre), self.r, self.r)
+
+
 
     @staticmethod
     def _find_angles(kps):

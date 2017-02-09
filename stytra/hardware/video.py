@@ -118,7 +118,7 @@ class FrameDispatcher(Process):
                     previous_time = current_time
                 i = (i+1) % n_fps_frames
                 if self.i == 0:
-                    self.gui_queue.put(np.swapaxes(frame,0,1))
+                    self.gui_queue.put(frame)
                 self.i = (self.i+1) % every_x
             except Empty:
                 print('empty_queue')
@@ -238,7 +238,6 @@ class VideoWriter(Process):
                 i = (i + 1) % n_fps_frames
 
             except Empty:
-                print('Empty and not finished')
                 if self.finished_signal.is_set():
                     print('Empty and finished')
                     break
@@ -248,10 +247,11 @@ class VideoWriter(Process):
 
 class MovingFrameDispatcher(FrameDispatcher):
     def __init__(self, *args, output_queue,
-                 framestart_queue, signal_start_rec, **kwargs):
+                 framestart_queue, signal_start_rec, diag_queue, **kwargs):
         super().__init__(*args, **kwargs)
         self.output_queue = output_queue
         self.framestart_queue = framestart_queue
+        self.diag_queue = diag_queue
         self.signal_start_rec = signal_start_rec
 
     def run(self):
@@ -271,7 +271,7 @@ class MovingFrameDispatcher(FrameDispatcher):
         frame_margin = 10
 
         previous_images = deque()
-        n_previous_save = 200
+        n_previous_save = 300
         n_next_save = 200
         record_counter = 0
 
@@ -292,12 +292,12 @@ class MovingFrameDispatcher(FrameDispatcher):
                 difsum = 0
                 n_crossed = 0
                 if i_frame >= n_previous_compare:
-
                     for j in range(n_previous_compare):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, frame_margin:- frame_margin,
                                                           frame_margin:- frame_margin],
                                                           current_frame_thresh[frame_margin:- frame_margin,
                                                           frame_margin:- frame_margin]))[0]
+                        self.diag_queue.put(difsum)
                         if difsum > motion_threshold:
                             n_crossed += 1
                     if n_crossed == n_previous_compare:
@@ -326,7 +326,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                 previous_images.append(current_frame)
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
                 if len(previous_images) > n_previous_save:
-                    previous_images.pop()
+                    previous_images.popleft()
 
                 # calculate the framerate
                 if i == n_fps_frames - 1:
