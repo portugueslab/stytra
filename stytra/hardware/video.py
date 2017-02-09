@@ -139,76 +139,6 @@ def update_bg(bg, current, alpha):
     return dif
 
 
-class BgSepFrameDispatcher(FrameDispatcher):
-    """ A frame dispatcher which additionaly separates the backgorund
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def run(self):
-        previous_time = datetime.now()
-        n_fps_frames = 10
-        i = 0
-        current_framerate = 100
-        every_x = 10
-
-        bgmodel = None
-        alpha = 0.01
-        bg_sub = cv2.bgsegm.createBackgroundSubtractorMOG(history=500,
-                                                          nmixtures=3,
-                                                          backgroundRatio=0.9)
-        i_total = 0
-        n_learn_background = 300
-        n_every_bg = 400
-        while not self.finished_signal.is_set():
-            try:
-
-                frame = self.frame_queue.get(timeout=5)
-                # calculate the background
-                # if bgmodel is None:
-                #      bgmodel = frame
-                #      mask = bgmodel
-                # #     dif = frame
-                # else:
-                #     print('First apply')
-                #     mask =bg_sub.apply(frame)
-                #     print(np.sum(mask))
-                # #     dif = update_bg(bgmodel, frame, alpha)
-
-                if i_total < n_learn_background or i % n_every_bg == 0:
-                    lr = 0.01
-                else:
-                    lr = 0
-
-                mask = bg_sub.apply(frame, learningRate=lr)
-                fishes = []
-                if self.processing_function is not None and i_total>n_learn_background:
-                    fishes = self.processing_function(frame, mask.copy(),
-                                                      params=self.processing_parameters)
-                    self.output_queue.put(fishes)
-                # calculate the framerate
-                if i == n_fps_frames - 1:
-                    current_time = datetime.now()
-                    current_framerate = n_fps_frames / (
-                        current_time - previous_time).total_seconds()
-                    every_x = max(int(current_framerate / self.gui_framerate),
-                                  1)
-                    # print('{:.2f} FPS'.format(framerate))
-                    previous_time = current_time
-                i = (i + 1) % n_fps_frames
-                i_total += 1
-                if self.i == 0:
-                    self.gui_queue.put(mask) # frame
-                    print('processing FPS: {:.2f}, found {} fishes'.format(
-                        current_framerate, len(fishes)))
-                self.i = (self.i + 1) % every_x
-            except Empty:
-                print('empty_queue')
-                break
-
-
 class VideoWriter(Process):
     def __init__(self, filename, input_queue, finished_signal):
         super().__init__()
@@ -340,8 +270,8 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 if self.i == 0:
                     self.gui_queue.put(current_frame)  # frame
-                    print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
-                        current_framerate, difsum, n_crossed))
+                    #print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
+                    #    current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
             except Empty:
                 print('empty_queue')

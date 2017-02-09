@@ -11,6 +11,7 @@ import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.paramqt import ParameterGui
 from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
+from stytra.tracking import FishTrackingProcess
 from multiprocessing import Queue, Event
 from queue import Empty
 import datetime
@@ -26,8 +27,8 @@ class Experiment(QMainWindow):
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
         # set up the stimuli
-        n_vels = 3
-        stim_duration = 10
+        n_vels = 50
+        stim_duration = 15
         refresh_rate = 1/60.
 
         t_break = np.arange(n_vels+1)*stim_duration
@@ -57,6 +58,8 @@ class Experiment(QMainWindow):
         self.record_queue = Queue()
         self.diag_queue = Queue()
         self.framestart_queue = Queue()
+        self.fish_queue = Queue()
+        self.fish_draw_queue = Queue()
 
         self.finished_sig = Event()
         self.start_rec_sig = Event()
@@ -68,8 +71,23 @@ class Experiment(QMainWindow):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       diag_queue=self.diag_queue)
-        self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
-                                    self.record_queue, finished_signal=self.finished_sig)
+        # self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
+        #                             self.record_queue, finished_signal=self.finished_sig)
+
+        def_params = dict(blurstd=3,
+                          thresh_dif=20,
+                          target_area=360,
+                          area_tolerance=300,
+                          fish_length=60,
+                          tail_to_body_ratio=0.8,
+                          n_tail_segments=10,
+                          tail_start_from_eye_centre=0.2,
+                          eye_area_ratio=0.02,
+                          eye_aspect=0.9,
+                          eye_threshold=50)
+
+        self.tracker = FishTrackingProcess(self.gui_frame_queue, self.fish_queue, self.finished_sig, def_params,
+                                           diagnostic_queue=self.fish_draw_queue)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
@@ -77,7 +95,7 @@ class Experiment(QMainWindow):
 
         self.main_layout = QSplitter(Qt.Horizontal)
         self.setCentralWidget(self.main_layout)
-        self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
+        self.camera_view = camera_display.CameraViewCalib(self.fish_draw_queue,
                                                           self.control_queue,
                                                           camera_rotation=0)
         self.main_layout.addWidget(self.camera_view)
@@ -110,10 +128,10 @@ class Experiment(QMainWindow):
         self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
         self.protocol.sig_protocol_finished.connect(self.finishProtocol)
 
+
         self.camera.start()
         self.frame_dispatcher.start()
-        self.recorder.start()
-
+        self.tracker.start()
         self.finished = False
         self.show()
 
@@ -154,7 +172,7 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('behaviour', 'start_times', timedata)
         self.dc.save()
 
-        self.recorder.join(timeout=10)
+        self.tracker.join(timeout=10)
         print('Recorder joined')
         self.finished = True
 

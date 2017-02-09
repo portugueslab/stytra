@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from stytra.tracking.tail import detect_tail
+from stytra.tracking.tail import detect_tail_unknown_dir
 from numba import vectorize, uint8
 
 
@@ -16,7 +16,7 @@ class ContourScorer:
             return 10000
         err_area = ((area-self.target_area)/self.target_area)**2
         _, el_axes, _ = cv2.minAreaRect(cont)
-        if el_axes[0]==0.0:
+        if el_axes[0] == 0.0:
             ratio = 0.0
         else:
             ratio = el_axes[1]/el_axes[0]
@@ -59,7 +59,7 @@ class EyeMeasurement:
         return np.mean(self.eyes, 0)
 
 
-def detect_eyes_tail(frame, params):
+def detect_eyes_tail(frame, frame_tail, start_x, start_y, params):
     eye_scorer = ContourScorer(params['eye_area_ratio']*params['target_area'],
                                params['eye_aspect'])
     ret, thresh_eyes = cv2.threshold(frame, params['eye_threshold'], 255,
@@ -75,40 +75,32 @@ def detect_eyes_tail(frame, params):
     for idx, eye_cont in enumerate(eye_scorer.best_n(eye_conts, 2)):
         eye_locs[idx] = np.mean(eye_cont, 0)
 
-    fish_length = np.sqrt(params['target_area']) * params['length_scaling']
+    fish_length = params['fish_length']
 
     eyes = EyeMeasurement()
     eyes.update(eye_locs)
 
     # find the direction in which to start fitting the tail
-    dir_tail = eyes.perpendicular()
     centre_eyes = eyes.centre()
 
     # get which quadrant of the image of the fish we are
     #  looking at (to determine the right angle)
-    fw = frame.shape[1]
-    eyedir = np.arctan2(eye_locs[1][1] - fw / 2.0,
-                        eye_locs[1][0] - fw / 2.0) + np.pi
-    if eyedir > 2 * np.pi:
-        eyedir -= 2 * np.pi
-
-    if 3 * np.pi / 2 > abs(eyedir - dir_tail) > np.pi / 2:
-        dir_tail += np.pi
-
-    tail_start = centre_eyes + fish_length * params[
-        'tail_start_from_eye_centre'] * np.array(
-        [np.cos(dir_tail), np.sin(dir_tail)])
+    centre_eyes += np.array([start_x, start_y])
 
     tail_len = fish_length * params['tail_to_body_ratio']
-    tail_angles = detect_tail(255 - frame, tail_start,
-                        dir_tail, tail_len,
-                        segments=params['n_tail_segments'])
+    eyes_to_tail = fish_length * params['tail_start_from_eye_centre']
+    dir_tail, tail_angles = detect_tail_unknown_dir(image=(255 - frame_tail),
+                                                    start_point=centre_eyes.copy(),
+                                                    tail_length=tail_len,
+                                                    eyes_to_tail=eyes_to_tail,
+                                                    segments=params['n_tail_segments'])
+    tail_start = centre_eyes + eyes_to_tail*np.array(
+        [np.cos(dir_tail), np.sin(dir_tail)])
 
     theta = dir_tail + tail_angles[0]
     tail_begin = tail_start + (tail_start/params['n_tail_segments'])* np.array([np.cos(theta),
                                                np.sin(theta)])
-    dir_fish = np.arctan2(centre_eyes[1]-tail_begin[1], centre_eyes[0]-tail_begin[0])
-    tail_angles[0] -= dir_fish-(dir_tail+np.pi)
+    dir_fish = dir_tail+np.pi
     return centre_eyes[0], centre_eyes[1], dir_fish, tail_angles
 
 
@@ -121,8 +113,9 @@ def bgdif(x, y):
 
 
 def detect_fishes(frame, mask, params):
-    print(np.max(mask))
-    ms, contours, orn = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+    kernel = np.ones((7, 7), np.uint8)
+    mask2 = cv2.dilate(mask.copy(), kernel)
+    ms, contours, orn = cv2.findContours(mask2, cv2.RETR_EXTERNAL,
                                          cv2.CHAIN_APPROX_NONE)
 
     # if there are no contours, report no fish in this frame
@@ -132,17 +125,18 @@ def detect_fishes(frame, mask, params):
     # find the contours corresponding to a fish
     measurements = []
     for fish_contour in contours:
+        print('area ', cv2.contourArea(fish_contour))
         if np.abs(cv2.contourArea(fish_contour) - params['target_area']) < \
                 params['area_tolerance']:
             # work only on the part of the image containing the fish
             fx, fy, fw, fh = cv2.boundingRect(fish_contour)
-            fish_frame = np.maximum(frame[fy:fy + fh, fx:fx + fw],
+            eye_frame = np.maximum(frame[fy:fy + fh, fx:fx + fw],
                                     255 - mask[fy:fy + fh, fx:fx + fw])
-            x, y, theta, tail_angles = detect_eyes_tail(fish_frame, params)
+            x, y, theta, tail_angles = detect_eyes_tail(eye_frame, frame,fx, fy, params)
             if x < 0:
                 continue
             measurements.append(
-                dict(x=x + fx, y=y + fy, theta=theta, tail_angles=tail_angles))
+                dict(x=x, y=y, theta=theta, tail_angles=tail_angles))
             # display_img_array(fish_frame, inverted=False)
 
     return measurements
