@@ -4,7 +4,7 @@ import os
 import deepdish as dd
 import param
 
-from stytra.paramqt import ParameterGui
+from paramqt import ParameterGui
 
 
 class DataCollector:

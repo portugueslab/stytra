@@ -14,12 +14,12 @@ if __name__ == '__main__':
     # experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
     experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
-    imaging_time = 30
+    imaging_time = 4
     stim_duration = 0.1
-    pause_duration = 2
+    pause_duration = 1
     flash_color = (255, 0, 0)
     refresh_rate = 1 / 60.
-    initial_pause = 5
+    initial_pause = 0
 
     n_repeats = (round((imaging_time - initial_pause) /
                        (stim_duration + pause_duration)))
@@ -80,9 +80,9 @@ if __name__ == '__main__':
     win_stim_disp.show()
     win_control.show()
     win_control.windowHandle().setScreen(app.screens()[0])
-    win_stim_disp.windowHandle().setScreen(app.screens()[0])
+    win_stim_disp.windowHandle().setScreen(app.screens()[1])
     win_control.widget_view.repaint()
-    #win_stim_disp.showFullScreen()
+    win_stim_disp.showFullScreen()
     win_control.refresh_ROI()
 
     app.exec_()
