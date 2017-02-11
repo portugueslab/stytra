@@ -51,18 +51,24 @@ def find_direction(start, image, seglen):
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
     detect_angles = angles
-    d_angles = detect_angles
-    weighted_vector = np.zeros(2)
 
+    weighted_vector = np.zeros(2)
+    max_dir = 0
+    max_val = 0
     for i in range(detect_angles.shape[0]):
-        coord = (int(start[0] + seglen * np.cos(d_angles[i])),
-                 int(start[1] + seglen * np.sin(d_angles[i])))
+        coord = (int(start[0] + seglen * np.cos(detect_angles[i])),
+                 int(start[1] + seglen * np.sin(detect_angles[i])))
         if ((coord[0] > 0) & (coord[0] < image.shape[1]) &
                 (coord[1] > 0) & (coord[1] < image.shape[0])):
             brg = image[coord[1], coord[0]]
+            # if brg > max_val:
+            #     max_val = brg
+            #     max_dir = detect_angles[i]
+
             weighted_vector += brg * np.array([np.cos(detect_angles[i]), np.sin(detect_angles[i])])
 
     return np.arctan2(weighted_vector[1], weighted_vector[0])
+
 
 @jit(nopython=True)
 def detect_tail_unknown_dir(image, start_point, eyes_to_tail=10, tail_length=100,
@@ -79,7 +85,7 @@ def detect_tail_unknown_dir(image, start_point, eyes_to_tail=10, tail_length=100
                                             np.sin(start_dir)])
     for i in range(segments):
         angles[i] = detect_segment(detect_angles, seglen,
-                                        start_point, last_dir, image)
+                                    start_point, last_dir, image)
         if angles[i] == np.nan:
             break
         last_dir += angles[i]

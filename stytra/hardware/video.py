@@ -239,13 +239,13 @@ class MovingFrameDispatcher(FrameDispatcher):
                                 frame_start = i_recorded
                                 i_previous = 0
                                 while previous_images:
-                                    im = previous_images.pop()
-                                    self.output_queue.put(im)
+                                    time, im = previous_images.pop()
+                                    self.output_queue.put((time, im))
                                     i_recorded += 1
                                     i_previous += 1
                                 time_start = datetime.now() - timedelta(seconds=i_previous/current_framerate)
-                                self.framestart_queue.put((frame_start, time_start))
-                            self.output_queue.put(current_frame)
+                                #self.framestart_queue.put((frame_start, time_start))
+                            self.output_queue.put((datetime.now(), current_frame))
                             i_recorded += 1
                         recording_state = True
                         record_counter -= 1
@@ -253,7 +253,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                         recording_state = False
 
                 i_frame += 1
-                previous_images.append(current_frame)
+                previous_images.append((datetime.now(), current_frame))
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
                 if len(previous_images) > n_previous_save:
                     previous_images.popleft()

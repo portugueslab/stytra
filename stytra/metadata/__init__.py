@@ -255,7 +255,7 @@ class MetadataLightsheet(Metadata):
 
 
 class MetadataCamera(Metadata):
-    exposure = param.Number(default=20.0, bounds=[0.5, 50], doc='Exposure (ms)')
+    exposure = param.Number(default=2.0, bounds=[0.5, 50], doc='Exposure (ms)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 

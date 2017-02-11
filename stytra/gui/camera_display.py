@@ -1,12 +1,12 @@
 from PyQt5.QtCore import QTimer, Qt, QRectF
 from PyQt5.QtGui import QMouseEvent
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QSlider
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 import pyqtgraph as pg
 from queue import Empty
 import numpy as np
 from stytra.paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
-
+from PIL import Image
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0):
@@ -44,6 +44,10 @@ class CameraViewWidget(QWidget):
                 control.control_widget.valueChanged.connect(self.update_controls)
             self.control_queue = control_queue
 
+        self.captureButton = QPushButton('Catpure frame')
+        self.captureButton.clicked.connect(self.save_image)
+        self.layout.addWidget(self.captureButton)
+
         self.setLayout(self.layout)
 
     def update_controls(self):
@@ -60,6 +64,10 @@ class CameraViewWidget(QWidget):
             self.image_item.setImage(im_in)
         except Empty:
             pass
+
+    def save_image(self):
+        pass
+        # TODO write saving
 
 
 class CameraTailSelection(CameraViewWidget):
