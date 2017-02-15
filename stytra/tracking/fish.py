@@ -4,6 +4,11 @@ from stytra.tracking.tail import detect_tail_unknown_dir
 from numba import vectorize, uint8
 from stytra.tracking.diagnostics import draw_fish
 
+from numba import jit
+
+import param as pa
+from stytra.metadata import Metadata
+
 class ContourScorer:
     def __init__(self, target_area, target_ratio, ratio_weight=1):
         self.target_area = target_area
@@ -172,6 +177,162 @@ def detect_fishes(frame, mask, params, diagnostics=False):
     if diagnostics:
         return measurements, np.vstack([display, diag_image])
     return measurements
+
+
+class MidlineDetectionParams(Metadata):
+    target_area = pa.Integer(450, (0, 700))
+    area_tolerance = pa.Integer(320, (0, 700))
+    n_tail_segments = pa.Integer(14, (1, 20))
+    tail_segment_length = pa.Number(3., (0.5, 10))
+    tail_detection_radius = pa.Integer(9, (1, 15))
+    n_tail_points_return = pa.Integer(2, (0, 10))
+
+
+def detect_fish_midline(frame, mask, params):
+    """
+
+    :param frame:
+    :param mask:
+    :param params:
+    :return: list containing the starting point and all the angles
+    """
+    _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
+                                         cv2.CHAIN_APPROX_NONE)
+
+    # if there are no contours, report no fish in this frame
+    if len(contours) == 0:
+            return []
+
+    # find the contours corresponding to a fish
+    measurements = []
+
+    for fish_contour in contours:
+        if np.abs(cv2.contourArea(fish_contour) - params['target_area']) < \
+                params['area_tolerance']:
+            fx, fy, fw, fh = cv2.boundingRect(fish_contour)
+
+            # crop the frame around the contour
+            mc = mask[fy:fy + fh, fx:fx + fw]
+            fc = (255 - frame[fy:fy + fh, fx:fx + fw]) * (mc // 255)
+
+            # find the beginning
+            y0, x0, angle = fish_start(mc)
+
+            # find the midline (while also refining the beginning)
+            points = find_fish_midline(fc, x0, y0, angle,
+                                       m=params['tail_segment_length'],
+                                       r=params['tail_detection_radius'],
+                                       n_points_max=params['n_tail_segments'],
+                                       n_points_begin=params['n_tail_points_return'])
+            angles = []
+            for p1, p2 in zip(points[:-1], points[1:]):
+                angles.append(np.arctan2(p2[1]-p1[1],
+                                         p2[0] - p1[0]))
+            while len(angles) < params['n_tail_segments']:
+                angles.append(angles[-1])
+
+            measurements.append([x0, y0] + angles)
+
+    return measurements
+
+
+def fish_start(mask):
+    mom = cv2.moments(cv2.erode(mask,np.ones((7,7), dtype=np.uint8)))
+    y0 = mom['m01']/mom['m00']
+    x0 = mom['m10']/mom['m00']
+    angle = np.arctan2(mask.shape[0]/2 - y0, mask.shape[1]/2 - x0)
+    return y0, x0, angle
+
+
+@jit(nopython=True)
+def _next_segment(fc, xm, ym, dx, dy, r, m):
+    """ Find the enpoint of the next tail segment
+    by calculating the moments in a look-ahead area
+
+    :param fc:
+    :param xm:
+    :param ym:
+    :param dx:
+    :param dy:
+    :param r:
+    :param m:
+    :return:
+    """
+    y_max, x_max = fc.shape
+    xs = min(max(int(round(xm + dx - r / 2)), 0), x_max)
+    xe = min(max(int(round(xm + dx + r / 2)), 0), x_max)
+    ys = min(max(int(round(ym + dy - r / 2)), 0), y_max)
+    ye = min(max(int(round(ym + dy + r / 2)), 0), y_max)
+
+    if xs == xe and ys == ye:
+        return -1, -1, 0, 0, 0
+
+    acc = 0
+    acc_x = 0
+    acc_y = 0
+    for x in range(xs, xe):
+        for y in range(ys, ye):
+            acc_x += x * fc[y, x]
+            acc_y += y * fc[y, x]
+            acc += fc[y, x]
+
+    if acc == 0:
+        return -1, -1, 0, 0, 0
+
+    mn_y = acc_y / acc - ym
+    mn_x = acc_x / acc - xm
+
+    a = np.sqrt(mn_y ** 2 + mn_x ** 2) / m
+
+    if a == 0:
+        return -1, -1, 0, 0, 0
+
+    dx = mn_x / a
+    dy = mn_y / a
+
+    return xm + dx, ym + dy, dx, dy, acc
+
+
+@jit(nopython=True)
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_begin=2):
+    """ Finds a midline for a fish image, with the starting point and direction
+    found by the fish start function
+    it goes first a bit in the direction of the tail, and then back,
+     so the starting point is refined
+
+    :param im:
+    :param xm:
+    :param ym:
+    :param angle:
+    :param r:
+    :param m:
+    :param n_points_max:
+    :param n_points_begin:
+    :return:
+    """
+    dx = np.cos(angle) * m
+    dy = np.sin(angle) * m
+
+    # go towards the midling
+    for i in range(n_points_begin):
+        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+
+    # turn back
+    dx = -dx
+    dy = -dy
+    # and follow the midline to the new beginning
+    for i in range(n_points_begin):
+        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+
+    # turn again and find the whole tail
+    dx = -dx
+    dy = -dy
+    points = [(xm, ym, 0)]
+    for i in range(1, n_points_max):
+        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+        if xm > 0:
+            points.append((xm, ym, acc))
+    return points
 
 if __name__ == '__main__':
     test = np.zeros((100, 100), dtype=np.uint8)
