@@ -43,7 +43,7 @@ class XimeaCamera(Process):
             self.cam.get_image(img)
             # TODO check if it does anything to add np.array
             arr = np.array(img.get_image_data_numpy())
-            self.q.put(arr)
+            self.q.put((datetime.now(), arr))
         self.cam.close_device()
 
 
@@ -106,7 +106,7 @@ class FrameDispatcher(Process):
         every_x = 10
         while not self.finished_signal.is_set():
             try:
-                frame = self.frame_queue.get(timeout=5)
+                time, frame = self.frame_queue.get(timeout=5)
                 if self.processing_function is not None:
                     self.output_queue.put(self.processing_function(frame))
                 # calculate the framerate
@@ -213,7 +213,7 @@ class MovingFrameDispatcher(FrameDispatcher):
         while not self.finished_signal.is_set():
             try:
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
-                current_frame = self.frame_queue.get()
+                current_time, current_frame = self.frame_queue.get()
                 _, current_frame_thresh =  \
                     cv2.threshold(current_frame, fish_threshold, 255, cv2.THRESH_BINARY)
                 # compare the thresholded frame to the previous ones, if there are enough differences
@@ -240,12 +240,12 @@ class MovingFrameDispatcher(FrameDispatcher):
                                 i_previous = 0
                                 while previous_images:
                                     time, im = previous_images.pop()
-                                    self.output_queue.put((time, im))
+                                    self.framestart_queue.put(time)
+                                    self.output_queue.put(im)
                                     i_recorded += 1
                                     i_previous += 1
-                                time_start = datetime.now() - timedelta(seconds=i_previous/current_framerate)
-                                #self.framestart_queue.put((frame_start, time_start))
-                            self.output_queue.put((datetime.now(), current_frame))
+                            self.output_queue.put(current_frame)
+                            self.framestart_queue.put(current_time)
                             i_recorded += 1
                         recording_state = True
                         record_counter -= 1
@@ -253,7 +253,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                         recording_state = False
 
                 i_frame += 1
-                previous_images.append((datetime.now(), current_frame))
+                previous_images.append((current_time, current_frame))
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
                 if len(previous_images) > n_previous_save:
                     previous_images.popleft()
@@ -270,8 +270,8 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 if self.i == 0:
                     self.gui_queue.put(current_frame)  # frame
-                    #print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
-                    #    current_framerate, difsum, n_crossed))
+                    print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
+                        current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
             except Empty:
                 print('empty_queue')

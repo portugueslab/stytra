@@ -18,20 +18,6 @@ import datetime
 import param as pa
 
 
-
-class ProcessingParams(metadata.Metadata):
-    blurstd = pa.Integer(3, (0, 5))
-    thresh_dif = pa.Integer(20, (0, 100))
-    target_area = pa.Integer(450, (0, 700))
-    area_tolerance = pa.Integer(320, (0, 700))
-    fish_length = pa.Integer(70, (0, 200))
-    tail_to_body_ratio = pa.Number(0.8, (0.1, 1))
-    n_tail_segments = pa.Integer(6, (1, 20))
-    tail_start_from_eye_centre = pa.Number(0.14, (0, 0.5))
-    eye_area = pa.Integer(15, (0, 100))
-    eye_threshold = pa.Integer(80, (0, 255))
-
-
 class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
