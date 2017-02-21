@@ -1,5 +1,8 @@
 import numpy as np
-
+import random
+from math import sqrt, pi, sin, cos
+from itertools import product
+from PIL import Image, ImageDraw
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     if kernel_std_y is None:
@@ -21,3 +24,225 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     min_im = np.min(img)
     max_im = np.max(img)
     return (((img - min_im) / (max_im - min_im)) * 255).astype(np.uint8)
+
+
+def poisson_disk_background(size, distance, radius):
+    """ A background with randomly spaced dots using the poisson algorithm
+
+    :param size: image size
+    :param distance: approximate disance between the dots
+    :param radius: radius of the dots
+    :return: the generated background
+    """
+
+    imh = size[0]
+    imw = size[1]
+
+    # first make the points
+    g = Grid(distance, *size)
+    rand = (random.uniform(0, imh), random.uniform(0, imw))
+    data = g.poisson(rand)
+
+    # then put them on a 2x size image, so that a seamless background can
+    # be created
+
+    im = Image.new('L', (imh * 2, imw * 2))
+
+    dr = ImageDraw.Draw(im)
+
+    points0 = np.array(data)
+    points = np.array([])
+    for i in range(2):
+        for j in range(2):
+            if len(points) == 0:
+                points = points0 + np.array([imh * i, imw * j])
+            else:
+                points = np.concatenate(
+                    [points, points0 + np.array([imh * i, imw * j])])
+    for point in points:
+        dr.ellipse([tuple(point - radius),
+                    tuple(point + radius)], fill=255)
+
+    return np.array(im)[imh // 2:3 * imh // 2, imw // 2:3 * imw // 2]
+
+
+
+
+class Grid:
+    """
+    class for filling a rectangular prism of dimension >= 2
+    with poisson disc samples spaced at least r apart
+    and k attempts per active sample
+    override Grid.distance to change
+    distance metric used and get different forms
+    of 'discs'
+
+    Adaped from code by Herman Tulleken (herman@luma.co.za)
+    """
+    def __init__(self, r, *size):
+        self.r = r
+
+        self.size = size
+        self.dim = len(size)
+
+        self.cell_size = r/(sqrt(self.dim))
+
+        self.widths = [int(size[k]/self.cell_size) + 1 for k in range(self.dim)]
+
+        nums = product(*(range(self.widths[k]) for k in range(self.dim)))
+
+        self.cells = {num:-1 for num in nums}
+        self.samples = []
+        self.active = []
+
+    def clear(self):
+        """
+        resets the grid
+        active points and
+        sample points
+        """
+        self.samples = []
+        self.active = []
+
+        for item in self.cells:
+            self.cells[item] = -1
+
+    def generate(self, point):
+        """
+        generates new points
+        in an annulus between
+        self.r, 2*self.r
+        """
+
+        rad = random.triangular(self.r, 2*self.r, .3*(2*self.r - self.r))
+             # was random.uniform(self.r, 2*self.r) but I think
+             # this may be closer to the correct distribution
+             # but easier to build
+
+        angs = [random.uniform(0, 2*pi)]
+
+        if self.dim > 2:
+            angs.extend(random.uniform(-pi/2, pi/2) for _ in range(self.dim-2))
+
+        angs[0] = 2*angs[0]
+
+        return self.convert(point, rad, angs)
+
+
+    def poisson(self, seed, k=30):
+        """
+        generates a set of poisson disc samples
+        """
+        self.clear()
+
+        self.samples.append(seed)
+        self.active.append(0)
+        self.update(seed, 0)
+
+        while self.active:
+
+            idx = random.choice(self.active)
+            point = self.samples[idx]
+            new_point = self.make_points(k, point)
+
+            if new_point:
+                self.samples.append(tuple(new_point))
+                self.active.append(len(self.samples)-1)
+                self.update(new_point, len(self.samples)-1)
+            else:
+                self.active.remove(idx)
+
+        return self.samples
+
+    def make_points(self, k, point):
+        """
+        uses generate to make up to
+        k new points, stopping
+        when it finds a good sample
+        using self.check
+        """
+        n = k
+
+        while n:
+            new_point = self.generate(point)
+            if self.check(point, new_point):
+                return new_point
+
+            n -= 1
+
+        return False
+
+    def check(self, point, new_point):
+        """
+        checks the neighbors of the point
+        and the new_point
+        against the new_point
+        returns True if none are closer than r
+        """
+        for i in range(self.dim):
+            if not (0 < new_point[i] < self.size[i] or
+               self.cellify(new_point) == -1):
+                return False
+
+        for item in self.neighbors(self.cellify(point)):
+            if self.distance(self.samples[item], new_point) < self.r**2:
+                return False
+
+        for item in self.neighbors(self.cellify(new_point)):
+            if self.distance(self.samples[item], new_point) < self.r**2:
+                return False
+
+
+        return True
+
+    def convert(self, point, rad, angs):
+        """
+        converts the random point
+        to rectangular coordinates
+        from radial coordinates centered
+        on the active point
+        """
+        new_point = [point[0] + rad*cos(angs[0]), point[1] + rad*sin(angs[0])]
+        if len(angs) > 1:
+            new_point.extend(point[i+1] + rad*sin(angs[i]) for i in range(1,len(angs)))
+        return new_point
+
+    def cellify(self, point):
+        """
+        returns the cell in which the point falls
+        """
+        return tuple(point[i]//self.cell_size for i in range(self.dim))
+
+    def distance(self, tup1, tup2):
+        """
+        returns squared distance between two points
+        """
+        return sum(min(abs(tup1[k] - tup2[k]),
+                       self.size[k]-abs(tup1[k] - tup2[k]))**2
+                   for k in range(self.dim))
+
+    def cell_distance(self, tup1, tup2):
+        """
+        returns true if the L1 distance is less than 2
+        for the two tuples
+        """
+        return sum(min(abs(tup1[k] - tup2[k]),
+                        self.widths[k] - abs(tup1[k] - tup2[k])-1) for k in range(self.dim)) <= 2
+
+    def neighbors(self, cell):
+        """
+        finds all occupied cells within
+        a distance of the given point
+        """
+        return (self.cells[tup] for tup in self.cells
+                if self.cells[tup] != -1 and
+                self.cell_distance(cell, tup))
+
+    def update(self, point, index):
+        """
+        updates the grid with the new point
+        """
+        self.cells[self.cellify(point)] = index
+
+    def __str__(self):
+        return self.cells.__str__()

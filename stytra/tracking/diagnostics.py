@@ -11,7 +11,7 @@ def a_to_tc(a):
     return tuple(a.astype(np.int))
 
 
-def draw_fish(display, fish_data, params):
+def draw_fish_old(display, fish_data, params):
     centre_eyes = np.array([fish_data['x'], fish_data['y']])
     fish_length = params['fish_length']
     dir_tail = fish_data['theta'] + np.pi
@@ -37,5 +37,28 @@ def draw_fish(display, fish_data, params):
     display = cv2.line(display, a_to_tc(centre_eyes), a_to_tc(
         centre_eyes + np.array([np.cos(fish_data['theta']),
                                 np.sin(fish_data['theta'])])*40), (120,100,30))
+
+    return display
+
+
+def draw_fish_new(display, mes, params):
+    if len(display.shape) == 2:
+        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+
+    points = [np.array([mes['x'], mes['y']])]
+    for i, col in enumerate(
+            ['th_{:02d}'.format(i) for i in range(params['n_tail_segments'])]):
+        points.append(points[-1] + params['tail_segment_length'] * np.array(
+            [np.cos(mes[col]), np.sin(mes[col])]))
+
+    points = np.array(points)
+    print(points)
+
+    display = cv2.circle(display, a_to_tc(points[0]), 3, (100, 250, 200))
+
+    for j in range(len(points) - 1):
+        display = cv2.line(display, a_to_tc(points[j]),
+                                    a_to_tc(points[j + 1]),
+                                    (250, 100, 100))
 
     return display

@@ -1,8 +1,9 @@
 from multiprocessing import Process
 from queue import Empty
-from stytra.tracking.fish import detect_fishes
+from stytra.tracking.fish import detect_fish_midline
 import cv2
 from datetime import datetime
+from stytra.tracking.diagnostics import draw_fish_new
 import numpy as np
 
 
@@ -23,8 +24,8 @@ class FishTrackingProcess(Process):
     def run(self):
         bg_sub = cv2.bgsegm.createBackgroundSubtractorMOG(history=500,
                                                           nmixtures=3,
-                                                          backgroundRatio=0.8,
-                                                          noiseSigma=2)
+                                                          backgroundRatio=self.processing_parameters['background_ratio'],
+                                                          noiseSigma=self.processing_parameters['background_noise_sigma'])
         i_total = 0
         n_learn_background = 100
         n_every_bg = 100
@@ -47,17 +48,18 @@ class FishTrackingProcess(Process):
 
                 mask = bg_sub.apply(frame, learningRate=lr)
                 if i_total > n_learn_background:
-                    output = detect_fishes(frame, mask.copy(),
-                                           params=self.processing_parameters,
-                                                       diagnostics=self.diagnostics)
-                    if self.diagnostics:
-                        fishes, diag_frame = output
-                    else:
-                        fishes = output
-                    self.fish_queue.put((time, fishes))
+
+                    output = detect_fish_midline(frame, mask.copy(),
+                                           params=self.processing_parameters)
+                    print(output)
+                    self.fish_queue.put((time, output))
 
                     if self.diagnostics:
-                        self.diagnostic_queue.put(diag_frame)
+                        display = frame.copy()
+                        for fish in output:
+                            display = draw_fish_new(display, fish, self.processing_parameters)
+                        self.diagnostic_queue.put(display)
+                        print('put display')
 
                 # calculate the framerate
                 if i_fps == n_fps_frames - 1:
