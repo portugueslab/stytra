@@ -67,7 +67,10 @@ class VideoFileSource(Process):
         i = 0
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
-            self.q.put(frame[:, :, 0])
+            if ret:
+                self.q.put(frame[:, :, 0])
+            else:
+                break
             if i == n_fps_frames - 1:
                 current_time = datetime.now()
                 current_framerate = n_fps_frames / (

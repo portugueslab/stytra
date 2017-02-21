@@ -1,8 +1,9 @@
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton
 import qdarkstyle
 
-from stytra.hardware.video import VideoFileSource, BgSepFrameDispatcher, FrameDispatcher
-from stytra.tracking.fish import detect_fishes
+from stytra.hardware.video import VideoFileSource, FrameDispatcher
+from stytra.tracking import FishTrackingProcess
+from stytra.tracking.fish import detect_fish_midline, MidlineDetectionParams
 from functools import partial
 from multiprocessing import Queue, Event
 
@@ -18,36 +19,26 @@ if __name__ == '__main__':
     app = QApplication([])
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-    def_params = dict(blurstd=3,
-                      thresh_dif=20,
-                      target_area=430,
-                      area_tolerance=90,
-                      length_scaling=3.6,
-                      tail_to_body_ratio=0.8,
-                      n_tail_segments=10,
-                      tail_start_from_eye_centre=0.2,
-                      eye_area_ratio=0.02,
-                      eye_aspect=0.9,
-                      eye_threshold=50)
-
     frame_queue = Queue()
+    fish_frame_queue = Queue()
     gui_frame_queue = Queue()
     data_queue = Queue()
     finished_sig = Event()
 
     camera = VideoFileSource(frame_queue, finished_sig,
-                              '/Users/vilimstich/PhD/TempData/Fish_recordings/Long_days/20160511T145418m.avi')
-    fish_detector = partial(detect_fishes, params=def_params)
+                              '/Users/vilimstich/PhD/Experimental/stytra_recordings/testlight.avi')
 
-    frame_dispatcher = BgSepFrameDispatcher(frame_queue,
-                                            gui_frame_queue,
-                                            output_queue = data_queue,
-                                            processing_function = detect_fishes,
-                                            processing_parameters = def_params)
+    frame_dispatcher = FrameDispatcher(frame_queue,
+                                        fish_frame_queue,
+                                       finished_sig, gui_framerate=100)
+
+    detection_params = MidlineDetectionParams()
+    tracker = FishTrackingProcess(fish_frame_queue, data_queue, finished_sig,
+                                  detection_params.get_param_dict(), gui_frame_queue)
 
     win_main = QDialog()
     main_layout = QHBoxLayout()
-    camera_view = camera_display.CameraViewCalib(gui_frame_queue)
+    camera_view = camera_display.CameraViewWidget(gui_frame_queue)
     main_layout.addWidget(camera_view)
 
     stopButton = QPushButton('Stop')
@@ -59,7 +50,7 @@ if __name__ == '__main__':
 
     camera.start()
     frame_dispatcher.start()
-
+    tracker.start()
 
 
     app.exec_()
