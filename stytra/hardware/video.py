@@ -191,13 +191,13 @@ class MovingFrameDispatcher(FrameDispatcher):
         current_framerate = 100
         every_x = 10
 
-        frame_0 = self.frame_queue.get(timeout=5)
+        t, frame_0 = self.frame_queue.get(timeout=5)
         n_previous_compare = 3
         i_previous = 0
         previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
                                 dtype=np.uint8)
-        fish_threshold = 70
-        motion_threshold = 300
+        fish_threshold = 40
+        motion_threshold = 400
         frame_margin = 10
 
         previous_images = deque()
@@ -227,7 +227,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                                                           frame_margin:- frame_margin],
                                                           current_frame_thresh[frame_margin:- frame_margin,
                                                           frame_margin:- frame_margin]))[0]
-                        self.diag_queue.put(difsum)
+                        # self.diag_queue.put(difsum)
                         if difsum > motion_threshold:
                             n_crossed += 1
                     if n_crossed == n_previous_compare:

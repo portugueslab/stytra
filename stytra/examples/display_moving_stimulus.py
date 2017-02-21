@@ -9,7 +9,7 @@ import numpy as np
 from stytra.gui import control_gui, display_gui, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
-from stytra.paramqt import ParameterGui
+from paramqt import ParameterGui
 from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
 from stytra.tracking import FishTrackingProcess
 from multiprocessing import Queue, Event
@@ -28,7 +28,7 @@ class Experiment(QMainWindow):
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
         # set up the stimuli
-        n_vels = 10
+        n_vels = 30
         stim_duration = 15
         refresh_rate = 1/60.
 
@@ -36,10 +36,10 @@ class Experiment(QMainWindow):
 
         xs = np.zeros(n_vels+1)
         ys = np.zeros(n_vels+1)
-        vel_mean = 50
+        vel_mean = 30
         vel_std = 5
-        angles = np.random.uniform(0, 2*np.pi, n_vels)
-        vels = np.random.randn(n_vels)*vel_std+vel_mean
+        angles = np.random.uniform(0, 2*np.pi, n_vels)# np.array([0, np.pi/2, np.pi, 3*np.pi/2]) #np.random.uniform(0, 2*np.pi, n_vels)
+        vels = np.random.randn(n_vels)*vel_std+vel_mean #np.array([50]*n_vels) #
 
         for i in range(n_vels):
             xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
@@ -72,23 +72,10 @@ class Experiment(QMainWindow):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       diag_queue=self.diag_queue)
-        # self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
-        #                             self.record_queue, finished_signal=self.finished_sig)
 
-        def_params = dict(blurstd=3,
-                          thresh_dif=20,
-                          target_area=450,
-                          area_tolerance=320,
-                          fish_length=70,
-                          tail_to_body_ratio=0.8,
-                          n_tail_segments=6,
-                          tail_start_from_eye_centre=0.14,
-                          eye_area=15,
-                          eye_aspect=0.9,
-                          eye_threshold=80)
+        self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
+                                     self.record_queue, finished_signal=self.finished_sig)
 
-        self.tracker = FishTrackingProcess(self.record_queue, self.fish_queue, self.finished_sig, def_params,
-                                           diagnostic_queue=self.fish_draw_queue)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
@@ -119,7 +106,7 @@ class Experiment(QMainWindow):
         metawidget = ParameterGui(self.fish_data)
         self.win_control.button_metadata.clicked.connect(metawidget.show)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
-        self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data)
+        self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data, use_last_val=False)
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
         self.dc.add_data_source('stimulus', 'calibration_points', self.calibrator, 'points')
@@ -131,7 +118,7 @@ class Experiment(QMainWindow):
 
         self.camera.start()
         self.frame_dispatcher.start()
-        self.tracker.start()
+        self.recorder.start()
         self.finished = False
         self.show()
 
@@ -152,56 +139,55 @@ class Experiment(QMainWindow):
             pass
 
 
-    # def finishProtocol(self):
-    #     self.finished_sig.set()
-    #     self.camera.join(timeout=3)
-    #     print('Camera joined')
-    #     self.frame_dispatcher.join(timeout=3)
-    #     print('Frame dispatcher terminated')
-    #     timedata = []
-    #     while True:
-    #         try:
-    #             frame, time = self.fish_queue.get(timeout=0.01)
-    #             timedelta = (time - self.protocol.t_start).total_seconds()
-    #             timedata.append([frame, timedelta])
-    #             print('Added a thing')
-    #         except Empty:
-    #             break
-    #
-    #     timedata = pd.DataFrame(timedata)
-    #     print('{} breaks '.format(len(timedata)))
-    #     self.dc.add_data_source('behaviour', 'start_times', timedata)
-    #     self.dc.save()
-    #
-    #     self.tracker.join(timeout=10)
-    #     print('Recorder joined')
-    #     self.finished = True
-
-
     def finishProtocol(self):
         self.finished_sig.set()
         self.camera.join(timeout=3)
         print('Camera joined')
         self.frame_dispatcher.join(timeout=3)
         print('Frame dispatcher terminated')
-        detected_fishes = []
+        timedata = []
         while True:
             try:
-                time, fishes = self.fish_queue.get(timeout=0.01)
+                time = self.framestart_queue.get(timeout=0.01)
                 timedelta = (time - self.protocol.t_start).total_seconds()
-                for fish in fishes:
-                    fish['t'] = timedelta
-                    detected_fishes.append(fish)
+                timedata.append([timedelta])
             except Empty:
                 break
 
-        print('{} measurements '.format(len(detected_fishes)))
-        self.dc.add_data_source('behaviour', 'fish_detected', pd.DataFrame(detected_fishes))
+        timedata = np.array(timedata)
+        print('{} breaks '.format(len(timedata)))
+        self.dc.add_data_source('behaviour', 'frame_times', timedata)
         self.dc.save()
 
-        self.tracker.join(timeout=10)
+        self.recorder.join(timeout=10)
         print('Recorder joined')
         self.finished = True
+
+
+    # def finishProtocol(self):
+    #     self.finished_sig.set()
+    #     self.camera.join(timeout=3)
+    #     print('Camera joined')
+    #     self.frame_dispatcher.join(timeout=3)
+    #     print('Frame dispatcher terminated')
+    #     detected_fishes = []
+    #     while True:
+    #         try:
+    #             time, fishes = self.fish_queue.get(timeout=0.01)
+    #             timedelta = (time - self.protocol.t_start).total_seconds()
+    #             for fish in fishes:
+    #                 fish['t'] = timedelta
+    #                 detected_fishes.append(fish)
+    #         except Empty:
+    #             break
+    #
+    #     print('{} measurements '.format(len(detected_fishes)))
+    #     self.dc.add_data_source('behaviour', 'fish_detected', pd.DataFrame(detected_fishes))
+    #     self.dc.save()
+    #
+    #     self.tracker.join(timeout=10)
+    #     print('Recorder joined')
+    #     self.finished = True
 
     def closeEvent(self, QCloseEvent):
         if not self.finished:

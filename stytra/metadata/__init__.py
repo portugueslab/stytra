@@ -48,7 +48,7 @@ class DataCollector:
 
         # Try to find previously saved metadata:
         self.last_metadata = None
-        list_metadata = [fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')]
+        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
         if len(list_metadata) > 0:
             self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
 
