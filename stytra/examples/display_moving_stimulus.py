@@ -1,14 +1,15 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QWidget, QSplitter
 import qdarkstyle
-from stytra.stimulation.stimuli import MovingSeamless, Flash
+from stytra.stimulation.stimuli import MovingSeamless
 from stytra.stimulation import Protocol
-from stytra.stimulation.backgrounds import noise_background
+from stytra.stimulation.backgrounds import noise_background, poisson_disk_background, existing_file_background
 import pandas as pd
 import numpy as np
 from stytra.gui import control_gui, display_gui, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
+from stytra.metadata.metalist_gui import MetaListGui
 from paramqt import ParameterGui
 from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
 from stytra.tracking import FishTrackingProcess
@@ -28,7 +29,7 @@ class Experiment(QMainWindow):
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
         # set up the stimuli
-        n_vels = 30
+        n_vels = 120
         stim_duration = 15
         refresh_rate = 1/60.
 
@@ -45,7 +46,7 @@ class Experiment(QMainWindow):
             xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
             ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
 
-        bg = noise_background((800, 800), 8)
+        bg = existing_file_background(r"C:\Users\vilim\experimental\poisson_inverted.h5")
 
         motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
         self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
@@ -101,10 +102,14 @@ class Experiment(QMainWindow):
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
 
-        self.fish_data = metadata.MetadataFish()
+        general_data = metadata.MetadataGeneral()
+        fish_data = metadata.MetadataFish()
+        self.metalist_gui = MetaListGui([general_data, fish_data])
+        self.dc.add_data_source(fish_data)
+        self.dc.add_data_source(general_data)
+
         self.stimulus_data = dict(background=bg, motion=motion)
-        metawidget = ParameterGui(self.fish_data)
-        self.win_control.button_metadata.clicked.connect(metawidget.show)
+        self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
         self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data, use_last_val=False)
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')

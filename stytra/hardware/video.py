@@ -13,9 +13,46 @@ from collections import deque
 from numba import jit
 
 
-class XimeaCamera(Process):
-    def __init__(self, frame_queue=None, signal=None, control_queue=None):
+class FrameProcessor(Process):
+    def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
+        """ A basic class for a process that deals with frames, provides framerate calculation
+
+        :param n_fps_frames:
+        :param framerate_queue:
+        :param print_framerate:
+        """
+        #  frame_input_queue=None, frame_output_queue=None, start_signal=None, end_signal=None
+        # self.frame_input_queue = frame_input_queue
+        # self.frame_output_queue = frame_input_queue
+        # self.start_signal = start_signal
+        # self.end_signal = end_signal
         super().__init__()
+
+        # framrate calculation parameters
+        self.n_fps_frames = n_fps_frames
+        self.i_fps = 0
+        self.previous_time_fps = None
+        self.current_framerate = None
+        self.print_framerate = print_framerate
+        self.framerate_queue = framerate_queue
+
+    def update_framerate(self):
+        if self.i_fps == self.n_fps_frames - 1:
+            current_time = datetime.now()
+            if self.previous_time_fps is not None:
+                self.current_framerate = self.n_fps_frames / (
+                    current_time - self.previous_time_fps).total_seconds()
+                if self.print_framerate:
+                    print('{:.2f} FPS'.format(self.current_framerate))
+                if self.framerate_queue:
+                    self.framerate_queue.put(self.current_framerate)
+            self.previous_time_fps = current_time
+        self.i_fps = (self.i_fps + 1) % self.n_fps_frames
+
+
+class XimeaCamera(FrameProcessor):
+    def __init__(self, frame_queue=None, signal=None, control_queue=None, **kwargs):
+        super().__init__(**kwargs)
 
         self.q = frame_queue
         self.control_queue = control_queue
@@ -47,13 +84,13 @@ class XimeaCamera(Process):
         self.cam.close_device()
 
 
-class VideoFileSource(Process):
+class VideoFileSource(FrameProcessor):
     """ A class to display videos from a file to test parts of
     stytra without a camera available
 
     """
-    def __init__(self, frame_queue=None, signal=None, source_file=None):
-        super().__init__()
+    def __init__(self, frame_queue=None, signal=None, source_file=None, **kwargs):
+        super().__init__(**kwargs)
         self.q = frame_queue
         self.signal = signal
         self.source_file = source_file
@@ -63,33 +100,25 @@ class VideoFileSource(Process):
         ret = True
         current_framerate = 100
         previous_time = datetime.now()
-        n_fps_frames = 10
-        i = 0
+
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
             if ret:
                 self.q.put(frame[:, :, 0])
             else:
                 break
-            if i == n_fps_frames - 1:
-                current_time = datetime.now()
-                current_framerate = n_fps_frames / (
-                    current_time - previous_time).total_seconds()
-
-                # print('{:.2f} FPS'.format(current_framerate))
-                previous_time = current_time
-            i = (i + 1) % n_fps_frames
+            self.update_framerate()
 
 
-class FrameDispatcher(Process):
+class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
 
     """
     def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None, control_queue=None,
-                 processing_function=None, processing_parameters=None,
-                 gui_framerate=30):
-        super().__init__()
+                 processing_function=None, processing_parameter_queue=None,
+                 gui_framerate=30, **kwargs):
+        super().__init__(**kwargs)
 
         self.frame_queue = frame_queue
         self.gui_queue = gui_queue
@@ -97,29 +126,33 @@ class FrameDispatcher(Process):
         self.i = 0
         self.gui_framerate = gui_framerate
         self.processing_function = processing_function
-        self.processing_parameters = processing_parameters
+        self.processing_parameter_queue = processing_parameter_queue
+        self.processing_parameters = dict()
         self.output_queue = output_queue
         self.control_queue = None
 
     def run(self):
-        previous_time = datetime.now()
-        n_fps_frames = 10
-        i = 0
-        current_framerate = 100
         every_x = 10
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get(timeout=5)
+
+                # acquire the processing parameters from a separate queue
+                if self.processing_parameter_queue is not None:
+                    try:
+                        self.processing_parameters = self.processing_parameter_queue.get(timeout=0.0001)
+                    except Empty:
+                        pass
+
                 if self.processing_function is not None:
-                    self.output_queue.put(self.processing_function(frame))
+                    self.output_queue.put(self.processing_function(frame, **self.processing_parameters))
+
                 # calculate the framerate
-                if i == n_fps_frames-1:
-                    current_time = datetime.now()
-                    current_framerate = n_fps_frames/(current_time-previous_time).total_seconds()
-                    every_x = max(int(current_framerate/self.gui_framerate), 1)
-                    # print('{:.2f} FPS'.format(framerate))
-                    previous_time = current_time
-                i = (i+1) % n_fps_frames
+                self.update_framerate()
+                if self.current_framerate:
+                    every_x = max(int(self.current_framerate/self.gui_framerate), 1)
+
+                # put the frame in the GUI queue
                 if self.i == 0:
                     self.gui_queue.put(frame)
                 self.i = (self.i+1) % every_x

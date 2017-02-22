@@ -3,6 +3,7 @@ import random
 from math import sqrt, pi, sin, cos
 from itertools import product
 from PIL import Image, ImageDraw
+import deepdish.io as dio
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     if kernel_std_y is None:
@@ -26,8 +27,13 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     return (((img - min_im) / (max_im - min_im)) * 255).astype(np.uint8)
 
 
+def existing_file_background(filepath):
+    return dio.load(filepath)
+
+
 def poisson_disk_background(size, distance, radius):
-    """ A background with randomly spaced dots using the poisson algorithm
+    """ A background with randomly spaced dots using the poisson disk
+     algorithm
 
     :param size: image size
     :param distance: approximate disance between the dots
@@ -64,8 +70,6 @@ def poisson_disk_background(size, distance, radius):
                     tuple(point + radius)], fill=255)
 
     return np.array(im)[imh // 2:3 * imh // 2, imw // 2:3 * imw // 2]
-
-
 
 
 class Grid:
@@ -246,3 +250,8 @@ class Grid:
 
     def __str__(self):
         return self.cells.__str__()
+
+
+if __name__ == '__main__':
+    bg = 255 - poisson_disk_background((640, 640), 12, 2)
+    dio.save('poisson_dense.h5', bg)

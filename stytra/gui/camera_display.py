@@ -71,7 +71,7 @@ class CameraViewWidget(QWidget):
 
 
 class CameraTailSelection(CameraViewWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, tail_output_queue, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.label = pg.TextItem('Select tail of the fish:\n' +
                                  'left click start, right click end')
@@ -80,8 +80,16 @@ class CameraTailSelection(CameraViewWidget):
                                                    width=4))
         self.display_area.addItem(self.roi_tail)
 
+        self.tail_output_queue = tail_output_queue
+
+        self.roi_tail.sigRegionChangeFinished.connect(self.send_roi_to_queue)
+
+    def send_roi_to_queue(self):
+        self.tail_output_queue.put(self.get_tail_coords())
+
     def get_tail_coords(self):
         return self.roi_tail.listPoints()
+
 
 
 class CameraViewCalib(CameraViewWidget):
