@@ -15,6 +15,7 @@ if __name__ == '__main__':
     experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
     imaging_time = 4
+
     stim_duration = 0.1
     pause_duration = 1
     flash_color = (255, 0, 0)
@@ -80,9 +81,9 @@ if __name__ == '__main__':
     win_stim_disp.show()
     win_control.show()
     win_control.windowHandle().setScreen(app.screens()[0])
-    win_stim_disp.windowHandle().setScreen(app.screens()[1])
+    win_stim_disp.windowHandle().setScreen(app.screens()[0])
     win_control.widget_view.repaint()
-    win_stim_disp.showFullScreen()
+    # win_stim_disp.showFullScreen()
     win_control.refresh_ROI()
 
     app.exec_()

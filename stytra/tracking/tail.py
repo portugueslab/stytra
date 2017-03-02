@@ -4,6 +4,15 @@ from numba import jit
 
 @jit(nopython=True)
 def detect_segment(detect_angles, seglen, start, direction, image):
+    """
+
+    :param detect_angles: a list of angles at which tto evalueate the next point
+    :param seglen: length of the segment
+    :param start: starting point
+    :param direction: angle to search around
+    :param image: image containing the tail
+    :return:
+    """
     d_angles = direction + detect_angles
 
     weighted_angles = 0.0
@@ -91,34 +100,36 @@ def detect_tail_unknown_dir(image, start_point, eyes_to_tail=10, tail_length=100
     return start_dir, angles
 
 
-
-
-@jit(nopython=True, cache=True)
-def _next_segment(fc, xm, ym, dx, dy, r, m):
+@jit(nopython=True)
+def _next_segment(fc, xm, ym, dx, dy, wind_size, next_point_dist):
     """ Find the enpoint of the next tail segment
     by calculating the moments in a look-ahead area
 
-    :param fc:
-    :param xm:
-    :param ym:
-    :param dx:
-    :param dy:
-    :param r:
-    :param m:
+    :param fc: image to find tail
+    :param xm: starting point x
+    :param ym: starting point y
+    :param dx: initial displacement x
+    :param dy: initial displacement y
+    :param wind_size: size of the window to estimate next tail point
+    :param next_point_dist: distance to the next tail point
     :return:
     """
-    y_max, x_max = fc.shape
-    xs = min(max(int(round(xm + dx - r / 2)), 0), x_max)
-    xe = min(max(int(round(xm + dx + r / 2)), 0), x_max)
-    ys = min(max(int(round(ym + dy - r / 2)), 0), y_max)
-    ye = min(max(int(round(ym + dy + r / 2)), 0), y_max)
 
+    # Generate square window for center of mass
+    y_max, x_max = fc.shape
+    xs = min(max(int(round(xm + dx - wind_size / 2)), 0), x_max)
+    xe = min(max(int(round(xm + dx + wind_size / 2)), 0), x_max)
+    ys = min(max(int(round(ym + dy - wind_size / 2)), 0), y_max)
+    ye = min(max(int(round(ym + dy + wind_size / 2)), 0), y_max)
+
+    # at the edge returns invalid data
     if xs == xe and ys == ye:
         return -1, -1, 0, 0, 0
 
-    acc = 0
-    acc_x = 0
-    acc_y = 0
+    # accumulators
+    acc = 0.0
+    acc_x = 0.0
+    acc_y = 0.0
     for x in range(xs, xe):
         for y in range(ys, ye):
             acc_x += x * fc[y, x]
@@ -128,18 +139,59 @@ def _next_segment(fc, xm, ym, dx, dy, r, m):
     if acc == 0:
         return -1, -1, 0, 0, 0
 
+    # center of mass relative to the starting points
     mn_y = acc_y / acc - ym
     mn_x = acc_x / acc - xm
 
-    a = np.sqrt(mn_y ** 2 + mn_x ** 2) / m
+    # normalise to segment length
+    a = np.sqrt(mn_y ** 2 + mn_x ** 2) / next_point_dist
 
+    # check center of mass validity
     if a == 0:
         return -1, -1, 0, 0, 0
 
+    # Use normalization factor
     dx = mn_x / a
     dy = mn_y / a
 
     return xm + dx, ym + dy, dx, dy, acc
+
+
+@jit(nopython=True, cache=True)
+def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30):
+    """ Finds a midline for a fish image, with the starting point and direction
+    found by the fish start function
+    it goes first a bit in the direction of the tail, and then back,
+     so the starting point is refined
+
+    :param im: image to process
+    :param start_x: starting point x
+    :param start_y: starting point y
+    :param tail_len_x: tail length on x
+    :param tail_len_y: tail length on y
+    :param n_segments: number of desired segments
+    :return:
+    """
+    im = 255 - im
+    #print([start_x, start_y])
+    length_tail = np.sqrt((tail_len_x) ** 2 + (tail_len_y) ** 2)
+    #print(length_tail)
+    seg_length = int(length_tail / n_segments)
+
+    disp_x = int(tail_len_x / n_segments)
+    # print(disp_x)
+    disp_y = int(tail_len_y / n_segments)
+    # print(disp_y)
+    points = [(start_x, start_y, 0)]
+    for i in range(1, n_segments):
+        start_x, start_y, disp_x, disp_y, acc = \
+            _next_segment(im, start_x, start_y, disp_x, disp_y, window_size, seg_length)
+        if start_x > 0:
+            points.append((start_x, start_y, acc))
+    #print(points)
+    return points
+
+
 
 
 @jit(nopython=True, cache=True)
@@ -149,7 +201,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_beg
     it goes first a bit in the direction of the tail, and then back,
      so the starting point is refined
 
-    :param im:
+    :param im: image to find tail
     :param xm:
     :param ym:
     :param angle:
@@ -162,7 +214,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_beg
     dx = np.cos(angle) * m
     dy = np.sin(angle) * m
 
-    # go towards the midling
+    # go towards the midline
     for i in range(n_points_begin):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
 

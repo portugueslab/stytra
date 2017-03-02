@@ -3,11 +3,12 @@ try:
 except ImportError:
     pass
 
+#import multiprocessing
 from multiprocessing import Process, JoinableQueue, Queue, Event
 from queue import Empty
 import numpy as np
 from datetime import datetime, timedelta
-import cv2
+#import cv2
 from collections import deque
 
 from numba import jit
@@ -28,7 +29,7 @@ class FrameProcessor(Process):
         # self.end_signal = end_signal
         super().__init__()
 
-        # framrate calculation parameters
+        # framerate calculation parameters
         self.n_fps_frames = n_fps_frames
         self.i_fps = 0
         self.previous_time_fps = None
@@ -96,6 +97,7 @@ class VideoFileSource(FrameProcessor):
         self.source_file = source_file
 
     def run(self):
+        import cv2
         cap = cv2.VideoCapture(self.source_file)
         ret = True
         current_framerate = 100
@@ -103,11 +105,14 @@ class VideoFileSource(FrameProcessor):
 
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
+            #print('Read a frame')
             if ret:
-                self.q.put(frame[:, :, 0])
+                self.q.put((datetime.now(), frame[:, :, 0]))
             else:
                 break
             self.update_framerate()
+
+        return
 
 
 class FrameDispatcher(FrameProcessor):
@@ -133,9 +138,10 @@ class FrameDispatcher(FrameProcessor):
 
     def run(self):
         every_x = 10
+        i_frame = 100
         while not self.finished_signal.is_set():
             try:
-                time, frame = self.frame_queue.get(timeout=5)
+                time, frame = self.frame_queue.get()
 
                 # acquire the processing parameters from a separate queue
                 if self.processing_parameter_queue is not None:
@@ -145,20 +151,25 @@ class FrameDispatcher(FrameProcessor):
                         pass
 
                 if self.processing_function is not None:
-                    self.output_queue.put(self.processing_function(frame, **self.processing_parameters))
+                    output = self.processing_function(frame, **self.processing_parameters)
+                    self.output_queue.put(output)
 
                 # calculate the framerate
                 self.update_framerate()
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
-
+                print(self.current_framerate)
+                i_frame += 1
                 # put the frame in the GUI queue
                 if self.i == 0:
-                    self.gui_queue.put(frame)
+                    self.gui_queue.put((None, frame))
+                    #print('put a frame')
                 self.i = (self.i+1) % every_x
             except Empty:
-                print('empty_queue')
+                #print('empty_queue')
                 break
+
+        return
 
 
 @jit(nopython=True)

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTimer, Qt, QRectF
+from PyQt5.QtCore import QTimer, Qt, QRectF, QObject
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 import pyqtgraph as pg
@@ -6,7 +6,13 @@ from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
+from stytra.tracking.diagnostics import draw_tail
 from PIL import Image
+
+
+
+
+
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0):
@@ -33,6 +39,7 @@ class CameraViewWidget(QWidget):
         self.update_image()
         self.centre = np.array([0, 0])
 
+
         self.layout = QVBoxLayout()
 
         self.layout.addWidget(self.camera_display_widget)
@@ -44,7 +51,7 @@ class CameraViewWidget(QWidget):
                 control.control_widget.valueChanged.connect(self.update_controls)
             self.control_queue = control_queue
 
-        self.captureButton = QPushButton('Catpure frame')
+        self.captureButton = QPushButton('Capture frame')
         self.captureButton.clicked.connect(self.save_image)
         self.layout.addWidget(self.captureButton)
 
@@ -55,8 +62,10 @@ class CameraViewWidget(QWidget):
         self.control_queue.put(self.metadata.get_param_dict())
 
     def update_image(self):
+
         try:
-            im_in = self.camera_queue.get(timeout=0.001)
+            time, im_in = self.camera_queue.get(timeout=0.001)
+            #print('Got a picture')
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
 
@@ -69,9 +78,13 @@ class CameraViewWidget(QWidget):
         pass
         # TODO write saving
 
+    #def closeEvent(self, QCloseEvent):
+     #   self.
+
+
 
 class CameraTailSelection(CameraViewWidget):
-    def __init__(self, tail_output_queue, *args, **kwargs):
+    def __init__(self, tail_start_points_queue, tail_position_data=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.label = pg.TextItem('Select tail of the fish:\n' +
                                  'left click start, right click end')
@@ -80,15 +93,41 @@ class CameraTailSelection(CameraViewWidget):
                                                    width=4))
         self.display_area.addItem(self.roi_tail)
 
-        self.tail_output_queue = tail_output_queue
+        self.tail_start_points_queue = tail_start_points_queue
 
+        self.tail_start_points_queue.put(self.get_tail_coords())
         self.roi_tail.sigRegionChangeFinished.connect(self.send_roi_to_queue)
+        self.tail_position_data =tail_position_data
 
     def send_roi_to_queue(self):
-        self.tail_output_queue.put(self.get_tail_coords())
+        self.tail_start_points_queue.put(self.get_tail_coords())
 
     def get_tail_coords(self):
-        return self.roi_tail.listPoints()
+        start_y = self.roi_tail.listPoints()[0].x()
+        start_x = self.roi_tail.listPoints()[0].y()
+        length_y = self.roi_tail.listPoints()[1].x() - start_y
+        length_x = self.roi_tail.listPoints()[1].y() - start_x
+        return {'start_x': start_x, 'start_y': start_y,
+                'tail_len_x': length_x, 'tail_len_y': length_y,
+                'n_segments': 30, 'window_size': 30}
+
+    def update_image(self):
+        try:
+            time, im_in = self.camera_queue.get(timeout=0.001)
+
+            if self.camera_rotation >= 1:
+                im_in = np.rot90(im_in, k=self.camera_rotation)
+
+            self.centre = np.array(im_in.shape[::-1])/2
+
+            try:
+                if self.tail_position_data:
+                    im_in = draw_tail(im_in, self.tail_position_data.stored_data[-100])
+            except IndexError:
+               pass
+            self.image_item.setImage(im_in)
+        except Empty:
+            pass
 
 
 
