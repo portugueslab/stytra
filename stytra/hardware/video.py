@@ -4,11 +4,10 @@ except ImportError:
     pass
 
 #import multiprocessing
-from multiprocessing import Process, JoinableQueue, Queue, Event
+from multiprocessing import Process, Queue, Event
 from queue import Empty
 import numpy as np
 from datetime import datetime, timedelta
-#import cv2
 from collections import deque
 
 from numba import jit
@@ -37,17 +36,20 @@ class FrameProcessor(Process):
         self.print_framerate = print_framerate
         self.framerate_queue = framerate_queue
 
+        self.current_time = datetime.now()
+        self.starting_time = datetime.now()
+
     def update_framerate(self):
         if self.i_fps == self.n_fps_frames - 1:
-            current_time = datetime.now()
+            self.current_time = datetime.now()
             if self.previous_time_fps is not None:
                 self.current_framerate = self.n_fps_frames / (
-                    current_time - self.previous_time_fps).total_seconds()
+                    self.current_time - self.previous_time_fps).total_seconds()
                 if self.print_framerate:
                     print('{:.2f} FPS'.format(self.current_framerate))
                 if self.framerate_queue:
                     self.framerate_queue.put(self.current_framerate)
-            self.previous_time_fps = current_time
+            self.previous_time_fps = self.current_time
         self.i_fps = (self.i_fps + 1) % self.n_fps_frames
 
 
@@ -120,9 +122,19 @@ class FrameDispatcher(FrameProcessor):
      as well as dispatching a subset for display
 
     """
-    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None, control_queue=None,
+    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameter_queue=None,
                  gui_framerate=30, **kwargs):
+        """
+        :param frame_queue: queue dispatching frames from camera
+        :param gui_queue: queue where to put frames to be displayed on the GUI
+        :param finished_signal: signal for the end of the acquisition
+        :param output_queue: queue for the output of the function applied on frames
+        :param control_queue:
+        :param processing_function: function to be applied to each frame
+        :param processing_parameter_queue: queue for the parameters to be passed to the function
+        :param gui_framerate: framerate of the display GUI
+        """
         super().__init__(**kwargs)
 
         self.frame_queue = frame_queue
@@ -152,21 +164,18 @@ class FrameDispatcher(FrameProcessor):
 
                 if self.processing_function is not None:
                     output = self.processing_function(frame, **self.processing_parameters)
-                    self.output_queue.put(output)
+                    self.output_queue.put((datetime.now(), output))
 
-                # calculate the framerate
+                # calculate the frame rate
                 self.update_framerate()
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
-                print(self.current_framerate)
+                #print(self.current_framerate)
                 i_frame += 1
-                # put the frame in the GUI queue
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    #print('put a frame')
                 self.i = (self.i+1) % every_x
             except Empty:
-                #print('empty_queue')
                 break
 
         return

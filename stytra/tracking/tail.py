@@ -158,11 +158,21 @@ def _next_segment(fc, xm, ym, dx, dy, wind_size, next_point_dist):
 
 
 @jit(nopython=True, cache=True)
+def angle(dx1, dy1, dx2, dy2):
+    alph1 = np.arctan2(dy1, dx1)
+    alph2 = np.arctan2(dy2, dx2)
+    diff = alph2 - alph1
+    if diff >= np.pi:
+        diff -= 2*np.pi
+    if diff <= -np.pi:
+        diff += 2*np.pi
+    return diff
+
+
+@jit(nopython=True, cache=True)
 def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30):
-    """ Finds a midline for a fish image, with the starting point and direction
-    found by the fish start function
-    it goes first a bit in the direction of the tail, and then back,
-     so the starting point is refined
+    """ Finds the tail for an embedded fish, given the starting point and
+    the direction of the tail. Alternative to the sequential circular arches.
 
     :param im: image to process
     :param start_x: starting point x
@@ -170,25 +180,31 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
     :param tail_len_x: tail length on x
     :param tail_len_y: tail length on y
     :param n_segments: number of desired segments
+    :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
-    im = 255 - im
-    #print([start_x, start_y])
-    length_tail = np.sqrt((tail_len_x) ** 2 + (tail_len_y) ** 2)
-    #print(length_tail)
-    seg_length = int(length_tail / n_segments)
+    im = 255 - im  # invert image
+    length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
+    seg_length = int(length_tail / n_segments)  # segment length from tail length and n of segments
 
+    # Initial displacements in x and y:
     disp_x = int(tail_len_x / n_segments)
-    # print(disp_x)
     disp_y = int(tail_len_y / n_segments)
-    # print(disp_y)
-    points = [(start_x, start_y, 0)]
+
+    cum_sum = 0  # cumulative tail sum
+    points = [(start_x, start_y, 0, cum_sum)]  # output with points
     for i in range(1, n_segments):
+        pre_disp_x = disp_x  # save previous displacements for angle calculation
+        pre_disp_y = disp_y
+        # Use next segment function for find next point with center-of-mass displacement:
         start_x, start_y, disp_x, disp_y, acc = \
             _next_segment(im, start_x, start_y, disp_x, disp_y, window_size, seg_length)
-        if start_x > 0:
-            points.append((start_x, start_y, acc))
-    #print(points)
+
+        if i > 1:  # update cumulative angle sum
+            new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
+            cum_sum = cum_sum + new_angle
+        points.append((start_x, start_y, acc, cum_sum))
+
     return points
 
 

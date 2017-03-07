@@ -104,6 +104,26 @@ class MovingSeamless(SeamlessStimulus):
         self.y = np.interp(self.elapsed, self.motion.t, self.motion.y)
 
 
+class MovingConstantly(SeamlessStimulus):
+    def __init__(self, *args, x_vel=0, y_vel=0, mm_px=1, monitor_rate=60, **kwargs):
+        """
+        :param x_vel: x drift velocity (mm/s)
+        :param y_vel: x drift velocity (mm/s)
+        :param mm_px: mm per pixel
+        :param monitor_rate: monitor rate (in Hz)
+        """
+        super().__init__(*args, **kwargs)
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+        self.x_shift_frame = (x_vel/mm_px)/monitor_rate
+        self.y_shift_frame = (y_vel/mm_px)/monitor_rate
+
+
+    def update(self):
+        self.x += self.x_shift_frame
+        self.y += self.y_shift_frame
+
+
 class DynamicStimulus(Stimulus):
     pass
 
@@ -115,3 +135,7 @@ class ClosedLoopStimulus(DynamicStimulus):
 class ClosedLoop1D(DynamicStimulus):
     def update(self):
         pass
+
+if __name__ == '__main__':
+    from stytra.stimulation.backgrounds import gratings
+    a = SeamlessStimulus(background=gratings)

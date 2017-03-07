@@ -1,12 +1,17 @@
 from PyQt5.QtWidgets import QApplication, QDialog
 
-from stytra.stimulation.stimuli import Pause, Flash, MovingSeamless
+from stytra.stimulation.stimuli import Pause, Flash, MovingConstantly
 from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import DataCollector, MetadataFish, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
+from stytra.stimulation.backgrounds import gratings
+
+import numpy as np
+import pandas as pd
+
 import qdarkstyle
 
 
@@ -14,13 +19,15 @@ if __name__ == '__main__':
     # experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
     experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
-    imaging_time = 4
+    imaging_time = 5
 
-    stim_duration = 0.1
+    stim_duration = 4
     pause_duration = 1
     flash_color = (255, 0, 0)
     refresh_rate = 1 / 60.
     initial_pause = 0
+
+    mm_px = 10/87
 
     n_repeats = (round((imaging_time - initial_pause) /
                        (stim_duration + pause_duration)))
@@ -28,8 +35,13 @@ if __name__ == '__main__':
     # Generate stimulus protocol
     stimuli = []
     stimuli.append(Pause(duration=initial_pause-2))
+    bg = gratings(orientation='vertical', shape='sinusoidal',
+                  mm_px=mm_px)
     for i in range(n_repeats):
-        stimuli.append(Flash(duration=stim_duration, color=flash_color))
+        #stimuli.append(Flash(duration=stim_duration, color=flash_color))
+        stimuli.append(MovingConstantly(background=bg,
+                                        x_vel=10, y_vel=50,
+                                        duration=stim_duration))
         stimuli.append(Pause(duration=pause_duration))
     protocol = Protocol(stimuli, refresh_rate)
 

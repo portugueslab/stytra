@@ -10,24 +10,37 @@ import numpy as np
 
 class DataAccumulator(QObject):
     def __init__(self, data_queue):
+        """
+        General class for accumulating (for saving or dispatching) data
+        out of a multiprocessing queue. Require triggering with some timer.
+        :param data_queue: queue from witch to retreive data
+        """
         super().__init__()
-        self.timer = QTimer()
-        self.timer.start(1)
-        self.timer.setSingleShot(False)
-        self.timer.timeout.connect(self.update_list)
+        # The timer should be an external one to avoid multiple timers
+        # into the same process (?):
+        # self.timer = QTimer()
+        # self.timer.start(1)
+        # self.timer.setSingleShot(False)
+        # self.timer.timeout.connect(self.update_list)
 
         self.data_queue = data_queue
         self.stored_data = []
 
     def update_list(self):
+        """Upon calling put all available data into a list.
+        """
         while True:
             try:
                 self.stored_data.append(self.data_queue.get(timeout=0.001))
             except Empty:
                 break
 
-    def get_data(self):
-        print(self.stored_data[-1])
+
+
+
+
+
+
 
 class FishTrackingProcess(Process):
     def __init__(self, image_queue, fish_queue, stop_event,

@@ -7,17 +7,15 @@ import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
 from stytra.tracking.diagnostics import draw_tail
-from PIL import Image
-
-
-
-
 
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0):
-        """ A widget to show the camera and display the controls
-
+        """
+        A widget to show the camera and display the controls
+        :param camera_queue: queue dispatching frames to display
+        :param control_queue: queue with controls for the camera
+        :param camera_rotation:
         """
 
         super().__init__()
@@ -33,12 +31,12 @@ class CameraViewWidget(QWidget):
         self.timer.start(0)
         self.timer.setSingleShot(False)
         self.timer.timeout.connect(self.update_image)
+
         self.camera_queue = camera_queue
         self.control_queue = control_queue
         self.camera_rotation = camera_rotation
         self.update_image()
         self.centre = np.array([0, 0])
-
 
         self.layout = QVBoxLayout()
 
@@ -65,7 +63,6 @@ class CameraViewWidget(QWidget):
 
         try:
             time, im_in = self.camera_queue.get(timeout=0.001)
-            #print('Got a picture')
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
 
@@ -78,16 +75,19 @@ class CameraViewWidget(QWidget):
         pass
         # TODO write saving
 
-    #def closeEvent(self, QCloseEvent):
-     #   self.
-
-
 
 class CameraTailSelection(CameraViewWidget):
-    def __init__(self, tail_start_points_queue, tail_position_data=None, *args, **kwargs):
+    def __init__(self, tail_start_points_queue, tail_position_data, *args, **kwargs):
+        """
+        Widget for select tail points and monitoring tracking in embedded animal.
+        :param tail_start_points_queue: queue where to dispatch tail points
+        :param tail_position_data: DataAccumulator object with tail tracking data.
+        """
+        self.tail_position_data = tail_position_data
         super().__init__(*args, **kwargs)
-        self.label = pg.TextItem('Select tail of the fish:\n' +
-                                 'left click start, right click end')
+
+        self.label = pg.TextItem('Select tail of the fish:')
+
         self.roi_tail = pg.LineSegmentROI(((320, 480), (320, 0)),
                                           pen=dict(color=(250, 10, 10),
                                                    width=4))
@@ -96,39 +96,44 @@ class CameraTailSelection(CameraViewWidget):
         self.tail_start_points_queue = tail_start_points_queue
 
         self.tail_start_points_queue.put(self.get_tail_coords())
-        self.roi_tail.sigRegionChangeFinished.connect(self.send_roi_to_queue)
-        self.tail_position_data =tail_position_data
+        self.roi_tail.sigRegionChanged.connect(self.send_roi_to_queue)
 
     def send_roi_to_queue(self):
         self.tail_start_points_queue.put(self.get_tail_coords())
 
     def get_tail_coords(self):
-        start_y = self.roi_tail.listPoints()[0].x()
-        start_x = self.roi_tail.listPoints()[0].y()
-        length_y = self.roi_tail.listPoints()[1].x() - start_y
-        length_x = self.roi_tail.listPoints()[1].y() - start_x
+        # Invert x and y:
+        start_y = self.roi_tail.listPoints()[0].x()  # start y
+        start_x = self.roi_tail.listPoints()[0].y()  # start x
+        length_y = self.roi_tail.listPoints()[1].x() - start_y  # delta y
+        length_x = self.roi_tail.listPoints()[1].y() - start_x  # delta x
         return {'start_x': start_x, 'start_y': start_y,
                 'tail_len_x': length_x, 'tail_len_y': length_y,
                 'n_segments': 30, 'window_size': 30}
 
     def update_image(self):
+        position_data = None
+        # Try to retrieve data about tail position of available:
         try:
+            try:
+                if self.tail_position_data:
+                    position_data = self.tail_position_data.stored_data[-1][1]
+            except IndexError:
+                pass
+
+            # Try to get time and frames from the camera queue (cut and paste
+            # from CameraViewWidget):
             time, im_in = self.camera_queue.get(timeout=0.001)
 
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
-
             self.centre = np.array(im_in.shape[::-1])/2
+            if position_data:  # draw the tail before displaying the frame:
+                im_in = draw_tail(im_in, position_data)
 
-            try:
-                if self.tail_position_data:
-                    im_in = draw_tail(im_in, self.tail_position_data.stored_data[-100])
-            except IndexError:
-               pass
             self.image_item.setImage(im_in)
         except Empty:
             pass
-
 
 
 class CameraViewCalib(CameraViewWidget):
@@ -150,7 +155,7 @@ class CameraViewCalib(CameraViewWidget):
             self.points_calib.setData(points_dicts)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     from multiprocessing import Queue
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])

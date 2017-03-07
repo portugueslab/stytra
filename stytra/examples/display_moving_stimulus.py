@@ -168,32 +168,6 @@ class Experiment(QMainWindow):
         print('Recorder joined')
         self.finished = True
 
-
-    # def finishProtocol(self):
-    #     self.finished_sig.set()
-    #     self.camera.join(timeout=3)
-    #     print('Camera joined')
-    #     self.frame_dispatcher.join(timeout=3)
-    #     print('Frame dispatcher terminated')
-    #     detected_fishes = []
-    #     while True:
-    #         try:
-    #             time, fishes = self.fish_queue.get(timeout=0.01)
-    #             timedelta = (time - self.protocol.t_start).total_seconds()
-    #             for fish in fishes:
-    #                 fish['t'] = timedelta
-    #                 detected_fishes.append(fish)
-    #         except Empty:
-    #             break
-    #
-    #     print('{} measurements '.format(len(detected_fishes)))
-    #     self.dc.add_data_source('behaviour', 'fish_detected', pd.DataFrame(detected_fishes))
-    #     self.dc.save()
-    #
-    #     self.tracker.join(timeout=10)
-    #     print('Recorder joined')
-    #     self.finished = True
-
     def closeEvent(self, QCloseEvent):
         if not self.finished:
             self.finishProtocol()
