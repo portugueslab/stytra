@@ -14,12 +14,7 @@ class DataCollector:
     ad maiorem dei gloriam.
     """
 
-    # Metadata entries are categorized with a fixed dictionary:
-    metadata_categories = dict(MetadataFish='fish',
-                               MetadataLightsheet='imaging',
-                               MetadataGeneral='general')
-
-    # Categories are initialized by default
+    # Categories are hardwired, to control integrity of the output HDF5 file
     data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={})
 
     def __init__(self, *data_tuples_list, folder_path='./'):
@@ -48,7 +43,7 @@ class DataCollector:
 
         # Try to find previously saved metadata:
         self.last_metadata = None
-        list_metadata = [fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')]
+        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
         if len(list_metadata) > 0:
             self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
 
@@ -125,7 +120,7 @@ class DataCollector:
                 data_dict[category].update(data_entry[-1])
 
             elif isinstance(data_entry[-1], Metadata):  # parameterized objects;
-                category = DataCollector.metadata_categories[type(data_entry[-1]).__name__]
+                category = data_entry[-1].category
                 data_dict[category].update(data_entry[-1].get_param_dict())
 
             if len(data_entry) > 2:
@@ -175,7 +170,7 @@ class DataCollector:
                             args[-1][key_new_dict] = self.last_metadata[category][key_new_dict]
 
                 elif isinstance(args[-1], Metadata):  # parameterized objects
-                    category = DataCollector.metadata_categories[type(args[-1]).__name__]
+                    category = args[-1].category
                     for key_new_obj in args[-1].get_param_dict().keys():
                         param_obj = args[-1].params()[key_new_obj]
 
@@ -202,6 +197,7 @@ class DataCollector:
 class Metadata(param.Parameterized):
     """General metadata class
     """
+    category = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -228,9 +224,12 @@ class Metadata(param.Parameterized):
         return ParameterGui(metadata_obj=self, save_button=save_button)
 
 
+
 class MetadataFish(Metadata):
     """Fish description metadata class
     """
+    category = 'fish'
+
     fish_age = param.Integer(default=6, bounds=(2, 9), doc='Fish age (days)')
     fish_genotype = param.ObjectSelector(default='TL',
                                          objects=['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
@@ -243,6 +242,8 @@ class MetadataFish(Metadata):
 class MetadataLightsheet(Metadata):
     """Lightsheet imaging description metadata class
     """
+    category = 'imaging'
+
     imaging_type = param.String(default='lightsheet', constant=True)
     frame_rate = param.Number(default=20, bounds=(1., 200.), doc='Camera frame rate (Hz)')
     piezo_frequency = param.Number(default=5, bounds=(0., 10), doc='Scanning frequency (Hz)')
@@ -254,13 +255,19 @@ class MetadataLightsheet(Metadata):
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
 
 
+
 class MetadataCamera(Metadata):
+    category = 'camera'
     exposure = param.Number(default=2.0, bounds=[0.5, 50], doc='Exposure (ms)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
+
 
 
 class MetadataGeneral(Metadata):
     """Fish description metadata class
     """
+    category = 'general'
+
     experiment_name = param.String()
     experimenter_name = param.String()
+

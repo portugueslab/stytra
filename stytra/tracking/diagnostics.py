@@ -61,3 +61,29 @@ def draw_fish_new(display, mes, params):
                                     (250, 100, 100))
 
     return display
+
+def draw_tail(display, points):
+    if len(display.shape) == 2:
+        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+
+    #points_mtx = np.array(points)[:, -2::-1]
+    points_mtx = np.array(points)[:, :2]
+
+    # points = [np.array([mes['x'], mes['y']])]
+    # for i, col in enumerate(
+    #         ['th_{:02d}'.format(i) for i in range(params['n_tail_segments'])]):
+    #     points.append(points[-1] + params['tail_segment_length'] * np.array(
+    #         [np.cos(mes[col]), np.sin(mes[col])]))
+    #
+    # points = np.array(points)
+    # print(points)
+
+    for i in range(points_mtx.shape[0]):
+        display = cv2.circle(display, a_to_tc(points_mtx[i]), 5, (200, 0, 0))
+
+    for i in range(points_mtx.shape[0] - 1):
+        display = cv2.line(display, a_to_tc(points_mtx[i]),
+                                    a_to_tc(points_mtx[i+1]),
+                                    (250, 100, 100))
+
+    return display

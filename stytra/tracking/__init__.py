@@ -1,3 +1,4 @@
+from PyQt5.QtCore import QObject, QTimer
 from multiprocessing import Process
 from queue import Empty
 from stytra.tracking.fish import detect_fish_midline
@@ -5,6 +6,40 @@ import cv2
 from datetime import datetime
 from stytra.tracking.diagnostics import draw_fish_new
 import numpy as np
+
+
+class DataAccumulator(QObject):
+    def __init__(self, data_queue):
+        """
+        General class for accumulating (for saving or dispatching) data
+        out of a multiprocessing queue. Require triggering with some timer.
+        :param data_queue: queue from witch to retreive data
+        """
+        super().__init__()
+        # The timer should be an external one to avoid multiple timers
+        # into the same process (?):
+        # self.timer = QTimer()
+        # self.timer.start(1)
+        # self.timer.setSingleShot(False)
+        # self.timer.timeout.connect(self.update_list)
+
+        self.data_queue = data_queue
+        self.stored_data = []
+
+    def update_list(self):
+        """Upon calling put all available data into a list.
+        """
+        while True:
+            try:
+                self.stored_data.append(self.data_queue.get(timeout=0.001))
+            except Empty:
+                break
+
+
+
+
+
+
 
 
 class FishTrackingProcess(Process):
@@ -22,6 +57,7 @@ class FishTrackingProcess(Process):
         self.processing_parameters = processing_parameters
 
     def run(self):
+        cv2.bgsegm.createBackgroundSubtractorMOG()
         bg_sub = cv2.bgsegm.createBackgroundSubtractorMOG(history=500,
                                                           nmixtures=3,
                                                           backgroundRatio=self.processing_parameters['background_ratio'],

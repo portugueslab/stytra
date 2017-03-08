@@ -3,6 +3,7 @@ import random
 from math import sqrt, pi, sin, cos
 from itertools import product
 from PIL import Image, ImageDraw
+import deepdish.io as dio
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     if kernel_std_y is None:
@@ -26,11 +27,16 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     return (((img - min_im) / (max_im - min_im)) * 255).astype(np.uint8)
 
 
+def existing_file_background(filepath):
+    return dio.load(filepath)
+
+
 def poisson_disk_background(size, distance, radius):
-    """ A background with randomly spaced dots using the poisson algorithm
+    """ A background with randomly spaced dots using the poisson disk
+     algorithm
 
     :param size: image size
-    :param distance: approximate disance between the dots
+    :param distance: approximate distance between the dots
     :param radius: radius of the dots
     :return: the generated background
     """
@@ -44,7 +50,7 @@ def poisson_disk_background(size, distance, radius):
     data = g.poisson(rand)
 
     # then put them on a 2x size image, so that a seamless background can
-    # be created
+    # be created:
 
     im = Image.new('L', (imh * 2, imw * 2))
 
@@ -66,6 +72,36 @@ def poisson_disk_background(size, distance, radius):
     return np.array(im)[imh // 2:3 * imh // 2, imw // 2:3 * imw // 2]
 
 
+def gratings(mm_px=1, spatial_period=0.1, orientation='horizontal',
+             shape='square', ratio=0.5):
+    """
+    Function for generating grids (assume usage of cv2.BORDER_WRAP for display)
+    :param mm_px: millimiters per pixel
+    :param spatial_period: spatial period (cycles/mm)
+    :param orientation: 'horizontal' or 'vertical'
+    :param shape: 'square', 'sinusoidal'
+    :param ratio: ratio of white over dark
+    :return:
+    """
+
+    grating_dim = round(1/(mm_px*spatial_period))  # calculate dimensions
+
+    # With cv2.BORDER_WRAP 1 line will be enough:
+    template_array = np.zeros((grating_dim, 1), dtype=np.uint8)
+
+    # Set pixels values according to the selected shape:
+    if shape == 'square':  # square wave
+        template_array[:round(ratio*grating_dim), :] = 255
+
+    elif shape == 'sinusoidal':  # sinusoidal wave
+        v = (np.sin(np.linspace(0, 2 * np.pi, grating_dim)) + 1) * 255 / 2
+        template_array[:, 0] = v.astype('uint8')
+
+    # Transpose for having vertical gratings:
+    if orientation == 'vertical':
+        template_array = template_array.T
+
+    return template_array
 
 
 class Grid:
@@ -77,7 +113,7 @@ class Grid:
     distance metric used and get different forms
     of 'discs'
 
-    Adaped from code by Herman Tulleken (herman@luma.co.za)
+    Adapted from code by Herman Tulleken (herman@luma.co.za)
     """
     def __init__(self, r, *size):
         self.r = r
@@ -246,3 +282,8 @@ class Grid:
 
     def __str__(self):
         return self.cells.__str__()
+
+
+if __name__ == '__main__':
+    bg = 255 - poisson_disk_background((640, 640), 12, 2)
+    dio.save('poisson_dense.h5', bg)
