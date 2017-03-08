@@ -52,7 +52,6 @@ def draw_fish_new(display, mes, params):
             [np.cos(mes[col]), np.sin(mes[col])]))
 
     points = np.array(points)
-    print(points)
 
     display = cv2.circle(display, a_to_tc(points[0]), 3, (100, 250, 200))
 
