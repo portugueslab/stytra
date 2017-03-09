@@ -115,22 +115,23 @@ class CameraTailSelection(CameraViewWidget):
         position_data = None
         # Try to retrieve data about tail position of available:
         try:
+            # Try to get time and frames from the camera queue (cut and paste
+            # from CameraViewWidget):
+            time, im_in = self.camera_queue.get(timeout=0.0001)
+
             try:
                 if self.tail_position_data:
                     position_data = self.tail_position_data.stored_data[-1][1]
             except IndexError:
                 pass
 
-            # Try to get time and frames from the camera queue (cut and paste
-            # from CameraViewWidget):
-            time, im_in = self.camera_queue.get(timeout=0.001)
+
 
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
             self.centre = np.array(im_in.shape[::-1])/2
             if position_data:  # draw the tail before displaying the frame:
                 im_in = draw_tail(im_in, position_data)
-
             self.image_item.setImage(im_in)
         except Empty:
             pass

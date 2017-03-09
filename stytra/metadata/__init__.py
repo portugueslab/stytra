@@ -258,13 +258,14 @@ class MetadataLightsheet(Metadata):
 
 class MetadataCamera(Metadata):
     category = 'camera'
-    exposure = param.Number(default=2.0, bounds=[0.5, 50], doc='Exposure (ms)')
+    exposure = param.Number(default=0.6, bounds=[0.5, 50], doc='Exposure (ms)')
+    framerate = param.Number(default=100, bounds=[0.5, 1000], doc='Frame rate (Hz)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 
 
 class MetadataGeneral(Metadata):
-    """Fish description metadata class
+    """General experiment properties metadata class
     """
     category = 'general'
 

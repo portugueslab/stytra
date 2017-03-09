@@ -106,7 +106,7 @@ class ProtocolControlWindow(QWidget):
         self.widget_view.roi_box.setSize(self.display_window.display_params['window']['size'])
 
     def refresh_ROI(self):
-        self.display_window.set_dims(self.widget_view.roi_box.pos(),
+        self.display_window.set_dims(self.widget_view.roi_box.POS(),
                                      self.widget_view.roi_box.size())
 
     def closeEvent(self, QCloseEvent):

@@ -29,11 +29,15 @@ class DataAccumulator(QObject):
     def update_list(self):
         """Upon calling put all available data into a list.
         """
+        collected = 0
         while True:
             try:
-                self.stored_data.append(self.data_queue.get(timeout=0.001))
+                self.stored_data.append(self.data_queue.get(timeout=0.00001))
+                collected+=1
             except Empty:
                 break
+
+        print(collected)
 
 
 
