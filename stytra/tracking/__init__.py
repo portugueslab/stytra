@@ -37,9 +37,6 @@ class DataAccumulator(QObject):
             except Empty:
                 break
 
-        print(collected)
-
-
 
 
 

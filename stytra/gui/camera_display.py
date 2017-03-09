@@ -28,10 +28,6 @@ class CameraViewWidget(QWidget):
                                    disableAutoRange=True)
         self.image_item = pg.ImageItem()
         self.display_area.addItem(self.image_item)
-        self.timer = QTimer()
-        self.timer.start(0)
-        self.timer.setSingleShot(False)
-        self.timer.timeout.connect(self.update_image)
 
         self.camera_queue = camera_queue
         self.control_queue = control_queue
@@ -62,15 +58,20 @@ class CameraViewWidget(QWidget):
         self.control_queue.put(self.camera_parameters.get_param_dict())
 
     def update_image(self):
-        try:
-            time, im_in = self.camera_queue.get(timeout=0.001)
-            if self.camera_rotation >= 1:
-                im_in = np.rot90(im_in, k=self.camera_rotation)
+        im_in = None
+        while True:
+            try:
+                time, im_in = self.camera_queue.get(timeout=0.001)
 
-            self.centre = np.array(im_in.shape[::-1])/2
+                if self.camera_rotation >= 1:
+                    im_in = np.rot90(im_in, k=self.camera_rotation)
+
+                self.centre = np.array(im_in.shape[::-1])/2
+
+            except Empty:
+                break
+        if im_in is not None:
             self.image_item.setImage(im_in)
-        except Empty:
-            pass
 
     def save_image(self):
         pass
@@ -118,15 +119,13 @@ class CameraTailSelection(CameraViewWidget):
         try:
             # Try to get time and frames from the camera queue (cut and paste
             # from CameraViewWidget):
-            time, im_in = self.camera_queue.get(timeout=0.0001)
-
+            time, im_in = self.camera_queue.get(timeout=0.001)
+            print('got frame')
             try:
                 if self.tail_position_data:
                     position_data = self.tail_position_data.stored_data[-1][1]
             except IndexError:
                 pass
-
-
 
             if self.camera_rotation >= 1:
                 im_in = np.rot90(im_in, k=self.camera_rotation)
