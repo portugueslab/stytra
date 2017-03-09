@@ -10,6 +10,7 @@ from numba import jit
 import param as pa
 from stytra.metadata import Metadata
 
+
 class ContourScorer:
     def __init__(self, target_area, target_ratio, ratio_weight=1):
         self.target_area = target_area
@@ -173,7 +174,7 @@ def detect_fishes(frame, mask, params, diagnostics=False):
             for i, ta in enumerate(tail_angles):
                 res2['tail_{:02d}'.format(i)] = ta
             if diagnostics:
-                draw_fish_old(display, res, params)
+                draw_fish(display, res, params)
             measurements.append(res2)
     if diagnostics:
         return measurements, np.vstack([display, diag_image])
@@ -183,10 +184,11 @@ def detect_fishes(frame, mask, params, diagnostics=False):
 class MidlineDetectionParams(Metadata):
     target_area = pa.Integer(450, (0, 700))
     area_tolerance = pa.Integer(320, (0, 700))
-    n_tail_segments = pa.Integer(14, (1, 20))
-    tail_segment_length = pa.Number(3., (0.5, 10))
+    n_tail_segments = pa.Integer(18, (1, 20))
+    tail_segment_length = pa.Number(4., (0.5, 10))
     tail_detection_radius = pa.Integer(9, (1, 15))
     n_tail_points_return = pa.Integer(2, (0, 10))
+    n_points_skip = pa.Integer(2, (0, 10))
     background_noise_sigma = pa.Number(5, (0.1, 20))
     background_ratio = pa.Number(0.5, (0.0, 1.0))
 
@@ -208,6 +210,7 @@ def detect_fish_midline(frame, mask, params):
 
     # find the contours corresponding to a fish
     measurements = []
+    skip_points=params['n_points_skip']
 
     for fish_contour in contours:
         if np.abs(cv2.contourArea(fish_contour) - params['target_area']) < \
@@ -230,7 +233,7 @@ def detect_fish_midline(frame, mask, params):
                                        n_points_max=params['n_tail_segments'],
                                        n_points_begin=params['n_tail_points_return'])
             angles = []
-            for p1, p2 in zip(points[:-1], points[1:]):
+            for p1, p2 in zip(points[skip_points:-1], points[skip_points+1:]):
                 angles.append(np.arctan2(p2[1]-p1[1],
                                          p2[0] - p1[0]))
             if len(angles) == 0:
@@ -238,7 +241,7 @@ def detect_fish_midline(frame, mask, params):
             while len(angles) < params['n_tail_segments']:
                 angles.append(angles[-1])
 
-            measurements.append([x0+fx, y0+fy] + angles)
+            measurements.append([points[skip_points][0]+fx, points[skip_points][1]+fy] + angles)
 
     return measurements
 

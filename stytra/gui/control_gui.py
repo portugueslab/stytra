@@ -5,7 +5,7 @@ import numpy as np
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
-    def __init__(self, *args, display_size=(1280, 800),ROI_desc=None,  **kwargs):
+    def __init__(self, *args, display_size=(1280, 800), ROI_desc=None,  **kwargs):
         super().__init__(*args, **kwargs)
 
         self.view_box = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)
@@ -47,7 +47,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                                         y=points_calib[:, 1]+y0)
         if image is not None:
             pass
-            # TODO place transforemd image
+            # TODO place transformed image
 
 
 class ProtocolControlWindow(QWidget):
@@ -55,7 +55,11 @@ class ProtocolControlWindow(QWidget):
     sig_closing = pyqtSignal()
 
     def __init__(self, app, protocol, display_window, *args):
-        """ Class for controlling the stimuli
+        """
+        Widget for controlling the stimulation.
+        :param app: Qt5 app
+        :param protocol: Protocol object with the stimulus
+        :param display_window: ProjectorViewer object for the projector
         """
         super().__init__(*args)
         self.app = app
@@ -63,20 +67,6 @@ class ProtocolControlWindow(QWidget):
         self.display_window = display_window
 
         ROI_desc = self.display_window.display_params['window']
-
-        # This part can be used for correctly display the  projectionViewer
-        # once the experiment folder parameter is passed to the window.
-        # Anyway, it would be better to take care of this from the DataCollector
-        # set_to_last_value method.
-
-        # import deepdish as dd
-        # import os
-        # experiment_folder = ''
-        # list_metadata = [fn for fn in os.listdir(experiment_folder) if fn.endswith('metadata.h5')]
-        # if len(list_metadata) > 0:
-        #   last_metadata = dd.io.load(experiment_folder + list_metadata[-1])
-        #   ROI_desc = dict(pos=last_metadata['stimulus']['window_pos'],
-        #                   size=last_metadata['stimulus']['window_size'])
 
         self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
 
@@ -121,7 +111,6 @@ class ProtocolControlWindow(QWidget):
 
     def closeEvent(self, QCloseEvent):
         """ On closing the app, save where the window was
-
         :param QCloseEvent:
         :return: None
         """

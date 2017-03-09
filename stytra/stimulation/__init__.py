@@ -17,10 +17,10 @@ class Protocol(QObject):
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli, dt, log_print=True):
+    def __init__(self, stimuli, dt=1/60, log_print=True):
         """
         :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
-        :param dt: frame rate in Hz (double)
+        :param dt: frame duration (sec)
         """
         super(Protocol, self).__init__()
 
