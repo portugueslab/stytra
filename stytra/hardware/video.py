@@ -13,6 +13,7 @@ from collections import deque
 
 from numba import jit
 
+import psutil
 
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
@@ -259,26 +260,26 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.framestart_queue = framestart_queue
         self.diag_queue = diag_queue
         self.signal_start_rec = signal_start_rec
+        self.mem_use = 0
 
     def run(self):
-        previous_time = datetime.now()
-        n_fps_frames = 10
         i = 0
-        current_framerate = 100
         every_x = 10
 
         t, frame_0 = self.frame_queue.get(timeout=5)
-        n_previous_compare = 3
-        i_previous = 0
+        n_previous_compare = 5
         previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
                                 dtype=np.uint8)
-        fish_threshold = 40
-        motion_threshold = 400
+        fish_threshold = 50
+        motion_threshold = 500
         frame_margin = 10
 
-        previous_images = deque()
         n_previous_save = 300
         n_next_save = 200
+
+
+        previous_images = deque()
+
         record_counter = 0
 
         i_frame = 0
@@ -310,12 +311,12 @@ class MovingFrameDispatcher(FrameDispatcher):
                         record_counter = n_next_save
 
                     if record_counter > 0:
-                        if self.signal_start_rec.is_set():
+                        if self.signal_start_rec.is_set() and self.mem_use < 0.9:
                             if not recording_state:
                                 frame_start = i_recorded
                                 i_previous = 0
                                 while previous_images:
-                                    time, im = previous_images.pop()
+                                    time, im = previous_images.popleft()
                                     self.framestart_queue.put(time)
                                     self.output_queue.put(im)
                                     i_recorded += 1
@@ -335,19 +336,16 @@ class MovingFrameDispatcher(FrameDispatcher):
                     previous_images.popleft()
 
                 # calculate the framerate
-                if i == n_fps_frames - 1:
-                    current_time = datetime.now()
-                    current_framerate = n_fps_frames / (
-                        current_time - previous_time).total_seconds()
-                    every_x = max(int(current_framerate / self.gui_framerate), 1)
-                    # print('{:.2f} FPS'.format(framerate))
-                    previous_time = current_time
-                i = (i + 1) % n_fps_frames
+                self.update_framerate()
+                if self.current_framerate is not None:
+                    every_x = max(int(self.current_framerate / self.gui_framerate), 1)
 
                 if self.i == 0:
+                    self.mem_use = psutil.virtual_memory().used/psutil.virtual_memory().total
                     self.gui_queue.put(current_frame)  # frame
-                    print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
-                        current_framerate, difsum, n_crossed))
+                    if self.current_framerate:
+                        print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
+                            self.current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
             except Empty:
                 print('empty_queue')

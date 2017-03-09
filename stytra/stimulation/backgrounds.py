@@ -4,6 +4,7 @@ from math import sqrt, pi, sin, cos
 from itertools import product
 from PIL import Image, ImageDraw
 import deepdish.io as dio
+import cv2
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     if kernel_std_y is None:
@@ -28,7 +29,10 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 
 
 def existing_file_background(filepath):
-    return dio.load(filepath)
+    if filepath.endswith('.h5'):
+        return dio.load(filepath)
+    else:
+        return cv2.imread(filepath)
 
 
 def poisson_disk_background(size, distance, radius):
