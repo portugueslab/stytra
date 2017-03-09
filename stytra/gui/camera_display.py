@@ -8,6 +8,7 @@ from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
 from stytra.tracking.diagnostics import draw_tail
 
+import cv2
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0,
@@ -57,6 +58,9 @@ class CameraViewWidget(QWidget):
         self.control_widget.save_meta()
         self.control_queue.put(self.camera_parameters.get_param_dict())
 
+    def modify_frame(self, frame):
+        return frame
+
     def update_image(self):
         im_in = None
         while True:
@@ -71,7 +75,7 @@ class CameraViewWidget(QWidget):
             except Empty:
                 break
         if im_in is not None:
-            self.image_item.setImage(im_in)
+            self.image_item.setImage(self.modify_frame(im_in))
 
     def save_image(self):
         pass
@@ -113,28 +117,20 @@ class CameraTailSelection(CameraViewWidget):
                 'tail_len_x': length_x, 'tail_len_y': length_y,
                 'n_segments': 30, 'window_size': 30}
 
-    def update_image(self):
+    def modify_frame(self, frame):
         position_data = None
-        # Try to retrieve data about tail position of available:
-        try:
-            # Try to get time and frames from the camera queue (cut and paste
-            # from CameraViewWidget):
-            time, im_in = self.camera_queue.get(timeout=0.001)
-            print('got frame')
-            try:
-                if self.tail_position_data:
-                    position_data = self.tail_position_data.stored_data[-1][1]
-            except IndexError:
-                pass
 
-            if self.camera_rotation >= 1:
-                im_in = np.rot90(im_in, k=self.camera_rotation)
-            self.centre = np.array(im_in.shape[::-1])/2
+        try:
+            if self.tail_position_data:
+                position_data = self.tail_position_data.stored_data[-1][1]
+
             if position_data:  # draw the tail before displaying the frame:
-                im_in = draw_tail(im_in, position_data)
-            self.image_item.setImage(im_in)
-        except Empty:
-            pass
+                return draw_tail(frame, position_data)
+            else:
+                return frame
+
+        except IndexError:
+            return frame
 
 
 class CameraViewCalib(CameraViewWidget):

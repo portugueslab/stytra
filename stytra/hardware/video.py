@@ -79,7 +79,6 @@ class XimeaCamera(FrameProcessor):
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
         downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
-        print(downsampling_str)
         self.cam.set_downsampling(downsampling_str)
         self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
         self.cam.set_sensor_feature_value(1)
@@ -101,7 +100,6 @@ class XimeaCamera(FrameProcessor):
                     pass
             if self.signal.is_set():
                 break
-                print('Got break message')
             self.cam.get_image(img)
             # TODO check if it does anything to add np.array
             arr = np.array(img.get_image_data_numpy())
@@ -196,7 +194,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    print('gui_put')
+                    #print('gui_put')
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
@@ -357,18 +355,20 @@ class MovingFrameDispatcher(FrameDispatcher):
 if __name__ == '__main__':
     from stytra.gui.camera_display import CameraViewWidget
     from PyQt5.QtWidgets import QApplication
+    from stytra.metadata import MetadataCamera
     app = QApplication([])
     q_cam = Queue()
     q_gui = Queue()
     q_control = Queue()
     finished_sig = Event()
+    meta = MetadataCamera()
     cam = XimeaCamera(q_cam, finished_sig, q_control)
     dispatcher = FrameDispatcher(q_cam, q_gui, finished_signal=finished_sig, print_framerate=True)
 
     cam.start()
     dispatcher.start()
 
-    win = CameraViewWidget(q_gui, q_control)
+    win = CameraViewWidget(q_gui, q_control, camera_parameters=meta)
 
     win.show()
     app.exec_()

@@ -169,8 +169,15 @@ def angle(dx1, dy1, dx2, dy2):
     return diff
 
 
+def detect_tail_canny(im, **kwargs):
+    import cv2
+    edges = cv2.Canny(im, 100, 200)
+    return detect_tail_new(edges, inverted=False, **kwargs)
+
+
 @jit(nopython=True, cache=True)
-def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30):
+def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30,
+                    inverted=True):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -183,7 +190,8 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
     :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
-    im = 255 - im  # invert image
+    if inverted:
+        im = (255-im).astype(np.uint8)  # invert image
     length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
     seg_length = int(length_tail / n_segments)  # segment length from tail length and n of segments
 

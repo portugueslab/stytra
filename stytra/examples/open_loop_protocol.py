@@ -58,7 +58,7 @@ class Experiment(QMainWindow):
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=30)
+                                                gui_framerate=30, print_framerate=True)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
@@ -80,7 +80,7 @@ class Experiment(QMainWindow):
         stim_duration = 2
         refresh_rate = 60.
         initial_pause = 0
-        mm_px = 10 / 87
+        mm_px = 150 / 87
 
         n_repeats = 2  # (round((imaging_time - initial_pause) / (stim_duration + pause_duration)))
 
@@ -159,11 +159,10 @@ class Experiment(QMainWindow):
 
 
         # Show windows:
-
-        #self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
-        #self.showFullScreen()
-        #self.win_stim_disp.show()
-        self.show()
+        self.win_stim_disp.show()
+        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        self.showMaximized()
+        #self.show()
 
 
 
