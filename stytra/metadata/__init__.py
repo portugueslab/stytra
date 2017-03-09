@@ -17,10 +17,11 @@ class DataCollector:
     # Metadata entries are categorized with a fixed dictionary:
     metadata_categories = dict(MetadataFish='fish',
                                MetadataLightsheet='imaging',
-                               MetadataGeneral='general')
+                               MetadataGeneral='general',
+                               MetadataCamera='camera')
 
     # Categories are initialized by default
-    data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={})
+    data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={}, camera={})
 
     def __init__(self, *data_tuples_list, folder_path='./'):
         """
@@ -175,19 +176,22 @@ class DataCollector:
                             args[-1][key_new_dict] = self.last_metadata[category][key_new_dict]
 
                 elif isinstance(args[-1], Metadata):  # parameterized objects
-                    category = DataCollector.metadata_categories[type(args[-1]).__name__]
-                    for key_new_obj in args[-1].get_param_dict().keys():
-                        param_obj = args[-1].params()[key_new_obj]
+                    try:
+                        category = DataCollector.metadata_categories[type(args[-1]).__name__]
+                        for key_new_obj in args[-1].get_param_dict().keys():
+                            param_obj = args[-1].params()[key_new_obj]
 
-                        if not param_obj.constant:  # leave eventual constant values
-                            if key_new_obj in self.last_metadata[category].keys():  # check if stored
-                                old_entry = self.last_metadata[category][key_new_obj]
-                                if isinstance(param_obj, param.Integer):
-                                    old_entry = int(old_entry)
-                                elif isinstance(param_obj, param.String):
-                                    old_entry = str(old_entry)
+                            if not param_obj.constant:  # leave eventual constant values
+                                if key_new_obj in self.last_metadata[category].keys():  # check if stored
+                                    old_entry = self.last_metadata[category][key_new_obj]
+                                    if isinstance(param_obj, param.Integer):
+                                        old_entry = int(old_entry)
+                                    elif isinstance(param_obj, param.String):
+                                        old_entry = str(old_entry)
 
-                                setattr(args[-1], key_new_obj, old_entry)
+                                    setattr(args[-1], key_new_obj, old_entry)
+                    except KeyError:
+                        pass
 
                 elif len(args) == 4:  # dict entries and objects attributes
                     category = args[0]
@@ -255,7 +259,7 @@ class MetadataLightsheet(Metadata):
 
 
 class MetadataCamera(Metadata):
-    exposure = param.Number(default=2.0, bounds=[0.5, 50], doc='Exposure (ms)')
+    exposure = param.Number(default=2.0, bounds=[0.1, 50], doc='Exposure (ms)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 

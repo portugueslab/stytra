@@ -9,7 +9,8 @@ from stytra.metadata import MetadataCamera
 from PIL import Image
 
 class CameraViewWidget(QWidget):
-    def __init__(self, camera_queue, control_queue=None, camera_rotation=0):
+    def __init__(self, camera_queue, control_queue=None, camera_rotation=0,
+                 camera_parameters=None):
         """ A widget to show the camera and display the controls
 
         """
@@ -37,12 +38,13 @@ class CameraViewWidget(QWidget):
 
         self.layout.addWidget(self.camera_display_widget)
         if control_queue is not None:
-            self.metadata = MetadataCamera()
-            self.control_widget = ParameterGui(self.metadata)
+            self.camera_parameters = camera_parameters
+            self.control_widget = ParameterGui(self.camera_parameters)
             self.layout.addWidget(self.control_widget)
             for control in self.control_widget.parameter_controls:
                 control.control_widget.valueChanged.connect(self.update_controls)
             self.control_queue = control_queue
+            self.control_queue.put(self.camera_parameters.get_param_dict())
 
         self.captureButton = QPushButton('Catpure frame')
         self.captureButton.clicked.connect(self.save_image)
@@ -52,7 +54,7 @@ class CameraViewWidget(QWidget):
 
     def update_controls(self):
         self.control_widget.save_meta()
-        self.control_queue.put(self.metadata.get_param_dict())
+        self.control_queue.put(self.camera_parameters.get_param_dict())
 
     def update_image(self):
         try:
