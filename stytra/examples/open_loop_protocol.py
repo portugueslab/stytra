@@ -58,7 +58,7 @@ class Experiment(QMainWindow):
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=30)
+                                                gui_framerate=30, print_framerate=True)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 

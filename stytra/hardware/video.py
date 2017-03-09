@@ -101,7 +101,6 @@ class XimeaCamera(FrameProcessor):
                     pass
             if self.signal.is_set():
                 break
-                print('Got break message')
             self.cam.get_image(img)
             # TODO check if it does anything to add np.array
             arr = np.array(img.get_image_data_numpy())
@@ -196,7 +195,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    print('gui_put')
+                    #print('gui_put')
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
