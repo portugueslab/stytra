@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
 from stytra.stimulation.stimuli import Pause, MovingConstantly
@@ -6,7 +6,7 @@ from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
-from stytra.metadata import DataCollector, MetadataFish, MetadataLightsheet, MetadataGeneral
+from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.stimulation.backgrounds import gratings
 from stytra.tracking.tail import detect_tail_new
@@ -25,19 +25,32 @@ import qdarkstyle
 class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
+        self.app = app
         multiprocessing.set_start_method('spawn')
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
         self.gui_frame_queue = multiprocessing.Queue()
+        self.control_queue = multiprocessing.Queue()
         self.processing_parameter_queue = multiprocessing.Queue()
         self.tail_position_queue = multiprocessing.Queue()
         self.finished_sig = multiprocessing.Event()
 
-        self.app = app
+        # Take care of metadata:
+        self.general_data = MetadataGeneral()
+        self.fish_data = MetadataFish()
+        self.imaging_data = MetadataLightsheet()
+        self.camera_data = MetadataCamera()
 
-        self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
-                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        self.gui_refresh_timer = QTimer()
+        self.gui_refresh_timer.setSingleShot(False)
+
+
+
+        #self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
+
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
                                                 gui_queue=self.gui_frame_queue,
@@ -45,7 +58,7 @@ class Experiment(QMainWindow):
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=50)
+                                                gui_framerate=30, print_framerate=True)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
@@ -53,12 +66,15 @@ class Experiment(QMainWindow):
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
-                                                 tail_position_data=self.data_acc_tailpoints)
-        self.camera_viewer.timer.timeout.connect(self.stream_plot.update)
-        self.camera_viewer.timer.timeout.connect(self.data_acc_tailpoints.update_list)
+                                                 tail_position_data=self.data_acc_tailpoints,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
+        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+        self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
+        self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
-        # experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
+        # self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         # imaging_time = 10
         stim_duration = 2
@@ -92,10 +108,7 @@ class Experiment(QMainWindow):
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
         self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
 
-        # Take care of metadata:
-        self.general_data = MetadataGeneral()
-        self.fish_data = MetadataFish()
-        self.imaging_data = MetadataLightsheet()
+
 
         # Get info from microscope after setting connection with the LabView computer
         # IMPORTANT: Check IP!!!
@@ -139,14 +152,20 @@ class Experiment(QMainWindow):
         self.setCentralWidget(self.main_layout)
 
         # Start dispatcher:
-        self.videofile.start()
+        # self.videofile.start()
+        self.camera.start()
         self.frame_dispatcher.start()
+        self.gui_refresh_timer.start()
+
 
         # Show windows:
+
+        #self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        #self.showFullScreen()
+        #self.win_stim_disp.show()
         self.show()
-        self.win_stim_disp.show()
-        #self.win_stim_disp.windowHandle().setScreen(app.screens()[0])
-        # win_stim_disp.showFullScreen()
+
+
 
     def finishAndSave(self):
         time_tuple = list(zip(*self.stored_data))[0]
@@ -170,16 +189,17 @@ class Experiment(QMainWindow):
         self.closeEvent()
 
     def finishProtocol(self):
-        print(self.data_acc_tailpoints.stored_data[-100:])
-        self.camera_viewer.timer.stop()
-        print('Timer stopped')
 
         self.finished_sig.set()
+        self.camera.join(timeout=1)
+
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
 
-        self.videofile.terminate()
+
         print('Camera joined')
+        self.gui_refresh_timer.stop()
+        print('Timer stopped')
 
         self.finished = True
 

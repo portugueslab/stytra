@@ -1,3 +1,4 @@
+from ximea import xiapi
 try:
     from ximea import xiapi
 except ImportError:
@@ -57,12 +58,21 @@ class FrameProcessor(Process):
 
 
 class XimeaCamera(FrameProcessor):
-    def __init__(self, frame_queue=None, signal=None, control_queue=None, **kwargs):
+    def __init__(self, frame_queue=None, signal=None, control_queue=None, downsampling=2,
+                 **kwargs):
+        """
+        Class for controlling a XimeaCamera
+        :param frame_queue: queue for frame dispatching from camera
+        :param signal:
+        :param control_queue: queue with parameters to feed to the camera (gain, exposure, fps)
+        :param downsampling: downsampling factor (default 1)
+        """
         super().__init__(**kwargs)
 
         self.q = frame_queue
         self.control_queue = control_queue
         self.signal = signal
+        self.downsampling = downsampling
 
     def run(self):
         self.cam = xiapi.Camera()
@@ -70,6 +80,12 @@ class XimeaCamera(FrameProcessor):
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
+        downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
+        print(downsampling_str)
+        self.cam.set_downsampling(downsampling_str)
+        self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+        self.cam.set_sensor_feature_value(1)
+        self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.signal.wait(0.0001)
             if self.control_queue is not None:
@@ -79,6 +95,10 @@ class XimeaCamera(FrameProcessor):
                         self.cam.set_exposure(int(control_params['exposure']*1000))
                     if 'gain' in control_params.keys():
                         self.cam.set_gain(control_params['gain'])
+                    if 'framerate' in control_params.keys():
+                        print(self.cam.get_framerate())
+                        #self.cam.set_framerate(self.cam.get_framerate())
+                        self.cam.set_framerate(control_params['framerate'])
                 except Empty:
                     pass
             if self.signal.is_set():
@@ -127,7 +147,7 @@ class FrameDispatcher(FrameProcessor):
     """
     def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameter_queue=None,
-                 gui_framerate=30, **kwargs):
+                 gui_framerate=60, **kwargs):
         """
         :param frame_queue: queue dispatching frames from camera
         :param gui_queue: queue where to put frames to be displayed on the GUI
@@ -177,6 +197,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
+                    #print('gui_put')
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
@@ -335,7 +356,7 @@ class MovingFrameDispatcher(FrameDispatcher):
 
 
 if __name__ == '__main__':
-    from stytra.gui.camera_display import CameraDisplayWidget
+    from stytra.gui.camera_display import CameraViewWidget
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])
     q_cam = Queue()
@@ -343,12 +364,12 @@ if __name__ == '__main__':
     q_control = Queue()
     finished_sig = Event()
     cam = XimeaCamera(q_cam, finished_sig, q_control)
-    dispatcher = FrameDispatcher(q_cam, q_gui)
+    dispatcher = FrameDispatcher(q_cam, q_gui, finished_signal=finished_sig, print_framerate=True)
 
     cam.start()
     dispatcher.start()
 
-    win = CameraDisplayWidget(q_gui, q_control)
+    win = CameraViewWidget(q_gui, q_control)
 
     win.show()
     app.exec_()
