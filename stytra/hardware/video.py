@@ -1,3 +1,4 @@
+from ximea import xiapi
 try:
     from ximea import xiapi
 except ImportError:
@@ -12,6 +13,7 @@ from collections import deque
 
 from numba import jit
 
+import psutil
 
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
@@ -54,12 +56,21 @@ class FrameProcessor(Process):
 
 
 class XimeaCamera(FrameProcessor):
-    def __init__(self, frame_queue=None, signal=None, control_queue=None, **kwargs):
+    def __init__(self, frame_queue=None, signal=None, control_queue=None, downsampling=2,
+                 **kwargs):
+        """
+        Class for controlling a XimeaCamera
+        :param frame_queue: queue for frame dispatching from camera
+        :param signal:
+        :param control_queue: queue with parameters to feed to the camera (gain, exposure, fps)
+        :param downsampling: downsampling factor (default 1)
+        """
         super().__init__(**kwargs)
 
         self.q = frame_queue
         self.control_queue = control_queue
         self.signal = signal
+        self.downsampling = downsampling
 
     def run(self):
         self.cam = xiapi.Camera()
@@ -67,6 +78,12 @@ class XimeaCamera(FrameProcessor):
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
+        downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
+        print(downsampling_str)
+        self.cam.set_downsampling(downsampling_str)
+        self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+        self.cam.set_sensor_feature_value(1)
+        self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.signal.wait(0.0001)
             if self.control_queue is not None:
@@ -76,6 +93,10 @@ class XimeaCamera(FrameProcessor):
                         self.cam.set_exposure(int(control_params['exposure']*1000))
                     if 'gain' in control_params.keys():
                         self.cam.set_gain(control_params['gain'])
+                    if 'framerate' in control_params.keys():
+                        print(self.cam.get_framerate())
+                        #self.cam.set_framerate(self.cam.get_framerate())
+                        self.cam.set_framerate(control_params['framerate'])
                 except Empty:
                     pass
             if self.signal.is_set():
@@ -124,7 +145,7 @@ class FrameDispatcher(FrameProcessor):
     """
     def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameter_queue=None,
-                 gui_framerate=30, **kwargs):
+                 gui_framerate=60, **kwargs):
         """
         :param frame_queue: queue dispatching frames from camera
         :param gui_queue: queue where to put frames to be displayed on the GUI
@@ -174,6 +195,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
+                    #print('gui_put')
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
@@ -239,26 +261,26 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.framestart_queue = framestart_queue
         self.diag_queue = diag_queue
         self.signal_start_rec = signal_start_rec
+        self.mem_use = 0
 
     def run(self):
-        previous_time = datetime.now()
-        n_fps_frames = 10
         i = 0
-        current_framerate = 100
         every_x = 10
 
         t, frame_0 = self.frame_queue.get(timeout=5)
-        n_previous_compare = 3
-        i_previous = 0
+        n_previous_compare = 5
         previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
                                 dtype=np.uint8)
-        fish_threshold = 40
-        motion_threshold = 400
+        fish_threshold = 50
+        motion_threshold = 500
         frame_margin = 10
 
-        previous_images = deque()
         n_previous_save = 300
         n_next_save = 200
+
+
+        previous_images = deque()
+
         record_counter = 0
 
         i_frame = 0
@@ -290,12 +312,12 @@ class MovingFrameDispatcher(FrameDispatcher):
                         record_counter = n_next_save
 
                     if record_counter > 0:
-                        if self.signal_start_rec.is_set():
+                        if self.signal_start_rec.is_set() and self.mem_use < 0.9:
                             if not recording_state:
                                 frame_start = i_recorded
                                 i_previous = 0
                                 while previous_images:
-                                    time, im = previous_images.pop()
+                                    time, im = previous_images.popleft()
                                     self.framestart_queue.put(time)
                                     self.output_queue.put(im)
                                     i_recorded += 1
@@ -315,19 +337,16 @@ class MovingFrameDispatcher(FrameDispatcher):
                     previous_images.popleft()
 
                 # calculate the framerate
-                if i == n_fps_frames - 1:
-                    current_time = datetime.now()
-                    current_framerate = n_fps_frames / (
-                        current_time - previous_time).total_seconds()
-                    every_x = max(int(current_framerate / self.gui_framerate), 1)
-                    # print('{:.2f} FPS'.format(framerate))
-                    previous_time = current_time
-                i = (i + 1) % n_fps_frames
+                self.update_framerate()
+                if self.current_framerate is not None:
+                    every_x = max(int(self.current_framerate / self.gui_framerate), 1)
 
                 if self.i == 0:
+                    self.mem_use = psutil.virtual_memory().used/psutil.virtual_memory().total
                     self.gui_queue.put(current_frame)  # frame
-                    print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
-                        current_framerate, difsum, n_crossed))
+                    if self.current_framerate:
+                        print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
+                            self.current_framerate, difsum, n_crossed))
                 self.i = (self.i + 1) % every_x
             except Empty:
                 print('empty_queue')
@@ -335,7 +354,7 @@ class MovingFrameDispatcher(FrameDispatcher):
 
 
 if __name__ == '__main__':
-    from stytra.gui.camera_display import CameraDisplayWidget
+    from stytra.gui.camera_display import CameraViewWidget
     from PyQt5.QtWidgets import QApplication
     app = QApplication([])
     q_cam = Queue()
@@ -343,12 +362,12 @@ if __name__ == '__main__':
     q_control = Queue()
     finished_sig = Event()
     cam = XimeaCamera(q_cam, finished_sig, q_control)
-    dispatcher = FrameDispatcher(q_cam, q_gui)
+    dispatcher = FrameDispatcher(q_cam, q_gui, finished_signal=finished_sig, print_framerate=True)
 
     cam.start()
     dispatcher.start()
 
-    win = CameraDisplayWidget(q_gui, q_control)
+    win = CameraViewWidget(q_gui, q_control)
 
     win.show()
     app.exec_()

@@ -26,10 +26,21 @@ class Experiment(QMainWindow):
         experiment_folder = r'D:\vilim\fishrecordings\stytra'
         vidfile = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.avi")
 
+        general_data = metadata.MetadataGeneral()
+        fish_data = metadata.MetadataFish()
+
+        self.im_filename = r"C:\Users\vilim\experimental\underwater\SeamlessRocks.png"
+
+        self.camera_parameters = metadata.MetadataCamera()
+
         self.dc = metadata.DataCollector(folder_path=experiment_folder)
 
+        self.dc.add_data_source(fish_data)
+        self.dc.add_data_source(general_data)
+        self.dc.add_data_source(self.camera_parameters)
+
         # set up the stimuli
-        n_vels = 120
+        n_vels = 240
         stim_duration = 15
         refresh_rate = 1/60.
 
@@ -46,7 +57,7 @@ class Experiment(QMainWindow):
             xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
             ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
 
-        bg = existing_file_background(r"C:\Users\vilim\experimental\poisson_inverted.h5")
+        bg = existing_file_background(self.im_filename)
 
         motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
         self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
@@ -86,7 +97,8 @@ class Experiment(QMainWindow):
         self.setCentralWidget(self.main_layout)
         self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
                                                           self.control_queue,
-                                                          camera_rotation=0)
+                                                          camera_rotation=0,
+                                                          camera_parameters=self.camera_parameters)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
@@ -102,15 +114,12 @@ class Experiment(QMainWindow):
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
 
-        general_data = metadata.MetadataGeneral()
-        fish_data = metadata.MetadataFish()
         self.metalist_gui = MetaListGui([general_data, fish_data])
-        self.dc.add_data_source(fish_data)
-        self.dc.add_data_source(general_data)
 
         self.stimulus_data = dict(background=bg, motion=motion)
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
+        self.dc.add_data_source('stimulus', 'image_file', self.im_filename)
         self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data, use_last_val=False)
         self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
@@ -143,7 +152,6 @@ class Experiment(QMainWindow):
         except Empty:
             pass
 
-
     def finishProtocol(self):
         self.finished_sig.set()
         self.camera.join(timeout=3)
@@ -151,6 +159,7 @@ class Experiment(QMainWindow):
         self.frame_dispatcher.join(timeout=3)
         print('Frame dispatcher terminated')
         timedata = []
+
         while True:
             try:
                 time = self.framestart_queue.get(timeout=0.01)
@@ -164,7 +173,7 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('behaviour', 'frame_times', timedata)
         self.dc.save()
 
-        self.recorder.join(timeout=10)
+        self.recorder.join(timeout=100)
         print('Recorder joined')
         self.finished = True
 
