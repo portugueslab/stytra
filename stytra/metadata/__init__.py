@@ -15,7 +15,9 @@ class DataCollector:
     """
 
     # Categories are hardwired, to control integrity of the output HDF5 file
-    data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={}, camera={})
+    data_dict_template = dict(fish={}, stimulus={}, imaging={},
+                              behaviour={}, general={}, camera={},
+                              tracking={})
 
     def __init__(self, *data_tuples_list, folder_path='./'):
         """
