@@ -216,16 +216,15 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
     return points
 
 
-
-
 @jit(nopython=True, cache=True)
 def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_begin=2):
     """ Finds a midline for a fish image, with the starting point and direction
     found by the fish start function
-    it goes first a bit in the direction of the tail, and then back,
+    it goes first a bit in the direction of the tail then back to the start of
+    the head and then continues onwards
      so the starting point is refined
 
-    :param im: image to find tail
+    :param im:
     :param xm:
     :param ym:
     :param angle:
@@ -238,16 +237,21 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_beg
     dx = np.cos(angle) * m
     dy = np.sin(angle) * m
 
-    # go towards the midline
+    # go towards the midling
     for i in range(n_points_begin):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
 
     # turn back
     dx = -dx
     dy = -dy
-    # and follow the midline to the new beginning
-    for i in range(n_points_begin):
+    # and follow the midline to the new beginning (stop when the fish ends)
+    n_steps = 15
+    for i in range(n_steps):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+        if ym+dy>=im.shape[0] or xm+dx>=im.shape[1]:
+            break
+        elif im[int(ym+dy), int(xm+dx)] ==0:
+            break
 
     # turn again and find the whole tail
     dx = -dx
@@ -257,4 +261,5 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_beg
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
         if xm > 0:
             points.append((xm, ym, acc))
+
     return points

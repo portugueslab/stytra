@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 
+
 def a_to_tc(a):
     """ Useful for drawing things with openCV,
     converts arrays to tuples of integers
@@ -61,6 +62,7 @@ def draw_fish_new(display, mes, params):
                                     (250, 100, 100))
 
     return display
+
 
 def draw_tail(display, points):
     if len(display.shape) == 2:
