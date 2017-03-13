@@ -80,24 +80,28 @@ class XimeaCamera(FrameProcessor):
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
-        downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
-        self.cam.set_downsampling(downsampling_str)
-        self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
-        self.cam.set_sensor_feature_value(1)
+        if not(str(self.cam.get_device_name() == 'MQ003MG-CM')):
+            downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
+            self.cam.set_downsampling(downsampling_str)
+            self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+            self.cam.set_sensor_feature_value(1)
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.signal.wait(0.0001)
             if self.control_queue is not None:
                 try:
                     control_params = self.control_queue.get(timeout=0.0001)
-                    if 'exposure' in control_params.keys():
-                        self.cam.set_exposure(int(control_params['exposure']*1000))
-                    if 'gain' in control_params.keys():
-                        self.cam.set_gain(control_params['gain'])
-                    if 'framerate' in control_params.keys():
-                        print(self.cam.get_framerate())
-                        #self.cam.set_framerate(self.cam.get_framerate())
-                        self.cam.set_framerate(control_params['framerate'])
+                    try:
+                        if 'exposure' in control_params.keys():
+                            self.cam.set_exposure(int(control_params['exposure']*1000))
+                        if 'gain' in control_params.keys():
+                            self.cam.set_gain(control_params['gain'])
+                        if 'framerate' in control_params.keys():
+                            print(self.cam.get_framerate())
+                            #self.cam.set_framerate(self.cam.get_framerate())
+                            self.cam.set_framerate(control_params['framerate'])
+                    except xiapi.Xi_error:
+                        print('Invalid camera settings')
                 except Empty:
                     pass
             if self.signal.is_set():
