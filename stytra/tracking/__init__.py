@@ -37,6 +37,14 @@ class DataAccumulator(QObject):
             except Empty:
                 break
 
+    def get_data_arrays(self):
+        time_tuple = list(zip(*self.stored_data))[0]
+        data_tuple = list(zip(*self.stored_data))[1]
+        time_arr = np.array([(t - time_tuple[0]).total_seconds()
+                             for t in time_tuple])
+        tail_arr = np.array(data_tuple)
+        return time_arr, tail_arr
+
 
 
 

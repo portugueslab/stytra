@@ -100,6 +100,7 @@ class ProtocolControlWindow(QWidget):
                 self.layout.addLayout(widget)
 
         self.setLayout(self.layout)
+        self.refresh_ROI()
 
     def reset_ROI(self):
         self.widget_view.roi_box.setPos(self.display_window.display_params['window']['pos'])

@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QTimer, Qt, QRectF, QObject
+from PyQt5.QtCore import QTimer, Qt, QRectF, QObject, QPoint
 from PyQt5.QtGui import QMouseEvent
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 import pyqtgraph as pg
@@ -7,6 +7,7 @@ import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
 from stytra.tracking.diagnostics import draw_tail
+
 
 import cv2
 
@@ -76,6 +77,7 @@ class CameraViewWidget(QWidget):
             except Empty:
                 break
         if im_in is not None:
+            #print('get frame!')
             self.image_item.setImage(self.modify_frame(im_in))
 
     def save_image(self):
@@ -84,7 +86,7 @@ class CameraViewWidget(QWidget):
 
 
 class CameraTailSelection(CameraViewWidget):
-    def __init__(self, tail_start_points_queue, tail_position_data, *args, **kwargs):
+    def __init__(self, tail_start_points_queue, tail_position_data, roi_dict=None, *args, **kwargs):
         """
         Widget for select tail points and monitoring tracking in embedded animal.
         :param tail_start_points_queue: queue where to dispatch tail points
@@ -95,27 +97,49 @@ class CameraTailSelection(CameraViewWidget):
 
         self.label = pg.TextItem('Select tail of the fish:')
 
-        self.roi_tail = pg.LineSegmentROI(((320, 480), (320, 0)),
+        if not roi_dict:
+            self.roi_dict = {'start_y': 320, 'start_x': 480,
+                             'length_y': 0, 'length_x': -400}
+        self.roi_dict = roi_dict
+
+        self.roi_tail = pg.LineSegmentROI(((self.roi_dict['start_y'], self.roi_dict['start_x']),
+                                           (self.roi_dict['start_y'] + self.roi_dict['length_y'],
+                                            self.roi_dict['start_x'] + self.roi_dict['length_x'])),
                                           pen=dict(color=(250, 10, 10),
                                                    width=4))
         self.display_area.addItem(self.roi_tail)
 
         self.tail_start_points_queue = tail_start_points_queue
 
+
+
+        self.get_tail_coords()
         self.tail_start_points_queue.put(self.get_tail_coords())
         self.roi_tail.sigRegionChanged.connect(self.send_roi_to_queue)
+
 
     def send_roi_to_queue(self):
         self.tail_start_points_queue.put(self.get_tail_coords())
 
+    #def set_tail_coords(self):
+    #    print(self.roi_tail.listPoints()[0].x())
+    #    print(self.roi_dict['start_y'])
+    #    self.roi_tail.listPoints()[0].setX(self.roi_dict['start_y'])
+    #    self.roi_tail.listPoints()[0].setY(self.roi_dict['start_x'])
+    #    self.roi_tail.listPoints()[1].setX(self.roi_dict['start_y'] + self.roi_dict['length_y'])
+    #    self.roi_tail.listPoints()[1].setY(self.roi_dict['start_x'] + self.roi_dict['length_x'])
+
+        print(self.roi_tail.listPoints()[0].x())
+
     def get_tail_coords(self):
         # Invert x and y:
-        start_y = self.roi_tail.listPoints()[0].x()  # start y
-        start_x = self.roi_tail.listPoints()[0].y()  # start x
-        length_y = self.roi_tail.listPoints()[1].x() - start_y  # delta y
-        length_x = self.roi_tail.listPoints()[1].y() - start_x  # delta x
-        return {'start_x': start_x, 'start_y': start_y,
-                'tail_len_x': length_x, 'tail_len_y': length_y,
+        #self.set_tail_coords()
+        self.roi_dict['start_y'] = self.roi_tail.listPoints()[0].x()  # start y
+        self.roi_dict['start_x'] = self.roi_tail.listPoints()[0].y()  # start x
+        self.roi_dict['length_y'] = self.roi_tail.listPoints()[1].x() - self.roi_dict['start_y']  # delta y
+        self.roi_dict['length_x'] = self.roi_tail.listPoints()[1].y() - self.roi_dict['start_x']  # delta x
+        return {'start_x': self.roi_dict['start_x'], 'start_y': self.roi_dict['start_y'],
+                'tail_len_x': self.roi_dict['length_x'], 'tail_len_y': self.roi_dict['length_y'],
                 'n_segments': 30, 'window_size': 30,
                 'inverted': False, 'filtered': True}
 

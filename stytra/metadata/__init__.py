@@ -19,7 +19,7 @@ class DataCollector:
                               behaviour={}, general={}, camera={},
                               tracking={})
 
-    def __init__(self, *data_tuples_list, folder_path='./'):
+    def __init__(self, *data_tuples_list, folder_path='./', use_last_val=True):
         """
         Init function.
             - Metadata objects: can be added without specifications
@@ -54,9 +54,9 @@ class DataCollector:
         # Add all the data tuples provided upon instantiation:
         for data_element in data_tuples_list:
             if isinstance(data_element, Metadata):
-                self.add_data_source(data_element)
+                self.add_data_source(data_element, use_last_val=use_last_val)
             else:
-                self.add_data_source(*data_element)
+                self.add_data_source(*data_element, use_last_val=use_last_val)
 
     def add_data_source(self, *args, use_last_val=True):
         """

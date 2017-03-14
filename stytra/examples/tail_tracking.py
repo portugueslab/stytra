@@ -7,6 +7,7 @@ from stytra.tracking import DataAccumulator
 from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget
 from stytra.gui.plots import TailPlot
+from stytra.metadata import MetadataCamera
 import qdarkstyle
 import multiprocessing
 
@@ -21,36 +22,41 @@ class Experiment(QMainWindow):
         self.finished = False
         self.frame_queue = Queue()
         self.gui_frame_queue = Queue()
+        self.control_queue = Queue()
         self.processing_parameter_queue = Queue()
         self.tail_position_queue = Queue()
         self.finished_sig = Event()
-        self.timer = QTimer()
-        self.timer.setSingleShot(False)
+        self.gui_refresh_timer = QTimer()
+        self.gui_refresh_timer.setSingleShot(False)
+        self.camera_data = MetadataCamera()
 
-        self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
-                                    '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        #self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                            '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
-                                                gui_queue=self.gui_frame_queue,
+        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=50)
+                                                gui_framerate=10, print_framerate=False)
 
-        self.data_accumulator = DataAccumulator(self.tail_position_queue)
+        self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
-        self.stream_plot = TailPlot(data_accumulator=self.data_accumulator)
+        self.stream_plot = TailPlot(data_accumulator=self.data_acc_tailpoints)
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
-                                                 tail_position_data=self.data_accumulator,
-                                                 update_timer=self.timer)
-        self.timer.timeout.connect(self.stream_plot.update)
-        self.timer.timeout.connect(self.data_accumulator.update_list)
-        self.videofile.start()
+                                                 tail_position_data=self.data_acc_tailpoints,
+                                                 update_timer=self.gui_refresh_timer,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
+        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+        self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
+
+        self.camera.start()
         self.frame_dispatcher.start()
-        self.timer.start()
+        self.gui_refresh_timer.start()
 
         self.main_layout = QSplitter(Qt.Vertical)
         self.main_layout.addWidget(self.camera_viewer)
@@ -62,16 +68,17 @@ class Experiment(QMainWindow):
 
     def finishProtocol(self):
 
-        self.timer.stop()
-        print('Timer stopped')
-
         self.finished_sig.set()
+        # self.camera.join(timeout=1)
+        self.camera.terminate()
+
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
 
-        self.videofile.terminate()
-        print('Camera joined')
 
+        print('Camera joined')
+        self.gui_refresh_timer.stop()
+        print('Timer stopped')
 
         self.finished = True
 

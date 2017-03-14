@@ -149,7 +149,7 @@ class FrameDispatcher(FrameProcessor):
     """
     def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameter_queue=None,
-                 gui_framerate=60, **kwargs):
+                 gui_framerate=30, **kwargs):
         """
         :param frame_queue: queue dispatching frames from camera
         :param gui_queue: queue where to put frames to be displayed on the GUI
@@ -199,7 +199,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    #print('gui_put')
+                    #print(every_x)
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
@@ -359,6 +359,7 @@ class MovingFrameDispatcher(FrameDispatcher):
 
 if __name__ == '__main__':
     from stytra.gui.camera_display import CameraViewWidget
+    from PyQt5.QtCore import QTimer
     from PyQt5.QtWidgets import QApplication
     from stytra.metadata import MetadataCamera
     app = QApplication([])
@@ -367,13 +368,15 @@ if __name__ == '__main__':
     q_control = Queue()
     finished_sig = Event()
     meta = MetadataCamera()
+    timer = QTimer()
+    timer.setSingleShot(False)
     cam = XimeaCamera(q_cam, finished_sig, q_control)
     dispatcher = FrameDispatcher(q_cam, q_gui, finished_signal=finished_sig, print_framerate=True)
 
     cam.start()
     dispatcher.start()
 
-    win = CameraViewWidget(q_gui, q_control, camera_parameters=meta)
+    win = CameraViewWidget(q_gui, update_timer=timer)
 
     win.show()
     app.exec_()
