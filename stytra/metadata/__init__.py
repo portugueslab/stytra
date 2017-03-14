@@ -15,7 +15,9 @@ class DataCollector:
     """
 
     # Categories are hardwired, to control integrity of the output HDF5 file
-    data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={})
+    data_dict_template = dict(fish={}, stimulus={}, imaging={},
+                              behaviour={}, general={}, camera={},
+                              tracking={})
 
     def __init__(self, *data_tuples_list, folder_path='./'):
         """
@@ -256,8 +258,9 @@ class MetadataLightsheet(Metadata):
 
 class MetadataCamera(Metadata):
     category = 'camera'
+
     exposure = param.Number(default=2, bounds=[0.1, 50], doc='Exposure (ms)')
-    framerate = param.Number(default=100, bounds=[0.5, 1000], doc='Frame rate (Hz)')
+    framerate = param.Number(default=500, bounds=[0.5, 1000], doc='Frame rate (Hz)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 

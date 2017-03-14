@@ -15,6 +15,7 @@ from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWrite
 from stytra.tracking import FishTrackingProcess
 from multiprocessing import Queue, Event
 from queue import Empty
+from PyQt5.QtCore import QTimer
 import datetime
 import param as pa
 
@@ -38,6 +39,9 @@ class Experiment(QMainWindow):
         self.dc.add_data_source(fish_data)
         self.dc.add_data_source(general_data)
         self.dc.add_data_source(self.camera_parameters)
+
+        self.gui_timer = QTimer()
+        self.gui_timer.setSingleShot(False)
 
         # set up the stimuli
         n_vels = 240
@@ -88,7 +92,6 @@ class Experiment(QMainWindow):
         self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
                                      self.record_queue, finished_signal=self.finished_sig)
 
-
         self.calibrator = calibration.CircleCalibrator(dh=50)
         self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
         self.win_stim_disp.widget_display.calibration = self.calibrator
@@ -99,10 +102,12 @@ class Experiment(QMainWindow):
                                                           self.control_queue,
                                                           camera_rotation=0,
                                                           camera_parameters=self.camera_parameters)
+        self.gui_timer.timeout.connect(self.camera_view.update_image)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
         self.win_control.refresh_ROI()
+        self.win_control.button_show_calib.clicked.connect(self.config_cam_calib)
         self.main_layout.addWidget(self.win_control)
 
         self.win_stim_disp.show()
@@ -133,13 +138,18 @@ class Experiment(QMainWindow):
         self.camera.start()
         self.frame_dispatcher.start()
         self.recorder.start()
+        self.gui_timer.start()
         self.finished = False
         self.show()
+
+    def config_cam_calib(self):
+        pass
+        # TODO change camera settings when calibrating
 
     def calibrate(self):
         try:
             # we steal a frame from the GUI display queue to calibrate
-            im = self.gui_frame_queue.get(timeout=1)
+            time, im = self.gui_frame_queue.get(timeout=1)
             try:
                 self.calibrator.find_transform_matrix(im)
                 self.win_control.widget_view.display_calibration_pattern(self.calibrator)
