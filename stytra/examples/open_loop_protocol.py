@@ -45,10 +45,10 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
-        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
-                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        #self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
@@ -64,36 +64,36 @@ class Experiment(QMainWindow):
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
-                                                 update_timer=self.gui_refresh_timer)
-                                                 # control_queue=self.control_queue,
-                                                 # camera_parameters=self.camera_data)
+                                                 update_timer=self.gui_refresh_timer,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
-        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
+        # self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         # imaging_time = 10
-        stim_duration = 2
+        stim_duration = 5
         refresh_rate = 60.
         initial_pause = 0
-        mm_px = 150 / 87
+        mm_px = 1#150 / 87
         n_repeats = 2  # (round((imaging_time - initial_pause) / (stim_duration + pause_duration)))
 
         # Generate stimulus protocol:
         self.stimuli = []
         self.stimuli.append(Pause(duration=initial_pause - 2))
-        self.bg = gratings(orientation='horizontal', shape='sinusoidal',
-                      mm_px=mm_px, spatial_period=0.2)
+        self.bg = gratings(orientation='horizontal', shape='square',
+                      mm_px=mm_px, spatial_period=0.02)
         for i in range(n_repeats):
             self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=10, mm_px=mm_px,
+            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=20, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
             self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-10, mm_px=mm_px,
+            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-20, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
         self.protocol = Protocol(self.stimuli, 1/refresh_rate)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
@@ -149,7 +149,8 @@ class Experiment(QMainWindow):
 
         # Show windows:
         self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[0])
+        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        self.win_stim_disp.showFullScreen()
         self.showMaximized()
         #self.show()
 
@@ -171,13 +172,13 @@ class Experiment(QMainWindow):
                                             self.dataframe)
 
         self.data_collector.save()
-        self.zmq_trigger.stop()
+        #self.zmq_trigger.stop()
         self.closeEvent()
 
     def finishProtocol(self):
 
         self.finished_sig.set()
-        #self.camera.join(timeout=1)
+        # self.camera.join(timeout=1)
         self.camera.terminate()
 
         self.frame_dispatcher.terminate()
