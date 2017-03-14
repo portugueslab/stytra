@@ -9,7 +9,7 @@ from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.stimulation.backgrounds import gratings
-from stytra.tracking.tail import detect_tail_new
+from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.plots import TailPlot
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
@@ -45,16 +45,13 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
+        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
+        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
-        #self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
-        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
-
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
-
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
-                                                gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_new,
+        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
+                                                processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
@@ -67,21 +64,21 @@ class Experiment(QMainWindow):
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
-                                                 control_queue=self.control_queue,
-                                                 camera_parameters=self.camera_data)
+                                                 update_timer=self.gui_refresh_timer)
+                                                 # control_queue=self.control_queue,
+                                                 # camera_parameters=self.camera_data)
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        # self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
+        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         # imaging_time = 10
         stim_duration = 2
         refresh_rate = 60.
         initial_pause = 0
         mm_px = 150 / 87
-
         n_repeats = 2  # (round((imaging_time - initial_pause) / (stim_duration + pause_duration)))
 
         # Generate stimulus protocol:
@@ -101,21 +98,16 @@ class Experiment(QMainWindow):
         self.protocol = Protocol(self.stimuli, 1/refresh_rate)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
 
-        # protocol.sig_protocol_finished.connect(zmq_trigger.stop)
-
         # Prepare control window and window for displaying the  stimulus
         # Instantiate display window and control window:
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
         self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
-
-
 
         # Get info from microscope after setting connection with the LabView computer
         # IMPORTANT: Check IP!!!
         # zmq_trigger = ZmqLightsheetTrigger(pause=initial_pause, tcp_address='tcp://192.168.233.156:5555')
         #
         # protocol.sig_protocol_started.connect(zmq_trigger.start)
-        # TODO: Change this part with one dictionary for the correspondences
         # dict_lightsheet_info = zmq_trigger.get_ls_data()
         # imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Sawtooth Wave'])
         # imaging_data.set_fix_value('piezo_frequency', dict_lightsheet_info['Piezo Frequency'])
@@ -128,11 +120,9 @@ class Experiment(QMainWindow):
                                             folder_path=self.experiment_folder)
 
         self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-        self.data_collector.add_data_source('stimulus', 'window_pos',
-                                            self.win_control.widget_view.roi_box.state, 'pos')
+        self.data_collector.add_data_source('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state, 'pos')
         self.data_collector.add_data_source('stimulus', 'window_size',
                                             self.win_control.widget_view.roi_box.state, 'size')
-
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.protocol.sig_protocol_finished.connect(self.data_collector.save)
@@ -152,7 +142,6 @@ class Experiment(QMainWindow):
         self.setCentralWidget(self.main_layout)
 
         # Start dispatcher:
-        # self.videofile.start()
         self.camera.start()
         self.frame_dispatcher.start()
         self.gui_refresh_timer.start()
@@ -160,7 +149,7 @@ class Experiment(QMainWindow):
 
         # Show windows:
         self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        self.win_stim_disp.windowHandle().setScreen(app.screens()[0])
         self.showMaximized()
         #self.show()
 
@@ -182,15 +171,14 @@ class Experiment(QMainWindow):
                                             self.dataframe)
 
         self.data_collector.save()
-        #print(self.win_control.data_collector.stored_data)
-        #self.data_collector.add_data_source('behaviour', 'tail_tracking',
-        #                                    )
+        self.zmq_trigger.stop()
         self.closeEvent()
 
     def finishProtocol(self):
 
         self.finished_sig.set()
-        self.camera.join(timeout=1)
+        #self.camera.join(timeout=1)
+        self.camera.terminate()
 
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')

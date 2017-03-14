@@ -1,12 +1,12 @@
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton, QMainWindow, QSplitter
 
 from multiprocessing import Queue, Event
 from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
 from stytra.tracking import DataAccumulator
-from stytra.tracking.tail import detect_tail_new
+from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget
-from stytra.gui.plots import StramingPlotWidget
+from stytra.gui.plots import TailPlot
 import qdarkstyle
 import multiprocessing
 
@@ -24,13 +24,15 @@ class Experiment(QMainWindow):
         self.processing_parameter_queue = Queue()
         self.tail_position_queue = Queue()
         self.finished_sig = Event()
+        self.timer = QTimer()
+        self.timer.setSingleShot(False)
 
         self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
                                     '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
                                                 gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_new,
+                                                processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
@@ -38,15 +40,17 @@ class Experiment(QMainWindow):
 
         self.data_accumulator = DataAccumulator(self.tail_position_queue)
 
-        self.stream_plot = StramingPlotWidget(data_accumulator=self.data_accumulator)
+        self.stream_plot = TailPlot(data_accumulator=self.data_accumulator)
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
-                                                 tail_position_data=self.data_accumulator)
-        self.camera_viewer.timer.timeout.connect(self.stream_plot.update)
-        self.camera_viewer.timer.timeout.connect(self.data_accumulator.update_list)
+                                                 tail_position_data=self.data_accumulator,
+                                                 update_timer=self.timer)
+        self.timer.timeout.connect(self.stream_plot.update)
+        self.timer.timeout.connect(self.data_accumulator.update_list)
         self.videofile.start()
         self.frame_dispatcher.start()
+        self.timer.start()
 
         self.main_layout = QSplitter(Qt.Vertical)
         self.main_layout.addWidget(self.camera_viewer)
@@ -58,7 +62,7 @@ class Experiment(QMainWindow):
 
     def finishProtocol(self):
 
-        self.camera_viewer.timer.stop()
+        self.timer.stop()
         print('Timer stopped')
 
         self.finished_sig.set()

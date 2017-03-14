@@ -1,4 +1,3 @@
-from ximea import xiapi
 try:
     from ximea import xiapi
 except ImportError:

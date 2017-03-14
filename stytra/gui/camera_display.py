@@ -12,7 +12,7 @@ import cv2
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0,
-                 camera_parameters=None):
+                 camera_parameters=None, update_timer=None):
         """
         A widget to show the camera and display the controls
         :param camera_queue: queue dispatching frames to display
@@ -33,7 +33,8 @@ class CameraViewWidget(QWidget):
         self.camera_queue = camera_queue
         self.control_queue = control_queue
         self.camera_rotation = camera_rotation
-        self.update_image()
+        self.update_timer = update_timer
+        self.update_timer.timeout.connect(self.update_image)
         self.centre = np.array([0, 0])
 
         self.layout = QVBoxLayout()
@@ -115,11 +116,11 @@ class CameraTailSelection(CameraViewWidget):
         length_x = self.roi_tail.listPoints()[1].y() - start_x  # delta x
         return {'start_x': start_x, 'start_y': start_y,
                 'tail_len_x': length_x, 'tail_len_y': length_y,
-                'n_segments': 30, 'window_size': 30}
+                'n_segments': 30, 'window_size': 30,
+                'inverted': False, 'filtered': True}
 
     def modify_frame(self, frame):
         position_data = None
-
         try:
             if self.tail_position_data:
                 position_data = self.tail_position_data.stored_data[-1][1]
