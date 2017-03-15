@@ -184,13 +184,13 @@ def detect_fishes(frame, mask, params, diagnostics=False):
 class MidlineDetectionParams(Metadata):
     target_area = pa.Integer(450, (0, 700))
     area_tolerance = pa.Integer(320, (0, 700))
-    n_tail_segments = pa.Integer(18, (1, 20))
+    n_tail_segments = pa.Integer(14, (1, 20))
     tail_segment_length = pa.Number(4., (0.5, 10))
     tail_detection_radius = pa.Integer(9, (1, 15))
-    n_tail_points_return = pa.Integer(2, (0, 10))
-    n_points_skip = pa.Integer(2, (0, 10))
     background_noise_sigma = pa.Number(5, (0.1, 20))
     background_ratio = pa.Number(0.5, (0.0, 1.0))
+    eye_and_bladder_threshold = pa.Integer(100, (0, 255),
+        doc='Thresholding used to find the centre of mass of the head')
 
 
 def detect_fish_midline(frame, mask, params):
@@ -210,11 +210,10 @@ def detect_fish_midline(frame, mask, params):
 
     # find the contours corresponding to a fish
     measurements = []
-    skip_points=params['n_points_skip']
 
     for fish_contour in contours:
-        if np.abs(cv2.contourArea(fish_contour) - params['target_area']) < \
-                params['area_tolerance']:
+        if np.abs(cv2.contourArea(fish_contour) - params.target_area) < \
+                params.area_tolerance:
             fx, fy, fw, fh = cv2.boundingRect(fish_contour)
 
             # crop the frame around the contour
@@ -222,32 +221,36 @@ def detect_fish_midline(frame, mask, params):
             fc = (255 - frame[fy:fy + fh, fx:fx + fw]) * (mc // 255)
 
             # find the beginning
-            y0, x0, angle = fish_start(mc)
+            y0, x0, angle = fish_start(fc, params.eye_and_bladder_threshold)
             if y0 < 0:
                 continue
 
             # find the midline (while also refining the beginning)
             points = find_fish_midline(fc, x0, y0, angle,
-                                       m=params['tail_segment_length'],
-                                       r=params['tail_detection_radius'],
-                                       n_points_max=params['n_tail_segments'],
-                                       n_points_begin=params['n_tail_points_return'])
-            angles = []
-            for p1, p2 in zip(points[skip_points:-1], points[skip_points+1:]):
-                angles.append(np.arctan2(p2[1]-p1[1],
-                                         p2[0] - p1[0]))
-            if len(angles) == 0:
-                continue
-            while len(angles) < params['n_tail_segments']:
-                angles.append(angles[-1])
+                                       m=params.tail_segment_length,
+                                       r=params.tail_detection_radius,
+                                       n_points_max=params.n_tail_segments)
+            if len(points) == params.n_tail_segments:
+                angles = []
+                for p1, p2 in zip(points[0:-1], points[1:]):
+                    angles.append(np.arctan2(p2[1]-p1[1],
+                                             p2[0] - p1[0]))
 
-            measurements.append([points[skip_points][0]+fx, points[skip_points][1]+fy] + angles)
+
+                measurements.append([points[0][0]+fx, points[0][1]+fy] + angles)
 
     return measurements
 
 
-def fish_start(mask):
-    mom = cv2.moments(cv2.erode(mask,np.ones((7,7), dtype=np.uint8)))
+def fish_start(mask, take_min=100):
+    """ Find the centre of head of the fish
+
+    :param mask:
+    :param take_min:
+    :return:
+    """
+    # take the centre of mass of only the darkest parts, the eyes and the
+    mom = cv2.moments(np.maximum(mask.astype(np.int16)-take_min,0)) # cv2.erode(mask,np.ones((7,7), dtype=np.uint8))
     if mom['m00'] == 0:
         return -1, -1, 0
     y0 = mom['m01']/mom['m00']

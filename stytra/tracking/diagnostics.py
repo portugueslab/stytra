@@ -48,8 +48,8 @@ def draw_fish_new(display, mes, params):
 
     points = [np.array([mes['x'], mes['y']])]
     for i, col in enumerate(
-            ['th_{:02d}'.format(i) for i in range(params['n_tail_segments'])]):
-        points.append(points[-1] + params['tail_segment_length'] * np.array(
+            ['th_{:02d}'.format(i) for i in range(params.n_tail_segments-1)]):
+        points.append(points[-1] + params.tail_segment_length * np.array(
             [np.cos(mes[col]), np.sin(mes[col])]))
 
     points = np.array(points)
