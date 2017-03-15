@@ -1,4 +1,3 @@
-from ximea import xiapi
 try:
     from ximea import xiapi
 except ImportError:
@@ -80,25 +79,28 @@ class XimeaCamera(FrameProcessor):
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
-        downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
-        print(downsampling_str)
-        self.cam.set_downsampling(downsampling_str)
-        self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
-        self.cam.set_sensor_feature_value(1)
+        if not(str(self.cam.get_device_name() == 'MQ003MG-CM')):
+            downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
+            self.cam.set_downsampling(downsampling_str)
+            self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+            self.cam.set_sensor_feature_value(1)
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.signal.wait(0.0001)
             if self.control_queue is not None:
                 try:
                     control_params = self.control_queue.get(timeout=0.0001)
-                    if 'exposure' in control_params.keys():
-                        self.cam.set_exposure(int(control_params['exposure']*1000))
-                    if 'gain' in control_params.keys():
-                        self.cam.set_gain(control_params['gain'])
-                    if 'framerate' in control_params.keys():
-                        print(self.cam.get_framerate())
-                        #self.cam.set_framerate(self.cam.get_framerate())
-                        self.cam.set_framerate(control_params['framerate'])
+                    try:
+                        if 'exposure' in control_params.keys():
+                            self.cam.set_exposure(int(control_params['exposure']*1000))
+                        if 'gain' in control_params.keys():
+                            self.cam.set_gain(control_params['gain'])
+                        if 'framerate' in control_params.keys():
+                            print(self.cam.get_framerate())
+                            #self.cam.set_framerate(self.cam.get_framerate())
+                            self.cam.set_framerate(control_params['framerate'])
+                    except xiapi.Xi_error:
+                        print('Invalid camera settings')
                 except Empty:
                     pass
             if self.signal.is_set():
@@ -147,7 +149,7 @@ class FrameDispatcher(FrameProcessor):
     """
     def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
                  processing_function=None, processing_parameter_queue=None,
-                 gui_framerate=60, **kwargs):
+                 gui_framerate=30, **kwargs):
         """
         :param frame_queue: queue dispatching frames from camera
         :param gui_queue: queue where to put frames to be displayed on the GUI
@@ -197,7 +199,7 @@ class FrameDispatcher(FrameProcessor):
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    #print('gui_put')
+                    #print(every_x)
                 self.i = (self.i+1) % every_x
             except Empty:
                 break
@@ -357,19 +359,24 @@ class MovingFrameDispatcher(FrameDispatcher):
 
 if __name__ == '__main__':
     from stytra.gui.camera_display import CameraViewWidget
+    from PyQt5.QtCore import QTimer
     from PyQt5.QtWidgets import QApplication
+    from stytra.metadata import MetadataCamera
     app = QApplication([])
     q_cam = Queue()
     q_gui = Queue()
     q_control = Queue()
     finished_sig = Event()
+    meta = MetadataCamera()
+    timer = QTimer()
+    timer.setSingleShot(False)
     cam = XimeaCamera(q_cam, finished_sig, q_control)
     dispatcher = FrameDispatcher(q_cam, q_gui, finished_signal=finished_sig, print_framerate=True)
 
     cam.start()
     dispatcher.start()
 
-    win = CameraViewWidget(q_gui, q_control)
+    win = CameraViewWidget(q_gui, update_timer=timer)
 
     win.show()
     app.exec_()

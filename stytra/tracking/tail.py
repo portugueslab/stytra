@@ -1,5 +1,6 @@
 import numpy as np
 from numba import jit
+import cv2
 
 
 @jit(nopython=True)
@@ -169,8 +170,31 @@ def angle(dx1, dy1, dx2, dy2):
     return diff
 
 
-@jit(nopython=True, cache=True)
-def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30):
+def bp_filter_img(img, small_square=3, large_square=50):
+    """
+    Bandpass filter for images.
+    :param img: input image
+    :param small_square: small square for low-pass smoothing
+    :param large_square: big square for high pass smoothing (subtraction of background shades)
+    :return: filtered image
+    """
+    img_filt_lower = cv2.boxFilter(img, -1, (large_square, large_square))
+    img_filt_low = cv2.boxFilter(img, -1, (small_square, small_square))
+    return cv2.absdiff(img_filt_low, img_filt_lower)
+
+
+def std_bp_filter(img, small_square=3, large_square=50):
+    """ Function for returning the standard deviation of an image pixels from the mean after
+    band-pass filtering
+    """
+    filtered = bp_filter_img(img, small_square, large_square)
+    return (filtered - int(cv2.mean(filtered)[0])) ** 2
+
+
+
+#@jit(nopython=True, cache=True)
+def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
+                    inverted=False, filtered=True):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -183,7 +207,10 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
     :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
-    im = 255 - im  # invert image
+    if filter:
+        im = std_bp_filter(im, small_square=3, large_square=50)
+    if inverted:
+        im = (255-im).astype(np.uint8)  # invert image
     length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
     seg_length = int(length_tail / n_segments)  # segment length from tail length and n of segments
 

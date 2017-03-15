@@ -15,9 +15,11 @@ class DataCollector:
     """
 
     # Categories are hardwired, to control integrity of the output HDF5 file
-    data_dict_template = dict(fish={}, stimulus={}, imaging={}, behaviour={}, general={})
+    data_dict_template = dict(fish={}, stimulus={}, imaging={},
+                              behaviour={}, general={}, camera={},
+                              tracking={})
 
-    def __init__(self, *data_tuples_list, folder_path='./'):
+    def __init__(self, *data_tuples_list, folder_path='./', use_last_val=True):
         """
         Init function.
             - Metadata objects: can be added without specifications
@@ -52,9 +54,9 @@ class DataCollector:
         # Add all the data tuples provided upon instantiation:
         for data_element in data_tuples_list:
             if isinstance(data_element, Metadata):
-                self.add_data_source(data_element)
+                self.add_data_source(data_element, use_last_val=use_last_val)
             else:
-                self.add_data_source(*data_element)
+                self.add_data_source(*data_element, use_last_val=use_last_val)
 
     def add_data_source(self, *args, use_last_val=True):
         """
@@ -256,8 +258,9 @@ class MetadataLightsheet(Metadata):
 
 class MetadataCamera(Metadata):
     category = 'camera'
+
     exposure = param.Number(default=2, bounds=[0.1, 50], doc='Exposure (ms)')
-    framerate = param.Number(default=100, bounds=[0.5, 1000], doc='Frame rate (Hz)')
+    framerate = param.Number(default=500, bounds=[0.5, 1000], doc='Frame rate (Hz)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 
