@@ -220,6 +220,7 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
 
     cum_sum = 0  # cumulative tail sum
     points = [(start_x, start_y, 0, cum_sum)]  # output with points
+    angles = [0]
     for i in range(1, n_segments):
         pre_disp_x = disp_x  # save previous displacements for angle calculation
         pre_disp_y = disp_y
@@ -231,8 +232,9 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
             new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
             cum_sum = cum_sum + new_angle
         points.append((start_x, start_y, acc, cum_sum))
+        angles.append(new_angle)
 
-    return points
+    return tuple(angles)
 
 
 @jit(nopython=True, cache=True)

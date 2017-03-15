@@ -99,13 +99,13 @@ class Experiment(QMainWindow):
         self.bg = gratings(orientation='horizontal', shape='square',
                       mm_px=mm_px, spatial_period=0.02)
         for i in range(n_repeats):
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
+            # self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
+            #                                      duration=stim_duration, monitor_rate=refresh_rate))
+            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=10, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=50, mm_px=mm_px,
-                                                 duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
-                                                 duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-50, mm_px=mm_px,
+            # self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
+            #                                      duration=stim_duration, monitor_rate=refresh_rate))
+            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-10, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
         self.protocol = Protocol(self.stimuli, 1/refresh_rate)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)

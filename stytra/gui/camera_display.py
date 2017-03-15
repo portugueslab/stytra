@@ -143,19 +143,19 @@ class CameraTailSelection(CameraViewWidget):
                 'n_segments': 30, 'window_size': 30,
                 'inverted': False, 'filtered': True}
 
-    def modify_frame(self, frame):
-        position_data = None
-        try:
-            if self.tail_position_data:
-                position_data = self.tail_position_data.stored_data[-1][1]
-
-            if position_data:  # draw the tail before displaying the frame:
-                return draw_tail(frame, position_data)
-            else:
-                return frame
-
-        except IndexError:
-            return frame
+    # def modify_frame(self, frame):
+    #     position_data = None
+    #     try:
+    #         if self.tail_position_data:
+    #             position_data = self.tail_position_data.stored_data[-1][1]
+    #
+    #         if position_data:  # draw the tail before displaying the frame:
+    #             return draw_tail(frame, position_data)
+    #         else:
+    #             return frame
+    #
+    #     except IndexError:
+    #         return frame
 
 
 class CameraViewCalib(CameraViewWidget):

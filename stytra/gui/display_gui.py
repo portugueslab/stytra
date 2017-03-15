@@ -36,3 +36,5 @@ class StimulusDisplayWindow(QDialog):
 
         for stimulus in self.protocol.stimuli:
             stimulus.output_shape = tuple(int(s+1) for s in size)
+
+
