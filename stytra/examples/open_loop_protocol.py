@@ -28,8 +28,8 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
 
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        # self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
+        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -57,17 +57,17 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
-        #self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
-        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=10, print_framerate=False)
+                                                gui_framerate=30, print_framerate=False)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
@@ -77,9 +77,10 @@ class Experiment(QMainWindow):
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
-                                                 control_queue=self.control_queue,
-                                                 camera_parameters=self.camera_data,
                                                  roi_dict=self.roi_dict)
+                                                 #control_queue=self.control_queue,
+                                                 #camera_parameters=self.camera_data)
+
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
@@ -160,23 +161,22 @@ class Experiment(QMainWindow):
 
         # Show windows:
         self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
-        self.win_stim_disp.showFullScreen()
-        self.showMaximized()
-        #self.show()
+        #self.win_stim_disp.windowHandle().setScreen(app.screens()[0])
+        #self.win_stim_disp.showFullScreen()
+        #self.showMaximized()
+        self.show()
 
 
 
     def finishAndSave(self):
         self.gui_refresh_timer.stop()
-        time_arr, tail_arr = self.data_acc_tailpoints.get_data_arrays()
-        tail_arr = tail_arr[:, -1, 3]
 
-        self.dataframe = pd.DataFrame(
-            np.array([time_arr, tail_arr]).T, columns=['time', 'tail_sum'])
+        self.dataframe = self.data_acc_tailpoints.get_dataframe()
 
         self.data_collector.add_data_source('behaviour', 'tail_tracking',
                                             self.dataframe)
+        self.data_collector.add_data_source('behaviour', 'tail_tracking_start',
+                                            self.data_acc_tailpoints.starting_time)
 
         self.data_collector.save()
         #self.zmq_trigger.stop()

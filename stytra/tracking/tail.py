@@ -231,10 +231,10 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
         if i > 1:  # update cumulative angle sum
             new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
             cum_sum = cum_sum + new_angle
+            angles.append(new_angle)
         points.append((start_x, start_y, acc, cum_sum))
-        angles.append(new_angle)
 
-    return tuple(angles)
+    return [cum_sum, ] + angles[::2]
 
 
 @jit(nopython=True, cache=True)
