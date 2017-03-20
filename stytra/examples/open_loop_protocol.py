@@ -160,8 +160,8 @@ class Experiment(QMainWindow):
 
         # Show windows:
         self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
-        self.win_stim_disp.showFullScreen()
+        #self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        #self.win_stim_disp.showFullScreen()
         self.showMaximized()
         #self.show()
 

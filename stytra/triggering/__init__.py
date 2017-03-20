@@ -1,31 +1,10 @@
-import serial as com
 import time
 import zmq
+from stytra.hardware.serial import PyboardConnection
 from datetime import datetime
 
 
-class SerialConnection:
-    def __init__(self, com_port, baudrate=None):
-        self.conn = com.Serial(port=com_port)
-
-        if baudrate:
-            self.conn.baudrate = baudrate
-
-    def read(self):
-        i = self.conn.read()
-        return self.convert(i)
-
-    def write(self, what):
-        self.conn.write(what.encode())
-
-    def convert(self, i):
-        return unpack("<b", i)[0]
-
-    def __del__(self):
-        self.conn.close()
-
-
-class PyboardConnection(SerialConnection):
+class PyboardTrigger(PyboardConnection):
 
     def switch_on(self):
         self.write('on')
@@ -34,9 +13,8 @@ class PyboardConnection(SerialConnection):
         self.write('off')
 
     def set_pulse_freq(self, fn):
-        self.write('set'+str(fn))
-        #print('set'+str(fn))
-        #self.write('set20')
+        # self.write('set'+str(fn))
+        self.write('set20')
 
 
 class ZmqClient:
@@ -103,3 +81,11 @@ class ZmqLightsheetTrigger(ZmqClient):
 
     def get_ls_data(self):
         return self.send(b"")
+
+
+if __name__=='__main__':
+    pyb = PyboardTrigger(com_port='COM3')
+    pyb.switch_off()
+
+    #pyb.set_pulse_freq(10)
+    del pyb

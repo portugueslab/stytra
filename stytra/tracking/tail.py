@@ -222,6 +222,7 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
     points = [(start_x, start_y, 0, cum_sum)]  # output with points
     angles = [0]
     for i in range(1, n_segments):
+        new_angle = 0
         pre_disp_x = disp_x  # save previous displacements for angle calculation
         pre_disp_y = disp_y
         # Use next segment function for find next point with center-of-mass displacement:

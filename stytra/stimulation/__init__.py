@@ -22,7 +22,7 @@ class Protocol(QObject):
         :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
         :param dt: frame duration (sec)
         """
-        super(Protocol, self).__init__()
+        super().__init__()
 
         self.t_start = None
         self.t = 0
@@ -61,6 +61,7 @@ class Protocol(QObject):
                 self.i_current_stimulus += 1
                 self.current_stimulus = self.stimuli[self.i_current_stimulus]
                 self.current_stimulus.started = datetime.datetime.now()
+                self.current_stimulus.run()
 
         self.sig_timestep.emit(self.i_current_stimulus)
         if isinstance(self.current_stimulus, DynamicStimulus):

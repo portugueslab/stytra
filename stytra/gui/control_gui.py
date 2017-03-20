@@ -54,7 +54,7 @@ class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, app, protocol, display_window, *args):
+    def __init__(self, app, protocol, display_window=None, *args):
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
@@ -66,9 +66,11 @@ class ProtocolControlWindow(QWidget):
         self.protocol = protocol
         self.display_window = display_window
 
-        ROI_desc = self.display_window.display_params['window']
-
-        self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
+        if self.display_window:
+            ROI_desc = self.display_window.display_params['window']
+            self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
+        else:
+            self.widget_view = None
 
         self.button_update_display = QPushButton('Update display area')
         self.button_update_display.clicked.connect(self.refresh_ROI)
@@ -107,8 +109,9 @@ class ProtocolControlWindow(QWidget):
         self.widget_view.roi_box.setSize(self.display_window.display_params['window']['size'])
 
     def refresh_ROI(self):
-        self.display_window.set_dims(self.widget_view.roi_box.pos(),
-                                     self.widget_view.roi_box.size())
+        if self.display_window:
+            self.display_window.set_dims(self.widget_view.roi_box.pos(),
+                                         self.widget_view.roi_box.size())
 
     def closeEvent(self, QCloseEvent):
         """ On closing the app, save where the window was

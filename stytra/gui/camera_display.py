@@ -96,10 +96,9 @@ class CameraTailSelection(CameraViewWidget):
         super().__init__(*args, **kwargs)
 
         self.label = pg.TextItem('Select tail of the fish:')
-
         if not roi_dict:
-            self.roi_dict = {'start_y': 320, 'start_x': 480,
-                             'length_y': 0, 'length_x': -400}
+            roi_dict = {'start_y': 320, 'start_x': 480,
+                        'length_y': 0, 'length_x': -400}
         self.roi_dict = roi_dict
 
         self.roi_tail = pg.LineSegmentROI(((self.roi_dict['start_y'], self.roi_dict['start_x']),
