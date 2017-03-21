@@ -1,5 +1,6 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow, QWidget, QSplitter
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow,\
+    QWidget, QSplitter, QProgressBar
 import qdarkstyle
 from stytra.stimulation.stimuli import MovingSeamless
 from stytra.stimulation import Protocol
@@ -20,17 +21,79 @@ import datetime
 import param as pa
 
 
+def make_moving_protocol(n_vels=240*3, stim_duration=5,
+                         vel_mean=30, vel_std=5):
+    t_break = np.arange(n_vels + 1) * stim_duration
+
+    angles = np.random.uniform(0, 2 * np.pi, n_vels)
+    vels = np.random.randn(n_vels) * vel_std + vel_mean
+
+    coords = np.zeros((n_vels + 1, 2))
+    trigs = [np.cos, np.sin]
+
+    for i_coord, trig in zip(range(2), trigs):
+        for i in range(n_vels):
+            coords[(i + 1), i_coord] = coords[i, i_coord] + stim_duration * vels[i] * trig(angles[i])
+
+    return pd.DataFrame(dict(t=t_break,
+                             x=coords[:, 0],
+                             y=coords[:, 1]))
+
+
+def make_moving_pausing_protocol(n_vels=240 * 3, stim_duration=5, pause_duration=5,
+                                 vel_mean=30, vel_std=5):
+    t_break = np.tile(np.arange(n_vels)*(stim_duration+pause_duration), (2, 1)).reshape((-1), order='F')
+    t_break[1::2] += stim_duration
+    t_break = np.concatenate([t_break, [t_break[-1]+pause_duration]])
+
+    angles = np.random.uniform(0, 2 * np.pi, n_vels)
+    vels = np.random.randn(n_vels) * vel_std + vel_mean
+
+    coords = np.zeros((n_vels * 2 + 1,2))
+    trigs = [np.cos, np.sin]
+
+    for i_coord, trig in zip(range(2), trigs):
+        for i in range(n_vels):
+            coords[2 * (i + 1), i_coord] = coords[2 * i, i_coord] + stim_duration * vels[i] * trig(angles[i])
+
+    coords[1::2] = coords[2::2]
+
+    return pd.DataFrame(dict(t=t_break,
+                             x=coords[:, 0],
+                             y=coords[:, 1]))
+
+
+def make_spinning_protocol(n_vels=500, stim_duration=10, pause_duration=5,
+                                 vel_mean=0.6, vel_std=0.4):
+    t_break = np.tile(np.arange(n_vels) * (stim_duration + pause_duration), (2, 1)).reshape((-1), order='F')
+    t_break[1::2] += stim_duration
+    t_break = np.concatenate([t_break, [t_break[-1] + pause_duration]])
+
+    vels = np.random.randn(n_vels) * vel_std + vel_mean
+
+    thetas = np.zeros((n_vels * 2 + 1))
+
+    for i in range(n_vels):
+        thetas[2 * (i + 1)] = thetas[2 * i] + stim_duration * vels[i] * np.random.choice([-1, 1])
+
+    thetas[1::2] = thetas[2::2]
+
+    return pd.DataFrame(dict(t=t_break,
+                            theta=thetas))
+
+
 class Experiment(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
-        experiment_folder = r'D:\vilim\fishrecordings\stytra'
-        vidfile = datetime.datetime.now().strftime("%Y%m%d_%H%M%S.avi")
+        experiment_folder = r'D:\vilim\fishrecordings\stytra\pausing'
+        self.expid = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        vidfile = self.expid+'.avi'
 
         general_data = metadata.MetadataGeneral()
         fish_data = metadata.MetadataFish()
 
-        self.im_filename = r"C:\Users\vilim\experimental\underwater\SeamlessRocks.png"
+        self.im_filename = r"C:\Users\vilim\experimental\underwater\66_underwater beach sand texture-seamless.jpg"
 
         self.camera_parameters = metadata.MetadataCamera()
 
@@ -38,34 +101,22 @@ class Experiment(QMainWindow):
 
         self.dc.add_data_source(fish_data)
         self.dc.add_data_source(general_data)
-        self.dc.add_data_source(self.camera_parameters)
+        self.dc.add_data_source(self.camera_parameters, use_last_val=True)
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
         # set up the stimuli
-        n_vels = 240
-        stim_duration = 15
+
         refresh_rate = 1/60.
 
-        t_break = np.arange(n_vels+1)*stim_duration
-
-        xs = np.zeros(n_vels+1)
-        ys = np.zeros(n_vels+1)
-        vel_mean = 30
-        vel_std = 5
-        angles = np.random.uniform(0, 2*np.pi, n_vels)# np.array([0, np.pi/2, np.pi, 3*np.pi/2]) #np.random.uniform(0, 2*np.pi, n_vels)
-        vels = np.random.randn(n_vels)*vel_std+vel_mean #np.array([50]*n_vels) #
-
-        for i in range(n_vels):
-            xs[i+1] = xs[i] + stim_duration * vels[i]*np.cos(angles[i])
-            ys[i + 1] = ys[i] + stim_duration * vels[i]*np.sin(angles[i])
+        motion = make_spinning_protocol()
+        self.protocol_duration = motion.t.iat[-1]
 
         bg = existing_file_background(self.im_filename)
 
-        motion = pd.DataFrame(dict(t=t_break, x=xs, y=ys))
         self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
-                                                 duration=n_vels*stim_duration)],
+                                                 duration=motion.t.iat[-1])],
                                                  dt=refresh_rate)
 
         # queues for interprocess communication
@@ -87,7 +138,8 @@ class Experiment(QMainWindow):
                                                       output_queue=self.record_queue,
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
-                                                      diag_queue=self.diag_queue)
+                                                      diag_queue=self.diag_queue,
+                                                      gui_framerate=30)
 
         self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
                                      self.record_queue, finished_signal=self.finished_sig)
@@ -109,13 +161,14 @@ class Experiment(QMainWindow):
         self.win_control.refresh_ROI()
         self.win_control.button_show_calib.clicked.connect(self.config_cam_calib)
         self.main_layout.addWidget(self.win_control)
+        self.prog_bar = QProgressBar()
+        # self.gui_timer.timeout.connect(self.update_progress)
 
         self.win_stim_disp.show()
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
         self.dc.add_data_source('stimulus', 'display_params',
                                 self.win_stim_disp.display_params)
-        print(self.win_stim_disp.display_params)
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
 
@@ -130,7 +183,7 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
         self.dc.add_data_source('stimulus', 'calibration_points', self.calibrator, 'points')
         self.dc.add_data_source('behaviour', 'video_file', vidfile)
-        print(self.calibrator.cam_to_proj)
+
         self.protocol.sig_protocol_started.connect(self.start_rec_sig.set)
         self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
         self.protocol.sig_protocol_finished.connect(self.finishProtocol)
@@ -141,6 +194,10 @@ class Experiment(QMainWindow):
         self.gui_timer.start()
         self.finished = False
         self.show()
+
+    # def update_progress(self):
+    #     time_elapsed = datetime.datetime.now()-self.protocol.t_start
+    #     self.prog_bar.setValue(int(time_elapsed*100/self.protocol_duration))
 
     def config_cam_calib(self):
         pass
@@ -181,9 +238,9 @@ class Experiment(QMainWindow):
         timedata = np.array(timedata)
         print('{} breaks '.format(len(timedata)))
         self.dc.add_data_source('behaviour', 'frame_times', timedata)
-        self.dc.save()
+        self.dc.save(self.expid)
 
-        self.recorder.join(timeout=100)
+        self.recorder.join(timeout=600)
         print('Recorder joined')
         self.finished = True
 

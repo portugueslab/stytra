@@ -17,6 +17,8 @@ from numba import jit
 
 import psutil
 
+import param as pa
+
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
         """ A basic class for a process that deals with frames, provides framerate calculation
@@ -142,7 +144,6 @@ class VideoFileSource(FrameProcessor):
 
         return
 
-
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
@@ -258,6 +259,15 @@ class VideoWriter(Process):
         outfile.release()
 
 
+class MovementDetectionParameters(pa.Parameterized):
+    fish_threshold = pa.Integer(100, (0, 255))
+    motion_threshold = pa.Integer(255*10)
+    frame_margin = pa.Integer(10)
+    n_previous_save = pa.Integer(300)
+    n_next_save = pa.Integer(200)
+
+
+
 class MovingFrameDispatcher(FrameDispatcher):
     def __init__(self, *args, output_queue,
                  framestart_queue, signal_start_rec, diag_queue, **kwargs):
@@ -267,25 +277,18 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.diag_queue = diag_queue
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
+        self.det_par = MovementDetectionParameters()
 
     def run(self):
         i = 0
         every_x = 10
 
         t, frame_0 = self.frame_queue.get(timeout=5)
-        n_previous_compare = 5
+        n_previous_compare = 3
         previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
                                 dtype=np.uint8)
-        fish_threshold = 50
-        motion_threshold = 500
-        frame_margin = 10
-
-        n_previous_save = 300
-        n_next_save = 200
-
 
         previous_images = deque()
-
         record_counter = 0
 
         i_frame = 0
@@ -298,23 +301,22 @@ class MovingFrameDispatcher(FrameDispatcher):
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
                 current_time, current_frame = self.frame_queue.get()
                 _, current_frame_thresh =  \
-                    cv2.threshold(current_frame, fish_threshold, 255, cv2.THRESH_BINARY)
+                    cv2.threshold(cv2.boxFilter(current_frame,-1,(3,3)), self.det_par.fish_threshold, 255, cv2.THRESH_BINARY)
                 # compare the thresholded frame to the previous ones, if there are enough differences
                 # because the fish moves, start recording to file
 
                 difsum = 0
                 n_crossed = 0
+                image_crop = slice(self.det_par.frame_margin, -self.det_par.frame_margin)
                 if i_frame >= n_previous_compare:
                     for j in range(n_previous_compare):
-                        difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, frame_margin:- frame_margin,
-                                                          frame_margin:- frame_margin],
-                                                          current_frame_thresh[frame_margin:- frame_margin,
-                                                          frame_margin:- frame_margin]))[0]
+                        difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],
+                                                          current_frame_thresh[image_crop, image_crop]))[0]
                         # self.diag_queue.put(difsum)
-                        if difsum > motion_threshold:
+                        if difsum > self.det_par.motion_threshold:
                             n_crossed += 1
                     if n_crossed == n_previous_compare:
-                        record_counter = n_next_save
+                        record_counter = self.det_par.n_next_save
 
                     if record_counter > 0:
                         if self.signal_start_rec.is_set() and self.mem_use < 0.9:
@@ -338,7 +340,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                 i_frame += 1
                 previous_images.append((current_time, current_frame))
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
-                if len(previous_images) > n_previous_save:
+                if len(previous_images) > self.det_par.n_previous_save:
                     previous_images.popleft()
 
                 # calculate the framerate
@@ -348,7 +350,7 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 if self.i == 0:
                     self.mem_use = psutil.virtual_memory().used/psutil.virtual_memory().total
-                    self.gui_queue.put((current_time, current_frame) ) # frame
+                    self.gui_queue.put((current_time, current_frame)) # frame
                     if self.current_framerate:
                         print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
                             self.current_framerate, difsum, n_crossed))

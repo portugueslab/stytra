@@ -139,16 +139,18 @@ class DataCollector:
 
         return data_dict
 
-    def save(self):
+    def save(self, timestamp=None):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
 
         data_dict = self.get_full_dict()
 
+        if timestamp is None:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_metadata")
-        filename = self.folder_path + timestamp + '.h5'
+        filename = self.folder_path + timestamp + '_metadata.h5'
         print(filename)
         dd.io.save(filename, data_dict)
 

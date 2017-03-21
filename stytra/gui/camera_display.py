@@ -41,7 +41,9 @@ class CameraViewWidget(QWidget):
         self.layout.addWidget(self.camera_display_widget)
         if control_queue is not None:
             self.camera_parameters = camera_parameters
+            print(self.camera_parameters.framerate)
             self.control_widget = ParameterGui(self.camera_parameters)
+            print(self.camera_parameters.framerate)
             self.layout.addWidget(self.control_widget)
             for control in self.control_widget.parameter_controls:
                 control.control_widget.valueChanged.connect(self.update_controls)

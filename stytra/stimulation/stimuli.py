@@ -83,8 +83,13 @@ class SeamlessStimulus(ImageStimulus):
             return np.array([[1, 0, self.y],
                              [0, 1, self.x]]).astype(np.float32)
         else:
-            return np.array([[np.cos(self.theta), -np.sin(self.theta), self.y],
-                             [np.sin(self.theta), np.cos(self.theta), self.x]]).astype(np.float32)
+            # shift by x and y and rotate around centre
+            xc = self.output_shape[1] / 2
+            yc = self.output_shape[0] / 2
+            return np.array([[np.sin(self.theta), np.cos(self.theta),
+                              self.y + yc - xc*np.sin(self.theta) - yc * np.cos(self.theta)],
+                             [np.cos(self.theta), -np.sin(self.theta),
+                              self.x + xc - xc*np.cos(self.theta) + yc * np.sin(self.theta)]]).astype(np.float32)
 
     def get_image(self):
         self.update()
@@ -100,8 +105,12 @@ class MovingSeamless(SeamlessStimulus):
         self.motion = motion
 
     def update(self):
-        self.x = np.interp(self.elapsed, self.motion.t, self.motion.x)
-        self.y = np.interp(self.elapsed, self.motion.t, self.motion.y)
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, attr, np.interp(self.elapsed, self.motion.t, self.motion[attr]))
+            except (AttributeError, KeyError):
+                pass
+
 
 
 class MovingConstantly(SeamlessStimulus):
