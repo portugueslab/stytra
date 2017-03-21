@@ -1,5 +1,6 @@
 import numpy as np
 from numba import jit
+import cv2
 
 
 @jit(nopython=True)
@@ -169,15 +170,31 @@ def angle(dx1, dy1, dx2, dy2):
     return diff
 
 
-def detect_tail_canny(im, **kwargs):
-    import cv2
-    edges = cv2.Canny(im, 100, 200)
-    return detect_tail_new(edges, inverted=False, **kwargs)
+def bp_filter_img(img, small_square=3, large_square=50):
+    """
+    Bandpass filter for images.
+    :param img: input image
+    :param small_square: small square for low-pass smoothing
+    :param large_square: big square for high pass smoothing (subtraction of background shades)
+    :return: filtered image
+    """
+    img_filt_lower = cv2.boxFilter(img, -1, (large_square, large_square))
+    img_filt_low = cv2.boxFilter(img, -1, (small_square, small_square))
+    return cv2.absdiff(img_filt_low, img_filt_lower)
 
 
-@jit(nopython=True, cache=True)
-def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30, window_size=30,
-                    inverted=True):
+def std_bp_filter(img, small_square=3, large_square=50):
+    """ Function for returning the standard deviation of an image pixels from the mean after
+    band-pass filtering
+    """
+    filtered = bp_filter_img(img, small_square, large_square)
+    return (filtered - int(cv2.mean(filtered)[0])) ** 2
+
+
+
+#@jit(nopython=True, cache=True)
+def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
+                    inverted=False, filtered=True):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -190,6 +207,8 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
     :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
+    if filter:
+        im = std_bp_filter(im, small_square=3, large_square=50)
     if inverted:
         im = (255-im).astype(np.uint8)  # invert image
     length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
@@ -201,7 +220,9 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
 
     cum_sum = 0  # cumulative tail sum
     points = [(start_x, start_y, 0, cum_sum)]  # output with points
+    angles = [0]
     for i in range(1, n_segments):
+        new_angle = 0
         pre_disp_x = disp_x  # save previous displacements for angle calculation
         pre_disp_y = disp_y
         # Use next segment function for find next point with center-of-mass displacement:
@@ -212,17 +233,14 @@ def detect_tail_new(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=30,
             new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
             cum_sum = cum_sum + new_angle
         points.append((start_x, start_y, acc, cum_sum))
+        angles.append(new_angle)
 
-    return points
+    return tuple(angles)
 
 
 @jit(nopython=True, cache=True)
-def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_begin=2):
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
     """ Finds a midline for a fish image, with the starting point and direction
-    found by the fish start function
-    it goes first a bit in the direction of the tail then back to the start of
-    the head and then continues onwards
-     so the starting point is refined
 
     :param im:
     :param xm:
@@ -231,35 +249,18 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20, n_points_beg
     :param r:
     :param m:
     :param n_points_max:
-    :param n_points_begin:
     :return:
     """
+
     dx = np.cos(angle) * m
     dy = np.sin(angle) * m
 
-    # go towards the midling
-    for i in range(n_points_begin):
-        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
-
-    # turn back
-    dx = -dx
-    dy = -dy
-    # and follow the midline to the new beginning (stop when the fish ends)
-    n_steps = 15
-    for i in range(n_steps):
-        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
-        if ym+dy>=im.shape[0] or xm+dx>=im.shape[1]:
-            break
-        elif im[int(ym+dy), int(xm+dx)] ==0:
-            break
-
-    # turn again and find the whole tail
-    dx = -dx
-    dy = -dy
     points = [(xm, ym, 0)]
     for i in range(1, n_points_max):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
         if xm > 0:
             points.append((xm, ym, acc))
+        else:
+            return [(-1.0, -1.0, 0.0)] # if the tail is not completely tracked, return invalid value
 
     return points

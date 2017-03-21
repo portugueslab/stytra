@@ -22,9 +22,11 @@ class DataAccumulator(QObject):
         # self.timer.start(1)
         # self.timer.setSingleShot(False)
         # self.timer.timeout.connect(self.update_list)
+        self.starting_time = None
 
         self.data_queue = data_queue
         self.stored_data = []
+        self.save_as_first = True
 
     def update_list(self):
         """Upon calling put all available data into a list.
@@ -32,10 +34,24 @@ class DataAccumulator(QObject):
         collected = 0
         while True:
             try:
-                self.stored_data.append(self.data_queue.get(timeout=0.00001))
-                collected+=1
+                t, data = self.data_queue.get(timeout=0.00001)
+                if self.save_as_first:
+                    self.starting_time = t
+                    self.save_as_first = False
+                t_ms = (t - self.starting_time).total_seconds()
+
+                self.stored_data.append(())
+                collected += 1
             except Empty:
                 break
+
+    def get_data_arrays(self):
+        time_tuple = list(zip(*self.stored_data))[0]
+        data_tuple = list(zip(*self.stored_data))[1]
+        time_arr = np.array([(t - time_tuple[0]).total_seconds()
+                             for t in time_tuple])
+        tail_arr = np.array(data_tuple)
+        return time_arr, tail_arr
 
 
 

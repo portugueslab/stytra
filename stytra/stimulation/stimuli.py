@@ -4,16 +4,17 @@ import qimage2ndarray
 from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import QPoint
 import cv2
+from time import sleep
+from stytra.hardware.serial import PyboardConnection
 
 
 class Stimulus:
     """ General class for a stimulus."""
-    def __init__(self, output_shape=(100, 100), duration=0.0):
+    def __init__(self, duration=0.0):
         """ Make a stimulus, with the basic properties common to all stimuli
         Initial values which do not change during the stimulus
         are prefixed with _, so that they are not logged
         at every time step
-
 
         :param output_shape:
         :param duration:
@@ -21,7 +22,6 @@ class Stimulus:
         self._started = None
         self.elapsed = 0.0
         self.duration = duration
-        self.output_shape = output_shape
         self.name = ''
 
     def get_state(self):
@@ -36,8 +36,15 @@ class Stimulus:
     def update(self):
         pass
 
+    def start(self):
+        pass
+
 
 class ImageStimulus(Stimulus):
+    def __init__(self, output_shape=(100, 100), **kwargs):
+        super().__init__(**kwargs)
+        self.output_shape = output_shape
+
     def get_image(self):
         pass
 
@@ -145,6 +152,33 @@ class ClosedLoop1D(DynamicStimulus):
     def update(self):
         pass
 
+
+class ShockStimulus(Stimulus):
+    def __init__(self, burst_freq=50, pulse_amp=3, burst_n=5, pulse_dur_ms=2, pyboard=None, **kwargs):
+        super().__init__(**kwargs)
+        assert isinstance(pyboard, PyboardConnection)
+        self._pyb = pyboard
+        self.burst_freq = burst_freq
+        self.pulse_dur_ms = pulse_dur_ms
+        self.burst_n = burst_n
+        self.pulse_amp_mA = pulse_amp
+        self.pause = 1/burst_freq - pulse_dur_ms/1000
+
+        amp_dac = str(int(255*pulse_amp/3.5))
+        pulse_dur_str = str(pulse_dur_ms).zfill(3)
+        self.mex = str('shock' + amp_dac + pulse_dur_str)
+
+
+    def start(self):
+        for i in range(self.burst_n):
+            self._pyb.write("shock218002")
+            sleep(self.pause)
+
+        self.elapsed = 1
+
+
 if __name__ == '__main__':
-    from stytra.stimulation.backgrounds import gratings
-    a = SeamlessStimulus(background=gratings)
+    pyb = PyboardConnection(com_port='COM3')
+    stim = ShockStimulus(pyboard=pyb)
+    stim.run()
+

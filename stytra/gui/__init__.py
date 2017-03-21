@@ -4,6 +4,7 @@ from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 from stytra.stimulation.stimuli import *
+from datetime import datetime
 
 
 class GLStimDisplay(QOpenGLWidget):
@@ -16,6 +17,15 @@ class GLStimDisplay(QOpenGLWidget):
 
         self.protocol = protocol
         protocol.sig_timestep.connect(self.display_stimulus)
+
+        self.n_fps_frames = 10
+        self.i_fps = 0
+        self.previous_time_fps = None
+        self.current_framerate = None
+        self.print_framerate = True
+
+        self.current_time = datetime.now()
+        self.starting_time = datetime.now()
 
     def setImage(self, img=None):
         if img is not None:
@@ -44,4 +54,17 @@ class GLStimDisplay(QOpenGLWidget):
         elif isinstance(self.protocol.current_stimulus, PainterStimulus):
             p = QPainter(self)
             self.protocol.current_stimulus.paint(p)
+        self.update_framerate()
         self.update()
+
+    def update_framerate(self):
+        if self.i_fps == self.n_fps_frames - 1:
+            self.current_time = datetime.now()
+            if self.previous_time_fps is not None:
+                self.current_framerate = self.n_fps_frames / (
+                    self.current_time - self.previous_time_fps).total_seconds()
+                if self.print_framerate:
+                    print('{:.2f} FPS'.format(self.current_framerate))
+
+            self.previous_time_fps = self.current_time
+        self.i_fps = (self.i_fps + 1) % self.n_fps_frames
