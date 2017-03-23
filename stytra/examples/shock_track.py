@@ -1,20 +1,20 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
-from stytra.stimulation.stimuli import Pause, MovingConstantly
+from stytra.stimulation.stimuli import Pause
 from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
-from stytra.stimulation.backgrounds import gratings
 from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
 from stytra.tracking import DataAccumulator
-
+from stytra.hardware.serial import PyboardConnection
+from stytra.stimulation.stimuli import ShockStimulus
 
 import multiprocessing
 
@@ -34,8 +34,8 @@ class Experiment(QMainWindow):
         self.frame_queue = multiprocessing.Queue()
         self.gui_frame_queue = multiprocessing.Queue()
         self.control_queue = multiprocessing.Queue()
-        self.processing_parameter_queue = multiprocessing.Queue()
-        self.tail_position_queue = multiprocessing.Queue()
+        self.processing_param_queue = multiprocessing.Queue()
+        self.tail_pos_queue = multiprocessing.Queue()
         self.finished_sig = multiprocessing.Event()
 
         # Take care of metadata:
@@ -44,14 +44,10 @@ class Experiment(QMainWindow):
         self.imaging_data = MetadataLightsheet()
         self.camera_data = MetadataCamera()
 
-        self.roi_dict = {'start_y': 320, 'start_x': 480,
-                         'length_y': 0, 'length_x': -400}
-
         self.metalist_gui = MetaListGui([self.general_data, self.fish_data, self.imaging_data])
         self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
                                             self.camera_data, folder_path=self.experiment_folder,
                                             use_last_val=True)
-        self.data_collector.add_data_source('tracking', self.roi_dict)
 
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
@@ -63,16 +59,17 @@ class Experiment(QMainWindow):
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
-                                                processing_parameter_queue=self.processing_parameter_queue,
-                                                finished_signal=self.finished_sig,
-                                                output_queue=self.tail_position_queue,
+                                                processing_parameter_queue=self.processing_param_queue,
+                                                finished_signal=self.finished_sig, output_queue=self.tail_pos_queue,
                                                 gui_framerate=30, print_framerate=False)
 
-        self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
+        self.data_acc_tailpoints = DataAccumulator(self.tail_pos_queue)
 
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 
-        self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
+        self.roi_dict = {'start_y': 320, 'start_x': 480, 'length_y': 0, 'length_x': -400}
+        self.data_collector.add_data_source('tracking', self.roi_dict)
+        self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_param_queue,
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
@@ -84,30 +81,27 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
+        # Stimulus is a series of shock bursts
+        repetitions = 1  # number of burst repetitions
+        period = 2  # burst repetition period
 
+        burst_freq = 100  # frequency of pulses in the burst
+        pulse_amp = 3  # amplitude in mA
+        pulse_n = 5  # number of shock pulses per burst
+        pulse_dur_ms = 2  # duration of each
 
-        # imaging_time = 10
-        stim_duration = 2
-        refresh_rate = 60.
-        initial_pause = 0
-        mm_px = 15 / 87
-        n_repeats = 1  # (round((imaging_time - initial_pause) / (stim_duration + pause_duration)))
+        #pyb = PyboardConnection(com_port='COM3')
+        pyb=None
 
-        # Generate stimulus protocol:
-        self.stimuli = []
-        self.stimuli.append(Pause(duration=initial_pause - 2))
-        self.bg = gratings(orientation='horizontal', shape='square',
-                           mm_px=mm_px, spatial_period=0.02)
-        for i in range(n_repeats):
-            # self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
-            #                                      duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=10, mm_px=mm_px,
-                                                 duration=stim_duration, monitor_rate=refresh_rate))
-            # self.stimuli.append(MovingConstantly(background=self.bg, x_vel=0, mm_px=mm_px,
-            #                                      duration=stim_duration, monitor_rate=refresh_rate))
-            self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-10, mm_px=mm_px,
-                                                 duration=stim_duration, monitor_rate=refresh_rate))
-        self.protocol = Protocol(self.stimuli, 1/refresh_rate)
+        # Generate stimulus protocol
+        stimuli = []
+        for i in range(repetitions):
+            stimuli.append(Pause(duration=period - 1/burst_freq*pulse_n))
+            stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=burst_freq,
+                                         pulse_amp=pulse_amp, pulse_n=pulse_n,
+                                         pulse_dur_ms=pulse_dur_ms))
+        self.protocol = Protocol(stimuli)
+
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
 
@@ -130,11 +124,7 @@ class Experiment(QMainWindow):
         # Metadata window and data collector for saving experiment data:
 
         self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-        self.data_collector.add_data_source('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state,
-                                            'pos')
-        self.data_collector.add_data_source('stimulus', 'window_size',
-                                            self.win_control.widget_view.roi_box.state, 'size')
-        self.data_collector.add_data_source('camera', 'fish_pos', self.camera_viewer.roi_dict)
+        # self.data_collector.add_data_source('camera', 'fish_pos', self.camera_viewer.roi_dict)
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.protocol.sig_protocol_finished.connect(self.data_collector.save)
@@ -158,21 +148,15 @@ class Experiment(QMainWindow):
         self.frame_dispatcher.start()
         self.gui_refresh_timer.start()
 
-
         # Show windows:
         self.win_stim_disp.show()
-        #self.win_stim_disp.windowHandle().setScreen(app.screens()[0])
-        #self.win_stim_disp.showFullScreen()
-        #self.showMaximized()
         self.show()
-
 
 
     def finishAndSave(self):
         self.gui_refresh_timer.stop()
 
         self.dataframe = self.data_acc_tailpoints.get_dataframe()
-
         self.data_collector.add_data_source('behaviour', 'tail_tracking',
                                             self.dataframe)
         self.data_collector.add_data_source('behaviour', 'tail_tracking_start',
@@ -184,17 +168,14 @@ class Experiment(QMainWindow):
         self.app.closeAllWindows()
         self.app.quit()
 
-    def finishProtocol(self):
 
+    def finishProtocol(self):
         self.finished_sig.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
-
+        print('Camera joined')
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
-
-
-        print('Camera joined')
         self.gui_refresh_timer.stop()
         print('Timer stopped')
 

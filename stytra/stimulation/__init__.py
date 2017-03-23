@@ -55,13 +55,13 @@ class Protocol(QObject):
             self.sig_stim_change.emit(self.i_current_stimulus)
             self.update_log()
 
-            if self.i_current_stimulus >= len(self.stimuli)-1:
+            if self.i_current_stimulus >= len(self.stimuli) - 1:
                 self.end()
             else:
                 self.i_current_stimulus += 1
                 self.current_stimulus = self.stimuli[self.i_current_stimulus]
                 self.current_stimulus.started = datetime.datetime.now()
-                self.current_stimulus.run()
+                self.current_stimulus.start()
 
         self.sig_timestep.emit(self.i_current_stimulus)
         if isinstance(self.current_stimulus, DynamicStimulus):

@@ -14,21 +14,23 @@ class DataAccumulator(QObject):
         """
         General class for accumulating (for saving or dispatching) data
         out of a multiprocessing queue. Require triggering with some timer.
-        :param data_queue: queue from witch to retreive data
+        This timer has to be set externally!!!
+        :param data_queue: queue from witch to retreive data (Queue object)
+        :param header_list: headers for the data that will be stored (stings list)
         """
         super().__init__()
-        # The timer should be an external one to avoid multiple timers
-        # into the same process (?):
-        # self.timer = QTimer()
-        # self.timer.start(1)
-        # self.timer.setSingleShot(False)
-        # self.timer.timeout.connect(self.update_list)
+
+        # Store externally the starting time make us free to keep
+        # only time differences in milliseconds in the list (faster)
         self.starting_time = None
 
         self.data_queue = data_queue
         self.stored_data = []
+
+        # Flag for saving time at the first data retrieval
         self.save_as_first = True
 
+        # First data column will always be time:
         self.header_list = ['time'] + header_list
 
     def update_list(self):
@@ -37,20 +39,32 @@ class DataAccumulator(QObject):
         collected = 0
         while True:
             try:
+                # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.00001)
+
+                # If we are at the starting time:
                 if self.save_as_first:
                     self.starting_time = t
                     self.save_as_first = False
+
+                # Time in ms (for having np and not datetime objects)
                 t_ms = (t - self.starting_time).total_seconds()
 
+                # append:
                 self.stored_data.append([t_ms, ] + data)
                 collected += 1
             except Empty:
                 break
 
+    def reset(self):
+        self.stored_data = []
+        self.save_as_first = True
+
     def get_dataframe(self):
+        """Returns pandas dataframe with data and headers
+        """
         data_array = pd.lib.to_object_array(self.stored_data).astype(float)
-        return pd.DataFrame(data_array[:,:len(self.header_list)],
+        return pd.DataFrame(data_array[:, :len(self.header_list)],
                             columns=self.header_list)
         #time_arr = np.array([(t - time_tuple[0]).total_seconds()
         #                     for t in time_tuple])

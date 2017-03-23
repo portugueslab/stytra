@@ -192,9 +192,9 @@ def std_bp_filter(img, small_square=3, large_square=50):
 
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
-                    inverted=False, filtered=True):
+                         inverted=False, filtered=True):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -207,7 +207,7 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
     :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
-    if filter:
+    if filtered:
         im = std_bp_filter(im, small_square=3, large_square=50)
     if inverted:
         im = (255-im).astype(np.uint8)  # invert image
