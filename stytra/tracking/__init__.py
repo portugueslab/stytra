@@ -6,10 +6,11 @@ import cv2
 from datetime import datetime
 from stytra.tracking.diagnostics import draw_fish_new
 import numpy as np
+import pandas as pd
 
 
 class DataAccumulator(QObject):
-    def __init__(self, data_queue):
+    def __init__(self, data_queue, header_list=['tail_sum']):
         """
         General class for accumulating (for saving or dispatching) data
         out of a multiprocessing queue. Require triggering with some timer.
@@ -28,6 +29,8 @@ class DataAccumulator(QObject):
         self.stored_data = []
         self.save_as_first = True
 
+        self.header_list = ['time'] + header_list
+
     def update_list(self):
         """Upon calling put all available data into a list.
         """
@@ -40,18 +43,19 @@ class DataAccumulator(QObject):
                     self.save_as_first = False
                 t_ms = (t - self.starting_time).total_seconds()
 
-                self.stored_data.append(())
+                self.stored_data.append([t_ms, ] + data)
                 collected += 1
             except Empty:
                 break
 
-    def get_data_arrays(self):
-        time_tuple = list(zip(*self.stored_data))[0]
-        data_tuple = list(zip(*self.stored_data))[1]
-        time_arr = np.array([(t - time_tuple[0]).total_seconds()
-                             for t in time_tuple])
-        tail_arr = np.array(data_tuple)
-        return time_arr, tail_arr
+    def get_dataframe(self):
+        data_array = pd.lib.to_object_array(self.stored_data).astype(float)
+        return pd.DataFrame(data_array[:,:len(self.header_list)],
+                            columns=self.header_list)
+        #time_arr = np.array([(t - time_tuple[0]).total_seconds()
+        #                     for t in time_tuple])
+        #tail_arr = np.array(data_tuple)
+        #return time_arr, tail_arr
 
 
 
