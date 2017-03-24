@@ -6,7 +6,7 @@ from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
-from stytra.tracking.diagnostics import draw_tail
+from stytra.tracking.diagnostics import draw_fish_angles_embedd
 
 
 import cv2
@@ -144,19 +144,22 @@ class CameraTailSelection(CameraViewWidget):
                 'n_segments': 30, 'window_size': 30,
                 'inverted': False, 'filtered': True}
 
-    # def modify_frame(self, frame):
-    #     position_data = None
-    #     try:
-    #         if self.tail_position_data:
-    #             position_data = self.tail_position_data.stored_data[-1][1]
-    #
-    #         if position_data:  # draw the tail before displaying the frame:
-    #             return draw_tail(frame, position_data)
-    #         else:
-    #             return frame
-    #
-    #     except IndexError:
-    #         return frame
+    def modify_frame(self, frame):
+        position_data = None
+        try:
+            if self.tail_position_data:
+                position_data = self.tail_position_data.stored_data[-1][1:]
+
+            if position_data:  # draw the tail before displaying the frame:
+                return draw_fish_angles_embedd(frame, np.array(position_data),
+                                               self.roi_dict['start_x'], self.roi_dict['start_y'],
+                                               (self.roi_dict['length_x'] ** 2 + self.roi_dict['length_y'] ** 2)
+                                               ** (1/2) / (len(position_data) + 1))
+            else:
+                return frame
+
+        except IndexError:
+            return frame
 
 
 class CameraViewCalib(CameraViewWidget):
