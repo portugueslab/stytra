@@ -16,8 +16,7 @@ class Stimulus:
         are prefixed with _, so that they are not logged
         at every time step
 
-        :param output_shape:
-        :param duration:
+        :param duration: duration of the stimulus (s)
         """
         self._started = None
         self.elapsed = 0.0
@@ -25,7 +24,8 @@ class Stimulus:
         self.name = ''
 
     def get_state(self):
-        """ Returns a dictionary with stimulus features """
+        """ Returns a dictionary with stimulus features
+        """
         state_dict = dict()
         for key, value in self.__dict__.items():
             if not callable(value) and key[0] != '_':
@@ -41,6 +41,8 @@ class Stimulus:
 
 
 class ImageStimulus(Stimulus):
+    """Generic visual stimulus
+    """
     def __init__(self, output_shape=(100, 100), **kwargs):
         super().__init__(**kwargs)
         self.output_shape = output_shape
@@ -50,7 +52,8 @@ class ImageStimulus(Stimulus):
 
 
 class Flash(ImageStimulus):
-    """ Flash stimulus """
+    """ Flash stimulus
+    """
     def __init__(self, *args, color=(255, 255, 255), **kwargs):
         super(Flash, self).__init__(*args, **kwargs)
         self.color = color
@@ -154,15 +157,27 @@ class ClosedLoop1D(DynamicStimulus):
 
 
 class ShockStimulus(Stimulus):
-    def __init__(self, burst_freq=50, pulse_amp=3, burst_n=5, pulse_dur_ms=2, pyboard=None, **kwargs):
+    def __init__(self, burst_freq=100, pulse_amp=3, pulse_n=5,
+                 pulse_dur_ms=2, pyboard=None, **kwargs):
+        """
+        Burst of electric shocks through pyboard (Anki's code)
+        :param burst_freq: burst frequency (Hz)
+        :param pulse_amp: pulse amplitude (mA)
+        :param pulse_n: number of pulses
+        :param pulse_dur_ms: pulses duration (ms)
+        :param pyboard: PyboardConnection object
+        """
         super().__init__(**kwargs)
-        assert isinstance(pyboard, PyboardConnection)
+        self.name = 'shock'
+        # assert isinstance(pyboard, PyboardConnection)
         self._pyb = pyboard
         self.burst_freq = burst_freq
         self.pulse_dur_ms = pulse_dur_ms
-        self.burst_n = burst_n
+        self.pulse_n = pulse_n
         self.pulse_amp_mA = pulse_amp
-        self.pause = 1/burst_freq - pulse_dur_ms/1000
+
+        # Pause between shocks in the burst in ms:
+        self.pause = 1000/burst_freq - pulse_dur_ms
 
         amp_dac = str(int(255*pulse_amp/3.5))
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
@@ -170,15 +185,16 @@ class ShockStimulus(Stimulus):
 
 
     def start(self):
-        for i in range(self.burst_n):
-            self._pyb.write("shock218002")
-            sleep(self.pause)
+        for i in range(self.pulse_n):
+            #self._pyb.write(self.mex)
+            print(self.mex)
+            sleep(self.pause/1000)
 
         self.elapsed = 1
 
 
 if __name__ == '__main__':
     pyb = PyboardConnection(com_port='COM3')
-    stim = ShockStimulus(pyboard=pyb)
-    stim.run()
+    stim = ShockStimulus(pyboard=None)
+    stim.start()
 

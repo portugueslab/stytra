@@ -7,7 +7,6 @@ from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import DataCollector, MetadataFish, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
-import json
 from stytra.hardware.serial import PyboardConnection
 
 import qdarkstyle

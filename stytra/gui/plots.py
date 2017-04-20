@@ -4,17 +4,23 @@ import pyqtgraph as pg
 import numpy as np
 import datetime
 from stytra.tracking import DataAccumulator
+import time
+import pandas as pd
 
 
-
-class StramingPlotWidget(pg.GraphicsWindow):
+class StreamingPlotWidget(pg.GraphicsWindow):
     """
     Class for displaying data retrieved from a data_accumulator
     object. Use timestamp of the streamed data.
     """
-    def __init__(self, *args, data_accumulator=None, **kwargs):
+    def __init__(self, data_accumulator=None, n_points=5000, x_range_s=(-5, 0),
+                 y_range=(-1, 1), data_acc_col=1, *args, **kwargs):
         """
         :param data_accumulator: DataAccumulator object to be displayed
+        :param n_points: number of collected points
+        :param x_range_s: time range
+        :param y_range: variable range
+        :param data_acc_col: column of data accumulator plotted (index)
         """
         super().__init__(*args, **kwargs)
 
@@ -28,36 +34,33 @@ class StramingPlotWidget(pg.GraphicsWindow):
 
         self.addItem(self.streamplot)
         self.start = datetime.datetime.now()
+        self.data_accum_idx = data_acc_col
 
-    def update(self):
-        """This function will be called by an external timer
-        """
-        pass
-
-
-class TailPlot(StramingPlotWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.n_points = 5000
+        self.n_points = n_points
         self.streamplot.setLabel('bottom', 'Time', 's')
-        self.streamplot.setLabel('left', 'Tail sum')
-        self.streamplot.setXRange(-5, 0)
-        self.streamplot.setYRange(-1, 1)
+        self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idx])
+        self.streamplot.setXRange(x_range_s[0], x_range_s[1])
+        self.streamplot.setYRange(y_range[0], y_range[1])
 
     def update(self):
-        self.data = np.ones(self.n_points)
-        x = np.arange(self.n_points)
+        """Function called by external timer to update the plot
+        """
         self.start = datetime.datetime.now()
         try:
             last_n = min(self.n_points, len(self.data_accumulator.stored_data))
-            d = np.array(self.data_accumulator.stored_data[-last_n:])
+            data_list = self.data_accumulator.stored_data[-last_n:]
 
-            unpacked_vals = list(zip(*d))
+            # apparently the fastest way to transpose list and convert to np:
+            data_array = pd.lib.to_object_array(data_list).astype(float)
 
-            x = np.array([(t - self.start).total_seconds()
-                          for t in unpacked_vals[0]])
-            self.data = np.array(unpacked_vals[1])[:, -1, 3]
-            self.curve.setData(x=x, y=self.data)
+            # difference from data accumulator time and now in s...
+            delta_t = (self.data_accumulator.starting_time -
+                       self.start).total_seconds()
+
+            # ...to be added to the array of times in s in the data accumulator
+            time_array = delta_t + data_array[:, 0]
+            self.curve.setData(x=time_array, y=data_array[:, self.data_accum_idx])
         except IndexError:
             pass
-        # self.curve.setData(x=np.arange(self.n_points), y=self.data)
+        except TypeError:
+            pass
