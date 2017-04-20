@@ -233,13 +233,18 @@ class MetadataFish(Metadata):
     """
     category = 'fish'
 
-    fish_age = param.Integer(default=6, bounds=(2, 9), doc='Fish age (days)')
-    fish_genotype = param.ObjectSelector(default='TL',
+    age = param.Integer(default=6, bounds=(2, 14), doc='Fish age (days)')
+    genotype = param.ObjectSelector(default='TL',
                                          objects=['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                                                   'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
-                                                  'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC'],
+                                                  'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
+                                                  'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
+                                                  'PC:epNtr-tagRFP'],
                                          check_on_set=False)
-    fish_comments = param.String()
+    dish_diameter = param.ObjectSelector(default='60', objects=['0', '30', '60', '90'],)
+    treatment = param.ObjectSelector(default='', objects=['', '10mM MTz'], check_on_set=False)
+    screened = param.ObjectSelector(default='not', objects=['not', 'dark', 'bright'])
+    comments = param.String()
 
 
 class MetadataLightsheet(Metadata):

@@ -14,7 +14,7 @@ from stytra.metadata.metalist_gui import MetaListGui
 from paramqt import ParameterGui
 from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
 from stytra.tracking import FishTrackingProcess
-from multiprocessing import Queue, Event
+from multiprocessing import Queue, Event, SimpleQueue
 from queue import Empty
 from PyQt5.QtCore import QTimer
 import datetime
@@ -63,8 +63,8 @@ def make_moving_pausing_protocol(n_vels=240 * 3, stim_duration=5, pause_duration
                              y=coords[:, 1]))
 
 
-def make_spinning_protocol(n_vels=500, stim_duration=10, pause_duration=5,
-                                 vel_mean=0.6, vel_std=0.4):
+def make_spinning_protocol(n_vels=100, stim_duration=10, pause_duration=5,
+                                 vel_mean=0.5, vel_std=0.35):
     t_break = np.tile(np.arange(n_vels) * (stim_duration + pause_duration), (2, 1)).reshape((-1), order='F')
     t_break[1::2] += stim_duration
     t_break = np.concatenate([t_break, [t_break[-1] + pause_duration]])
@@ -107,10 +107,9 @@ class Experiment(QMainWindow):
         self.gui_timer.setSingleShot(False)
 
         # set up the stimuli
-
         refresh_rate = 1/60.
 
-        motion = make_spinning_protocol()
+        motion = make_moving_pausing_protocol(n_vels=500, stim_duration=5, pause_duration=10)
         self.protocol_duration = motion.t.iat[-1]
 
         bg = existing_file_background(self.im_filename)
@@ -124,7 +123,6 @@ class Experiment(QMainWindow):
         self.control_queue = Queue()
         self.gui_frame_queue = Queue()
         self.record_queue = Queue()
-        self.diag_queue = Queue()
         self.framestart_queue = Queue()
         self.fish_queue = Queue()
         self.fish_draw_queue = Queue()
@@ -138,7 +136,6 @@ class Experiment(QMainWindow):
                                                       output_queue=self.record_queue,
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
-                                                      diag_queue=self.diag_queue,
                                                       gui_framerate=30)
 
         self.recorder = VideoWriter(experiment_folder + '/' + vidfile,
@@ -152,9 +149,9 @@ class Experiment(QMainWindow):
         self.setCentralWidget(self.main_layout)
         self.camera_view = camera_display.CameraViewCalib(self.gui_frame_queue,
                                                           self.control_queue,
+                                                          update_timer=self.gui_timer,
                                                           camera_rotation=0,
                                                           camera_parameters=self.camera_parameters)
-        self.gui_timer.timeout.connect(self.camera_view.update_image)
         self.main_layout.addWidget(self.camera_view)
 
         self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
@@ -226,10 +223,10 @@ class Experiment(QMainWindow):
         self.frame_dispatcher.join(timeout=3)
         print('Frame dispatcher terminated')
         timedata = []
-
+        print(self.framestart_queue.qsize())
         while True:
             try:
-                time = self.framestart_queue.get(timeout=0.01)
+                time = self.framestart_queue.get(timeout=0.1)
                 timedelta = (time - self.protocol.t_start).total_seconds()
                 timedata.append([timedelta])
             except Empty:
