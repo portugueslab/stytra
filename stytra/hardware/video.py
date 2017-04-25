@@ -18,6 +18,7 @@ import psutil
 
 import param as pa
 
+
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
         """ A basic class for a process that deals with frames, provides framerate calculation
@@ -51,7 +52,7 @@ class FrameProcessor(Process):
                 self.current_framerate = self.n_fps_frames / (
                     self.current_time - self.previous_time_fps).total_seconds()
                 if self.print_framerate:
-                    print('{:.2f} FPS'.format(self.current_framerate))
+                    print('FPS: ' + int(self.current_framerate*10/500)*'#')
                 if self.framerate_queue:
                     self.framerate_queue.put(self.current_framerate)
             self.previous_time_fps = self.current_time
@@ -241,39 +242,38 @@ class VideoWriter(Process):
                 current_frame = self.input_queue.get(timeout=1)
                 outfile.write(current_frame)
 
-                if i == n_fps_frames - 1:
+                if (i % n_fps_frames) == 0:
                     current_time = datetime.now()
                     current_framerate = n_fps_frames / (
                         current_time - previous_time).total_seconds()
 
                     print('Saving framerate: {:.2f} FPS'.format(current_framerate))
                     previous_time = current_time
-                i = (i + 1) % n_fps_frames
+                i += 1
 
             except Empty:
                 if self.finished_signal.is_set():
                     print('Empty and finished')
                     break
-        print('Finished saving!')
+        print('Finished saving, {} frames in total'.format(i))
         outfile.release()
 
 
 class MovementDetectionParameters(pa.Parameterized):
     fish_threshold = pa.Integer(100, (0, 255))
-    motion_threshold = pa.Integer(255*10)
+    motion_threshold = pa.Integer(255*8)
     frame_margin = pa.Integer(10)
-    n_previous_save = pa.Integer(300)
-    n_next_save = pa.Integer(200)
-
+    n_previous_save = pa.Integer(400)
+    n_next_save = pa.Integer(300)
 
 
 class MovingFrameDispatcher(FrameDispatcher):
     def __init__(self, *args, output_queue,
-                 framestart_queue, signal_start_rec, diag_queue, **kwargs):
+                 framestart_queue, signal_start_rec,  **kwargs):
         super().__init__(*args, **kwargs)
         self.output_queue = output_queue
         self.framestart_queue = framestart_queue
-        self.diag_queue = diag_queue
+
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
         self.det_par = MovementDetectionParameters()
@@ -311,23 +311,21 @@ class MovingFrameDispatcher(FrameDispatcher):
                     for j in range(n_previous_compare):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],
                                                           current_frame_thresh[image_crop, image_crop]))[0]
-                        # self.diag_queue.put(difsum)
+
                         if difsum > self.det_par.motion_threshold:
                             n_crossed += 1
+
                     if n_crossed == n_previous_compare:
                         record_counter = self.det_par.n_next_save
 
                     if record_counter > 0:
                         if self.signal_start_rec.is_set() and self.mem_use < 0.9:
                             if not recording_state:
-                                frame_start = i_recorded
-                                i_previous = 0
                                 while previous_images:
                                     time, im = previous_images.popleft()
                                     self.framestart_queue.put(time)
                                     self.output_queue.put(im)
                                     i_recorded += 1
-                                    i_previous += 1
                             self.output_queue.put(current_frame)
                             self.framestart_queue.put(current_time)
                             i_recorded += 1
@@ -335,12 +333,14 @@ class MovingFrameDispatcher(FrameDispatcher):
                         record_counter -= 1
                     else:
                         recording_state = False
+                        previous_images.append((current_time, current_frame))
+                        if len(previous_images) > self.det_par.n_previous_save:
+                            previous_images.popleft()
 
                 i_frame += 1
-                previous_images.append((current_time, current_frame))
+
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
-                if len(previous_images) > self.det_par.n_previous_save:
-                    previous_images.popleft()
+
 
                 # calculate the framerate
                 self.update_framerate()
