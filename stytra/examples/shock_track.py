@@ -27,8 +27,8 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
 
-        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/shock_meta'
+        #self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -52,10 +52,10 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
-        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
-                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        # self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
@@ -73,34 +73,63 @@ class Experiment(QMainWindow):
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
-                                                 roi_dict=self.roi_dict)
-                                                 #control_queue=self.control_queue,
-                                                 #camera_parameters=self.camera_data)
+                                                 roi_dict=self.roi_dict,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
-        # Stimulus is a series of shock bursts
-        repetitions = 1  # number of burst repetitions
-        period = 2  # burst repetition period
-
-        burst_freq = 100  # frequency of pulses in the burst
-        pulse_amp = 3  # amplitude in mA
-        pulse_n = 5  # number of shock pulses per burst
-        pulse_dur_ms = 2  # duration of each
-
-        #pyb = PyboardConnection(com_port='COM3')
-        pyb=None
-
+        self.pyb = PyboardConnection(com_port='COM3')
         # Generate stimulus protocol
         stimuli = []
+
+        # Stimulus is a series of shock bursts
+        repetitions = 5  # number of burst repetitions
+        period = 25  # burst repetition period
+        #
+        # burst_freq = 1  # frequency of pulses in the burst
+        # pulse_amp = 3.  # amplitude in mA
+        # pulse_n = 1  # number of shock pulses per burst
+        # pulse_dur_ms = 100 # duration of each
+        #
+        # for i in range(repetitions):
+        #     stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
+        #     stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
+        #                                  pulse_amp=pulse_amp, pulse_n=pulse_n,
+        #                                  pulse_dur_ms=pulse_dur_ms))
+        # self.protocol = Protocol(stimuli)
+
+        burst_freq = 1  # frequency of pulses in the burst
+        pulse_amp = 3.5  # amplitude in mA
+        pulse_n = 1  # number of shock pulses per burst
+        pulse_dur_ms = 150  # duration of each
+
+        stimuli.append(Pause(duration=30))
         for i in range(repetitions):
-            stimuli.append(Pause(duration=period - 1/burst_freq*pulse_n))
-            stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=burst_freq,
+            stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
+            stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
                                          pulse_amp=pulse_amp, pulse_n=pulse_n,
                                          pulse_dur_ms=pulse_dur_ms))
         self.protocol = Protocol(stimuli)
+
+        burst_freq = 1  # frequency of pulses in the burst
+        pulse_amp = 3.5  # amplitude in mA
+        pulse_n = 1  # number of shock pulses per burst
+        pulse_dur_ms = 200  # duration of each
+
+
+
+        stimuli.append(Pause(duration=30))
+        for i in range(repetitions):
+            stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
+            stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
+                                         pulse_amp=pulse_amp, pulse_n=pulse_n,
+                                         pulse_dur_ms=pulse_dur_ms))
+        self.protocol = Protocol(stimuli)
+
+
 
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)

@@ -27,7 +27,8 @@ if __name__ == '__main__':
     stimuli = []
     for i in range(5):
         stimuli.append(Pause(duration=2))
-        stimuli.append(ShockStimulus(pyboard=pyb))
+        stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+                                     pulse_n=1, pulse_dur_ms=5))
     protocol = Protocol(stimuli)
 
     # Prepare control window and window for displaying the  stimulus

@@ -141,8 +141,8 @@ class CameraTailSelection(CameraViewWidget):
         self.roi_dict['length_x'] = self.roi_tail.listPoints()[1].y() - self.roi_dict['start_x']  # delta x
         return {'start_x': self.roi_dict['start_x'], 'start_y': self.roi_dict['start_y'],
                 'tail_len_x': self.roi_dict['length_x'], 'tail_len_y': self.roi_dict['length_y'],
-                'n_segments': 30, 'window_size': 30,
-                'inverted': False, 'filtered': True}
+                'n_segments': 20, 'window_size': 25,
+                'inverted': False, 'filtered': False}
 
     def modify_frame(self, frame):
         position_data = None

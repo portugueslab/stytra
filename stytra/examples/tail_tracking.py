@@ -6,7 +6,7 @@ from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
 from stytra.tracking import DataAccumulator
 from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget
-from stytra.gui.plots import TailPlot
+from stytra.gui.plots import StreamingPlotWidget
 from stytra.metadata import MetadataCamera
 import qdarkstyle
 import multiprocessing
@@ -30,9 +30,9 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer.setSingleShot(False)
         self.camera_data = MetadataCamera()
 
-        self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
-                                    '/Users/luigipetrucco/Desktop/tail_movement.avi')
-        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        # self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                             '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
@@ -43,14 +43,14 @@ class Experiment(QMainWindow):
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
-        self.stream_plot = TailPlot(data_accumulator=self.data_acc_tailpoints)
+        self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_parameter_queue,
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
-                                                 update_timer=self.gui_refresh_timer)
-                                                 # control_queue=self.control_queue,
-                                                 # camera_parameters=self.camera_data)
+                                                 update_timer=self.gui_refresh_timer,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
 

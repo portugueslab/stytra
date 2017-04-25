@@ -27,8 +27,8 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
 
-        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
+        #self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -56,17 +56,17 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
-        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
-                                         '/Users/luigipetrucco/Desktop/tail_movement.avi')
+        #self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+        #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=30, print_framerate=False)
+                                                gui_framerate=30, print_framerate=True)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
 
@@ -76,9 +76,9 @@ class Experiment(QMainWindow):
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
-                                                 roi_dict=self.roi_dict)
-                                                 #control_queue=self.control_queue,
-                                                 #camera_parameters=self.camera_data)
+                                                 roi_dict=self.roi_dict,
+                                                 control_queue=self.control_queue,
+                                                 camera_parameters=self.camera_data)
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
@@ -87,7 +87,7 @@ class Experiment(QMainWindow):
 
 
         # imaging_time = 10
-        stim_duration = 2
+        stim_duration = 20
         refresh_rate = 60.
         initial_pause = 0
         mm_px = 15 / 87

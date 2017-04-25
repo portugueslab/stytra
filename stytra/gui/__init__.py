@@ -63,8 +63,8 @@ class GLStimDisplay(QOpenGLWidget):
             if self.previous_time_fps is not None:
                 self.current_framerate = self.n_fps_frames / (
                     self.current_time - self.previous_time_fps).total_seconds()
-                if self.print_framerate:
-                    print('{:.2f} FPS'.format(self.current_framerate))
+                # if self.print_framerate:
+                #     print('{:.2f} FPS'.format(self.current_framerate))
 
             self.previous_time_fps = self.current_time
         self.i_fps = (self.i_fps + 1) % self.n_fps_frames

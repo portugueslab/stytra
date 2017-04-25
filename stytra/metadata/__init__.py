@@ -248,12 +248,12 @@ class MetadataLightsheet(Metadata):
     category = 'imaging'
 
     imaging_type = param.String(default='lightsheet', constant=True)
-    frame_rate = param.Number(default=20, bounds=(1., 200.), doc='Camera frame rate (Hz)')
+    frame_rate = param.Number(default=20, bounds=(0., 200.), doc='Camera frame rate (Hz)')
     piezo_frequency = param.Number(default=5, bounds=(0., 10), doc='Scanning frequency (Hz)')
     piezo_amplitude = param.Number(default=0, bounds=(0., 10), doc='Piezo scanning amplitude (arbitrary voltage)')
     exposure_time = param.Number(default=1, bounds=(0.1, 10), doc='Exposure (ms)')
     laser_power = param.Number(default=23, bounds=(0.1, 100), doc='Laser power (mA)')
-    scanning_profile = param.ObjectSelector(default='sawtooth', objects=['none', 'sawtooth', 'triangle'])
+    scanning_profile = param.ObjectSelector(default='sawtooth', objects=['none', 'sawtooth', 'triangle', 'sine'])
     binning = param.ObjectSelector(default='2x2', objects=['1x1', '2x2', '4x4'])
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
 

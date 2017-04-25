@@ -192,9 +192,9 @@ def std_bp_filter(img, small_square=3, large_square=50):
 
 
 
-#@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
-                         inverted=False, filtered=True):
+                         inverted=False, filtered=False):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -207,8 +207,8 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
     :param window_size: size in pixel of the window for center-of-mass calculation
     :return:
     """
-    if filtered:
-        im = std_bp_filter(im, small_square=3, large_square=50)
+    # if filtered:
+    #     im = std_bp_filter(im, small_square=3, large_square=50)
     if inverted:
         im = (255 - im).astype(np.uint8)  # invert image
     length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
@@ -230,10 +230,10 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
             _next_segment(im, start_x, start_y, disp_x, disp_y, window_size, seg_length)
 
         if i > 1:  # update cumulative angle sum
-            # new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
-            new_angle = np.arctan2(disp_y, disp_x)
+            new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
+            abs_angle = np.arctan2(disp_y, disp_x)
             cum_sum = cum_sum + new_angle
-            angles.append(new_angle)
+            angles.append(abs_angle)
 
     return [cum_sum, ] + angles[::]
 
