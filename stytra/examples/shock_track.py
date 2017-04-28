@@ -1,20 +1,19 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
-from stytra.stimulation.stimuli import Pause
-from stytra.stimulation import Protocol
+from stytra.stimulation.protocols import SpontActivityProtocol, ShockProtocol, FlashProtocol, FlashShockProtocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.tracking.tail import detect_tail_embedded
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
-from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
+from stytra.hardware.video import XimeaCamera, FrameDispatcher
 from stytra.tracking import DataAccumulator
-from stytra.hardware.serial import PyboardConnection
-from stytra.stimulation.stimuli import ShockStimulus
+from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
+import json
+
 
 import multiprocessing
 
@@ -26,9 +25,22 @@ class Experiment(QMainWindow):
         super().__init__()
         self.app = app
         multiprocessing.set_start_method('spawn')
+        self.pyb = PyboardConnection(com_port='COM3')
+        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.163:5555')
 
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/shock_meta'
-        #self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        # Editable part #############################################################################################
+        #############################################################################################################
+        # Experiment folder:
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/prova270417'
+
+        # Select a protocol:
+        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
+        self.protocol = FlashProtocol(repetitions=4, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
+        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+
+        #############################################################################################################
+        # End editable part #########################################################################################
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -44,7 +56,8 @@ class Experiment(QMainWindow):
         self.imaging_data = MetadataLightsheet()
         self.camera_data = MetadataCamera()
 
-        self.metalist_gui = MetaListGui([self.general_data, self.fish_data, self.imaging_data])
+        self.metalist_gui = MetaListGui([self.general_data, self.imaging_data,  self.fish_data])
+
         self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
                                             self.camera_data, folder_path=self.experiment_folder,
                                             use_last_val=True)
@@ -68,7 +81,9 @@ class Experiment(QMainWindow):
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 
         self.roi_dict = {'start_y': 320, 'start_x': 480, 'length_y': 0, 'length_x': -400}
+
         self.data_collector.add_data_source('tracking', self.roi_dict)
+
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_param_queue,
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
@@ -81,55 +96,7 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
         self.gui_refresh_timer.timeout.connect(self.camera_viewer.update_image)
 
-        self.pyb = PyboardConnection(com_port='COM3')
-        # Generate stimulus protocol
-        stimuli = []
-
-        # Stimulus is a series of shock bursts
-        repetitions = 5  # number of burst repetitions
-        period = 25  # burst repetition period
-        #
-        # burst_freq = 1  # frequency of pulses in the burst
-        # pulse_amp = 3.  # amplitude in mA
-        # pulse_n = 1  # number of shock pulses per burst
-        # pulse_dur_ms = 100 # duration of each
-        #
-        # for i in range(repetitions):
-        #     stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
-        #     stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
-        #                                  pulse_amp=pulse_amp, pulse_n=pulse_n,
-        #                                  pulse_dur_ms=pulse_dur_ms))
-        # self.protocol = Protocol(stimuli)
-
-        burst_freq = 1  # frequency of pulses in the burst
-        pulse_amp = 3.5  # amplitude in mA
-        pulse_n = 1  # number of shock pulses per burst
-        pulse_dur_ms = 150  # duration of each
-
-        stimuli.append(Pause(duration=30))
-        for i in range(repetitions):
-            stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
-            stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
-                                         pulse_amp=pulse_amp, pulse_n=pulse_n,
-                                         pulse_dur_ms=pulse_dur_ms))
-        self.protocol = Protocol(stimuli)
-
-        burst_freq = 1  # frequency of pulses in the burst
-        pulse_amp = 3.5  # amplitude in mA
-        pulse_n = 1  # number of shock pulses per burst
-        pulse_dur_ms = 200  # duration of each
-
-
-
-        stimuli.append(Pause(duration=30))
-        for i in range(repetitions):
-            stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
-            stimuli.append(ShockStimulus(pyboard=self.pyb, burst_freq=burst_freq,
-                                         pulse_amp=pulse_amp, pulse_n=pulse_n,
-                                         pulse_dur_ms=pulse_dur_ms))
-        self.protocol = Protocol(stimuli)
-
-
+        self.protocol.print()
 
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
@@ -137,26 +104,22 @@ class Experiment(QMainWindow):
         # Prepare control window and window for displaying the  stimulus
         # Instantiate display window and control window:
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
+
         self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
+        self.data_collector.add_data_source('stimulus', 'window_pos',
+                                            self.win_control.widget_view.roi_box.state, 'pos')
+        self.data_collector.add_data_source('stimulus', 'window_size',
+                                            self.win_control.widget_view.roi_box.state, 'size')
 
-        # Get info from microscope after setting connection with the LabView computer
-        # IMPORTANT: Check IP!!!
-        # zmq_trigger = ZmqLightsheetTrigger(pause=initial_pause, tcp_address='tcp://192.168.233.156:5555')
-        #
-        # protocol.sig_protocol_started.connect(zmq_trigger.start)
-        # dict_lightsheet_info = zmq_trigger.get_ls_data()
-        # imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Sawtooth Wave'])
-        # imaging_data.set_fix_value('piezo_frequency', dict_lightsheet_info['Piezo Frequency'])
-        # imaging_data.set_fix_value('piezo_amplitude', dict_lightsheet_info['Piezo Top and Bottom']['1'])
-        # imaging_data.set_fix_value('frame_rate', dict_lightsheet_info['Triggering']['1'])
-
-        # Metadata window and data collector for saving experiment data:
-
-        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-        # self.data_collector.add_data_source('camera', 'fish_pos', self.camera_viewer.roi_dict)
+        dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
+        print(dict_lightsheet_info)
+        self.imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
+        self.imaging_data.set_fix_value('piezo_frequency', dict_lightsheet_info['Piezo Frequency'])
+        self.imaging_data.set_fix_value('piezo_amplitude', abs(dict_lightsheet_info['Piezo Top and Bottom']['1']))
+        self.imaging_data.set_fix_value('frame_rate', dict_lightsheet_info['camera frame capture rate'])
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
-        self.protocol.sig_protocol_finished.connect(self.data_collector.save)
+        self.win_control.refresh_ROI()
 
         # Create window:
         self.main_layout = QSplitter(Qt.Horizontal)
@@ -179,11 +142,12 @@ class Experiment(QMainWindow):
 
         # Show windows:
         self.win_stim_disp.show()
+        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
+        self.win_stim_disp.showFullScreen()
         self.show()
 
-
     def finishAndSave(self):
-        self.gui_refresh_timer.stop()
+        # self.gui_refresh_timer.stop()
 
         self.dataframe = self.data_acc_tailpoints.get_dataframe()
         self.data_collector.add_data_source('behaviour', 'tail_tracking',
@@ -192,11 +156,11 @@ class Experiment(QMainWindow):
                                             self.data_acc_tailpoints.starting_time)
 
         self.data_collector.save()
-        #self.zmq_trigger.stop()
-        self.finishProtocol()
-        self.app.closeAllWindows()
-        self.app.quit()
-
+        self.data_acc_tailpoints.reset()
+        # self.zmq_trigger.stop()
+        # self.finishProtocol()
+        # self.app.closeAllWindows()
+        # self.app.quit()
 
     def finishProtocol(self):
         self.finished_sig.set()
@@ -216,11 +180,8 @@ class Experiment(QMainWindow):
             self.app.closeAllWindows()
             self.app.quit()
 
-
-
 if __name__ == '__main__':
-    app = QApplication([])
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    exp = Experiment(app)
-    app.exec_()
-
+    application = QApplication([])
+    application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    exp = Experiment(application)
+    application.exec_()
