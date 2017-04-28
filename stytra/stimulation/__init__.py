@@ -31,6 +31,7 @@ class Protocol(QObject):
         self.current_stimulus = stimuli[0]
         self.timer = QTimer()
         self.dt = dt
+        self.past_stimuli_elapsed = None
 
         # Log will be a list of stimuli states
         self.log = []
@@ -41,6 +42,7 @@ class Protocol(QObject):
         self.timer.timeout.connect(self.timestep)
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
+        self.past_stimuli_elapsed = datetime.datetime.now()
         self.current_stimulus.started = datetime.datetime.now()
 
         self.sig_protocol_started.emit()
@@ -49,7 +51,7 @@ class Protocol(QObject):
     def timestep(self):
         self.t = (datetime.datetime.now() - self.t_start).total_seconds()  # Time from start in seconds
         self.current_stimulus.elapsed = (datetime.datetime.now() -
-                                         self.current_stimulus.started).total_seconds()
+                                         self.past_stimuli_elapsed).total_seconds()
 
         if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
             self.sig_stim_change.emit(self.i_current_stimulus)
@@ -58,6 +60,12 @@ class Protocol(QObject):
             if self.i_current_stimulus >= len(self.stimuli) - 1:
                 self.end()
             else:
+                # update the variable which keeps track when the last
+                # stimulus *should* have ended, in order to avoid
+                # drifting
+
+                self.past_stimuli_elapsed += datetime.timedelta(
+                    seconds=self.current_stimulus.duration)
                 self.i_current_stimulus += 1
                 self.current_stimulus = self.stimuli[self.i_current_stimulus]
                 self.current_stimulus.started = datetime.datetime.now()
