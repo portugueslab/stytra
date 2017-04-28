@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QComboBox
 import pyqtgraph as pg
 import numpy as np
 
@@ -131,3 +131,57 @@ class ProtocolControlWindow(QWidget):
             self.button_show_calib.setText('Show calibration')
         dispw.update()
         self.sig_calibrating.emit()
+
+    def set_protocol(self, protocol):
+        self.button_start.clicked.disconnect(self.protocol.start)
+        #self.button_end.clicked.diconnect(self.protocol.end)
+
+
+        self.protocol = protocol
+        self.button_start.clicked.connect(self.protocol.start)
+        self.button_end.clicked.connect(self.protocol.end)
+        print('new protocol:')
+        print(self.protocol.name)
+
+
+
+
+class ProtocolSelectorWidget(QWidget):
+    change_signal = pyqtSignal()
+    def __init__(self, app, protocol_list, *args):
+        """
+        Widget for controlling the stimulation.
+        :param app: Qt5 app
+        :param protocol: Protocol object with the stimulus
+        :param display_window: ProjectorViewer object for the projector
+        """
+        super().__init__(*args)
+        self.app = app
+        self.protocol_list = protocol_list
+        self.layout = QVBoxLayout()
+        self.index = 0
+
+        names = []
+        for protocol in self.protocol_list:
+            names.append(protocol.name)
+
+        self.protocol_selector = QComboBox()
+        self.protocol_selector.setEditable(False)
+        # Add list and set default:
+        self.protocol_selector.addItems(names)
+        self.protocol_selector.setCurrentIndex(0)
+        self.protocol_selector.currentTextChanged.connect(self.change_protocol)
+
+        self.layout.addWidget(self.protocol_selector)
+
+        self.setLayout(self.layout)
+
+    def change_protocol(self):
+        self.index = self.protocol_selector.currentIndex()
+        self.change_signal.emit()
+
+
+
+
+
+

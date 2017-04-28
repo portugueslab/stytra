@@ -17,7 +17,7 @@ class Protocol(QObject):
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli, dt=1/60, log_print=True):
+    def __init__(self, stimuli=None, dt=1/60, log_print=True):
         """
         :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
         :param dt: frame duration (sec)
@@ -26,9 +26,10 @@ class Protocol(QObject):
 
         self.t_start = None
         self.t = 0
-        self.stimuli = stimuli
+        if stimuli:
+            self.stimuli = stimuli
+            self.current_stimulus = stimuli[0]
         self.i_current_stimulus = 0
-        self.current_stimulus = stimuli[0]
         self.timer = QTimer()
         self.dt = dt
 
@@ -42,7 +43,6 @@ class Protocol(QObject):
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
         self.current_stimulus.started = datetime.datetime.now()
-
         self.sig_protocol_started.emit()
         # self.sig_stim_change.emit(0) - not sure about commenting out this
 
@@ -96,6 +96,13 @@ class Protocol(QObject):
 
         # Log will be a list of stimuli states
         self.log = []
+
+    def print(self):
+        string = ''
+        for stim in self.stimuli:
+            string += '-' + stim.name
+
+        print(string)
 
 
 

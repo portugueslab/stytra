@@ -42,10 +42,10 @@ if __name__ == '__main__':
     stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
     stimuli.append(Pause(duration=1))
     stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
-    for i in range(10):    #change here for number of stimuli (default: 10 in 5 min (1 every 30 s))
-        stimuli.append(Pause(duration=24)) # pre-flash interval
-        stimuli.append(Flash(duration=1, color=flash_color)) # flash duration
-        stimuli.append(Pause(duration=5)) # post flash interval
+    stimuli.append(Pause(duration=29))  # pre-flash interval
+    for i in range(10):  # change here for number of stimuli (default: 10 in 5 min (1 every 30 s))
+        stimuli.append(Flash(duration=1, color=flash_color))  # flash duration
+        stimuli.append(Pause(duration=29))  # post flash interval
     ######################################################################################
 
     ######################################################################################
@@ -58,36 +58,15 @@ if __name__ == '__main__':
     # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
     # stimuli.append(Pause(duration=1))
     # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
-    # stimuli.append(Pause(duration=24.95))  # pre-shock interval
+    # stimuli.append(Pause(duration=29))  # pre-shock interval
     # for i in range(50): # change here for number of pairing trials
-    #     stimuli.append(Pause(duration=4.))
     #     stimuli.append(Flash(duration=0.95, color=flash_color))  # flash duration
     #     stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
     #                                   pulse_n=1, pulse_dur_ms=5))
     #     stimuli.append(Flash(duration=0.05, color=flash_color))  # flash duration
-    #     stimuli.append(Pause(duration=25.0))  # post flash interval
+    #     stimuli.append(Pause(duration=29.0))  # post flash interval
     ######################################################################################
 
-    ######################################################################################
-    ############################
-    ### Long protocol flash (start and stop 10 seconds of acquisition)
-    ############################
-    ### Generate stimulus protocol
-    # stimuli = []
-    # stimuli.append(Pause(duration=1))
-    # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-    # stimuli.append(Pause(duration=1))
-    # for i in range(50):
-    #     stimuli.append(Pause(duration=20)) # inter-stimulus pause
-    #     stimuli.append(StartAquisition(zmq_trigger=zmq_trigger)) #start aquisition
-    #     stimuli.append(Pause(duration=4)) # pre-flash interval
-    #     stimuli.append(Flash(duration=1, color=flash_color)) # flash duration
-    #     stimuli.append(Pause(duration=5)) # post flash interval
-    #     stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger)) #stop acquisition
-    #
-    # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))
-    # protocol = Protocol(stimuli, refresh_rate)
-    ######################################################################################
 
     ######################################################################################
     ############################
@@ -99,7 +78,7 @@ if __name__ == '__main__':
     # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
     # stimuli.append(Pause(duration=1))
     # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
-    # stimuli.append(Pause(duration=24.95))  # pre-shock interval
+    # stimuli.append(Pause(duration=29.95))  # pre-shock interval
     # for i in range(10): # change here for number of trials
     #     stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
     #                                   pulse_n=1, pulse_dur_ms=5))
@@ -108,30 +87,6 @@ if __name__ == '__main__':
 
 
 
-
-    ######################################################################################
-    ############################
-    ### Long protocol shock (start and stop 10 seconds of acquition
-    ############################
-    ###Generate stimulus protocol
-    # pyb = PyboardConnection(com_port='COM3')
-    #
-    # stimuli = []
-    # stimuli.append(Pause(duration=1))
-    # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-    # stimuli.append(Pause(duration=1))
-    # for i in range(50):
-    #     stimuli.append(Pause(duration=20)) # inter-stimulus pause
-    #     stimuli.append(StartAquisition(zmq_trigger=zmq_trigger)) #start aquisition
-    #     stimuli.append(Pause(duration=4.95)) # pre-shock interval
-    #     stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-    #                                   pulse_n=1, pulse_dur_ms=5))
-    #     stimuli.append(Pause(duration=5.05)) # post shock interval
-    #     stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger)) #stop acquisition
-    #
-    # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))
-    # protocol = Protocol(stimuli, refresh_rate)
-    ######################################################################################
 
 
 

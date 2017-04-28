@@ -1,3 +1,4 @@
+from PyQt5.QtWidgets import QApplication
 from stytra.gui.control_gui import ProtocolControlWindow
 import qdarkstyle
 

@@ -196,7 +196,7 @@ class ShockStimulus(Stimulus):
 class StopAquisition(Stimulus):
     def __init__(self, zmq_trigger=None, **kwargs):
         super().__init__(**kwargs)
-        self.name = 'starty_acquisition'
+        self.name = 'stop_acquisition'
         self._zmq_trigger = zmq_trigger
 
     def start(self):
@@ -206,12 +206,14 @@ class StopAquisition(Stimulus):
 class StartAquisition(Stimulus):
     def __init__(self, zmq_trigger=None, **kwargs):
         super().__init__(**kwargs)
-        self.name = 'stop_acquisition'
+        self.name = 'start_acquisition'
         self._zmq_trigger = zmq_trigger
 
     def start(self):
-        print('start')
         self._zmq_trigger.start_command()
+        print('Acquisition started')
+        self.elapsed = 1
+
 
 class PrepareAquisition(Stimulus):
     def __init__(self, zmq_trigger=None, **kwargs):
@@ -221,7 +223,8 @@ class PrepareAquisition(Stimulus):
 
     def start(self):
         self._zmq_trigger.prepare()
-        'prepared'
+        print('Acquisition prepared')
+        self.elapsed = 1
 
 
 class FlashShock(Flash):
