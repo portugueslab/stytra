@@ -26,18 +26,18 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
-        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.163:5555')
+        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.223:5555')
 
         # Editable part #############################################################################################
         #############################################################################################################
         # Experiment folder:
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/prova270417'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/newstimulation'
 
         # Select a protocol:
-        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
-        self.protocol = FlashProtocol(repetitions=4, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
-        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
-        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        #self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
+        #self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
+        self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        #self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
 
         #############################################################################################################
         # End editable part #########################################################################################
@@ -90,7 +90,10 @@ class Experiment(QMainWindow):
                                                  update_timer=self.gui_refresh_timer,
                                                  roi_dict=self.roi_dict,
                                                  control_queue=self.control_queue,
-                                                 camera_parameters=self.camera_data)
+                                                 camera_parameters=self.camera_data,
+                                                 tracking_params={'n_segments': 10, 'window_size': 25,
+                                                                  'color_invert': False, 'image_filt': True}
+                                                 )
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
@@ -110,6 +113,7 @@ class Experiment(QMainWindow):
                                             self.win_control.widget_view.roi_box.state, 'pos')
         self.data_collector.add_data_source('stimulus', 'window_size',
                                             self.win_control.widget_view.roi_box.state, 'size')
+        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
 
         dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
         print(dict_lightsheet_info)

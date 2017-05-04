@@ -212,7 +212,6 @@ class StartAquisition(Stimulus):
     def start(self):
         self._zmq_trigger.start_command()
         print('Acquisition started')
-        self.elapsed = 1
 
 
 class PrepareAquisition(Stimulus):
@@ -224,35 +223,33 @@ class PrepareAquisition(Stimulus):
     def start(self):
         self._zmq_trigger.prepare()
         print('Acquisition prepared')
-        self.elapsed = 1
 
+#
+# class FlashShock(Flash):
+#     def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
+#                  pulse_dur_ms=2, pyboard=None, **kwargs):
+#         super().__init__(**kwargs)
+#         self.name = 'shock'
+#         # assert isinstance(pyboard, PyboardConnection)
+#         self._pyb = pyboard
+#         self.burst_freq = burst_freq
+#         self.pulse_dur_ms = pulse_dur_ms
+#         self.pulse_n = pulse_n
+#         self.pulse_amp_mA = pulse_amp
+#
+#         # Pause between shocks in the burst in ms:
+#         self.pause = 1000 / burst_freq - pulse_dur_ms
+#
+#         amp_dac = str(int(255 * pulse_amp / 3.5))
+#         pulse_dur_str = str(pulse_dur_ms).zfill(3)
+#         self.mex = str('shock' + amp_dac + pulse_dur_str)
+#
+#     def start(self):
+#         for i in range(self.pulse_n):
+#             self._pyb.write(self.mex)
+#             print(self.mex)
+#             sleep(self.pause / 1000)
 
-class FlashShock(Flash):
-    def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
-                 pulse_dur_ms=2, pyboard=None, **kwargs):
-        super().__init__(**kwargs)
-        self.name = 'shock'
-        # assert isinstance(pyboard, PyboardConnection)
-        self._pyb = pyboard
-        self.burst_freq = burst_freq
-        self.pulse_dur_ms = pulse_dur_ms
-        self.pulse_n = pulse_n
-        self.pulse_amp_mA = pulse_amp
-
-        # Pause between shocks in the burst in ms:
-        self.pause = 1000 / burst_freq - pulse_dur_ms
-
-        amp_dac = str(int(255 * pulse_amp / 3.5))
-        pulse_dur_str = str(pulse_dur_ms).zfill(3)
-        self.mex = str('shock' + amp_dac + pulse_dur_str)
-
-    def start(self):
-        for i in range(self.pulse_n):
-            self._pyb.write(self.mex)
-            print(self.mex)
-            sleep(self.pause / 1000)
-
-        self.elapsed = 1
 
 
 if __name__ == '__main__':

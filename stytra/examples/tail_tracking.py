@@ -50,7 +50,9 @@ class Experiment(QMainWindow):
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
                                                  control_queue=self.control_queue,
-                                                 camera_parameters=self.camera_data)
+                                                 camera_parameters=self.camera_data,
+                                                 tracking_params={'n_segments': 10, 'window_size': 25,
+                                                                  'color_invert': False, 'image_filt': True})
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
 
