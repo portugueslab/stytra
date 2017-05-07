@@ -119,8 +119,6 @@ class Experiment(QMainWindow):
         pulse_n = 1  # number of shock pulses per burst
         pulse_dur_ms = 200  # duration of each
 
-
-
         stimuli.append(Pause(duration=30))
         for i in range(repetitions):
             stimuli.append(Pause(duration=period - 1 / burst_freq * pulse_n))
@@ -128,8 +126,6 @@ class Experiment(QMainWindow):
                                          pulse_amp=pulse_amp, pulse_n=pulse_n,
                                          pulse_dur_ms=pulse_dur_ms))
         self.protocol = Protocol(stimuli)
-
-
 
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
