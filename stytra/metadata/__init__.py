@@ -1,10 +1,38 @@
 import datetime
 import os
+import numpy as np
+import pandas as pd
 
 import deepdish as dd
 import param
 
 from paramqt import ParameterGui
+
+
+def metadata_dataframe(metadata):
+    metadata_dict = metadata
+
+    if 'tail_tracking' in metadata_dict['behaviour'].keys():
+        final_df = metadata_dict['behaviour']['tail_tracking'].copy()
+        delta_time = 0
+
+        if 'tail_tracking_start' in metadata_dict['behaviour'].keys():
+            stim_start = metadata_dict['stimulus']['log'][0]['started']
+            track_start = metadata_dict['behaviour']['tail_tracking_start']
+            delta_time = (stim_start - track_start).total_seconds()
+
+        final_df['stimulus'] = np.nan
+
+        for stimulus in metadata_dict['stimulus']['log']:
+            final_df.loc[(final_df['time'] > stimulus['t_start'] + delta_time) &
+                         (final_df['time'] < stimulus['t_stop'] + delta_time),
+                         'stimulus'] = stimulus['name']
+
+    else:
+        print('Conversion without tail tracking not implemented jet!')
+        final_df = None
+
+    return final_df
 
 
 class DataCollector:
@@ -139,7 +167,7 @@ class DataCollector:
 
         return data_dict
 
-    def save(self, timestamp=None):
+    def save(self, timestamp=None, save_csv=True):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
@@ -153,6 +181,12 @@ class DataCollector:
         filename = self.folder_path + timestamp + '_metadata.h5'
         print(filename)
         dd.io.save(filename, data_dict)
+
+        # Save .csv file if required
+        if save_csv:
+            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
+            dataframe = metadata_dataframe(data_dict)
+            dataframe.to_csv(filename_df)
 
     def set_to_last_value(self, *args):
         """
