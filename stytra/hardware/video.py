@@ -108,10 +108,14 @@ class XimeaCamera(FrameProcessor):
                     pass
             if self.signal.is_set():
                 break
-            self.cam.get_image(img)
-            # TODO check if it does anything to add np.array
-            arr = np.array(img.get_image_data_numpy())
-            self.q.put((datetime.now(), arr))
+            try:
+                self.cam.get_image(img)
+                # TODO check if it does anything to add np.array
+                arr = np.array(img.get_image_data_numpy())
+                self.q.put((datetime.now(), arr))
+            except xiapi.Xi_error:
+                print('Unable to acquire frame')
+                pass
         self.cam.close_device()
 
 
