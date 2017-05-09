@@ -2,8 +2,6 @@ from PyQt5.QtWidgets import QApplication
 from stytra.gui.control_gui import ProtocolControlWindow
 import qdarkstyle
 
-
-
 class Experiment:
     def __init__(self, directory, name):
         self.app = QApplication([])

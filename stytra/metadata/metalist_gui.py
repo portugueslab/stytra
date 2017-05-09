@@ -49,7 +49,6 @@ class MetaListGui(QWidget):
         self.create_layout()
         self.show()
 
-
     def save_all_meta(self):
         check_list = []
         for paramqt_widget in self.widget_list:

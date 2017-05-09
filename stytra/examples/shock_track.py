@@ -21,26 +21,34 @@ import qdarkstyle
 
 
 class Experiment(QMainWindow):
-    def __init__(self, app):
+    def __init__(self, app, stim_name):
         super().__init__()
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
-        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.223:5555')
+        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.2:5555')
 
         # Editable part #############################################################################################
         #############################################################################################################
         # Experiment folder:
         self.experiment_folder = 'C:/Users/lpetrucco/Desktop/newstimulation'
-
-        # Select a protocol:
-        #self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
-        #self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
-        self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
-        #self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
-
         #############################################################################################################
         # End editable part #########################################################################################
+
+        # Select a protocol:
+        protocol_dict = {'spontaneous': SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
+                         'flash': FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
+                         'shock': ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                         'pairing': FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)}
+
+        try:
+            self.protocol = protocol_dict[stim_name]
+        except KeyError:
+            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
+        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
+        # self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
+        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -68,7 +76,7 @@ class Experiment(QMainWindow):
         # self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
         #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue,  downsampling=4)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=detect_tail_embedded,
@@ -185,7 +193,13 @@ class Experiment(QMainWindow):
             self.app.quit()
 
 if __name__ == '__main__':
+    import git
     application = QApplication([])
     application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    exp = Experiment(application)
-    application.exec_()
+    repo = git.Repo(search_parent_directories=True)
+    sha = repo.head.object.hexsha
+    print(sha)
+    # stimulus_name = input("Choose stimulus: ")
+    # exp = Experiment(application, stimulus_name)
+    # application.exec_()
+
