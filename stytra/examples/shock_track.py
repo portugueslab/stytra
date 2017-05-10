@@ -41,15 +41,20 @@ class Experiment(QMainWindow):
         # Fixed factor for converting piezo voltages to microns; an half FOV of 5 results in 400 microns scanning, so:
         piezo_amp_conversion = 400 / 5
 
-        # Select chosen protocol (make sure that the specified number of frames (second tuple element) is correct!):
-        protocol_dict = {'spontaneous': (SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
-                                         18000),
-                         'flash': (FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
-                                   18000),
-                         'shock': (ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
-                                   18000),
-                         'pairing': (FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
-                                     90000)}
+        # Select a protocol:
+        protocol_dict = {'spontaneous': SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
+                         'flash': FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
+                         'shock': ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                         'pairing': FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)}
+
+        try:
+            self.protocol = protocol_dict[stim_name]
+        except KeyError:
+            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
+        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
+        # self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
+        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
