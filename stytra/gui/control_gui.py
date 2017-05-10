@@ -1,7 +1,9 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QComboBox
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QComboBox, QApplication, \
+    QFileDialog, QLineEdit
 import pyqtgraph as pg
 import numpy as np
+import os
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -179,6 +181,75 @@ class ProtocolSelectorWidget(QWidget):
     def change_protocol(self):
         self.index = self.protocol_selector.currentIndex()
         self.change_signal.emit()
+
+
+class StartingWindow(QWidget):
+    def __init__(self, app, protocol_list, *args):
+        """
+        Widget for controlling the stimulation.
+        :param app: Qt5 app
+        :param protocol: Protocol object with the stimulus
+        :param display_window: ProjectorViewer object for the projector
+        """
+        super().__init__(*args)
+        self.app = app
+        self.protocol_list = protocol_list
+        self.layout = QVBoxLayout()
+        self.chached_folder_filename = 'folder.txt'
+
+        # folder selection: set to cached folder if existing:
+        if os.path.isfile(self.chached_folder_filename):
+            with open(self.chached_folder_filename, 'r') as text_file:
+                self.folder = text_file.read()
+        else:
+            self.folder = os.getcwd()
+        self.folder_box = QLineEdit(self.folder)
+        self.folder_box.setEnabled(False)
+        self.layout.addWidget(self.folder_box)
+
+        self.button_folder = QPushButton('Select new folder')
+        self.button_folder.clicked.connect(self.change_folder)
+        self.layout.addWidget(self.button_folder)
+
+        # Add list:
+        self.protocol = self.protocol_list[0]
+        self.protocol_selector = QComboBox()
+        self.protocol_selector.setEditable(False)
+        self.protocol_selector.addItems(protocol_list)
+        self.protocol_selector.currentTextChanged.connect(self.change_protocol)
+        self.layout.addWidget(self.protocol_selector)
+
+        self.button_end = QPushButton('Proceed')
+        self.button_end.clicked.connect(self.close)
+        self.layout.addWidget(self.button_end)
+
+        self.setLayout(self.layout)
+        self.show()
+
+    def change_folder(self):
+        dialog = QFileDialog()
+        folder_path = dialog.getExistingDirectory(None, "Select Folder")
+        self.folder_box.setText(folder_path)
+        self.folder = folder_path
+        with open(self.chached_folder_filename, 'w') as text_file:
+            text_file.write(folder_path)
+
+    def change_protocol(self):
+        self.protocol = self.protocol_list[self.protocol_selector.currentIndex()]
+
+
+
+if __name__ == '__main__':
+    application = QApplication([])
+    exp = StartingWindow(application, ['a', 'b'])
+    application.exec_()
+    print(exp.folder)
+
+    application2 = QApplication([])
+    exp2 = StartingWindow(application2, [exp.protocol, 'b'])
+    application2.exec_()
+    print(exp.folder)
+    print(exp.protocol)
 
 
 

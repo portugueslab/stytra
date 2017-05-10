@@ -199,7 +199,7 @@ def std_bp_filter(img, small_square=3, large_square=50):
 # Can't be jit-ted because of the cv2 library in the filtering
 # @jit(nopython=True, cache=True)
 def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
-                         color_invert=False, image_filt=True):
+                         color_invert=False, image_filt=False):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
