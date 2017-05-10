@@ -52,7 +52,7 @@ class FrameProcessor(Process):
                 self.current_framerate = self.n_fps_frames / (
                     self.current_time - self.previous_time_fps).total_seconds()
                 if self.print_framerate:
-                    print('FPS: ' + int(self.current_framerate*10/500)*'#')
+                    print('FPS: ' + str(self.current_framerate))# int(self.current_framerate*10/500)*'#')
                 if self.framerate_queue:
                     self.framerate_queue.put(self.current_framerate)
             self.previous_time_fps = self.current_time

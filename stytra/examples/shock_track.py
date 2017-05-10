@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
 from stytra.stimulation.protocols import SpontActivityProtocol, ShockProtocol, FlashProtocol, FlashShockProtocol
 from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow
+from stytra.gui.control_gui import ProtocolControlWindow, StartingWindow
 from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.tracking.tail import detect_tail_embedded
@@ -13,6 +13,7 @@ from stytra.hardware.video import XimeaCamera, FrameDispatcher
 from stytra.tracking import DataAccumulator
 from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
 import json
+import git
 
 
 import multiprocessing
@@ -21,34 +22,34 @@ import qdarkstyle
 
 
 class Experiment(QMainWindow):
-    def __init__(self, app, stim_name):
+    def __init__(self, app, folder, stim_name):
         super().__init__()
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
         self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.2:5555')
+        self.experiment_folder = folder
 
         # Editable part #############################################################################################
         #############################################################################################################
         # Experiment folder:
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/newstimulation'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
+
+        run_if_committed = False
         #############################################################################################################
         # End editable part #########################################################################################
+        # Fixed factor for converting piezo voltages to microns; an half FOV of 5 results in 400 microns scanning, so:
+        piezo_amp_conversion = 400 / 5
 
-        # Select a protocol:
-        protocol_dict = {'spontaneous': SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
-                         'flash': FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
-                         'shock': ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
-                         'pairing': FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)}
-
-        try:
-            self.protocol = protocol_dict[stim_name]
-        except KeyError:
-            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
-        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
-        # self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
-        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
-        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+        # Select chosen protocol (make sure that the specified number of frames (second tuple element) is correct!):
+        protocol_dict = {'spontaneous': (SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
+                                         18000),
+                         'flash': (FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
+                                   18000),
+                         'shock': (ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                                   18000),
+                         'pairing': (FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                                     90000)}
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -70,6 +71,19 @@ class Experiment(QMainWindow):
                                             self.camera_data, folder_path=self.experiment_folder,
                                             use_last_val=True)
 
+        try:
+            self.protocol = protocol_dict[stim_name][0]
+        except KeyError:
+            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
+
+        repo = git.Repo(search_parent_directories=True)
+        git_hash = repo.head.object.hexsha
+        self.data_collector.add_data_source('general', 'git_hash', git_hash)
+        self.data_collector.add_data_source('general', 'program_name', __file__)
+
+        if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and run_if_committed:
+            raise PermissionError('The project has to be committed before starting!')
+
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
 
@@ -82,14 +96,13 @@ class Experiment(QMainWindow):
                                                 processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_param_queue,
                                                 finished_signal=self.finished_sig, output_queue=self.tail_pos_queue,
-                                                gui_framerate=30, print_framerate=False)
+                                                gui_framerate=30, print_framerate=True)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_pos_queue)
 
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 
         self.roi_dict = {'start_y': 320, 'start_x': 480, 'length_y': 0, 'length_x': -400}
-
         self.data_collector.add_data_source('tracking', self.roi_dict)
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_param_queue,
@@ -100,7 +113,7 @@ class Experiment(QMainWindow):
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
                                                  tracking_params={'n_segments': 10, 'window_size': 25,
-                                                                  'color_invert': False, 'image_filt': True}
+                                                                  'color_invert': False, 'image_filt': False}
                                                  )
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
@@ -124,11 +137,15 @@ class Experiment(QMainWindow):
         self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
 
         dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
-        print(dict_lightsheet_info)
         self.imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
-        self.imaging_data.set_fix_value('piezo_frequency', dict_lightsheet_info['Piezo Frequency'])
-        self.imaging_data.set_fix_value('piezo_amplitude', abs(dict_lightsheet_info['Piezo Top and Bottom']['1']))
-        self.imaging_data.set_fix_value('frame_rate', dict_lightsheet_info['camera frame capture rate'])
+        piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
+        piezo_freq = dict_lightsheet_info['Piezo Frequency']
+        imaging_framerate = dict_lightsheet_info['camera frame capture rate']
+        self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
+        self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
+        self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
+        self.imaging_data.set_fix_value('dz', (piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)))
+        self.imaging_data.set_fix_value('n_frames', protocol_dict[stim_name][1])
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.refresh_ROI()
@@ -193,13 +210,15 @@ class Experiment(QMainWindow):
             self.app.quit()
 
 if __name__ == '__main__':
-    import git
     application = QApplication([])
     application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    repo = git.Repo(search_parent_directories=True)
-    sha = repo.head.object.hexsha
-    print(sha)
-    # stimulus_name = input("Choose stimulus: ")
-    # exp = Experiment(application, stimulus_name)
-    # application.exec_()
+    starting_win = StartingWindow(application, ['spontaneous', 'flash', 'shock', 'pairing'])
+    print('1')
+    application.exec_()
+    print(starting_win.folder)
+    print(starting_win.protocol)
+    application2 = QApplication([])
+    exp = Experiment(application2, starting_win.folder, starting_win.protocol)
+    application2.exec_()
+
 
