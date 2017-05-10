@@ -34,8 +34,7 @@ class Experiment(QMainWindow):
         #############################################################################################################
         # Experiment folder:
         # self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
-
-        run_if_committed = True
+        run_only_committed = True
         #############################################################################################################
         # End editable part #########################################################################################
         # Fixed factor for converting piezo voltages to microns; an half FOV of 5 results in 400 microns scanning, so:
@@ -56,11 +55,7 @@ class Experiment(QMainWindow):
         try:
             self.protocol = protocol_dict[stim_name][0]
         except KeyError:
-            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
-        # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
-        # self.protocol = FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger)
-        # self.protocol = ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
-        # self.protocol = FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)
+            raise KeyError('Stimulus name must be one of the following: anatomy, spontaneous, flash, shock, pairing')
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -92,7 +87,7 @@ class Experiment(QMainWindow):
         self.data_collector.add_data_source('general', 'git_hash', git_hash)
         self.data_collector.add_data_source('general', 'program_name', __file__)
 
-        if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and run_if_committed:
+        if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and     run_only_committed:
             print('The following files contain uncommitted changes:')
             print(repo.git.diff('HEAD~1..HEAD', name_only=True))
             raise PermissionError('The project has to be committed before starting!')
@@ -154,6 +149,7 @@ class Experiment(QMainWindow):
         piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
         piezo_freq = dict_lightsheet_info['Piezo Frequency']
         imaging_framerate = dict_lightsheet_info['camera frame capture rate']
+        print('Step size on z:' + str(piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)) + ' um')
         self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
         self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
         self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
@@ -225,7 +221,7 @@ class Experiment(QMainWindow):
 if __name__ == '__main__':
     application = QApplication([])
     application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    starting_win = StartingWindow(application, ['spontaneous', 'flash', 'shock', 'pairing'])
+    starting_win = StartingWindow(application, ['anatomy', 'spontaneous', 'flash', 'shock', 'pairing'])
     application.exec_()
     print(starting_win.folder)
     print(starting_win.protocol)
