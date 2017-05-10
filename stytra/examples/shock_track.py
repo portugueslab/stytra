@@ -33,7 +33,7 @@ class Experiment(QMainWindow):
         # Editable part #############################################################################################
         #############################################################################################################
         # Experiment folder:
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
+        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
 
         run_if_committed = True
         #############################################################################################################
@@ -42,13 +42,19 @@ class Experiment(QMainWindow):
         piezo_amp_conversion = 400 / 5
 
         # Select a protocol:
-        protocol_dict = {'spontaneous': SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
-                         'flash': FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
-                         'shock': ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
-                         'pairing': FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb)}
+        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=100, zmq_trigger=self.zmq_trigger),
+                                     600),
+                         'spontaneous': (SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
+                                         18000),
+                         'flash': (FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
+                                   18000),
+                         'shock': (ShockProtocol(repetitions=10, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                                   18000),
+                         'pairing': (FlashShockProtocol(repetitions=50, period_sec=30, zmq_trigger=self.zmq_trigger, pyb=self.pyb),
+                                     90000)}
 
         try:
-            self.protocol = protocol_dict[stim_name]
+            self.protocol = protocol_dict[stim_name][0]
         except KeyError:
             raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
         # self.protocol = SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger)
@@ -87,6 +93,8 @@ class Experiment(QMainWindow):
         self.data_collector.add_data_source('general', 'program_name', __file__)
 
         if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and run_if_committed:
+            print('The following files contain uncommitted changes:')
+            print(repo.git.diff('HEAD~1..HEAD', name_only=True))
             raise PermissionError('The project has to be committed before starting!')
 
         self.gui_refresh_timer = QTimer()
@@ -101,7 +109,7 @@ class Experiment(QMainWindow):
                                                 processing_function=detect_tail_embedded,
                                                 processing_parameter_queue=self.processing_param_queue,
                                                 finished_signal=self.finished_sig, output_queue=self.tail_pos_queue,
-                                                gui_framerate=30, print_framerate=True)
+                                                gui_framerate=30, print_framerate=False)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_pos_queue)
 
@@ -218,7 +226,6 @@ if __name__ == '__main__':
     application = QApplication([])
     application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     starting_win = StartingWindow(application, ['spontaneous', 'flash', 'shock', 'pairing'])
-    print('1')
     application.exec_()
     print(starting_win.folder)
     print(starting_win.protocol)
