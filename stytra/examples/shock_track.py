@@ -87,9 +87,12 @@ class Experiment(QMainWindow):
         self.data_collector.add_data_source('general', 'git_hash', git_hash)
         self.data_collector.add_data_source('general', 'program_name', __file__)
 
-        if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and     run_only_committed:
+        for item in repo.index.diff(None):
+            print(item.a_path)
+
+        if len(repo.git.diff(None)) > 0 and     run_only_committed:
             print('The following files contain uncommitted changes:')
-            print(repo.git.diff('HEAD~1..HEAD', name_only=True))
+            print(repo.git.diff(None))
             raise PermissionError('The project has to be committed before starting!')
 
         self.gui_refresh_timer = QTimer()
