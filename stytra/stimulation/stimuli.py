@@ -151,9 +151,29 @@ class ClosedLoopStimulus(DynamicStimulus):
     pass
 
 
-class ClosedLoop1D(DynamicStimulus):
+class ClosedLoop1D(SeamlessStimulus):
+
+    def __init__(self, *args, default_velocity,
+                 fish_motion_estimator, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_vel = default_velocity
+        self.fish_motion_estimator = fish_motion_estimator
+
+        self.past_x = self.x
+        self.past_y = self.y
+        self.past_theta = self.theta
+        self.past_t = 0
+
     def update(self):
-        pass
+        self.x += (self.elapsed-self.past_t) * (self.default_vel -
+                                              self.fish_motion_estimator.veloctiy)
+
+        self.past_t = self.elapsed
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, 'past_'+attr, getattr(self, attr))
+            except (AttributeError, KeyError):
+                pass
 
 
 class ShockStimulus(Stimulus):
