@@ -182,7 +182,7 @@ def detect_fishes(frame, mask, params, diagnostics=False):
 
 
 class MidlineDetectionParams(Metadata):
-    target_area = pa.Integer(450, (0, 700))
+    target_area = pa.Integer(450, (0, 1500))
     area_tolerance = pa.Integer(320, (0, 700))
     n_tail_segments = pa.Integer(14, (1, 20))
     tail_segment_length = pa.Number(4., (0.5, 10))
