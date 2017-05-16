@@ -9,28 +9,46 @@ import param
 from paramqt import ParameterGui
 
 
-def metadata_dataframe(metadata):
-    metadata_dict = metadata
+def metadata_dataframe(metadata_dict, time_step=0.005):
+    """
+    Function for converting a metadata dictionary into a panda dataframe
+    for saving
+    :param metadata_dict: metadata dictionary (containing stimulus log!)
+    :param time_step: time step (used only if tracking is not present!)
+    :return: a pandas DataFrame with a 'stimulus' column for the stimulus
+    """
 
+    # Check if tail tracking is present, to use tracking dataframe as template.
+    # If there is no tracking, generate a dataframe with time steps specified:
     if 'tail_tracking' in metadata_dict['behaviour'].keys():
         final_df = metadata_dict['behaviour']['tail_tracking'].copy()
-        delta_time = 0
-
-        if 'tail_tracking_start' in metadata_dict['behaviour'].keys():
-            stim_start = metadata_dict['stimulus']['log'][0]['started']
-            track_start = metadata_dict['behaviour']['tail_tracking_start']
-            delta_time = (stim_start - track_start).total_seconds()
-
-        final_df['stimulus'] = np.nan
-
-        for stimulus in metadata_dict['stimulus']['log']:
-            final_df.loc[(final_df['time'] > stimulus['t_start'] + delta_time) &
-                         (final_df['time'] < stimulus['t_stop'] + delta_time),
-                         'stimulus'] = stimulus['name']
-
     else:
-        print('Conversion without tail tracking not implemented jet!')
-        final_df = None
+        t = metadata_dict['stimulus']['log'][-1]['t_stop']
+        timearr = np.arange(0, t, time_step)
+        final_df = pd.DataFrame(timearr, columns=['time'])
+
+    # Control for delays between tracking and stimulus starting points:
+    delta_time = 0
+    if 'tail_tracking_start' in metadata_dict['behaviour'].keys():
+        stim_start = metadata_dict['stimulus']['log'][0]['started']
+        track_start = metadata_dict['behaviour']['tail_tracking_start']
+        delta_time = (stim_start - track_start).total_seconds()
+
+    # Assign in a loop a stimulus to each time point
+    start_point = None
+    for stimulus in metadata_dict['stimulus']['log']:
+        if stimulus['name'] == 'start_acquisition':
+            start_point = stimulus
+
+        final_df.loc[(final_df['time'] > stimulus['t_start'] + delta_time) &
+                     (final_df['time'] < stimulus['t_stop'] + delta_time),
+                     'stimulus'] = str(stimulus['name'])
+
+    # Check for the 'start acquisition' which run for a very short time and can be
+    # missed:
+    if start_point:
+        start_idx = np.argmin(abs(final_df['time'] - start_point['t_start']))
+        final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
 
     return final_df
 
