@@ -118,6 +118,7 @@ class Experiment(QMainWindow):
                                                  duration=motion.t.iat[-1])],
                                                  dt=refresh_rate)
 
+
         # queues for interprocess communication
         self.frame_queue = Queue()
         self.control_queue = Queue()

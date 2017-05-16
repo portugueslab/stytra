@@ -27,7 +27,7 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
-        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.236.2:5555')
+        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.233.98:5555')
         self.experiment_folder = folder
 
         # Editable part #############################################################################################
@@ -41,9 +41,12 @@ class Experiment(QMainWindow):
         piezo_amp_conversion = 400 / 5
 
         # Select a protocol:
-        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=100, zmq_trigger=self.zmq_trigger),
-                                     600),
-                         'multistimulus_exp10': (MultistimulusExp06Protocol(zmq_trigger=self.zmq_trigger), 100)}
+        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=30, zmq_trigger=self.zmq_trigger),
+                                     240),
+                         'multistimulus_exp10': (MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
+                             zmq_trigger=self.zmq_trigger,
+                         shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
+                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=4)), 100)}
 
         try:
             self.protocol = protocol_dict[stim_name][0]
@@ -67,6 +70,7 @@ class Experiment(QMainWindow):
             self.protocol = protocol_dict[stim_name][0]
         except KeyError:
             raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
+
 
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
@@ -100,13 +104,17 @@ class Experiment(QMainWindow):
         piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
         piezo_freq = dict_lightsheet_info['Piezo Frequency']
         imaging_framerate = dict_lightsheet_info['camera frame capture rate']
+        if imaging_framerate == 0:
+            imaging_framerate = 1;
         print('Step size on z:' + str(piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)) + ' um')
         self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
         self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
         self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
         self.imaging_data.set_fix_value('dz', (piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)))
         self.imaging_data.set_fix_value('n_frames', protocol_dict[stim_name][1])
-
+        print(dict_lightsheet_info)
+        print('The experiment will last: {:.2f} seconds'.format(self.protocol.get_duration()))
+        print('And require {} frames'.format(int(self.protocol.get_duration()*imaging_framerate)))
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.refresh_ROI()
 
@@ -116,10 +124,8 @@ class Experiment(QMainWindow):
         stim_wid = QSplitter(Qt.Vertical)
         stim_wid.addWidget(self.win_control)
 
-
         self.main_layout.addWidget(stim_wid)
         self.setCentralWidget(self.main_layout)
-
 
         # Show windows:
         self.win_stim_disp.show()
@@ -129,7 +135,7 @@ class Experiment(QMainWindow):
 
     def finishAndSave(self):
         # self.gui_refresh_timer.stop()
-        self.data_collector.save()
+        self.data_collector.save(save_csv=False)
         # self.zmq_trigger.stop()
         # self.finishProtocol()
         # self.app.closeAllWindows()
@@ -149,7 +155,7 @@ class Experiment(QMainWindow):
 if __name__ == '__main__':
     application = QApplication([])
     application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    starting_win = StartingWindow(application, ['anatomy', 'spontaneous', 'flash', 'shock', 'pairing'])
+    starting_win = StartingWindow(application, ['anatomy', 'multistimulus_exp10'])
     application.exec_()
     print(starting_win.folder)
     print(starting_win.protocol)

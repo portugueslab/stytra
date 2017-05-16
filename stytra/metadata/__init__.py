@@ -197,9 +197,9 @@ class DataCollector:
 
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         filename = self.folder_path + timestamp + '_metadata.h5'
-        print(filename)
-        dd.io.save(filename, data_dict)
 
+        dd.io.save(filename, data_dict)
+        print('saved '+filename)
         # Save .csv file if required
         if save_csv:
             filename_df = self.folder_path + timestamp + '_metadata_df.csv'
@@ -291,7 +291,8 @@ class MetadataFish(Metadata):
                                                   'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
                                                   'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
                                                   'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
-                                                  'PC:epNtr-tagRFP'],
+                                                  'PC:epNtr-tagRFP',
+                                                  'NeuroD-6f'],
                                          check_on_set=False)
     dish_diameter = param.ObjectSelector(default='60', objects=['0', '30', '60', '90'],)
     treatment = param.ObjectSelector(default='', objects=['', '10mM MTz'], check_on_set=False)

@@ -15,7 +15,9 @@ class LightsheetProtocol(Protocol):
 
         self.stimuli = [Pause(duration=1),
                         PrepareAquisition(zmq_trigger=zmq_trigger),
-                        Pause(duration=prepare_pause)]
+                        Pause(duration=prepare_pause),
+                        StartAquisition(zmq_trigger=zmq_trigger)  # start aquisition
+                        ]
 
         self.current_stimulus = self.stimuli[0]
 
@@ -142,38 +144,44 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
                         flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
                         velocities=(3, 10, 30, -10),
                         pre_stim_pause=4,
-                        one_stimulus_duration=8,
+                        one_stimulus_duration=7,
                         grating_motion_duration=4,
                         grating_args=None,
                         shock_args=None,
+                        mm_px=1,
                 *args, **kwargs):
         super().__init__(*args, **kwargs)
         if grating_args is None:
             grating_args = dict()
+        if shock_args is None:
+            shock_args = dict()
 
+        grating_args['mm_px'] = mm_px
 
         for i in range(repetitions):  # change here for number of pairing trials
             self.stimuli.append(Pause(duration=pre_stim_pause))
             for flash_duration in flash_durations:
-                self.stimuli.append(Flash(duration=flash_duration, color=(255, 0, 0)))  # flash duration
-                self.stimuli.append(Pause(duration=one_stimulus_duration-flash_duration))
+               self.stimuli.append(Flash(duration=flash_duration, color=(255, 0, 0)))  # flash duration
+               self.stimuli.append(Pause(duration=one_stimulus_duration-flash_duration))
 
-                t = [0, pre_stim_pause]
-                x = [0., 0.]
+            t = [0, one_stimulus_duration]
+            x = [0., 0.]
 
-                for vel in velocities:
-                    t.append(t[-1]+grating_motion_duration)
-                    x.append(x[-1]+vel*grating_motion_duration)
-                    t.append(t[-1] + one_stimulus_duration)
-                    x.append(x[-1])
+            for vel in velocities:
+                t.append(t[-1] + grating_motion_duration)
+                x.append(x[-1] - vel*grating_motion_duration/mm_px)
+                t.append(t[-1] + one_stimulus_duration)
+                x.append(x[-1])
 
-                motion = pd.DataFrame(dict(t=t,
-                                     x=x,
-                                     y=np.zeros(len(x))))
-                self.stimuli.append(MovingSeamless(motion=motion,
-                                                   background=gratings(**grating_args)))
+            last_time = t[-1]
+            motion = pd.DataFrame(dict(t=t,
+                                 x=x,
+                                 y=np.zeros(len(x))))
+            self.stimuli.append(MovingSeamless(motion=motion,
+                                               background=gratings(**grating_args),
+                                               duration=last_time))
 
-                self.stimuli.append(Pause(duration=pre_stim_pause))
-                self.stimuli.append(ShockStimulus(**shock_args))
-                self.stimuli.append(Pause(duration=one_stimulus_duration))
+            self.stimuli.append(Pause(duration=pre_stim_pause))
+            self.stimuli.append(ShockStimulus(**shock_args))
+            self.stimuli.append(Pause(duration=one_stimulus_duration))
         self.name = 'exp006multistim'

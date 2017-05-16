@@ -105,6 +105,12 @@ class Protocol(QObject):
         # Log will be a list of stimuli states
         self.log = []
 
+    def get_duration(self):
+        total_duration = 0
+        for stim in self.stimuli:
+            total_duration += stim.duration
+        return total_duration
+
     def print(self):
         string = ''
         for stim in self.stimuli:

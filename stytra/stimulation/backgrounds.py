@@ -76,7 +76,7 @@ def poisson_disk_background(size, distance, radius):
     return np.array(im)[imh // 2:3 * imh // 2, imw // 2:3 * imw // 2]
 
 
-def gratings(mm_px=1, spatial_period=0.1, orientation='horizontal',
+def gratings(mm_px=1, spatial_period=10, orientation='horizontal',
              shape='square', ratio=0.5):
     """
     Function for generating grids (assume usage of cv2.BORDER_WRAP for display)
@@ -88,7 +88,7 @@ def gratings(mm_px=1, spatial_period=0.1, orientation='horizontal',
     :return:
     """
 
-    grating_dim = round(1/(mm_px*spatial_period))  # calculate dimensions
+    grating_dim = round(spatial_period/(mm_px))  # calculate dimensions
 
     # With cv2.BORDER_WRAP 1 line will be enough:
     template_array = np.zeros((grating_dim, 1), dtype=np.uint8)
