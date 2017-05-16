@@ -298,7 +298,7 @@ class MetadataLightsheet(Metadata):
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
     dx = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - x (um)')
     dy = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - y (um)')
-    dz = param.Number(default=0.6, bounds=(0.0005, 50), doc='Pixel size  - z (um)')
+    dz = param.Number(default=0.6, bounds=(0.000, 50), doc='Pixel size  - z (um)')
     n_frames = param.Integer(default=18000, bounds=(1, 1000000), doc='Movie frames')
 
 

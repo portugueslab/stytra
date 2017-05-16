@@ -34,15 +34,15 @@ class Experiment(QMainWindow):
         #############################################################################################################
         # Experiment folder:
         # self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
-        run_only_committed = True
+        run_only_committed = False
         #############################################################################################################
         # End editable part #########################################################################################
         # Fixed factor for converting piezo voltages to microns; an half FOV of 5 results in 400 microns scanning, so:
         piezo_amp_conversion = 400 / 5
 
         # Select a protocol:
-        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=100, zmq_trigger=self.zmq_trigger),
-                                     600),
+        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=20, zmq_trigger=self.zmq_trigger),
+                                     200),
                          'spontaneous': (SpontActivityProtocol(duration_sec=300, zmq_trigger=self.zmq_trigger),
                                          18000),
                          'flash': (FlashProtocol(repetitions=10, period_sec=30,  duration_sec=1, zmq_trigger=self.zmq_trigger),
@@ -124,7 +124,7 @@ class Experiment(QMainWindow):
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
                                                  tracking_params={'n_segments': 10, 'window_size': 25,
-                                                                  'color_invert': False, 'image_filt': False}
+                                                                  'color_invert': False, 'image_filt': True}
                                                  )
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
