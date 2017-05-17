@@ -159,3 +159,5 @@ def draw_fish_angles_ls(display, angles, x, y, x_len=0, y_len=0, tail_segment_le
         display = cv2.line(display, a_to_tc(points[j]),
                            a_to_tc(points[j + 1]),
                            (250, 100, 100))
+
+    return display

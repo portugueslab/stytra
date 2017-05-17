@@ -273,9 +273,9 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
 
 
 @jit(nopython=True)
-def _tail_trace_core_ls(img, x_start, y_start, x_len, y_len, num_points=9, width=10):
+def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, width=10):
     img_filt = img
-    start_angle = np.arctan2(x_len, y_len)
+    start_angle = np.arctan2(tail_len_x, tail_len_y)
     lin = np.linspace(-np.pi / 2 + start_angle, np.pi / 2 + start_angle, 25)
 
     tail_sum = 0.
@@ -288,8 +288,8 @@ def _tail_trace_core_ls(img, x_start, y_start, x_len, y_len, num_points=9, width
     for j in range(num_points):
         # Find the x and y values of the arc
         a = 0
-        xs = x_start + width / num_points * np.sin(lin)
-        ys = y_start + width / num_points * np.cos(lin)
+        xs = start_x + width / num_points * np.sin(lin)
+        ys = start_x + width / num_points * np.cos(lin)
 
         xs_int = np.zeros(len(xs), dtype=np.int16)
         ys_int = np.zeros(len(ys), dtype=np.int16)
@@ -307,7 +307,7 @@ def _tail_trace_core_ls(img, x_start, y_start, x_len, y_len, num_points=9, width
         # print(ys_int[5])
         # print(intensity_vect[5])
 
-        ident = np.argmax(intensity_vect)
+        ident = np.argmin(intensity_vect)
         # print(ident)
         # img_filt[ys_int,xs_int]
         # ident = np.where(img_filt[ys,xs]==max(img_filt[ys,xs]))[0][0]
@@ -326,13 +326,13 @@ def _tail_trace_core_ls(img, x_start, y_start, x_len, y_len, num_points=9, width
     return [tail_sum, ] + angles
 
 
-def tail_trace_ls(img, x_start, y_start, x_len, y_len, num_points=9, width=100, filtering=True):
+def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, width=10, filtering=True):
     if filtering:
         img_filt = cv2.boxFilter(img, -1, (7, 7))
     else:
         img_filt = img
 
-    angle_list = _tail_trace_andreas(img, x_start, y_start, x_len, y_len,
+    angle_list = _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
                                      num_points=num_points, width=width)
 
     return angle_list

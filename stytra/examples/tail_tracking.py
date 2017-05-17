@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton, QMa
 from multiprocessing import Queue, Event
 from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
 from stytra.tracking import DataAccumulator
-from stytra.tracking.tail import detect_tail_embedded
+from stytra.tracking.tail import tail_trace_ls
 from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.metadata import MetadataCamera
@@ -35,7 +35,7 @@ class Experiment(QMainWindow):
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_embedded,
+                                                processing_function=tail_trace_ls,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
@@ -51,8 +51,10 @@ class Experiment(QMainWindow):
                                                  update_timer=self.gui_refresh_timer,
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
-                                                 tracking_params={'n_segments': 10, 'window_size': 25,
-                                                                  'color_invert': False, 'image_filt': True})
+                                                 tracking_params={'num_points': 9, 'width': 10, 'filtering': True})
+                                                 # tracking_params={'n_segments': 10, 'window_size': 25,
+                                                 #                  'color_invert': False, 'image_filt': True})
+
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
 

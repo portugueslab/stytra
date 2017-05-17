@@ -6,7 +6,7 @@ from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
-from stytra.tracking.diagnostics import draw_fish_angles_embedd
+from stytra.tracking.diagnostics import draw_fish_angles_ls
 
 
 import cv2
@@ -43,9 +43,7 @@ class CameraViewWidget(QWidget):
         self.layout.addWidget(self.camera_display_widget)
         if control_queue is not None:
             self.camera_parameters = camera_parameters
-            print(self.camera_parameters.framerate)
             self.control_widget = ParameterGui(self.camera_parameters)
-            print(self.camera_parameters.framerate)
             self.layout.addWidget(self.control_widget)
             for control in self.control_widget.parameter_controls:
                 control.control_widget.valueChanged.connect(self.update_controls)
@@ -147,7 +145,7 @@ class CameraTailSelection(CameraViewWidget):
                 position_data = self.tail_position_data.stored_data[-1][1:]
 
             if position_data:  # draw the tail before displaying the frame:
-                return draw_fish_angles_embedd(frame, np.array(position_data),
+                return draw_fish_angles_ls(frame, np.array(position_data),
                                                self.roi_dict['start_x'], self.roi_dict['start_y'],
                                                (self.roi_dict['length_x'] ** 2 + self.roi_dict['length_y'] ** 2)
                                                ** (1/2) / (len(position_data) + 1))
