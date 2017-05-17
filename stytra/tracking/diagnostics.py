@@ -136,3 +136,26 @@ def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
                            (250, 100, 100))
 
     return display
+
+
+def draw_fish_angles_ls(display, angles, x, y, x_len=0, y_len=0, tail_segment_length=10):
+    if len(display.shape) == 2:
+        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+
+    #prev_angle = np.arctan2(x_len,y_len) + np.pi
+    #print(prev_angle)
+    points = [np.array([x, y])]
+    for angle in angles:
+        #angle = a + prev_angle
+        points.append(points[-1] - tail_segment_length * np.array(
+            [np.cos(angle), np.sin(angle)]) +1)
+        #prev_angle = angle
+
+    points = np.array(points)
+
+    display = cv2.circle(display, a_to_tc(points[0]), 3, (100, 250, 200))
+
+    for j in range(len(points) - 1):
+        display = cv2.line(display, a_to_tc(points[j]),
+                           a_to_tc(points[j + 1]),
+                           (250, 100, 100))
