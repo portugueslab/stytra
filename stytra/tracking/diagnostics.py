@@ -138,26 +138,41 @@ def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
     return display
 
 
-def draw_fish_angles_ls(display, angles, x, y, x_len=0, y_len=0, tail_segment_length=10):
+def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_y, tail_length=None):
+    """
+    Function for drawing the fish tail with absolute angles from 0 to 2*pi (as tracked
+    by the tail_trace_ls function)
+    :param display: input image to modify
+    :param angles: absolute angles (0 to 2*pi)
+    :param start_x:
+    :param start_y:
+    :param tail_len_x:
+    :param tail_len_y:
+    :param tail_length: can be fixed; if not specified, it is calculated from tail_len_x and y
+    :return:
+    """
+    # If tail length is not fixed, calculate from tail dimensions:
+    if not tail_length:
+        tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+    # Get segment length:
+    tail_segment_length = tail_length / (len(angles) - 1)
+
+    # Add color dimension:
     if len(display.shape) == 2:
         display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
 
-    #prev_angle = np.arctan2(x_len,y_len) + np.pi
-    #print(prev_angle)
-    points = [np.array([x, y])]
+    # Generate points from angles:
+    points = [np.array([start_x, start_y])]
     for angle in angles:
-        #angle = a + prev_angle
-        points.append(points[-1] - tail_segment_length * np.array(
-            [np.cos(angle), np.sin(angle)]) +1)
-        #prev_angle = angle
-
+        points.append(points[-1] + tail_segment_length * np.array(
+            [np.sin(angle), np.cos(angle)]))
     points = np.array(points)
 
-    display = cv2.circle(display, a_to_tc(points[0]), 3, (100, 250, 200))
-
+    # Draw tail points and segments:
     for j in range(len(points) - 1):
-        display = cv2.line(display, a_to_tc(points[j]),
-                           a_to_tc(points[j + 1]),
-                           (250, 100, 100))
+        cv2.circle(display, a_to_tc(points[j]), 3, (100, 250, 200))
+        cv2.line(display, a_to_tc(points[j]),
+                 a_to_tc(points[j + 1]),
+                 (250, 100, 100))
 
     return display

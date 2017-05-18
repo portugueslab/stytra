@@ -30,9 +30,12 @@ class Experiment(QMainWindow):
         self.gui_refresh_timer.setSingleShot(False)
         self.camera_data = MetadataCamera()
 
-        # self.videofile = VideoFileSource(self.frame_queue, self.finished_sig,
-        #                             '/Users/luigipetrucco/Desktop/tail_movement.avi')
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
+        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+                                     '/Users/luigipetrucco/Desktop/lab/tailtrack/tail_movement.avi')
+        self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
+                                      '/Users/luigipetrucco/Desktop/lab/tailtrack/migliore.ts')
+
+        #self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=tail_trace_ls,
@@ -51,7 +54,7 @@ class Experiment(QMainWindow):
                                                  update_timer=self.gui_refresh_timer,
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
-                                                 tracking_params={'num_points': 9, 'width': 10, 'filtering': True})
+                                                 tracking_params={'num_points': 9, 'width': 30, 'filtering': True})
                                                  # tracking_params={'n_segments': 10, 'window_size': 25,
                                                  #                  'color_invert': False, 'image_filt': True})
 

@@ -87,7 +87,7 @@ class CameraViewWidget(QWidget):
 
 class CameraTailSelection(CameraViewWidget):
     def __init__(self, tail_start_points_queue, tail_position_data, roi_dict=None,
-                 tracking_params={'n_segments': 20, 'window_size': 25, 'color_invert': False, 'image_filt': True},
+                 tracking_params=None,
                  *args, **kwargs):
         """Widget for select tail points and monitoring tracking in embedded animal.
         :param tail_start_points_queue: queue where to dispatch tail points
@@ -132,7 +132,6 @@ class CameraTailSelection(CameraViewWidget):
                                             'tail_len_x': self.roi_dict['length_x'],
                                             'tail_len_y': self.roi_dict['length_y']})
         return self.tracking_params
-
 
     def modify_frame(self, frame):
         """Function for drawing the tail position on the frame with draw_fish_angles_embedd function

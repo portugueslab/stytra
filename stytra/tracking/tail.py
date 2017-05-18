@@ -273,66 +273,82 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
 
 
 @jit(nopython=True)
-def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, width=10):
-    img_filt = img
+def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points, tail_length, color_invert):
+    """
+    Tail tracing based on min (or max) detection on arches. Wrapped by tail_trace_ls.
+    """
+    # Define starting angle based on tail dimensions:
     start_angle = np.arctan2(tail_len_x, tail_len_y)
+
+    # Initialise first angle arch, tail sum and angle list:
     lin = np.linspace(-np.pi / 2 + start_angle, np.pi / 2 + start_angle, 25)
-
     tail_sum = 0.
-    # width = (x_len**2+y_len**2)**(1/2)
-
-    # points = np.zeros((num_points, 2))
-    # angles = np.zeros((num_points, 2))
     angles = []
-    # points[0,:] = [x_start, y_start]
-    for j in range(num_points):
-        # Find the x and y values of the arc
-        a = 0
-        xs = start_x + width / num_points * np.sin(lin)
-        ys = start_x + width / num_points * np.cos(lin)
 
+    for j in range(num_points):  # Cycle on segments
+        # Transform arch angles in x and y coordinates:
+        xs = start_x + tail_length / num_points * np.sin(lin)
+        ys = start_y + tail_length / num_points * np.cos(lin)
+
+        # Transform coordinates in pixel indexes:
         xs_int = np.zeros(len(xs), dtype=np.int16)
         ys_int = np.zeros(len(ys), dtype=np.int16)
-        # a = xs
-        intensity_vect = np.zeros(len(ys), dtype=np.int16)
 
-        # points[0,1] = y_start
+        # Create vector of intensities along the arch:
+        intensity_vect = np.zeros(len(ys), dtype=np.int16)
         for i in range(len(xs)):
             xs_int[i] = int(xs[i])
             ys_int[i] = int(ys[i])
+            intensity_vect[i] = img[ys_int[i], xs_int[i]]
 
-            intensity_vect[i] = img_filt[ys_int[i], xs_int[i]]
+        # Find minimum or maximum of the arch.
+        # This switch is much faster than inverting the entire image.
+        if color_invert:
+            ident = np.argmin(intensity_vect)
+        else:
+            ident = np.argmax(intensity_vect)
 
-        # print(ys[5])
-        # print(ys_int[5])
-        # print(intensity_vect[5])
-
-        ident = np.argmin(intensity_vect)
-        # print(ident)
-        # img_filt[ys_int,xs_int]
-        # ident = np.where(img_filt[ys,xs]==max(img_filt[ys,xs]))[0][0]
         tail_sum += lin[ident]
-        # print(ident)
         angles.append(lin[ident])
 
-        # The minimum is the starting point of the next arc
-        x_start = xs[ident]
-        y_start = ys[ident]
-        # points[j,:] = [x_start, y_start]
+        # The point found will be the starting point of the next arc
+        start_x = xs[ident]
+        start_y = ys[ident]
 
-        # Create an 180 deg angle depending on the previous one
+        # Create an 180 deg angle depending on the previous one:
         lin = np.linspace(lin[ident] - np.pi / 3, lin[ident] + np.pi / 3, 20)
-        # print(lin[5])
+
     return [tail_sum, ] + angles
 
 
-def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, width=10, filtering=True):
+def tail_trace_ls(img, x_start, y_start, tail_len_x, tail_len_y, num_points=9, tail_length=None,
+                  filtering=True, color_invert=False):
+    """
+    Tail tracing based on min (or max) detection on arches. Wrap _tail_trace_core_ls.
+    Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.
+    :param img: input image
+    :param x_start: tail starting point (x)
+    :param y_start: tail starting point (y)
+    :param tail_len_x: tail length x (if tail length is fixed, only orientation matters)
+    :param tail_len_y: tail length y
+    :param num_points: number of segments
+    :param tail_length: total tail length; if unspecified, calculated from tail_len_x and y
+    :param filtering: True for smoothing the image
+    :param color_invert: True for inverting image colors
+    :return:
+    """
+    # If required smooth the image:
     if filtering:
         img_filt = cv2.boxFilter(img, -1, (7, 7))
     else:
         img_filt = img
 
-    angle_list = _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
-                                     num_points=num_points, width=width)
+    # If tail length is not fixed, calculate from tail dimensions:
+    if not tail_length:
+        tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+
+    # Use jitted function for the actual calculation:
+    angle_list = _tail_trace_core_ls(img_filt, x_start, y_start, tail_len_x, tail_len_y,
+                                     num_points, tail_length, color_invert)
 
     return angle_list
