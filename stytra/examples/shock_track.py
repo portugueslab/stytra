@@ -6,7 +6,7 @@ from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow, StartingWindow
 from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
-from stytra.tracking.tail import detect_tail_embedded
+from stytra.tracking.tail import tail_trace_ls
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.hardware.video import XimeaCamera, FrameDispatcher
@@ -101,13 +101,14 @@ class Experiment(QMainWindow):
         # self.camera = VideoFileSource(self.frame_queue, self.finished_sig,
         #                                 '/Users/luigipetrucco/Desktop/tail_movement.avi')
 
-        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue,  downsampling=4)
+        self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue,  downsampling=1)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_embedded,
+                                                processing_function=tail_trace_ls,
                                                 processing_parameter_queue=self.processing_param_queue,
-                                                finished_signal=self.finished_sig, output_queue=self.tail_pos_queue,
-                                                gui_framerate=30, print_framerate=False)
+                                                finished_signal=self.finished_sig,
+                                                output_queue=self.tail_pos_queue,
+                                                gui_framerate=10, print_framerate=False)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_pos_queue)
 
@@ -120,12 +121,12 @@ class Experiment(QMainWindow):
                                                  camera_queue=self.gui_frame_queue,
                                                  tail_position_data=self.data_acc_tailpoints,
                                                  update_timer=self.gui_refresh_timer,
-                                                 roi_dict=self.roi_dict,
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
-                                                 tracking_params={'n_segments': 10, 'window_size': 25,
-                                                                  'color_invert': False, 'image_filt': True}
-                                                 )
+                                                 tail_length=200,
+                                                 tracking_params={'num_points': 9,
+                                                                  'filtering': True,
+                                                                  'color_invert': False})
 
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(self.data_acc_tailpoints.update_list)
@@ -141,23 +142,27 @@ class Experiment(QMainWindow):
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
 
         self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
-        self.data_collector.add_data_source('stimulus', 'window_pos',
-                                            self.win_control.widget_view.roi_box.state, 'pos')
-        self.data_collector.add_data_source('stimulus', 'window_size',
-                                            self.win_control.widget_view.roi_box.state, 'size')
-        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
 
-        dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
-        self.imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
-        piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
-        piezo_freq = dict_lightsheet_info['Piezo Frequency']
-        imaging_framerate = dict_lightsheet_info['camera frame capture rate']
-        print('Step size on z:' + str(piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)) + ' um')
-        self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
-        self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
-        self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
-        self.imaging_data.set_fix_value('dz', (piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)))
-        self.imaging_data.set_fix_value('n_frames', protocol_dict[stim_name][1])
+        try:
+            self.data_collector.add_data_source('stimulus', 'window_pos',
+                                                self.win_control.widget_view.roi_box.state, 'pos')
+            self.data_collector.add_data_source('stimulus', 'window_size',
+                                                self.win_control.widget_view.roi_box.state, 'size')
+            self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
+
+            dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
+            self.imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
+            piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
+            piezo_freq = dict_lightsheet_info['Piezo Frequency']
+            imaging_framerate = dict_lightsheet_info['camera frame capture rate']
+            print('Step size on z:' + str(piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)) + ' um')
+            self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
+            self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
+            self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
+            self.imaging_data.set_fix_value('dz', (piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)))
+            self.imaging_data.set_fix_value('n_frames', protocol_dict[stim_name][1])
+        except AttributeError:
+            print('No lightsheet computer dected')
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.refresh_ROI()
