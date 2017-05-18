@@ -151,6 +151,12 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_
     :param tail_length: can be fixed; if not specified, it is calculated from tail_len_x and y
     :return:
     """
+    circle_size = 10
+    circle_color = (100, 250, 200)
+    circle_thickness = 2
+    line_color = (250, 100, 100)
+    line_thickness = 2
+
     # If tail length is not fixed, calculate from tail dimensions:
     if not tail_length:
         tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
@@ -170,9 +176,12 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_
 
     # Draw tail points and segments:
     for j in range(len(points) - 1):
-        cv2.circle(display, a_to_tc(points[j]), 3, (100, 250, 200))
-        cv2.line(display, a_to_tc(points[j]),
-                 a_to_tc(points[j + 1]),
-                 (250, 100, 100))
+        cv2.circle(display, a_to_tc(points[j]), circle_size, circle_color,
+                   thickness=circle_thickness)
+        cv2.line(display, a_to_tc(points[j]), a_to_tc(points[j + 1]),
+                 line_color,  thickness=line_thickness)
+    cv2.circle(display, a_to_tc(points[-1]), circle_size, circle_color,
+               thickness=circle_thickness)
+
 
     return display

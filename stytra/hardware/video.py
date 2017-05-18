@@ -100,7 +100,6 @@ class XimeaCamera(FrameProcessor):
                             self.cam.set_gain(control_params['gain'])
                         if 'framerate' in control_params.keys():
                             print(self.cam.get_framerate())
-                            #self.cam.set_framerate(self.cam.get_framerate())
                             self.cam.set_framerate(control_params['framerate'])
                     except xiapi.Xi_error:
                         print('Invalid camera settings')
@@ -147,6 +146,7 @@ class VideoFileSource(FrameProcessor):
             self.update_framerate()
 
         return
+
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
@@ -201,11 +201,9 @@ class FrameDispatcher(FrameProcessor):
                 self.update_framerate()
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
-                #print(self.current_framerate)
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    #print(every_x)
                 self.i = (self.i+1) % every_x
             except Empty:
                 break

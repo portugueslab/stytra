@@ -321,14 +321,14 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_point
     return [tail_sum, ] + angles
 
 
-def tail_trace_ls(img, x_start, y_start, tail_len_x, tail_len_y, num_points=9, tail_length=None,
+def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, tail_length=None,
                   filtering=True, color_invert=False):
     """
     Tail tracing based on min (or max) detection on arches. Wrap _tail_trace_core_ls.
     Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.
     :param img: input image
-    :param x_start: tail starting point (x)
-    :param y_start: tail starting point (y)
+    :param start_x: tail starting point (x)
+    :param start_y: tail starting point (y)
     :param tail_len_x: tail length x (if tail length is fixed, only orientation matters)
     :param tail_len_y: tail length y
     :param num_points: number of segments
@@ -348,7 +348,7 @@ def tail_trace_ls(img, x_start, y_start, tail_len_x, tail_len_y, num_points=9, t
         tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
     # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(img_filt, x_start, y_start, tail_len_x, tail_len_y,
+    angle_list = _tail_trace_core_ls(img_filt, start_x, start_y, tail_len_x, tail_len_y,
                                      num_points, tail_length, color_invert)
 
     return angle_list

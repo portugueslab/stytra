@@ -87,7 +87,7 @@ class CameraViewWidget(QWidget):
 
 class CameraTailSelection(CameraViewWidget):
     def __init__(self, tail_start_points_queue, tail_position_data, roi_dict=None,
-                 tracking_params=None,
+                 tracking_params=None, tail_length=None,
                  *args, **kwargs):
         """Widget for select tail points and monitoring tracking in embedded animal.
         :param tail_start_points_queue: queue where to dispatch tail points
@@ -98,6 +98,8 @@ class CameraTailSelection(CameraViewWidget):
         super().__init__(*args, **kwargs)
         self.tail_start_points_queue = tail_start_points_queue
         self.tracking_params = tracking_params
+        self.tail_length = tail_length
+
 
         self.label = pg.TextItem('Select tail of the fish:')
 
@@ -128,9 +130,11 @@ class CameraTailSelection(CameraViewWidget):
         self.roi_dict['length_y'] = self.roi_tail.listPoints()[1].x() - self.roi_dict['start_y']  # delta y
         self.roi_dict['length_x'] = self.roi_tail.listPoints()[1].y() - self.roi_dict['start_x']  # delta x
 
-        self.tracking_params.update({'start_x': self.roi_dict['start_x'], 'start_y': self.roi_dict['start_y'],
-                                            'tail_len_x': self.roi_dict['length_x'],
-                                            'tail_len_y': self.roi_dict['length_y']})
+        self.tracking_params.update({'start_x': self.roi_dict['start_x'],
+                                     'start_y': self.roi_dict['start_y'],
+                                     'tail_len_x': self.roi_dict['length_x'],
+                                     'tail_len_y': self.roi_dict['length_y'],
+                                     'tail_length': self.tail_length})
         return self.tracking_params
 
     def modify_frame(self, frame):
@@ -141,13 +145,13 @@ class CameraTailSelection(CameraViewWidget):
         position_data = None
         try:
             if self.tail_position_data:
-                position_data = self.tail_position_data.stored_data[-1][1:]
+                position_data = self.tail_position_data.stored_data[-1][2:]
 
             if position_data:  # draw the tail before displaying the frame:
                 return draw_fish_angles_ls(frame, np.array(position_data),
-                                               self.roi_dict['start_x'], self.roi_dict['start_y'],
-                                               (self.roi_dict['length_x'] ** 2 + self.roi_dict['length_y'] ** 2)
-                                               ** (1/2) / (len(position_data) + 1))
+                                           self.roi_dict['start_x'], self.roi_dict['start_y'],
+                                           self.roi_dict['length_x'], self.roi_dict['length_y'],
+                                           tail_length=self.tail_length)
             else:
                 return frame
 
