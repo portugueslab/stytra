@@ -123,7 +123,7 @@ class Experiment(QMainWindow):
                                                  update_timer=self.gui_refresh_timer,
                                                  control_queue=self.control_queue,
                                                  camera_parameters=self.camera_data,
-                                                 tail_length=200,
+                                                 tail_length=None,
                                                  tracking_params={'num_points': 9,
                                                                   'filtering': True,
                                                                   'color_invert': False})

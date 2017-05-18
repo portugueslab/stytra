@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMainWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.metadata import MetadataFish, MetadataGeneral, DataCollector
 import qdarkstyle
 import git
 
-#imports for tracking
+# imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import DataAccumulator
-from stytra.tracking.tail import tail_trace_ls
+from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
@@ -16,18 +16,17 @@ from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
 
 
-class Experiment:
-    def __init__(self, directory, name, app=None):
+class Experiment(QMainWindow):
+    def __init__(self, directory, name, save_csv=False, app=None):
         """ A general class for running experiments
 
         :param directory:
         :param name:
         :param app: A QApplication in which to run the experiment
         """
-        if app is None:
-            self.app = QApplication([])
-        else:
-            self.app = app
+        super().__init__()
+
+        self.app = app
 
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
@@ -53,21 +52,21 @@ class Experiment:
             raise PermissionError(
                 'The project has to be committed before starting!')
 
-
     def end_protocol(self):
-        self.dc.save(save_csv=False)
+        self.dc.save(save_csv=save_csv)
 
 
 class TailTrackingExperiment(Experiment):
     def __init__(self, *args, video_input=None,
-                        tracking_method='ts', **kwargs):
+                        tracking_method='angle_sweep',
+                        tracking_method_parameters=None, **kwargs):
         """ An experiment which contains tail tracking,
         base for any experiment that tracks behaviour or employs
         closed loops
 
         :param args:
         :param video_input: if not using a camera, the video
-        file for the test imput
+        file for the test input
         :param tracking_method: the method used to track the tail
         :param kwargs:
         """
@@ -94,9 +93,15 @@ class TailTrackingExperiment(Experiment):
                                           self.finished_sig,
                                           video_input)
 
+        dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
+                                       centroid=detect_tail_embedded)
+
+        if tracking_method_parameters is None:
+            tracking_method_parameters = dict()
+
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
                                                 gui_queue=self.gui_frame_queue,
-                                                processing_function=tail_trace_ls,
+                                                processing_function=dict_tracking_functions[tracking_method],
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
@@ -116,7 +121,7 @@ class TailTrackingExperiment(Experiment):
             update_timer=self.gui_refresh_timer,
             control_queue=self.control_queue,
             camera_parameters=self.metadata_camera,
-            tracking_params={'num_points': 9, 'width': 30, 'filtering': True})
+            tracking_params=tracking_method_parameters)
 
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
@@ -139,6 +144,11 @@ class TailTrackingExperiment(Experiment):
         self.gui_refresh_timer.stop()
 
         super().end_protocol()
+
+    def closeEvent(self, QCloseEvent):
+        self.end_protocol()
+        self.app.closeAllWindows()
+        self.app.quit()
 
 
 

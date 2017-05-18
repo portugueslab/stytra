@@ -308,7 +308,7 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_point
         else:
             ident = np.argmax(intensity_vect)
 
-        tail_sum += lin[ident]
+        tail_sum += np.cos(lin[ident])
         angles.append(lin[ident])
 
         # The point found will be the starting point of the next arc
