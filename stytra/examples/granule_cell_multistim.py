@@ -1,20 +1,15 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
-from stytra.stimulation.protocols import SpontActivityProtocol, ShockProtocol, FlashProtocol, FlashShockProtocol, MultistimulusExp06Protocol
+from stytra.stimulation.protocols import SpontActivityProtocol, MultistimulusExp06Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow, StartingWindow
-from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
+from stytra.metadata import DataCollector, MetadataFish,  MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
-from stytra.tracking.tail import detect_tail_embedded
-from stytra.gui.plots import StreamingPlotWidget
-from stytra.gui.camera_display import CameraTailSelection
-from stytra.hardware.video import XimeaCamera, FrameDispatcher
-from stytra.tracking import DataAccumulator
+
 from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
 import json
 import git
-
 
 import multiprocessing
 
