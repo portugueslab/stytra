@@ -56,7 +56,7 @@ class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, app, protocol, display_window=None, *args):
+    def __init__(self, experiment, display_window=None, *args):
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
@@ -64,8 +64,9 @@ class ProtocolControlWindow(QWidget):
         :param display_window: ProjectorViewer object for the projector
         """
         super().__init__(*args)
-        self.app = app
-        self.protocol = protocol
+        self.experiment = experiment
+        self.app = experiment.app
+        self.protocol = experiment.protocol
         self.display_window = display_window
 
         if self.display_window:

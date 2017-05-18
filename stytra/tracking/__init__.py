@@ -62,6 +62,13 @@ class DataAccumulator(QObject):
         return pd.DataFrame(data_array[:, :len(self.header_list)],
                             columns=self.header_list)
 
+    def get_last_n(self, n):
+        last_n = min(n, len(self.stored_data))
+        data_list = self.stored_data[-max(last_n, 1):]
+
+        # apparently the fastest way to transpose list and convert to np:
+        return pd.lib.to_object_array(data_list).astype(float)
+
 
 class FishTrackingProcess(Process):
     def __init__(self, image_queue, fish_queue, stop_event,

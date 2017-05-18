@@ -1,5 +1,8 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
+
 from stytra.gui.control_gui import ProtocolControlWindow
+from stytra.gui.display_gui import StimulusDisplayWindow
+
 from stytra.metadata import MetadataFish, MetadataGeneral, DataCollector
 import qdarkstyle
 import git
@@ -11,6 +14,7 @@ from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
+
 
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
@@ -36,8 +40,14 @@ class Experiment(QMainWindow):
         self.directory = directory
         self.name = name
 
+        self.save_csv = save_csv
+
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
+
+        self.window_display = StimulusDisplayWindow(self)
+        self.widget_contol = ProtocolControlWindow(self)
+
 
     def check_if_commited(self):
         repo = git.Repo(search_parent_directories=True)
@@ -53,7 +63,7 @@ class Experiment(QMainWindow):
                 'The project has to be committed before starting!')
 
     def end_protocol(self):
-        self.dc.save(save_csv=save_csv)
+        self.dc.save(save_csv=self.save_csv)
 
 
 class TailTrackingExperiment(Experiment):

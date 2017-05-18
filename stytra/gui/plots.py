@@ -47,12 +47,7 @@ class StreamingPlotWidget(pg.GraphicsWindow):
         """
         self.start = datetime.datetime.now()
         try:
-            last_n = min(self.n_points, len(self.data_accumulator.stored_data))
-            data_list = self.data_accumulator.stored_data[-last_n:]
-
-            # apparently the fastest way to transpose list and convert to np:
-            data_array = pd.lib.to_object_array(data_list).astype(float)
-
+            data_array = self.data_accumulator.get_last_n(self.n_points)
             # difference from data accumulator time and now in s...
             delta_t = (self.data_accumulator.starting_time -
                        self.start).total_seconds()

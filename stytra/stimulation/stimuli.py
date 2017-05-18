@@ -5,7 +5,10 @@ from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import QPoint
 import cv2
 from time import sleep
-from stytra.hardware.serial import PyboardConnection
+try:
+    from stytra.hardware.serial import PyboardConnection
+except ImportError:
+    print('Serial pyboard connection not installed')
 
 
 class Stimulus:
