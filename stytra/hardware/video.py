@@ -3,12 +3,13 @@ try:
 except ImportError:
     pass
 
-#import multiprocessing
 from multiprocessing import Process, Queue, Event
 from queue import Empty
 import numpy as np
 from datetime import datetime, timedelta
 from collections import deque
+
+import time
 
 import cv2
 
@@ -138,7 +139,7 @@ class VideoFileSource(FrameProcessor):
 
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
-            #print('Read a frame')
+            time.sleep(1./24)
             if ret:
                 self.q.put((datetime.now(), frame[:, :, 0]))
             else:

@@ -56,7 +56,7 @@ class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, experiment, display_window=None, *args):
+    def __init__(self, display_window=None, *args):
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
@@ -64,9 +64,6 @@ class ProtocolControlWindow(QWidget):
         :param display_window: ProjectorViewer object for the projector
         """
         super().__init__(*args)
-        self.experiment = experiment
-        self.app = experiment.app
-        self.protocol = experiment.protocol
         self.display_window = display_window
 
         if self.display_window:
@@ -86,10 +83,7 @@ class ProtocolControlWindow(QWidget):
         self.layout_calibrate.addWidget(self.button_calibrate)
 
         self.button_start = QPushButton('Start protocol')
-        self.button_start.clicked.connect(self.protocol.start)
-
         self.button_end = QPushButton('End protocol')
-        self.button_end.clicked.connect(self.protocol.end)
 
         self.button_metadata = QPushButton('Edit metadata')
 
@@ -136,17 +130,17 @@ class ProtocolControlWindow(QWidget):
         self.sig_calibrating.emit()
 
     def set_protocol(self, protocol):
-        self.button_start.clicked.disconnect(self.protocol.start)
-        #self.button_end.clicked.diconnect(self.protocol.end)
-
+        try:
+            self.button_start.clicked.disconnect(self.protocol.start)
+            self.button_end.clicked.diconnect(self.protocol.end)
+        except AttributeError:
+            pass
 
         self.protocol = protocol
         self.button_start.clicked.connect(self.protocol.start)
         self.button_end.clicked.connect(self.protocol.end)
         print('new protocol:')
         print(self.protocol.name)
-
-
 
 
 class ProtocolSelectorWidget(QWidget):
@@ -237,7 +231,6 @@ class StartingWindow(QWidget):
 
     def change_protocol(self):
         self.protocol = self.protocol_list[self.protocol_selector.currentIndex()]
-
 
 
 if __name__ == '__main__':

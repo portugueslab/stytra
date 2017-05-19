@@ -8,18 +8,16 @@ from datetime import datetime
 
 
 class StimulusDisplayWindow(QDialog):
-    def __init__(self, experiment, *args):
+    def __init__(self, *args):
         """ Make a display window for a visual simulation protocol,
         with a movable display area
 
         """
         super().__init__(*args)
 
-        self.experiment = experiment
-        self.protocol = experiment.protocol
-        self.widget_display = GLStimDisplay(experiment.protocol, self)
+        self.widget_display = GLStimDisplay(self)
         self.widget_display.setMaximumSize(2000, 2000)
-        self.display_params = dict(window=dict(pos=(0,0), size=(100,100)),
+        self.display_params = dict(window=dict(pos=(0, 0), size=(100, 100)),
                                    refresh_rate=1/60.)
 
         self.update_display_params()
@@ -29,7 +27,6 @@ class StimulusDisplayWindow(QDialog):
 
     def update_display_params(self):
         self.set_dims(**self.display_params['window'])
-        self.protocol.dt = self.display_params['refresh_rate']
 
     def set_dims(self, pos, size):
         self.widget_display.setGeometry(
@@ -38,20 +35,19 @@ class StimulusDisplayWindow(QDialog):
         self.display_params['window']['size'] = size
         self.display_params['window']['pos'] = pos
 
-        for stimulus in self.protocol.stimuli:
-            stimulus.output_shape = tuple(int(s+1) for s in size)
+    def set_protocol(self, protocol):
+        self.widget_display.set_protocol(protocol)
 
 
 class GLStimDisplay(QOpenGLWidget):
-    def __init__(self, protocol, *args):
+    def __init__(self,  *args):
         super().__init__(*args)
         self.img = None
         self.calibrating = False
         self.calibration = None
         self.dims = None
 
-        self.protocol = protocol
-        protocol.sig_timestep.connect(self.display_stimulus)
+        self.protocol = None
 
         self.n_fps_frames = 10
         self.i_fps = 0
@@ -61,6 +57,10 @@ class GLStimDisplay(QOpenGLWidget):
 
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
+        self.protocol.sig_timestep.connect(self.display_stimulus)
 
     def setImage(self, img=None):
         if img is not None:
@@ -81,11 +81,11 @@ class GLStimDisplay(QOpenGLWidget):
         if self.img is not None:
             p.drawImage(QPoint(0, 0), self.img)
 
-    def display_stimulus(self, i_stim):
+    def display_stimulus(self):
         self.dims = (self.height(), self.width())
 
         if isinstance(self.protocol.current_stimulus, ImageStimulus):
-            self.setImage(self.protocol.current_stimulus.get_image())
+            self.setImage(self.protocol.current_stimulus.get_image(self.dims))
         elif isinstance(self.protocol.current_stimulus, PainterStimulus):
             p = QPainter(self)
             self.protocol.current_stimulus.paint(p)

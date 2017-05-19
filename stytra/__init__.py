@@ -14,7 +14,7 @@ from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
-
+from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
@@ -45,15 +45,18 @@ class Experiment(QMainWindow):
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
-        self.window_display = StimulusDisplayWindow(self)
-        self.widget_contol = ProtocolControlWindow(self)
+        self.window_display = StimulusDisplayWindow()
+        self.widget_control = ProtocolControlWindow(self.window_display)
 
+    def set_protocol(self, protocol):
+        self.window_display.set_protocol(protocol)
+        self.widget_control.set_protocol(protocol)
 
-    def check_if_commited(self):
+    def check_if_committed(self):
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
-        self.data_collector.add_data_source('general', 'git_hash', git_hash)
-        self.data_collector.add_data_source('general', 'program_name', __file__)
+        self.dc.add_data_source('general', 'git_hash', git_hash)
+        self.dc.add_data_source('general', 'program_name', __file__)
 
         if len(repo.git.diff('HEAD~1..HEAD',
                              name_only=True)) > 0:
