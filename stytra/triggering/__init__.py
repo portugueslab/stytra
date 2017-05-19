@@ -86,6 +86,7 @@ class ZmqLightsheetTrigger(ZmqClient):
 if __name__=='__main__':
     pyb = PyboardTrigger(com_port='COM3')
     pyb.switch_off()
-
-    #pyb.set_pulse_freq(10)
-    del pyb
+    #
+    # #pyb.set_pulse_freq(10)
+    # del pyb
+    ZmqLightsheetTrigger

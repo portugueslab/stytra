@@ -151,13 +151,33 @@ class ClosedLoopStimulus(DynamicStimulus):
     pass
 
 
-class ClosedLoop1D(DynamicStimulus):
+class ClosedLoop1D(SeamlessStimulus):
+
+    def __init__(self, *args, default_velocity,
+                 fish_motion_estimator, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_vel = default_velocity
+        self.fish_motion_estimator = fish_motion_estimator
+
+        self.past_x = self.x
+        self.past_y = self.y
+        self.past_theta = self.theta
+        self.past_t = 0
+
     def update(self):
-        pass
+        self.x += (self.elapsed-self.past_t) * (self.default_vel -
+                                              self.fish_motion_estimator.veloctiy)
+
+        self.past_t = self.elapsed
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, 'past_'+attr, getattr(self, attr))
+            except (AttributeError, KeyError):
+                pass
 
 
 class ShockStimulus(Stimulus):
-    def __init__(self, burst_freq=100, pulse_amp=3, pulse_n=5,
+    def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
                  pulse_dur_ms=2, pyboard=None, **kwargs):
         """
         Burst of electric shocks through pyboard (Anki's code)
@@ -186,15 +206,80 @@ class ShockStimulus(Stimulus):
 
     def start(self):
         for i in range(self.pulse_n):
-            #self._pyb.write(self.mex)
+            self._pyb.write(self.mex)
             print(self.mex)
-            sleep(self.pause/1000)
+            #sleep(self.pause/1000)
 
         self.elapsed = 1
 
 
+class StopAquisition(Stimulus):
+    def __init__(self, zmq_trigger=None, **kwargs):
+        super().__init__(**kwargs)
+        self.name = 'stop_acquisition'
+        self._zmq_trigger = zmq_trigger
+
+    def start(self):
+        print('stop')
+        self._zmq_trigger.stop()
+
+class StartAquisition(Stimulus):
+    def __init__(self, zmq_trigger=None, **kwargs):
+        super().__init__(**kwargs)
+        self.name = 'start_acquisition'
+        self._zmq_trigger = zmq_trigger
+
+    def start(self):
+        self._zmq_trigger.start_command()
+        print('Acquisition started')
+
+
+class PrepareAquisition(Stimulus):
+    def __init__(self, zmq_trigger=None, **kwargs):
+        super().__init__(**kwargs)
+        self.name = 'prepare'
+        self._zmq_trigger = zmq_trigger
+
+    def start(self):
+        self._zmq_trigger.prepare()
+        print('Acquisition prepared')
+
+#
+# class FlashShock(Flash):
+#     def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
+#                  pulse_dur_ms=2, pyboard=None, **kwargs):
+#         super().__init__(**kwargs)
+#         self.name = 'shock'
+#         # assert isinstance(pyboard, PyboardConnection)
+#         self._pyb = pyboard
+#         self.burst_freq = burst_freq
+#         self.pulse_dur_ms = pulse_dur_ms
+#         self.pulse_n = pulse_n
+#         self.pulse_amp_mA = pulse_amp
+#
+#         # Pause between shocks in the burst in ms:
+#         self.pause = 1000 / burst_freq - pulse_dur_ms
+#
+#         amp_dac = str(int(255 * pulse_amp / 3.5))
+#         pulse_dur_str = str(pulse_dur_ms).zfill(3)
+#         self.mex = str('shock' + amp_dac + pulse_dur_str)
+#
+#     def start(self):
+#         for i in range(self.pulse_n):
+#             self._pyb.write(self.mex)
+#             print(self.mex)
+#             sleep(self.pause / 1000)
+
+
+
 if __name__ == '__main__':
     pyb = PyboardConnection(com_port='COM3')
-    stim = ShockStimulus(pyboard=None)
+    # stim = ShockStimulus(pyboard=pyb, burst_freq=100, pulse_amp=3.5,
+    #                      pulse_n=5, pulse_dur_ms=2)
+    # stim = ShockStimulus(pyboard=pyb, burst_freq=100, pulse_amp=3.5,
+    #                      pulse_n=20, pulse_dur_ms=2)
+    stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+                         pulse_n=1, pulse_dur_ms=5)
     stim.start()
+    del pyb
 

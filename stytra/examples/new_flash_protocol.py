@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import QApplication, QDialog
 
-from stytra.stimulation.stimuli import Pause, Flash
+from stytra.stimulation.stimuli import Pause, Flash, StartAquisition, StopAquisition, PrepareAquisition, ShockStimulus
 from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.triggering import ZmqLightsheetTrigger
+from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
 from stytra.metadata import DataCollector, MetadataFish, MetadataLightsheet, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
 import json
@@ -13,26 +13,88 @@ import qdarkstyle
 
 
 if __name__ == '__main__':
-    experiment_folder = 'C:/Users/lpetrucco/Desktop/flash_170316_meta/'
+    experiment_folder = 'J:/Luigi Petrucco/light_sheet/170420/f1_huc_6s'
     # experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
 
-    imaging_time = 180
+    zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.233.112:5555')
 
-    stim_duration = 1
-    pause_duration = 10
     flash_color = (255, 255, 255)
-    refresh_rate = 1 / 60.
-    initial_pause = 2
+    refresh_rate = 60
 
-    n_repeats = (round((imaging_time - initial_pause) /
-                       (stim_duration + pause_duration)))
+    ######################################################################################
+    ############################
+    ## Spontaneus activity
+    ###########################
+    # stimuli = []
+    # stimuli.append(Pause(duration=1))
+    # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
+    # stimuli.append(Pause(duration=2))
+    # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
+    # stimuli.append(Pause(duration=300)) #change here for duration (in s)
+    # ######################################################################################
 
-    # Generate stimulus protocol
+    ######################################################################################
+    ############################
+    ### Short protocol flash
+    ############################
     stimuli = []
-    stimuli.append(Pause(duration=pause_duration + initial_pause))
-    for i in range(n_repeats):
-        stimuli.append(Flash(duration=stim_duration, color=flash_color))
-        stimuli.append(Pause(duration=pause_duration))
+    stimuli.append(Pause(duration=1))
+    stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
+    stimuli.append(Pause(duration=1))
+    stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
+    stimuli.append(Pause(duration=29))  # pre-flash interval
+    for i in range(10):  # change here for number of stimuli (default: 10 in 5 min (1 every 30 s))
+        stimuli.append(Flash(duration=1, color=flash_color))  # flash duration
+        stimuli.append(Pause(duration=29))  # post flash interval
+    ######################################################################################
+
+    ######################################################################################
+    ############################
+    ### Pairing protocol
+    ############################
+    # pyb = PyboardConnection(com_port='COM3')
+    # stimuli = []
+    # stimuli.append(Pause(duration=1))
+    # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
+    # stimuli.append(Pause(duration=1))
+    # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
+    # stimuli.append(Pause(duration=29))  # pre-shock interval
+    # for i in range(50): # change here for number of pairing trials
+    #     stimuli.append(Flash(duration=0.95, color=flash_color))  # flash duration
+    #     stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+    #                                   pulse_n=1, pulse_dur_ms=5))
+    #     stimuli.append(Flash(duration=0.05, color=flash_color))  # flash duration
+    #     stimuli.append(Pause(duration=29.0))  # post flash interval
+    ######################################################################################
+
+
+    ######################################################################################
+    ############################
+    ### Short protocol shock (contiunuous acquisition)
+    ############################
+    # pyb = PyboardConnection(com_port='COM3')
+    # stimuli = []
+    # stimuli.append(Pause(duration=1))
+    # stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
+    # stimuli.append(Pause(duration=1))
+    # stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
+    # stimuli.append(Pause(duration=29.95))  # pre-shock interval
+    # for i in range(10): # change here for number of trials
+    #     stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+    #                                   pulse_n=1, pulse_dur_ms=5))
+    #     stimuli.append(Pause(duration=30))  # post flash interval
+    ######################################################################################
+
+
+
+
+
+
+
+
+
+
+
     protocol = Protocol(stimuli, refresh_rate)
 
     # Prepare control window and window for displaying the  stimulus
@@ -50,13 +112,12 @@ if __name__ == '__main__':
 
     # Get info from microscope
     # Set connection with the Labview computer
-    zmq_trigger = ZmqLightsheetTrigger(pause=initial_pause, tcp_address='tcp://192.168.236.35:5555')
-    protocol.sig_protocol_started.connect(zmq_trigger.start)
+    # protocol.sig_protocol_started.connect(zmq_trigger.start)
     dict_lightsheet_info = json.loads((zmq_trigger.get_ls_data()).decode('ascii'))
     print(dict_lightsheet_info)
     imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
     imaging_data.set_fix_value('piezo_frequency', dict_lightsheet_info['Piezo Frequency'])
-    #imaging_data.set_fix_value('piezo_amplitude', dict_lightsheet_info['Piezo Top and Bottom']['1'])
+    imaging_data.set_fix_value('piezo_amplitude', abs(dict_lightsheet_info['Piezo Top and Bottom']['1']))
     imaging_data.set_fix_value('frame_rate', dict_lightsheet_info['camera frame capture rate'])
 
     metalist_gui = MetaListGui([general_data, fish_data, imaging_data])

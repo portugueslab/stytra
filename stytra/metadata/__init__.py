@@ -1,10 +1,56 @@
 import datetime
 import os
+import numpy as np
+import pandas as pd
 
 import deepdish as dd
 import param
 
 from paramqt import ParameterGui
+
+
+def metadata_dataframe(metadata_dict, time_step=0.005):
+    """
+    Function for converting a metadata dictionary into a panda dataframe
+    for saving
+    :param metadata_dict: metadata dictionary (containing stimulus log!)
+    :param time_step: time step (used only if tracking is not present!)
+    :return: a pandas DataFrame with a 'stimulus' column for the stimulus
+    """
+
+    # Check if tail tracking is present, to use tracking dataframe as template.
+    # If there is no tracking, generate a dataframe with time steps specified:
+    if 'tail_tracking' in metadata_dict['behaviour'].keys():
+        final_df = metadata_dict['behaviour']['tail_tracking'].copy()
+    else:
+        t = metadata_dict['stimulus']['log'][-1]['t_stop']
+        timearr = np.arange(0, t, time_step)
+        final_df = pd.DataFrame(timearr, columns=['time'])
+
+    # Control for delays between tracking and stimulus starting points:
+    delta_time = 0
+    if 'tail_tracking_start' in metadata_dict['behaviour'].keys():
+        stim_start = metadata_dict['stimulus']['log'][0]['started']
+        track_start = metadata_dict['behaviour']['tail_tracking_start']
+        delta_time = (stim_start - track_start).total_seconds()
+
+    # Assign in a loop a stimulus to each time point
+    start_point = None
+    for stimulus in metadata_dict['stimulus']['log']:
+        if stimulus['name'] == 'start_acquisition':
+            start_point = stimulus
+
+        final_df.loc[(final_df['time'] > stimulus['t_start'] + delta_time) &
+                     (final_df['time'] < stimulus['t_stop'] + delta_time),
+                     'stimulus'] = str(stimulus['name'])
+
+    # Check for the 'start acquisition' which run for a very short time and can be
+    # missed:
+    if start_point:
+        start_idx = np.argmin(abs(final_df['time'] - start_point['t_start']))
+        final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
+
+    return final_df
 
 
 class DataCollector:
@@ -139,7 +185,7 @@ class DataCollector:
 
         return data_dict
 
-    def save(self, timestamp=None):
+    def save(self, timestamp=None, save_csv=True):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
@@ -151,8 +197,14 @@ class DataCollector:
 
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         filename = self.folder_path + timestamp + '_metadata.h5'
-        print(filename)
+
         dd.io.save(filename, data_dict)
+        print('saved '+filename)
+        # Save .csv file if required
+        if save_csv:
+            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
+            dataframe = metadata_dataframe(data_dict)
+            dataframe.to_csv(filename_df)
 
     def set_to_last_value(self, *args):
         """
@@ -239,7 +291,8 @@ class MetadataFish(Metadata):
                                                   'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
                                                   'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
                                                   'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
-                                                  'PC:epNtr-tagRFP'],
+                                                  'PC:epNtr-tagRFP',
+                                                  'NeuroD-6f'],
                                          check_on_set=False)
     dish_diameter = param.ObjectSelector(default='60', objects=['0', '30', '60', '90'],)
     treatment = param.ObjectSelector(default='', objects=['', '10mM MTz'], check_on_set=False)
@@ -253,21 +306,26 @@ class MetadataLightsheet(Metadata):
     category = 'imaging'
 
     imaging_type = param.String(default='lightsheet', constant=True)
-    frame_rate = param.Number(default=20, bounds=(1., 200.), doc='Camera frame rate (Hz)')
+    frame_rate = param.Number(default=20, bounds=(0., 200.), doc='Camera frame rate (Hz)')
     piezo_frequency = param.Number(default=5, bounds=(0., 10), doc='Scanning frequency (Hz)')
+    # redundant once we have dz!
     piezo_amplitude = param.Number(default=0, bounds=(0., 10), doc='Piezo scanning amplitude (arbitrary voltage)')
     exposure_time = param.Number(default=1, bounds=(0.1, 10), doc='Exposure (ms)')
     laser_power = param.Number(default=23, bounds=(0.1, 100), doc='Laser power (mA)')
-    scanning_profile = param.ObjectSelector(default='sawtooth', objects=['none', 'sawtooth', 'triangle'])
+    scanning_profile = param.ObjectSelector(default='sawtooth', objects=['none', 'sawtooth', 'triangle', 'sine'])
     binning = param.ObjectSelector(default='2x2', objects=['1x1', '2x2', '4x4'])
     trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
+    dx = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - x (um)')
+    dy = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - y (um)')
+    dz = param.Number(default=0.6, bounds=(0.000, 50), doc='Pixel size  - z (um)')
+    n_frames = param.Integer(default=18000, bounds=(1, 1000000), doc='Movie frames')
 
 
 class MetadataCamera(Metadata):
     category = 'camera'
 
-    exposure = param.Number(default=2, bounds=[0.1, 50], doc='Exposure (ms)')
-    framerate = param.Number(default=500, bounds=[0.5, 1000], doc='Frame rate (Hz)')
+    exposure = param.Number(default=1, bounds=[0.1, 50], doc='Exposure (ms)')
+    # framerate = param.Number(default=100, bounds=[0.5, 1000], doc='Frame rate (Hz)')
     gain = param.Number(default=1.0, bounds=[0.1, 3], doc='Camera amplification gain')
 
 

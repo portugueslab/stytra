@@ -52,7 +52,7 @@ class FrameProcessor(Process):
                 self.current_framerate = self.n_fps_frames / (
                     self.current_time - self.previous_time_fps).total_seconds()
                 if self.print_framerate:
-                    print('FPS: ' + int(self.current_framerate*10/500)*'#')
+                    print('FPS: ' + str(self.current_framerate))# int(self.current_framerate*10/500)*'#')
                 if self.framerate_queue:
                     self.framerate_queue.put(self.current_framerate)
             self.previous_time_fps = self.current_time
@@ -100,7 +100,6 @@ class XimeaCamera(FrameProcessor):
                             self.cam.set_gain(control_params['gain'])
                         if 'framerate' in control_params.keys():
                             print(self.cam.get_framerate())
-                            #self.cam.set_framerate(self.cam.get_framerate())
                             self.cam.set_framerate(control_params['framerate'])
                     except xiapi.Xi_error:
                         print('Invalid camera settings')
@@ -108,10 +107,14 @@ class XimeaCamera(FrameProcessor):
                     pass
             if self.signal.is_set():
                 break
-            self.cam.get_image(img)
-            # TODO check if it does anything to add np.array
-            arr = np.array(img.get_image_data_numpy())
-            self.q.put((datetime.now(), arr))
+            try:
+                self.cam.get_image(img)
+                # TODO check if it does anything to add np.array
+                arr = np.array(img.get_image_data_numpy())
+                self.q.put((datetime.now(), arr))
+            except xiapi.Xi_error:
+                print('Unable to acquire frame')
+                pass
         self.cam.close_device()
 
 
@@ -143,6 +146,7 @@ class VideoFileSource(FrameProcessor):
             self.update_framerate()
 
         return
+
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
@@ -197,11 +201,9 @@ class FrameDispatcher(FrameProcessor):
                 self.update_framerate()
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
-                #print(self.current_framerate)
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
-                    #print(every_x)
                 self.i = (self.i+1) % every_x
             except Empty:
                 break

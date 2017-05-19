@@ -182,7 +182,7 @@ def detect_fishes(frame, mask, params, diagnostics=False):
 
 
 class MidlineDetectionParams(Metadata):
-    target_area = pa.Integer(450, (0, 700))
+    target_area = pa.Integer(450, (0, 1500))
     area_tolerance = pa.Integer(320, (0, 700))
     n_tail_segments = pa.Integer(14, (1, 20))
     tail_segment_length = pa.Number(4., (0.5, 10))
@@ -201,10 +201,11 @@ def detect_fish_midline(frame, mask, params):
     :param params:
     :return: list containing the starting point and all the angles
     """
-    _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL,
+    _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
                                          cv2.CHAIN_APPROX_NONE)
 
     # if there are no contours, report no fish in this frame
+
     if len(contours) == 0:
             return []
 
@@ -235,7 +236,6 @@ def detect_fish_midline(frame, mask, params):
                 for p1, p2 in zip(points[0:-1], points[1:]):
                     angles.append(np.arctan2(p2[1]-p1[1],
                                              p2[0] - p1[0]))
-
 
                 measurements.append([points[0][0]+fx, points[0][1]+fy] + angles)
 

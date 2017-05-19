@@ -136,3 +136,52 @@ def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
                            (250, 100, 100))
 
     return display
+
+
+def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_y, tail_length=None):
+    """
+    Function for drawing the fish tail with absolute angles from 0 to 2*pi (as tracked
+    by the tail_trace_ls function)
+    :param display: input image to modify
+    :param angles: absolute angles (0 to 2*pi)
+    :param start_x:
+    :param start_y:
+    :param tail_len_x:
+    :param tail_len_y:
+    :param tail_length: can be fixed; if not specified, it is calculated from tail_len_x and y
+    :return:
+    """
+    circle_size = 10
+    circle_color = (100, 250, 200)
+    circle_thickness = 2
+    line_color = (250, 100, 100)
+    line_thickness = 2
+
+    # If tail length is not fixed, calculate from tail dimensions:
+    if not tail_length:
+        tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+    # Get segment length:
+    tail_segment_length = tail_length / (len(angles) - 1)
+
+    # Add color dimension:
+    if len(display.shape) == 2:
+        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+
+    # Generate points from angles:
+    points = [np.array([start_x, start_y])]
+    for angle in angles:
+        points.append(points[-1] + tail_segment_length * np.array(
+            [np.sin(angle), np.cos(angle)]))
+    points = np.array(points)
+
+    # Draw tail points and segments:
+    for j in range(len(points) - 1):
+        cv2.circle(display, a_to_tc(points[j]), circle_size, circle_color,
+                   thickness=circle_thickness)
+        cv2.line(display, a_to_tc(points[j]), a_to_tc(points[j + 1]),
+                 line_color,  thickness=line_thickness)
+    cv2.circle(display, a_to_tc(points[-1]), circle_size, circle_color,
+               thickness=circle_thickness)
+
+
+    return display

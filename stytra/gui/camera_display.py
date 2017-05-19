@@ -6,7 +6,7 @@ from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
 from stytra.metadata import MetadataCamera
-from stytra.tracking.diagnostics import draw_fish_angles_embedd
+from stytra.tracking.diagnostics import draw_fish_angles_ls
 
 
 import cv2
@@ -43,9 +43,7 @@ class CameraViewWidget(QWidget):
         self.layout.addWidget(self.camera_display_widget)
         if control_queue is not None:
             self.camera_parameters = camera_parameters
-            print(self.camera_parameters.framerate)
             self.control_widget = ParameterGui(self.camera_parameters)
-            print(self.camera_parameters.framerate)
             self.layout.addWidget(self.control_widget)
             for control in self.control_widget.parameter_controls:
                 control.control_widget.valueChanged.connect(self.update_controls)
@@ -88,21 +86,29 @@ class CameraViewWidget(QWidget):
 
 
 class CameraTailSelection(CameraViewWidget):
-    def __init__(self, tail_start_points_queue, tail_position_data, roi_dict=None, *args, **kwargs):
-        """
-        Widget for select tail points and monitoring tracking in embedded animal.
+    def __init__(self, tail_start_points_queue, tail_position_data, roi_dict=None,
+                 tracking_params=None, tail_length=None,
+                 *args, **kwargs):
+        """Widget for select tail points and monitoring tracking in embedded animal.
         :param tail_start_points_queue: queue where to dispatch tail points
         :param tail_position_data: DataAccumulator object with tail tracking data.
+        :param roi_dict: dictionary for setting default tail position
         """
         self.tail_position_data = tail_position_data
         super().__init__(*args, **kwargs)
+        self.tail_start_points_queue = tail_start_points_queue
+        self.tracking_params = tracking_params
+        self.tail_length = tail_length
+
 
         self.label = pg.TextItem('Select tail of the fish:')
-        if not roi_dict:
+
+        if not roi_dict:  # use input dictionary
             roi_dict = {'start_y': 320, 'start_x': 480,
                         'length_y': 0, 'length_x': -400}
         self.roi_dict = roi_dict
 
+        # Draw ROI for tail selection:
         self.roi_tail = pg.LineSegmentROI(((self.roi_dict['start_y'], self.roi_dict['start_x']),
                                            (self.roi_dict['start_y'] + self.roi_dict['length_y'],
                                             self.roi_dict['start_x'] + self.roi_dict['length_x'])),
@@ -110,51 +116,42 @@ class CameraTailSelection(CameraViewWidget):
                                                    width=4))
         self.display_area.addItem(self.roi_tail)
 
-        self.tail_start_points_queue = tail_start_points_queue
-
-
-
-        self.get_tail_coords()
-        self.tail_start_points_queue.put(self.get_tail_coords())
+        self.get_tracking_params()
+        self.tail_start_points_queue.put(self.get_tracking_params())
         self.roi_tail.sigRegionChanged.connect(self.send_roi_to_queue)
 
-
     def send_roi_to_queue(self):
-        self.tail_start_points_queue.put(self.get_tail_coords())
+        self.tail_start_points_queue.put(self.get_tracking_params())
 
-    #def set_tail_coords(self):
-    #    print(self.roi_tail.listPoints()[0].x())
-    #    print(self.roi_dict['start_y'])
-    #    self.roi_tail.listPoints()[0].setX(self.roi_dict['start_y'])
-    #    self.roi_tail.listPoints()[0].setY(self.roi_dict['start_x'])
-    #    self.roi_tail.listPoints()[1].setX(self.roi_dict['start_y'] + self.roi_dict['length_y'])
-    #    self.roi_tail.listPoints()[1].setY(self.roi_dict['start_x'] + self.roi_dict['length_x'])
-
-        print(self.roi_tail.listPoints()[0].x())
-
-    def get_tail_coords(self):
+    def get_tracking_params(self):
         # Invert x and y:
-        #self.set_tail_coords()
         self.roi_dict['start_y'] = self.roi_tail.listPoints()[0].x()  # start y
         self.roi_dict['start_x'] = self.roi_tail.listPoints()[0].y()  # start x
         self.roi_dict['length_y'] = self.roi_tail.listPoints()[1].x() - self.roi_dict['start_y']  # delta y
         self.roi_dict['length_x'] = self.roi_tail.listPoints()[1].y() - self.roi_dict['start_x']  # delta x
-        return {'start_x': self.roi_dict['start_x'], 'start_y': self.roi_dict['start_y'],
-                'tail_len_x': self.roi_dict['length_x'], 'tail_len_y': self.roi_dict['length_y'],
-                'n_segments': 30, 'window_size': 30,
-                'inverted': False, 'filtered': True}
+
+        self.tracking_params.update({'start_x': self.roi_dict['start_x'],
+                                     'start_y': self.roi_dict['start_y'],
+                                     'tail_len_x': self.roi_dict['length_x'],
+                                     'tail_len_y': self.roi_dict['length_y'],
+                                     'tail_length': self.tail_length})
+        return self.tracking_params
 
     def modify_frame(self, frame):
+        """Function for drawing the tail position on the frame with draw_fish_angles_embedd function
+        :param frame: camera frame
+        :return: modified frame
+        """
         position_data = None
         try:
             if self.tail_position_data:
-                position_data = self.tail_position_data.stored_data[-1][1:]
+                position_data = self.tail_position_data.stored_data[-1][2:]
 
             if position_data:  # draw the tail before displaying the frame:
-                return draw_fish_angles_embedd(frame, np.array(position_data),
-                                               self.roi_dict['start_x'], self.roi_dict['start_y'],
-                                               (self.roi_dict['length_x'] ** 2 + self.roi_dict['length_y'] ** 2)
-                                               ** (1/2) / (len(position_data) + 1))
+                return draw_fish_angles_ls(frame, np.array(position_data),
+                                           self.roi_dict['start_x'], self.roi_dict['start_y'],
+                                           self.roi_dict['length_x'], self.roi_dict['length_y'],
+                                           tail_length=self.tail_length)
             else:
                 return frame
 
