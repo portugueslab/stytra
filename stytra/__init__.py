@@ -48,9 +48,19 @@ class Experiment(QMainWindow):
         self.window_display = StimulusDisplayWindow()
         self.widget_control = ProtocolControlWindow(self.window_display)
 
+        # Connect the display window to the metadata collector
+        self.dc.add_data_source('stimulus', 'display_params',
+                                self.window_display.display_params)
+        self.window_display.update_display_params()
+        self.widget_control.reset_ROI()
+
+        self.protocol = None
+
     def set_protocol(self, protocol):
+        self.protocol = protocol
         self.window_display.set_protocol(protocol)
         self.widget_control.set_protocol(protocol)
+        self.protocol.sig_protocol_finished.connect(self.end_protocol)
 
     def check_if_committed(self):
         repo = git.Repo(search_parent_directories=True)
@@ -64,6 +74,12 @@ class Experiment(QMainWindow):
             print(repo.git.diff('HEAD~1..HEAD', name_only=True))
             raise PermissionError(
                 'The project has to be committed before starting!')
+
+    def show_stimulus_screen(self, full_screen=True):
+        self.window_display.show()
+        if full_screen:
+            self.window_display.windowHandle().setScreen(self.app.screens()[1])
+            self.window_display.showFullScreen()
 
     def end_protocol(self):
         self.dc.save(save_csv=self.save_csv)
@@ -144,6 +160,11 @@ class TailTrackingExperiment(Experiment):
         self.camera.start()
         self.frame_dispatcher.start()
         self.gui_refresh_timer.start()
+
+    def set_protocol(self, protocol):
+        super().set_protocol(protocol)
+        self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+
 
     def end_protocol(self):
         self.finished_sig.set()

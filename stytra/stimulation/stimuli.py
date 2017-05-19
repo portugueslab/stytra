@@ -167,8 +167,8 @@ class ClosedLoop1D(SeamlessStimulus):
         self.past_t = 0
 
     def update(self):
-        self.x += (self.elapsed-self.past_t) * (self.default_vel -
-                                               self.fish_motion_estimator.get_velocity())
+        self.x += (self.elapsed-self.past_t) * (self.default_vel +
+                                                self.fish_motion_estimator.get_velocity())
 
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
