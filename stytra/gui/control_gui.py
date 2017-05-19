@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QProgressBar
 import pyqtgraph as pg
 import numpy as np
 
@@ -88,6 +88,8 @@ class ProtocolControlWindow(QWidget):
         self.button_end = QPushButton('End protocol')
         self.button_end.clicked.connect(self.protocol.end)
 
+        self.progbar_protocol = QProgressBar()
+
         self.button_metadata = QPushButton('Edit metadata')
 
         self.timer = None
@@ -95,7 +97,7 @@ class ProtocolControlWindow(QWidget):
         for widget in [
                        self.widget_view, self.button_update_display,
                        self.layout_calibrate, self.button_start,
-                       self.button_end, self.button_metadata]:
+                       self.button_end, self.progbar_protocol, self.button_metadata]:
             if isinstance(widget, QWidget):
                 self.layout.addWidget(widget)
             if isinstance(widget, QLayout):
@@ -131,3 +133,4 @@ class ProtocolControlWindow(QWidget):
             self.button_show_calib.setText('Show calibration')
         dispw.update()
         self.sig_calibrating.emit()
+
