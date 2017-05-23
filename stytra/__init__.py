@@ -18,7 +18,7 @@ from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
-
+import sys
 
 class Experiment(QMainWindow):
     def __init__(self, directory, name, save_csv=False, app=None):
@@ -161,12 +161,15 @@ class TailTrackingExperiment(Experiment):
         self.frame_dispatcher.start()
         self.gui_refresh_timer.start()
 
+        sys.excepthook = self.excepthook
+        self.finished = False
+
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
-
     def end_protocol(self):
+        self.finished = True
         self.finished_sig.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
@@ -180,9 +183,16 @@ class TailTrackingExperiment(Experiment):
         super().end_protocol()
 
     def closeEvent(self, QCloseEvent):
-        self.end_protocol()
+        if not self.finished:
+            self.end_protocol()
         self.app.closeAllWindows()
         self.app.quit()
+
+    def excepthook(self, exctype, value, traceback):
+        print(exctype, value, traceback)
+        self.finished_sig.set()
+        self.camera.terminate()
+        self.frame_dispatcher.terminate()
 
 
 

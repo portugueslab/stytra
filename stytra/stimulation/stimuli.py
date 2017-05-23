@@ -124,7 +124,6 @@ class MovingSeamless(SeamlessStimulus):
                 pass
 
 
-
 class MovingConstantly(SeamlessStimulus):
     def __init__(self, *args, x_vel=0, y_vel=0, mm_px=1, monitor_rate=60, **kwargs):
         """
@@ -146,18 +145,32 @@ class MovingConstantly(SeamlessStimulus):
 
 
 class DynamicStimulus(Stimulus):
-    pass
+    """ Stimuli where parameters change during stimulation, used
+    to record form stimuli which react to the fish
+
+    """
+    def __init__(self, *args, dynamic_parameters=None, **kwargs):
+        """
+
+        :param args:
+        :param dynamic_parameters: A list of all parameters that are to be recorded
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        if dynamic_parameters is None:
+            self.dynamic_parameters = []
+        else:
+            self.dynamic_parameters = dynamic_parameters
+
+    def get_dynamic_state(self):
+        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
 
 
-class ClosedLoopStimulus(DynamicStimulus):
-    pass
-
-
-class ClosedLoop1D(SeamlessStimulus):
+class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
 
     def __init__(self, *args, default_velocity,
                  fish_motion_estimator, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, dynamic_parameters=['x'], **kwargs)
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
 

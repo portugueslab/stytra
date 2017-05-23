@@ -21,9 +21,9 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.setCentralWidget(self.main_layout)
 
         self.set_protocol(Protocol([
-            ClosedLoop1D(background=gratings(mm_px=0.22, spatial_period=10),
+            ClosedLoop1D(background=gratings(mm_px=0.22, spatial_period=5),
                          fish_motion_estimator=VigourMotionEstimator(
-                        self.data_acc_tailpoints, gain=10, vigour_window=100), duration=100, default_velocity=-20)
+                        self.data_acc_tailpoints, gain=30, vigour_window=100), duration=100, default_velocity=-20)
                         ]))
         self.show()
         self.window_display.show()
