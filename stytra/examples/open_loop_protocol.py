@@ -6,7 +6,8 @@ from stytra.stimulation import Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
-from stytra.metadata import DataCollector, MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
+from stytra.metadata import MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
+from stytra import DataCollector
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.stimulation.backgrounds import gratings
 from stytra.tracking.tail import detect_tail_embedded

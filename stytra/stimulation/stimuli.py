@@ -138,7 +138,6 @@ class MovingConstantly(SeamlessStimulus):
         self.x_shift_frame = (x_vel/mm_px)/monitor_rate
         self.y_shift_frame = (y_vel/mm_px)/monitor_rate
 
-
     def update(self):
         self.x += self.x_shift_frame
         self.y += self.y_shift_frame
@@ -167,21 +166,20 @@ class DynamicStimulus(Stimulus):
 
 
 class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
-
     def __init__(self, *args, default_velocity,
                  fish_motion_estimator, **kwargs):
-        super().__init__(*args, dynamic_parameters=['x'], **kwargs)
+        super().__init__(*args, dynamic_parameters=['x', 'vel'], **kwargs)
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
-
+        self.vel = 0
         self.past_x = self.x
         self.past_y = self.y
         self.past_theta = self.theta
         self.past_t = 0
 
     def update(self):
-        self.x += (self.elapsed-self.past_t) * (self.default_vel +
-                                                self.fish_motion_estimator.get_velocity())
+        self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
+        self.x += (self.elapsed-self.past_t) * self.vel
 
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
@@ -217,7 +215,6 @@ class ShockStimulus(Stimulus):
         amp_dac = str(int(255*pulse_amp/3.5))
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str('shock' + amp_dac + pulse_dur_str)
-
 
     def start(self):
         for i in range(self.pulse_n):

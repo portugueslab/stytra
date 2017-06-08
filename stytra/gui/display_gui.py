@@ -1,10 +1,10 @@
-
+import numpy as np
 from PyQt5.QtCore import QPoint, QRect
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
-from stytra.stimulation.stimuli import *
 from datetime import datetime
+from stytra.stimulation.stimuli import ImageStimulus, PainterStimulus
 
 
 class StimulusDisplayWindow(QDialog):

@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
 
-from stytra.metadata import MetadataFish, MetadataGeneral, DataCollector
+from stytra.metadata import MetadataFish, MetadataGeneral
+from stytra.collectors import DataCollector
 import qdarkstyle
 import git
 
@@ -19,6 +20,11 @@ from stytra.stimulation import Protocol
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
 import sys
+
+# imports for accumulator
+import pandas as pd
+import numpy as np
+
 
 class Experiment(QMainWindow):
     def __init__(self, directory, name, save_csv=False, app=None):
@@ -63,6 +69,11 @@ class Experiment(QMainWindow):
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
 
     def check_if_committed(self):
+        """ Checks if the version of stytra used to run the experiment is commited,
+        so that for each experiment it is known what code was used to record it
+
+        :return:
+        """
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
         self.dc.add_data_source('general', 'git_hash', git_hash)
@@ -78,8 +89,11 @@ class Experiment(QMainWindow):
     def show_stimulus_screen(self, full_screen=True):
         self.window_display.show()
         if full_screen:
-            self.window_display.windowHandle().setScreen(self.app.screens()[1])
-            self.window_display.showFullScreen()
+            try:
+                self.window_display.windowHandle().setScreen(self.app.screens()[1])
+                self.window_display.showFullScreen()
+            except IndexError:
+                print('Second screen not available')
 
     def end_protocol(self):
         self.dc.save(save_csv=self.save_csv)
@@ -152,6 +166,8 @@ class TailTrackingExperiment(Experiment):
             camera_parameters=self.metadata_camera,
             tracking_params=tracking_method_parameters)
 
+        self.dc.add_data_source('tracking','tail_position', self.camera_viewer.roi_dict)
+
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
@@ -193,6 +209,3 @@ class TailTrackingExperiment(Experiment):
         self.finished_sig.set()
         self.camera.terminate()
         self.frame_dispatcher.terminate()
-
-
-

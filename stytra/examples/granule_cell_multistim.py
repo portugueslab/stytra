@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 from stytra.stimulation.protocols import SpontActivityProtocol, MultistimulusExp06Protocol
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow, StartingWindow
-from stytra.metadata import DataCollector, MetadataFish,  MetadataLightsheet, MetadataGeneral
+from stytra.metadata import MetadataFish,  MetadataLightsheet, MetadataGeneral
+from stytra import DataCollector
 from stytra.metadata.metalist_gui import MetaListGui
 
 from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
