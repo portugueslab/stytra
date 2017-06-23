@@ -15,6 +15,9 @@ from multiprocessing import Queue, Event
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
 
+# imports for moving detector
+from stytra.hardware.video import MovingFrameDispatcher
+
 
 class Experiment(QMainWindow):
     def __init__(self, directory, name, save_csv=False, app=None):
@@ -36,6 +39,8 @@ class Experiment(QMainWindow):
         self.directory = directory
         self.name = name
 
+        self.save_csv = save_csv
+
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
@@ -53,33 +58,27 @@ class Experiment(QMainWindow):
                 'The project has to be committed before starting!')
 
     def end_protocol(self):
-        self.dc.save(save_csv=save_csv)
+        self.dc.save(save_csv=self.save_csv)
 
 
-class TailTrackingExperiment(Experiment):
-    def __init__(self, *args, video_input=None,
-                        tracking_method='angle_sweep',
-                        tracking_method_parameters=None, **kwargs):
-        """ An experiment which contains tail tracking,
-        base for any experiment that tracks behaviour or employs
-        closed loops
+class CameraExperiment(Experiment):
+    def __init__(self, *args, video_input=None, **kwargs):
+        """
 
         :param args:
         :param video_input: if not using a camera, the video
         file for the test input
-        :param tracking_method: the method used to track the tail
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-
-        # infrastructure for processing data from the camera
         self.frame_queue = Queue()
         self.gui_frame_queue = Queue()
-        self.processing_parameter_queue = Queue()
-        self.tail_position_queue = Queue()
         self.finished_sig = Event()
+
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
+
+
         self.metadata_camera = MetadataCamera()
 
         if video_input is None:
@@ -92,6 +91,35 @@ class TailTrackingExperiment(Experiment):
             self.camera = VideoFileSource(self.frame_queue,
                                           self.finished_sig,
                                           video_input)
+
+    def go_live(self):
+        self.camera.start()
+        self.gui_refresh_timer.start()
+
+    def end_protocol(self):
+        super().end_protocol()
+        self.finished_sig.set()
+        # self.camera.join(timeout=1)
+        self.camera.terminate()
+
+
+class TailTrackingExperiment(CameraExperiment):
+    def __init__(self, *args,
+                        tracking_method='angle_sweep',
+                        tracking_method_parameters=None, **kwargs):
+        """ An experiment which contains tail tracking,
+        base for any experiment that tracks behaviour or employs
+        closed loops
+
+        :param args:
+        :param tracking_method: the method used to track the tail
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+
+        # infrastructure for processing data from the camera
+        self.processing_parameter_queue = Queue()
+        self.tail_position_queue = Queue()
 
         dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
                                        centroid=detect_tail_embedded)
@@ -128,15 +156,13 @@ class TailTrackingExperiment(Experiment):
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
-        self.camera.start()
+        self.go_live()
+
+    def go_live(self):
+        super().go_live()
         self.frame_dispatcher.start()
-        self.gui_refresh_timer.start()
 
     def end_protocol(self):
-        self.finished_sig.set()
-        # self.camera.join(timeout=1)
-        self.camera.terminate()
-
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
 
@@ -151,4 +177,18 @@ class TailTrackingExperiment(Experiment):
         self.app.quit()
 
 
+class MovementRecordingExperiment(CameraExperiment):
+    """ Experiment where the fish is recorded while it is moving
 
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.go_live()
+
+        self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
+                                                      self.gui_frame_queue,
+                                                      self.finished_sig,
+                                                      output_queue=self.record_queue,
+                                                      framestart_queue=self.framestart_queue,
+                                                      signal_start_rec=self.start_rec_sig,
+                                                      gui_framerate=30)
