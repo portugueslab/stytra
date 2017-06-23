@@ -5,10 +5,10 @@ from stytra.tracking.fish import detect_fish_midline
 import cv2
 from datetime import datetime
 from stytra.tracking.diagnostics import draw_fish_new
-import pandas as pd
+from stytra.collectors import Accumulator
 
 
-class DataAccumulator(QObject):
+class DataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=['tail_sum']):
         """
         General class for accumulating (for saving or dispatching) data
@@ -27,7 +27,7 @@ class DataAccumulator(QObject):
         self.stored_data = []
 
         # First data column will always be time:
-        self.header_list = ['time'] + header_list
+        self.header_list.extend(header_list)
 
     def update_list(self):
         """Upon calling put all available data into a list.
@@ -54,13 +54,6 @@ class DataAccumulator(QObject):
         """
         self.stored_data = []
         print('resetted')
-
-    def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers
-        """
-        data_array = pd.lib.to_object_array(self.stored_data).astype(float)
-        return pd.DataFrame(data_array[:, :len(self.header_list)],
-                            columns=self.header_list)
 
 
 class FishTrackingProcess(Process):

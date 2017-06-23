@@ -4,6 +4,7 @@ import datetime
 from builtins import print
 
 from stytra.stimulation.stimuli import DynamicStimulus
+from stytra.collectors import Accumulator
 
 
 class Protocol(QObject):
@@ -17,13 +18,14 @@ class Protocol(QObject):
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli=None, dt=1/60, log_print=True):
+    def __init__(self, stimuli=None, name='', dt=1/60, log_print=True):
         """
         :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
         :param dt: frame duration (sec)
         """
         super().__init__()
 
+        self.name = name
         self.t_start = None
         self.t = 0
         if stimuli:
@@ -36,6 +38,7 @@ class Protocol(QObject):
 
         # Log will be a list of stimuli states
         self.log = []
+        self.dynamic_log = DynamicLog(self.stimuli)
         self.log_print = log_print
 
     def start(self):
@@ -43,6 +46,7 @@ class Protocol(QObject):
         self.timer.timeout.connect(self.timestep)
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
+        self.dynamic_log.starting_time = self.t_start
         self.past_stimuli_elapsed = datetime.datetime.now()
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
@@ -52,7 +56,6 @@ class Protocol(QObject):
         self.t = (datetime.datetime.now() - self.t_start).total_seconds()  # Time from start in seconds
         self.current_stimulus.elapsed = (datetime.datetime.now() -
                                          self.past_stimuli_elapsed).total_seconds()
-
         if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
             self.sig_stim_change.emit(self.i_current_stimulus)
             self.update_log()
@@ -74,12 +77,13 @@ class Protocol(QObject):
         self.sig_timestep.emit(self.i_current_stimulus)
         if isinstance(self.current_stimulus, DynamicStimulus):
             self.sig_stim_change.emit(self.i_current_stimulus)
+            self.update_dynamic_log()
 
     def end(self):
         self.sig_protocol_finished.emit()
         self.timer.timeout.disconnect()
         self.timer.stop()
-        self.reset_log()
+        self.reset()
 
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""
@@ -91,7 +95,11 @@ class Protocol(QObject):
             print(new_dict)
         self.log.append(new_dict)
 
-    def reset_log(self):
+    def update_dynamic_log(self):
+        if isinstance(self.current_stimulus, DynamicStimulus):
+            self.dynamic_log.update_list((self.t,) + self.current_stimulus.get_dynamic_state())
+
+    def reset(self):
         self.t_start = None
         self.t = 0
         for stimulus in self.stimuli:
@@ -104,6 +112,7 @@ class Protocol(QObject):
 
         # Log will be a list of stimuli states
         self.log = []
+        self.dynamic_log = DynamicLog()
 
     def get_duration(self):
         total_duration = 0
@@ -119,4 +128,16 @@ class Protocol(QObject):
         print(string)
 
 
+class DynamicLog(Accumulator):
+    def __init__(self, stimuli):
+        super().__init__()
+        # it is assumed the first dynamic stimulus has all the fields
+        self.starting_time = 0
+        for stimulus in stimuli:
+            if isinstance(stimulus, DynamicStimulus):
+                self.header_list = ['time'] + stimulus.dynamic_parameters
+        self.stored_data = []
+
+    def update_list(self, data):
+        self.stored_data.append(data)
 

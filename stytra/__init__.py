@@ -1,6 +1,10 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
+
 from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.metadata import MetadataFish, MetadataGeneral, DataCollector
+from stytra.gui.display_gui import StimulusDisplayWindow
+
+from stytra.metadata import MetadataFish, MetadataGeneral
+from stytra.collectors import DataCollector
 import qdarkstyle
 import git
 
@@ -11,9 +15,15 @@ from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
+from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
+import sys
+
+# imports for accumulator
+import pandas as pd
+import numpy as np
 
 # imports for moving detector
 from stytra.hardware.video import MovingFrameDispatcher
@@ -44,11 +54,33 @@ class Experiment(QMainWindow):
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
-    def check_if_commited(self):
+        self.window_display = StimulusDisplayWindow()
+        self.widget_control = ProtocolControlWindow(self.window_display)
+
+        # Connect the display window to the metadata collector
+        self.dc.add_data_source('stimulus', 'display_params',
+                                self.window_display.display_params)
+        self.window_display.update_display_params()
+        self.widget_control.reset_ROI()
+
+        self.protocol = None
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
+        self.window_display.set_protocol(protocol)
+        self.widget_control.set_protocol(protocol)
+        self.protocol.sig_protocol_finished.connect(self.end_protocol)
+
+    def check_if_committed(self):
+        """ Checks if the version of stytra used to run the experiment is commited,
+        so that for each experiment it is known what code was used to record it
+
+        :return:
+        """
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
-        self.data_collector.add_data_source('general', 'git_hash', git_hash)
-        self.data_collector.add_data_source('general', 'program_name', __file__)
+        self.dc.add_data_source('general', 'git_hash', git_hash)
+        self.dc.add_data_source('general', 'program_name', __file__)
 
         if len(repo.git.diff('HEAD~1..HEAD',
                              name_only=True)) > 0:
@@ -56,6 +88,15 @@ class Experiment(QMainWindow):
             print(repo.git.diff('HEAD~1..HEAD', name_only=True))
             raise PermissionError(
                 'The project has to be committed before starting!')
+
+    def show_stimulus_screen(self, full_screen=True):
+        self.window_display.show()
+        if full_screen:
+            try:
+                self.window_display.windowHandle().setScreen(self.app.screens()[1])
+                self.window_display.showFullScreen()
+            except IndexError:
+                print('Second screen not available')
 
     def end_protocol(self):
         self.dc.save(save_csv=self.save_csv)
@@ -151,6 +192,8 @@ class TailTrackingExperiment(CameraExperiment):
             camera_parameters=self.metadata_camera,
             tracking_params=tracking_method_parameters)
 
+        self.dc.add_data_source('tracking','tail_position', self.camera_viewer.roi_dict)
+
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
@@ -162,7 +205,19 @@ class TailTrackingExperiment(CameraExperiment):
         super().go_live()
         self.frame_dispatcher.start()
 
+        sys.excepthook = self.excepthook
+        self.finished = False
+
+    def set_protocol(self, protocol):
+        super().set_protocol(protocol)
+        self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+
     def end_protocol(self):
+        self.finished = True
+        self.finished_sig.set()
+        # self.camera.join(timeout=1)
+        self.camera.terminate()
+
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
 
@@ -172,10 +227,16 @@ class TailTrackingExperiment(CameraExperiment):
         super().end_protocol()
 
     def closeEvent(self, QCloseEvent):
-        self.end_protocol()
+        if not self.finished:
+            self.end_protocol()
         self.app.closeAllWindows()
         self.app.quit()
 
+    def excepthook(self, exctype, value, traceback):
+        print(exctype, value, traceback)
+        self.finished_sig.set()
+        self.camera.terminate()
+        self.frame_dispatcher.terminate()
 
 class MovementRecordingExperiment(CameraExperiment):
     """ Experiment where the fish is recorded while it is moving

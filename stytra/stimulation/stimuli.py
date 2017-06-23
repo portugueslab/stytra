@@ -5,7 +5,10 @@ from PyQt5.QtGui import QPainter, QImage
 from PyQt5.QtCore import QPoint
 import cv2
 from time import sleep
-from stytra.hardware.serial import PyboardConnection
+try:
+    from stytra.hardware.serial import PyboardConnection
+except ImportError:
+    print('Serial pyboard connection not installed')
 
 
 class Stimulus:
@@ -43,11 +46,10 @@ class Stimulus:
 class ImageStimulus(Stimulus):
     """Generic visual stimulus
     """
-    def __init__(self, output_shape=(100, 100), **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.output_shape = output_shape
 
-    def get_image(self):
+    def get_image(self, dims):
         pass
 
 
@@ -62,8 +64,8 @@ class Flash(ImageStimulus):
                        np.array(self.color, dtype=np.uint8)[None, None, :]
 
 
-    def get_image(self):
-        self._imdata = np.ones(self.output_shape + (3,), dtype=np.uint8) * \
+    def get_image(self, dims):
+        self._imdata = np.ones(dims + (3,), dtype=np.uint8) * \
                        np.array(self.color, dtype=np.uint8)[None, None, :]
 
         return self._imdata
@@ -88,24 +90,24 @@ class SeamlessStimulus(ImageStimulus):
         self.theta = 0
         self._background = background
 
-    def _transform_mat(self):
+    def _transform_mat(self, dims):
         if self.theta == 0:
             return np.array([[1, 0, self.y],
                              [0, 1, self.x]]).astype(np.float32)
         else:
             # shift by x and y and rotate around centre
-            xc = self.output_shape[1] / 2
-            yc = self.output_shape[0] / 2
+            xc = dims[1] / 2
+            yc = dims[0] / 2
             return np.array([[np.sin(self.theta), np.cos(self.theta),
                               self.y + yc - xc*np.sin(self.theta) - yc * np.cos(self.theta)],
                              [np.cos(self.theta), -np.sin(self.theta),
                               self.x + xc - xc*np.cos(self.theta) + yc * np.sin(self.theta)]]).astype(np.float32)
 
-    def get_image(self):
+    def get_image(self, dims):
         self.update()
-        to_display = cv2.warpAffine(self._background, self._transform_mat(),
+        to_display = cv2.warpAffine(self._background, self._transform_mat(dims),
                                     borderMode=cv2.BORDER_WRAP,
-                                    dsize=self.output_shape)
+                                    dsize=dims)
         return to_display
 
 
@@ -122,7 +124,6 @@ class MovingSeamless(SeamlessStimulus):
                 pass
 
 
-
 class MovingConstantly(SeamlessStimulus):
     def __init__(self, *args, x_vel=0, y_vel=0, mm_px=1, monitor_rate=60, **kwargs):
         """
@@ -137,36 +138,48 @@ class MovingConstantly(SeamlessStimulus):
         self.x_shift_frame = (x_vel/mm_px)/monitor_rate
         self.y_shift_frame = (y_vel/mm_px)/monitor_rate
 
-
     def update(self):
         self.x += self.x_shift_frame
         self.y += self.y_shift_frame
 
 
 class DynamicStimulus(Stimulus):
-    pass
+    """ Stimuli where parameters change during stimulation, used
+    to record form stimuli which react to the fish
+
+    """
+    def __init__(self, *args, dynamic_parameters=None, **kwargs):
+        """
+
+        :param args:
+        :param dynamic_parameters: A list of all parameters that are to be recorded
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        if dynamic_parameters is None:
+            self.dynamic_parameters = []
+        else:
+            self.dynamic_parameters = dynamic_parameters
+
+    def get_dynamic_state(self):
+        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
 
 
-class ClosedLoopStimulus(DynamicStimulus):
-    pass
-
-
-class ClosedLoop1D(SeamlessStimulus):
-
+class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
     def __init__(self, *args, default_velocity,
                  fish_motion_estimator, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, dynamic_parameters=['x', 'vel'], **kwargs)
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
-
+        self.vel = 0
         self.past_x = self.x
         self.past_y = self.y
         self.past_theta = self.theta
         self.past_t = 0
 
     def update(self):
-        self.x += (self.elapsed-self.past_t) * (self.default_vel -
-                                              self.fish_motion_estimator.veloctiy)
+        self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
+        self.x += (self.elapsed-self.past_t) * self.vel
 
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
@@ -203,7 +216,6 @@ class ShockStimulus(Stimulus):
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str('shock' + amp_dac + pulse_dur_str)
 
-
     def start(self):
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
@@ -222,6 +234,7 @@ class StopAquisition(Stimulus):
     def start(self):
         print('stop')
         self._zmq_trigger.stop()
+
 
 class StartAquisition(Stimulus):
     def __init__(self, zmq_trigger=None, **kwargs):
@@ -243,33 +256,6 @@ class PrepareAquisition(Stimulus):
     def start(self):
         self._zmq_trigger.prepare()
         print('Acquisition prepared')
-
-#
-# class FlashShock(Flash):
-#     def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
-#                  pulse_dur_ms=2, pyboard=None, **kwargs):
-#         super().__init__(**kwargs)
-#         self.name = 'shock'
-#         # assert isinstance(pyboard, PyboardConnection)
-#         self._pyb = pyboard
-#         self.burst_freq = burst_freq
-#         self.pulse_dur_ms = pulse_dur_ms
-#         self.pulse_n = pulse_n
-#         self.pulse_amp_mA = pulse_amp
-#
-#         # Pause between shocks in the burst in ms:
-#         self.pause = 1000 / burst_freq - pulse_dur_ms
-#
-#         amp_dac = str(int(255 * pulse_amp / 3.5))
-#         pulse_dur_str = str(pulse_dur_ms).zfill(3)
-#         self.mex = str('shock' + amp_dac + pulse_dur_str)
-#
-#     def start(self):
-#         for i in range(self.pulse_n):
-#             self._pyb.write(self.mex)
-#             print(self.mex)
-#             sleep(self.pause / 1000)
-
 
 
 if __name__ == '__main__':
