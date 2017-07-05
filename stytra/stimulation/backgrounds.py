@@ -32,7 +32,7 @@ def existing_file_background(filepath):
     if filepath.endswith('.h5'):
         return dio.load(filepath)
     else:
-        return cv2.imread(filepath)
+        return cv2.imread(filepath)[:, :, [2, 1, 0]]
 
 
 def poisson_disk_background(size, distance, radius):

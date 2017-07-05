@@ -74,6 +74,7 @@ class ProtocolControlWindow(QWidget):
 
         self.button_update_display = QPushButton('Update display area')
         self.button_update_display.clicked.connect(self.refresh_ROI)
+        #
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
@@ -100,6 +101,7 @@ class ProtocolControlWindow(QWidget):
 
         self.setLayout(self.layout)
         self.refresh_ROI()
+        #self.widget_view.roi_box.sigRegionChanged.connect(self.refresh_ROI)
 
     def reset_ROI(self):
         self.widget_view.roi_box.setPos(self.display_window.display_params['window']['pos'])

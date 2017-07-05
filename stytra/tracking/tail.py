@@ -33,7 +33,8 @@ def detect_segment(detect_angles, seglen, start, direction, image):
 
 
 @jit(nopython=True)
-def detect_tail(image, start_point, start_dir=0, pixlen=100, segments=5, max_segment_angle=np.pi*3/8):
+def detect_tail(image, start_point, start_dir=0, pixlen=100, segments=5,
+                max_segment_angle=np.pi*3/8):
     seglen = pixlen * 1.0 / segments
 
     detect_angles = np.linspace(-max_segment_angle, max_segment_angle, 17)

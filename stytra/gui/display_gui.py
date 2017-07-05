@@ -73,22 +73,24 @@ class GLStimDisplay(QOpenGLWidget):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
         h = self.height()
-        p.drawRect(QRect(-1, -1, w+2, h+2))
+        if isinstance(self.protocol.current_stimulus, PainterStimulus):
+            self.protocol.current_stimulus.paint(p, w, h)
+        else:
+            p.drawRect(QRect(-1, -1, w+2, h+2))
+            p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
+            if self.img is not None:
+                p.drawImage(QPoint(0, 0), self.img)
+
         if self.calibrating and self.calibration is not None:
             self.calibration.make_calibration_pattern(p, h, w)
-
-        p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
-        if self.img is not None:
-            p.drawImage(QPoint(0, 0), self.img)
+        p.end()
 
     def display_stimulus(self):
         self.dims = (self.height(), self.width())
 
         if isinstance(self.protocol.current_stimulus, ImageStimulus):
             self.setImage(self.protocol.current_stimulus.get_image(self.dims))
-        elif isinstance(self.protocol.current_stimulus, PainterStimulus):
-            p = QPainter(self)
-            self.protocol.current_stimulus.paint(p)
+
         self.update_framerate()
         self.update()
 

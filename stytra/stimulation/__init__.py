@@ -77,6 +77,7 @@ class Protocol(QObject):
         self.sig_timestep.emit(self.i_current_stimulus)
         if isinstance(self.current_stimulus, DynamicStimulus):
             self.sig_stim_change.emit(self.i_current_stimulus)
+            self.current_stimulus.update()
             self.update_dynamic_log()
 
     def end(self):

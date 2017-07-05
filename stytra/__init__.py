@@ -28,6 +28,7 @@ import numpy as np
 # imports for moving detector
 from stytra.hardware.video import MovingFrameDispatcher
 
+import os
 
 class Experiment(QMainWindow):
     def __init__(self, directory, name, save_csv=False, app=None):
@@ -47,6 +48,10 @@ class Experiment(QMainWindow):
         self.metadata_fish = MetadataFish()
 
         self.directory = directory
+
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+
         self.name = name
 
         self.save_csv = save_csv
@@ -101,6 +106,10 @@ class Experiment(QMainWindow):
     def end_protocol(self):
         self.dc.save(save_csv=self.save_csv)
 
+    def closeEvent(self, QCloseEvent):
+        self.end_protocol()
+        self.app.closeAllWindows()
+        self.app.quit()
 
 class CameraExperiment(Experiment):
     def __init__(self, *args, video_input=None, **kwargs):
@@ -226,17 +235,12 @@ class TailTrackingExperiment(CameraExperiment):
 
         super().end_protocol()
 
-    def closeEvent(self, QCloseEvent):
-        if not self.finished:
-            self.end_protocol()
-        self.app.closeAllWindows()
-        self.app.quit()
-
     def excepthook(self, exctype, value, traceback):
         print(exctype, value, traceback)
         self.finished_sig.set()
         self.camera.terminate()
         self.frame_dispatcher.terminate()
+
 
 class MovementRecordingExperiment(CameraExperiment):
     """ Experiment where the fish is recorded while it is moving

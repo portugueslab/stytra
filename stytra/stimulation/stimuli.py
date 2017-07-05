@@ -1,8 +1,8 @@
 import numpy as np
-from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QImage, QTransform
 import qimage2ndarray
-from PyQt5.QtGui import QPainter, QImage
-from PyQt5.QtCore import QPoint
+from PyQt5.QtGui import QPainter, QImage, QBrush, QPen, QColor
+from PyQt5.QtCore import QPoint, QRect
 import cv2
 from time import sleep
 try:
@@ -10,6 +10,7 @@ try:
 except ImportError:
     print('Serial pyboard connection not installed')
 
+from itertools import product
 
 class Stimulus:
     """ General class for a stimulus."""
@@ -41,6 +42,28 @@ class Stimulus:
 
     def start(self):
         pass
+
+
+class DynamicStimulus(Stimulus):
+    """ Stimuli where parameters change during stimulation, used
+    to record form stimuli which react to the fish
+
+    """
+    def __init__(self, *args, dynamic_parameters=None, **kwargs):
+        """
+
+        :param args:
+        :param dynamic_parameters: A list of all parameters that are to be recorded
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        if dynamic_parameters is None:
+            self.dynamic_parameters = []
+        else:
+            self.dynamic_parameters = dynamic_parameters
+
+    def get_dynamic_state(self):
+        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
 
 
 class ImageStimulus(Stimulus):
@@ -78,17 +101,23 @@ class Pause(Flash):
 
 
 class PainterStimulus(Stimulus):
-    def paint(self, p):
+    def paint(self, p, w, h):
         pass
 
 
-class SeamlessStimulus(ImageStimulus):
+class BackgroundStimulus(Stimulus):
     def __init__(self, *args, background=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.x = 0
         self.y = 0
         self.theta = 0
         self._background = background
+
+
+class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
+    def __init__(self, *args, background=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
     def _transform_mat(self, dims):
         if self.theta == 0:
@@ -111,7 +140,59 @@ class SeamlessStimulus(ImageStimulus):
         return to_display
 
 
-class MovingSeamless(SeamlessStimulus):
+class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
+                              DynamicStimulus):
+    def __init__(self, *args, dynamic_paramters=['x', 'y', 'theta'],
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self._background = qimage2ndarray.array2qimage(self._background)
+
+    def rotTransform(self, w, h):
+        xc = -w / 2
+        yc = -h / 2
+        return QTransform().translate(-xc, -yc).rotate(
+            self.theta * 180 / np.pi).translate(xc, yc)
+
+    def paint(self, p, w, h):
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        display_centre = (w/ 2, h / 2)
+        imw = self._background.width()
+        imh = self._background.height()
+        image_centre = (imw / 2, imh / 2)
+
+        cx = self.x - np.floor(self.x / imw) * imw
+        cy = self.y - np.floor(
+            self.y / imh) * imh
+
+        dx = display_centre[0] - image_centre[0] + cx
+        dy = display_centre[1] - image_centre[1] - cy
+
+        # rotate the coordinate transform around the position of the fish
+        p.setTransform(self.rotTransform(w, h))
+
+        for idx, idy in product(range(-1, 2), range(-1, 2)):
+            p.drawImage(QPoint(dx + imw * idx,
+                               dy + imh * idy), self._background)
+
+
+
+class RandomDotKinematogram(PainterStimulus):
+    def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dot_density = dot_density
+        self.coherence = coherence
+        self.velocity = velocity
+        self.direction = direction
+        self.dots = None
+
+    def paint(self, p, w, h):
+        # TODO implement dot painting and update
+        pass
+
+
+class MovingSeamless(SeamlessPainterStimulus):
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
@@ -143,26 +224,6 @@ class MovingConstantly(SeamlessStimulus):
         self.y += self.y_shift_frame
 
 
-class DynamicStimulus(Stimulus):
-    """ Stimuli where parameters change during stimulation, used
-    to record form stimuli which react to the fish
-
-    """
-    def __init__(self, *args, dynamic_parameters=None, **kwargs):
-        """
-
-        :param args:
-        :param dynamic_parameters: A list of all parameters that are to be recorded
-        :param kwargs:
-        """
-        super().__init__(*args, **kwargs)
-        if dynamic_parameters is None:
-            self.dynamic_parameters = []
-        else:
-            self.dynamic_parameters = dynamic_parameters
-
-    def get_dynamic_state(self):
-        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
 
 
 class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
