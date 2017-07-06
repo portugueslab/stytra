@@ -74,7 +74,6 @@ class ProtocolControlWindow(QWidget):
 
         self.button_update_display = QPushButton('Update display area')
         self.button_update_display.clicked.connect(self.refresh_ROI)
-        #
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
@@ -111,15 +110,6 @@ class ProtocolControlWindow(QWidget):
         if self.display_window:
             self.display_window.set_dims(self.widget_view.roi_box.pos(),
                                          self.widget_view.roi_box.size())
-
-    def closeEvent(self, QCloseEvent):
-        """ On closing the app, save where the window was
-        :param QCloseEvent:
-        :return: None
-        """
-        self.sig_closing.emit()
-        self.deleteLater()
-        self.app.quit()
 
     def toggle_calibration(self):
         dispw = self.display_window.widget_display

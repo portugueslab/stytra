@@ -4,18 +4,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter, QProgressBar
 import numpy as np
 import pandas as pd
 from stytra import Experiment
-from stytra.stimulation.stimuli import Pause
-from stytra.gui import display_gui, control_gui
-import stytra.calibration as calibration
 from stytra.stimulation import Protocol
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation.stimuli import MovingSeamless
-from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.metadata import MetadataFish
-from queue import Empty
-
-import qdarkstyle
 
 
 def make_spinning_protocol(n_vels=3, stim_duration=10, pause_duration=5,

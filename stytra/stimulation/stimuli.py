@@ -142,9 +142,8 @@ class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
 
 class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                               DynamicStimulus):
-    def __init__(self, *args, dynamic_paramters=['x', 'y', 'theta'],
-                 **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'], **kwargs)
         self._background = qimage2ndarray.array2qimage(self._background)
 
     def rotTransform(self, w, h):
@@ -175,7 +174,6 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         for idx, idy in product(range(-1, 2), range(-1, 2)):
             p.drawImage(QPoint(dx + imw * idx,
                                dy + imh * idy), self._background)
-
 
 
 class RandomDotKinematogram(PainterStimulus):
@@ -222,8 +220,6 @@ class MovingConstantly(SeamlessStimulus):
     def update(self):
         self.x += self.x_shift_frame
         self.y += self.y_shift_frame
-
-
 
 
 class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):

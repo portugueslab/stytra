@@ -30,6 +30,7 @@ from stytra.hardware.video import MovingFrameDispatcher
 
 import os
 
+
 class Experiment(QMainWindow):
     def __init__(self, directory, name, save_csv=False, app=None):
         """ A general class for running experiments
@@ -107,9 +108,10 @@ class Experiment(QMainWindow):
         self.dc.save(save_csv=self.save_csv)
 
     def closeEvent(self, QCloseEvent):
-        self.end_protocol()
-        self.app.closeAllWindows()
-        self.app.quit()
+        pass
+        #self.end_protocol()
+        #self.app.closeAllWindows()
+
 
 class CameraExperiment(Experiment):
     def __init__(self, *args, video_input=None, **kwargs):
