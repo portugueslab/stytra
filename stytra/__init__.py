@@ -259,3 +259,7 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       gui_framerate=30)
+
+class LightsheetExperiment(Experiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
