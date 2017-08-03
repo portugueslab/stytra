@@ -29,7 +29,6 @@ class ZmqClient:
 
 
     def send(self, message=None):
-
         self.socket.connect(self.tcp_address)
         self.socket.send(bytes(message))
 
@@ -63,7 +62,6 @@ class ZmqLightsheetTrigger(ZmqClient):
     def __init__(self, pause=2, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pause = pause
-
 
     def prepare(self):
         self.send(b"prepare")
