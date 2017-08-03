@@ -75,7 +75,12 @@ class Experiment(QMainWindow):
         self.protocol = protocol
         self.window_display.set_protocol(protocol)
         self.widget_control.set_protocol(protocol)
+        self.protocol.sig_timestep.connect(self.update_progress)
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
+        self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
+
+    def update_progress(self, i_stim):
+        self.widget_control.progress_bar.setValue(int(self.protocol.t))
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is commited,
@@ -259,7 +264,3 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       gui_framerate=30)
-
-class LightsheetExperiment(Experiment):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)

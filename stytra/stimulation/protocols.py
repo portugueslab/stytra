@@ -4,22 +4,31 @@ import pandas as pd
 import numpy as np
 from stytra.stimulation.backgrounds import gratings
 
+import zmq
+
+
 class LightsheetProtocol(Protocol):
     """ Protocols which run on the lightsheet have extra parameters
 
     """
-    def __init__(self, *args, prepare_pause=2, zmq_trigger=None,  **kwargs):
-        super().__init__()
-        if not zmq_trigger:
-            print('missing trigger')
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.stimuli = [Pause(duration=1),
-                        PrepareAquisition(zmq_trigger=zmq_trigger),
-                        Pause(duration=prepare_pause),
-                        StartAquisition(zmq_trigger=zmq_trigger)  # start aquisition
-                        ]
-
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.REP)
+        self.zmq_socket.bind("tcp://*:5555")
         self.current_stimulus = self.stimuli[0]
+        self.lightsheet_config = dict()
+
+    def start(self):
+        # Start only when received the GO signal from the lightsheet
+        self.lightsheet_config = self.zmq_socket.recv_json()
+        # send the duration of the protocol so that
+        # the scanning can stop
+        self.zmq_socket.send_json(self.duration)
+        super().start()
+
+
 
 # Spontaneus activity
 class SpontActivityProtocol(Protocol):
@@ -136,7 +145,6 @@ class FlashShockProtocol(Protocol):
         self.stimuli = stimuli
         self.current_stimulus = stimuli[0]
         self.name = 'flashshock'
-
 
 
 class MultistimulusExp06Protocol(LightsheetProtocol):

@@ -32,7 +32,6 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)
         self.behaviour_layout.addWidget(self.velocity_plot)
         self.show()
-        self.window_display.show()
         self.show_stimulus_screen()
 
 

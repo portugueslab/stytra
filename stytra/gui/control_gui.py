@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QComboBox, QApplication, \
-    QFileDialog, QLineEdit
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
+    QWidget, QLayout, QComboBox, QApplication, \
+    QFileDialog, QLineEdit, QProgressBar
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -83,6 +84,8 @@ class ProtocolControlWindow(QWidget):
         self.layout_calibrate.addWidget(self.button_calibrate)
 
         self.button_start = QPushButton('Start protocol')
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setFormat('%p% %v/%m')
         self.button_end = QPushButton('End protocol')
 
         self.button_metadata = QPushButton('Edit metadata')
@@ -91,7 +94,7 @@ class ProtocolControlWindow(QWidget):
         self.layout = QVBoxLayout()
         for widget in [
                        self.widget_view, self.button_update_display,
-                       self.layout_calibrate, self.button_start,
+                       self.layout_calibrate, self.button_start, self.progress_bar,
                        self.button_end, self.button_metadata]:
             if isinstance(widget, QWidget):
                 self.layout.addWidget(widget)

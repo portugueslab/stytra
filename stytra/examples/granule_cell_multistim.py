@@ -1,12 +1,13 @@
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
-from stytra.stimulation.protocols import SpontActivityProtocol, MultistimulusExp06Protocol
-from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow, StartingWindow
+from stytra import Experiment
+
 from stytra.metadata import MetadataFish,  MetadataLightsheet, MetadataGeneral
 from stytra import DataCollector
 from stytra.metadata.metalist_gui import MetaListGui
+
+from stytra.stimulation.protocols import SpontActivityProtocol, MultistimulusExp06Protocol
 
 from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
 import json
@@ -17,7 +18,7 @@ import multiprocessing
 import qdarkstyle
 
 
-class Experiment(QMainWindow):
+class GcMultistimExperiment(Experiment):
     def __init__(self, app, folder, stim_name):
         super().__init__()
         self.app = app
@@ -26,26 +27,14 @@ class Experiment(QMainWindow):
         self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.233.98:5555')
         self.experiment_folder = folder
 
-        # Editable part #############################################################################################
-        #############################################################################################################
-        # Experiment folder:
-        # self.experiment_folder = 'C:/Users/lpetrucco/Desktop'
-        run_only_committed = True
-        #############################################################################################################
-        # End editable part #########################################################################################
-        # Fixed factor for converting piezo voltages to microns; an half FOV of 5 results in 400 microns scanning, so:
-        piezo_amp_conversion = 400 / 5
-
         # Select a protocol:
-        protocol_dict = {'anatomy': (SpontActivityProtocol(duration_sec=30, zmq_trigger=self.zmq_trigger),
-                                     240),
-                         'multistimulus_exp10': (MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
-                             zmq_trigger=self.zmq_trigger,
+        protocol_dict = {'anatomy': SpontActivityProtocol(duration_sec=30, zmq_trigger=self.zmq_trigger),
+                         'multistimulus_exp10': MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
                          shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
-                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=4)), 100)}
+                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=4))}
 
         try:
-            self.protocol = protocol_dict[stim_name][0]
+            self.protocol = protocol_dict[stim_name]
         except KeyError:
             raise KeyError('Stimulus name must be one of the following: ' +', '.join(protocol_dict.keys()))
 
@@ -56,78 +45,28 @@ class Experiment(QMainWindow):
         self.fish_data = MetadataFish()
         self.imaging_data = MetadataLightsheet()
 
-        self.metalist_gui = MetaListGui([self.general_data, self.imaging_data,  self.fish_data])
+        self.metalist_gui = MetaListGui([self.general_data, self.imaging_data,
+                                         self.fish_data])
 
-        self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
+        self.data_collector = DataCollector(self.fish_data, self.imaging_data,
+                                            self.general_data,
                                             folder_path=self.experiment_folder,
                                             use_last_val=True)
 
         try:
-            self.protocol = protocol_dict[stim_name][0]
+            self.set_protocol(protocol_dict[stim_name])
         except KeyError:
-            raise KeyError('Stimulus name must be one of the following: spontaneous, flash, shock, pairing')
+            raise KeyError('Stimulus name must be one of the following: ' + ', '.join(protocol_dict.keys()))
 
 
-        repo = git.Repo(search_parent_directories=True)
-        git_hash = repo.head.object.hexsha
-        self.data_collector.add_data_source('general', 'git_hash', git_hash)
-        self.data_collector.add_data_source('general', 'program_name', __file__)
-
-        if len(repo.git.diff('HEAD~1..HEAD', name_only=True)) > 0 and run_only_committed:
-            print('The following files contain uncommitted changes:')
-            print(repo.git.diff('HEAD~1..HEAD', name_only=True))
-            raise PermissionError('The project has to be committed before starting!')
-
-        self.gui_refresh_timer = QTimer()
-        self.gui_refresh_timer.setSingleShot(False)
-
-
-        self.protocol.sig_protocol_finished.connect(self.finishAndSave)
-
-        # Prepare control window and window for displaying the  stimulus
-        # Instantiate display window and control window:
-        self.win_stim_disp = StimulusDisplayWindow(self.protocol)
-
-        self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
-        self.data_collector.add_data_source('stimulus', 'window_pos',
-                                            self.win_control.widget_view.roi_box.state, 'pos')
-        self.data_collector.add_data_source('stimulus', 'window_size',
-                                            self.win_control.widget_view.roi_box.state, 'size')
-        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-
-        dict_lightsheet_info = json.loads((self.zmq_trigger.get_ls_data()).decode('ascii'))
-        self.imaging_data.set_fix_value('scanning_profile', dict_lightsheet_info['Scanning Type'][:-5].lower())
-        piezo_amp = abs(dict_lightsheet_info['Piezo Top and Bottom']['1'])
-        piezo_freq = dict_lightsheet_info['Piezo Frequency']
-        imaging_framerate = dict_lightsheet_info['camera frame capture rate']
-        if imaging_framerate == 0:
-            imaging_framerate = 1;
-        print('Step size on z:' + str(piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)) + ' um')
-        self.imaging_data.set_fix_value('piezo_frequency', piezo_freq)
-        self.imaging_data.set_fix_value('piezo_amplitude', piezo_amp)
-        self.imaging_data.set_fix_value('frame_rate', imaging_framerate)
-        self.imaging_data.set_fix_value('dz', (piezo_amp_conversion*piezo_amp*(piezo_freq/imaging_framerate)))
-        self.imaging_data.set_fix_value('n_frames', protocol_dict[stim_name][1])
-        print(dict_lightsheet_info)
-        print('The experiment will last: {:.2f} seconds'.format(self.protocol.get_duration()))
-        print('And require {} frames'.format(int(self.protocol.get_duration()*imaging_framerate)))
-        self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
-        self.win_control.refresh_ROI()
-
-        # Create window:
+        # Create window and layout:
         self.main_layout = QSplitter(Qt.Horizontal)
-
-        stim_wid = QSplitter(Qt.Vertical)
-        stim_wid.addWidget(self.win_control)
-
-        self.main_layout.addWidget(stim_wid)
+        self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
 
         # Show windows:
-        self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
-        self.win_stim_disp.showFullScreen()
         self.show()
+        self.show_stimulus_screen(True)
 
     def finishAndSave(self):
         # self.gui_refresh_timer.stop()
