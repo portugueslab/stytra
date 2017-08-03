@@ -7,9 +7,11 @@ from stytra.metadata import MetadataFish,  MetadataLightsheet, MetadataGeneral
 from stytra import DataCollector
 from stytra.metadata.metalist_gui import MetaListGui
 
+from stytra.gui.control_gui import StartingWindow
+
 from stytra.stimulation.protocols import SpontActivityProtocol, MultistimulusExp06Protocol
 
-from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
+from stytra.triggering import PyboardConnection
 import json
 import git
 
@@ -20,15 +22,14 @@ import qdarkstyle
 
 class GcMultistimExperiment(Experiment):
     def __init__(self, app, folder, stim_name):
-        super().__init__()
+        super().__init__(directory=folder, name=stim_name,app=app)
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
-        self.zmq_trigger = ZmqLightsheetTrigger(pause=0, tcp_address='tcp://192.168.233.98:5555')
         self.experiment_folder = folder
 
         # Select a protocol:
-        protocol_dict = {'anatomy': SpontActivityProtocol(duration_sec=30, zmq_trigger=self.zmq_trigger),
+        protocol_dict = {'anatomy': SpontActivityProtocol(duration_sec=30),
                          'multistimulus_exp10': MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
                          shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
                  pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=4))}
@@ -37,7 +38,7 @@ class GcMultistimExperiment(Experiment):
             self.protocol = protocol_dict[stim_name]
         except KeyError:
             raise KeyError('Stimulus name must be one of the following: ' +', '.join(protocol_dict.keys()))
-
+        print(self.protocol)
         self.finished = False
 
         # Take care of metadata:
@@ -89,13 +90,12 @@ class GcMultistimExperiment(Experiment):
 
 if __name__ == '__main__':
     application = QApplication([])
-    application.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     starting_win = StartingWindow(application, ['anatomy', 'multistimulus_exp10'])
     application.exec_()
     print(starting_win.folder)
     print(starting_win.protocol)
     application2 = QApplication([])
-    exp = Experiment(application2, starting_win.folder, starting_win.protocol)
+    exp = GcMultistimExperiment(application2, starting_win.folder, starting_win.protocol)
     application2.exec_()
 
 

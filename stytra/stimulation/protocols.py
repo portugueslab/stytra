@@ -1,4 +1,5 @@
-from stytra.stimulation.stimuli import Pause, Flash, StartAquisition, StopAquisition, PrepareAquisition, ShockStimulus, MovingSeamless
+from stytra.stimulation.stimuli import Pause, Flash, StartAquisition,\
+    StopAquisition, PrepareAquisition, ShockStimulus, MovingSeamless, FullFieldPainterStimulus
 from stytra.stimulation import Protocol
 import pandas as pd
 import numpy as np
@@ -16,13 +17,16 @@ class LightsheetProtocol(Protocol):
 
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
-        self.zmq_socket.bind("tcp://*:5555")
+
         self.current_stimulus = self.stimuli[0]
         self.lightsheet_config = dict()
 
     def start(self):
         # Start only when received the GO signal from the lightsheet
+        self.zmq_socket.bind("tcp://*:5555")
+        print('bound socket')
         self.lightsheet_config = self.zmq_socket.recv_json()
+        print('received config')
         # send the duration of the protocol so that
         # the scanning can stop
         self.zmq_socket.send_json(self.duration)
@@ -31,28 +35,22 @@ class LightsheetProtocol(Protocol):
 
 
 # Spontaneus activity
-class SpontActivityProtocol(Protocol):
+class SpontActivityProtocol(LightsheetProtocol):
     # TODO @Luigi inherit from LightsheetProtocol
-    def __init__(self, duration_sec=60, prepare_pause=2, zmq_trigger=None):
+    def __init__(self, duration_sec=60):
         """
         :param duration:
         :param prepare_pause:
         :param zmq_trigger:
         """
-        super().__init__()
-        if not zmq_trigger:
-            print('missing trigger')
+
 
         stimuli = []
-        stimuli.append(Pause(duration=1))
-        stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-        stimuli.append(Pause(duration=prepare_pause))
-        stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
         stimuli.append(Pause(duration=duration_sec))  # change here for duration (in s)
 
         self.stimuli = stimuli
         self.current_stimulus = stimuli[0]
-        self.name = 'spontaneous'
+        super().__init__(stimuli=stimuli, name='spontaneous')
 
 
 class FlashProtocol(Protocol):
@@ -158,19 +156,19 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
                         shock_args=None,
                         mm_px=1,
                 *args, **kwargs):
-        super().__init__(*args, **kwargs)
+
         if grating_args is None:
             grating_args = dict()
         if shock_args is None:
             shock_args = dict()
 
         grating_args['mm_px'] = mm_px
-
+        stimuli = []
         for i in range(repetitions):  # change here for number of pairing trials
-            self.stimuli.append(Pause(duration=pre_stim_pause))
+            stimuli.append(Pause(duration=pre_stim_pause))
             for flash_duration in flash_durations:
-               self.stimuli.append(Flash(duration=flash_duration, color=(255, 0, 0)))  # flash duration
-               self.stimuli.append(Pause(duration=one_stimulus_duration-flash_duration))
+                stimuli.append(FullFieldPainterStimulus(duration=flash_duration, color=(255, 0, 0)))  # flash duration
+                stimuli.append(Pause(duration=one_stimulus_duration-flash_duration))
 
             t = [0, one_stimulus_duration]
             x = [0., 0.]
@@ -185,11 +183,13 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
             motion = pd.DataFrame(dict(t=t,
                                  x=x,
                                  y=np.zeros(len(x))))
-            self.stimuli.append(MovingSeamless(motion=motion,
+            stimuli.append(MovingSeamless(motion=motion,
                                                background=gratings(**grating_args),
                                                duration=last_time))
 
-            self.stimuli.append(Pause(duration=pre_stim_pause))
-            self.stimuli.append(ShockStimulus(**shock_args))
-            self.stimuli.append(Pause(duration=one_stimulus_duration))
+            stimuli.append(Pause(duration=pre_stim_pause))
+            stimuli.append(ShockStimulus(**shock_args))
+            stimuli.append(Pause(duration=one_stimulus_duration))
+
+        super().__init__(*args, stimuli=stimuli, **kwargs)
         self.name = 'exp006multistim'

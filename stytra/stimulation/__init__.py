@@ -35,7 +35,7 @@ class Protocol(QObject):
         self.timer = QTimer()
         self.dt = dt
         self.past_stimuli_elapsed = None
-        self.duration  = self.get_duration()
+        self.duration = self.get_duration()
 
         # Log will be a list of stimuli states
         self.log = []

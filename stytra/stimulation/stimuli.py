@@ -94,11 +94,6 @@ class Flash(ImageStimulus):
         return self._imdata
 
 
-class Pause(Flash):
-    def __init__(self, *args, **kwargs):
-        super(Pause, self).__init__(*args, color=(0, 0, 0), **kwargs)
-        self.name = 'Pause'
-
 
 class PainterStimulus(Stimulus):
     def paint(self, p, w, h):
@@ -139,6 +134,22 @@ class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
                                     dsize=dims)
         return to_display
 
+
+class FullFieldPainterStimulus(PainterStimulus):
+    def __init__(self, *args, color=(255,0,0), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+        self.name='Flash'
+
+    def paint(self, p, w, h):
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+
+class Pause(FullFieldPainterStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, color=(0, 0, 0), **kwargs)
+        self.name = 'Pause'
 
 class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                               DynamicStimulus):
