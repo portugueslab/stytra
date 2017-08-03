@@ -148,7 +148,7 @@ class FlashShockProtocol(Protocol):
 class MultistimulusExp06Protocol(LightsheetProtocol):
     def __init__(self, repetitions=20,
                         flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
-                        velocities=(3, 10, 30, -10),
+                        velocities=(-3, -10, -30, 10),
                         pre_stim_pause=4,
                         one_stimulus_duration=7,
                         grating_motion_duration=4,
@@ -181,8 +181,8 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
 
             last_time = t[-1]
             motion = pd.DataFrame(dict(t=t,
-                                 x=x,
-                                 y=np.zeros(len(x))))
+                                 x=np.zeros(len(x)),
+                                 y=x))
             stimuli.append(MovingSeamless(motion=motion,
                                                background=gratings(**grating_args),
                                                duration=last_time))

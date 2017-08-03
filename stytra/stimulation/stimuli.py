@@ -182,7 +182,8 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.rotTransform(w, h))
 
-        for idx, idy in product(range(-1, 2), range(-1, 2)):
+        # TODO calculate the number of repeats
+        for idx, idy in product(range(-150, 150), range(-20, 20)):
             p.drawImage(QPoint(dx + imw * idx,
                                dy + imh * idy), self._background)
 

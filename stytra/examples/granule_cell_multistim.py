@@ -32,7 +32,7 @@ class GcMultistimExperiment(Experiment):
         protocol_dict = {'anatomy': SpontActivityProtocol(duration_sec=30),
                          'multistimulus_exp10': MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
                          shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
-                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=4))}
+                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=6))}
 
         try:
             self.protocol = protocol_dict[stim_name]
