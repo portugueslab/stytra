@@ -12,7 +12,7 @@ class LightsheetProtocol(Protocol):
     """ Protocols which run on the lightsheet have extra parameters
 
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, wait_for_lightsheet=True, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.zmq_context = zmq.Context()
@@ -20,16 +20,18 @@ class LightsheetProtocol(Protocol):
 
         self.current_stimulus = self.stimuli[0]
         self.lightsheet_config = dict()
+        self.wait_for_lightsheet = wait_for_lightsheet
 
     def start(self):
         # Start only when received the GO signal from the lightsheet
-        self.zmq_socket.bind("tcp://*:5555")
-        print('bound socket')
-        self.lightsheet_config = self.zmq_socket.recv_json()
-        print('received config')
-        # send the duration of the protocol so that
-        # the scanning can stop
-        self.zmq_socket.send_json(self.duration)
+        if self.wait_for_lightsheet:
+            self.zmq_socket.bind("tcp://*:5555")
+            print('bound socket')
+            self.lightsheet_config = self.zmq_socket.recv_json()
+            print('received config')
+            # send the duration of the protocol so that
+            # the scanning can stop
+            self.zmq_socket.send_json(self.duration)
         super().start()
 
 
@@ -147,7 +149,7 @@ class FlashShockProtocol(Protocol):
 
 class MultistimulusExp06Protocol(LightsheetProtocol):
     def __init__(self, repetitions=20,
-                        flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
+                        flash_durations=[], # (0.05, 0.1, 0.2, 0.5, 1, 3)
                         velocities=(3, 10, 30, -10),
                         pre_stim_pause=4,
                         one_stimulus_duration=7,
@@ -171,18 +173,18 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
                 stimuli.append(Pause(duration=one_stimulus_duration-flash_duration))
 
             t = [0, one_stimulus_duration]
-            x = [0., 0.]
+            y = [0., 0.]
 
             for vel in velocities:
                 t.append(t[-1] + grating_motion_duration)
-                x.append(x[-1] - vel*grating_motion_duration/mm_px)
+                y.append(y[-1] + vel*grating_motion_duration/mm_px)
                 t.append(t[-1] + one_stimulus_duration)
-                x.append(x[-1])
+                y.append(y[-1])
 
             last_time = t[-1]
             motion = pd.DataFrame(dict(t=t,
-                                 x=x,
-                                 y=np.zeros(len(x))))
+                                 x=np.zeros(len(y)),
+                                 y=y))
             stimuli.append(MovingSeamless(motion=motion,
                                                background=gratings(**grating_args),
                                                duration=last_time))

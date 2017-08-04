@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
+from stytra.calibration import CrossCalibrator
 
 from stytra.metadata import MetadataFish, MetadataGeneral
 from stytra.collectors import DataCollector
@@ -69,6 +70,9 @@ class Experiment(QMainWindow):
         self.window_display.update_display_params()
         self.widget_control.reset_ROI()
 
+        self.calibrator = CrossCalibrator()
+        self.window_display.widget_display.calibration = self.calibrator
+
         self.protocol = None
 
     def set_protocol(self, protocol):
@@ -78,6 +82,7 @@ class Experiment(QMainWindow):
         self.protocol.sig_timestep.connect(self.update_progress)
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
+        self.dc.add_data_source('stimulus', 'log', protocol.log)
 
     def update_progress(self, i_stim):
         self.widget_control.progress_bar.setValue(int(self.protocol.t))
