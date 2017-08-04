@@ -7,7 +7,7 @@ import pandas as pd
 import param
 
 from stytra.metadata import Metadata
-
+from copy import deepcopy
 
 class Accumulator:
     """ A general class for an object that accumulates that
@@ -185,7 +185,7 @@ class DataCollector:
         self.data_tuples.append(args)
 
     def get_full_dict(self):
-        data_dict = DataCollector.data_dict_template
+        data_dict = deepcopy(DataCollector.data_dict_template)
 
         for data_entry in self.data_tuples:
             if isinstance(data_entry[-1], dict):  # dictionaries;

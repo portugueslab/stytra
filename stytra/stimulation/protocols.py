@@ -39,20 +39,19 @@ class LightsheetProtocol(Protocol):
 # Spontaneus activity
 class SpontActivityProtocol(LightsheetProtocol):
     # TODO @Luigi inherit from LightsheetProtocol
-    def __init__(self, duration_sec=60):
+    def __init__(self, *args,  duration_sec=60, **kwargs):
         """
         :param duration:
         :param prepare_pause:
         :param zmq_trigger:
         """
 
-
         stimuli = []
         stimuli.append(Pause(duration=duration_sec))  # change here for duration (in s)
 
         self.stimuli = stimuli
         self.current_stimulus = stimuli[0]
-        super().__init__(stimuli=stimuli, name='spontaneous')
+        super().__init__(*args, stimuli=stimuli, name='spontaneous', **kwargs)
 
 
 class FlashProtocol(Protocol):

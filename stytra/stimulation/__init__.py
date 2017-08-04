@@ -83,8 +83,11 @@ class Protocol(QObject):
 
     def end(self):
         self.sig_protocol_finished.emit()
-        self.timer.timeout.disconnect()
-        self.timer.stop()
+        try:
+            self.timer.timeout.disconnect()
+            self.timer.stop()
+        except:
+            pass
         self.reset()
 
     def update_log(self):
@@ -110,11 +113,10 @@ class Protocol(QObject):
 
         self.i_current_stimulus = 0
         self.current_stimulus = self.stimuli[0]
-        self.timer = QTimer()
 
         # Log will be a list of stimuli states
         self.log = []
-        self.dynamic_log = DynamicLog()
+        self.dynamic_log = DynamicLog(self.stimuli)
 
     def get_duration(self):
         total_duration = 0

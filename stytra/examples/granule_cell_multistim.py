@@ -69,6 +69,7 @@ if __name__ == '__main__':
     application2 = QApplication([])
     exp = GcMultistimExperiment(application2, starting_win.folder,
                                 starting_win.protocol, wait_for_lightsheet=False)
+
     application2.exec_()
 
 

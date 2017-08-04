@@ -117,10 +117,8 @@ class Experiment(QMainWindow):
     def end_protocol(self):
         self.dc.save(save_csv=self.save_csv)
 
-    def closeEvent(self, QCloseEvent):
-        pass
-        #self.end_protocol()
-        #self.app.closeAllWindows()
+    def closeEvent(self, *args, **kwargs):
+        self.app.closeAllWindows()
 
 
 class CameraExperiment(Experiment):
