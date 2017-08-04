@@ -21,44 +21,35 @@ import qdarkstyle
 
 
 class GcMultistimExperiment(Experiment):
-    def __init__(self, app, folder, stim_name):
-        super().__init__(directory=folder, name=stim_name,app=app)
+    def __init__(self, app, folder, stim_name, wait_for_lightsheet=True):
+        super().__init__(directory=folder, name=stim_name, app=app)
         self.app = app
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
         self.experiment_folder = folder
 
         # Select a protocol:
-        protocol_dict = {'anatomy': SpontActivityProtocol(duration_sec=30),
-                         'multistimulus_exp10': MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
+        if stim_name == 'anatomy':
+            protocol = SpontActivityProtocol(duration_sec=30,
+                                             wait_for_lightsheet=wait_for_lightsheet)
+        elif stim_name == 'multistimulus_exp10':
+            protocol = MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
                          shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
-                 pulse_dur_ms=5, pyboard=self.pyb), grating_args=dict(spatial_period=6))}
+                 pulse_dur_ms=5, pyboard=self.pyb),
+                                grating_args=dict(spatial_period=4),
+                                    wait_for_lightsheet=wait_for_lightsheet)
+        else:
+            raise ValueError('Stimulus name is not valid')
 
-        try:
-            self.protocol = protocol_dict[stim_name]
-        except KeyError:
-            raise KeyError('Stimulus name must be one of the following: ' +', '.join(protocol_dict.keys()))
-        print(self.protocol)
+        self.set_protocol(protocol)
+        self.dc.add_data_source('imaging', 'lightsheet_config',
+                                protocol.lightsheet_config)
+
+        print('The protocol will take {} seconds or {}:{}'.format(protocol.duration,
+                                                                  int(protocol.duration)//60,
+                                                                  protocol.duration - 60*int(protocol.duration)//60))
+
         self.finished = False
-
-        # Take care of metadata:
-        self.general_data = MetadataGeneral()
-        self.fish_data = MetadataFish()
-        self.imaging_data = MetadataLightsheet()
-
-        self.metalist_gui = MetaListGui([self.general_data, self.imaging_data,
-                                         self.fish_data])
-
-        self.data_collector = DataCollector(self.fish_data, self.imaging_data,
-                                            self.general_data,
-                                            folder_path=self.experiment_folder,
-                                            use_last_val=True)
-
-        try:
-            self.set_protocol(protocol_dict[stim_name])
-        except KeyError:
-            raise KeyError('Stimulus name must be one of the following: ' + ', '.join(protocol_dict.keys()))
-
 
         # Create window and layout:
         self.main_layout = QSplitter(Qt.Horizontal)
@@ -69,25 +60,6 @@ class GcMultistimExperiment(Experiment):
         self.show()
         self.show_stimulus_screen(True)
 
-    def finishAndSave(self):
-        # self.gui_refresh_timer.stop()
-        self.data_collector.save(save_csv=False)
-        # self.zmq_trigger.stop()
-        # self.finishProtocol()
-        # self.app.closeAllWindows()
-        # self.app.quit()
-
-    def finishProtocol(self):
-        # self.camera.join(timeout=1)
-
-        self.finished = True
-
-    def closeEvent(self, QCloseEvent):
-        if not self.finished:
-            self.finishProtocol()
-            self.app.closeAllWindows()
-            self.app.quit()
-
 if __name__ == '__main__':
     application = QApplication([])
     starting_win = StartingWindow(application, ['anatomy', 'multistimulus_exp10'])
@@ -95,7 +67,9 @@ if __name__ == '__main__':
     print(starting_win.folder)
     print(starting_win.protocol)
     application2 = QApplication([])
-    exp = GcMultistimExperiment(application2, starting_win.folder, starting_win.protocol)
+    exp = GcMultistimExperiment(application2, starting_win.folder,
+                                starting_win.protocol, wait_for_lightsheet=False)
+
     application2.exec_()
 
 

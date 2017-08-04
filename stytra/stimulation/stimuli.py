@@ -113,7 +113,6 @@ class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
     def __init__(self, *args, background=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-
     def _transform_mat(self, dims):
         if self.theta == 0:
             return np.array([[1, 0, self.y],
@@ -123,9 +122,11 @@ class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
             xc = dims[1] / 2
             yc = dims[0] / 2
             return np.array([[np.sin(self.theta), np.cos(self.theta),
-                              self.y + yc - xc*np.sin(self.theta) - yc * np.cos(self.theta)],
+                              self.y + yc - xc*np.sin(self.theta) -
+                              yc * np.cos(self.theta)],
                              [np.cos(self.theta), -np.sin(self.theta),
-                              self.x + xc - xc*np.cos(self.theta) + yc * np.sin(self.theta)]]).astype(np.float32)
+                              self.x + xc - xc*np.cos(self.theta) +
+                              yc * np.sin(self.theta)]]).astype(np.float32)
 
     def get_image(self, dims):
         self.update()
@@ -150,6 +151,7 @@ class Pause(FullFieldPainterStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
         self.name = 'Pause'
+
 
 class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                               DynamicStimulus):
@@ -182,8 +184,9 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.rotTransform(w, h))
 
-        # TODO calculate the number of repeats
-        for idx, idy in product(range(-150, 150), range(-20, 20)):
+        nw = int(np.ceil(w/(imw*2)))
+        nh = int(np.ceil(h/(imh*2)))
+        for idx, idy in product(range(-nw, nw+1), range(-nh, nh+1)):
             p.drawImage(QPoint(dx + imw * idx,
                                dy + imh * idy), self._background)
 
