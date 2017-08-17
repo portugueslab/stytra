@@ -5,6 +5,7 @@ from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator
 
 from stytra.metadata import MetadataFish, MetadataGeneral
+from stytra.metadata.metalist_gui import MetaListGui
 from stytra.collectors import DataCollector
 import qdarkstyle
 import git
@@ -63,6 +64,9 @@ class Experiment(QMainWindow):
 
         self.window_display = StimulusDisplayWindow()
         self.widget_control = ProtocolControlWindow(self.window_display)
+
+        self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
+        self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',

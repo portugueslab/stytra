@@ -209,6 +209,7 @@ class MovingSeamless(SeamlessPainterStimulus):
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
+        self.name='moving seamless'
 
     def update(self):
         for attr in ['x', 'y', 'theta']:
