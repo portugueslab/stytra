@@ -94,7 +94,6 @@ class Flash(ImageStimulus):
         return self._imdata
 
 
-
 class PainterStimulus(Stimulus):
     def paint(self, p, w, h):
         pass
@@ -140,7 +139,7 @@ class FullFieldPainterStimulus(PainterStimulus):
     def __init__(self, *args, color=(255,0,0), **kwargs):
         super().__init__(*args, **kwargs)
         self.color = color
-        self.name='Flash'
+        self.name = 'flash'
 
     def paint(self, p, w, h):
         p.setBrush(QBrush(QColor(*self.color)))
@@ -191,19 +190,6 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                                dy + imh * idy), self._background)
 
 
-class RandomDotKinematogram(PainterStimulus):
-    def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dot_density = dot_density
-        self.coherence = coherence
-        self.velocity = velocity
-        self.direction = direction
-        self.dots = None
-
-    def paint(self, p, w, h):
-        # TODO implement dot painting and update
-        pass
-
 
 class MovingSeamless(SeamlessPainterStimulus):
     def __init__(self, *args, motion=None, **kwargs):
@@ -238,10 +224,11 @@ class MovingConstantly(SeamlessStimulus):
         self.y += self.y_shift_frame
 
 
-class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
+class ClosedLoop1D(SeamlessPainterStimulus):
     def __init__(self, *args, default_velocity,
                  fish_motion_estimator, **kwargs):
-        super().__init__(*args, dynamic_parameters=['x', 'vel'], **kwargs)
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append('vel')
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
         self.vel = 0
@@ -252,7 +239,7 @@ class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
 
     def update(self):
         self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
-        self.x += (self.elapsed-self.past_t) * self.vel
+        self.y -= (self.elapsed-self.past_t) * self.vel
 
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
@@ -260,6 +247,20 @@ class ClosedLoop1D(SeamlessStimulus, DynamicStimulus):
                 setattr(self, 'past_'+attr, getattr(self, attr))
             except (AttributeError, KeyError):
                 pass
+
+
+class RandomDotKinematogram(PainterStimulus):
+    def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dot_density = dot_density
+        self.coherence = coherence
+        self.velocity = velocity
+        self.direction = direction
+        self.dots = None
+
+    def paint(self, p, w, h):
+        # TODO implement dot painting and update
+        pass
 
 
 class ShockStimulus(Stimulus):
@@ -296,39 +297,6 @@ class ShockStimulus(Stimulus):
             #sleep(self.pause/1000)
 
         self.elapsed = 1
-
-
-class StopAquisition(Stimulus):
-    def __init__(self, zmq_trigger=None, **kwargs):
-        super().__init__(**kwargs)
-        self.name = 'stop_acquisition'
-        self._zmq_trigger = zmq_trigger
-
-    def start(self):
-        print('stop')
-        self._zmq_trigger.stop()
-
-
-class StartAquisition(Stimulus):
-    def __init__(self, zmq_trigger=None, **kwargs):
-        super().__init__(**kwargs)
-        self.name = 'start_acquisition'
-        self._zmq_trigger = zmq_trigger
-
-    def start(self):
-        self._zmq_trigger.start_command()
-        print('Acquisition started')
-
-
-class PrepareAquisition(Stimulus):
-    def __init__(self, zmq_trigger=None, **kwargs):
-        super().__init__(**kwargs)
-        self.name = 'prepare'
-        self._zmq_trigger = zmq_trigger
-
-    def start(self):
-        self._zmq_trigger.prepare()
-        print('Acquisition prepared')
 
 
 if __name__ == '__main__':
