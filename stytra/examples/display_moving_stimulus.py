@@ -2,6 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow,\
     QWidget, QSplitter, QProgressBar
 import qdarkstyle
+
+import stytra.collectors
 from stytra.stimulation.stimuli import MovingSeamless
 from stytra.stimulation import Protocol
 from stytra.stimulation.backgrounds import noise_background, poisson_disk_background, existing_file_background
@@ -97,7 +99,7 @@ class Experiment(QMainWindow):
 
         self.camera_parameters = metadata.MetadataCamera()
 
-        self.dc = metadata.DataCollector(folder_path=experiment_folder)
+        self.dc = stytra.collectors.DataCollector(folder_path=experiment_folder)
 
         self.dc.add_data_source(fish_data)
         self.dc.add_data_source(general_data)

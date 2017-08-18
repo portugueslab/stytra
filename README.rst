@@ -1,1 +1,1 @@
-stytra - a packaga to control stimulation and track behaviour in zebrafish experiments
+stytra - a modular package to control stimulation and track behaviour in zebrafish experiments

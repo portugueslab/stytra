@@ -3,18 +3,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter, QProgressBar
 
 import numpy as np
 import pandas as pd
-from stytra.stimulation.stimuli import Pause
-from stytra.gui import display_gui, control_gui
-import stytra.calibration as calibration
+from stytra import Experiment
 from stytra.stimulation import Protocol
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation.stimuli import MovingSeamless
-from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.metadata import MetadataFish
-from queue import Empty
-
-import qdarkstyle
 
 
 def make_spinning_protocol(n_vels=3, stim_duration=10, pause_duration=5,
@@ -36,61 +28,31 @@ def make_spinning_protocol(n_vels=3, stim_duration=10, pause_duration=5,
                             theta=thetas))
 
 
-class Experiment(QMainWindow):
-    def __init__(self, app):
-        super().__init__()
-        self.app = app
+class StimulusOnyExperiment(Experiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.main_layout = QSplitter(Qt.Horizontal)
 
+        self.main_layout.addWidget(self.widget_control)
+        self.setCentralWidget(self.main_layout)
 
-        # set up the stimuli
-
-        refresh_rate = 1/60.
-
+        self.im_filename = r"J:\Vilim Stih\sync\underwater\40_water with stone and fish texture-seamless.jpg"
+        bg = existing_file_background(self.im_filename)
+        print(bg.shape)
         motion = make_spinning_protocol()
         self.protocol_duration = motion.t.iat[-1]
 
-        self.im_filename = r"C:\Users\vilim\experimental\underwater\66_underwater beach sand texture-seamless.jpg"
-        bg = existing_file_background(self.im_filename)
-
-
-        self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
-                                                 duration=motion.t.iat[-1])],
-                                                 dt=refresh_rate)
-
-        self.calibrator = calibration.CircleCalibrator(dh=50)
-        self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
-        self.win_stim_disp.widget_display.calibration = self.calibrator
-
-        self.main_layout = QSplitter(Qt.Horizontal)
-        self.setCentralWidget(self.main_layout)
-
-        self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
-        self.win_control.refresh_ROI()
-        self.main_layout.addWidget(self.win_control)
-        self.prog_bar = QProgressBar()
-        # self.gui_timer.timeout.connect(self.update_progress)
-
-        self.win_stim_disp.show()
-        self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
-        self.win_stim_disp.showFullScreen()
-
-        self.win_stim_disp.update_display_params()
-        self.win_control.reset_ROI()
+        print(self.protocol_duration)
+        self.set_protocol(Protocol([MovingSeamless(background=bg, motion=motion,
+                                                 duration=motion.t.iat[-1])]))
 
         self.show()
-
-    # def update_progress(self):
-    #     time_elapsed = datetime.datetime.now()-self.protocol.t_start
-    #     self.prog_bar.setValue(int(time_elapsed*100/self.protocol_duration))
-
-
-    def closeEvent(self, QCloseEvent):
-        self.app.closeAllWindows()
-        self.app.quit()
+        self.window_display.show()
+        self.show_stimulus_screen(full_screen=False)
 
 
 if __name__ == '__main__':
     app = QApplication([])
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-    exp = Experiment(app)
+    exp = StimulusOnyExperiment(app=app, name='stimulus_test',
+                               directory=r'D:\vilim/')
     app.exec_()

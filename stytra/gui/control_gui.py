@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QComboBox, QApplication, \
-    QFileDialog, QLineEdit
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout, QWidget, QLayout, QProgressBar
+from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
+    QWidget, QLayout, QComboBox, QApplication, \
+    QFileDialog, QLineEdit, QProgressBar
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -57,7 +57,7 @@ class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, app, protocol, display_window=None, *args):
+    def __init__(self, display_window=None, *args):
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
@@ -65,8 +65,6 @@ class ProtocolControlWindow(QWidget):
         :param display_window: ProjectorViewer object for the projector
         """
         super().__init__(*args)
-        self.app = app
-        self.protocol = protocol
         self.display_window = display_window
 
         if self.display_window:
@@ -86,10 +84,9 @@ class ProtocolControlWindow(QWidget):
         self.layout_calibrate.addWidget(self.button_calibrate)
 
         self.button_start = QPushButton('Start protocol')
-        self.button_start.clicked.connect(self.protocol.start)
-
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setFormat('%p% %v/%m')
         self.button_end = QPushButton('End protocol')
-        self.button_end.clicked.connect(self.protocol.end)
 
         self.progbar_protocol = QProgressBar()
 
@@ -99,8 +96,8 @@ class ProtocolControlWindow(QWidget):
         self.layout = QVBoxLayout()
         for widget in [
                        self.widget_view, self.button_update_display,
-                       self.layout_calibrate, self.button_start,
-                       self.button_end, self.progbar_protocol, self.button_metadata]:
+                       self.layout_calibrate, self.button_start, self.progress_bar,
+                       self.button_end, self.button_metadata]:
             if isinstance(widget, QWidget):
                 self.layout.addWidget(widget)
             if isinstance(widget, QLayout):
@@ -108,6 +105,7 @@ class ProtocolControlWindow(QWidget):
 
         self.setLayout(self.layout)
         self.refresh_ROI()
+        #self.widget_view.roi_box.sigRegionChanged.connect(self.refresh_ROI)
 
     def reset_ROI(self):
         self.widget_view.roi_box.setPos(self.display_window.display_params['window']['pos'])
@@ -117,15 +115,6 @@ class ProtocolControlWindow(QWidget):
         if self.display_window:
             self.display_window.set_dims(self.widget_view.roi_box.pos(),
                                          self.widget_view.roi_box.size())
-
-    def closeEvent(self, QCloseEvent):
-        """ On closing the app, save where the window was
-        :param QCloseEvent:
-        :return: None
-        """
-        self.sig_closing.emit()
-        self.deleteLater()
-        self.app.quit()
 
     def toggle_calibration(self):
         dispw = self.display_window.widget_display
@@ -138,17 +127,17 @@ class ProtocolControlWindow(QWidget):
         self.sig_calibrating.emit()
 
     def set_protocol(self, protocol):
-        self.button_start.clicked.disconnect(self.protocol.start)
-        #self.button_end.clicked.diconnect(self.protocol.end)
-
+        try:
+            self.button_start.clicked.disconnect(self.protocol.start)
+            self.button_end.clicked.diconnect(self.protocol.end)
+        except AttributeError:
+            pass
 
         self.protocol = protocol
         self.button_start.clicked.connect(self.protocol.start)
         self.button_end.clicked.connect(self.protocol.end)
         print('new protocol:')
         print(self.protocol.name)
-
-
 
 
 class ProtocolSelectorWidget(QWidget):
@@ -239,7 +228,6 @@ class StartingWindow(QWidget):
 
     def change_protocol(self):
         self.protocol = self.protocol_list[self.protocol_selector.currentIndex()]
-
 
 
 if __name__ == '__main__':

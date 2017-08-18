@@ -3,12 +3,13 @@ try:
 except ImportError:
     pass
 
-#import multiprocessing
 from multiprocessing import Process, Queue, Event
 from queue import Empty
 import numpy as np
 from datetime import datetime, timedelta
 from collections import deque
+
+import time
 
 import cv2
 
@@ -20,7 +21,7 @@ import param as pa
 
 
 class FrameProcessor(Process):
-    def __init__(self, n_fps_frames=10, framerate_queue=None, print_framerate=False):
+    def __init__(self, n_fps_frames=10, check_mem=True, framerate_queue=None, print_framerate=False):
         """ A basic class for a process that deals with frames, provides framerate calculation
 
         :param n_fps_frames:
@@ -41,6 +42,7 @@ class FrameProcessor(Process):
         self.current_framerate = None
         self.print_framerate = print_framerate
         self.framerate_queue = framerate_queue
+        self.check_mem = check_mem
 
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
@@ -138,7 +140,7 @@ class VideoFileSource(FrameProcessor):
 
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
-            #print('Read a frame')
+            time.sleep(1./24)
             if ret:
                 self.q.put((datetime.now(), frame[:, :, 0]))
             else:
@@ -342,7 +344,6 @@ class MovingFrameDispatcher(FrameDispatcher):
                 i_frame += 1
 
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
-
 
                 # calculate the framerate
                 self.update_framerate()

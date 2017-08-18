@@ -1,6 +1,12 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
+
 from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.metadata import MetadataFish, MetadataGeneral, DataCollector
+from stytra.gui.display_gui import StimulusDisplayWindow
+from stytra.calibration import CrossCalibrator
+
+from stytra.metadata import MetadataFish, MetadataGeneral
+from stytra.metadata.metalist_gui import MetaListGui
+from stytra.collectors import DataCollector
 import qdarkstyle
 import git
 
@@ -11,9 +17,20 @@ from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
+from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QTimer
 from stytra.metadata import MetadataCamera
+import sys
+
+# imports for accumulator
+import pandas as pd
+import numpy as np
+
+# imports for moving detector
+from stytra.hardware.video import MovingFrameDispatcher
+
+import os
 
 
 class Experiment(QMainWindow):
@@ -34,16 +51,56 @@ class Experiment(QMainWindow):
         self.metadata_fish = MetadataFish()
 
         self.directory = directory
+
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
+
         self.name = name
+
+        self.save_csv = save_csv
 
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
-    def check_if_commited(self):
+        self.window_display = StimulusDisplayWindow()
+        self.widget_control = ProtocolControlWindow(self.window_display)
+
+        self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
+        self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
+
+        # Connect the display window to the metadata collector
+        self.dc.add_data_source('stimulus', 'display_params',
+                                self.window_display.display_params)
+        self.window_display.update_display_params()
+        self.widget_control.reset_ROI()
+
+        self.calibrator = CrossCalibrator()
+        self.window_display.widget_display.calibration = self.calibrator
+
+        self.protocol = None
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
+        self.window_display.set_protocol(protocol)
+        self.widget_control.set_protocol(protocol)
+        self.protocol.sig_timestep.connect(self.update_progress)
+        self.protocol.sig_protocol_finished.connect(self.end_protocol)
+        self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
+        self.dc.add_data_source('stimulus', 'log', protocol.log)
+
+    def update_progress(self, i_stim):
+        self.widget_control.progress_bar.setValue(int(self.protocol.t))
+
+    def check_if_committed(self):
+        """ Checks if the version of stytra used to run the experiment is commited,
+        so that for each experiment it is known what code was used to record it
+
+        :return:
+        """
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
-        self.data_collector.add_data_source('general', 'git_hash', git_hash)
-        self.data_collector.add_data_source('general', 'program_name', __file__)
+        self.dc.add_data_source('general', 'git_hash', git_hash)
+        self.dc.add_data_source('general', 'program_name', __file__)
 
         if len(repo.git.diff('HEAD~1..HEAD',
                              name_only=True)) > 0:
@@ -52,34 +109,40 @@ class Experiment(QMainWindow):
             raise PermissionError(
                 'The project has to be committed before starting!')
 
+    def show_stimulus_screen(self, full_screen=True):
+        self.window_display.show()
+        if full_screen:
+            try:
+                self.window_display.windowHandle().setScreen(self.app.screens()[1])
+                self.window_display.showFullScreen()
+            except IndexError:
+                print('Second screen not available')
+
     def end_protocol(self):
-        self.dc.save(save_csv=save_csv)
+        self.dc.save(save_csv=self.save_csv)
+
+    def closeEvent(self, *args, **kwargs):
+        self.app.closeAllWindows()
 
 
-class TailTrackingExperiment(Experiment):
-    def __init__(self, *args, video_input=None,
-                        tracking_method='angle_sweep',
-                        tracking_method_parameters=None, **kwargs):
-        """ An experiment which contains tail tracking,
-        base for any experiment that tracks behaviour or employs
-        closed loops
+class CameraExperiment(Experiment):
+    def __init__(self, *args, video_input=None, **kwargs):
+        """
 
         :param args:
         :param video_input: if not using a camera, the video
         file for the test input
-        :param tracking_method: the method used to track the tail
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-
-        # infrastructure for processing data from the camera
         self.frame_queue = Queue()
         self.gui_frame_queue = Queue()
-        self.processing_parameter_queue = Queue()
-        self.tail_position_queue = Queue()
         self.finished_sig = Event()
+
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
+
+
         self.metadata_camera = MetadataCamera()
 
         if video_input is None:
@@ -92,6 +155,35 @@ class TailTrackingExperiment(Experiment):
             self.camera = VideoFileSource(self.frame_queue,
                                           self.finished_sig,
                                           video_input)
+
+    def go_live(self):
+        self.camera.start()
+        self.gui_refresh_timer.start()
+
+    def end_protocol(self):
+        super().end_protocol()
+        self.finished_sig.set()
+        # self.camera.join(timeout=1)
+        self.camera.terminate()
+
+
+class TailTrackingExperiment(CameraExperiment):
+    def __init__(self, *args,
+                        tracking_method='angle_sweep',
+                        tracking_method_parameters=None, **kwargs):
+        """ An experiment which contains tail tracking,
+        base for any experiment that tracks behaviour or employs
+        closed loops
+
+        :param args:
+        :param tracking_method: the method used to track the tail
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+
+        # infrastructure for processing data from the camera
+        self.processing_parameter_queue = Queue()
+        self.tail_position_queue = Queue()
 
         dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
                                        centroid=detect_tail_embedded)
@@ -123,16 +215,28 @@ class TailTrackingExperiment(Experiment):
             camera_parameters=self.metadata_camera,
             tracking_params=tracking_method_parameters)
 
+        self.dc.add_data_source('tracking','tail_position', self.camera_viewer.roi_dict)
+
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
-        self.camera.start()
+        self.go_live()
+
+    def go_live(self):
+        super().go_live()
         self.frame_dispatcher.start()
-        self.gui_refresh_timer.start()
+
+        sys.excepthook = self.excepthook
+        self.finished = False
+
+    def set_protocol(self, protocol):
+        super().set_protocol(protocol)
+        self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
     def end_protocol(self):
+        self.finished = True
         self.finished_sig.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
@@ -145,10 +249,25 @@ class TailTrackingExperiment(Experiment):
 
         super().end_protocol()
 
-    def closeEvent(self, QCloseEvent):
-        self.end_protocol()
-        self.app.closeAllWindows()
-        self.app.quit()
+    def excepthook(self, exctype, value, traceback):
+        print(exctype, value, traceback)
+        self.finished_sig.set()
+        self.camera.terminate()
+        self.frame_dispatcher.terminate()
 
 
+class MovementRecordingExperiment(CameraExperiment):
+    """ Experiment where the fish is recorded while it is moving
 
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.go_live()
+
+        self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
+                                                      self.gui_frame_queue,
+                                                      self.finished_sig,
+                                                      output_queue=self.record_queue,
+                                                      framestart_queue=self.framestart_queue,
+                                                      signal_start_rec=self.start_rec_sig,
+                                                      gui_framerate=30)
