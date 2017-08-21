@@ -46,8 +46,14 @@ class MetadataFish(Metadata):
                                                   'PC:epNtr-tagRFP',
                                                   'NeuroD-6f'],
                                          check_on_set=False)
-    dish_diameter = param.ObjectSelector(default='60', objects=['0', '30', '60', '90'],)
-    treatment = param.ObjectSelector(default='', objects=['', '10mM MTz'], check_on_set=False)
+    dish_diameter = param.ObjectSelector(default='60',
+                                         objects=['0', '30', '60', '90',
+                                                  'lightsheet'])
+    setup = param.ObjectSelector(objects=['lightsheet', 'behaviour_saskin', '2p', 'behaviour_42'])
+    embedded = param.Boolean(default=True)
+    treatment = param.ObjectSelector(default='', objects=['',
+                                                          '10mM MTz',
+                                                          'Bungarotoxin'], check_on_set=False)
     screened = param.ObjectSelector(default='not', objects=['not', 'dark', 'bright'])
     comments = param.String()
 
@@ -87,4 +93,22 @@ class MetadataGeneral(Metadata):
     category = 'general'
 
     experiment_name = param.String()
-    experimenter_name = param.String()
+    experimenter_name = param.ObjectSelector(objects=['Elena Dragomir',
+                                                      'Andreas Kist',
+                                                      'Laura Knogler',
+                                                      'Daniil Markov',
+                                                      'Pablo Oteiza',
+                                                      'Virginia Palieri',
+                                                      'Luigi Petrucco',
+                                                      'Ruben Portugues',
+                                                      'Vilim Stih',
+                                                      'Tugce Yildizoglu'
+                                                      ])
+    setup_name = param.ObjectSelector(objects=['2p',
+                                               'Lightsheet',
+                                               '42',
+                                               'Saskin',
+                                               'Archimedes',
+                                               'Helmut',
+                                               'Katysha'])
+

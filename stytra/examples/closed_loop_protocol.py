@@ -25,9 +25,11 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.set_protocol(Protocol([
             ClosedLoop1D(background=gratings(mm_px=0.22, spatial_period=5),
                          fish_motion_estimator=VigourMotionEstimator(
-                        self.data_acc_tailpoints, gain=30, vigour_window=100), duration=100, default_velocity=-20)
+                        self.data_acc_tailpoints, gain=30, vigour_window=100),
+                         duration=100, default_velocity=-20)
                         ]))
-        self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_col=2,
+        self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log,
+                                                 data_acc_col=2,
                                                  xlink=self.stream_plot.streamplot)
         self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)
         self.behaviour_layout.addWidget(self.velocity_plot)

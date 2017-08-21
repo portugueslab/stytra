@@ -66,7 +66,9 @@ class Experiment(QMainWindow):
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',
-                                self.window_display.display_params)
+                            self.window_display.display_params,
+                                use_last_val=True)
+
         self.window_display.update_display_params()
         self.widget_control.reset_ROI()
 
@@ -176,6 +178,7 @@ class TailTrackingExperiment(CameraExperiment):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
+        self.metadata_fish.embedded = True
 
         # infrastructure for processing data from the camera
         self.processing_parameter_queue = Queue()
@@ -197,7 +200,6 @@ class TailTrackingExperiment(CameraExperiment):
                                                 print_framerate=False)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
-
 
         # GUI elements
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
