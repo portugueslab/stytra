@@ -188,6 +188,8 @@ class Experiment(QMainWindow):
         self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
         self.protocol.sig_protocol_finished.connect(self.finishProtocol)
 
+        self.protocol.sig_timestep.connect(self.update_progress)
+
         self.camera.start()
         self.frame_dispatcher.start()
         self.recorder.start()
@@ -202,6 +204,10 @@ class Experiment(QMainWindow):
     def config_cam_calib(self):
         pass
         # TODO change camera settings when calibrating
+
+    def update_progress(self):
+        finished = (datetime.datetime.now() - self.protocol.t_start).total_seconds()/self.protocol_duration
+        self.win_control.progbar_protocol.setValue(int(finished*100))
 
     def calibrate(self):
         try:

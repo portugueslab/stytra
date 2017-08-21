@@ -7,6 +7,7 @@ from stytra.stimulation.backgrounds import gratings
 
 import zmq
 
+from copy import deepcopy
 
 class LightsheetProtocol(Protocol):
     """ Protocols which run on the lightsheet have extra parameters
@@ -29,6 +30,7 @@ class LightsheetProtocol(Protocol):
             print('bound socket')
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
+            print(self.lightsheet_config)
             # send the duration of the protocol so that
             # the scanning can stop
             self.zmq_socket.send_json(self.duration)
@@ -38,7 +40,6 @@ class LightsheetProtocol(Protocol):
 
 # Spontaneus activity
 class SpontActivityProtocol(LightsheetProtocol):
-    # TODO @Luigi inherit from LightsheetProtocol
     def __init__(self, *args,  duration_sec=60, **kwargs):
         """
         :param duration:
@@ -148,14 +149,18 @@ class FlashShockProtocol(Protocol):
 
 class MultistimulusExp06Protocol(LightsheetProtocol):
     def __init__(self, repetitions=20,
-                        flash_durations=[], # (0.05, 0.1, 0.2, 0.5, 1, 3)
+                        flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
                         velocities=(3, 10, 30, -10),
                         pre_stim_pause=4,
                         one_stimulus_duration=7,
                         grating_motion_duration=4,
                         grating_args=None,
                         shock_args=None,
+                        shock_on=False,
+                        lr_vel=10,
                         mm_px=1,
+                        spontaneous_duration_pre=120,
+                        spontaneous_duration_post=120,
                 *args, **kwargs):
 
         if grating_args is None:
@@ -165,6 +170,7 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
 
         grating_args['mm_px'] = mm_px
         stimuli = []
+        stimuli.append(Pause(duration=spontaneous_duration_pre))
         for i in range(repetitions):  # change here for number of pairing trials
             stimuli.append(Pause(duration=pre_stim_pause))
             for flash_duration in flash_durations:
@@ -173,24 +179,52 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
 
             t = [0, one_stimulus_duration]
             y = [0., 0.]
+            x = [0., 0.]
 
             for vel in velocities:
                 t.append(t[-1] + grating_motion_duration)
                 y.append(y[-1] + vel*grating_motion_duration/mm_px)
                 t.append(t[-1] + one_stimulus_duration)
                 y.append(y[-1])
+                x.extend([0., 0.])
+
 
             last_time = t[-1]
             motion = pd.DataFrame(dict(t=t,
-                                 x=np.zeros(len(y)),
+                                 x=x,
                                  y=y))
             stimuli.append(MovingSeamless(motion=motion,
                                                background=gratings(**grating_args),
                                                duration=last_time))
 
-            stimuli.append(Pause(duration=pre_stim_pause))
-            stimuli.append(ShockStimulus(**shock_args))
-            stimuli.append(Pause(duration=one_stimulus_duration))
+
+            if lr_vel>0:
+                t = [0, one_stimulus_duration]
+                y = [0., 0.]
+                x = [0., 0.]
+                for xvel in [-lr_vel, lr_vel]:
+                    t.append(t[-1] + grating_motion_duration)
+                    x.append(x[-1] + xvel * grating_motion_duration / mm_px)
+                    t.append(t[-1] + one_stimulus_duration)
+                    x.append(x[-1])
+                    y.extend([0., 0.])
+                last_time = t[-1]
+                motion = pd.DataFrame(dict(t=t,
+                                           x=x,
+                                           y=y))
+                grating_args_v = deepcopy(grating_args)
+                grating_args_v['orientation'] = 'vertical'
+                grating_args_v['spatial_period'] *= 2 # because of the stretch of the image
+                stimuli.append(MovingSeamless(motion=motion,
+                                              background=gratings(**grating_args_v),
+                                              duration=last_time))
+
+            if shock_on:
+                stimuli.append(Pause(duration=pre_stim_pause))
+                stimuli.append(ShockStimulus(**shock_args))
+                stimuli.append(Pause(duration=one_stimulus_duration))
+
+        stimuli.append(Pause(duration=spontaneous_duration_post))
 
         super().__init__(*args, stimuli=stimuli, **kwargs)
         self.name = 'exp006multistim'

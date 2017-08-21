@@ -88,6 +88,8 @@ class ProtocolControlWindow(QWidget):
         self.progress_bar.setFormat('%p% %v/%m')
         self.button_end = QPushButton('End protocol')
 
+        self.progbar_protocol = QProgressBar()
+
         self.button_metadata = QPushButton('Edit metadata')
 
         self.timer = None
@@ -239,6 +241,7 @@ if __name__ == '__main__':
     application2.exec_()
     print(exp.folder)
     print(exp.protocol)
+
 
 
 

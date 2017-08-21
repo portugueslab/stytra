@@ -30,7 +30,7 @@ class GcMultistimExperiment(Experiment):
 
         # Select a protocol:
         if stim_name == 'anatomy':
-            protocol = SpontActivityProtocol(duration_sec=30,
+            protocol = SpontActivityProtocol(duration_sec=60,
                                              wait_for_lightsheet=wait_for_lightsheet)
         elif stim_name == 'multistimulus_exp10':
             protocol = MultistimulusExp06Protocol(repetitions=20, mm_px=0.23,
@@ -42,8 +42,7 @@ class GcMultistimExperiment(Experiment):
             raise ValueError('Stimulus name is not valid')
 
         self.set_protocol(protocol)
-        self.dc.add_data_source('imaging', 'lightsheet_config',
-                                protocol.lightsheet_config)
+        self.dc.add_data_source('imaging', 'lightsheet_config', protocol, 'lightsheet_config')
 
         print('The protocol will take {} seconds or {}:{}'.format(protocol.duration,
                                                                   int(protocol.duration)//60,
@@ -68,7 +67,7 @@ if __name__ == '__main__':
     print(starting_win.protocol)
     application2 = QApplication([])
     exp = GcMultistimExperiment(application2, starting_win.folder,
-                                starting_win.protocol, wait_for_lightsheet=False)
+                                starting_win.protocol, wait_for_lightsheet=True)
 
     application2.exec_()
 
