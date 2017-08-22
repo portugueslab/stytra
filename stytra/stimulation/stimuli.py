@@ -204,7 +204,7 @@ class MovingSeamless(SeamlessPainterStimulus):
                 pass
 
 
-class MovingConstantly(SeamlessStimulus):
+class MovingConstantly(SeamlessPainterStimulus):
     def __init__(self, *args, x_vel=0, y_vel=0, mm_px=1, monitor_rate=60, **kwargs):
         """
         :param x_vel: x drift velocity (mm/s)

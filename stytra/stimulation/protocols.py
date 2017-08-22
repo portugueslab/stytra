@@ -1,5 +1,6 @@
-from stytra.stimulation.stimuli import Pause, Flash, StartAquisition,\
-    StopAquisition, PrepareAquisition, ShockStimulus, MovingSeamless, FullFieldPainterStimulus
+from stytra.stimulation.stimuli import Pause, Flash, \
+    ShockStimulus, MovingSeamless,\
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion
 from stytra.stimulation import Protocol
 import pandas as pd
 import numpy as np
@@ -116,6 +117,56 @@ class FlashShockProtocol(Protocol):
         self.stimuli = stimuli
         self.current_stimulus = stimuli[0]
         self.name = 'flashshock'
+
+
+def make_value_blocks(duration_value_tuples):
+    """ For all the stimuli that accept a motion parameter,
+        we usually want one thing to stay the same in a block
+
+    :param duration_value_tuples:
+    :return:
+    """
+    t = []
+    vals = []
+
+    for dur, val in duration_value_tuples:
+        if len(t) == 0:
+            last_t = 0
+        else:
+            last_t = t[-1]
+
+        t.extend([last_t, last_t+dur])
+        vals.extend([val, val])
+    return t, vals
+
+
+class ReafferenceProtocol(Protocol):
+    def __init__(self, n_backwards=7, pause_duration=7, backwards_duration=0.5,
+                 forward_duration=2, backward_vel=20, forward_vel=10,
+                 n_forward=14,
+                 gain_probability=0.5, gain=1, grating_args=None):
+        gains = []
+        vels = []
+        ts = []
+        for i in range(n_backwards):
+            if len(ts) == 0:
+                last_t = 0
+            else:
+                last_t = ts[-1]
+            ts.extend([last_t, last_t+pause_duration,
+                       last_t + pause_duration, last_t+backwards_duration])
+            vels.extend([0,0,backward_vel, backward_vel])
+        gains.extend([0]*len(vels))
+        for i in range(n_forward):
+            gain_exists = (np.random.random_sample() < gain_probability)*1
+            ts.extend([last_t, last_t+pause_duration,
+                       last_t + pause_duration, last_t+forward_duration])
+            vels.extend([0, 0, forward_vel, forward_vel])
+            gains.extend([0, 0, gain_exists*gain])
+        super().__init__([ClosedLoop1D_variable_motion(motion=pd.DataFrame(
+            dict(t=ts, vel=vels, gain=gains,
+                 background=gratings(**grating_args))))])
+        self.name = 'Reafference'
 
 
 class MultistimulusExp06Protocol(Protocol):
