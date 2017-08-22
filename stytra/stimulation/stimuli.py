@@ -225,12 +225,14 @@ class MovingConstantly(SeamlessStimulus):
 
 class ClosedLoop1D(SeamlessPainterStimulus):
     def __init__(self, *args, default_velocity,
-                 fish_motion_estimator, **kwargs):
+                 fish_motion_estimator, gain=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append('vel')
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
         self.vel = 0
+        self.gain = gain
+        self.base_gain = 1
         self.past_x = self.x
         self.past_y = self.y
         self.past_theta = self.theta
@@ -238,14 +240,30 @@ class ClosedLoop1D(SeamlessPainterStimulus):
 
     def update(self):
         self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
-        self.y -= (self.elapsed-self.past_t) * self.vel
-
+        self.y -= (self.elapsed-self.past_t) * self.vel * self.gain * self.base_gain
+        # TODO implement lag
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
             try:
                 setattr(self, 'past_'+attr, getattr(self, attr))
             except (AttributeError, KeyError):
                 pass
+
+
+class ClosedLoop1D_variable_motion(ClosedLoop1D):
+    def __init__(self, *args, motion, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.motion = motion
+
+    def update(self):
+        for attr in ['vel', 'gain', 'lag']:
+            try:
+                setattr(self, attr, np.interp(self.elapsed,
+                                              self.motion.t,
+                                              self.motion[attr]))
+            except (AttributeError, KeyError):
+                pass
+
 
 
 class RandomDotKinematogram(PainterStimulus):
