@@ -206,7 +206,8 @@ class DataCollector:
                     if isinstance(data_entry[2], dict):
                         data_dict[category][label] = data_entry[2][data_entry[3]]
                     else: # object attribute entries
-                        data_dict[category][label] = getattr(data_entry[2], data_entry[3])
+                        data_dict[category][label] = getattr(data_entry[2],
+                                                             data_entry[3])
 
         return data_dict
 
@@ -262,7 +263,8 @@ class DataCollector:
                                     old_entry = int(old_entry)
                                 elif isinstance(param_obj, param.String):
                                     old_entry = str(old_entry)
-
+                                elif isinstance(param_obj, param.Boolean):
+                                    old_entry = bool(old_entry)
                                 setattr(args[-1], key_new_obj, old_entry)
 
                 elif len(args) == 4:  # dict entries and objects attributes

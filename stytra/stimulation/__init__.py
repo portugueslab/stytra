@@ -63,6 +63,7 @@ class Protocol(QObject):
 
             if self.i_current_stimulus >= len(self.stimuli) - 1:
                 self.end()
+                self.sig_protocol_finished.emit()
             else:
                 # update the variable which keeps track when the last
                 # stimulus *should* have ended, in order to avoid
@@ -82,7 +83,6 @@ class Protocol(QObject):
             self.update_dynamic_log()
 
     def end(self):
-        self.sig_protocol_finished.emit()
         try:
             self.timer.timeout.disconnect()
             self.timer.stop()

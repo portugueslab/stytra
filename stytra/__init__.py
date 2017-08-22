@@ -37,7 +37,9 @@ import zmq
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
-    def __init__(self, directory, name, save_csv=False, app=None):
+    def __init__(self, directory, name, calibrator=None,
+                 save_csv=False, run_committed=False,
+                 app=None):
         """ A general class for running experiments
 
         :param directory:
@@ -59,6 +61,7 @@ class Experiment(QMainWindow):
             os.makedirs(self.directory)
 
         self.name = name
+        self.run_committed = run_committed
 
         self.save_csv = save_csv
 
@@ -81,17 +84,24 @@ class Experiment(QMainWindow):
         self.window_display.update_display_params()
         self.widget_control.reset_ROI()
 
-        self.calibrator = CrossCalibrator()
+        if calibrator is None:
+            self.calibrator = CrossCalibrator()
+        else:
+            self.calibrator = calibrator
         self.window_display.widget_display.calibrator = self.calibrator
         self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
+        self.dc.add_data_source('stimulus', 'mm per px',
+                                self.calibrator, 'mm_px', use_last_val=True)
+        self.widget_control.spin_calibrate.valueChanged.connect(
+            self.calibrator.set_physical_scale)
+        self.widget_control.spin_calibrate.setValue(self.calibrator.mm_px)
 
         self.protocol = None
 
     def set_protocol(self, protocol):
         self.protocol = protocol
         self.protocol.reset()
-        self.window_display.set_protocol(protocol)
-        self.widget_control.set_protocol(protocol)
+        self.window_display.widget_display.set_protocol(protocol)
         self.protocol.sig_timestep.connect(self.update_progress)
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
@@ -128,11 +138,12 @@ class Experiment(QMainWindow):
                 print('Second screen not available')
 
     def start_protocol(self):
+        if self.run_committed:
+            self.check_if_committed()
         self.protocol.start()
 
     def end_protocol(self):
         self.protocol.end()
-        self.protocol.reset()
         self.dc.save(save_csv=self.save_csv)
 
     def closeEvent(self, *args, **kwargs):
@@ -146,11 +157,6 @@ class Experiment(QMainWindow):
             self.widget_control.button_show_calib.setText('Show calibration')
         self.window_display.widget_display.update()
         self.sig_calibrating.emit()
-
-    def set_protocol(self, protocol):
-        self.protocol = protocol
-        print('new protocol:')
-        print(self.protocol.name)
 
 
 class LightsheetExperiment(Experiment):
@@ -193,7 +199,6 @@ class CameraExperiment(Experiment):
 
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
-
 
         self.metadata_camera = MetadataCamera()
 

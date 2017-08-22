@@ -12,6 +12,7 @@ except ImportError:
 
 from itertools import product
 
+
 class Stimulus:
     """ General class for a stimulus."""
     def __init__(self, duration=0.0):
@@ -167,7 +168,7 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        display_centre = (w/ 2, h / 2)
+        display_centre = (w/2, h/2)
         imw = self._background.width()
         imh = self._background.height()
         image_centre = (imw / 2, imh / 2)
