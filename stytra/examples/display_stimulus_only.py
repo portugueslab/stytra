@@ -38,7 +38,6 @@ class StimulusOnyExperiment(Experiment):
 
         self.im_filename = r"J:\Vilim Stih\sync\underwater\40_water with stone and fish texture-seamless.jpg"
         bg = existing_file_background(self.im_filename)
-        print(bg.shape)
         motion = make_spinning_protocol()
         self.protocol_duration = motion.t.iat[-1]
 
@@ -47,7 +46,6 @@ class StimulusOnyExperiment(Experiment):
                                                  duration=motion.t.iat[-1])]))
 
         self.show()
-        self.window_display.show()
         self.show_stimulus_screen(full_screen=False)
 
 

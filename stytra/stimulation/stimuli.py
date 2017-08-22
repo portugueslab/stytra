@@ -34,7 +34,6 @@ class Stimulus:
         for key, value in self.__dict__.items():
             if not callable(value) and key[0] != '_':
                 state_dict[key] = value
-
         return state_dict
 
     def update(self):
@@ -136,7 +135,7 @@ class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
 
 
 class FullFieldPainterStimulus(PainterStimulus):
-    def __init__(self, *args, color=(255,0,0), **kwargs):
+    def __init__(self, *args, color=(255, 0, 0), **kwargs):
         super().__init__(*args, **kwargs)
         self.color = color
         self.name = 'flash'
@@ -188,7 +187,6 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         for idx, idy in product(range(-nw, nw+1), range(-nh, nh+1)):
             p.drawImage(QPoint(dx + imw * idx,
                                dy + imh * idy), self._background)
-
 
 
 class MovingSeamless(SeamlessPainterStimulus):

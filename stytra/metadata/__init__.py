@@ -49,34 +49,12 @@ class MetadataFish(Metadata):
     dish_diameter = param.ObjectSelector(default='60',
                                          objects=['0', '30', '60', '90',
                                                   'lightsheet'])
-    setup = param.ObjectSelector(objects=['lightsheet', 'behaviour_saskin', '2p', 'behaviour_42'])
     embedded = param.Boolean(default=True)
     treatment = param.ObjectSelector(default='', objects=['',
                                                           '10mM MTz',
                                                           'Bungarotoxin'], check_on_set=False)
     screened = param.ObjectSelector(default='not', objects=['not', 'dark', 'bright'])
     comments = param.String()
-
-
-class MetadataLightsheet(Metadata):
-    """Lightsheet imaging description metadata class
-    """
-    category = 'imaging'
-
-    imaging_type = param.String(default='lightsheet', constant=True)
-    frame_rate = param.Number(default=20, bounds=(0., 200.), doc='Camera frame rate (Hz)')
-    piezo_frequency = param.Number(default=5, bounds=(0., 10), doc='Scanning frequency (Hz)')
-    # redundant once we have dz!
-    piezo_amplitude = param.Number(default=0, bounds=(0., 10), doc='Piezo scanning amplitude (arbitrary voltage)')
-    exposure_time = param.Number(default=1, bounds=(0.1, 10), doc='Exposure (ms)')
-    laser_power = param.Number(default=23, bounds=(0.1, 100), doc='Laser power (mA)')
-    scanning_profile = param.ObjectSelector(default='sawtooth', objects=['none', 'sawtooth', 'triangle', 'sine'])
-    binning = param.ObjectSelector(default='2x2', objects=['1x1', '2x2', '4x4'])
-    trigger = param.ObjectSelector(default='External', objects=['Internal', 'External'])
-    dx = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - x (um)')
-    dy = param.Number(default=0.6, bounds=(0.05, 10), doc='Pixel size  - y (um)')
-    dz = param.Number(default=0.6, bounds=(0.000, 50), doc='Pixel size  - z (um)')
-    n_frames = param.Integer(default=18000, bounds=(1, 1000000), doc='Movie frames')
 
 
 class MetadataCamera(Metadata):
@@ -93,7 +71,8 @@ class MetadataGeneral(Metadata):
     category = 'general'
 
     experiment_name = param.String()
-    experimenter_name = param.ObjectSelector(objects=['Elena Dragomir',
+    experimenter_name = param.ObjectSelector(default='Vilim Stih',
+                                             objects=['Elena Dragomir',
                                                       'Andreas Kist',
                                                       'Laura Knogler',
                                                       'Daniil Markov',
@@ -104,7 +83,8 @@ class MetadataGeneral(Metadata):
                                                       'Vilim Stih',
                                                       'Tugce Yildizoglu'
                                                       ])
-    setup_name = param.ObjectSelector(objects=['2p',
+
+    setup_name = param.ObjectSelector(default='Saskin', objects=['2p',
                                                'Lightsheet',
                                                '42',
                                                'Saskin',

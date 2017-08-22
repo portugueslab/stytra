@@ -61,7 +61,9 @@ class GcMultistimExperiment(Experiment):
 
 if __name__ == '__main__':
     application = QApplication([])
-    starting_win = StartingWindow(application, ['anatomy', 'multistimulus_exp10'])
+    starting_win = StartingWindow(application,
+                                  ['anatomy',
+                                   'multistimulus_exp10'])
     application.exec_()
     print(starting_win.folder)
     print(starting_win.protocol)

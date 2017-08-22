@@ -8,7 +8,7 @@ from stytra.stimulation.stimuli import ImageStimulus, PainterStimulus
 
 
 class StimulusDisplayWindow(QDialog):
-    def __init__(self, *args):
+    def __init__(self, *args, experiment=None):
         """ Make a display window for a visual simulation protocol,
         with a movable display area
 
@@ -44,7 +44,7 @@ class GLStimDisplay(QOpenGLWidget):
         super().__init__(*args)
         self.img = None
         self.calibrating = False
-        self.calibration = None
+        self.calibrator = None
         self.dims = None
 
         self.protocol = None
@@ -73,7 +73,8 @@ class GLStimDisplay(QOpenGLWidget):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
         h = self.height()
-        if isinstance(self.protocol.current_stimulus, PainterStimulus):
+        if self.protocol is not None and \
+                isinstance(self.protocol.current_stimulus, PainterStimulus):
             self.protocol.current_stimulus.paint(p, w, h)
         else:
             p.drawRect(QRect(-1, -1, w+2, h+2))
@@ -81,9 +82,10 @@ class GLStimDisplay(QOpenGLWidget):
             if self.img is not None:
                 p.drawImage(QPoint(0, 0), self.img)
 
-        if self.calibrating and self.calibration is not None:
-            self.calibration.make_calibration_pattern(p, h, w)
+        if self.calibrator is not None and self.calibrator.enabled:
+            self.calibrator.make_calibration_pattern(p, h, w)
         p.end()
+        pass
 
     def display_stimulus(self):
         self.dims = (self.height(), self.width())

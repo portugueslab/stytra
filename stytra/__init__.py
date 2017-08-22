@@ -19,7 +19,7 @@ from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
 
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, pyqtSignal
 from stytra.metadata import MetadataCamera
 import sys
 
@@ -32,8 +32,11 @@ from stytra.hardware.video import MovingFrameDispatcher
 
 import os
 
+import zmq
+
 
 class Experiment(QMainWindow):
+    sig_calibrating = pyqtSignal()
     def __init__(self, directory, name, save_csv=False, app=None):
         """ A general class for running experiments
 
@@ -62,11 +65,13 @@ class Experiment(QMainWindow):
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
-        self.window_display = StimulusDisplayWindow()
+        self.window_display = StimulusDisplayWindow(experiment=self)
         self.widget_control = ProtocolControlWindow(self.window_display)
 
         self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
         self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
+        self.widget_control.button_start.clicked.connect(self.start_protocol)
+        self.widget_control.button_end.clicked.connect(self.end_protocol)
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',
@@ -77,12 +82,14 @@ class Experiment(QMainWindow):
         self.widget_control.reset_ROI()
 
         self.calibrator = CrossCalibrator()
-        self.window_display.widget_display.calibration = self.calibrator
+        self.window_display.widget_display.calibrator = self.calibrator
+        self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
 
         self.protocol = None
 
     def set_protocol(self, protocol):
         self.protocol = protocol
+        self.protocol.reset()
         self.window_display.set_protocol(protocol)
         self.widget_control.set_protocol(protocol)
         self.protocol.sig_timestep.connect(self.update_progress)
@@ -120,11 +127,54 @@ class Experiment(QMainWindow):
             except IndexError:
                 print('Second screen not available')
 
+    def start_protocol(self):
+        self.protocol.start()
+
     def end_protocol(self):
+        self.protocol.end()
+        self.protocol.reset()
         self.dc.save(save_csv=self.save_csv)
 
     def closeEvent(self, *args, **kwargs):
         self.app.closeAllWindows()
+
+    def toggle_calibration(self):
+        self.calibrator.toggle()
+        if self.calibrator.enabled:
+            self.widget_control.button_show_calib.setText('Hide calibration')
+        else:
+            self.widget_control.button_show_calib.setText('Show calibration')
+        self.window_display.widget_display.update()
+        self.sig_calibrating.emit()
+
+    def set_protocol(self, protocol):
+        self.protocol = protocol
+        print('new protocol:')
+        print(self.protocol.name)
+
+
+class LightsheetExperiment(Experiment):
+    def __init__(self, *args, wait_for_lightsheet=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.REP)
+
+        self.lightsheet_config = dict()
+        self.wait_for_lightsheet = wait_for_lightsheet
+
+    def start_protocol(self):
+        # Start only when received the GO signal from the lightsheet
+        if self.wait_for_lightsheet:
+            self.zmq_socket.bind("tcp://*:5555")
+            print('bound socket')
+            self.lightsheet_config = self.zmq_socket.recv_json()
+            print('received config')
+            print(self.lightsheet_config)
+            # send the duration of the protocol so that
+            # the scanning can stop
+            self.zmq_socket.send_json(self.duration)
+        super().start_protocol()
 
 
 class CameraExperiment(Experiment):

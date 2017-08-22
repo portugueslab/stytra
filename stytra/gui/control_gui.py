@@ -1,7 +1,7 @@
 from PyQt5.QtCore import QRectF, pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
     QWidget, QLayout, QComboBox, QApplication, \
-    QFileDialog, QLineEdit, QProgressBar
+    QFileDialog, QLineEdit, QProgressBar, QLabel, QDoubleSpinBox
 import pyqtgraph as pg
 import numpy as np
 import os
@@ -11,7 +11,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     def __init__(self, *args, display_size=(1280, 800), ROI_desc=None,  **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.view_box = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)
+        self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
+                                   enableMouse=False)
         self.addItem(self.view_box)
 
         self.roi_box = pg.ROI(maxBounds=QRectF(0, 0, display_size[0],
@@ -26,7 +27,9 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                                      pen=(80, 80, 80)),
                               )
         self.calibration_points = pg.ScatterPlotItem()
-        self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10), pen=(200, 10, 10), fill_level=1)
+        self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10),
+                                                  pen=(200, 10, 10),
+                                                  fill_level=1)
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
 
@@ -78,10 +81,13 @@ class ProtocolControlWindow(QWidget):
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
-        self.button_show_calib.clicked.connect(self.toggle_calibration)
         self.button_calibrate = QPushButton('Calibrate')
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.button_calibrate)
+        self.label_calibrate = QLabel('size of calib. pattern in mm')
+        self.spin_calibrate = QDoubleSpinBox()
+        self.layout_calibrate.addWidget(self.label_calibrate)
+        self.layout_calibrate.addWidget(self.spin_calibrate)
 
         self.button_start = QPushButton('Start protocol')
         self.progress_bar = QProgressBar()
@@ -116,28 +122,6 @@ class ProtocolControlWindow(QWidget):
             self.display_window.set_dims(self.widget_view.roi_box.pos(),
                                          self.widget_view.roi_box.size())
 
-    def toggle_calibration(self):
-        dispw = self.display_window.widget_display
-        dispw.calibrating = ~dispw.calibrating
-        if dispw.calibrating:
-            self.button_show_calib.setText('Hide calibration')
-        else:
-            self.button_show_calib.setText('Show calibration')
-        dispw.update()
-        self.sig_calibrating.emit()
-
-    def set_protocol(self, protocol):
-        try:
-            self.button_start.clicked.disconnect(self.protocol.start)
-            self.button_end.clicked.diconnect(self.protocol.end)
-        except AttributeError:
-            pass
-
-        self.protocol = protocol
-        self.button_start.clicked.connect(self.protocol.start)
-        self.button_end.clicked.connect(self.protocol.end)
-        print('new protocol:')
-        print(self.protocol.name)
 
 
 class ProtocolSelectorWidget(QWidget):

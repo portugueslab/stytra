@@ -9,37 +9,8 @@ import zmq
 
 from copy import deepcopy
 
-class LightsheetProtocol(Protocol):
-    """ Protocols which run on the lightsheet have extra parameters
-
-    """
-    def __init__(self, *args, wait_for_lightsheet=True, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
-
-        self.current_stimulus = self.stimuli[0]
-        self.lightsheet_config = dict()
-        self.wait_for_lightsheet = wait_for_lightsheet
-
-    def start(self):
-        # Start only when received the GO signal from the lightsheet
-        if self.wait_for_lightsheet:
-            self.zmq_socket.bind("tcp://*:5555")
-            print('bound socket')
-            self.lightsheet_config = self.zmq_socket.recv_json()
-            print('received config')
-            print(self.lightsheet_config)
-            # send the duration of the protocol so that
-            # the scanning can stop
-            self.zmq_socket.send_json(self.duration)
-        super().start()
-
-
-
 # Spontaneus activity
-class SpontActivityProtocol(LightsheetProtocol):
+class SpontActivityProtocol(Protocol):
     def __init__(self, *args,  duration_sec=60, **kwargs):
         """
         :param duration:
@@ -147,7 +118,7 @@ class FlashShockProtocol(Protocol):
         self.name = 'flashshock'
 
 
-class MultistimulusExp06Protocol(LightsheetProtocol):
+class MultistimulusExp06Protocol(Protocol):
     def __init__(self, repetitions=20,
                         flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
                         velocities=(3, 10, 30, -10),
@@ -187,7 +158,6 @@ class MultistimulusExp06Protocol(LightsheetProtocol):
                 t.append(t[-1] + one_stimulus_duration)
                 y.append(y[-1])
                 x.extend([0., 0.])
-
 
             last_time = t[-1]
             motion = pd.DataFrame(dict(t=t,

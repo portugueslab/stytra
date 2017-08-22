@@ -10,14 +10,27 @@ class CalibrationException(Exception):
 
 
 class Calibrator:
-    def __init__(self):
-        pass
+    def __init__(self, mm_px=1):
+        self.enabled = False
+        self.mm_px = mm_px
+        self.length_to_measure = 'pixel'
+
+    def toggle(self):
+        self.enabled = ~self.enabled
+
+    def set_physical_scale(self, measured_distance):
+        self.mm_px = measured_distance
 
     def make_calibration_pattern(self, p, h, w):
         pass
 
 
 class CrossCalibrator(Calibrator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.line_length_px = 1
+        self.length_to_measure = 'a line in the cross'
+
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
@@ -25,18 +38,23 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
         p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
         p.drawLine(w // 2, h * 3 // 4, w * 3 // 4, h * 3 // 4)
+        self.line_length_px = h//2
+
+    def set_physical_scale(self, measured_distance):
+        self.mm_px = measured_distance/self.line_length_px
 
 
 class CircleCalibrator(Calibrator):
     """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle
     """
-    def __init__(self, dh=80, r=3):
+    def __init__(self, *args, dh=80, r=3, **kwargs):
         self.dh = dh
         self.r = r
         self.points = None
         self.points_cam = None
         self.proj_to_cam = None
         self.cam_to_proj = None
+        self.length_to_measure = 'the largest distance between the points'
 
     def make_calibration_pattern(self, p, h, w, draw=True):
         assert isinstance(p, QPainter)
@@ -56,7 +74,8 @@ class CircleCalibrator(Calibrator):
             for centre in centres:
                 p.drawEllipse(QPoint(*centre), self.r, self.r)
 
-
+    def set_physical_scale(self, measured_distance):
+        self.mm_px = measured_distance/self.dh
 
     @staticmethod
     def _find_angles(kps):
