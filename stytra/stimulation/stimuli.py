@@ -169,6 +169,11 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
 
     def paint(self, p, w, h):
         # draw the black background
+        if self.calibrator is not None:
+            mm_px = self.calibrator.mm_px
+        else:
+            mm_px = 1
+
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
@@ -179,8 +184,8 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         image_centre = (imw / 2, imh / 2)
 
         cx = self.x - np.floor(self.x / imw) * imw
-        cy = self.y - np.floor(
-            self.y / imh) * imh
+        cy = -self.y/mm_px - np.floor(
+            -(self.y/mm_px) / imh) * imh
 
         dx = display_centre[0] - image_centre[0] + cx
         dy = display_centre[1] - image_centre[1] - cy
@@ -273,11 +278,10 @@ class MovingConstantly(SeamlessPainterStimulus):
         self.y += self.y_shift_frame
 
 
-class ClosedLoop1D(SeamlessPainterStimulus):
+class ClosedLoop1D(BackgroundStimulus):
     def __init__(self, *args, default_velocity,
                  fish_motion_estimator, gain=1, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dynamic_parameters.append('vel')
+        super().__init__(*args, dynamic_parameters=['vel'], **kwargs)
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
         self.vel = 0
@@ -290,7 +294,7 @@ class ClosedLoop1D(SeamlessPainterStimulus):
 
     def update(self):
         self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
-        self.y -= (self.elapsed-self.past_t) * self.vel * self.gain * self.base_gain
+        self.y += (self.elapsed-self.past_t) * self.vel * self.gain * self.base_gain
         # TODO implement lag
         self.past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
