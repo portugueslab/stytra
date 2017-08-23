@@ -15,7 +15,7 @@ from itertools import product
 
 class Stimulus:
     """ General class for a stimulus."""
-    def __init__(self, duration=0.0):
+    def __init__(self, calibrator=None, duration=0.0):
         """ Make a stimulus, with the basic properties common to all stimuli
         Initial values which do not change during the stimulus
         are prefixed with _, so that they are not logged
@@ -27,6 +27,7 @@ class Stimulus:
         self.elapsed = 0.0
         self.duration = duration
         self.name = ''
+        self.calibrator = calibrator
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -63,7 +64,8 @@ class DynamicStimulus(Stimulus):
             self.dynamic_parameters = dynamic_parameters
 
     def get_dynamic_state(self):
-        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
+        return tuple(getattr(self, param, 0)
+                     for param in self.dynamic_parameters)
 
 
 class ImageStimulus(Stimulus):
@@ -155,7 +157,8 @@ class Pause(FullFieldPainterStimulus):
 class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                               DynamicStimulus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'], **kwargs)
+        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
+                         **kwargs)
         self._background = qimage2ndarray.array2qimage(self._background)
 
     def rotTransform(self, w, h):
@@ -165,9 +168,11 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
             self.theta * 180 / np.pi).translate(xc, yc)
 
     def paint(self, p, w, h):
+        # draw the black background
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
+        # find the centres of the display and image
         display_centre = (w/2, h/2)
         imw = self._background.width()
         imh = self._background.height()
@@ -190,11 +195,44 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
                                dy + imh * idy), self._background)
 
 
-class MovingSeamless(SeamlessPainterStimulus):
+class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
+                             DynamicStimulus):
+    def __init__(self, *args, grating_orientation='horizontal', grating_period,
+                 grating_color=(255, 255, 255), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grating_orientation = grating_orientation
+        self.grating_period = grating_period
+        self.grating_color = grating_color
+
+    def paint(self, p, w, h):
+        # draw the background
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        grating_width = self.grating_period/self.calibrator.mm_px # in pixels
+        p.setBrush(QBrush(QColor(*self.grating_color)))
+        if self.grating_orientation == 'horizontal':
+            n_gratings = int(np.round(w / grating_width + 2))
+            start = -self.y / self.calibrator.mm_px - \
+                    np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
+            print(start)
+            for i in range(n_gratings):
+                p.drawRect(-1, start, w+2, grating_width/2)
+                start += grating_width
+        else:
+            n_gratings = int(np.round(h / grating_width + 2))
+            start = self.x / self.calibrator.mm_px - \
+                    np.floor(self.x / grating_width) * grating_width
+            for i in range(n_gratings):
+                p.drawRect(start, -1, start + grating_width / 2, h+2)
+                start += grating_width
+
+
+class MovingStimulus(DynamicStimulus):
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
-        self.name='moving seamless'
+        self.name = 'moving seamless'
 
     def update(self):
         for attr in ['x', 'y', 'theta']:
@@ -202,6 +240,18 @@ class MovingSeamless(SeamlessPainterStimulus):
                 setattr(self, attr, np.interp(self.elapsed, self.motion.t, self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
+
+
+class MovingBackgroundStimulus(MovingStimulus, SeamlessPainterStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = 'Moving seamless background stimulus'
+
+
+class MovingGratingStimulus(MovingStimulus, GratingPainterStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = 'Moving grating stimulus'
 
 
 class MovingConstantly(SeamlessPainterStimulus):

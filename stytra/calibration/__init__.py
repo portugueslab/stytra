@@ -28,7 +28,8 @@ class Calibrator:
 class CrossCalibrator(Calibrator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.line_length_px = 1
+        self.length_px = 1
+        self.length_mm = 1
         self.length_to_measure = 'a line in the cross'
 
     def make_calibration_pattern(self, p, h, w):
@@ -38,10 +39,11 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
         p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
         p.drawLine(w // 2, h * 3 // 4, w * 3 // 4, h * 3 // 4)
-        self.line_length_px = h//2
+        self.length_px = h//2
 
     def set_physical_scale(self, measured_distance):
-        self.mm_px = measured_distance/self.line_length_px
+        self.length_mm = measured_distance
+        self.mm_px = measured_distance/self.length_px
 
 
 class CircleCalibrator(Calibrator):

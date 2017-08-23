@@ -28,22 +28,16 @@ class SpontActivityProtocol(Protocol):
 
 
 class FlashProtocol(Protocol):
-    def __init__(self, repetitions=10, period_sec=30, duration_sec=1, pre_stim_pause=20,
-                 prepare_pause=2, zmq_trigger=None):
+    def __init__(self, repetitions=10, period_sec=30, duration_sec=1, pre_stim_pause=20):
         """
         :param repetitions:
         :param prepare_pause:
         :param zmq_trigger:
         """
         super().__init__()
-        if not zmq_trigger:
-            print('missing trigger')
 
         stimuli = []
-        stimuli.append(Pause(duration=1))
-        stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-        stimuli.append(Pause(duration=prepare_pause))
-        stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start acquisition
+
         # stimuli.append(Pause(duration=period_sec-duration_sec))  # pre-flash interval
         for i in range(repetitions):
             stimuli.append(Pause(duration=pre_stim_pause))

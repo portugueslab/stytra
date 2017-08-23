@@ -92,9 +92,14 @@ class Experiment(QMainWindow):
         self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
         self.dc.add_data_source('stimulus', 'mm per px',
                                 self.calibrator, 'mm_px', use_last_val=True)
+        self.dc.add_data_source('stimulus', 'calibration_pattern_length_mm',
+                                self.calibrator, 'length_mm', use_last_val=True)
+        self.dc.add_data_source('stimulus', 'calibration_pattern_length_px',
+                                self.calibrator, 'length_px',
+                                use_last_val=True)
         self.widget_control.spin_calibrate.valueChanged.connect(
             self.calibrator.set_physical_scale)
-        self.widget_control.spin_calibrate.setValue(self.calibrator.mm_px)
+        self.widget_control.spin_calibrate.setValue(self.calibrator.length_mm)
 
         self.protocol = None
 

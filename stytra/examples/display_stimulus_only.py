@@ -6,7 +6,8 @@ import pandas as pd
 from stytra import Experiment
 from stytra.stimulation import Protocol
 from stytra.stimulation.backgrounds import existing_file_background
-from stytra.stimulation.stimuli import MovingSeamless
+from stytra.stimulation.stimuli import MovingBackgroundStimulus,\
+    MovingGratingStimulus
 
 
 def make_spinning_protocol(n_vels=3, stim_duration=10, pause_duration=5,
@@ -41,9 +42,18 @@ class StimulusOnyExperiment(Experiment):
         motion = make_spinning_protocol()
         self.protocol_duration = motion.t.iat[-1]
 
+        grating_motion = pd.DataFrame(dict(
+            t=[0,  1, 3, 4],
+            y=[0,  0, 10, 10]))
         print(self.protocol_duration)
-        self.set_protocol(Protocol([MovingSeamless(background=bg, motion=motion,
-                                                 duration=motion.t.iat[-1])]))
+        self.set_protocol(Protocol([
+            MovingGratingStimulus(grating_period=10, motion=grating_motion,
+                                  calibrator=self.calibrator,
+                                  grating_orientation='horizontal',
+                                  duration=20),
+            MovingBackgroundStimulus(background=bg, motion=motion,
+                                                 duration=motion.t.iat[-1],
+                                                calibrator=self.calibrator)]))
 
         self.show()
         self.show_stimulus_screen(full_screen=False)
