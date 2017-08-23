@@ -1,6 +1,6 @@
 import numpy as np
 from stytra.tracking import DataAccumulator
-from keras.models import load_model
+# from keras.models import load_model
 
 
 class VigourMotionEstimator:

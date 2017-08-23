@@ -220,7 +220,6 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
             n_gratings = int(np.round(w / grating_width + 2))
             start = -self.y / self.calibrator.mm_px - \
                     np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
-            print(start)
             for i in range(n_gratings):
                 p.drawRect(-1, start, w+2, grating_width/2)
                 start += grating_width
@@ -278,15 +277,16 @@ class MovingConstantly(SeamlessPainterStimulus):
         self.y += self.y_shift_frame
 
 
-class ClosedLoop1D(BackgroundStimulus):
+class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     def __init__(self, *args, default_velocity,
-                 fish_motion_estimator, gain=1, **kwargs):
-        super().__init__(*args, dynamic_parameters=['vel'], **kwargs)
+                 fish_motion_estimator, gain=1, base_gain=1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append('vel')
         self.default_vel = default_velocity
         self.fish_motion_estimator = fish_motion_estimator
         self.vel = 0
         self.gain = gain
-        self.base_gain = 1
+        self.base_gain = base_gain
         self.past_x = self.x
         self.past_y = self.y
         self.past_theta = self.theta

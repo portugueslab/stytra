@@ -289,7 +289,6 @@ class TailTrackingExperiment(CameraExperiment):
     def go_live(self):
         super().go_live()
         self.frame_dispatcher.start()
-
         sys.excepthook = self.excepthook
         self.finished = False
 
