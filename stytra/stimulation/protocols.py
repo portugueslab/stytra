@@ -1,5 +1,5 @@
 from stytra.stimulation.stimuli import Pause, Flash, \
-    ShockStimulus, MovingSeamless,\
+    ShockStimulus, MovingGratingStimulus,\
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion
 from stytra.stimulation import Protocol
 import pandas as pd
@@ -174,9 +174,9 @@ class MultistimulusExp06Protocol(Protocol):
                         shock_args=None,
                         shock_on=False,
                         lr_vel=10,
-                        mm_px=1,
                         spontaneous_duration_pre=120,
                         spontaneous_duration_post=120,
+                 calibrator=None,
                 *args, **kwargs):
 
         if grating_args is None:
@@ -184,7 +184,6 @@ class MultistimulusExp06Protocol(Protocol):
         if shock_args is None:
             shock_args = dict()
 
-        grating_args['mm_px'] = mm_px
         stimuli = []
         stimuli.append(Pause(duration=spontaneous_duration_pre))
         for i in range(repetitions):  # change here for number of pairing trials
@@ -199,7 +198,7 @@ class MultistimulusExp06Protocol(Protocol):
 
             for vel in velocities:
                 t.append(t[-1] + grating_motion_duration)
-                y.append(y[-1] + vel*grating_motion_duration/mm_px)
+                y.append(y[-1] + vel*grating_motion_duration)
                 t.append(t[-1] + one_stimulus_duration)
                 y.append(y[-1])
                 x.extend([0., 0.])
@@ -208,9 +207,8 @@ class MultistimulusExp06Protocol(Protocol):
             motion = pd.DataFrame(dict(t=t,
                                  x=x,
                                  y=y))
-            stimuli.append(MovingSeamless(motion=motion,
-                                               background=gratings(**grating_args),
-                                               duration=last_time))
+            stimuli.append(MovingGratingStimulus(motion=motion,
+                                               duration=last_time, **grating_args, calibrator=calibrator))
 
 
             if lr_vel>0:
@@ -219,7 +217,7 @@ class MultistimulusExp06Protocol(Protocol):
                 x = [0., 0.]
                 for xvel in [-lr_vel, lr_vel]:
                     t.append(t[-1] + grating_motion_duration)
-                    x.append(x[-1] + xvel * grating_motion_duration / mm_px)
+                    x.append(x[-1] + xvel * grating_motion_duration)
                     t.append(t[-1] + one_stimulus_duration)
                     x.append(x[-1])
                     y.extend([0., 0.])
@@ -228,11 +226,11 @@ class MultistimulusExp06Protocol(Protocol):
                                            x=x,
                                            y=y))
                 grating_args_v = deepcopy(grating_args)
-                grating_args_v['orientation'] = 'vertical'
-                grating_args_v['spatial_period'] *= 2 # because of the stretch of the image
-                stimuli.append(MovingSeamless(motion=motion,
-                                              background=gratings(**grating_args_v),
-                                              duration=last_time))
+                grating_args_v['grating_orientation'] = 'vertical'
+                grating_args_v['grating_period'] *= 2 # because of the stretch of the image
+                stimuli.append(MovingGratingStimulus(motion=motion,
+                                              **grating_args_v,
+                                              duration=last_time, calibrator=calibrator))
 
             if shock_on:
                 stimuli.append(Pause(duration=pre_stim_pause))
