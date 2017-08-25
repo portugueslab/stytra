@@ -150,10 +150,8 @@ class CameraTailSelection(CameraViewWidget):
         """
         position_data = None
         try:
-            if self.tail_position_data:
+            if self.tail_position_data:  # draw the tail before displaying the frame:
                 position_data = self.tail_position_data.stored_data[-1][2:]
-
-            if position_data:  # draw the tail before displaying the frame:
                 return draw_fish_angles_ls(frame, np.array(position_data),
                                            self.roi_dict['start_x'], self.roi_dict['start_y'],
                                            self.roi_dict['length_x'], self.roi_dict['length_y'],

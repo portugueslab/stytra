@@ -131,7 +131,7 @@ def make_value_blocks(duration_value_tuples):
 
 
 class ReafferenceProtocol(Protocol):
-    def __init__(self, n_backwards=7, pause_duration=7, backwards_duration=0.5,
+    def __init__(self, n_repeats=1, n_backwards=7, pause_duration=7, backwards_duration=0.5,
                  forward_duration=2, backward_vel=20, forward_vel=10,
                  n_forward=14,
                  gain_probability=0.5, gain=1, grating_period=10,
@@ -140,27 +140,26 @@ class ReafferenceProtocol(Protocol):
         gains = []
         vels = []
         ts = []
-        for i in range(n_backwards):
-            if len(ts) == 0:
-                last_t = 0
-            else:
+        last_t = 0
+        for i_repeat in range(n_repeats):
+            for i in range(n_backwards):
+                ts.extend([last_t, last_t+pause_duration,
+                           last_t + pause_duration, last_t+pause_duration+backwards_duration])
+                vels.extend([0, 0, -backward_vel, -backward_vel])
                 last_t = ts[-1]
-            ts.extend([last_t, last_t+pause_duration,
-                       last_t + pause_duration, last_t+pause_duration+backwards_duration])
-            vels.extend([0, 0, -backward_vel, -backward_vel])
-        gains.extend([0]*len(vels))
+            gains.extend([0]*n_backwards*4)
 
-        for i in range(n_forward):
-            last_t = ts[-1]
-            gain_exists = (np.random.random_sample() < gain_probability)*1
-            ts.extend([last_t, last_t+pause_duration,
-                       last_t + pause_duration, last_t+pause_duration+forward_duration])
-            vels.extend([0, 0, forward_vel, forward_vel])
-            gains.extend([0, 0, gain_exists*gain, gain_exists*gain])
-        super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
-            dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
-            fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
-        self.name = 'Reafference'
+            for i in range(n_forward):
+                gain_exists = (np.random.random_sample() < gain_probability)*1
+                ts.extend([last_t, last_t+pause_duration,
+                           last_t + pause_duration, last_t+pause_duration+forward_duration])
+                vels.extend([0, 0, forward_vel, forward_vel])
+                gains.extend([0, 0, gain_exists*gain, gain_exists*gain])
+                last_t = ts[-1]
+            super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
+                dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
+                fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
+            self.name = 'Reafference'
 
 
 class MultistimulusExp06Protocol(Protocol):

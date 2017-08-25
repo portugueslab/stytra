@@ -7,8 +7,10 @@ from datetime import datetime
 from stytra.tracking.diagnostics import draw_fish_new
 from stytra.collectors import Accumulator
 
+import pandas as pd
 
-class DataAccumulator(QObject, Accumulator):
+
+class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=['tail_sum']):
         """
         General class for accumulating (for saving or dispatching) data
@@ -45,7 +47,7 @@ class DataAccumulator(QObject, Accumulator):
                 t_ms = (t - self.starting_time).total_seconds()
 
                 # append:
-                self.stored_data.append([t_ms, ] + data)
+                self.stored_data.append((t_ms, ) + data)
             except Empty:
                 break
 

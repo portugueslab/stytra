@@ -274,7 +274,8 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
 
 
 @jit(nopython=True)
-def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points, tail_length, color_invert):
+def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
+                        num_points, tail_length, color_invert):
     """
     Tail tracing based on min (or max) detection on arches. Wrapped by tail_trace_ls.
     """
@@ -282,25 +283,22 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_point
     start_angle = np.arctan2(tail_len_x, tail_len_y)
 
     # Initialise first angle arch, tail sum and angle list:
-    lin = np.linspace(-np.pi / 2 + start_angle, np.pi / 2 + start_angle, 25)
+    pi2 = np.pi/2
+    lin = np.linspace(-pi2 + start_angle, pi2 + start_angle, 25)
     tail_sum = 0.
-    angles = []
+    angles = np.zeros(num_points+1)
+
+    # Create vector of intensities along the arch:
+    intensity_vect = np.zeros(len(lin), dtype=np.int16)
 
     for j in range(num_points):  # Cycle on segments
         # Transform arch angles in x and y coordinates:
         xs = start_x + tail_length / num_points * np.sin(lin)
         ys = start_y + tail_length / num_points * np.cos(lin)
 
-        # Transform coordinates in pixel indexes:
-        xs_int = np.zeros(len(xs), dtype=np.int16)
-        ys_int = np.zeros(len(ys), dtype=np.int16)
-
-        # Create vector of intensities along the arch:
-        intensity_vect = np.zeros(len(ys), dtype=np.int16)
+        # fill the vector of intensities along the arch
         for i in range(len(xs)):
-            xs_int[i] = int(xs[i])
-            ys_int[i] = int(ys[i])
-            intensity_vect[i] = img[ys_int[i], xs_int[i]]
+            intensity_vect[i] = img[int(ys[i]), int(xs[i])]
 
         # Find minimum or maximum of the arch.
         # This switch is much faster than inverting the entire image.
@@ -309,20 +307,26 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_point
         else:
             ident = np.argmax(intensity_vect)
 
-        tail_sum += np.cos(lin[ident])
-        angles.append(lin[ident])
+        new_angle = lin[ident]
+
+        # skip the first angle for the tail sum
+        if j > 0:
+            tail_sum += new_angle + pi2
+
+        angles[j+1] = new_angle
 
         # The point found will be the starting point of the next arc
         start_x = xs[ident]
         start_y = ys[ident]
 
-        # Create an 180 deg angle depending on the previous one:
-        lin = np.linspace(lin[ident] - np.pi / 3, lin[ident] + np.pi / 3, 20)
+        # Create an 120 deg angle depending on the previous one:
+        lin = np.linspace(new_angle - np.pi / 3, new_angle + np.pi / 3, 20)
 
-    return [tail_sum, ] + angles
+    angles[0] = tail_sum
+    return angles
 
 
-def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, tail_length=None,
+def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, n_segments=9, tail_length=None,
                   filtering=True, color_invert=False):
     """
     Tail tracing based on min (or max) detection on arches. Wrap _tail_trace_core_ls.
@@ -332,7 +336,7 @@ def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, t
     :param start_y: tail starting point (y)
     :param tail_len_x: tail length x (if tail length is fixed, only orientation matters)
     :param tail_len_y: tail length y
-    :param num_points: number of segments
+    :param n_segments: number of segments
     :param tail_length: total tail length; if unspecified, calculated from tail_len_x and y
     :param filtering: True for smoothing the image
     :param color_invert: True for inverting image colors
@@ -350,6 +354,6 @@ def tail_trace_ls(img, start_x, start_y, tail_len_x, tail_len_y, num_points=9, t
 
     # Use jitted function for the actual calculation:
     angle_list = _tail_trace_core_ls(img_filt, start_x, start_y, tail_len_x, tail_len_y,
-                                     num_points, tail_length, color_invert)
+                                     n_segments, tail_length, color_invert)
 
     return angle_list

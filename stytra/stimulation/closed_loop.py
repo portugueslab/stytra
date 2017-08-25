@@ -1,11 +1,11 @@
 import numpy as np
-from stytra.tracking import DataAccumulator
+from stytra.tracking import QueueDataAccumulator
 # from keras.models import load_model
 
 
 class VigourMotionEstimator:
     def __init__(self, data_acc, vigour_window=50):
-        assert(isinstance(data_acc, DataAccumulator))
+        assert(isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
         self.vigour_window = vigour_window
         self.last_dt = 1/500.
@@ -22,7 +22,7 @@ class VigourMotionEstimator:
 
 class LSTMMotionEstimator:
     def __init__(self, data_acc, LSTM_file, PCA_weights, gains=[1,1,1], delay=0):
-        assert (isinstance(data_acc, DataAccumulator))
+        assert (isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
         self.PCA_weights = PCA_weights
         self.model = load_model(LSTM_file)

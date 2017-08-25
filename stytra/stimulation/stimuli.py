@@ -279,7 +279,7 @@ class MovingConstantly(SeamlessPainterStimulus):
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     def __init__(self, *args, default_velocity=10,
-                 fish_motion_estimator, gain=1, base_gain=1, **kwargs):
+                 fish_motion_estimator, gain=1, base_gain=5, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = 'closed loop 1D'
         self.dynamic_parameters.append('vel')

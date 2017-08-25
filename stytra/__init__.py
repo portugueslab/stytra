@@ -12,7 +12,7 @@ import git
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
-from stytra.tracking import DataAccumulator
+from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
@@ -36,6 +36,17 @@ import os
 
 import zmq
 
+
+# this part is needed to find default arguments of functions
+import inspect
+
+def get_default_args(func):
+    signature = inspect.signature(func)
+    return {
+        k: v.default
+        for k, v in signature.parameters.items()
+        if v.default is not inspect.Parameter.empty
+    }
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
@@ -80,7 +91,7 @@ class Experiment(QMainWindow):
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',
-                            self.window_display.display_params,
+                            self.window_display, 'display_params',
                                 use_last_val=True)
 
         self.window_display.update_display_params()
@@ -152,6 +163,7 @@ class Experiment(QMainWindow):
     def end_protocol(self):
         self.protocol.end()
         self.dc.save(save_csv=self.save_csv)
+        self.reset()
 
     def closeEvent(self, *args, **kwargs):
         self.end_protocol()
@@ -255,8 +267,9 @@ class TailTrackingExperiment(CameraExperiment):
         dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
                                        centroid=detect_tail_embedded)
 
-        if tracking_method_parameters is None:
-            tracking_method_parameters = dict()
+        current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
+        if tracking_method_parameters is not None:
+            current_tracking_method_parameters.update(tracking_method_parameters)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
                                                 gui_queue=self.gui_frame_queue,
@@ -267,7 +280,11 @@ class TailTrackingExperiment(CameraExperiment):
                                                 gui_framerate=20,
                                                 print_framerate=False)
 
-        self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
+        self.data_acc_tailpoints = QueueDataAccumulator(self.tail_position_queue,
+                                                        header_list=['tail_sum'] +
+                                                        ['theta_{:02}'.format(i)
+                                                         for i in range(
+                                                            current_tracking_method_parameters['n_segments'])])
 
         # GUI elements
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
@@ -279,10 +296,11 @@ class TailTrackingExperiment(CameraExperiment):
             update_timer=self.gui_refresh_timer,
             control_queue=self.control_queue,
             camera_parameters=self.metadata_camera,
-            tracking_params=tracking_method_parameters)
+            tracking_params=current_tracking_method_parameters)
 
         self.dc.add_data_source('tracking',
-                                'tail_position', self.camera_viewer.roi_dict)
+                                'tail_position', self.camera_viewer, 'roi_dict')
+
 
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
@@ -299,6 +317,14 @@ class TailTrackingExperiment(CameraExperiment):
     def start_protocol(self):
         self.data_acc_tailpoints.reset()
         super().start_protocol()
+
+    def end_protocol(self):
+        self.dc.add_data_source('tracking', 'tail_angles',
+                                self.data_acc_tailpoints.get_dataframe())
+        self.dc.add_data_source('stimulus', 'dynamic_parameters',
+                                self.protocol.dynamic_log.get_dataframe())
+        super().end_protocol()
+
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)

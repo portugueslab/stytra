@@ -200,7 +200,7 @@ class FrameDispatcher(FrameProcessor):
 
                 if self.processing_function is not None:
                     output = self.processing_function(frame, **self.processing_parameters)
-                    self.output_queue.put((datetime.now(), output))
+                    self.output_queue.put((datetime.now(), tuple(output)))
 
                 # calculate the frame rate
                 self.update_framerate()

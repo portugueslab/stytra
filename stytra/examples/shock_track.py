@@ -11,7 +11,7 @@ from stytra.tracking.tail import tail_trace_ls
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.hardware.video import XimeaCamera, FrameDispatcher
-from stytra.tracking import DataAccumulator
+from stytra.tracking import QueueDataAccumulator
 from stytra.triggering import ZmqLightsheetTrigger, PyboardConnection
 import json
 import git
@@ -111,7 +111,7 @@ class Experiment(QMainWindow):
                                                 output_queue=self.tail_pos_queue,
                                                 gui_framerate=10, print_framerate=False)
 
-        self.data_acc_tailpoints = DataAccumulator(self.tail_pos_queue)
+        self.data_acc_tailpoints = QueueDataAccumulator(self.tail_pos_queue)
 
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 

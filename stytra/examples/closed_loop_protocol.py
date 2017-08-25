@@ -27,17 +27,11 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.main_layout.addWidget(self.behaviour_layout)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
-        self.set_protocol(ReafferenceProtocol(fish_motion_estimator=VigourMotionEstimator(
+        self.set_protocol(ReafferenceProtocol(n_repeats=10,
+            fish_motion_estimator=VigourMotionEstimator(
                                  self.data_acc_tailpoints, vigour_window=0.05),
             calibrator=self.calibrator))
 
-        # Protocol([
-        #     ClosedLoop1DGrating(grating_orientation='horizontal',
-        #                         grating_period=10, base_gain=0.5,
-        #                         fish_motion_estimator=VigourMotionEstimator(
-        #                             self.data_acc_tailpoints, vigour_window=0.05),
-        #                         duration=100, default_velocity=10, calibrator=self.calibrator)
-        # ])
         self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_col=1,
                                                  xlink=self.stream_plot.streamplot)
         self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)
@@ -51,7 +45,7 @@ if __name__ == '__main__':
     exp = ClosedLoopExperiment(app=app, name='closed_loop',
                               directory=r'D:\vilim/closed_loop/',
                               tracking_method='angle_sweep',
-                              tracking_method_parameters={'num_points': 9,
+                              tracking_method_parameters={'n_segments': 9,
                                                           'filtering': True,
                                                           'color_invert': True})
     app.exec_()

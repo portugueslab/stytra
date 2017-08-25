@@ -9,6 +9,7 @@ import param
 from stytra.metadata import Metadata
 from copy import deepcopy
 
+
 class Accumulator:
     """ A general class for an object that accumulates that
     will be saved or plotted in real time
@@ -22,8 +23,7 @@ class Accumulator:
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers
         """
-        data_array = pd.lib.to_object_array(self.stored_data).astype(np.float64)
-        return pd.DataFrame(data_array[:, :len(self.header_list)],
+        return pd.DataFrame(self.stored_data,
                             columns=self.header_list)
 
     def get_last_n(self, n):

@@ -48,6 +48,7 @@ class Protocol(QObject):
         self.timer.setSingleShot(False)
         self.timer.start(self.dt)
         self.dynamic_log.starting_time = self.t_start
+        self.dynamic_log.reset()
         self.past_stimuli_elapsed = datetime.datetime.now()
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
@@ -88,7 +89,7 @@ class Protocol(QObject):
             self.timer.stop()
         except:
             pass
-        self.reset()
+
 
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""
@@ -116,7 +117,6 @@ class Protocol(QObject):
 
         # Log will be a list of stimuli states
         self.log = []
-        self.dynamic_log = DynamicLog(self.stimuli)
 
     def get_duration(self):
         total_duration = 0
@@ -144,4 +144,7 @@ class DynamicLog(Accumulator):
 
     def update_list(self, data):
         self.stored_data.append(data)
+
+    def reset(self):
+        self.stored_data = []
 
