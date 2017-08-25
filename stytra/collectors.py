@@ -28,6 +28,8 @@ class Accumulator:
 
     def get_last_n(self, n):
         last_n = min(n, len(self.stored_data))
+        if len(self.stored_data) == 0:
+            return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
         data_list = self.stored_data[-max(last_n, 1):]
 
         obar = np.array(data_list)

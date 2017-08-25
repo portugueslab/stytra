@@ -1,10 +1,10 @@
 from stytra import TailTrackingExperiment
 from stytra.stimulation.stimuli import ClosedLoop1D, GratingPainterStimulus
-from stytra.stimulation.backgrounds import gratings
+from stytra.calibration import CrossCalibrator
 from stytra.stimulation.closed_loop import VigourMotionEstimator
 from PyQt5.QtWidgets import QSplitter, QApplication, QVBoxLayout
 from PyQt5.QtCore import Qt
-from stytra.stimulation import Protocol
+from stytra.stimulation.protocols import ReafferenceProtocol
 from stytra.gui.plots import StreamingPlotWidget
 
 import multiprocessing
@@ -17,7 +17,8 @@ class ClosedLoop1DGrating(ClosedLoop1D, GratingPainterStimulus):
 
 class ClosedLoopExperiment(TailTrackingExperiment):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, calibrator=CrossCalibrator(fixed_length=160),
+                         **kwargs)
         self.main_layout = QSplitter(Qt.Horizontal)
         self.behaviour_layout = QSplitter(Qt.Vertical)
         self.behaviour_layout.addWidget(self.camera_viewer)
@@ -26,12 +27,17 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.main_layout.addWidget(self.behaviour_layout)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
-        self.set_protocol(Protocol([
-            ClosedLoop1DGrating(grating_orientation='horizontal', grating_period=10, base_gain=0.01,
-                         fish_motion_estimator=VigourMotionEstimator(
-                         self.data_acc_tailpoints, vigour_window=100),
-                         duration=100, default_velocity=20, calibrator=self.calibrator)
-                        ]))
+        self.set_protocol(ReafferenceProtocol(fish_motion_estimator=VigourMotionEstimator(
+                                 self.data_acc_tailpoints, vigour_window=0.05),
+            calibrator=self.calibrator))
+
+        # Protocol([
+        #     ClosedLoop1DGrating(grating_orientation='horizontal',
+        #                         grating_period=10, base_gain=0.5,
+        #                         fish_motion_estimator=VigourMotionEstimator(
+        #                             self.data_acc_tailpoints, vigour_window=0.05),
+        #                         duration=100, default_velocity=10, calibrator=self.calibrator)
+        # ])
         self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_col=1,
                                                  xlink=self.stream_plot.streamplot)
         self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)

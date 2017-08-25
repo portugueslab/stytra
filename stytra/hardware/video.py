@@ -4,7 +4,7 @@ except ImportError:
     pass
 
 from multiprocessing import Process, Queue, Event
-from queue import Empty
+from queue import Empty, Full
 import numpy as np
 from datetime import datetime, timedelta
 from collections import deque
@@ -113,7 +113,10 @@ class XimeaCamera(FrameProcessor):
                 self.cam.get_image(img)
                 # TODO check if it does anything to add np.array
                 arr = np.array(img.get_image_data_numpy())
-                self.q.put((datetime.now(), arr))
+                try:
+                    self.q.put((datetime.now(), arr))
+                except Full:
+                    print('frame dropped')
             except xiapi.Xi_error:
                 print('Unable to acquire frame')
                 pass
@@ -201,6 +204,7 @@ class FrameDispatcher(FrameProcessor):
 
                 # calculate the frame rate
                 self.update_framerate()
+                # put the current frame into the GUI queue
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
                 i_frame += 1

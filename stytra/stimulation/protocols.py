@@ -1,5 +1,5 @@
 from stytra.stimulation.stimuli import Pause, Flash, \
-    ShockStimulus, MovingSeamless,\
+    ShockStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion
 from stytra.stimulation import Protocol
 import pandas as pd
@@ -95,10 +95,6 @@ class FlashShockProtocol(Protocol):
             print('missing trigger')
 
         stimuli = []
-        stimuli.append(Pause(duration=1))
-        stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-        stimuli.append(Pause(duration=prepare_pause))
-        stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
 
         for i in range(repetitions):  # change here for number of pairing trials
             stimuli.append(Pause(duration=pre_stim_pause))
@@ -138,7 +134,9 @@ class ReafferenceProtocol(Protocol):
     def __init__(self, n_backwards=7, pause_duration=7, backwards_duration=0.5,
                  forward_duration=2, backward_vel=20, forward_vel=10,
                  n_forward=14,
-                 gain_probability=0.5, gain=1, grating_args=None):
+                 gain_probability=0.5, gain=1, grating_period=10,
+                 fish_motion_estimator=None,
+                 calibrator=None,):
         gains = []
         vels = []
         ts = []
@@ -148,18 +146,20 @@ class ReafferenceProtocol(Protocol):
             else:
                 last_t = ts[-1]
             ts.extend([last_t, last_t+pause_duration,
-                       last_t + pause_duration, last_t+backwards_duration])
-            vels.extend([0,0,backward_vel, backward_vel])
+                       last_t + pause_duration, last_t+pause_duration+backwards_duration])
+            vels.extend([0, 0, -backward_vel, -backward_vel])
         gains.extend([0]*len(vels))
+
         for i in range(n_forward):
+            last_t = ts[-1]
             gain_exists = (np.random.random_sample() < gain_probability)*1
             ts.extend([last_t, last_t+pause_duration,
-                       last_t + pause_duration, last_t+forward_duration])
+                       last_t + pause_duration, last_t+pause_duration+forward_duration])
             vels.extend([0, 0, forward_vel, forward_vel])
-            gains.extend([0, 0, gain_exists*gain])
-        super().__init__([ClosedLoop1D_variable_motion(motion=pd.DataFrame(
-            dict(t=ts, vel=vels, gain=gains,
-                 background=gratings(**grating_args))))])
+            gains.extend([0, 0, gain_exists*gain, gain_exists*gain])
+        super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
+            dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
+            fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
         self.name = 'Reafference'
 
 

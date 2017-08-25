@@ -278,25 +278,29 @@ class MovingConstantly(SeamlessPainterStimulus):
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
-    def __init__(self, *args, default_velocity,
+    def __init__(self, *args, default_velocity=10,
                  fish_motion_estimator, gain=1, base_gain=1, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = 'closed loop 1D'
         self.dynamic_parameters.append('vel')
-        self.default_vel = default_velocity
-        self.fish_motion_estimator = fish_motion_estimator
+        self.dynamic_parameters.append('y')
+        self.base_vel = default_velocity
+        self._fish_motion_estimator = fish_motion_estimator
         self.vel = 0
         self.gain = gain
         self.base_gain = base_gain
-        self.past_x = self.x
-        self.past_y = self.y
-        self.past_theta = self.theta
-        self.past_t = 0
+        self._past_x = self.x
+        self._past_y = self.y
+        self._past_theta = self.theta
+        self._past_t = 0
 
     def update(self):
-        self.vel = self.default_vel + self.fish_motion_estimator.get_velocity()
-        self.y += (self.elapsed-self.past_t) * self.vel * self.gain * self.base_gain
+        dt = (self.elapsed - self._past_t)
+        self.vel = self.base_vel - \
+                   self._fish_motion_estimator.get_velocity() * self.gain * self.base_gain
+        self.y += dt * self.vel
         # TODO implement lag
-        self.past_t = self.elapsed
+        self._past_t = self.elapsed
         for attr in ['x', 'y', 'theta']:
             try:
                 setattr(self, 'past_'+attr, getattr(self, attr))
@@ -304,19 +308,21 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
-class ClosedLoop1D_variable_motion(ClosedLoop1D):
+class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
     def __init__(self, *args, motion, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
+        self.duration = motion.t.iloc[-1]
 
     def update(self):
-        for attr in ['vel', 'gain', 'lag']:
+        for attr in ['base_vel', 'gain', 'lag']:
             try:
                 setattr(self, attr, np.interp(self.elapsed,
                                               self.motion.t,
                                               self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
+        super().update()
 
 
 

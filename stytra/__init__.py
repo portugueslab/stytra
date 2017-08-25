@@ -23,6 +23,8 @@ from PyQt5.QtCore import QTimer, pyqtSignal
 from stytra.metadata import MetadataCamera
 import sys
 
+import traceback
+
 # imports for accumulator
 import pandas as pd
 import numpy as np
@@ -143,8 +145,8 @@ class Experiment(QMainWindow):
                 print('Second screen not available')
 
     def start_protocol(self):
-        if self.run_committed:
-            self.check_if_committed()
+        # if self.run_committed:
+        #     self.check_if_committed()
         self.protocol.start()
 
     def end_protocol(self):
@@ -152,6 +154,7 @@ class Experiment(QMainWindow):
         self.dc.save(save_csv=self.save_csv)
 
     def closeEvent(self, *args, **kwargs):
+        self.end_protocol()
         self.app.closeAllWindows()
 
     def toggle_calibration(self):
@@ -198,7 +201,7 @@ class CameraExperiment(Experiment):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.frame_queue = Queue()
+        self.frame_queue = Queue(500)
         self.gui_frame_queue = Queue()
         self.finished_sig = Event()
 
@@ -220,13 +223,14 @@ class CameraExperiment(Experiment):
 
     def go_live(self):
         self.camera.start()
-        self.gui_refresh_timer.start()
+        self.gui_refresh_timer.start(1000//60)
 
-    def end_protocol(self):
-        super().end_protocol()
+    def closeEvent(self, *args, **kwargs):
+        super().closeEvent(*args, **kwargs)
         self.finished_sig.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
+        print('Camera process terminated')
 
 
 class TailTrackingExperiment(CameraExperiment):
@@ -260,7 +264,7 @@ class TailTrackingExperiment(CameraExperiment):
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
-                                                gui_framerate=10,
+                                                gui_framerate=20,
                                                 print_framerate=False)
 
         self.data_acc_tailpoints = DataAccumulator(self.tail_position_queue)
@@ -277,7 +281,8 @@ class TailTrackingExperiment(CameraExperiment):
             camera_parameters=self.metadata_camera,
             tracking_params=tracking_method_parameters)
 
-        self.dc.add_data_source('tracking','tail_position', self.camera_viewer.roi_dict)
+        self.dc.add_data_source('tracking',
+                                'tail_position', self.camera_viewer.roi_dict)
 
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
@@ -290,28 +295,24 @@ class TailTrackingExperiment(CameraExperiment):
         super().go_live()
         self.frame_dispatcher.start()
         sys.excepthook = self.excepthook
-        self.finished = False
+
+    def start_protocol(self):
+        self.data_acc_tailpoints.reset()
+        super().start_protocol()
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
-    def end_protocol(self):
-        self.finished = True
-        self.finished_sig.set()
-        # self.camera.join(timeout=1)
-        self.camera.terminate()
-
+    def closeEvent(self, *args, **kwargs):
+        super().closeEvent(*args, **kwargs)
         self.frame_dispatcher.terminate()
         print('Frame dispatcher terminated')
-
-        print('Camera joined')
         self.gui_refresh_timer.stop()
 
-        super().end_protocol()
-
-    def excepthook(self, exctype, value, traceback):
-        print(exctype, value, traceback)
+    def excepthook(self, exctype, value, tb):
+        traceback.print_tb(tb)
+        print('{0}: {1}'.format(exctype, value))
         self.finished_sig.set()
         self.camera.terminate()
         self.frame_dispatcher.terminate()

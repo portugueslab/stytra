@@ -8,10 +8,16 @@ class VigourMotionEstimator:
         assert(isinstance(data_acc, DataAccumulator))
         self.data_acc = data_acc
         self.vigour_window = vigour_window
+        self.last_dt = 1/500.
 
     def get_velocity(self, lag=0):
         # TODO implement lag here
-        return np.std(self.data_acc.get_last_n(self.vigour_window)[:, 1])
+        vigour_n_samples = int(round(self.vigour_window/self.last_dt))
+        past_tail_motion = self.data_acc.get_last_n(vigour_n_samples)
+        new_dt = (past_tail_motion[-1, -1] - past_tail_motion[-1, 0])/vigour_n_samples
+        if new_dt>0:
+            self.last_dt = new_dt
+        return np.std(past_tail_motion[:, 1])
 
 
 class LSTMMotionEstimator:

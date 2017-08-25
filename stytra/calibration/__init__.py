@@ -26,20 +26,27 @@ class Calibrator:
 
 
 class CrossCalibrator(Calibrator):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, fixed_length=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.length_px = 1
+
+        if fixed_length is not None:
+            self.length_px = fixed_length
+            self.length_is_fixed = True
+        else:
+            self.length_is_fixed = False
+            self.length_px = 1
         self.length_mm = 1
         self.length_to_measure = 'a line in the cross'
 
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
-        p.drawLine(w // 4, h // 2, w * 3 // 4, h // 2)
-        p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
-        p.drawLine(w // 2, h * 3 // 4, w // 2, h // 4)
-        p.drawLine(w // 2, h * 3 // 4, w * 3 // 4, h * 3 // 4)
-        self.length_px = h//2
+        if not self.length_is_fixed:
+            self.length_px = max(h/2, w/2)
+        l2 = self.length_px/2
+        p.drawLine(w//2-l2, h // 2, w//2 + l2, h // 2)
+        p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
+        p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
     def set_physical_scale(self, measured_distance):
         self.length_mm = measured_distance
