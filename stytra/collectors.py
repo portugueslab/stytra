@@ -17,7 +17,7 @@ class Accumulator:
     """
     def __init__(self):
         self.stored_data = []
-        self.header_list = ['time']
+        self.header_list = ['t']
         self.starting_time = datetime.datetime.now()
 
     def get_dataframe(self):
@@ -52,7 +52,7 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
     else:
         t = metadata_dict['stimulus']['log'][-1]['t_stop']
         timearr = np.arange(0, t, time_step)
-        final_df = pd.DataFrame(timearr, columns=['time'])
+        final_df = pd.DataFrame(timearr, columns=['t'])
 
     # Control for delays between tracking and stimulus starting points:
     delta_time = 0
@@ -67,14 +67,14 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
         if stimulus['name'] == 'start_acquisition':
             start_point = stimulus
 
-        final_df.loc[(final_df['time'] > stimulus['t_start'] + delta_time) &
-                     (final_df['time'] < stimulus['t_stop'] + delta_time),
+        final_df.loc[(final_df['t'] > stimulus['t_start'] + delta_time) &
+                     (final_df['t'] < stimulus['t_stop'] + delta_time),
                      'stimulus'] = str(stimulus['name'])
 
     # Check for the 'start acquisition' which run for a very short time and can be
     # missed:
     if start_point:
-        start_idx = np.argmin(abs(final_df['time'] - start_point['t_start']))
+        start_idx = np.argmin(abs(final_df['t'] - start_point['t_start']))
         final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
 
     return final_df

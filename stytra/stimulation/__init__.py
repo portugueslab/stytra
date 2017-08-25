@@ -90,7 +90,6 @@ class Protocol(QObject):
         except:
             pass
 
-
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""
         # Update with the data of the current stimulus:
@@ -139,7 +138,7 @@ class DynamicLog(Accumulator):
         self.starting_time = 0
         for stimulus in stimuli:
             if isinstance(stimulus, DynamicStimulus):
-                self.header_list = ['time'] + stimulus.dynamic_parameters
+                self.header_list = ['t'] + stimulus.dynamic_parameters
         self.stored_data = []
 
     def update_list(self, data):

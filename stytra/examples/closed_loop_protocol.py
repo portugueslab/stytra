@@ -27,7 +27,7 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.main_layout.addWidget(self.behaviour_layout)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
-        self.set_protocol(ReafferenceProtocol(n_repeats=10,
+        self.set_protocol(ReafferenceProtocol(n_repeats=100,
             fish_motion_estimator=VigourMotionEstimator(
                                  self.data_acc_tailpoints, vigour_window=0.05),
             calibrator=self.calibrator))
