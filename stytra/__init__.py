@@ -200,7 +200,7 @@ class LightsheetExperiment(Experiment):
             print(self.lightsheet_config)
             # send the duration of the protocol so that
             # the scanning can stop
-            self.zmq_socket.send_json(self.duration)
+            self.zmq_socket.send_json(self.protocol.duration)
         super().start_protocol()
 
 
