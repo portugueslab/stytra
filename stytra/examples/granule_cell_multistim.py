@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication,  QSplitter
 
 from stytra import LightsheetExperiment
 
+from stytra.calibration import CrossCalibrator
 from stytra.stimulation.protocols import MultistimulusExp06Protocol
 
 from stytra.triggering import PyboardConnection
@@ -12,17 +13,16 @@ import multiprocessing
 
 class GcMultistimExperiment(LightsheetExperiment):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, calibrator=CrossCalibrator(fixed_length=50), **kwargs)
         multiprocessing.set_start_method('spawn')
         self.pyb = PyboardConnection(com_port='COM3')
 
-        protocol = MultistimulusExp06Protocol(repetitions=2, spontaneous_duration_pre=0, spontaneous_duration_post=0,
+        protocol = MultistimulusExp06Protocol(repetitions=16,
                          shock_args=dict(burst_freq=1, pulse_amp=3., pulse_n=1,
                  pulse_dur_ms=5, pyboard=self.pyb),
                                 grating_args=dict(grating_period=10), calibrator=self.calibrator)
 
         self.set_protocol(protocol)
-        self.dc.add_data_source('imaging', 'lightsheet_config', protocol, 'lightsheet_config')
 
         print('The protocol will take {} seconds or {}:{}'.format(protocol.duration,
                                                                   int(protocol.duration)//60,

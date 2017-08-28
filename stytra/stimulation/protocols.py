@@ -1,6 +1,7 @@
 from stytra.stimulation.stimuli import Pause, Flash, \
-    ShockStimulus, MovingGratingStimulus,\
+    ShockStimulus, MovingGratingStimulus, MovingBackgroundStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion
+from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation import Protocol
 import pandas as pd
 import numpy as np
@@ -172,6 +173,7 @@ class MultistimulusExp06Protocol(Protocol):
                         grating_args=None,
                         shock_args=None,
                         shock_on=False,
+                        water_on=True,
                         lr_vel=10,
                         spontaneous_duration_pre=120,
                         spontaneous_duration_post=120,
@@ -209,7 +211,6 @@ class MultistimulusExp06Protocol(Protocol):
             stimuli.append(MovingGratingStimulus(motion=motion,
                                                duration=last_time, **grating_args, calibrator=calibrator))
 
-
             if lr_vel>0:
                 t = [0, one_stimulus_duration]
                 y = [0., 0.]
@@ -235,6 +236,34 @@ class MultistimulusExp06Protocol(Protocol):
                 stimuli.append(Pause(duration=pre_stim_pause))
                 stimuli.append(ShockStimulus(**shock_args))
                 stimuli.append(Pause(duration=one_stimulus_duration))
+
+            if water_on:
+                im_vel = 10
+                stimuli.append(Pause(duration=pre_stim_pause))
+                t = [0, one_stimulus_duration]
+                y = [0., 0.]
+                x = [0., 0.]
+
+                dxs = [-1, 1, 0, 0]
+                dys = [0, 0, 1, 1]
+                for dx, dy in zip(dxs, dys):
+                    t.append(t[-1] + grating_motion_duration)
+                    x.append(x[-1] + dx * im_vel * grating_motion_duration)
+                    y.append(y[-1] + dy * im_vel * grating_motion_duration)
+                    t.append(t[-1] + one_stimulus_duration)
+                    x.append(x[-1])
+                    y.append(y[-1])
+
+                last_time = t[-1]
+                motion = pd.DataFrame(dict(t=t,
+                                           x=x,
+                                           y=y))
+
+                stimuli.append(MovingBackgroundStimulus(motion=motion,
+                                                     duration=last_time,
+                                background=existing_file_background(r"C:\Users\portugueslab\Documents\underwater\SeamlessRocks.png"),
+                                                        calibrator=calibrator))
+
 
         stimuli.append(Pause(duration=spontaneous_duration_post))
 

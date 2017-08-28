@@ -57,41 +57,46 @@ class Protocol(QObject):
         # self.sig_stim_change.emit(0) - not sure about commenting out this
 
     def timestep(self):
-        self.t = (datetime.datetime.now() - self.t_start).total_seconds()  # Time from start in seconds
-        self.current_stimulus.elapsed = (datetime.datetime.now() -
-                                         self.past_stimuli_elapsed).total_seconds()
-        if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
-            self.sig_stim_change.emit(self.i_current_stimulus)
-            self.update_log()
+        if self.running:
+            self.t = (datetime.datetime.now() - self.t_start).total_seconds()  # Time from start in seconds
+            self.current_stimulus.elapsed = (datetime.datetime.now() -
+                                             self.past_stimuli_elapsed).total_seconds()
+            if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
+                self.sig_stim_change.emit(self.i_current_stimulus)
+                self.update_log()
 
-            if self.i_current_stimulus >= len(self.stimuli) - 1:
-                self.end()
-                self.sig_protocol_finished.emit()
-            else:
-                # update the variable which keeps track when the last
-                # stimulus *should* have ended, in order to avoid
-                # drifting
+                if self.i_current_stimulus >= len(self.stimuli) - 1:
+                    self.end()
+                    self.sig_protocol_finished.emit()
 
-                self.past_stimuli_elapsed += datetime.timedelta(
-                    seconds=self.current_stimulus.duration)
-                self.i_current_stimulus += 1
-                self.current_stimulus = self.stimuli[self.i_current_stimulus]
-                self.current_stimulus.started = datetime.datetime.now()
-                self.current_stimulus.start()
 
-        self.sig_timestep.emit(self.i_current_stimulus)
-        if isinstance(self.current_stimulus, DynamicStimulus):
-            self.sig_stim_change.emit(self.i_current_stimulus)
-            self.current_stimulus.update()
-            self.update_dynamic_log()
+                else:
+                    # update the variable which keeps track when the last
+                    # stimulus *should* have ended, in order to avoid
+                    # drifting
+
+                    self.past_stimuli_elapsed += datetime.timedelta(
+                        seconds=self.current_stimulus.duration)
+                    self.i_current_stimulus += 1
+                    self.current_stimulus = self.stimuli[self.i_current_stimulus]
+                    self.current_stimulus.started = datetime.datetime.now()
+                    self.current_stimulus.start()
+
+            self.sig_timestep.emit(self.i_current_stimulus)
+            if isinstance(self.current_stimulus, DynamicStimulus):
+                self.sig_stim_change.emit(self.i_current_stimulus)
+                self.current_stimulus.update()
+                self.update_dynamic_log()
 
     def end(self):
-        self.running = False
-        try:
-            self.timer.timeout.disconnect()
-            self.timer.stop()
-        except:
-            pass
+        if self.running:
+            self.running = False
+            try:
+                self.timer.timeout.disconnect()
+                self.timer.stop()
+            except:
+                pass
+
 
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""

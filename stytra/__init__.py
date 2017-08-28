@@ -161,10 +161,9 @@ class Experiment(QMainWindow):
         self.protocol.start()
 
     def end_protocol(self):
-        if self.protocol.running:
-            self.protocol.end()
-            self.dc.save(save_csv=self.save_csv)
-            self.protocol.reset()
+        self.protocol.end()
+        self.dc.save(save_csv=self.save_csv)
+        self.protocol.reset()
 
     def closeEvent(self, *args, **kwargs):
         self.end_protocol()
@@ -189,6 +188,7 @@ class LightsheetExperiment(Experiment):
 
         self.lightsheet_config = dict()
         self.wait_for_lightsheet = wait_for_lightsheet
+        self.dc.add_data_source('imaging', 'lightsheet_config', self, 'lightsheet_config')
 
     def start_protocol(self):
         # Start only when received the GO signal from the lightsheet
