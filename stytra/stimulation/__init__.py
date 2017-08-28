@@ -41,6 +41,7 @@ class Protocol(QObject):
         self.log = []
         self.dynamic_log = DynamicLog(self.stimuli)
         self.log_print = log_print
+        self.running = False
 
     def start(self):
         self.t_start = datetime.datetime.now()
@@ -52,6 +53,7 @@ class Protocol(QObject):
         self.past_stimuli_elapsed = datetime.datetime.now()
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
+        self.running = True
         # self.sig_stim_change.emit(0) - not sure about commenting out this
 
     def timestep(self):
@@ -84,6 +86,7 @@ class Protocol(QObject):
             self.update_dynamic_log()
 
     def end(self):
+        self.running = False
         try:
             self.timer.timeout.disconnect()
             self.timer.stop()

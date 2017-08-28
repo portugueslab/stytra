@@ -161,9 +161,10 @@ class Experiment(QMainWindow):
         self.protocol.start()
 
     def end_protocol(self):
-        self.protocol.end()
-        self.dc.save(save_csv=self.save_csv)
-        self.reset()
+        if self.protocol.running:
+            self.protocol.end()
+            self.dc.save(save_csv=self.save_csv)
+            self.protocol.reset()
 
     def closeEvent(self, *args, **kwargs):
         self.end_protocol()
