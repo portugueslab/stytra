@@ -290,11 +290,12 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
 
     # Create vector of intensities along the arch:
     intensity_vect = np.zeros(len(lin), dtype=np.int16)
+    seglen = tail_length / num_points
 
     for j in range(num_points):  # Cycle on segments
         # Transform arch angles in x and y coordinates:
-        xs = start_x + tail_length / num_points * np.sin(lin)
-        ys = start_y + tail_length / num_points * np.cos(lin)
+        xs = start_x + seglen * np.sin(lin)
+        ys = start_y + seglen * np.cos(lin)
 
         # fill the vector of intensities along the arch
         for i in range(len(xs)):

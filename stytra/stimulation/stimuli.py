@@ -221,14 +221,14 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
             start = -self.y / self.calibrator.mm_px - \
                     np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
             for i in range(n_gratings):
-                p.drawRect(-1, start, w+2, grating_width/2)
+                p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
         else:
             n_gratings = int(np.round(h / grating_width + 2))
             start = self.x / self.calibrator.mm_px - \
                     np.floor(self.x / grating_width) * grating_width
             for i in range(n_gratings):
-                p.drawRect(start, -1, grating_width / 2, h+2)
+                p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
                 start += grating_width
 
 
