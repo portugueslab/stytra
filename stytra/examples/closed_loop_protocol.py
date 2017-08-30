@@ -10,8 +10,6 @@ from stytra.gui.plots import StreamingPlotWidget
 import multiprocessing
 
 
-
-
 class ClosedLoopExperiment(TailTrackingExperiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CrossCalibrator(fixed_length=160),
@@ -44,5 +42,5 @@ if __name__ == '__main__':
                               tracking_method='angle_sweep',
                               tracking_method_parameters={'n_segments': 9,
                                                           'filtering': True,
-                                                          'color_invert': False})
+                                                          'color_invert': True})
     app.exec_()

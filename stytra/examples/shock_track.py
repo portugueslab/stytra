@@ -115,7 +115,7 @@ class Experiment(QMainWindow):
 
         self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
 
-        self.roi_dict = {'start_y': 320, 'start_x': 480, 'length_y': 0, 'length_x': -400}
+        self.roi_dict = {'start_y': 320, 'start_x': 480, 'tail_length_y': 0, 'tail_length_x': -400}
         self.data_collector.add_data_source('tracking', self.roi_dict)
 
         self.camera_viewer = CameraTailSelection(tail_start_points_queue=self.processing_param_queue,

@@ -46,7 +46,7 @@ class Experiment(QMainWindow):
         self.camera_data = MetadataCamera()
 
         self.roi_dict = {'start_y': 320, 'start_x': 480,
-                         'length_y': 0, 'length_x': -400}
+                         'tail_length_y': 0, 'tail_length_x': -400}
 
         self.metalist_gui = MetaListGui([self.general_data, self.fish_data, self.imaging_data])
         self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
