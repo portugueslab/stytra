@@ -123,7 +123,6 @@ class ProtocolControlWindow(QWidget):
                                          self.widget_view.roi_box.size())
 
 
-
 class ProtocolSelectorWidget(QWidget):
     change_signal = pyqtSignal()
     def __init__(self, app, protocol_list, *args):

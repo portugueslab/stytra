@@ -2,7 +2,7 @@ import numpy as np
 from PyQt5.QtGui import QImage, QTransform
 import qimage2ndarray
 from PyQt5.QtGui import QPainter, QImage, QBrush, QPen, QColor
-from PyQt5.QtCore import QPoint, QRect
+from PyQt5.QtCore import QPoint, QRect, QRectF
 import cv2
 from time import sleep
 try:
@@ -279,7 +279,7 @@ class MovingConstantly(SeamlessPainterStimulus):
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     def __init__(self, *args, default_velocity=10,
-                 fish_motion_estimator, gain=1, base_gain=5, **kwargs):
+                 fish_motion_estimator, gain=1, shunting=False, base_gain=5, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = 'closed loop 1D'
         self.dynamic_parameters.append('vel')
@@ -289,6 +289,11 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self.vel = 0
         self.gain = gain
         self.base_gain = base_gain
+        self.swimming_threshold = 0
+        self.fish_swimming = False
+        self.shunting = shunting
+        self.shunted = False
+
         self._past_x = self.x
         self._past_y = self.y
         self._past_theta = self.theta
@@ -296,8 +301,20 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
     def update(self):
         dt = (self.elapsed - self._past_t)
-        self.vel = self.base_vel - \
-                   self._fish_motion_estimator.get_velocity() * self.gain * self.base_gain
+        fish_velocity = self._fish_motion_estimator.get_velocity()
+        if self.base_vel == 0:
+            self.shunted = False
+
+        if self.shunting and self.fish_swimming and fish_velocity < self.swimming_threshold:
+            self.shunted = True
+
+        if fish_velocity > self.swimming_threshold:
+            print('I am swimming with vel {:05f}'.format(fish_velocity))
+            self.fish_swimming = True
+
+        self.vel = self.base_vel * int(not self.shunted) - \
+                   fish_velocity * self.gain *self.base_gain* int(self.fish_swimming)
+
         self.y += dt * self.vel
         # TODO implement lag
         self._past_t = self.elapsed
@@ -306,7 +323,6 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 setattr(self, 'past_'+attr, getattr(self, attr))
             except (AttributeError, KeyError):
                 pass
-
 
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
     def __init__(self, *args, motion, **kwargs):
@@ -323,7 +339,6 @@ class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
             except (AttributeError, KeyError):
                 pass
         super().update()
-
 
 
 class RandomDotKinematogram(PainterStimulus):

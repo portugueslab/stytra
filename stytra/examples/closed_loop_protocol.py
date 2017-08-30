@@ -1,4 +1,4 @@
-from stytra import TailTrackingExperiment
+from stytra import TailTrackingExperiment, LightsheetExperiment
 from stytra.stimulation.stimuli import ClosedLoop1D, GratingPainterStimulus
 from stytra.calibration import CrossCalibrator
 from stytra.stimulation.closed_loop import VigourMotionEstimator
@@ -10,9 +10,6 @@ from stytra.gui.plots import StreamingPlotWidget
 import multiprocessing
 
 
-class ClosedLoop1DGrating(ClosedLoop1D, GratingPainterStimulus):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
 
 class ClosedLoopExperiment(TailTrackingExperiment):
@@ -27,7 +24,7 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.main_layout.addWidget(self.behaviour_layout)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
-        self.set_protocol(ReafferenceProtocol(n_repeats=100,
+        self.set_protocol(ReafferenceProtocol(n_repeats=5, n_backwards=0,
             fish_motion_estimator=VigourMotionEstimator(
                                  self.data_acc_tailpoints, vigour_window=0.05),
             calibrator=self.calibrator))
@@ -47,5 +44,5 @@ if __name__ == '__main__':
                               tracking_method='angle_sweep',
                               tracking_method_parameters={'n_segments': 9,
                                                           'filtering': True,
-                                                          'color_invert': True})
+                                                          'color_invert': False})
     app.exec_()

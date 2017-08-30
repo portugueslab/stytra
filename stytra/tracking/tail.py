@@ -298,7 +298,10 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
 
         # fill the vector of intensities along the arch
         for i in range(len(xs)):
-            intensity_vect[i] = img[int(ys[i]), int(xs[i])]
+            yp = int(ys[i])
+            xp = int(xs[i])
+            if img.shape[1] > xp >= 0 and 0 <= yp < img.shape[0]:
+                intensity_vect[i] = img[yp, xp]
 
         # Find minimum or maximum of the arch.
         # This switch is much faster than inverting the entire image.
@@ -311,7 +314,7 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
 
         # skip the first angle for the tail sum
         if j > 0:
-            tail_sum += new_angle + pi2
+            tail_sum += new_angle - angles[j]
 
         angles[j+1] = new_angle
 

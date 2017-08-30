@@ -40,6 +40,7 @@ class CrossCalibrator(Calibrator):
 
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
+        p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         if not self.length_is_fixed:
             self.length_px = max(h/2, w/2)

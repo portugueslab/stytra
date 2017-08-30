@@ -4,7 +4,7 @@ from stytra.tracking import QueueDataAccumulator
 
 
 class VigourMotionEstimator:
-    def __init__(self, data_acc, vigour_window=50):
+    def __init__(self, data_acc, vigour_window=0.050):
         assert(isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
         self.vigour_window = vigour_window
@@ -12,9 +12,9 @@ class VigourMotionEstimator:
 
     def get_velocity(self, lag=0):
         # TODO implement lag here
-        vigour_n_samples = int(round(self.vigour_window/self.last_dt))
+        vigour_n_samples = max(int(round(self.vigour_window/self.last_dt)), 2)
         past_tail_motion = self.data_acc.get_last_n(vigour_n_samples)
-        new_dt = (past_tail_motion[-1, -1] - past_tail_motion[-1, 0])/vigour_n_samples
+        new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0])/vigour_n_samples
         if new_dt>0:
             self.last_dt = new_dt
         return np.std(past_tail_motion[:, 1])

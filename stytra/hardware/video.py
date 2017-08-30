@@ -84,9 +84,12 @@ class XimeaCamera(FrameProcessor):
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
-        if not(str(self.cam.get_device_name() == 'MQ003MG-CM')):
-            downsampling_str = 'XI_DWN_' + str(self.downsampling) + 'x' + str(self.downsampling)
-            self.cam.set_downsampling(downsampling_str)
+        # for the camera on the lightsheet rig which supports hardware downsampling
+        # MQ013MG-ON lightsheet
+        # MQ003MG-CM behaviour
+
+        if str(self.cam.get_device_name()) == 'MQ013MG-ON':
+            self.cam.set_downsampling(2)
             self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')

@@ -97,7 +97,6 @@ class Protocol(QObject):
             except:
                 pass
 
-
     def update_log(self):
         """This is coming directly from the Logger class and can be made better"""
         # Update with the data of the current stimulus:

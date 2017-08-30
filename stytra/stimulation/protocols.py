@@ -133,11 +133,11 @@ def make_value_blocks(duration_value_tuples):
 
 class ReafferenceProtocol(Protocol):
     def __init__(self, n_repeats=1, n_backwards=7, pause_duration=7, backwards_duration=0.5,
-                 forward_duration=2, backward_vel=20, forward_vel=10,
-                 n_forward=14,
-                 gain_probability=0.5, gain=1, grating_period=10,
+                 forward_duration=4, backward_vel=20, forward_vel=10,
+                 n_forward=14, gain=1, grating_period=10,
                  fish_motion_estimator=None,
                  calibrator=None,):
+
         gains = []
         vels = []
         ts = []
@@ -151,32 +151,41 @@ class ReafferenceProtocol(Protocol):
             gains.extend([0]*n_backwards*4)
 
             for i in range(n_forward):
-                gain_exists = (np.random.random_sample() < gain_probability)*1
+
+                # blocks of two are in random order gain 0 or gain 1
+                if i % 2 == 0:
+                    gain_exists = bool(np.random.randint(0, 1))
+                else:
+                    gain_exists = not gain_exists
+
                 ts.extend([last_t, last_t+pause_duration,
                            last_t + pause_duration, last_t+pause_duration+forward_duration])
                 vels.extend([0, 0, forward_vel, forward_vel])
                 gains.extend([0, 0, gain_exists*gain, gain_exists*gain])
                 last_t = ts[-1]
+
             super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
                 dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
+                shunting=True,
                 fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
+
             self.name = 'Reafference'
 
 
 class MultistimulusExp06Protocol(Protocol):
     def __init__(self, repetitions=20,
-                        flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
-                        velocities=(3, 10, 30, -10),
-                        pre_stim_pause=4,
-                        one_stimulus_duration=7,
-                        grating_motion_duration=4,
-                        grating_args=None,
-                        shock_args=None,
-                        shock_on=False,
-                        water_on=True,
-                        lr_vel=10,
-                        spontaneous_duration_pre=120,
-                        spontaneous_duration_post=120,
+                 flash_durations=(0.05, 0.1, 0.2, 0.5, 1, 3),
+                 velocities=(3, 10, 30, -10),
+                 pre_stim_pause=4,
+                 one_stimulus_duration=7,
+                 grating_motion_duration=4,
+                 grating_args=None,
+                 shock_args=None,
+                 shock_on=False,
+                 water_on=True,
+                 lr_vel=10,
+                 spontaneous_duration_pre=120,
+                 spontaneous_duration_post=120,
                  calibrator=None,
                 *args, **kwargs):
 
