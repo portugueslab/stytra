@@ -16,7 +16,9 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.addItem(self.view_box)
 
         self.roi_box = pg.ROI(maxBounds=QRectF(0, 0, display_size[0],
-                                               display_size[1]), **ROI_desc)
+                                               display_size[1]),
+                              size=ROI_desc['size'],
+                              pos=ROI_desc['pos'])
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
         self.view_box.addItem(self.roi_box)
@@ -71,13 +73,10 @@ class ProtocolControlWindow(QWidget):
         self.display_window = display_window
 
         if self.display_window:
-            ROI_desc = self.display_window.display_params['window']
+            ROI_desc = self.display_window.display_params
             self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
         else:
             self.widget_view = None
-
-        self.button_update_display = QPushButton('Update display area')
-        self.button_update_display.clicked.connect(self.refresh_ROI)
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
@@ -101,7 +100,7 @@ class ProtocolControlWindow(QWidget):
         self.timer = None
         self.layout = QVBoxLayout()
         for widget in [
-                       self.widget_view, self.button_update_display,
+                       self.widget_view,
                        self.layout_calibrate, self.button_start, self.progress_bar,
                        self.button_end, self.button_metadata]:
             if isinstance(widget, QWidget):
@@ -110,17 +109,19 @@ class ProtocolControlWindow(QWidget):
                 self.layout.addLayout(widget)
 
         self.setLayout(self.layout)
-        self.refresh_ROI()
-        #self.widget_view.roi_box.sigRegionChanged.connect(self.refresh_ROI)
+        self.reset_ROI()
+        self.widget_view.roi_box.sigRegionChangeFinished.connect(self.refresh_ROI)
 
     def reset_ROI(self):
-        self.widget_view.roi_box.setPos(self.display_window.display_params['window']['pos'])
-        self.widget_view.roi_box.setSize(self.display_window.display_params['window']['size'])
+        print(self.display_window.display_params)
+        self.widget_view.roi_box.setPos(self.display_window.display_params['pos'], finish=False)
+        self.widget_view.roi_box.setSize(self.display_window.display_params['size'])
+        self.refresh_ROI()
 
     def refresh_ROI(self):
         if self.display_window:
-            self.display_window.set_dims(self.widget_view.roi_box.pos(),
-                                         self.widget_view.roi_box.size())
+            self.display_window.set_dims(tuple([int(p) for p in self.widget_view.roi_box.pos()]),
+                                         tuple([int(p) for p in self.widget_view.roi_box.size()]))
 
 
 class ProtocolSelectorWidget(QWidget):

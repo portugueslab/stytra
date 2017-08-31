@@ -47,7 +47,7 @@ class Protocol(QObject):
         self.t_start = datetime.datetime.now()
         self.timer.timeout.connect(self.timestep)
         self.timer.setSingleShot(False)
-        self.timer.start(self.dt)
+        self.timer.start(self.dt * 1000) # it is in milliseconds
         self.dynamic_log.starting_time = self.t_start
         self.dynamic_log.reset()
         self.past_stimuli_elapsed = datetime.datetime.now()

@@ -40,6 +40,7 @@ import zmq
 # this part is needed to find default arguments of functions
 import inspect
 
+
 def get_default_args(func):
     signature = inspect.signature(func)
     return {
@@ -47,6 +48,7 @@ def get_default_args(func):
         for k, v in signature.parameters.items()
         if v.default is not inspect.Parameter.empty
     }
+
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
@@ -91,16 +93,16 @@ class Experiment(QMainWindow):
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',
-                            self.window_display, 'display_params',
+                                self.window_display, 'display_params',
                                 use_last_val=True)
 
-        self.window_display.update_display_params()
         self.widget_control.reset_ROI()
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
         else:
             self.calibrator = calibrator
+
         self.window_display.widget_display.calibrator = self.calibrator
         self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
         self.dc.add_data_source('stimulus', 'mm per px',
@@ -301,7 +303,7 @@ class TailTrackingExperiment(CameraExperiment):
 
         self.dc.add_data_source('tracking',
                                 'tail_position', self.camera_viewer, 'roi_dict')
-
+        self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)

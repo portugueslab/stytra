@@ -17,23 +17,14 @@ class StimulusDisplayWindow(QDialog):
 
         self.widget_display = GLStimDisplay(self)
         self.widget_display.setMaximumSize(2000, 2000)
-        self.display_params = dict(window=dict(pos=(0, 0), size=(100, 100)),
-                                   refresh_rate=1/60.)
-
-        self.update_display_params()
-        self.loc = np.array((0, 0))
+        self.display_params = dict(pos=(0, 0), size=(100, 100))
 
         self.setStyleSheet('background-color:black;')
 
-    def update_display_params(self):
-        self.set_dims(**self.display_params['window'])
-
     def set_dims(self, pos, size):
-        self.widget_display.setGeometry(
-            *([int(k) for k in pos] +
-              [int(k) for k in size]))
-        self.display_params['window']['size'] = size
-        self.display_params['window']['pos'] = pos
+        self.widget_display.setGeometry(*(pos+size))
+        self.display_params['pos'] = pos
+        self.display_params['size'] = size
 
     def set_protocol(self, protocol):
         self.widget_display.set_protocol(protocol)

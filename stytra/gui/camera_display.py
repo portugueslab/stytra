@@ -125,6 +125,13 @@ class CameraTailSelection(CameraViewWidget):
         self.tail_start_points_queue.put(self.get_tracking_params())
         self.roi_tail.sigRegionChangeFinished.connect(self.send_roi_to_queue)
 
+    def reset_ROI(self):
+        # TODO figure out how to load handles
+        pass
+        # self.roi_tail.setPoints(((self.roi_dict['start_y'], self.roi_dict['start_x']),
+        #                                    (self.roi_dict['start_y'] + self.roi_dict['tail_length_y'],
+        #                                     self.roi_dict['start_x'] + self.roi_dict['tail_length_x'])))
+
     def send_roi_to_queue(self):
         self.tail_start_points_queue.put(self.get_tracking_params())
 
