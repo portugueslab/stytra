@@ -13,8 +13,9 @@ class StreamingPlotWidget(pg.GraphicsWindow):
     Class for displaying data retrieved from a data_accumulator
     object. Use timestamp of the streamed data.
     """
-    def __init__(self, data_accumulator=None, n_points=5000, x_range_s=(-5, 0),
-                 y_range=(-1, 1), data_acc_col=1, processing_function=None, xlink=None, *args, **kwargs):
+    def __init__(self, data_accumulator=None, n_points=500, x_range_s=(-5, 0),
+                 y_range=(-1, 1), data_acc_col=1, processing_function=None,
+                 xlink=None, *args, **kwargs):
         """
         :param data_accumulator: DataAccumulator object to be displayed
         :param n_points: number of collected points
@@ -67,6 +68,7 @@ class StreamingPlotWidget(pg.GraphicsWindow):
             # ...to be added to the array of times in s in the data accumulator
             time_array = delta_t + data_array[:, 0]
             self.curve.setData(x=time_array, y=data_array[:, self.data_accum_idx])
+
         except IndexError:
             pass#print(self.data_accumulator.header_list)
         except TypeError:

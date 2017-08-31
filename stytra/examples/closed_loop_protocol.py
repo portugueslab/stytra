@@ -40,7 +40,7 @@ if __name__ == '__main__':
     exp = ClosedLoopExperiment(app=app, name='closed_loop',
                               directory=r'D:\vilim/closed_loop/',
                               tracking_method='angle_sweep',
-                              tracking_method_parameters={'n_segments': 9,
+                              tracking_method_parameters={'n_segments': 7,
                                                           'filtering': True,
-                                                          'color_invert': True})
+                                                          'color_invert': False})
     app.exec_()

@@ -11,7 +11,7 @@ from copy import deepcopy
 
 
 class Accumulator:
-    """ A general class for an object that accumulates that
+    """ A general class for an object that accumulates what
     will be saved or plotted in real time
 
     """

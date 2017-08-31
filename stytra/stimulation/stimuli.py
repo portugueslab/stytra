@@ -219,7 +219,8 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
             start = -self.y / self.calibrator.mm_px - \
-                    np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
+                np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
+
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
@@ -313,7 +314,11 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
             self.fish_swimming = True
 
         self.vel = self.base_vel * int(not self.shunted) - \
-                   fish_velocity * self.gain *self.base_gain* int(self.fish_swimming)
+                   fish_velocity * self.gain *self.base_gain * int(self.fish_swimming)
+
+        if self.vel is None or self.vel > 10:
+            print('I am resetting vel to 0 because it is strange.')
+            self.vel = 0
 
         self.y += dt * self.vel
         # TODO implement lag

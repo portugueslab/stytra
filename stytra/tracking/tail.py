@@ -301,7 +301,7 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
         for i in range(len(xs)):
             yp = int(ys[i])
             xp = int(xs[i])
-            if img.shape[1] > xp >= 0 and 0 <= yp < img.shape[0]:
+            if img.shape[1] > xp >= 0 and 0 <= yp < img.shape[0]:  # check image boundaries
                 intensity_vect[i] = img[yp, xp]
 
         # Find minimum or maximum of the arch.
@@ -311,7 +311,12 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
         else:
             ident = np.argmax(intensity_vect)
 
-        new_angle = lin[ident]
+        if not np.isnan(lin[ident]):
+            new_angle = lin[ident]
+        else:
+            new_angle = angles[j]
+
+        new_angle = np.mod(new_angle, np.pi*2)
 
         # skip the first angle for the tail sum
         if j > 0:
@@ -324,17 +329,17 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
         start_y = ys[ident]
 
         # Create an 120 deg angle depending on the previous one:
-        lin = np.linspace(new_angle - np.pi / 3, new_angle + np.pi / 3, 20)
+        lin = np.linspace(new_angle - pi2, new_angle + pi2, 20)
 
     angles[0] = tail_sum
     return angles
 
 
 def tail_trace_ls(img, start_x=0, start_y=0, tail_length_x=1,
-                  tail_length_y=1, n_segments=9, tail_length=None,
+                  tail_length_y=1, n_segments=7, tail_length=None,
                   filtering=True, color_invert=False):
     """
-    Tail tracing based on min (or max) detection on arches. Wrap _tail_trace_core_ls.
+    Tail tracing based on min (or max) detection on arches. Wraps _tail_trace_core_ls.
     Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.
     :param img: input image
     :param start_x: tail starting point (x)
@@ -360,5 +365,6 @@ def tail_trace_ls(img, start_x=0, start_y=0, tail_length_x=1,
     # Use jitted function for the actual calculation:
     angle_list = _tail_trace_core_ls(img_filt, start_x, start_y, tail_length_x, tail_length_y,
                                      n_segments, tail_length, color_invert)
+
 
     return angle_list
