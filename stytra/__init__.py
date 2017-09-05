@@ -35,7 +35,7 @@ from stytra.hardware.video import MovingFrameDispatcher
 import os
 
 import zmq
-
+from stytra.dbconn import put_experiment_in_db
 
 # this part is needed to find default arguments of functions
 import inspect
@@ -53,8 +53,8 @@ def get_default_args(func):
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
     def __init__(self, directory, name, calibrator=None,
-                 save_csv=False, run_committed=False,
-                 app=None):
+                 save_csv=False,
+                 app=None, debug_mode=True):
         """ A general class for running experiments
 
         :param directory:
@@ -64,7 +64,6 @@ class Experiment(QMainWindow):
         super().__init__()
 
         self.app = app
-
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         self.metadata_general = MetadataGeneral()
@@ -76,15 +75,17 @@ class Experiment(QMainWindow):
             os.makedirs(self.directory)
 
         self.name = name
-        self.run_committed = run_committed
 
         self.save_csv = save_csv
 
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
+        self.debug_mode = debug_mode
+
         self.window_display = StimulusDisplayWindow(experiment=self)
-        self.widget_control = ProtocolControlWindow(self.window_display)
+        self.widget_control = ProtocolControlWindow(self.window_display,
+                                                    self.debug_mode)
 
         self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
         self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
@@ -112,6 +113,19 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'calibration_pattern_length_px',
                                 self.calibrator, 'length_px',
                                 use_last_val=True)
+
+        self.dc.add_data_source('general', 't_protocol_start',
+                                self, 'protocol', 't_start',
+                                use_last_val=False)
+
+        self.dc.add_data_source('general', 't_protocol_end',
+                                self, 'protocol', 't_end',
+                                use_last_val=False)
+
+        self.dc.add_data_source('general', 'is_protocol_completed',
+                                self, 'protocol', 'completed',
+                                use_last_val=False)
+
         self.widget_control.spin_calibrate.valueChanged.connect(
             self.calibrator.set_physical_scale)
         self.widget_control.spin_calibrate.setValue(self.calibrator.length_mm)
@@ -162,13 +176,15 @@ class Experiment(QMainWindow):
         #     self.check_if_committed()
         self.protocol.start()
 
-    def end_protocol(self):
+    def end_protocol(self, do_not_save=None):
         self.protocol.end()
-        self.dc.save(save_csv=self.save_csv)
+        if not do_not_save and not self.debug_mode:
+            self.dc.save(save_csv=self.save_csv)
+            put_experiment_in_db(self.dc.get_full_dict())
         self.protocol.reset()
 
     def closeEvent(self, *args, **kwargs):
-        self.end_protocol()
+        self.end_protocol(do_not_save=True)
         self.app.closeAllWindows()
 
     def toggle_calibration(self):
