@@ -290,7 +290,8 @@ class TailTrackingExperiment(CameraExperiment):
                                                             current_tracking_method_parameters['n_segments'])])
 
         # GUI elements
-        self.stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints)
+        self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+                                                    data_acc_var='tail_sum')
 
         self.camera_viewer = CameraTailSelection(
             tail_start_points_queue=self.processing_parameter_queue,
@@ -306,7 +307,7 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+        self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 

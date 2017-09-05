@@ -14,7 +14,7 @@ class StreamingPlotWidget(pg.GraphicsWindow):
     object. Use timestamp of the streamed data.
     """
     def __init__(self, data_accumulator=None, n_points=500, x_range_s=(-5, 0),
-                 y_range=(-1, 1), data_acc_col=1, processing_function=None,
+                 y_range=(-1, 1), data_acc_var=None, processing_function=None,
                  xlink=None, *args, **kwargs):
         """
         :param data_accumulator: DataAccumulator object to be displayed
@@ -38,11 +38,12 @@ class StreamingPlotWidget(pg.GraphicsWindow):
 
         self.addItem(self.streamplot)
         self.start = datetime.datetime.now()
-        self.data_accum_idx = data_acc_col
+        self.data_accum_idx = self.data_accumulator.header_list.index(data_acc_var)
 
         self.n_points = n_points
         self.streamplot.setLabel('bottom', 'Time', 's')
         self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idx])
+        print(self.data_accum_idx)
         self.streamplot.setXRange(x_range_s[0], x_range_s[1])
         self.streamplot.setYRange(y_range[0], y_range[1])
         if xlink is not None:

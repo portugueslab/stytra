@@ -280,17 +280,24 @@ class MovingConstantly(SeamlessPainterStimulus):
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     def __init__(self, *args, default_velocity=10,
-                 fish_motion_estimator, gain=1, shunting=False, base_gain=5, **kwargs):
+                 fish_motion_estimator, gain=1,
+                 shunting=False,
+                 base_gain=5,
+                 swimming_threshold=0.5,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.name = 'closed loop 1D'
+        self.fish_velocity = 0
         self.dynamic_parameters.append('vel')
         self.dynamic_parameters.append('y')
+        self.dynamic_parameters.append('fish_velocity')
         self.base_vel = default_velocity
+        self.fish_velocity = 0
         self._fish_motion_estimator = fish_motion_estimator
         self.vel = 0
         self.gain = gain
         self.base_gain = base_gain
-        self.swimming_threshold = 0
+        self.swimming_threshold = swimming_threshold
         self.fish_swimming = False
         self.shunting = shunting
         self.shunted = False
@@ -302,21 +309,22 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
     def update(self):
         dt = (self.elapsed - self._past_t)
-        fish_velocity = self._fish_motion_estimator.get_velocity()
+        self.fish_velocity = self._fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
             self.shunted = False
+            self.fish_swimming = False
 
-        if self.shunting and self.fish_swimming and fish_velocity < self.swimming_threshold:
+        if self.shunting and self.fish_swimming and self.fish_velocity < self.swimming_threshold:
             self.shunted = True
 
-        if fish_velocity > self.swimming_threshold:
-            print('I am swimming with vel {:05f}'.format(fish_velocity))
+        if self.fish_velocity > self.swimming_threshold:
+            print('I am swimming with vel {:05f}'.format(self.fish_velocity))
             self.fish_swimming = True
 
         self.vel = self.base_vel * int(not self.shunted) - \
-                   fish_velocity * self.gain *self.base_gain * int(self.fish_swimming)
+                   self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming)
 
-        if self.vel is None or self.vel > 10:
+        if self.vel is None or self.vel > 15:
             print('I am resetting vel to 0 because it is strange.')
             self.vel = 0
 
