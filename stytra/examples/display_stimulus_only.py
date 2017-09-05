@@ -62,5 +62,5 @@ class StimulusOnyExperiment(Experiment):
 if __name__ == '__main__':
     app = QApplication([])
     exp = StimulusOnyExperiment(app=app, name='stimulus_test',
-                               directory=r'D:\vilim/')
+                               directory=r'D:\vilim/', debug_mode=False)
     app.exec_()

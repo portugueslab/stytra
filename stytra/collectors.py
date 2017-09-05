@@ -182,6 +182,10 @@ class DataCollector:
                     ValueError('Fourth argument must be an attribute of the third!')
 
         if len(args) > 4:
+            if hasattr(args[2], args[3]) and hasattr(args[3], args[4]):
+                ValueError('Fourth argument must be an attribute of the third...!')
+
+        if len(args) > 5:
             ValueError('Too many arguments!')
 
         self.data_tuples.append(args)
@@ -210,6 +214,10 @@ class DataCollector:
                     else: # object attribute entries
                         data_dict[category][label] = getattr(data_entry[2],
                                                              data_entry[3])
+                elif len(data_entry) == 5:
+                    data_dict[category][label] = getattr(getattr(data_entry[2],
+                                                                 data_entry[3]),
+                                                         data_entry[4])
 
         return data_dict
 
