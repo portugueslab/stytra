@@ -134,7 +134,7 @@ def make_value_blocks(duration_value_tuples):
 class ReafferenceProtocol(Protocol):
     def __init__(self, n_repeats=1, n_backwards=7, pause_duration=7, backwards_duration=0.5,
                  forward_duration=4, backward_vel=20, forward_vel=10,
-                 n_forward=14, gain=1, grating_period=10,
+                 n_forward=14, gain=1, grating_period=10, base_gain=10,
                  fish_motion_estimator=None,
                  calibrator=None,):
 
@@ -166,7 +166,7 @@ class ReafferenceProtocol(Protocol):
 
             super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
                 dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
-                shunting=True,
+                shunting=True, base_gain=base_gain,
                 fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
 
             self.name = 'Reafference'

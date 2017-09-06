@@ -9,7 +9,7 @@ class TailTrackImplementation(TailTrackingExperiment):
         super().__init__(*args, **kwargs)
         self.main_layout = QSplitter(Qt.Vertical)
         self.main_layout.addWidget(self.camera_viewer)
-        self.main_layout.addWidget(self.stream_plot)
+        self.main_layout.addWidget(self.tail_stream_plot)
 
         self.setCentralWidget(self.main_layout)
         self.show()

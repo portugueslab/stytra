@@ -1,10 +1,27 @@
-from PyQt5.QtCore import QRectF, pyqtSignal
+from PyQt5.QtCore import QRectF, pyqtSignal, Qt
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
     QWidget, QLayout, QComboBox, QApplication, \
     QFileDialog, QLineEdit, QProgressBar, QLabel, QDoubleSpinBox
 import pyqtgraph as pg
 import numpy as np
 import os
+
+
+class DebugLabel(QLabel):
+    def __init__(self, *args, debug_on=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setAlignment(Qt.AlignCenter)
+        self.setStyleSheet('border-radius: 2px')
+        self.set_debug(debug_on)
+        self.setMinimumHeight(36)
+
+    def set_debug(self, debug_on=False):
+        if debug_on:
+            self.setText('Debug mode is on, data will not be saved!')
+            self.setStyleSheet('background-color: #dc322f;color:#fff')
+        else:
+            self.setText('Experiment ready, please ensure the metadata is correct')
+            self.setStyleSheet('background-color: #002b36')
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -62,7 +79,7 @@ class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, display_window=None, *args):
+    def __init__(self, display_window=None, debug_mode=False, *args):
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
@@ -71,6 +88,7 @@ class ProtocolControlWindow(QWidget):
         """
         super().__init__(*args)
         self.display_window = display_window
+        self.label_debug = DebugLabel(debug_on=debug_mode)
 
         if self.display_window:
             ROI_desc = self.display_window.display_params
@@ -99,7 +117,7 @@ class ProtocolControlWindow(QWidget):
 
         self.timer = None
         self.layout = QVBoxLayout()
-        for widget in [
+        for widget in [self.label_debug,
                        self.widget_view,
                        self.layout_calibrate, self.button_start, self.progress_bar,
                        self.button_end, self.button_metadata]:

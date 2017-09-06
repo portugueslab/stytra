@@ -225,7 +225,7 @@ class Experiment(QMainWindow):
         except Empty:
             pass
 
-    def finishProtocol(self):
+    def finishProtocol(self, isfinished):
         self.finished_sig.set()
         self.camera.join(timeout=3)
         print('Camera joined')

@@ -42,7 +42,7 @@ class GcMultistimExperiment(LightsheetExperiment):
 if __name__ == '__main__':
     app = QApplication([])
     exp = GcMultistimExperiment(app=app,
-                                directory=r"C:\Users\portugueslab\Documents\Lightsheet_exp_metadata",
+                                directory=r"D:\vilim\gc_multistim",
                                 name='lightsheet',
                                 wait_for_lightsheet=True)
 
