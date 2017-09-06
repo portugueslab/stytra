@@ -10,7 +10,7 @@ from stytra.gui.plots import StreamingPlotWidget
 import multiprocessing
 
 
-class ClosedLoopExperiment(TailTrackingExperiment):
+class ClosedLoopExperiment(TailTrackingExperiment, LightsheetExperiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CrossCalibrator(fixed_length=160),
                          **kwargs)
@@ -22,11 +22,11 @@ class ClosedLoopExperiment(TailTrackingExperiment):
         self.main_layout.addWidget(self.behaviour_layout)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
-        self.set_protocol(ReafferenceProtocol(n_repeats=5, n_backwards=0, forward_duration=5, pause_duration=5,
+        self.set_protocol(ReafferenceProtocol(n_repeats=20, n_backwards=7, forward_duration=5, pause_duration=5,
             fish_motion_estimator=VigourMotionEstimator(
                                  self.data_acc_tailpoints, vigour_window=0.05),
             calibrator=self.calibrator, base_gain=20))
-
+        print('The protocol will take: {}'.format(self.protocol.get_duration()))
         self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_var='vel',
                                                  xlink=self.tail_stream_plot.streamplot, y_range=(-25, 15))
         self.fish_velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_var='fish_velocity',
@@ -47,5 +47,7 @@ if __name__ == '__main__':
                               tracking_method='angle_sweep',
                               tracking_method_parameters={'n_segments': 9,
                                                           'filtering': True,
-                                                          'color_invert': False})
+                                                          'color_invert': False},
+                               debug_mode=False,
+                               wait_for_lightsheet=True)
     app.exec_()
