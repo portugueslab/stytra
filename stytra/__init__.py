@@ -125,6 +125,7 @@ class Experiment(QMainWindow):
         self.protocol.sig_timestep.connect(self.update_progress)
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
+        self.widget_control.progress_bar.setValue(0)
         self.dc.add_data_source('stimulus', 'log', protocol.log)
 
     def update_progress(self, i_stim):
