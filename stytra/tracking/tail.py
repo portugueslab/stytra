@@ -272,6 +272,13 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
 
     return points
 
+@jit(nopython=True)
+def reduce_to_pi(angle):
+    if angle > np.pi:
+        return angle - np.pi*2
+    if angle < -np.pi:
+        return angle + np.pi * 2
+    return angle
 
 @jit(nopython=True)
 def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
@@ -316,11 +323,11 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
         else:
             new_angle = angles[j]
 
-        new_angle = np.mod(new_angle, np.pi*2)
+        new_angle = reduce_to_pi(new_angle)
 
         # skip the first angle for the tail sum
         if j > 0:
-            tail_sum += new_angle - angles[j]
+            tail_sum += reduce_to_pi(new_angle - angles[j])
 
         angles[j+1] = new_angle
 

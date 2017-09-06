@@ -43,11 +43,13 @@ class StreamingPlotWidget(pg.GraphicsWindow):
         self.n_points = n_points
         self.streamplot.setLabel('bottom', 'Time', 's')
         self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idx])
-        print(self.data_accum_idx)
         self.streamplot.setXRange(x_range_s[0], x_range_s[1])
         self.streamplot.setYRange(y_range[0], y_range[1])
         if xlink is not None:
             self.streamplot.setXLink(xlink)
+
+        self.text_fps = pg.TextItem(anchor=(0, 1))
+        self.streamplot.addItem(self.text_fps)
 
         self.processing_function = processing_function
 
@@ -61,13 +63,10 @@ class StreamingPlotWidget(pg.GraphicsWindow):
             delta_t = (self.data_accumulator.starting_time -
                        self.start).total_seconds()
 
-            # debugging
-            if self.data_accumulator.header_list[1] == 'x':
-                print(delta_t)
-
             data_array = self.data_accumulator.get_last_n(self.n_points)
             # ...to be added to the array of times in s in the data accumulator
             time_array = delta_t + data_array[:, 0]
+            self.text_fps.setText('{:.2f}'.format(self.data_accumulator.get_fps()))
             self.curve.setData(x=time_array, y=data_array[:, self.data_accum_idx])
 
         except IndexError:

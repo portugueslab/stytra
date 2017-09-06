@@ -24,10 +24,6 @@ class GcMultistimExperiment(LightsheetExperiment):
 
         self.set_protocol(protocol)
 
-        print('The protocol will take {} seconds or {}:{}'.format(protocol.duration,
-                                                                  int(protocol.duration)//60,
-                                                                  protocol.duration - 60*int(protocol.duration)//60))
-
         self.finished = False
 
         # Create window and layout:
