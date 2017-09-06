@@ -15,16 +15,25 @@ class Accumulator:
     will be saved or plotted in real time
 
     """
-    def __init__(self):
+    def __init__(self, fps_range=10):
         self.stored_data = []
         self.header_list = ['t']
         self.starting_time = datetime.datetime.now()
+        self.fps_range = fps_range
 
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers
         """
         return pd.DataFrame(self.stored_data,
                             columns=self.header_list)
+
+    def get_fps(self):
+        try:
+            last_t = self.stored_data[-1][0]
+            t_minus_dif = self.stored_data[-self.fps_range][0]
+            return self.fps_range/(last_t-t_minus_dif)
+        except (IndexError, ValueError):
+            return 0.0
 
     def get_last_n(self, n):
         last_n = min(n, len(self.stored_data))
@@ -47,8 +56,8 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
     # Check if tail tracking is present, to use tracking dataframe as template.
     # If there is no tracking, generate a dataframe with time steps specified:
-    if 'tail_tracking' in metadata_dict['behaviour'].keys():
-        final_df = metadata_dict['behaviour']['tail_tracking'].copy()
+    if 'tail' in metadata_dict['behaviour'].keys():
+        final_df = metadata_dict['behaviour']['tail'].copy()
     else:
         t = metadata_dict['stimulus']['log'][-1]['t_stop']
         timearr = np.arange(0, t, time_step)
@@ -221,7 +230,7 @@ class DataCollector:
 
         return data_dict
 
-    def save(self, timestamp=None, save_csv=True):
+    def save(self, timestamp=None, save_csv=False):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """

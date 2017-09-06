@@ -49,9 +49,10 @@ class Protocol(QObject):
         self.t_start = datetime.datetime.now()
         self.timer.timeout.connect(self.timestep)
         self.timer.setSingleShot(False)
-        self.timer.start(self.dt * 1000) # it is in milliseconds
+        self.timer.start() # it is in milliseconds
         self.dynamic_log.starting_time = self.t_start
         self.dynamic_log.reset()
+        self.log = []
         self.past_stimuli_elapsed = datetime.datetime.now()
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
@@ -91,6 +92,8 @@ class Protocol(QObject):
                 self.update_dynamic_log()
 
     def end(self):
+        if not self.completed:
+            self.update_log()
         if self.running:
             self.running = False
             self.t_end = datetime.datetime.now()
@@ -105,7 +108,7 @@ class Protocol(QObject):
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
-                             t_start=self.t - self.current_stimulus.elapsed, t_stop=self.t)
+                        t_start=self.t - self.current_stimulus.elapsed, t_stop=self.t)
         if self.log_print:
             print(new_dict)
         self.log.append(new_dict)
@@ -126,8 +129,6 @@ class Protocol(QObject):
         self.i_current_stimulus = 0
         self.current_stimulus = self.stimuli[0]
 
-        # Log will be a list of stimuli states
-        self.log = []
 
     def get_duration(self):
         total_duration = 0

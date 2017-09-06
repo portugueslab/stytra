@@ -20,6 +20,7 @@ from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QTimer, pyqtSignal
+from PyQt5.QtWidgets import QCheckBox
 from stytra.metadata import MetadataCamera
 import sys
 
@@ -130,6 +131,8 @@ class Experiment(QMainWindow):
             self.calibrator.set_physical_scale)
         self.widget_control.spin_calibrate.setValue(self.calibrator.length_mm)
 
+        self.dc.add_data_source('stimulus', 'log', self, 'protocol', 'log', use_last_val=False)
+
         self.protocol = None
 
     def set_protocol(self, protocol):
@@ -140,7 +143,6 @@ class Experiment(QMainWindow):
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
         self.widget_control.progress_bar.setValue(0)
-        self.dc.add_data_source('stimulus', 'log', protocol.log)
 
     def update_progress(self, i_stim):
         self.widget_control.progress_bar.setValue(int(self.protocol.t))
@@ -179,8 +181,8 @@ class Experiment(QMainWindow):
 
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
+        self.dc.save(save_csv=self.save_csv)
         if not do_not_save and not self.debug_mode:
-            self.dc.save(save_csv=self.save_csv)
             put_experiment_in_db(self.dc.get_full_dict())
         self.protocol.reset()
 
@@ -199,19 +201,23 @@ class Experiment(QMainWindow):
 
 
 class LightsheetExperiment(Experiment):
-    def __init__(self, *args, wait_for_lightsheet=False, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
+        self.chk_lightsheet = QCheckBox("Wait for lightsheet")
+        self.chk_lightsheet.setChecked(False)
+
+        self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
+
         self.lightsheet_config = dict()
-        self.wait_for_lightsheet = wait_for_lightsheet
         self.dc.add_data_source('imaging', 'lightsheet_config', self, 'lightsheet_config')
 
     def start_protocol(self):
         # Start only when received the GO signal from the lightsheet
-        if self.wait_for_lightsheet:
+        if self.chk_lightsheet.isChecked():
             self.zmq_socket.bind("tcp://*:5555")
             print('bound socket')
             self.lightsheet_config = self.zmq_socket.recv_json()
@@ -241,6 +247,7 @@ class CameraExperiment(Experiment):
         self.gui_refresh_timer.setSingleShot(False)
 
         self.metadata_camera = MetadataCamera()
+        self.dc.add_data_source(self.metadata_camera)
 
         if video_input is None:
             self.control_queue = Queue()
@@ -339,12 +346,12 @@ class TailTrackingExperiment(CameraExperiment):
         self.data_acc_tailpoints.reset()
         super().start_protocol()
 
-    def end_protocol(self):
-        self.dc.add_data_source('tracking', 'tail_angles',
+    def end_protocol(self, *args, **kwargs):
+        self.dc.add_data_source('behaviour', 'tail',
                                 self.data_acc_tailpoints.get_dataframe())
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                 self.protocol.dynamic_log.get_dataframe())
-        super().end_protocol()
+        super().end_protocol(*args, **kwargs)
 
 
     def set_protocol(self, protocol):

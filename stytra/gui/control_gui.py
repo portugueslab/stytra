@@ -131,7 +131,6 @@ class ProtocolControlWindow(QWidget):
         self.widget_view.roi_box.sigRegionChangeFinished.connect(self.refresh_ROI)
 
     def reset_ROI(self):
-        print(self.display_window.display_params)
         self.widget_view.roi_box.setPos(self.display_window.display_params['pos'], finish=False)
         self.widget_view.roi_box.setSize(self.display_window.display_params['size'])
         self.refresh_ROI()
@@ -236,13 +235,11 @@ if __name__ == '__main__':
     application = QApplication([])
     exp = StartingWindow(application, ['a', 'b'])
     application.exec_()
-    print(exp.folder)
 
     application2 = QApplication([])
     exp2 = StartingWindow(application2, [exp.protocol, 'b'])
     application2.exec_()
-    print(exp.folder)
-    print(exp.protocol)
+
 
 
 
