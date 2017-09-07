@@ -181,8 +181,8 @@ class Experiment(QMainWindow):
 
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
-        self.dc.save(save_csv=self.save_csv)
         if not do_not_save and not self.debug_mode:
+            self.dc.save(save_csv=self.save_csv)
             put_experiment_in_db(self.dc.get_full_dict())
         self.protocol.reset()
 
