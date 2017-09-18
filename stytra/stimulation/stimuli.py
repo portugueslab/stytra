@@ -247,6 +247,34 @@ class MovingStimulus(DynamicStimulus):
                 pass
 
 
+class VideoStimulus(PainterStimulus, DynamicStimulus):
+    def __init__(self, *args, path, framerate=30, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append('i_frame')
+        self.i_frame = 0
+        self.video_path = path
+        self.framerate = framerate
+        self._current_frame = None
+        self._last_frame_display_time = 0
+        self._cap = cv2.VideoCapture(self.video_path)
+        self._current_frame = self._cap.read()
+        self.duration = self._cap.get(cv2.CAP_PROP_FRAME_COUNT)/framerate
+
+    def update(self):
+        if self.elapsed >= self.last_frame_display_time+1/self.framerate:
+            try:
+                self.current_frame = self._cap.read()
+                self._last_frame_display_time = self.elapsed
+            except:
+                pass  # TODO reset video on end
+
+    def paint(self, p, w, h):
+        display_centre = (w / 2, h / 2)
+        p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1]//2,
+                           display_centre[1] - self._current_frame.shape[0] // 2),
+            qimage2ndarray.array2qimage(self._current_frame))
+
+
 class MovingBackgroundStimulus(MovingStimulus, SeamlessPainterStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
