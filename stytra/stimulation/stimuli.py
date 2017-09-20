@@ -204,31 +204,43 @@ class MovingStimulus(DynamicStimulus):
 
 
 class VideoStimulus(PainterStimulus, DynamicStimulus):
-    def __init__(self, *args, path, framerate=30, **kwargs):
+    def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append('i_frame')
         self.i_frame = 0
-        self.video_path = path
-        self.framerate = framerate
+        self.video_path = video_path
+
         self._current_frame = None
         self._last_frame_display_time = 0
         self._cap = cv2.VideoCapture(self.video_path)
-        self._current_frame = self._cap.read()
-        self.duration = self._cap.get(cv2.CAP_PROP_FRAME_COUNT)/framerate
+        _, self._current_frame = self._cap.read()
+        print(self._current_frame.shape)
+
+        if framerate is None:
+            self.framerate = self._cap.get(cv2.CAP_PROP_FPS)
+        else:
+            self.framerate = framerate
+
+        if duration is None:
+            self.duration = self._cap.get(cv2.CAP_PROP_FRAME_COUNT)/self.framerate
+        else:
+            self.duration = duration
 
     def update(self):
-        if self.elapsed >= self.last_frame_display_time+1/self.framerate:
+        if self.elapsed >= self._last_frame_display_time+1/self.framerate:
             try:
-                self.current_frame = self._cap.read()
+                print('next frame loaded')
+                _, self._current_frame = self._cap.read()
                 self._last_frame_display_time = self.elapsed
             except:
                 pass  # TODO reset video on end
 
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)
+        img = qimage2ndarray.array2qimage(self._current_frame)
         p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1]//2,
                            display_centre[1] - self._current_frame.shape[0] // 2),
-            qimage2ndarray.array2qimage(self._current_frame))
+                    img)
 
 
 class MovingBackgroundStimulus(MovingStimulus, SeamlessPainterStimulus):
@@ -320,6 +332,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
             except (AttributeError, KeyError):
                 pass
 
+
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
     def __init__(self, *args, motion, **kwargs):
         super().__init__(*args, **kwargs)
@@ -389,10 +402,6 @@ class ShockStimulus(Stimulus):
 
 if __name__ == '__main__':
     pyb = PyboardConnection(com_port='COM3')
-    # stim = ShockStimulus(pyboard=pyb, burst_freq=100, pulse_amp=3.5,
-    #                      pulse_n=5, pulse_dur_ms=2)
-    # stim = ShockStimulus(pyboard=pyb, burst_freq=100, pulse_amp=3.5,
-    #                      pulse_n=20, pulse_dur_ms=2)
     stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
                          pulse_n=1, pulse_dur_ms=5)
     stim.start()

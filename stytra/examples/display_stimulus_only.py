@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter, QProgressBar
 import numpy as np
 import pandas as pd
 from stytra import Experiment
-from stytra.stimulation import Protocol
+from stytra.stimulation.protocols import VisualCodingProtocol
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation.stimuli import MovingBackgroundStimulus,\
     MovingGratingStimulus
@@ -40,20 +40,20 @@ class StimulusOnyExperiment(Experiment):
         self.im_filename = r"J:\Vilim Stih\sync\underwater\40_water with stone and fish texture-seamless.jpg"
         bg = existing_file_background(self.im_filename)
         motion = make_spinning_protocol()
-        self.protocol_duration = motion.t.iat[-1]
 
-        grating_motion = pd.DataFrame(dict(
-            t=[0,  1, 3, 4],
-            y=[0,  0, 10, 10]))
-        print(self.protocol_duration)
-        self.set_protocol(Protocol([
-            MovingGratingStimulus(grating_period=10, motion=grating_motion,
-                                  calibrator=self.calibrator,
-                                  grating_orientation='horizontal',
-                                  duration=20),
-            MovingBackgroundStimulus(background=bg, motion=motion,
-                                                 duration=motion.t.iat[-1],
-                                                calibrator=self.calibrator)]))
+        # grating_motion = pd.DataFrame(dict(
+        #     t=[0,  1, 3, 4],
+        #     y=[0,  0, 10, 10]))
+        # Protocol([
+        #     MovingGratingStimulus(grating_period=10, motion=grating_motion,
+        #                           calibrator=self.calibrator,
+        #                           grating_orientation='horizontal',
+        #                           duration=20),
+        #     MovingBackgroundStimulus(background=bg, motion=motion,
+        #                              duration=motion.t.iat[-1],
+        #                              calibrator=self.calibrator)])
+        self.set_protocol(VisualCodingProtocol(video_file=
+                                               r"J:\Vilim Stih\sync\underwater\Fishes.mp4"))
 
         self.show()
         self.show_stimulus_screen(full_screen=False)

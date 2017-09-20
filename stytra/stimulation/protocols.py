@@ -1,6 +1,6 @@
-from stytra.stimulation.stimuli import Pause, Flash, \
+from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, MovingGratingStimulus, MovingBackgroundStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion,
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, VideoStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation import Protocol
 import pandas as pd
@@ -52,7 +52,7 @@ class FlashProtocol(Protocol):
 
 class ShockProtocol(Protocol):
     def __init__(self, repetitions=10, period_sec=30, pre_stim_pause=20.95,
-                 prepare_pause=2, pyb=None, zmq_trigger=None):
+                 prepare_pause=2, pyb=None):
         """
 
         :param repetitions:
@@ -61,15 +61,9 @@ class ShockProtocol(Protocol):
         :param zmq_trigger:
         """
         super().__init__()
-        if not zmq_trigger:
-            print('missing trigger')
 
         stimuli = []
-        stimuli.append(Pause(duration=1))
-        stimuli.append(PrepareAquisition(zmq_trigger=zmq_trigger))
-        stimuli.append(Pause(duration=prepare_pause))
-        stimuli.append(StartAquisition(zmq_trigger=zmq_trigger))  # start aquisition
-          # pre-shock interval
+       # pre-shock interval
         for i in range(repetitions):  # change here for number of trials
             stimuli.append(Pause(duration=pre_stim_pause))
             stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
@@ -281,10 +275,10 @@ class MultistimulusExp06Protocol(Protocol):
 
 
 class VisualCodingProtocol(Protocol):
-    def __init__(self, *args, video_dir, **kwargs):
+    def __init__(self, *args, video_file, **kwargs):
 
         stimuli = []
-        stimuli.append()
+        stimuli.append(VideoStimulus(video_path=video_file))
 
         super().__init__(*args, stimuli=stimuli, **kwargs)
-        self.name='visual coding protocol'
+        self.name= 'visual coding protocol'

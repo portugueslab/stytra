@@ -250,6 +250,7 @@ class Experiment(QMainWindow):
         print('Recorder joined')
         self.finished = True
 
+
     def closeEvent(self, QCloseEvent):
         if not self.finished:
             self.finishProtocol()
