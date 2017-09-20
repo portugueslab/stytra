@@ -158,7 +158,7 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
 
 class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
                              DynamicStimulus):
-    def __init__(self, *args, grating_orientation='horizontal', grating_period,
+    def __init__(self, *args, grating_orientation='horizontal', grating_period=10,
                  grating_color=(255, 255, 255), **kwargs):
         super().__init__(*args, **kwargs)
         self.grating_orientation = grating_orientation

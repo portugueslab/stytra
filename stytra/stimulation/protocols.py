@@ -29,22 +29,15 @@ class NoStimulation(Protocol):
 
 class FlashProtocol(Protocol):
     name = 'repetitive flash protocol'
-    def __init__(self, repetitions=10, period_sec=30,  flash_duration=1):
-        """
-        :param repetitions:
-
-        """
-        super().__init__()
+    def __init__(self, *args, period_sec=30,  flash_duration=1, **kwargs):
 
         stimuli = []
 
-        # stimuli.append(Pause(duration=period_sec-duration_sec))  # pre-flash interval
-        for i in range(repetitions):
-            stimuli.append(Pause(duration=period_sec-flash_duration))
-            stimuli.append(FullFieldPainterStimulus(duration=flash_duration, color=(255, 255, 255)))  # flash duration
+        stimuli.append(Pause(duration=period_sec-flash_duration))
+        stimuli.append(FullFieldPainterStimulus(duration=flash_duration,
+                                                color=(255, 255, 255)))  # flash duration
 
-        self.stimuli = stimuli
-        self.current_stimulus = stimuli[0]
+        super().__init__(*args, stimuli=stimuli, **kwargs)
 
 
 class ShockProtocol(Protocol):
@@ -125,8 +118,7 @@ class ReafferenceProtocol(Protocol):
     def __init__(self, *args, n_backwards=7, pause_duration=7, backwards_duration=0.5,
                  forward_duration=4, backward_vel=20, forward_vel=10,
                  n_forward=14, gain=1, grating_period=10, base_gain=10,
-                 fish_motion_estimator=None,
-                 calibrator=None, **kwargs):
+                 fish_motion_estimator=None, **kwargs):
 
         gains = []
         vels = []
@@ -156,7 +148,7 @@ class ReafferenceProtocol(Protocol):
         super().__init__(stimuli=[ClosedLoop1D_variable_motion(motion=pd.DataFrame(
             dict(t=ts, base_vel=vels, gain=gains)), grating_period=grating_period,
             shunting=True, base_gain=base_gain,
-            fish_motion_estimator=fish_motion_estimator, calibrator=calibrator)])
+            fish_motion_estimator=fish_motion_estimator)])
 
 
 class MultistimulusExp06Protocol(Protocol):
@@ -172,7 +164,6 @@ class MultistimulusExp06Protocol(Protocol):
                  shock_on=False,
                  water_on=True,
                  lr_vel=10,
-                 calibrator=None,
          **kwargs):
 
         if grating_args is None:
@@ -202,7 +193,8 @@ class MultistimulusExp06Protocol(Protocol):
                              x=x,
                              y=y))
         stimuli.append(MovingGratingStimulus(motion=motion,
-                                           duration=last_time, **grating_args, calibrator=calibrator))
+                                           duration=last_time,
+                                             **grating_args))
 
         if lr_vel>0:
             t = [0, one_stimulus_duration]
@@ -220,10 +212,9 @@ class MultistimulusExp06Protocol(Protocol):
                                        y=y))
             grating_args_v = deepcopy(grating_args)
             grating_args_v['grating_orientation'] = 'vertical'
-            grating_args_v['grating_period'] *= 2 # because of the stretch of the image
             stimuli.append(MovingGratingStimulus(motion=motion,
                                           **grating_args_v,
-                                          duration=last_time, calibrator=calibrator))
+                                          duration=last_time))
 
         if shock_on:
             stimuli.append(Pause(duration=pre_stim_pause))
@@ -254,8 +245,7 @@ class MultistimulusExp06Protocol(Protocol):
 
             stimuli.append(MovingBackgroundStimulus(motion=motion,
                                                  duration=last_time,
-                            background=existing_file_background(r"C:\Users\portugueslab\Documents\underwater\SeamlessRocks.png"),
-                                                    calibrator=calibrator))
+                            background=existing_file_background(r"C:\Users\portugueslab\Documents\underwater\SeamlessRocks.png")))
 
         super().__init__(*args, stimuli=stimuli, **kwargs)
 

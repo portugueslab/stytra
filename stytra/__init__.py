@@ -157,7 +157,9 @@ class Experiment(QMainWindow):
         Protclass = self.widget_control.combo_prot.prot_classdict[
             self.widget_control.combo_prot.currentText()]
         n_repeats = self.widget_control.spn_n_repeats.value()
-        self.set_protocol(Protclass(n_repeats=n_repeats, **protocol_params))
+        self.set_protocol(Protclass(n_repeats=n_repeats,
+                                    calibrator=self.calibrator,
+                                    **protocol_params))
 
     def set_protocol(self, protocol):
         self.protocol = protocol
@@ -374,7 +376,6 @@ class TailTrackingExperiment(CameraExperiment):
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
-
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)

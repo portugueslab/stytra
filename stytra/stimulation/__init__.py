@@ -21,6 +21,7 @@ class Protocol(QObject):
     sig_protocol_finished = pyqtSignal()
 
     def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
+                 calibrator = None,
                  dt=1/60, log_print=True):
         super().__init__()
 
@@ -38,6 +39,8 @@ class Protocol(QObject):
             self.stimuli.append(Pause(duration=post_pause))
 
         self.current_stimulus = self.stimuli[0]
+        for stimulus in self.stimuli:
+            stimulus.calibrator = calibrator
 
         self.i_current_stimulus = 0
         self.timer = QTimer()
