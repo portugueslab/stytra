@@ -31,6 +31,7 @@ class Stimulus:
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
+        ignores the properties which are private (start with _)
         """
         state_dict = dict()
         for key, value in self.__dict__.items():
@@ -78,24 +79,6 @@ class ImageStimulus(Stimulus):
         pass
 
 
-class Flash(ImageStimulus):
-    """ Flash stimulus
-    """
-    def __init__(self, *args, color=(255, 255, 255), **kwargs):
-        super(Flash, self).__init__(*args, **kwargs)
-        self.color = color
-        self.name = 'Whole field'
-        self._imdata = np.ones(self.output_shape + (3,), dtype=np.uint8) * \
-                       np.array(self.color, dtype=np.uint8)[None, None, :]
-
-
-    def get_image(self, dims):
-        self._imdata = np.ones(dims + (3,), dtype=np.uint8) * \
-                       np.array(self.color, dtype=np.uint8)[None, None, :]
-
-        return self._imdata
-
-
 class PainterStimulus(Stimulus):
     def paint(self, p, w, h):
         pass
@@ -108,33 +91,6 @@ class BackgroundStimulus(Stimulus):
         self.y = 0
         self.theta = 0
         self._background = background
-
-
-class SeamlessStimulus(ImageStimulus, BackgroundStimulus):
-    def __init__(self, *args, background=None, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _transform_mat(self, dims):
-        if self.theta == 0:
-            return np.array([[1, 0, self.y],
-                             [0, 1, self.x]]).astype(np.float32)
-        else:
-            # shift by x and y and rotate around centre
-            xc = dims[1] / 2
-            yc = dims[0] / 2
-            return np.array([[np.sin(self.theta), np.cos(self.theta),
-                              self.y + yc - xc*np.sin(self.theta) -
-                              yc * np.cos(self.theta)],
-                             [np.cos(self.theta), -np.sin(self.theta),
-                              self.x + xc - xc*np.cos(self.theta) +
-                              yc * np.sin(self.theta)]]).astype(np.float32)
-
-    def get_image(self, dims):
-        self.update()
-        to_display = cv2.warpAffine(self._background, self._transform_mat(dims),
-                                    borderMode=cv2.BORDER_WRAP,
-                                    dsize=dims)
-        return to_display
 
 
 class FullFieldPainterStimulus(PainterStimulus):

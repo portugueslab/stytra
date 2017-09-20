@@ -1,6 +1,6 @@
 from stytra.stimulation.stimuli import Pause, Flash, \
     ShockStimulus, MovingGratingStimulus, MovingBackgroundStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation import Protocol
 import pandas as pd
@@ -278,3 +278,13 @@ class MultistimulusExp06Protocol(Protocol):
 
         super().__init__(*args, stimuli=stimuli, **kwargs)
         self.name = 'exp006multistim'
+
+
+class VisualCodingProtocol(Protocol):
+    def __init__(self, *args, video_dir, **kwargs):
+
+        stimuli = []
+        stimuli.append()
+
+        super().__init__(*args, stimuli=stimuli, **kwargs)
+        self.name='visual coding protocol'
