@@ -53,7 +53,7 @@ def get_default_args(func):
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
-    def __init__(self, directory, name, calibrator=None,
+    def __init__(self, directory, calibrator=None,
                  save_csv=False,
                  app=None, debug_mode=True):
         """ A general class for running experiments
@@ -75,23 +75,26 @@ class Experiment(QMainWindow):
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        self.name = name
-
         self.save_csv = save_csv
 
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
         self.debug_mode = debug_mode
+        if not self.debug_mode:
+            self.check_if_committed()
 
         self.window_display = StimulusDisplayWindow(experiment=self)
         self.widget_control = ProtocolControlWindow(self.window_display,
                                                     self.debug_mode)
 
-        self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
+        self.metadata_gui = MetaListGui([self.metadata_general,
+                                         self.metadata_fish])
+        self.widget_control.combo_prot.currentIndexChanged.connect(self.change_protocol)
+        self.widget_control.spn_n_repeats.valueChanged.connect(self.change_protocol)
+
         self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
-        self.widget_control.button_start.clicked.connect(self.start_protocol)
-        self.widget_control.button_end.clicked.connect(self.end_protocol)
+        self.widget_control.button_toggle_prot.clicked.connect(self.toggle_protocol)
 
         # Connect the display window to the metadata collector
         self.dc.add_data_source('stimulus', 'display_params',
@@ -134,11 +137,32 @@ class Experiment(QMainWindow):
         self.dc.add_data_source('stimulus', 'log', self, 'protocol', 'log', use_last_val=False)
 
         self.protocol = None
+        self.init_ui()
+        self.show()
+
+    def init_ui(self):
+        self.setCentralWidget(self.widget_control)
+
+    def toggle_protocol(self):
+        if self.protocol.running:
+            self.end_protocol()
+            self.widget_control.button_toggle_prot.setText("▶")
+        else:
+            self.start_protocol()
+            self.widget_control.button_toggle_prot.setText("■")
+
+    def change_protocol(self, _):
+        protocol_params = dict()
+        # TODO implement GUI for protocol params
+        Protclass = self.widget_control.combo_prot.prot_classdict[
+            self.widget_control.combo_prot.currentText()]
+        n_repeats = self.widget_control.spn_n_repeats.value()
+        self.set_protocol(Protclass(n_repeats=n_repeats, **protocol_params))
 
     def set_protocol(self, protocol):
         self.protocol = protocol
         self.protocol.reset()
-        self.window_display.widget_display.set_protocol(protocol)
+        self.window_display.widget_display.set_protocol(self.protocol)
         self.protocol.sig_timestep.connect(self.update_progress)
         self.protocol.sig_protocol_finished.connect(self.end_protocol)
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
@@ -175,8 +199,6 @@ class Experiment(QMainWindow):
                 print('Second screen not available')
 
     def start_protocol(self):
-        # if self.run_committed:
-        #     self.check_if_committed()
         self.protocol.start()
 
     def end_protocol(self, do_not_save=None):

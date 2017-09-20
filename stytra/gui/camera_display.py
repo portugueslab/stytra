@@ -5,11 +5,8 @@ import pyqtgraph as pg
 from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
-from stytra.metadata import MetadataCamera
 from stytra.tracking.diagnostics import draw_fish_angles_ls
 
-
-import cv2
 
 class CameraViewWidget(QWidget):
     def __init__(self, camera_queue, control_queue=None, camera_rotation=0,
@@ -150,9 +147,6 @@ class CameraTailSelection(CameraViewWidget):
 
         except np.linalg.LinAlgError:
             print('not init')
-
-
-
         return self.tracking_params
 
     def modify_frame(self, frame):

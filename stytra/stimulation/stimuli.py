@@ -214,7 +214,6 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
         self._last_frame_display_time = 0
         self._cap = cv2.VideoCapture(self.video_path)
         _, self._current_frame = self._cap.read()
-        print(self._current_frame.shape)
 
         if framerate is None:
             self.framerate = self._cap.get(cv2.CAP_PROP_FPS)
@@ -228,14 +227,15 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def update(self):
         if self.elapsed >= self._last_frame_display_time+1/self.framerate:
-            try:
-                print('next frame loaded')
-                _, self._current_frame = self._cap.read()
+            ret, next_frame = self._cap.read()
+            print(ret, 'read frame')
+            if ret and next_frame is not None:
+                print('Got next frame')
+                self._current_frame = next_frame
                 self._last_frame_display_time = self.elapsed
-            except:
-                pass  # TODO reset video on end
 
     def paint(self, p, w, h):
+        print('painting painting ', self.elapsed)
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
         p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1]//2,

@@ -1,11 +1,12 @@
 from PyQt5.QtCore import QRectF, pyqtSignal, Qt
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
-    QWidget, QLayout, QComboBox, QApplication, \
+    QWidget, QLayout, QComboBox, QSpinBox, \
     QFileDialog, QLineEdit, QProgressBar, QLabel, QDoubleSpinBox
 import pyqtgraph as pg
 import numpy as np
-import os
+import inspect
 
+from stytra.stimulation import protocols, Protocol
 
 class DebugLabel(QLabel):
     def __init__(self, *args, debug_on=False, **kwargs):
@@ -75,6 +76,19 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
             # TODO place transformed image
 
 
+class ProtocolDropdown(QComboBox):
+    def __init__(self):
+        super().__init__()
+        prot_classes = inspect.getmembers(protocols, inspect.isclass)
+
+        self.setEditable(False)
+        self.prot_classdict = {prot[1].name: prot[1]
+                               for prot in prot_classes if issubclass(prot[1],
+                                                                      Protocol)}
+
+        self.addItems(list(self.prot_classdict.keys()))
+
+
 class ProtocolControlWindow(QWidget):
     sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
@@ -96,22 +110,34 @@ class ProtocolControlWindow(QWidget):
         else:
             self.widget_view = None
 
+        ## Widgets for display calibration
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
         self.button_calibrate = QPushButton('Calibrate')
-        self.layout_calibrate.addWidget(self.button_show_calib)
-        self.layout_calibrate.addWidget(self.button_calibrate)
         self.label_calibrate = QLabel('size of calib. pattern in mm')
         self.spin_calibrate = QDoubleSpinBox()
+        self.layout_calibrate.addWidget(self.button_show_calib)
+        self.layout_calibrate.addWidget(self.button_calibrate)
+        self.layout_calibrate.addWidget(self.spin_calibrate)
         self.layout_calibrate.addWidget(self.label_calibrate)
         self.layout_calibrate.addWidget(self.spin_calibrate)
 
-        self.button_start = QPushButton('Start protocol')
+        ## Widgets for protocol choosing
+        self.layout_choose = QHBoxLayout()
+        self.combo_prot = ProtocolDropdown()
+        self.spn_n_repeats = QSpinBox()
+        self.spn_n_repeats.setMinimum(0)
+        self.spn_n_repeats.setValue(1)
+        self.layout_choose.addWidget(self.combo_prot)
+        self.layout_choose.addWidget(self.spn_n_repeats)
+
+        ## Widgets for protocol running
+        self.layout_run = QHBoxLayout()
+        self.button_toggle_prot = QPushButton("▶")
         self.progress_bar = QProgressBar()
         self.progress_bar.setFormat('%p% %v/%m')
-        self.button_end = QPushButton('End protocol')
-
-        self.progbar_protocol = QProgressBar()
+        self.layout_run.addWidget(self.button_toggle_prot)
+        self.layout_run.addWidget(self.progress_bar)
 
         self.button_metadata = QPushButton('Edit metadata')
 
@@ -119,8 +145,9 @@ class ProtocolControlWindow(QWidget):
         self.layout = QVBoxLayout()
         for widget in [self.label_debug,
                        self.widget_view,
-                       self.layout_calibrate, self.button_start, self.progress_bar,
-                       self.button_end, self.button_metadata]:
+                        self.layout_choose,
+                       self.layout_calibrate, self.layout_run,
+                       self.button_metadata]:
             if isinstance(widget, QWidget):
                 self.layout.addWidget(widget)
             if isinstance(widget, QLayout):
@@ -141,104 +168,7 @@ class ProtocolControlWindow(QWidget):
                                          tuple([int(p) for p in self.widget_view.roi_box.size()]))
 
 
-class ProtocolSelectorWidget(QWidget):
-    change_signal = pyqtSignal()
-    def __init__(self, app, protocol_list, *args):
-        """
-        Widget for controlling the stimulation.
-        :param app: Qt5 app
-        :param protocol: Protocol object with the stimulus
-        :param display_window: ProjectorViewer object for the projector
-        """
-        super().__init__(*args)
-        self.app = app
-        self.protocol_list = protocol_list
-        self.layout = QVBoxLayout()
-        self.index = 0
 
-        names = []
-        for protocol in self.protocol_list:
-            names.append(protocol.name)
-
-        self.protocol_selector = QComboBox()
-        self.protocol_selector.setEditable(False)
-        # Add list and set default:
-        self.protocol_selector.addItems(names)
-        self.protocol_selector.setCurrentIndex(0)
-        self.protocol_selector.currentTextChanged.connect(self.change_protocol)
-
-        self.layout.addWidget(self.protocol_selector)
-
-        self.setLayout(self.layout)
-
-    def change_protocol(self):
-        self.index = self.protocol_selector.currentIndex()
-        self.change_signal.emit()
-
-
-class StartingWindow(QWidget):
-    def __init__(self, app, protocol_list, *args):
-        """
-        Widget for controlling the stimulation.
-        :param app: Qt5 app
-        :param protocol: Protocol object with the stimulus
-        :param display_window: ProjectorViewer object for the projector
-        """
-        super().__init__(*args)
-        self.app = app
-        self.protocol_list = protocol_list
-        self.layout = QVBoxLayout()
-        self.chached_folder_filename = 'folder.txt'
-
-        # folder selection: set to cached folder if existing:
-        if os.path.isfile(self.chached_folder_filename):
-            with open(self.chached_folder_filename, 'r') as text_file:
-                self.folder = text_file.read()
-        else:
-            self.folder = os.getcwd()
-        self.folder_box = QLineEdit(self.folder)
-        self.folder_box.setEnabled(False)
-        self.layout.addWidget(self.folder_box)
-
-        self.button_folder = QPushButton('Select new folder')
-        self.button_folder.clicked.connect(self.change_folder)
-        self.layout.addWidget(self.button_folder)
-
-        # Add list:
-        self.protocol = self.protocol_list[0]
-        self.protocol_selector = QComboBox()
-        self.protocol_selector.setEditable(False)
-        self.protocol_selector.addItems(protocol_list)
-        self.protocol_selector.currentTextChanged.connect(self.change_protocol)
-        self.layout.addWidget(self.protocol_selector)
-
-        self.button_end = QPushButton('Proceed')
-        self.button_end.clicked.connect(self.close)
-        self.layout.addWidget(self.button_end)
-
-        self.setLayout(self.layout)
-        self.show()
-
-    def change_folder(self):
-        dialog = QFileDialog()
-        folder_path = dialog.getExistingDirectory(None, "Select Folder")
-        self.folder_box.setText(folder_path)
-        self.folder = folder_path
-        with open(self.chached_folder_filename, 'w') as text_file:
-            text_file.write(folder_path)
-
-    def change_protocol(self):
-        self.protocol = self.protocol_list[self.protocol_selector.currentIndex()]
-
-
-if __name__ == '__main__':
-    application = QApplication([])
-    exp = StartingWindow(application, ['a', 'b'])
-    application.exec_()
-
-    application2 = QApplication([])
-    exp2 = StartingWindow(application2, [exp.protocol, 'b'])
-    application2.exec_()
 
 
 

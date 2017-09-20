@@ -50,10 +50,10 @@ if __name__ == '__main__':
     print(args)
     app = QApplication([])
     exp = ClosedLoopExperiment(app=app, name='closed_loop',
-                              directory=r'D:\vilim/closed_loop/',
-                              tracking_method='angle_sweep',
-                              tracking_method_parameters={'n_segments': 9,
-                                                          'filtering': True,
-                                                          'color_invert': args.tail_invert},
+                               directory=r'D:\vilim/closed_loop/',
+                               tracking_method='angle_sweep',
+                               tracking_method_parameters={'n_segments': 9,
+                                                           'filtering': True,
+                                                           'color_invert': args.tail_invert},
                                debug_mode=args.debug)
     app.exec_()

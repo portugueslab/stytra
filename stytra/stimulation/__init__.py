@@ -3,8 +3,10 @@ import datetime
 
 from builtins import print
 
-from stytra.stimulation.stimuli import DynamicStimulus
+from stytra.stimulation.stimuli import DynamicStimulus, Pause
 from stytra.collectors import Accumulator
+
+from copy import deepcopy
 
 
 class Protocol(QObject):
@@ -12,27 +14,31 @@ class Protocol(QObject):
     updating signals etc.
 
     """
-
+    name = ''
     sig_timestep = pyqtSignal(int)
     sig_stim_change = pyqtSignal(int)
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli=None, name='', dt=1/60, log_print=True):
-        """
-        :param stimuli: list of stimuli for the protocol (list of Stimulus objects)
-        :param dt: frame duration (sec)
-        """
+    def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
+                 dt=1/60, log_print=True):
         super().__init__()
 
-        self.name = name
         self.t_start = None
         self.t_end = None
         self.completed = False
         self.t = 0
-        if stimuli:
-            self.stimuli = stimuli
-            self.current_stimulus = stimuli[0]
+
+        self.stimuli = []
+        if pre_pause > 0:
+            self.stimuli.append(Pause(duration=pre_pause))
+        for i in range(n_repeats):
+            self.stimuli.extend(deepcopy(stimuli))
+        if post_pause > 0:
+            self.stimuli.append(Pause(duration=post_pause))
+
+        self.current_stimulus = self.stimuli[0]
+
         self.i_current_stimulus = 0
         self.timer = QTimer()
         self.dt = dt
@@ -128,7 +134,6 @@ class Protocol(QObject):
 
         self.i_current_stimulus = 0
         self.current_stimulus = self.stimuli[0]
-
 
     def get_duration(self):
         total_duration = 0

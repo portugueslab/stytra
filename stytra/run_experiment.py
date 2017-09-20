@@ -17,6 +17,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
+    parser.add_argument('--full-screen',
+                        action='store_true')
 
     args = parser.parse_args()
 
@@ -34,7 +36,7 @@ if __name__ == '__main__':
     if args.lightsheet:
         bases.append(LightsheetExperiment)
 
-    ExpClass = type('exp_class', bases)
+    ExpClass = type('exp_class', tuple(bases), dict())
     exp = ExpClass(**class_kwargs)
-
-    app.exec()
+    exp.show_stimulus_screen(full_screen=args.full_screen)
+    app.exec_()
