@@ -33,14 +33,14 @@ class Protocol(QObject):
         self.stimuli = []
         if pre_pause > 0:
             self.stimuli.append(Pause(duration=pre_pause))
-        for i in range(n_repeats):
+        for i in range(max(n_repeats,1)):
             self.stimuli.extend(deepcopy(stimuli))
         if post_pause > 0:
             self.stimuli.append(Pause(duration=post_pause))
 
         self.current_stimulus = self.stimuli[0]
         for stimulus in self.stimuli:
-            stimulus.calibrator = calibrator
+            stimulus.initialise_external(calibrator=calibrator)
 
         self.i_current_stimulus = 0
         self.timer = QTimer()

@@ -3,7 +3,7 @@ from PyQt5.QtGui import QImage, QTransform
 import qimage2ndarray
 from PyQt5.QtGui import QPainter, QImage, QBrush, QPen, QColor
 from PyQt5.QtCore import QPoint, QRect, QRectF
-import cv2
+import pims
 from time import sleep
 try:
     from stytra.hardware.serial import PyboardConnection
@@ -15,7 +15,7 @@ from itertools import product
 
 class Stimulus:
     """ General class for a stimulus."""
-    def __init__(self, calibrator=None, duration=0.0):
+    def __init__(self, duration=0.0):
         """ Make a stimulus, with the basic properties common to all stimuli
         Initial values which do not change during the stimulus
         are prefixed with _, so that they are not logged
@@ -27,7 +27,7 @@ class Stimulus:
         self.elapsed = 0.0
         self.duration = duration
         self.name = ''
-        self.calibrator = calibrator
+        self.calibrator = None
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -44,6 +44,15 @@ class Stimulus:
 
     def start(self):
         pass
+
+    def initialise_external(self, calibrator=None):
+        """ Functions that initiate each stimulus,
+        gets around problems with copying
+
+        :param calibrator:
+        :return:
+        """
+        self.calibrator = calibrator
 
 
 class DynamicStimulus(Stimulus):
@@ -170,7 +179,7 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        grating_width = self.grating_period/self.calibrator.mm_px # in pixels
+        grating_width = self.grating_period/max(self.calibrator.mm_px,0.0001) # in pixels
         p.setBrush(QBrush(QColor(*self.grating_color)))
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
@@ -212,27 +221,31 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
         self._current_frame = None
         self._last_frame_display_time = 0
-        self._cap = cv2.VideoCapture(self.video_path)
-        _, self._current_frame = self._cap.read()
+        self._video_seq = None
 
-        if framerate is None:
-            self.framerate = self._cap.get(cv2.CAP_PROP_FPS)
-        else:
-            self.framerate = framerate
+        self.framerate = None
+        self.duration = duration
 
-        if duration is None:
-            self.duration = self._cap.get(cv2.CAP_PROP_FRAME_COUNT)/self.framerate
-        else:
-            self.duration = duration
+    def initialise_external(self, *args, **kwargs):
+        super().initialise_external(*args, **kwargs)
+        self._video_seq = pims.Video(self.video_path)
+        self._current_frame = self._video_seq.get_frame(self.i_frame)
+        metadata = self._video_seq.get_metadata()
+
+        if self.framerate is None:
+            self.framerate = metadata['fps']
+
+        if self.duration is None:
+            self.duration = metadata['duration']
+
 
     def update(self):
         if self.elapsed >= self._last_frame_display_time+1/self.framerate:
-            ret, next_frame = self._cap.read()
-            print(ret, 'read frame')
-            if ret and next_frame is not None:
-                print('Got next frame')
+            next_frame = self._video_seq.get_frame(self.i_frame)
+            if next_frame is not None:
                 self._current_frame = next_frame
                 self._last_frame_display_time = self.elapsed
+                self.i_frame += 1
 
     def paint(self, p, w, h):
         print('painting painting ', self.elapsed)

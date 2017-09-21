@@ -28,8 +28,8 @@ class NoStimulation(Protocol):
 
 
 class FlashProtocol(Protocol):
-    name = 'repetitive flash protocol'
-    def __init__(self, *args, period_sec=30,  flash_duration=1, **kwargs):
+    name = 'flash protocol'
+    def __init__(self, *args, period_sec=5,  flash_duration=2, **kwargs):
 
         stimuli = []
 
@@ -245,7 +245,7 @@ class MultistimulusExp06Protocol(Protocol):
 
             stimuli.append(MovingBackgroundStimulus(motion=motion,
                                                  duration=last_time,
-                            background=existing_file_background(r"C:\Users\portugueslab\Documents\underwater\SeamlessRocks.png")))
+                            background=existing_file_background("/Users/vilimstich/PhD/j_sync/underwater/SeamlessRocks.png")))
 
         super().__init__(*args, stimuli=stimuli, **kwargs)
 
@@ -253,7 +253,7 @@ class MultistimulusExp06Protocol(Protocol):
 class VisualCodingProtocol(Protocol):
     name = "visual coding protocol"
     def __init__(self, *args,
-                 video_file=r"J:\Vilim Stih\sync\underwater\Fishes.mp4", **kwargs):
+                 video_file=r"/Users/vilimstich/PhD/j_sync/underwater/Underwater River Biotope from West Bengal, INDIA/Underwater River Biotope from West Bengal, INDIA. (1080p_25fps_H264-128kbit_AAC).mp4", **kwargs):
 
         stimuli = []
         stimuli.append(VideoStimulus(video_path=video_file))
