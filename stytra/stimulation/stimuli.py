@@ -28,6 +28,7 @@ class Stimulus:
         self.duration = duration
         self.name = ''
         self.calibrator = None
+        self.asset_folder = None
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -45,7 +46,8 @@ class Stimulus:
     def start(self):
         pass
 
-    def initialise_external(self, calibrator=None):
+    def initialise_external(self, calibrator=None,
+                            asset_folder=None):
         """ Functions that initiate each stimulus,
         gets around problems with copying
 
@@ -53,6 +55,7 @@ class Stimulus:
         :return:
         """
         self.calibrator = calibrator
+        self.asset_folder = asset_folder
 
 
 class DynamicStimulus(Stimulus):
@@ -76,7 +79,6 @@ class DynamicStimulus(Stimulus):
     def get_dynamic_state(self):
         return tuple(getattr(self, param, 0)
                      for param in self.dynamic_parameters)
-
 
 class ImageStimulus(Stimulus):
     """Generic visual stimulus
@@ -228,7 +230,8 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        self._video_seq = pims.Video(self.video_path)
+        self._video_seq = pims.Video(self.asset_folder +
+                                     '/' + self.video_path)
         self._current_frame = self._video_seq.get_frame(self.i_frame)
         metadata = self._video_seq.get_metadata()
 

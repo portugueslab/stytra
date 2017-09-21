@@ -17,6 +17,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
+    parser.add_argument('--asset_dir', action='store',
+                        default='/Users/vilimstich/PhD/j_sync/underwater')
     parser.add_argument('--full-screen',
                         action='store_true')
 
@@ -26,7 +28,10 @@ if __name__ == '__main__':
 
     app = QApplication([])
 
-    class_kwargs = dict(app=app, directory=args.directory, debug_mode=args.debug)
+    class_kwargs = dict(app=app,
+                        directory=args.directory,
+                        debug_mode=args.debug,
+                        asset_directory=args.asset_dir)
 
     if args.tail_tracking:
         bases.append(TailTrackingExperiment)
