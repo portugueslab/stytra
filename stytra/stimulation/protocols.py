@@ -11,6 +11,7 @@ import zmq
 
 from copy import deepcopy
 
+
 class NoStimulation(Protocol):
     name = 'no_stimulation'
 
@@ -253,7 +254,7 @@ class MultistimulusExp06Protocol(Protocol):
 class VisualCodingProtocol(Protocol):
     name = "visual coding protocol"
     def __init__(self, *args,
-                 video_file=r"/Users/vilimstich/PhD/j_sync/underwater/Underwater River Biotope from West Bengal, INDIA/Underwater River Biotope from West Bengal, INDIA. (1080p_25fps_H264-128kbit_AAC).mp4", **kwargs):
+                 video_file=r"3minUnderwater.mp4", **kwargs):
 
         stimuli = []
         stimuli.append(VideoStimulus(video_path=video_file))

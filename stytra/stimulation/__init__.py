@@ -21,8 +21,9 @@ class Protocol(QObject):
     sig_protocol_finished = pyqtSignal()
 
     def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
-                 calibrator = None,
-                 dt=1/60, log_print=True):
+                 calibrator=None,
+                 dt=1/60, log_print=True,
+                 asset_folder=''):
         super().__init__()
 
         self.t_start = None
@@ -33,14 +34,15 @@ class Protocol(QObject):
         self.stimuli = []
         if pre_pause > 0:
             self.stimuli.append(Pause(duration=pre_pause))
-        for i in range(max(n_repeats,1)):
+        for i in range(max(n_repeats, 1)):
             self.stimuli.extend(deepcopy(stimuli))
         if post_pause > 0:
             self.stimuli.append(Pause(duration=post_pause))
 
         self.current_stimulus = self.stimuli[0]
         for stimulus in self.stimuli:
-            stimulus.initialise_external(calibrator=calibrator)
+            stimulus.initialise_external(calibrator=calibrator,
+                                         asset_folder=asset_folder)
 
         self.i_current_stimulus = 0
         self.timer = QTimer()

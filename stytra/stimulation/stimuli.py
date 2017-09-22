@@ -52,6 +52,7 @@ class Stimulus:
         gets around problems with copying
 
         :param calibrator:
+        :param asset_folder:
         :return:
         """
         self.calibrator = calibrator
@@ -200,6 +201,19 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
                 start += grating_width
 
 
+class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
+    def __init__(self, *args, spot_radius=5, average_distance=20,
+                 n_spots=10, **kwargs):
+        super().__init__()
+        self.dynamic_parameters = ['spot_positions']
+        self.spot_radius = spot_radius
+        self.average_distance = 20
+        self.spot_positions = np.array((n_spots, 2))
+
+    def paint(self, p, w, h):
+        pass
+
+
 class MovingStimulus(DynamicStimulus):
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -225,21 +239,32 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
         self._last_frame_display_time = 0
         self._video_seq = None
 
-        self.framerate = None
+        self.framerate = framerate
         self.duration = duration
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
+        print(self.asset_folder +
+              '/' + self.video_path)
         self._video_seq = pims.Video(self.asset_folder +
                                      '/' + self.video_path)
+
         self._current_frame = self._video_seq.get_frame(self.i_frame)
-        metadata = self._video_seq.get_metadata()
+        try:
+            metadata = self._video_seq.get_metadata()
 
-        if self.framerate is None:
-            self.framerate = metadata['fps']
+            if self.framerate is None:
+                self.framerate = metadata['fps']
+            if self.duration is None:
+                self.duration = metadata['duration']
 
-        if self.duration is None:
-            self.duration = metadata['duration']
+        except AttributeError:
+            if self.framerate is None:
+                self.framerate = self._video_seq.frame_rate
+
+            if self.duration is None:
+                self.duration = self._video_seq.duration
+
 
 
     def update(self):
@@ -251,7 +276,6 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
                 self.i_frame += 1
 
     def paint(self, p, w, h):
-        print('painting painting ', self.elapsed)
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
         p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1]//2,

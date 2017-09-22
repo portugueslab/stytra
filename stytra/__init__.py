@@ -55,7 +55,9 @@ class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
     def __init__(self, directory, calibrator=None,
                  save_csv=False,
-                 app=None, debug_mode=True):
+                 app=None,
+                 asset_directory='',
+                 debug_mode=True):
         """ A general class for running experiments
 
         :param directory:
@@ -80,6 +82,7 @@ class Experiment(QMainWindow):
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
+        self.asset_dir = asset_directory
         self.debug_mode = debug_mode
         if not self.debug_mode:
             self.check_if_committed()
@@ -159,6 +162,7 @@ class Experiment(QMainWindow):
         n_repeats = self.widget_control.spn_n_repeats.value()
         self.set_protocol(Protclass(n_repeats=n_repeats,
                                     calibrator=self.calibrator,
+                                    asset_folder=self.asset_dir,
                                     **protocol_params))
 
     def set_protocol(self, protocol):

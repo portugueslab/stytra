@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QApplication
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--tail_tracking',
+    parser.add_argument('--tail-tracking',
                         action='store_true')
     parser.add_argument('--tail-invert',
                         action='store_true')
@@ -17,7 +17,7 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
-    parser.add_argument('--asset_dir', action='store',
+    parser.add_argument('--asset-dir', action='store',
                         default='/Users/vilimstich/PhD/j_sync/underwater')
     parser.add_argument('--full-screen',
                         action='store_true')
