@@ -4,7 +4,7 @@ from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 from datetime import datetime
-from stytra.stimulation.stimuli import ImageStimulus, PainterStimulus
+from stytra.stimulation.stimuli import PainterStimulus
 
 
 class StimulusDisplayWindow(QDialog):
@@ -53,12 +53,6 @@ class GLStimDisplay(QOpenGLWidget):
         self.protocol = protocol
         self.protocol.sig_timestep.connect(self.display_stimulus)
 
-    def setImage(self, img=None):
-        if img is not None:
-            self.img = qimage2ndarray.array2qimage(img)
-        else:
-            self.img = None
-
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -80,9 +74,6 @@ class GLStimDisplay(QOpenGLWidget):
 
     def display_stimulus(self):
         self.dims = (self.height(), self.width())
-
-        if isinstance(self.protocol.current_stimulus, ImageStimulus):
-            self.setImage(self.protocol.current_stimulus.get_image(self.dims))
 
         self.update_framerate()
         self.update()

@@ -26,7 +26,9 @@ class Calibrator:
 
 
 class CrossCalibrator(Calibrator):
-    def __init__(self, *args, fixed_length=None, **kwargs):
+    def __init__(self, *args, fixed_length=60,
+                 calibration_length='outside',
+                 **kwargs):
         super().__init__(*args, **kwargs)
 
         if fixed_length is not None:
@@ -35,6 +37,7 @@ class CrossCalibrator(Calibrator):
         else:
             self.length_is_fixed = False
             self.length_px = 1
+
         self.length_mm = 1
         self.length_to_measure = 'a line in the cross'
 

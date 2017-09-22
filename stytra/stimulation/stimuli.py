@@ -1,4 +1,5 @@
 import numpy as np
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QTransform
 import qimage2ndarray
 from PyQt5.QtGui import QPainter, QImage, QBrush, QPen, QColor
@@ -81,15 +82,6 @@ class DynamicStimulus(Stimulus):
         return tuple(getattr(self, param, 0)
                      for param in self.dynamic_parameters)
 
-class ImageStimulus(Stimulus):
-    """Generic visual stimulus
-    """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_image(self, dims):
-        pass
-
 
 class PainterStimulus(Stimulus):
     def paint(self, p, w, h):
@@ -112,28 +104,50 @@ class FullFieldPainterStimulus(PainterStimulus):
         self.name = 'flash'
 
     def paint(self, p, w, h):
+        p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+
+class PartFieldStimulus(PainterStimulus):
+    def __init__(self, *args, color=(255, 0, 0),
+                 bounding_box=(0,0,1,1), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = 'part_field'
+        self.color = color
+        self.bounding_box = bounding_box
+
+    def paint(self, p, w, h):
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.drawRect(QRect(
+              int(self.bounding_box[0] * w),
+              int(self.bounding_box[1] * h),
+              int(self.bounding_box[2] * w),
+              int(self.bounding_box[3] * h)
+        ))
 
 
 class Pause(FullFieldPainterStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
-        self.name = 'Pause'
+        self.name = 'pause'
 
 
-class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
-                              DynamicStimulus):
+class SeamlessImageStimulus(PainterStimulus,
+                              DynamicStimulus,
+                              BackgroundStimulus):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
-                         **kwargs)
-        self._background = qimage2ndarray.array2qimage(self._background)
+        super().__init__(*args, **kwargs)
+
+    def get_unit_dims(self, w, h):
+        return self._background.width(),  self._background.height()
 
     def rotTransform(self, w, h):
         xc = -w / 2
         yc = -h / 2
         return QTransform().translate(-xc, -yc).rotate(
-            self.theta * 180 / np.pi).translate(xc, yc)
+            self.theta*180/np.pi).translate(xc, yc)
 
     def paint(self, p, w, h):
         # draw the black background
@@ -147,8 +161,8 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
 
         # find the centres of the display and image
         display_centre = (w/2, h/2)
-        imw = self._background.width()
-        imh = self._background.height()
+        imw, imh = self.get_unit_dims(w, h)
+
         image_centre = (imw / 2, imh / 2)
 
         cx = self.x - np.floor(self.x / imw) * imw
@@ -164,8 +178,30 @@ class SeamlessPainterStimulus(PainterStimulus, BackgroundStimulus,
         nw = int(np.ceil(w/(imw*2)))
         nh = int(np.ceil(h/(imh*2)))
         for idx, idy in product(range(-nw, nw+1), range(-nh, nh+1)):
-            p.drawImage(QPoint(dx + imw * idx,
-                               dy + imh * idy), self._background)
+            self.draw_block(p, QPoint(idx*imw+dx, idy*imh+dy), w, h)
+
+    def draw_block(self, p, point, w, h):
+        p.drawImage(point, self._background)
+
+
+class SeamlessGratingStimulus(SeamlessImageStimulus):
+    def __init__(self, *args, grating_angle=0, grating_period=10,
+                 grating_color=(255, 255, 255), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.theta = grating_angle
+        self.grating_period = grating_period
+        self.grating_color = grating_color
+
+    def get_unit_dims(self, w, h):
+        return self.grating_period/max(self.calibrator.mm_px, 0.0001), max(w,h)
+
+    def draw_block(self, p, point, w, h):
+        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(*self.grating_color)))
+        p.drawRect(point.x(), point.y(),
+                   int(self.grating_period/(2*max(self.calibrator.mm_px, 0.0001))),
+                   w)
 
 
 class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
@@ -173,12 +209,13 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
     def __init__(self, *args, grating_orientation='horizontal', grating_period=10,
                  grating_color=(255, 255, 255), **kwargs):
         super().__init__(*args, **kwargs)
-        self.grating_orientation = grating_orientation
+        self.theta = grating_orientation
         self.grating_period = grating_period
         self.grating_color = grating_color
 
     def paint(self, p, w, h):
         # draw the background
+        p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
@@ -214,9 +251,10 @@ class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
         pass
 
 
-class MovingStimulus(DynamicStimulus):
+class MovingStimulus(DynamicStimulus, BackgroundStimulus):
     def __init__(self, *args, motion=None, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
+                         **kwargs)
         self.motion = motion
         self.name = 'moving seamless'
 
@@ -228,9 +266,32 @@ class MovingStimulus(DynamicStimulus):
                 pass
 
 
+class MovingConstantVel(MovingStimulus):
+    def __init__(self, *args, x_vel=0, y_vel=0, **kwargs):
+        """
+        :param x_vel: x drift velocity (mm/s)
+        :param y_vel: x drift velocity (mm/s)
+        :param mm_px: mm per pixel
+        :param monitor_rate: monitor rate (in Hz)
+        """
+        super().__init__(*args, **kwargs)
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+        self._past_t = 0
+
+    def update(self):
+        dt = (self.elapsed - self._past_t)
+        self.x += self.x_vel*dt
+        self.y += self.y_vel*dt
+        self._past_t = self.elapsed
+
+
 class VideoStimulus(PainterStimulus, DynamicStimulus):
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.name='video'
+
         self.dynamic_parameters.append('i_frame')
         self.i_frame = 0
         self.video_path = video_path
@@ -266,7 +327,6 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
                 self.duration = self._video_seq.duration
 
 
-
     def update(self):
         if self.elapsed >= self._last_frame_display_time+1/self.framerate:
             next_frame = self._video_seq.get_frame(self.i_frame)
@@ -278,40 +338,9 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
-        p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1]//2,
+        p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1] // 2,
                            display_centre[1] - self._current_frame.shape[0] // 2),
                     img)
-
-
-class MovingBackgroundStimulus(MovingStimulus, SeamlessPainterStimulus):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = 'Moving seamless background stimulus'
-
-
-class MovingGratingStimulus(MovingStimulus, GratingPainterStimulus):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = 'Moving grating stimulus'
-
-
-class MovingConstantly(SeamlessPainterStimulus):
-    def __init__(self, *args, x_vel=0, y_vel=0, mm_px=1, monitor_rate=60, **kwargs):
-        """
-        :param x_vel: x drift velocity (mm/s)
-        :param y_vel: x drift velocity (mm/s)
-        :param mm_px: mm per pixel
-        :param monitor_rate: monitor rate (in Hz)
-        """
-        super().__init__(*args, **kwargs)
-        self.x_vel = x_vel
-        self.y_vel = y_vel
-        self.x_shift_frame = (x_vel/mm_px)/monitor_rate
-        self.y_shift_frame = (y_vel/mm_px)/monitor_rate
-
-    def update(self):
-        self.x += self.x_shift_frame
-        self.y += self.y_shift_frame
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):

@@ -1,13 +1,14 @@
 from stytra.stimulation.stimuli import Pause, \
-    ShockStimulus, MovingGratingStimulus, MovingBackgroundStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, VideoStimulus
+    ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
+    PartFieldStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation import Protocol
 import pandas as pd
 import numpy as np
 from stytra.stimulation.backgrounds import gratings
 
-import zmq
+from itertools import product
 
 from copy import deepcopy
 
@@ -254,10 +255,56 @@ class MultistimulusExp06Protocol(Protocol):
 class VisualCodingProtocol(Protocol):
     name = "visual coding protocol"
     def __init__(self, *args,
-                 video_file=r"3minUnderwater.mp4", **kwargs):
+                 video_file=r"3minUnderwater.mp4",
+                 n_directions=8,
+                 n_split=4,
+                 grating_period = 10,
+                 grating_vel = 10,
+                 part_field_duration=1,
+                 part_field_pause=1,
+                 inter_segment_pause=2,
+                 grating_move_duration=2,
+                 grating_pause_duration=1,
+                 **kwargs):
 
         stimuli = []
-        stimuli.append(VideoStimulus(video_path=video_file))
 
+        n_split = n_split
+
+        for (ix, iy) in product(range(n_split), repeat=2):
+            stimuli.append(PartFieldStimulus(
+                bounding_box=(
+                    ix/n_split,
+                    iy/n_split,
+                    1/n_split,
+                    1/n_split),
+                duration=part_field_duration))
+            stimuli.append(Pause(duration=part_field_pause))
+
+        stimuli.append(Pause(duration=inter_segment_pause))
+
+        delta_theta = np.pi*2/n_directions
+
+        grating_motion = pd.DataFrame(dict(t = [0,
+             grating_pause_duration,
+             grating_pause_duration+grating_move_duration,
+             grating_pause_duration*2+grating_move_duration],
+                                           x=[0,
+                                               0,
+                                               grating_move_duration*grating_vel,
+                                               grating_move_duration*grating_vel]))
+        moving_grating_class = type('MovingGratings',
+                                    (MovingStimulus, SeamlessGratingStimulus),
+                                    dict(name='moving_gratings'))
+        for i_dir in range(n_directions):
+            stimuli.append(moving_grating_class(duration=float(grating_motion.t.iat[-1]),
+                                                motion=grating_motion,
+                                                grating_period=grating_period,
+                                 grating_angle=i_dir*delta_theta
+                                 ))
+
+        stimuli.append(Pause(duration=inter_segment_pause))
+
+        stimuli.append(VideoStimulus(video_path=video_file, duration=180))
         super().__init__(*args, stimuli=stimuli, **kwargs)
-        self.name= 'visual coding protocol'
+
