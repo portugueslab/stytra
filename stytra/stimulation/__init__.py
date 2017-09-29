@@ -2,14 +2,13 @@ from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 import datetime
 
 from builtins import print
-
-from stytra.stimulation.stimuli import DynamicStimulus, Pause
-from stytra.collectors import Accumulator
-
 from copy import deepcopy
 
+from stytra.stimulation.stimuli import DynamicStimulus, Pause
+from stytra.collectors import Accumulator, HasPyQtGraphParams
 
-class Protocol(QObject):
+
+class Protocol(QObject, HasPyQtGraphParams):
     """ Class that manages the stimulation protocol, includes a timer,
     updating signals etc.
 
@@ -21,9 +20,17 @@ class Protocol(QObject):
     sig_protocol_finished = pyqtSignal()
 
     def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
-                 calibrator=None,
-                 dt=1/60, log_print=True,
-                 asset_folder=''):
+                 calibrator=None, dt=1/60, log_print=True, asset_folder=''):
+        """ Constructor
+        :param stimuli: list of stimuli of the (list of Stimulus objects)
+        :param n_repeats: repetitions for the list of stimuli
+        :param pre_pause: interval before starting the protocol (seconds ?)
+        :param post_pause: interval after the protocol (seconds ?)
+        :param calibrator:
+        :param dt:
+        :param log_print:
+        :param asset_folder:
+        """
         super().__init__()
 
         self.t_start = None
@@ -68,15 +75,14 @@ class Protocol(QObject):
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
         self.running = True
-        # self.sig_stim_change.emit(0) - not sure about commenting out this
 
     def timestep(self):
         if self.running:
             # Time from start in seconds
             self.t = (datetime.datetime.now() - self.t_start).total_seconds()
-            self.current_stimulus.elapsed = (datetime.datetime.now() -
+            self.current_stimulus._elapsed = (datetime.datetime.now() -
                                              self.past_stimuli_elapsed).total_seconds()
-            if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
+            if self.current_stimulus._elapsed > self.current_stimulus.duration:  # If stimulus time is over
                 self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_log()
 
@@ -119,7 +125,7 @@ class Protocol(QObject):
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
-                        t_start=self.t - self.current_stimulus.elapsed, t_stop=self.t)
+                        t_start=self.t - self.current_stimulus._elapsed, t_stop=self.t)
         if self.log_print:
             print(new_dict)
         self.log.append(new_dict)
@@ -135,7 +141,7 @@ class Protocol(QObject):
         self.t = 0
         for stimulus in self.stimuli:
             stimulus._started = None
-            stimulus.elapsed = 0.0
+            stimulus._elapsed = 0.0
 
         self.i_current_stimulus = 0
         self.current_stimulus = self.stimuli[0]

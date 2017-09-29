@@ -8,12 +8,16 @@ import param
 
 from stytra.metadata import Metadata
 from copy import deepcopy
+from pyqtgraph.parametertree import Parameter
+
+
+class HasPyQtGraphParams(object):
+    params = Parameter.create(name='unassigned_params', type='group')
 
 
 class Accumulator:
     """ A general class for an object that accumulates what
     will be saved or plotted in real time
-
     """
     def __init__(self, fps_range=10):
         self.stored_data = []
@@ -87,6 +91,94 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
         final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
 
     return final_df
+
+
+class NewDataCollector:
+    def __init__(self, *data_tuples_list, folder_path='./'):
+        """ It accept static data in a Metadata object, which will be restored
+        to the last values, or dynamic data like tail tracking or stimulus log that
+        will not be restored.
+        Right now accept only one metadata object, can be extended to multiple ones.
+        :param data_tuples_list: tuple of data to be added
+        :param folder_path: destination for the final HDF5 object
+        """
+
+        # Check validity of directory:
+        if os.path.isdir(folder_path):
+            if not folder_path.endswith('/'):
+                folder_path += '/'
+            self.folder_path = folder_path
+        else:
+            raise ValueError('The specified directory does not exist!')
+
+        # Try to find previously saved metadata:
+        self.last_metadata = None
+        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
+        if len(list_metadata) > 0:
+            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])['static_metadata']
+
+        self.log_data_dict = dict()
+        self.static_metadata = None
+        # Add all the data tuples provided upon instantiation:
+        for data_element in data_tuples_list:
+            self.add_data_source(*data_element)
+
+    def add_data_source(self, entry, name='unspecified_entry'):
+        """
+        Function for adding new data sources.
+            - Metadata objects: can be passed without specifications
+                                (e.g., add_data_source(MetadataFish()));
+            - Log data, for stimulus log or rail tracking
+        """
+
+        # If true, use the last values used for this parameter
+        if type(entry) == Metadata:
+            if self.last_metadata is not None:
+                entry.params.restoreState(self.last_metadata)
+            self.static_metadata = entry
+            print('presa')
+        else:
+            self.log_data_dict[name] = entry
+
+    def get_full_dict(self):
+        # data_dict = deepcopy(DataCollector.data_dict_template)
+        data_dict = {}
+        data_dict['log_data'] = self.log_data_dict
+        print(self.static_metadata.params)
+        print(self.static_metadata.get_state())
+        data_dict['static_metadata'] = self.static_metadata.params.saveState()
+
+        return data_dict
+
+    def save(self, timestamp=None, save_csv=False):
+        """
+        Save the HDF5 file considering the current value of all the entries of the class
+        """
+
+        data_dict = self.get_full_dict()
+
+        if timestamp is None:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
+        filename = self.folder_path + timestamp + '_metadata.h5'
+
+        dd.io.save(filename, data_dict)
+        print('saved '+filename)
+        # Save .csv file if required
+        if save_csv:
+            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
+            dataframe = metadata_dataframe(data_dict)
+            dataframe.to_csv(filename_df)
+
+    # def set_to_last_value(self, entry):
+    #     """
+    #     This function take restore the state of the metadata dictionary to the
+    #     one found in a log file, if there is one.
+    #     """
+    #     # It is a little bit messy. It may be made cleaner (?).
+    #
+
 
 
 class DataCollector:

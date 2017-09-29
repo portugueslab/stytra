@@ -1,14 +1,22 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys
+import traceback
+import os
+import zmq
+import inspect
+import qdarkstyle
+import git
+
+from PyQt5.QtWidgets import QMainWindow, QCheckBox
+from PyQt5.QtCore import QTimer, pyqtSignal
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator
 
-from stytra.metadata import MetadataFish, MetadataGeneral
-from stytra.metadata.metalist_gui import MetaListGui
-from stytra.collectors import DataCollector
-import qdarkstyle
-import git
+from stytra.metadata import MetadataFish, Metadata
+# from stytra.metadata.metalist_gui import MetaListGui
+from stytra.metadata import general_metadata_params
+from stytra.collectors import NewDataCollector, HasPyQtGraphParams
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
@@ -19,29 +27,15 @@ from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
 
-from PyQt5.QtCore import QTimer, pyqtSignal
-from PyQt5.QtWidgets import QCheckBox
 from stytra.metadata import MetadataCamera
-import sys
 
-import traceback
-
-# imports for accumulator
-import pandas as pd
-import numpy as np
 
 # imports for moving detector
 from stytra.hardware.video import MovingFrameDispatcher
-
-import os
-
-import zmq
 from stytra.dbconn import put_experiment_in_db
 
+
 # this part is needed to find default arguments of functions
-import inspect
-
-
 def get_default_args(func):
     signature = inspect.signature(func)
     return {
@@ -53,58 +47,56 @@ def get_default_args(func):
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
+
     def __init__(self, directory, calibrator=None,
                  save_csv=False,
                  app=None,
                  asset_directory='',
                  debug_mode=True):
-        """ A general class for running experiments
-
-        :param directory:
-        :param name:
-        :param app: A QApplication in which to run the experiment
+        """General class for running experiments
+        :param directory: data for saving options and data
+        :param calibrator:
+        :param save_csv:
+        :param app: app: A QApplication in which to run the experiment
+        :param asset_directory:
+        :param debug_mode:
         """
         super().__init__()
 
         self.app = app
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-        self.metadata_general = MetadataGeneral()
-        self.metadata_fish = MetadataFish()
-
         self.directory = directory
-
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
+        # For some reason, initialising Experiment as inheriting from HasPyQtGraphParams
+        # and adding children crashes the program. Therefore, we have a metadata object
+        self.metadata = Metadata()
 
         self.save_csv = save_csv
 
-        self.dc = DataCollector(self.metadata_general, self.metadata_fish,
-                                folder_path=self.directory, use_last_val=True)
+        self.dc = NewDataCollector(folder_path=self.directory)
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
-        if not self.debug_mode:
-            self.check_if_committed()
+        # if not self.debug_mode:
+        #     self.check_if_committed()
 
-        self.window_display = StimulusDisplayWindow(experiment=self)
+        self.window_display = StimulusDisplayWindow()
         self.widget_control = ProtocolControlWindow(self.window_display,
                                                     self.debug_mode)
 
-        self.metadata_gui = MetaListGui([self.metadata_general,
-                                         self.metadata_fish])
         self.widget_control.combo_prot.currentIndexChanged.connect(self.change_protocol)
         self.widget_control.spn_n_repeats.valueChanged.connect(self.change_protocol)
 
-        self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
+        self.widget_control.button_metadata.clicked.connect(self.metadata.show_gui)
         self.widget_control.button_toggle_prot.clicked.connect(self.toggle_protocol)
 
         # Connect the display window to the metadata collector
-        self.dc.add_data_source('stimulus', 'display_params',
-                                self.window_display, 'display_params',
-                                use_last_val=True)
+        # self.dc.add_data_source('stimulus', 'display_params',
+        #                         self.window_display, 'display_params',
+        #                         use_last_val=True)
 
-        self.widget_control.reset_ROI()
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -113,35 +105,40 @@ class Experiment(QMainWindow):
 
         self.window_display.widget_display.calibrator = self.calibrator
         self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
-        self.dc.add_data_source('stimulus', 'mm per px',
-                                self.calibrator, 'mm_px', use_last_val=True)
-        self.dc.add_data_source('stimulus', 'calibration_pattern_length_mm',
-                                self.calibrator, 'length_mm', use_last_val=True)
-        self.dc.add_data_source('stimulus', 'calibration_pattern_length_px',
-                                self.calibrator, 'length_px',
-                                use_last_val=True)
-
-        self.dc.add_data_source('general', 't_protocol_start',
-                                self, 'protocol', 't_start',
-                                use_last_val=False)
-
-        self.dc.add_data_source('general', 't_protocol_end',
-                                self, 'protocol', 't_end',
-                                use_last_val=False)
-
-        self.dc.add_data_source('general', 'is_protocol_completed',
-                                self, 'protocol', 'completed',
-                                use_last_val=False)
 
         self.widget_control.spin_calibrate.valueChanged.connect(
             self.calibrator.set_physical_scale)
-        self.widget_control.spin_calibrate.setValue(self.calibrator.length_mm)
+        self.widget_control.spin_calibrate.setValue(self.calibrator.params['length_mm'])
 
-        self.dc.add_data_source('stimulus', 'log', self, 'protocol', 'log', use_last_val=False)
+        self.change_protocol()
+        self.dc.add_data_source(self.protocol.log, name='stim_log')
+
+        self.metadata.params.addChildren([self.window_display.params, self.calibrator.params])
+
+        self.dc.add_data_source(self.metadata)
+        self.widget_control.reset_ROI()
 
         self.protocol = None
         self.init_ui()
         self.show()
+        print(self.calibrator.params['length_mm'])
+        # self.metadata.params.sigTreeStateChanged.connect(self.change)
+
+
+
+    def change(self, param, changes):
+        pass
+        # print("tree changes:")
+        # for param, change, data in changes:
+        #     path = self.metadata.params.childPath(param)
+        #     if path is not None:
+        #         childName = '.'.join(path)
+        #     else:
+        #         childName = param.name()
+        #     print('  parameter: %s'% childName)
+        #     print('  change:    %s'% change)
+        #     print('  data:      %s'% str(data))
+        #     print('  ----------')
 
     def init_ui(self):
         self.setCentralWidget(self.widget_control)
@@ -154,7 +151,7 @@ class Experiment(QMainWindow):
             self.start_protocol()
             self.widget_control.button_toggle_prot.setText("■")
 
-    def change_protocol(self, _):
+    def change_protocol(self):
         protocol_params = dict()
         # TODO implement GUI for protocol params
         Protclass = self.widget_control.combo_prot.prot_classdict[
@@ -166,6 +163,9 @@ class Experiment(QMainWindow):
                                     **protocol_params))
 
     def set_protocol(self, protocol):
+        """ Set a new experiment protocol
+        :param protocol: stytra Protocol object
+        """
         self.protocol = protocol
         self.protocol.reset()
         self.window_display.widget_display.set_protocol(self.protocol)
@@ -174,19 +174,24 @@ class Experiment(QMainWindow):
         self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
         self.widget_control.progress_bar.setValue(0)
 
+
     def update_progress(self, i_stim):
         self.widget_control.progress_bar.setValue(int(self.protocol.t))
 
     def check_if_committed(self):
-        """ Checks if the version of stytra used to run the experiment is commited,
+        """ Checks if the version of stytra used to run the experiment is committed,
         so that for each experiment it is known what code was used to record it
-
-        :return:
         """
+
+        # Get program name and version for saving:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
         self.dc.add_data_source('general', 'git_hash', git_hash)
         self.dc.add_data_source('general', 'program_name', __file__)
+
+        self.metadata.params.addChild({'name': 'program_version', 'type': 'group',
+                                       'value': [{'name': 'git_hash', 'value': git_hash},
+                                                 {'name': 'program', 'value': __file__}]})
 
         if len(repo.git.diff('HEAD~1..HEAD',
                              name_only=True)) > 0:
@@ -210,12 +215,14 @@ class Experiment(QMainWindow):
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
         if not do_not_save and not self.debug_mode:
-            self.dc.save(save_csv=self.save_csv)
-            put_experiment_in_db(self.dc.get_full_dict())
+            #TODO saving here
+            self.dc.save(save_csv=False)
+            # put_experiment_in_db(self.dc.get_full_dict())
         self.protocol.reset()
 
     def closeEvent(self, *args, **kwargs):
-        self.end_protocol(do_not_save=True)
+        if self.protocol is not None:
+            self.end_protocol(do_not_save=True)
         self.app.closeAllWindows()
 
     def toggle_calibration(self):
@@ -313,7 +320,7 @@ class TailTrackingExperiment(CameraExperiment):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.metadata_fish.embedded = True
+        self.metadata.params[('fish_metadata', 'embedded')] = True
 
         # infrastructure for processing data from the camera
         self.processing_parameter_queue = Queue()

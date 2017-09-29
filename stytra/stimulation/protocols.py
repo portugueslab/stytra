@@ -31,6 +31,7 @@ class NoStimulation(Protocol):
 
 class FlashProtocol(Protocol):
     name = 'flash protocol'
+
     def __init__(self, *args, period_sec=5,  flash_duration=2, **kwargs):
 
         stimuli = []
@@ -44,6 +45,7 @@ class FlashProtocol(Protocol):
 
 class ShockProtocol(Protocol):
     name = 'shock protocol'
+
     def __init__(self, repetitions=10, period_sec=30, pre_stim_pause=20.95,
                  prepare_pause=2, pyb=None):
         """
@@ -56,7 +58,7 @@ class ShockProtocol(Protocol):
         super().__init__()
 
         stimuli = []
-       # pre-shock interval
+        # pre-shock interval
         for i in range(repetitions):  # change here for number of trials
             stimuli.append(Pause(duration=pre_stim_pause))
             stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
@@ -70,8 +72,9 @@ class ShockProtocol(Protocol):
 
 class FlashShockProtocol(Protocol):
     name = 'Flash and shock'
+
     def __init__(self, *args, period_sec=30, duration_sec=1, pre_stim_pause=20, shock_duration=0.05,
-                 prepare_pause=2, pyb=None, zmq_trigger=None, **kwargs):
+                 pyb=None, zmq_trigger=None, **kwargs):
         """
 
         :param repetitions:
@@ -85,7 +88,8 @@ class FlashShockProtocol(Protocol):
         stimuli = []
 
         stimuli.append(Pause(duration=pre_stim_pause))
-        stimuli.append(FullFieldPainterStimulus(duration=duration_sec-shock_duration, color=(255, 255, 255)))  # flash duration
+        stimuli.append(FullFieldPainterStimulus(duration=duration_sec-shock_duration,
+                                                color=(255, 255, 255)))  # flash duration
         stimuli.append(ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
                                      pulse_n=1, pulse_dur_ms=5))
         stimuli.append(FullFieldPainterStimulus(duration=shock_duration, color=(255, 255, 255)))  # flash duration
@@ -192,10 +196,10 @@ class MultistimulusExp06Protocol(Protocol):
 
         last_time = t[-1]
         motion = pd.DataFrame(dict(t=t,
-                             x=x,
-                             y=y))
+                                   x=x,
+                                   y=y))
         stimuli.append(MovingGratingStimulus(motion=motion,
-                                           duration=last_time,
+                                             duration=last_time,
                                              **grating_args))
 
         if lr_vel>0:
@@ -215,8 +219,8 @@ class MultistimulusExp06Protocol(Protocol):
             grating_args_v = deepcopy(grating_args)
             grating_args_v['grating_orientation'] = 'vertical'
             stimuli.append(MovingGratingStimulus(motion=motion,
-                                          **grating_args_v,
-                                          duration=last_time))
+                                                 **grating_args_v,
+                                                 duration=last_time))
 
         if shock_on:
             stimuli.append(Pause(duration=pre_stim_pause))
@@ -254,18 +258,33 @@ class MultistimulusExp06Protocol(Protocol):
 
 class VisualCodingProtocol(Protocol):
     name = "visual coding protocol"
+
     def __init__(self, *args,
                  video_file=r"3minUnderwater.mp4",
                  n_directions=8,
                  n_split=4,
-                 grating_period = 10,
-                 grating_vel = 10,
+                 grating_period=10,
+                 grating_vel=10,
                  part_field_duration=1,
                  part_field_pause=1,
                  inter_segment_pause=2,
                  grating_move_duration=2,
                  grating_pause_duration=1,
                  **kwargs):
+        """
+        :param args:
+        :param video_file:
+        :param n_directions:
+        :param n_split:
+        :param grating_period:
+        :param grating_vel:
+        :param part_field_duration:
+        :param part_field_pause:
+        :param inter_segment_pause:
+        :param grating_move_duration:
+        :param grating_pause_duration:
+        :param kwargs:
+        """
 
         stimuli = []
 
@@ -285,14 +304,14 @@ class VisualCodingProtocol(Protocol):
 
         delta_theta = np.pi*2/n_directions
 
-        grating_motion = pd.DataFrame(dict(t = [0,
-             grating_pause_duration,
-             grating_pause_duration+grating_move_duration,
-             grating_pause_duration*2+grating_move_duration],
+        grating_motion = pd.DataFrame(dict(t=[0,
+                                              grating_pause_duration,
+                                              grating_pause_duration+grating_move_duration,
+                                              grating_pause_duration*2+grating_move_duration],
                                            x=[0,
-                                               0,
-                                               grating_move_duration*grating_vel,
-                                               grating_move_duration*grating_vel]))
+                                              0,
+                                              grating_move_duration*grating_vel,
+                                              grating_move_duration*grating_vel]))
         moving_grating_class = type('MovingGratings',
                                     (MovingStimulus, SeamlessGratingStimulus),
                                     dict(name='moving_gratings'))
@@ -300,11 +319,11 @@ class VisualCodingProtocol(Protocol):
             stimuli.append(moving_grating_class(duration=float(grating_motion.t.iat[-1]),
                                                 motion=grating_motion,
                                                 grating_period=grating_period,
-                                 grating_angle=i_dir*delta_theta
-                                 ))
+                                                grating_angle=i_dir*delta_theta
+                                                ))
 
         stimuli.append(Pause(duration=inter_segment_pause))
 
-        stimuli.append(VideoStimulus(video_path=video_file, duration=180))
+        # stimuli.append(VideoStimulus(video_path=video_file, duration=180))
         super().__init__(*args, stimuli=stimuli, **kwargs)
 

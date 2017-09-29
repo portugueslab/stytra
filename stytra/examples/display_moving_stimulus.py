@@ -168,7 +168,7 @@ class Experiment(QMainWindow):
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
         self.dc.add_data_source('stimulus', 'display_params',
-                                self.win_stim_disp.display_params)
+                                self.win_stim_disp.params)
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
 

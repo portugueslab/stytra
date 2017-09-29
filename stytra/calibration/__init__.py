@@ -3,23 +3,30 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 import math
 import cv2
 import numpy as np
+from pyqtgraph.parametertree import Parameter
+from stytra.collectors import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):
     pass
 
 
-class Calibrator:
+class Calibrator(HasPyQtGraphParams):
     def __init__(self, mm_px=1):
         self.enabled = False
-        self.mm_px = mm_px
-        self.length_to_measure = 'pixel'
+
+        self.params.setName('calibration_params')
+        self.params.addChildren([{'name': 'mm_px', 'value': mm_px,  'visible': False},
+                                 {'name': 'length_mm', 'value': None,  'visible': False},
+                                 {'name': 'length_px', 'value': None,  'visible': False}])
+        self.length_to_measure = 'pixels'
+
 
     def toggle(self):
         self.enabled = ~self.enabled
 
     def set_physical_scale(self, measured_distance):
-        self.mm_px = measured_distance
+        self.params['mm_px'] = measured_distance
 
     def make_calibration_pattern(self, p, h, w):
         pass
@@ -27,18 +34,17 @@ class Calibrator:
 
 class CrossCalibrator(Calibrator):
     def __init__(self, *args, fixed_length=60,
-                 calibration_length='outside',
                  **kwargs):
         super().__init__(*args, **kwargs)
 
         if fixed_length is not None:
-            self.length_px = fixed_length
+            self.params['length_px'] = fixed_length
             self.length_is_fixed = True
         else:
             self.length_is_fixed = False
-            self.length_px = 1
+            self.params['length_px'] = 1
 
-        self.length_mm = 1
+        self.params['length_mm'] = 1
         self.length_to_measure = 'a line in the cross'
 
     def make_calibration_pattern(self, p, h, w):
@@ -46,15 +52,15 @@ class CrossCalibrator(Calibrator):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         if not self.length_is_fixed:
-            self.length_px = max(h/2, w/2)
-        l2 = self.length_px/2
+            self.params['length_px'] = max(h/2, w/2)
+        l2 = self.params['length_px']/2
         p.drawLine(w//2-l2, h // 2, w//2 + l2, h // 2)
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
     def set_physical_scale(self, measured_distance):
-        self.length_mm = measured_distance
-        self.mm_px = measured_distance/self.length_px
+        self.params['length_mm'] = measured_distance
+        self.params['mm_px'] = measured_distance/self.params['length_px']
 
 
 class CircleCalibrator(Calibrator):
@@ -88,7 +94,7 @@ class CircleCalibrator(Calibrator):
                 p.drawEllipse(QPoint(*centre), self.r, self.r)
 
     def set_physical_scale(self, measured_distance):
-        self.mm_px = measured_distance/self.dh
+        self.params['mm_px'] = measured_distance/self.dh
 
     @staticmethod
     def _find_angles(kps):

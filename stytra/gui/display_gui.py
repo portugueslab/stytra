@@ -5,26 +5,29 @@ from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QApplication
 import qimage2ndarray
 from datetime import datetime
 from stytra.stimulation.stimuli import PainterStimulus
+from stytra.collectors import HasPyQtGraphParams
 
 
-class StimulusDisplayWindow(QDialog):
-    def __init__(self, *args, experiment=None):
+class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
+    def __init__(self, *args, **kwargs):
         """ Make a display window for a visual simulation protocol,
-        with a movable display area
-
+        with a display area that can be controlled and changed from a ProtocolControlWindow
         """
-        super().__init__(*args)
+        super().__init__(*args, **kwargs)
 
         self.widget_display = GLStimDisplay(self)
         self.widget_display.setMaximumSize(2000, 2000)
-        self.display_params = dict(pos=(0, 0), size=(100, 100))
+
+        self.params.setName('display_params')
+        self.params.addChildren([{'name': 'pos', 'value': (0, 0), 'visible': False},
+                                 {'name': 'size', 'value': (400, 400), 'visible': False}])
 
         self.setStyleSheet('background-color:black;')
 
     def set_dims(self, pos, size):
         self.widget_display.setGeometry(*(pos+size))
-        self.display_params['pos'] = pos
-        self.display_params['size'] = size
+        self.params['pos'] = pos
+        self.params['size'] = size
 
     def set_protocol(self, protocol):
         self.widget_display.set_protocol(protocol)

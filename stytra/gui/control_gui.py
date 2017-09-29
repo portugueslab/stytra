@@ -8,6 +8,7 @@ import inspect
 
 from stytra.stimulation import protocols, Protocol
 
+
 class DebugLabel(QLabel):
     def __init__(self, *args, debug_on=False, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,12 +106,12 @@ class ProtocolControlWindow(QWidget):
         self.label_debug = DebugLabel(debug_on=debug_mode)
 
         if self.display_window:
-            ROI_desc = self.display_window.display_params
+            ROI_desc = self.display_window.params
             self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
         else:
             self.widget_view = None
 
-        ## Widgets for display calibration
+        # Widgets for calibration displaying
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
         self.button_calibrate = QPushButton('Calibrate')
@@ -122,7 +123,7 @@ class ProtocolControlWindow(QWidget):
         self.layout_calibrate.addWidget(self.label_calibrate)
         self.layout_calibrate.addWidget(self.spin_calibrate)
 
-        ## Widgets for protocol choosing
+        # Widgets for protocol choosing
         self.layout_choose = QHBoxLayout()
         self.combo_prot = ProtocolDropdown()
         self.spn_n_repeats = QSpinBox()
@@ -131,7 +132,7 @@ class ProtocolControlWindow(QWidget):
         self.layout_choose.addWidget(self.combo_prot)
         self.layout_choose.addWidget(self.spn_n_repeats)
 
-        ## Widgets for protocol running
+        # Widgets for protocol running
         self.layout_run = QHBoxLayout()
         self.button_toggle_prot = QPushButton("▶")
         self.progress_bar = QProgressBar()
@@ -158,8 +159,8 @@ class ProtocolControlWindow(QWidget):
         self.widget_view.roi_box.sigRegionChangeFinished.connect(self.refresh_ROI)
 
     def reset_ROI(self):
-        self.widget_view.roi_box.setPos(self.display_window.display_params['pos'], finish=False)
-        self.widget_view.roi_box.setSize(self.display_window.display_params['size'])
+        self.widget_view.roi_box.setPos(self.display_window.params['pos'], finish=False)
+        self.widget_view.roi_box.setSize(self.display_window.params['size'])
         self.refresh_ROI()
 
     def refresh_ROI(self):
