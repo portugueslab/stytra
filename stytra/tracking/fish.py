@@ -9,7 +9,7 @@ from numba import jit
 
 import param as pa
 from stytra.metadata import Metadata
-
+from collections import namedtuple
 
 class ContourScorer:
     def __init__(self, target_area, target_ratio, ratio_weight=1):
@@ -66,9 +66,10 @@ class EyeMeasurement:
         return np.mean(self.eyes, 0)
 
 
-def detect_eyes_tail(frame, frame_tail, start_x, start_y, params, diag_image=None):
+def detect_eyes_tail(frame, frame_tail, start_x,
+                     start_y, params, diag_image=None):
     # find the eyes
-    ret, thresh_eyes = cv2.threshold(frame, params['eye_threshold'], 255,
+    ret, thresh_eyes = cv2.threshold(frame, params.eye_threshold, 255,
                                      cv2.THRESH_BINARY)
     diag_image[start_y:start_y+frame.shape[0],
                start_x:start_x + frame.shape[1]] = thresh_eyes
@@ -115,7 +116,7 @@ def detect_eyes_tail(frame, frame_tail, start_x, start_y, params, diag_image=Non
                                                     start_point=centre_eyes.copy(),
                                                     tail_length=tail_len,
                                                     eyes_to_tail=eyes_to_tail,
-                                                    segments=params['n_tail_segments'])
+                                                    segments=params.n_tail_segments)
 
     theta = dir_tail - tail_angles[0]
 
@@ -134,110 +135,77 @@ def bgdif(x, y):
         return y-x
 
 
-def detect_fishes(frame, mask, params, diagnostics=False):
-    kernel = np.ones((7, 7), np.uint8)
-    mask2 = cv2.dilate(mask.copy(), kernel)
-    ms, contours, orn = cv2.findContours(mask2, cv2.RETR_EXTERNAL,
-                                         cv2.CHAIN_APPROX_NONE)
-
-    # if there are no contours, report no fish in this frame
-    if len(contours) == 0:
-        if diagnostics:
-            return [], frame.copy()
-        else:
-            return []
-
-    # find the contours corresponding to a fish
-    measurements = []
-    if diagnostics:
-        display = frame.copy()
-        diag_image = frame.copy()
-    else:
-        diag_image = None
-
-    for fish_contour in contours:
-        if np.abs(cv2.contourArea(fish_contour) - params['target_area']) < \
-                params['area_tolerance']:
-            # work only on the part of the image containing the fish
-            fx, fy, fw, fh = cv2.boundingRect(fish_contour)
-            if diagnostics:
-                cv2.rectangle(display, (fx, fy), (fx+fw, fy+fh), 200)
-                cv2.putText(display, str(cv2.contourArea(fish_contour)),
-                            (fx + fw, fy + fh), cv2.FONT_HERSHEY_PLAIN, 1, 0)
-            eye_frame = frame[fy:fy + fh, fx:fx + fw]#np.maximum(frame[fy:fy + fh, fx:fx + fw],
-                                    #255 - mask[fy:fy + fh, fx:fx + fw])
-            x, y, theta, tail_angles = detect_eyes_tail(eye_frame, frame, fx, fy, params, diag_image)
-            if x < 0:
-                continue
-            res = dict(x=x, y=y, theta=theta, tail_angles=-tail_angles)
-            res2 = dict(x=x, y=y, theta=theta)
-            for i, ta in enumerate(tail_angles):
-                res2['tail_{:02d}'.format(i)] = ta
-            if diagnostics:
-                draw_fish(display, res, params)
-            measurements.append(res2)
-    if diagnostics:
-        return measurements, np.vstack([display, diag_image])
-    return measurements
-
-
 class MidlineDetectionParams(Metadata):
     target_area = pa.Integer(450, (0, 1500))
     area_tolerance = pa.Integer(320, (0, 700))
     n_tail_segments = pa.Integer(14, (1, 20))
     tail_segment_length = pa.Number(4., (0.5, 10))
-    tail_detection_radius = pa.Integer(9, (1, 15))
-    background_noise_sigma = pa.Number(5, (0.1, 20))
-    background_ratio = pa.Number(0.5, (0.0, 1.0))
+    tail_detection_radius = pa.Integer(9, (1, 15),
+                                       doc='size of the area which is used to find the next segment')
     eye_and_bladder_threshold = pa.Integer(100, (0, 255),
         doc='Thresholding used to find the centre of mass of the head')
 
 
-def detect_fish_midline(frame, mask, params):
-    """
+def find_fishes_midlines(frame, mask, params):
+    """ Finds the fishes in the frame using the mask
+    obtained by background subtraction
 
-    :param frame:
-    :param mask:
+    :param frame: video frame
+    :param mask: corresponding mask
+        obtained with background subtraction
     :param params:
-    :return: list containing the starting point and all the angles
+    :return: list of named tuples containing the fish measurements
     """
     _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
-                                         cv2.CHAIN_APPROX_NONE)
+                                      cv2.CHAIN_APPROX_NONE)
 
     # if there are no contours, report no fish in this frame
 
     if len(contours) == 0:
-            return []
+        return []
 
     # find the contours corresponding to a fish
     measurements = []
 
+    # go through all the contours
     for fish_contour in contours:
-        if np.abs(cv2.contourArea(fish_contour) - params.target_area) < \
+
+        # skip if the area is too small or too big
+        if np.abs(cv2.contourArea(fish_contour) - params.target_area) > \
                 params.area_tolerance:
-            fx, fy, fw, fh = cv2.boundingRect(fish_contour)
+            continue
 
-            # crop the frame around the contour
-            mc = mask[fy:fy + fh, fx:fx + fw]
-            fc = (255 - frame[fy:fy + fh, fx:fx + fw]) * (mc // 255)
+        fx, fy, fw, fh = cv2.boundingRect(fish_contour)
 
-            # find the beginning
-            y0, x0, angle = fish_start(fc, params.eye_and_bladder_threshold)
-            if y0 < 0:
-                continue
+        # crop the frame around the contour
+        mc = mask[fy:fy + fh, fx:fx + fw]
 
-            # find the midline (while also refining the beginning)
-            points = find_fish_midline(fc, x0, y0, angle,
-                                       m=params.tail_segment_length,
-                                       r=params.tail_detection_radius,
-                                       n_points_max=params.n_tail_segments)
-            if len(points) == params.n_tail_segments:
-                angles = []
-                for p1, p2 in zip(points[0:-1], points[1:]):
-                    angles.append(np.arctan2(p2[1]-p1[1],
-                                             p2[0] - p1[0]))
+        # construct an image of the fish masked by the contour
+        fc = (255 - frame[fy:fy + fh, fx:fx + fw]) * (mc // 255)
 
-                measurements.append([points[0][0]+fx, points[0][1]+fy] + angles)
+        # find the beginning
+        y0, x0, angle = fish_start(fc, params.eye_and_bladder_threshold)
+
+        # if the fish start has not been found, go to the next contour
+        if y0 < 0:
+            continue
+
+        # find the midline (while also refining the beginning)
+        points = find_fish_midline(fc, x0, y0, angle,
+                                   m=params.tail_segment_length,
+                                   r=params.tail_detection_radius,
+                                   n_points_max=params.n_tail_segments)
+
+        # if all the points of the tail have been found, calculate
+        # the angle of each segment
+        if len(points) == params.n_tail_segments:
+            angles = []
+            for p1, p2 in zip(points[0:-1], points[1:]):
+                angles.append(np.arctan2(p2[1] - p1[1],
+                                         p2[0] - p1[0]))
+
+            measurements.append(
+                ((points[0][0] + fx, points[0][1] + fy) + tuple(angles)))
 
     return measurements
 

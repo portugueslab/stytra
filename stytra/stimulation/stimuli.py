@@ -25,11 +25,11 @@ class Stimulus:
         :param duration: duration of the stimulus (s)
         """
         self._started = None
-        self.elapsed = 0.0
+        self._elapsed = 0.0
         self.duration = duration
         self.name = ''
-        self.calibrator = None
-        self.asset_folder = None
+        self._calibrator = None
+        self._asset_folder = None
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -56,8 +56,8 @@ class Stimulus:
         :param asset_folder:
         :return:
         """
-        self.calibrator = calibrator
-        self.asset_folder = asset_folder
+        self._calibrator = calibrator
+        self._asset_folder = asset_folder
 
 
 class DynamicStimulus(Stimulus):
@@ -151,8 +151,8 @@ class SeamlessImageStimulus(PainterStimulus,
 
     def paint(self, p, w, h):
         # draw the black background
-        if self.calibrator is not None:
-            mm_px = self.calibrator.mm_px
+        if self._calibrator is not None:
+            mm_px = self._calibrator.mm_px
         else:
             mm_px = 1
 
@@ -193,14 +193,14 @@ class SeamlessGratingStimulus(SeamlessImageStimulus):
         self.grating_color = grating_color
 
     def get_unit_dims(self, w, h):
-        return self.grating_period/max(self.calibrator.mm_px, 0.0001), max(w,h)
+        return self.grating_period / max(self._calibrator.mm_px, 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.grating_color)))
         p.drawRect(point.x(), point.y(),
-                   int(self.grating_period/(2*max(self.calibrator.mm_px, 0.0001))),
+                   int(self.grating_period / (2 * max(self._calibrator.mm_px, 0.0001))),
                    w)
 
 
@@ -219,19 +219,19 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        grating_width = self.grating_period/max(self.calibrator.mm_px,0.0001) # in pixels
+        grating_width = self.grating_period/max(self._calibrator.mm_px, 0.0001) # in pixels
         p.setBrush(QBrush(QColor(*self.grating_color)))
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self.calibrator.mm_px - \
-                np.floor((-self.y / self.calibrator.mm_px) / grating_width + 1 ) * grating_width
+            start = -self.y / self._calibrator.mm_px - \
+                    np.floor((-self.y / self._calibrator.mm_px) / grating_width + 1) * grating_width
 
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
         else:
             n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self.calibrator.mm_px - \
+            start = self.x / self._calibrator.mm_px - \
                     np.floor(self.x / grating_width) * grating_width
             for i in range(n_gratings):
                 p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
@@ -261,7 +261,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
     def update(self):
         for attr in ['x', 'y', 'theta']:
             try:
-                setattr(self, attr, np.interp(self.elapsed, self.motion.t, self.motion[attr]))
+                setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
 
@@ -280,10 +280,10 @@ class MovingConstantVel(MovingStimulus):
         self._past_t = 0
 
     def update(self):
-        dt = (self.elapsed - self._past_t)
+        dt = (self._elapsed - self._past_t)
         self.x += self.x_vel*dt
         self.y += self.y_vel*dt
-        self._past_t = self.elapsed
+        self._past_t = self._elapsed
 
 
 class VideoStimulus(PainterStimulus, DynamicStimulus):
@@ -305,9 +305,9 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        print(self.asset_folder +
+        print(self._asset_folder +
               '/' + self.video_path)
-        self._video_seq = pims.Video(self.asset_folder +
+        self._video_seq = pims.Video(self._asset_folder +
                                      '/' + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
@@ -328,11 +328,11 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
 
     def update(self):
-        if self.elapsed >= self._last_frame_display_time+1/self.framerate:
+        if self._elapsed >= self._last_frame_display_time+1/self.framerate:
             next_frame = self._video_seq.get_frame(self.i_frame)
             if next_frame is not None:
                 self._current_frame = next_frame
-                self._last_frame_display_time = self.elapsed
+                self._last_frame_display_time = self._elapsed
                 self.i_frame += 1
 
     def paint(self, p, w, h):
@@ -373,7 +373,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self._past_t = 0
 
     def update(self):
-        dt = (self.elapsed - self._past_t)
+        dt = (self._elapsed - self._past_t)
         self.fish_velocity = self._fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
             self.shunted = False
@@ -394,7 +394,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
         self.y += dt * self.vel
         # TODO implement lag
-        self._past_t = self.elapsed
+        self._past_t = self._elapsed
         for attr in ['x', 'y', 'theta']:
             try:
                 setattr(self, 'past_'+attr, getattr(self, attr))
@@ -411,7 +411,7 @@ class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
     def update(self):
         for attr in ['base_vel', 'gain', 'lag']:
             try:
-                setattr(self, attr, np.interp(self.elapsed,
+                setattr(self, attr, np.interp(self._elapsed,
                                               self.motion.t,
                                               self.motion[attr]))
             except (AttributeError, KeyError):
