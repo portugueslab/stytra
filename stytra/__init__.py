@@ -210,8 +210,9 @@ class Experiment(QMainWindow):
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
         if not do_not_save and not self.debug_mode:
+            db_id = put_experiment_in_db(self.dc.get_full_dict())
+            self.dc.add_data_source('general', 'db_id', db_id)
             self.dc.save(save_csv=self.save_csv)
-            put_experiment_in_db(self.dc.get_full_dict())
         self.protocol.reset()
 
     def closeEvent(self, *args, **kwargs):
