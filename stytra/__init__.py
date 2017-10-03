@@ -1,8 +1,8 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.calibration import CrossCalibrator
+from stytra.calibration import CrossCalibrator, CircleCalibrator
 
 from stytra.metadata import MetadataFish, MetadataGeneral
 from stytra.metadata.metalist_gui import MetaListGui
@@ -14,7 +14,7 @@ import git
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
-from stytra.gui.camera_display import CameraTailSelection
+from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
@@ -23,6 +23,8 @@ from PyQt5.QtCore import QTimer, pyqtSignal
 from PyQt5.QtWidgets import QCheckBox
 from stytra.metadata import MetadataCamera
 import sys
+
+
 
 import traceback
 
@@ -289,9 +291,14 @@ class CameraExperiment(Experiment):
                                           self.finished_sig,
                                           video_input)
 
+        self.frame_dispatcher = None
+
     def go_live(self):
         self.camera.start()
         self.gui_refresh_timer.start(1000//60)
+        if self.frame_dispatcher is not None:
+            self.frame_dispatcher.start()
+        sys.excepthook = self.excepthook
 
     def closeEvent(self, *args, **kwargs):
         super().closeEvent(*args, **kwargs)
@@ -299,6 +306,10 @@ class CameraExperiment(Experiment):
         # self.camera.join(timeout=1)
         self.camera.terminate()
         print('Camera process terminated')
+        if self.frame_dispatcher is not None:
+            self.frame_dispatcher.terminate()
+            print('Frame dispatcher terminated')
+        self.gui_refresh_timer.stop()
 
 
 class TailTrackingExperiment(CameraExperiment):
@@ -366,11 +377,6 @@ class TailTrackingExperiment(CameraExperiment):
 
         self.go_live()
 
-    def go_live(self):
-        super().go_live()
-        self.frame_dispatcher.start()
-        sys.excepthook = self.excepthook
-
     def start_protocol(self):
         self.data_acc_tailpoints.reset()
         super().start_protocol()
@@ -386,12 +392,6 @@ class TailTrackingExperiment(CameraExperiment):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
-    def closeEvent(self, *args, **kwargs):
-        super().closeEvent(*args, **kwargs)
-        self.frame_dispatcher.terminate()
-        print('Frame dispatcher terminated')
-        self.gui_refresh_timer.stop()
-
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)
         print('{0}: {1}'.format(exctype, value))
@@ -405,8 +405,14 @@ class MovementRecordingExperiment(CameraExperiment):
 
     """
     def __init__(self, *args, **kwargs):
+        self.framestart_queue = Queue()
+        self.splitter = QSplitter()
+        self.camera_view = CameraViewCalib(camera_queue=self.gui_frame_queue,
+                                           update_timer=self.gui_refresh_timer,
+                                           control_queue=self.control_queue,
+                                           camera_parameters=self.metadata_camera)
         super().__init__(*args, **kwargs)
-        self.go_live()
+        self.calibrator = CircleCalibrator()
 
         self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
                                                       self.gui_frame_queue,
@@ -415,3 +421,9 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       gui_framerate=30)
+        self.go_live()
+
+    def init_ui(self):
+        self.setCentralWidget(self.splitter)
+        self.splitter.addWidget(self.camera_view)
+        self.splitter.addWidget(self.widget_control)

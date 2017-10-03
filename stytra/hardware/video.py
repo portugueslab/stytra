@@ -279,15 +279,16 @@ class MovementDetectionParameters(pa.Parameterized):
 
 
 class MovingFrameDispatcher(FrameDispatcher):
-    def __init__(self, *args, output_queue,
-                 framestart_queue, signal_start_rec,  **kwargs):
+    def __init__(self, *args, output_queue, control_queue,
+                 framestart_queue, signal_start_rec, **kwargs):
         super().__init__(*args, **kwargs)
         self.output_queue = output_queue
+        self.control_queue = control_queue
         self.framestart_queue = framestart_queue
 
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
-        self.det_par = MovementDetectionParameters()
+        self.processing_parameters = MovementDetectionParameters()
 
     def run(self):
         i = 0
@@ -308,26 +309,35 @@ class MovingFrameDispatcher(FrameDispatcher):
 
         while not self.finished_signal.is_set():
             try:
+
+                if self.processing_parameter_queue is not None:
+                    try:
+                        self.processing_parameters = self.processing_parameter_queue.get(timeout=0.0001)
+                    except Empty:
+                        pass
+
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
                 current_time, current_frame = self.frame_queue.get()
                 _, current_frame_thresh =  \
-                    cv2.threshold(cv2.boxFilter(current_frame,-1,(3,3)), self.det_par.fish_threshold, 255, cv2.THRESH_BINARY)
+                    cv2.threshold(cv2.boxFilter(current_frame, -1, (3, 3)),
+                                  self.processing_parameters.fish_threshold,
+                                  255, cv2.THRESH_BINARY)
+
                 # compare the thresholded frame to the previous ones, if there are enough differences
                 # because the fish moves, start recording to file
-
                 difsum = 0
                 n_crossed = 0
-                image_crop = slice(self.det_par.frame_margin, -self.det_par.frame_margin)
+                image_crop = slice(self.processing_parameters.frame_margin, -self.processing_parameters.frame_margin)
                 if i_frame >= n_previous_compare:
                     for j in range(n_previous_compare):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],
                                                           current_frame_thresh[image_crop, image_crop]))[0]
 
-                        if difsum > self.det_par.motion_threshold:
+                        if difsum > self.processing_parameters.motion_threshold:
                             n_crossed += 1
 
                     if n_crossed == n_previous_compare:
-                        record_counter = self.det_par.n_next_save
+                        record_counter = self.processing_parameters.n_next_save
 
                     if record_counter > 0:
                         if self.signal_start_rec.is_set() and self.mem_use < 0.9:
@@ -345,7 +355,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                     else:
                         recording_state = False
                         previous_images.append((current_time, current_frame))
-                        if len(previous_images) > self.det_par.n_previous_save:
+                        if len(previous_images) > self.processing_parameters.n_previous_save:
                             previous_images.popleft()
 
                 i_frame += 1

@@ -1,5 +1,5 @@
 import argparse
-from stytra import TailTrackingExperiment, Experiment, LightsheetExperiment
+from stytra import TailTrackingExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
 import stytra.stimulation.protocols as prot
 
 from PyQt5.QtWidgets import QApplication
@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QApplication
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--freely-swimming',
+                        action='store_true')
     parser.add_argument('--tail-tracking',
                         action='store_true')
     parser.add_argument('--tail-invert',
@@ -33,13 +35,21 @@ if __name__ == '__main__':
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir)
 
+    bases = []
+
     if args.tail_tracking:
         bases.append(TailTrackingExperiment)
         class_kwargs['tracking_method_parameters'] = dict(n_segments=9,
                                                           filtering=True,
                                                           color_invert=args.tail_invert)
+    elif args.freely_swimming:
+        bases.append(MovementRecordingExperiment)
+
     if args.lightsheet:
         bases.append(LightsheetExperiment)
+
+    if len(bases) == 0:
+        bases.append(Experiment)
 
     ExpClass = type('exp_class', tuple(bases), dict())
     exp = ExpClass(**class_kwargs)
