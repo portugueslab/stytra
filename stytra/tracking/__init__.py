@@ -11,7 +11,7 @@ import pandas as pd
 
 
 class QueueDataAccumulator(QObject, Accumulator):
-    def __init__(self, data_queue, header_list=['tail_sum']):
+    def __init__(self, data_queue, header_list=None):
         """
         General class for accumulating (for saving or dispatching) data
         out of a multiprocessing queue. Require triggering with some timer.

@@ -2,8 +2,8 @@ import numpy as np
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage, QTransform
 import qimage2ndarray
-from PyQt5.QtGui import QPainter, QImage, QBrush, QPen, QColor
-from PyQt5.QtCore import QPoint, QRect, QRectF
+from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
+from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
 from time import sleep
 try:
@@ -28,7 +28,7 @@ class Stimulus:
         self._elapsed = 0.0
         self.duration = duration
         self.name = ''
-        self._experiment= None
+        self._experiment = None
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -91,6 +91,7 @@ class BackgroundStimulus(Stimulus):
         self.y = 0
         self.theta = 0
         self._background = background
+        self._qbackground = None
 
 
 class FullFieldPainterStimulus(PainterStimulus):
@@ -137,7 +138,8 @@ class SeamlessImageStimulus(PainterStimulus,
         super().__init__(*args, **kwargs)
 
     def get_unit_dims(self, w, h):
-        return self._background.width(),  self._background.height()
+        w, h  =  self._qbackground.width(),  self._qbackground.height()
+        return w, h
 
     def rotTransform(self, w, h):
         xc = -w / 2
@@ -147,6 +149,9 @@ class SeamlessImageStimulus(PainterStimulus,
 
     def paint(self, p, w, h):
         # draw the black background
+        if self._qbackground is None:
+            self._qbackground = qimage2ndarray.array2qimage(self._background)
+
         if self._experiment.calibrator is not None:
             mm_px = self._experiment.calibrator.mm_px
         else:
@@ -174,10 +179,10 @@ class SeamlessImageStimulus(PainterStimulus,
         nw = int(np.ceil(w/(imw*2)))
         nh = int(np.ceil(h/(imh*2)))
         for idx, idy in product(range(-nw, nw+1), range(-nh, nh+1)):
-            self.draw_block(p, QPoint(idx*imw+dx, idy*imh+dy), w, h)
+            self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
 
     def draw_block(self, p, point, w, h):
-        p.drawImage(point, self._background)
+        p.drawImage(point, self._qbackground)
 
 
 class SeamlessGratingStimulus(SeamlessImageStimulus):
@@ -397,8 +402,13 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
 
 class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters = ['x', 'y', 'theta']
+
     def update(self):
-        self.x, self.y, self.theta = self.experiment.position_estimator.get_coords()
+        self.x, self.y, self.theta = self._experiment.position_estimator.get_coords()
 
 
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
