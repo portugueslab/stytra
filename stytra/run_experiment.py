@@ -23,6 +23,7 @@ if __name__ == '__main__':
                         default='/Users/vilimstich/PhD/j_sync/underwater')
     parser.add_argument('--full-screen',
                         action='store_true')
+    parser.add_argument('--setup', action='store', default='')
 
     args = parser.parse_args()
 

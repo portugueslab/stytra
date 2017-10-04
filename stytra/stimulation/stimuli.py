@@ -402,6 +402,15 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
+class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
+    def __init__(self, *args, position_estimator, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._position_estimator = position_estimator
+
+    def update(self):
+        self.x, self.y, self.theta = self._position_estimator.get_coords()
+
+
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
     def __init__(self, *args, motion, **kwargs):
         super().__init__(*args, **kwargs)
