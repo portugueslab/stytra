@@ -1,7 +1,7 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
-    PartFieldStimulus
+    PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 from stytra.stimulation import Protocol
 import pandas as pd
@@ -306,5 +306,17 @@ class VisualCodingProtocol(Protocol):
         stimuli.append(Pause(duration=inter_segment_pause))
 
         stimuli.append(VideoStimulus(video_path=video_file, duration=180))
+        super().__init__(*args, stimuli=stimuli, **kwargs)
+
+
+class VRProtocol(Protocol):
+    name='VR protocol'
+    def __init__(self, *args, background_image='underwater_caustics.jpg',
+                 duration=120,
+                 position_estimater=None, **kwargs):
+        stimuli = [
+            VRMotionStimulus(background=existing_file_background(kwargs['asset_dir']+'/'+background_image),
+                    estimator=position_estimater)
+        ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
 

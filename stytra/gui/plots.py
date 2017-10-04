@@ -73,3 +73,33 @@ class StreamingPlotWidget(pg.GraphicsWindow):
             pass#print(self.data_accumulator.header_list)
         except TypeError:
             pass#print(self.data_accumulator.header_list)
+
+
+class StreamingPositionPlot(pg.GraphicsWindow):
+    """ Plot that displays the virtual position of the fish
+
+    """
+    def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
+        super().__init__(*args, **kwargs)
+        assert isinstance(data_accumulator, Accumulator)
+        self.positionPlot = self.addPlot()
+        self.curvePosition = self.positionPlot.plot()
+
+        self.n_points = n_points
+        self.start = datetime.datetime.now()
+        self.ind_x = self.data_accumulator.header_list.index('x')
+        self.ind_y = self.data_accumulator.header_list.index('y')
+
+    def update(self):
+        self.start = datetime.date.now()
+
+        try:
+            delta_t = (self.data_accumulator.starting_time -
+                       self.start).total_seconds()
+
+            data_array = self.data_accumulator.get_last_n(self.n_points)
+
+            self.curve.setData(x=data_array[:, self.ind_x], y=data_array[:, self.ind_y])
+
+        except (IndexError, TypeError):
+            pass

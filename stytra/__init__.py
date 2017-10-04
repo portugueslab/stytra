@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter, QVBoxLayout
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
@@ -15,9 +15,12 @@ from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
-from stytra.gui.plots import StreamingPlotWidget
+from stytra.gui.plots import StreamingPlotWidget, StreamingPositionPlot
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
+
+from stytra.stimulation.closed_loop import LSTMLocationEstimator
+from stytra.stimulation.protocols import VRProtocol, ReafferenceProtocol
 
 from PyQt5.QtCore import QTimer, pyqtSignal
 from PyQt5.QtWidgets import QCheckBox
@@ -164,8 +167,12 @@ class Experiment(QMainWindow):
         n_repeats = self.widget_control.spn_n_repeats.value()
         self.set_protocol(Protclass(n_repeats=n_repeats,
                                     calibrator=self.calibrator,
-                                    asset_folder=self.asset_dir,
+                                    asset_dir=self.asset_dir,
                                     **protocol_params))
+        self.reconfigure_ui()
+
+    def reconfigure_ui(self):
+        pass
 
     def set_protocol(self, protocol):
         self.protocol = protocol
@@ -353,10 +360,6 @@ class TailTrackingExperiment(CameraExperiment):
                                                          for i in range(
                                                             current_tracking_method_parameters['n_segments'])])
 
-        # GUI elements
-        self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                    data_acc_var='tail_sum')
-
         self.camera_viewer = CameraTailSelection(
             tail_start_points_queue=self.processing_parameter_queue,
             camera_queue=self.gui_frame_queue,
@@ -366,12 +369,13 @@ class TailTrackingExperiment(CameraExperiment):
             camera_parameters=self.metadata_camera,
             tracking_params=current_tracking_method_parameters)
 
+        self.widget_control.layout.insertWidget(0, self.camera_viewer)
+
         self.dc.add_data_source('tracking',
                                 'tail_position', self.camera_viewer, 'roi_dict')
         self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
@@ -391,6 +395,20 @@ class TailTrackingExperiment(CameraExperiment):
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+
+    def reconfigure_ui(self):
+        if isinstance(self.protocol, VRProtocol):
+            self.main_layout = QSplitter()
+            self.setCentralWidget(self.main_layout)
+            self.monitoring_layout = QVBoxLayout()
+            self.positionPlot = StreamingPositionPlot(self.protocol.dynamic_log)
+            self.main_layout.addItem(self.monitoring_layout)
+            self.main_layout.addItem(self.widget_control)
+        else:
+            # GUI elements
+            self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+                                                        data_acc_var='tail_sum')
+            self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)

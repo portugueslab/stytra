@@ -38,7 +38,7 @@ class LSTMLocationEstimator:
         self.lstm_sample_rate = lstm_sample_rate
         self.past_coords = None
 
-    def get_displacement(self, delta_t_last):
+    def get_coords(self, delta_t_last):
         """ Calculates the position and rotation displacement using the LSTM
         model taking into account how much time has
         passeed since the last estimation

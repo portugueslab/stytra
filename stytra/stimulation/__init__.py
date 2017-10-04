@@ -23,7 +23,7 @@ class Protocol(QObject):
     def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
                  calibrator=None,
                  dt=1/60, log_print=True,
-                 asset_folder=''):
+                 asset_dir=''):
         super().__init__()
 
         self.t_start = None
@@ -42,7 +42,7 @@ class Protocol(QObject):
         self.current_stimulus = self.stimuli[0]
         for stimulus in self.stimuli:
             stimulus.initialise_external(calibrator=calibrator,
-                                         asset_folder=asset_folder)
+                                         asset_folder=asset_dir)
 
         self.i_current_stimulus = 0
         self.timer = QTimer()
