@@ -28,8 +28,7 @@ class Stimulus:
         self._elapsed = 0.0
         self.duration = duration
         self.name = ''
-        self._calibrator = None
-        self._asset_folder = None
+        self._experiment= None
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -47,17 +46,14 @@ class Stimulus:
     def start(self):
         pass
 
-    def initialise_external(self, calibrator=None,
-                            asset_folder=None):
+    def initialise_external(self, experiment):
         """ Functions that initiate each stimulus,
         gets around problems with copying
 
-        :param calibrator:
-        :param asset_folder:
-        :return:
+        :param experiment: the experiment object to which link the simulus
+        :return: None
         """
-        self._calibrator = calibrator
-        self._asset_folder = asset_folder
+        self._experiment = experiment
 
 
 class DynamicStimulus(Stimulus):
@@ -151,8 +147,8 @@ class SeamlessImageStimulus(PainterStimulus,
 
     def paint(self, p, w, h):
         # draw the black background
-        if self._calibrator is not None:
-            mm_px = self._calibrator.mm_px
+        if self._experiment.calibrator is not None:
+            mm_px = self._experiment.calibrator.mm_px
         else:
             mm_px = 1
 
@@ -193,14 +189,14 @@ class SeamlessGratingStimulus(SeamlessImageStimulus):
         self.grating_color = grating_color
 
     def get_unit_dims(self, w, h):
-        return self.grating_period / max(self._calibrator.mm_px, 0.0001), max(w, h)
+        return self.grating_period / max(self._experiment.calibrator.mm_px, 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.grating_color)))
         p.drawRect(point.x(), point.y(),
-                   int(self.grating_period / (2 * max(self._calibrator.mm_px, 0.0001))),
+                   int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
                    w)
 
 
@@ -219,19 +215,19 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        grating_width = self.grating_period/max(self._calibrator.mm_px, 0.0001) # in pixels
+        grating_width = self.grating_period/max(self._experiment.calibrator.mm_px, 0.0001) # in pixels
         p.setBrush(QBrush(QColor(*self.grating_color)))
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._calibrator.mm_px - \
-                    np.floor((-self.y / self._calibrator.mm_px) / grating_width + 1) * grating_width
+            start = -self.y / self._experiment.calibrator.mm_px - \
+                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width + 1) * grating_width
 
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
         else:
             n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self._calibrator.mm_px - \
+            start = self.x / self._experiment.calibrator.mm_px - \
                     np.floor(self.x / grating_width) * grating_width
             for i in range(n_gratings):
                 p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
@@ -305,9 +301,9 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        print(self._asset_folder +
+        print(self._experiment.asset_folder +
               '/' + self.video_path)
-        self._video_seq = pims.Video(self._asset_folder +
+        self._video_seq = pims.Video(self._experiment.asset_folder +
                                      '/' + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
@@ -344,8 +340,7 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
-    def __init__(self, *args, default_velocity=10,
-                 fish_motion_estimator, gain=1,
+    def __init__(self, *args, default_velocity=10, gain=1,
                  shunting=False,
                  base_gain=5,
                  swimming_threshold=0.2,
@@ -358,7 +353,6 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self.dynamic_parameters.append('fish_velocity')
         self.base_vel = default_velocity
         self.fish_velocity = 0
-        self._fish_motion_estimator = fish_motion_estimator
         self.vel = 0
         self.gain = gain
         self.base_gain = base_gain
@@ -374,7 +368,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
     def update(self):
         dt = (self._elapsed - self._past_t)
-        self.fish_velocity = self._fish_motion_estimator.get_velocity()
+        self.fish_velocity = self._experiment.fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
             self.shunted = False
             self.fish_swimming = False
