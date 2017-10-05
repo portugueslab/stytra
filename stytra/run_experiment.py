@@ -13,6 +13,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--tail-invert',
                         action='store_true')
+    parser.add_argument('--vr-on',
+                        action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
     parser.add_argument('--lightsheet',
@@ -40,9 +42,13 @@ if __name__ == '__main__':
 
     if args.tail_tracking:
         bases.append(TailTrackingExperiment)
-        class_kwargs['tracking_method_parameters'] = dict(n_segments=9,
+        class_kwargs['tracking_method_parameters'] = dict(n_segments=12,
                                                           filtering=True,
                                                           color_invert=args.tail_invert)
+        if args.vr_on:
+            class_kwargs['motion_estimation'] = 'LSTM'
+            class_kwargs['motion_estimation_parameters'] = dict(model='lstm_300Hz.h5')
+
     elif args.freely_swimming:
         bases.append(MovementRecordingExperiment)
 

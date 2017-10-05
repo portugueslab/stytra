@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QMainWindow, QSplitter, QVBoxLayout
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
@@ -58,7 +58,8 @@ def get_default_args(func):
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
-    def __init__(self, directory, calibrator=None,
+    def __init__(self, directory,
+                 calibrator=None,
                  save_csv=False,
                  app=None,
                  asset_directory='',
@@ -160,14 +161,12 @@ class Experiment(QMainWindow):
             self.widget_control.button_toggle_prot.setText("■")
 
     def change_protocol(self, _):
-        protocol_params = dict()
+        protocol_params = dict(asset_dir = self.asset_dir)
         # TODO implement GUI for protocol params
         Protclass = self.widget_control.combo_prot.prot_classdict[
             self.widget_control.combo_prot.currentText()]
         n_repeats = self.widget_control.spn_n_repeats.value()
-        self.set_protocol(Protclass(n_repeats=n_repeats,
-                                    calibrator=self.calibrator,
-                                    asset_dir=self.asset_dir,
+        self.set_protocol(Protclass(n_repeats=n_repeats, experiment=self,
                                     **protocol_params))
         self.reconfigure_ui()
 
@@ -321,8 +320,10 @@ class CameraExperiment(Experiment):
 
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
-                        tracking_method='angle_sweep',
-                        tracking_method_parameters=None, **kwargs):
+                 tracking_method='angle_sweep',
+                 tracking_method_parameters=None,
+                 motion_estimation=None, motion_estimation_parameters=None,
+                 **kwargs):
         """ An experiment which contains tail tracking,
         base for any experiment that tracks behaviour or employs
         closed loops
@@ -379,6 +380,11 @@ class TailTrackingExperiment(CameraExperiment):
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
+        if motion_estimation == 'LSTM':
+            self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
+                                                            self.asset_dir + '/' +
+                                                            motion_estimation_parameters['model'])
+
         self.go_live()
 
     def start_protocol(self):
@@ -391,6 +397,7 @@ class TailTrackingExperiment(CameraExperiment):
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
+        self.position_estimator.reset()
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
@@ -399,16 +406,35 @@ class TailTrackingExperiment(CameraExperiment):
     def reconfigure_ui(self):
         if isinstance(self.protocol, VRProtocol):
             self.main_layout = QSplitter()
-            self.setCentralWidget(self.main_layout)
+            self.monitoring_widget = QWidget()
             self.monitoring_layout = QVBoxLayout()
-            self.positionPlot = StreamingPositionPlot(self.protocol.dynamic_log)
-            self.main_layout.addItem(self.monitoring_layout)
-            self.main_layout.addItem(self.widget_control)
+            self.monitoring_widget.setLayout(self.monitoring_layout)
+
+            self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
+            self.monitoring_layout.addWidget(self.positionPlot)
+            self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
+
+            self.tail_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+                                                 data_acc_var='tail_sum')
+            self.monitoring_layout.addWidget(self.tail_plot)
+            self.gui_refresh_timer.timeout.connect(self.tail_plot.update)
+
+            self.tail_plot_angle = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+                                                 data_acc_var='theta_01')
+            self.monitoring_layout.addWidget(self.tail_plot_angle)
+            self.gui_refresh_timer.timeout.connect(self.tail_plot_angle.update)
+
+            self.monitoring_layout.addWidget(self.tail_plot)
+            self.gui_refresh_timer.timeout.connect(self.tail_plot.update)
+
+            self.main_layout.addWidget(self.monitoring_widget)
+            self.main_layout.addWidget(self.widget_control)
+            self.setCentralWidget(self.main_layout)
         else:
             # GUI elements
-            self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+            self.tail_stream_plot = StreamingPlotWidget(edata_accumulator=self.data_acc_tailpoints,
                                                         data_acc_var='tail_sum')
-            self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
+
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)

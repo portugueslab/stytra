@@ -14,7 +14,7 @@ class StreamingPlotWidget(pg.GraphicsWindow):
     object. Use timestamp of the streamed data.
     """
     def __init__(self, data_accumulator=None, n_points=500, x_range_s=(-5, 0),
-                 y_range=(-1, 1), data_acc_var=None, processing_function=None,
+                 y_range=(-1, 1), data_acc_var=None,
                  xlink=None, *args, **kwargs):
         """
         :param data_accumulator: DataAccumulator object to be displayed
@@ -22,7 +22,6 @@ class StreamingPlotWidget(pg.GraphicsWindow):
         :param x_range_s: time range
         :param y_range: variable range
         :param data_acc_col: column of data accumulator plotted (index)
-        :param processing_function: how to process the paremeter which is plotted
         :param xlink: another axis to link y to (so that the time is synchronised)
         """
 
@@ -34,24 +33,30 @@ class StreamingPlotWidget(pg.GraphicsWindow):
         # initialise the widgets
         self.streamplot = self.addPlot()
 
-        self.curve = self.streamplot.plot()
-
         self.addItem(self.streamplot)
         self.start = datetime.datetime.now()
-        self.data_accum_idx = self.data_accumulator.header_list.index(data_acc_var)
+
+        if isinstance(data_acc_var, str):
+            data_acc_var = [data_acc_var]
+
+        self.data_accum_idxs = [self.data_accumulator.header_list.index(dv)
+                                for dv in data_acc_var]
+
+        self.curves = []
+        for i in range(len(data_acc_var)):
+            c = pg.PlotCurveItem(pen=(i, len(data_acc_var) * 1.3))
+            self.streamplot.addItem(c)
+            c.setPos(0, i * 6)
+            self.curves.append(c)
 
         self.n_points = n_points
         self.streamplot.setLabel('bottom', 'Time', 's')
-        self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idx])
+        self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idxs[0]])
         self.streamplot.setXRange(x_range_s[0], x_range_s[1])
         self.streamplot.setYRange(y_range[0], y_range[1])
+
         if xlink is not None:
             self.streamplot.setXLink(xlink)
-
-        self.text_fps = pg.TextItem(anchor=(0, 1))
-        self.streamplot.addItem(self.text_fps)
-
-        self.processing_function = processing_function
 
     def update(self):
         """Function called by external timer to update the plot
@@ -66,13 +71,14 @@ class StreamingPlotWidget(pg.GraphicsWindow):
             data_array = self.data_accumulator.get_last_n(self.n_points)
             # ...to be added to the array of times in s in the data accumulator
             time_array = delta_t + data_array[:, 0]
-            self.text_fps.setText('{:.2f}'.format(self.data_accumulator.get_fps()))
-            self.curve.setData(x=time_array, y=data_array[:, self.data_accum_idx])
+            self.streamplot.setTitle('FPS: {:.2f}'.format(self.data_accumulator.get_fps()))
+            for idx, curve in zip(self.data_accum_idxs, self.curves):
+                curve.setData(x=time_array, y=data_array[:, idx])
 
         except IndexError:
-            pass#print(self.data_accumulator.header_list)
+            pass
         except TypeError:
-            pass#print(self.data_accumulator.header_list)
+            pass
 
 
 class StreamingPositionPlot(pg.GraphicsWindow):
@@ -83,20 +89,16 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         super().__init__(*args, **kwargs)
         assert isinstance(data_accumulator, Accumulator)
         self.positionPlot = self.addPlot()
-        self.curvePosition = self.positionPlot.plot()
+        self.curve = self.positionPlot.plot()
 
         self.n_points = n_points
         self.start = datetime.datetime.now()
+        self.data_accumulator = data_accumulator
         self.ind_x = self.data_accumulator.header_list.index('x')
         self.ind_y = self.data_accumulator.header_list.index('y')
 
     def update(self):
-        self.start = datetime.date.now()
-
         try:
-            delta_t = (self.data_accumulator.starting_time -
-                       self.start).total_seconds()
-
             data_array = self.data_accumulator.get_last_n(self.n_points)
 
             self.curve.setData(x=data_array[:, self.ind_x], y=data_array[:, self.ind_y])

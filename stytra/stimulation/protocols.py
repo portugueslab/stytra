@@ -311,12 +311,12 @@ class VisualCodingProtocol(Protocol):
 
 class VRProtocol(Protocol):
     name='VR protocol'
-    def __init__(self, *args, background_image='underwater_caustics.jpg',
-                 duration=120,
-                 position_estimater=None, **kwargs):
+    def __init__(self, *args, background_image='underwater_caustics.jpg', duration=240, asset_dir='',
+                 **kwargs):
+        bg = existing_file_background(asset_dir+'/'+background_image)
+        print(bg.shape)
         stimuli = [
-            VRMotionStimulus(background=existing_file_background(kwargs['asset_dir']+'/'+background_image),
-                    estimator=position_estimater)
+            VRMotionStimulus(background=bg, duration=duration)
         ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
 
