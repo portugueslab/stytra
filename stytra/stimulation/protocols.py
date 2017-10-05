@@ -1,7 +1,7 @@
 from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
-    PartFieldStimulus
+    PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np

@@ -42,79 +42,41 @@ def draw_fish_old(display, fish_data, params):
     return display
 
 
-def draw_fish_new(display, mes, params):
-    if len(display.shape) == 2:
-        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+def draw_found_fish(background, measurements, params,
+                    head_color=(100, 250, 200),
+                    head_radius=3,
+                    tail_color=(250, 100, 100)):
+    """ Overlays the detected posture of all the found fish
+    on a camera frame
 
-    points = [np.array([mes['x'], mes['y']])]
-    for i, col in enumerate(
-            ['th_{:02d}'.format(i) for i in range(params.n_tail_segments-1)]):
-        points.append(points[-1] + params.tail_segment_length * np.array(
-            [np.cos(mes[col]), np.sin(mes[col])]))
+    :param background:
+    :param measurements:
+    :param params:
+    :param head_color:
+    :param head_radius:
+    :param tail_color:
+    :return:
+    """
+    if len(background.shape) == 2:
+        background = background[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
+    for mes in measurements:
+        points = [np.array([mes.x, mes.y])]
+        for i, col in enumerate(
+                ['th_{:02d}'.format(i) for i in
+                 range(params.n_tail_segments - 1)]):
+            points.append(points[-1] + params.tail_segment_length * np.array(
+                [np.cos(getattr(mes, col)), np.sin(getattr(mes, col))]))
 
-    points = np.array(points)
+        points = np.array(points)
 
-    display = cv2.circle(display, a_to_tc(points[0]), 3, (100, 250, 200))
+        cv2.circle(background, a_to_tc(points[0]), head_radius, head_color)
 
-    for j in range(len(points) - 1):
-        display = cv2.line(display, a_to_tc(points[j]),
-                                    a_to_tc(points[j + 1]),
-                                    (250, 100, 100))
+        for j in range(len(points) - 1):
+            cv2.line(background, a_to_tc(points[j]),
+                     a_to_tc(points[j + 1]),
+                     tail_color)
 
-    return display
-
-
-def draw_tail(display, points):
-    if len(display.shape) == 2:
-        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
-
-    #points_mtx = np.array(points)[:, -2::-1]
-    points_mtx = np.array(points)[:, :2]
-
-    # points = [np.array([mes['x'], mes['y']])]
-    # for i, col in enumerate(
-    #         ['th_{:02d}'.format(i) for i in range(params['n_tail_segments'])]):
-    #     points.append(points[-1] + params['tail_segment_length'] * np.array(
-    #         [np.cos(mes[col]), np.sin(mes[col])]))
-    #
-    # points = np.array(points)
-    # print(points)
-
-    for i in range(points_mtx.shape[0]):
-        display = cv2.circle(display, a_to_tc(points_mtx[i]), 5, (200, 0, 0))
-
-    for i in range(points_mtx.shape[0] - 1):
-        display = cv2.line(display, a_to_tc(points_mtx[i]),
-                                    a_to_tc(points_mtx[i+1]),
-                                    (250, 100, 100))
-
-    return display
-
-def draw_tail_angles(display, points):
-    if len(display.shape) == 2:
-        display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
-
-    #points_mtx = np.array(points)[:, -2::-1]
-    points_mtx = np.array(points)[:, :2]
-
-    # points = [np.array([mes['x'], mes['y']])]
-    # for i, col in enumerate(
-    #         ['th_{:02d}'.format(i) for i in range(params['n_tail_segments'])]):
-    #     points.append(points[-1] + params['tail_segment_length'] * np.array(
-    #         [np.cos(mes[col]), np.sin(mes[col])]))
-    #
-    # points = np.array(points)
-    # print(points)
-
-    for i in range(points_mtx.shape[0]):
-        display = cv2.circle(display, a_to_tc(points_mtx[i]), 5, (200, 0, 0))
-
-    for i in range(points_mtx.shape[0] - 1):
-        display = cv2.line(display, a_to_tc(points_mtx[i]),
-                                    a_to_tc(points_mtx[i+1]),
-                                    (250, 100, 100))
-
-    return display
+    return background
 
 
 def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
@@ -138,7 +100,8 @@ def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
     return display
 
 
-def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_y, tail_length=None):
+def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x,
+                        tail_len_y, tail_length=None):
     """
     Function for drawing the fish tail with absolute angles from 0 to 2*pi (as tracked
     by the tail_trace_ls function)
@@ -182,6 +145,4 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x, tail_len_
                  line_color,  thickness=line_thickness)
     cv2.circle(display, a_to_tc(points[-1]), circle_size, circle_color,
                thickness=circle_thickness)
-
-
     return display

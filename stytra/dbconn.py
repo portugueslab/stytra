@@ -28,7 +28,6 @@ def sanitize_item(it):
     if isinstance(it, datetime.datetime):
         temptime = time.mktime(it.timetuple())
         return datetime.datetime.utcfromtimestamp(temptime)
-
     return 0
 
 
@@ -36,11 +35,11 @@ def put_experiment_in_db(exp_dict):
     """ Puts a record of the experiment in the default lab MongoDB database
 
     :param exp_dict: a dictionary from the experiment data collector
-    :return:
+    :return: the database id of the inserted item
     """
     new_dict = sanitize_item(exp_dict)
     client = pymongo.MongoClient('mongodb://192.168.235.12:27017')
     db = client.experiment_database
     collection = db['experiments']
-    collection.insert_one(new_dict)
-    print('Inserted into db')
+    db_id = collection.insert_one(new_dict).inserted_id
+    return str(db_id)

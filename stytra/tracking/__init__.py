@@ -1,10 +1,10 @@
 from PyQt5.QtCore import QObject
 from multiprocessing import Process
 from queue import Empty
-from stytra.tracking.fish import detect_fish_midline
+from stytra.tracking.fish import find_fishes_midlines
 import cv2
 from datetime import datetime
-from stytra.tracking.diagnostics import draw_fish_new
+from stytra.tracking.diagnostics import draw_found_fish
 from stytra.collectors import Accumulator
 
 import pandas as pd

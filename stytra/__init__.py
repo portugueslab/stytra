@@ -11,7 +11,7 @@ from PyQt5.QtCore import QTimer, pyqtSignal
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.calibration import CrossCalibrator
+from stytra.calibration import CrossCalibrator, CircleCalibrator
 
 # from stytra.metadata import MetadataFish, Metadata
 from pyqtgraph.parametertree import ParameterTree
@@ -21,8 +21,8 @@ from stytra.collectors import NewDataCollector, HasPyQtGraphParams, Metadata
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
-from stytra.gui.camera_display import CameraTailSelection
-from stytra.gui.plots import StreamingPlotWidget
+from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
+from stytra.gui.plots import StreamingPlotWidget, StreamingPositionPlot
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
@@ -162,6 +162,10 @@ class Experiment(QMainWindow):
         self.set_protocol(Protclass(calibrator=self.calibrator,
                                     asset_folder=self.asset_dir,
                                     **protocol_params))
+        self.reconfigure_ui()
+
+    def reconfigure_ui(self):
+        pass
 
     def set_protocol(self, protocol):
         """ Set a new experiment protocol
@@ -296,9 +300,14 @@ class CameraExperiment(Experiment):
                                           self.finished_sig,
                                           video_input)
 
+        self.frame_dispatcher = None
+
     def go_live(self):
         self.camera.start()
         self.gui_refresh_timer.start(1000//60)
+        if self.frame_dispatcher is not None:
+            self.frame_dispatcher.start()
+        sys.excepthook = self.excepthook
 
     def closeEvent(self, *args, **kwargs):
         super().closeEvent(*args, **kwargs)
@@ -306,6 +315,10 @@ class CameraExperiment(Experiment):
         # self.camera.join(timeout=1)
         self.camera.terminate()
         print('Camera process terminated')
+        if self.frame_dispatcher is not None:
+            self.frame_dispatcher.terminate()
+            print('Frame dispatcher terminated')
+        self.gui_refresh_timer.stop()
 
 
 class TailTrackingExperiment(CameraExperiment):
@@ -349,10 +362,6 @@ class TailTrackingExperiment(CameraExperiment):
                                                          for i in range(
                                                             current_tracking_method_parameters['n_segments'])])
 
-        # GUI elements
-        self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                    data_acc_var='tail_sum')
-
         self.camera_viewer = CameraTailSelection(
             tail_start_points_queue=self.processing_parameter_queue,
             camera_queue=self.gui_frame_queue,
@@ -362,21 +371,17 @@ class TailTrackingExperiment(CameraExperiment):
             camera_parameters=self.metadata_camera,
             tracking_params=current_tracking_method_parameters)
 
+        self.widget_control.layout.insertWidget(0, self.camera_viewer)
+
         self.dc.add_data_source('tracking',
                                 'tail_position', self.camera_viewer, 'roi_dict')
         self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
         self.go_live()
-
-    def go_live(self):
-        super().go_live()
-        self.frame_dispatcher.start()
-        sys.excepthook = self.excepthook
 
     def start_protocol(self):
         self.data_acc_tailpoints.reset()
@@ -393,11 +398,19 @@ class TailTrackingExperiment(CameraExperiment):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
-    def closeEvent(self, *args, **kwargs):
-        super().closeEvent(*args, **kwargs)
-        self.frame_dispatcher.terminate()
-        print('Frame dispatcher terminated')
-        self.gui_refresh_timer.stop()
+    def reconfigure_ui(self):
+        if isinstance(self.protocol, VRProtocol):
+            self.main_layout = QSplitter()
+            self.setCentralWidget(self.main_layout)
+            self.monitoring_layout = QVBoxLayout()
+            self.positionPlot = StreamingPositionPlot(self.protocol.dynamic_log)
+            self.main_layout.addItem(self.monitoring_layout)
+            self.main_layout.addItem(self.widget_control)
+        else:
+            # GUI elements
+            self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
+                                                        data_acc_var='tail_sum')
+            self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)
@@ -412,8 +425,14 @@ class MovementRecordingExperiment(CameraExperiment):
 
     """
     def __init__(self, *args, **kwargs):
+        self.framestart_queue = Queue()
+        self.splitter = QSplitter()
+        self.camera_view = CameraViewCalib(camera_queue=self.gui_frame_queue,
+                                           update_timer=self.gui_refresh_timer,
+                                           control_queue=self.control_queue,
+                                           camera_parameters=self.metadata_camera)
         super().__init__(*args, **kwargs)
-        self.go_live()
+        self.calibrator = CircleCalibrator()
 
         self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
                                                       self.gui_frame_queue,
