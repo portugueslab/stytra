@@ -1,12 +1,12 @@
 from PyQt5.QtCore import QRectF, pyqtSignal, Qt
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
-    QWidget, QLayout, QComboBox, QSpinBox, \
+    QWidget, QLayout, QComboBox, \
     QFileDialog, QLineEdit, QProgressBar, QLabel, QDoubleSpinBox
 import pyqtgraph as pg
 import numpy as np
 import inspect
 
-from stytra.stimulation import protocols, Protocol
+from stytra.stimulation import protocols, ProtocolRunner
 
 
 class DebugLabel(QLabel):
@@ -85,7 +85,7 @@ class ProtocolDropdown(QComboBox):
         self.setEditable(False)
         self.prot_classdict = {prot[1].name: prot[1]
                                for prot in prot_classes if issubclass(prot[1],
-                                                                      Protocol)}
+                                                                      ProtocolRunner)}
 
         self.addItems(list(self.prot_classdict.keys()))
 
@@ -126,11 +126,9 @@ class ProtocolControlWindow(QWidget):
         # Widgets for protocol choosing
         self.layout_choose = QHBoxLayout()
         self.combo_prot = ProtocolDropdown()
-        self.spn_n_repeats = QSpinBox()
-        self.spn_n_repeats.setMinimum(0)
-        self.spn_n_repeats.setValue(1)
+        self.protocol_params_butt = QPushButton()
         self.layout_choose.addWidget(self.combo_prot)
-        self.layout_choose.addWidget(self.spn_n_repeats)
+        self.layout_choose.addWidget(self.protocol_params_butt)
 
         # Widgets for protocol running
         self.layout_run = QHBoxLayout()

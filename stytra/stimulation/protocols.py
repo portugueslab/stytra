@@ -1,16 +1,48 @@
-from stytra.stimulation.stimuli import Pause, \
+from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
     PartFieldStimulus
 from stytra.stimulation.backgrounds import existing_file_background
-from stytra.stimulation import Protocol
 import pandas as pd
 import numpy as np
 from stytra.stimulation.backgrounds import gratings
+from stytra.collectors import Accumulator, HasPyQtGraphParams
 
 from itertools import product
 
 from copy import deepcopy
+
+
+class Protocol(HasPyQtGraphParams):
+    def __init__(self):
+        for child in self.params.children():
+            self.params.removeChild(child)
+        self.params.setName('stimulus/protocol_params')
+
+        for name, val in zip(['n_repeats', 'pre_pause', 'post_pause'],
+                             [1, 0, 0]):
+            self.params.addChild({'name': name, 'value': val})
+
+    def get_stimulus_list(self):
+        """Generate protocol from specified parameters
+                """
+        main_stimuli = self.get_main_stim()
+        stimuli = []
+        if self.params['pre_pause'] > 0:
+            stimuli.append(Pause(duration=self.params['pre_pause']))
+
+        for i in range(max(self.params['n_repeats'], 1)):
+            stimuli.extend(deepcopy(main_stimuli))
+
+        if self.params['post_pause'] > 0:
+            stimuli.append(Pause(duration=self.params['post_pause']))
+
+        return stimuli
+
+    def get_main_stim(self):
+        """ Get the stimulus list for each different protocol
+        """
+        return [Pause()]
 
 
 class NoStimulation(Protocol):
@@ -32,15 +64,22 @@ class NoStimulation(Protocol):
 class FlashProtocol(Protocol):
     name = 'flash protocol'
 
-    def __init__(self, *args, period_sec=5,  flash_duration=2, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super.__init__(*args, **kwargs)
 
+        self.set_new_param('period_sec', 5)
+        self.set_new_param('flash_duration', 2)
+
+    def get_main_stim(self):
         stimuli = []
 
-        stimuli.append(Pause(duration=period_sec-flash_duration))
-        stimuli.append(FullFieldPainterStimulus(duration=flash_duration,
+        stimuli.append(Pause(duration=self.params['period_sec'] - \
+                                      self.params['flash_duration']))
+        stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
                                                 color=(255, 255, 255)))  # flash duration
 
-        super().__init__(*args, stimuli=stimuli, **kwargs)
+        return stimuli
+
 
 
 class ShockProtocol(Protocol):
@@ -326,4 +365,5 @@ class VisualCodingProtocol(Protocol):
 
         # stimuli.append(VideoStimulus(video_path=video_file, duration=180))
         super().__init__(*args, stimuli=stimuli, **kwargs)
+
 

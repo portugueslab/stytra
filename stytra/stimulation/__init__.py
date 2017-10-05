@@ -1,4 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
+from PyQt5.QtWidgets import QLayout, QPushButton, QWidget
+from pyqtgraph.parametertree import ParameterTree
 import datetime
 
 from builtins import print
@@ -6,9 +8,10 @@ from copy import deepcopy
 
 from stytra.stimulation.stimuli import DynamicStimulus, Pause
 from stytra.collectors import Accumulator, HasPyQtGraphParams
+from stytra.stimulation.protocols import FlashProtocol
 
 
-class Protocol(QObject, HasPyQtGraphParams):
+class ProtocolRunner(QObject):
     """ Class that manages the stimulation protocol, includes a timer,
     updating signals etc.
 
@@ -19,8 +22,7 @@ class Protocol(QObject, HasPyQtGraphParams):
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
 
-    def __init__(self, stimuli=None, n_repeats=1, pre_pause=0, post_pause=0,
-                 calibrator=None, dt=1/60, log_print=True, asset_folder=''):
+    def __init__(self, calibrator=None, dt=1/60, log_print=True, asset_folder=''):
         """ Constructor
         :param stimuli: list of stimuli of the (list of Stimulus objects)
         :param n_repeats: repetitions for the list of stimuli
@@ -33,41 +35,71 @@ class Protocol(QObject, HasPyQtGraphParams):
         """
         super().__init__()
 
+
         self.t_start = None
         self.t_end = None
         self.completed = False
         self.t = 0
 
-        self.stimuli = []
-        if pre_pause > 0:
-            self.stimuli.append(Pause(duration=pre_pause))
-        for i in range(max(n_repeats, 1)):
-            self.stimuli.extend(deepcopy(stimuli))
-        if post_pause > 0:
-            self.stimuli.append(Pause(duration=post_pause))
-
-        self.current_stimulus = self.stimuli[0]
-        for stimulus in self.stimuli:
-            stimulus.initialise_external(calibrator=calibrator,
-                                         asset_folder=asset_folder)
-
-        self.i_current_stimulus = 0
-        self.timer = QTimer()
         self.dt = dt
+        self.timer = QTimer()
+
+        self.calibrator = calibrator
+        self.asset_folder = asset_folder
+
+        self.protocol = None
+        self.stimuli = []
+        self.i_current_stimulus = None
+        self.current_stimulus = None
         self.past_stimuli_elapsed = None
-        self.duration = self.get_duration()
+        self.duration = None
+        self.dynamic_log = None
+
+        self.new_protocol()
 
         # Log will be a list of stimuli states
         self.log = []
-        self.dynamic_log = DynamicLog(self.stimuli)
         self.log_print = log_print
         self.running = False
+
+    def set_new_protocol(self, protocol=FlashProtocol):  # change default to empty
+        """Generate protocol from specified parameters
+        """
+        self.protocol = protocol
+        self.update_protocol()
+
+    def update_protocol(self):
+        self.stimuli = self.protocol.get_stimulus_list()
+
+        self.current_stimulus = stimuli[0]
+        for stimulus in stimuli:
+            stimulus.initialise_external(calibrator=self.calibrator,
+                                         asset_folder=self.asset_folder)
+
+        self.duration = self.get_duration()
+
+        self.dynamic_log = DynamicLog(self.stimuli)
+        self.duration = self.get_duration()
+
+    def get_parameter_gui(self):
+        params_widget = QWidget()
+        params_layout = QLayout()
+
+        parameter_tree = ParameterTree(showHeader=False)
+        create_button = QPushButton(text='Create protocol!')
+        create_button.clicked.connect(self.update_protocol)
+
+        params_layout.addWidget(parameter_tree)
+        params_layout.addWidget(create_button)
+
+        params_widget.setLayout(params_widget)
+        params_widget.show()
 
     def start(self):
         self.t_start = datetime.datetime.now()
         self.timer.timeout.connect(self.timestep)
         self.timer.setSingleShot(False)
-        self.timer.start() # it is in milliseconds
+        self.timer.start()  # it is in milliseconds
         self.dynamic_log.starting_time = self.t_start
         self.dynamic_log.reset()
         self.log = []
@@ -144,7 +176,12 @@ class Protocol(QObject, HasPyQtGraphParams):
             stimulus._elapsed = 0.0
 
         self.i_current_stimulus = 0
-        self.current_stimulus = self.stimuli[0]
+
+        print(self.stimuli)
+        if len(self.stimuli) > 0:
+            self.current_stimulus = self.stimuli[0]
+        else:
+            self.current_stimulus = None
 
     def get_duration(self):
         total_duration = 0
@@ -175,4 +212,3 @@ class DynamicLog(Accumulator):
 
     def reset(self):
         self.stored_data = []
-

@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
 from stytra.stimulation.stimuli import Pause, MovingConstantly
-from stytra.stimulation import Protocol
+from stytra.stimulation import ProtocolRunner
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.triggering import ZmqLightsheetTrigger
@@ -108,7 +108,7 @@ class Experiment(QMainWindow):
             #                                      duration=stim_duration, monitor_rate=refresh_rate))
             self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-10, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
-        self.protocol = Protocol(self.stimuli, 1/refresh_rate)
+        self.protocol = ProtocolRunner(self.stimuli, 1 / refresh_rate)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
 

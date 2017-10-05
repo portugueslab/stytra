@@ -1,62 +1,10 @@
 import param
 from paramqt import ParameterGui
 from pyqtgraph.parametertree import Parameter, ParameterTree
-
-metadata_params_dict = [
-    {'name': 'fish_metadata', 'type': 'group', 'children': [
-        {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15), 'tip': 'Fish age (days)'},
-        {'name': 'genotype', 'type': 'list',
-         'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
-                    'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
-                    'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
-                    'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
-                    'PC:epNtr-tagRFP',
-                    'NeuroD-6f'], 'value': 'TL'},
-        {'name': 'dish_diameter', 'type': 'list',
-         'values': ['0', '30', '60', '90', 'lightsheet'], 'value': '60'},
-
-        {'name': 'comments', 'type': 'str', 'value': ""},
-        {'name': 'embedded', 'type': 'bool', 'value': True, 'tip': "This is a checkbox"},
-        {'name': 'treatment', 'type': 'list',
-         'values': ['',
-                    '10mM MTz',
-                    'Bungarotoxin'], 'value': ''},
-        {'name': 'screened', 'type': 'list',
-         'values': ['not', 'dark', 'bright'], 'value': 'not'}]},
-
-    {'name': 'general_metadata', 'type': 'group', 'visible': True,
-     'children': [
-         {'name': 'experiment_name', 'type': 'str', 'value': ''},
-         {'name': 'experimenter_name', 'type': 'list', 'value': 'Vilim Stih',
-          'values': ['Elena Dragomir',
-                     'Andreas Kist',
-                     'Laura Knogler',
-                     'Daniil Markov',
-                     'Pablo Oteiza',
-                     'Virginia Palieri',
-                     'Luigi Petrucco',
-                     'Ruben Portugues',
-                     'Vilim Stih',
-                     'Tugce Yildizoglu'],
-          },
-         {'name': 'setup_name', 'type': 'list',
-          'values': ['2p',
-                     'Lightsheet',
-                     '42',
-                     'Saskin',
-                     'Archimedes',
-                     'Helmut',
-                     'Katysha'], 'value': 'Saskin'},
-         {'name': 'random_add', 'type': 'int', 'value': 3}],
-     }
-]
-
-# Create tree of Parameter objects
-general_metadata_params = Parameter.create(name='general_metadata', type='group',
-                                           children=metadata_params_dict)
+from stytra.collectors import HasPyQtGraphParams
 
 
-class Metadata(object):
+class Metadata(HasPyQtGraphParams):
     def __init__(self):
         self.gui = None  # avoid unnecessary Qwidgets around
 
@@ -111,9 +59,8 @@ class Metadata(object):
 
             ]
 
-        # Create tree of Parameter objects
-        self.params = Parameter.create(name='params', type='group', children=params)
-        #
+        self.params.setName('general_metadata')
+        self.params.addChildren(params)
 
     def get_param_dict(self):
         return self.params.getValues()

@@ -13,10 +13,9 @@ from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator
 
-from stytra.metadata import MetadataFish, Metadata
-# from stytra.metadata.metalist_gui import MetaListGui
-from stytra.metadata import general_metadata_params
-from stytra.collectors import NewDataCollector, HasPyQtGraphParams
+# from stytra.metadata import MetadataFish, Metadata
+from pyqtgraph.parametertree import ParameterTree
+from stytra.collectors import NewDataCollector, HasPyQtGraphParams, Metadata
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
@@ -25,7 +24,7 @@ from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from multiprocessing import Queue, Event
-from stytra.stimulation import Protocol
+from stytra.stimulation import ProtocolRunner
 
 from stytra.metadata import MetadataCamera
 
@@ -69,8 +68,9 @@ class Experiment(QMainWindow):
         self.directory = directory
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
-        # For some reason, initialising Experiment as inheriting from HasPyQtGraphParams
-        # and adding children crashes the program. Therefore, we have a metadata object
+        # Maybe Experiment class can inherit from HasPyQtParams itself; but for now I just
+        # use metadata object to access the global _params later in the code.
+        # This entire Metadata() thing may be replaced by params in the experiment
         self.metadata = Metadata()
 
         self.save_csv = save_csv
@@ -79,23 +79,18 @@ class Experiment(QMainWindow):
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
-        # if not self.debug_mode:
+
+        # if not self.debug_mode: #TODO uncomment this!
         #     self.check_if_committed()
 
+        self.protocol_runner = ProtocolRunner()
         self.window_display = StimulusDisplayWindow()
         self.widget_control = ProtocolControlWindow(self.window_display,
                                                     self.debug_mode)
 
         self.widget_control.combo_prot.currentIndexChanged.connect(self.change_protocol)
-        self.widget_control.spn_n_repeats.valueChanged.connect(self.change_protocol)
-
         self.widget_control.button_metadata.clicked.connect(self.metadata.show_gui)
         self.widget_control.button_toggle_prot.clicked.connect(self.toggle_protocol)
-
-        # Connect the display window to the metadata collector
-        # self.dc.add_data_source('stimulus', 'display_params',
-        #                         self.window_display, 'display_params',
-        #                         use_last_val=True)
 
 
         if calibrator is None:
@@ -108,57 +103,63 @@ class Experiment(QMainWindow):
 
         self.widget_control.spin_calibrate.valueChanged.connect(
             self.calibrator.set_physical_scale)
-        self.widget_control.spin_calibrate.setValue(self.calibrator.params['length_mm'])
+        # self.widget_control.spin_calibrate.setValue(self.calibrator.params['length_mm'])
+        self.newcontrol = ParameterTree(showHeader=False)
+        self.newcontrol.setParameters(self.calibrator.params.child('length_mm'))
+        self.widget_control.layout_calibrate.addWidget(self.newcontrol)
+
 
         self.change_protocol()
         self.dc.add_data_source(self.protocol.log, name='stim_log')
-
-        self.metadata.params.addChildren([self.window_display.params, self.calibrator.params])
+        self.widget_control.protocol_params_butt.clicked.connect(self.protocol.params_widget)
 
         self.dc.add_data_source(self.metadata)
+
         self.widget_control.reset_ROI()
 
-        self.protocol = None
         self.init_ui()
         self.show()
-        print(self.calibrator.params['length_mm'])
-        # self.metadata.params.sigTreeStateChanged.connect(self.change)
 
+        # Debug line:
+        self.metadata._params.sigTreeStateChanged.connect(self.change)
 
 
     def change(self, param, changes):
-        pass
-        # print("tree changes:")
-        # for param, change, data in changes:
-        #     path = self.metadata.params.childPath(param)
-        #     if path is not None:
-        #         childName = '.'.join(path)
-        #     else:
-        #         childName = param.name()
-        #     print('  parameter: %s'% childName)
-        #     print('  change:    %s'% change)
-        #     print('  data:      %s'% str(data))
-        #     print('  ----------')
+        print("tree changes:")
+        for param, change, data in changes:
+            path = self.metadata.params.childPath(param)
+            if path is not None:
+                childName = '.'.join(path)
+            else:
+                childName = param.name()
+            print('  parameter: %s'% childName)
+            print('  change:    %s'% change)
+            print('  data:      %s'% str(data))
+            print('  ----------')
 
     def init_ui(self):
         self.setCentralWidget(self.widget_control)
 
     def toggle_protocol(self):
+        # Start/stop the protocol:
         if self.protocol.running:
             self.end_protocol()
-            self.widget_control.button_toggle_prot.setText("▶")
         else:
             self.start_protocol()
+
+        # swap the symbol: #TODO still buggy!
+        if self.widget_control.button_toggle_prot.text() == "▶":
             self.widget_control.button_toggle_prot.setText("■")
+        else:
+            self.widget_control.button_toggle_prot.setText("▶")
 
     def change_protocol(self):
         protocol_params = dict()
         # TODO implement GUI for protocol params
         Protclass = self.widget_control.combo_prot.prot_classdict[
             self.widget_control.combo_prot.currentText()]
-        n_repeats = self.widget_control.spn_n_repeats.value()
-        self.set_protocol(Protclass(n_repeats=n_repeats,
-                                    calibrator=self.calibrator,
+        # n_repeats = self.widget_control.spn_n_repeats.value()
+        self.set_protocol(Protclass(calibrator=self.calibrator,
                                     asset_folder=self.asset_dir,
                                     **protocol_params))
 

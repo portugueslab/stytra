@@ -3,22 +3,23 @@ from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 import math
 import cv2
 import numpy as np
-from pyqtgraph.parametertree import Parameter
+from pyqtgraph.parametertree import Parameter, parameterTypes
 from stytra.collectors import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):
     pass
 
-
 class Calibrator(HasPyQtGraphParams):
     def __init__(self, mm_px=1):
+        super().__init__()
         self.enabled = False
 
         self.params.setName('calibration_params')
-        self.params.addChildren([{'name': 'mm_px', 'value': mm_px,  'visible': False},
-                                 {'name': 'length_mm', 'value': None,  'visible': False},
-                                 {'name': 'length_px', 'value': None,  'visible': False}])
+        self.params.addChildren([{'name': 'mm_px', 'value': mm_px,  'visible': True},
+                                 {'name': 'length_mm', 'value': None, 'type': 'float',  'suffix': 'mm', 'siPrefix': True,
+                                  'visible': True},
+                                 {'name': 'length_px', 'value': None,  'visible': True}])
         self.length_to_measure = 'pixels'
 
 
@@ -47,6 +48,9 @@ class CrossCalibrator(Calibrator):
         self.params['length_mm'] = 1
         self.length_to_measure = 'a line in the cross'
 
+        self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
+
+
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -58,9 +62,14 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
-    def set_physical_scale(self, measured_distance):
-        self.params['length_mm'] = measured_distance
-        self.params['mm_px'] = measured_distance/self.params['length_px']
+    def set_physical_scale(self):
+        # self.params['length_mm'] = measured_distance
+        #TODO fixing this!
+        print('problems_pre')
+        print(self.params['length_mm']/self.params['length_px'])
+        self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
+        print('problems_post')
+
 
 
 class CircleCalibrator(Calibrator):

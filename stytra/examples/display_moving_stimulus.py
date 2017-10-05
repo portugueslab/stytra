@@ -5,7 +5,7 @@ import qdarkstyle
 
 import stytra.collectors
 from stytra.stimulation.stimuli import MovingSeamless
-from stytra.stimulation import Protocol
+from stytra.stimulation import ProtocolRunner
 from stytra.stimulation.backgrounds import noise_background, poisson_disk_background, existing_file_background
 import pandas as pd
 import numpy as np
@@ -116,9 +116,9 @@ class Experiment(QMainWindow):
 
         bg = existing_file_background(self.im_filename)
 
-        self.protocol = Protocol([MovingSeamless(background=bg, motion=motion,
-                                                 duration=motion.t.iat[-1])],
-                                                 dt=refresh_rate)
+        self.protocol = ProtocolRunner([MovingSeamless(background=bg, motion=motion,
+                                                       duration=motion.t.iat[-1])],
+                                       dt=refresh_rate)
 
 
         # queues for interprocess communication

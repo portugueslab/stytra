@@ -6,13 +6,111 @@ import numpy as np
 import pandas as pd
 import param
 
-from stytra.metadata import Metadata
+# from stytra.metadata import Metadata
 from copy import deepcopy
-from pyqtgraph.parametertree import Parameter
+from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class HasPyQtGraphParams(object):
-    params = Parameter.create(name='unassigned_params', type='group')
+    """
+    This weird class is used to have a number of objects which
+    constitute the experiment interfaces and protocols sharing a global
+    params Parameter that will be used for saving metadata and restoring
+    the app to the last used data.
+    _params is a class attribute and is shared among all subclasses; each
+    subclass will have an alias, params, providing access to its private
+    parameters.
+    """
+    _params = Parameter.create(name='unassigned_params', type='group')
+
+    def __init__(self):
+        # Generally this name is then redefined inside the subclass
+        self.params = Parameter.create(name=self.__class__.__name__,
+                                       type='group')
+        self._params.addChild(self.params)
+
+    def set_new_param(self, name, value):
+        self.params.addChild({'name': name, 'value': value})
+
+
+
+class Metadata(HasPyQtGraphParams):
+    def __init__(self):
+        super().__init__()
+        self.gui = None  # avoid unnecessary Qwidgets around
+
+        params = [
+            {'name': 'fish_metadata', 'type': 'group', 'children': [
+                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15), 'tip': 'Fish age (days)'},
+                {'name': 'genotype', 'type': 'list',
+                 'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
+                            'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
+                            'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
+                            'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
+                            'PC:epNtr-tagRFP',
+                            'NeuroD-6f'], 'value': 'TL'},
+                {'name': 'dish_diameter', 'type': 'list',
+                 'values': ['0', '30', '60', '90', 'lightsheet'], 'value': '60'},
+
+                {'name': 'comments', 'type': 'str', 'value': ""},
+                {'name': 'embedded', 'type': 'bool', 'value': True, 'tip': "This is a checkbox"},
+                {'name': 'treatment', 'type': 'list',
+                 'values': ['',
+                            '10mM MTz',
+                            'Bungarotoxin'], 'value': ''},
+                {'name': 'screened', 'type': 'list',
+                 'values': ['not', 'dark', 'bright'], 'value': 'not'}]},
+
+            {'name': 'general_metadata', 'type': 'group', 'visible': True,
+             'children': [
+                {'name': 'experiment_name', 'type': 'str', 'value': ''},
+                {'name': 'experimenter_name', 'type': 'list', 'value': 'Vilim Stih',
+                 'values': ['Elena Dragomir',
+                            'Andreas Kist',
+                            'Laura Knogler',
+                            'Daniil Markov',
+                            'Pablo Oteiza',
+                            'Virginia Palieri',
+                            'Luigi Petrucco',
+                            'Ruben Portugues',
+                            'Vilim Stih',
+                            'Tugce Yildizoglu'],
+                 },
+                {'name': 'setup_name',  'type': 'list',
+                 'values': ['2p',
+                            'Lightsheet',
+                            '42',
+                            'Saskin',
+                            'Archimedes',
+                            'Helmut',
+                            'Katysha'], 'value': 'Saskin'},
+                {'name': 'random_add', 'type': 'int', 'value': 3}],
+             }
+
+
+            ]
+
+        self.params.setName('general_metadata')
+        self.params.addChildren(params)
+
+    def get_param_dict(self):
+        return self.params.getValues()
+
+    def show_gui(self):
+        self.gui = self.get_gui(self)
+        self.gui.show()
+
+    def get_gui(self, save_button=True):
+        t = ParameterTree()
+        t.setParameters(self._params, showTop=False)
+        t.setWindowTitle('pyqtgraph example: Parameter Tree')
+        return t
+
+    def get_state(self):
+        return self._params.saveState()
+
+    def restore_state(self):
+        pass
 
 
 class Accumulator:
@@ -128,15 +226,14 @@ class NewDataCollector:
         Function for adding new data sources.
             - Metadata objects: can be passed without specifications
                                 (e.g., add_data_source(MetadataFish()));
-            - Log data, for stimulus log or rail tracking
+            - Log data, for stimulus log or tail tracking
         """
 
         # If true, use the last values used for this parameter
         if type(entry) == Metadata:
             if self.last_metadata is not None:
-                entry.params.restoreState(self.last_metadata)
+                entry._params.restoreState(self.last_metadata)
             self.static_metadata = entry
-            print('presa')
         else:
             self.log_data_dict[name] = entry
 
@@ -144,9 +241,8 @@ class NewDataCollector:
         # data_dict = deepcopy(DataCollector.data_dict_template)
         data_dict = {}
         data_dict['log_data'] = self.log_data_dict
-        print(self.static_metadata.params)
-        print(self.static_metadata.get_state())
-        data_dict['static_metadata'] = self.static_metadata.params.saveState()
+        data_dict['static_metadata'] = self.static_metadata._params.saveState()
+        print(data_dict['static_metadata'])
 
         return data_dict
 
