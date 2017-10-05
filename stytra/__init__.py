@@ -267,11 +267,11 @@ class LightsheetExperiment(Experiment):
 
 
 class CameraExperiment(Experiment):
-    def __init__(self, *args, video_input=None, **kwargs):
+    def __init__(self, *args, video_file=None, **kwargs):
         """
 
         :param args:
-        :param video_input: if not using a camera, the video
+        :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
@@ -286,7 +286,7 @@ class CameraExperiment(Experiment):
         self.metadata_camera = MetadataCamera()
         self.dc.add_data_source(self.metadata_camera)
 
-        if video_input is None:
+        if video_file is None:
             self.control_queue = Queue()
             self.camera = XimeaCamera(self.frame_queue,
                                       self.finished_sig,
@@ -295,7 +295,7 @@ class CameraExperiment(Experiment):
             self.control_queue = None
             self.camera = VideoFileSource(self.frame_queue,
                                           self.finished_sig,
-                                          video_input)
+                                          video_file)
 
         self.frame_dispatcher = None
 
