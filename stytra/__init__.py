@@ -15,7 +15,7 @@ from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
-from stytra.gui.plots import StreamingPlotWidget, StreamingPositionPlot
+from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
 
@@ -414,26 +414,27 @@ class TailTrackingExperiment(CameraExperiment):
             self.monitoring_layout.addWidget(self.positionPlot)
             self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
 
-            self.tail_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                 data_acc_var='tail_sum')
-            self.monitoring_layout.addWidget(self.tail_plot)
-            self.gui_refresh_timer.timeout.connect(self.tail_plot.update)
+            self.stream_plot = MultiStreamPlot()
 
-            self.tail_plot_angle = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                 data_acc_var='theta_01')
-            self.monitoring_layout.addWidget(self.tail_plot_angle)
-            self.gui_refresh_timer.timeout.connect(self.tail_plot_angle.update)
+            self.monitoring_layout.addWidget(self.stream_plot)
+            self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
 
-            self.monitoring_layout.addWidget(self.tail_plot)
-            self.gui_refresh_timer.timeout.connect(self.tail_plot.update)
+            self.stream_plot.add_stream(self.data_acc_tailpoints,
+                                        ['tail_sum', 'theta_01'])
+
+            self.stream_plot.add_stream(self.position_estimator.log, ['v_ax',
+                                             'v_lat',
+                                             'v_ang',
+                                             'middle_tail',
+                                             'indexes_from_past_end'])
 
             self.main_layout.addWidget(self.monitoring_widget)
             self.main_layout.addWidget(self.widget_control)
             self.setCentralWidget(self.main_layout)
         else:
+            pass
             # GUI elements
-            self.tail_stream_plot = StreamingPlotWidget(edata_accumulator=self.data_acc_tailpoints,
-                                                        data_acc_var='tail_sum')
+            # TODO update for multistreamplot
 
 
     def excepthook(self, exctype, value, tb):

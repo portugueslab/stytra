@@ -156,7 +156,6 @@ class VideoFileSource(FrameProcessor):
                 else:
                     break
             self.update_framerate()
-            print(self.current_framerate)
         return
 
 

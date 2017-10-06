@@ -9,16 +9,13 @@ from stytra.collectors import Accumulator
 
 class EstimatorLog(Accumulator):
     def __init__(self, headers):
-        self.header_list = ('t', ) + headers
+        super().__init__()
+        self.header_list = ('t', ) + tuple(headers)
         self.stored_data = []
-        self.starting_time = 0
 
     def update_list(self, data):
+        self.check_start()
         self.stored_data.append(data)
-
-    def reset(self):
-        self.starting_time = 0
-        self.stored_data = []
 
 
 class VigourMotionEstimator:
@@ -40,7 +37,7 @@ class VigourMotionEstimator:
 
 class LSTMLocationEstimator:
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
-                 gains=[1,1,1], update_interval=100, lstm_sample_rate=500,
+                 gains=[1, 1, 1], update_interval=100, lstm_sample_rate=300,
                  logging=True):
         assert (isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
@@ -49,13 +46,11 @@ class LSTMLocationEstimator:
         self.n_past = self.model.input_shape[1]
         self.delta_t = datetime.timedelta(seconds=self.n_past/lstm_sample_rate)
 
-        self.update_interval = update_interval
         self.gains = gains
         self.last_update = 0 # the position at which the last update occured
-        self.past_coordinates = np.zeros((update_interval, 3))
         self.lstm_sample_rate = lstm_sample_rate
 
-        self.first_t = None
+        self.t_start = None
         self.past_t = None
         self.past_coords = None
 
@@ -69,7 +64,7 @@ class LSTMLocationEstimator:
             self.log = None
 
     def reset(self):
-        self.first_t = None
+        self.t_start = None
         self.past_t = None
         self.past_coords = None
 
@@ -80,8 +75,8 @@ class LSTMLocationEstimator:
 
         :return:
         """
-        if self.first_t is None:
-            self.first_t = datetime.datetime.now()
+        if self.t_start is None:
+            self.t_start = datetime.datetime.now()
 
         tail = self.data_acc.get_last_n(self.n_past)[:, 2:]
         tail -= tail[:, :1]
@@ -117,8 +112,7 @@ class LSTMLocationEstimator:
         self.past_coords = new_coordinates
 
         if self.log is not None:
-            t = (t_estimation-self.first_t).total_seconds()
-            self.log.update_list((t,
+            self.log.update_list(((t_estimation-self.t_start).total_seconds(),
                                   Y[-1, 0],
                                   Y[-1, 1],
                                   Y[-1, 2],

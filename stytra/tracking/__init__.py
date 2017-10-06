@@ -7,8 +7,6 @@ from datetime import datetime
 from stytra.tracking.diagnostics import draw_found_fish
 from stytra.collectors import Accumulator
 
-import pandas as pd
-
 
 class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=None):
@@ -51,11 +49,6 @@ class QueueDataAccumulator(QObject, Accumulator):
             except Empty:
                 break
 
-    def reset(self):
-        """Reset data list
-        """
-        self.stored_data = []
-        print('resetted')
 
 
 class FishTrackingProcess(Process):
