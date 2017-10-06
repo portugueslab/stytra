@@ -50,7 +50,7 @@ class Stimulus:
         """ Functions that initiate each stimulus,
         gets around problems with copying
 
-        :param experiment: the experiment object to which link the simulus
+        :param experiment: the experiment object to which link the stimulus
         :return: None
         """
         self._experiment = experiment
@@ -145,7 +145,7 @@ class SeamlessImageStimulus(PainterStimulus,
     def paint(self, p, w, h):
         # draw the black background
         if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.mm_px
+            mm_px = self._experiment.calibrator.params['mm_px']
         else:
             mm_px = 1
 
@@ -186,14 +186,14 @@ class SeamlessGratingStimulus(SeamlessImageStimulus):
         self.grating_color = grating_color
 
     def get_unit_dims(self, w, h):
-        return self.grating_period / max(self._experiment.calibrator.mm_px, 0.0001), max(w, h)
+        return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.grating_color)))
         p.drawRect(point.x(), point.y(),
-                   int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
+                   int(self.grating_period / (2 * max(self._experiment.calibrator.params['mm_px'], 0.0001))),
                    w)
 
 
@@ -212,20 +212,20 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        grating_width = self.grating_period/max(self._experiment.calibrator.mm_px, 0.0001) # in pixels
+        grating_width = self.grating_period/max(self._experiment.calibrator.params['mm_px'], 0.0001) # in pixels
         p.setBrush(QBrush(QColor(*self.grating_color)))
 
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._experiment.calibrator.mm_px - \
-                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width + 1) * grating_width
+            start = -self.y / self._experiment.calibrator.params['mm_px'] - \
+                    np.floor((-self.y / self._experiment.calibrator.params['mm_px']) / grating_width+1) * grating_width
 
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
         else:
             n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self._experiment.calibrator.mm_px - \
+            start = self.x / self._experiment.calibrator.params['mm_px'] - \
                     np.floor(self.x / grating_width) * grating_width
             for i in range(n_gratings):
                 p.drawRect(int(round(start)), -1, grating_width / 2, h+2)

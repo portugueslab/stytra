@@ -104,7 +104,7 @@ class Metadata(HasPyQtGraphParams):
 #         setattr(self, obj, val)
 #         setattr(self.params(obj), 'constant', True)
 #
-#     def show_gui(self):
+#     def show_metadata_gui(self):
 #         self.gui = self.get_gui(self)
 #         self.gui.show()
 #

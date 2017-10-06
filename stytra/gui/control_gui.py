@@ -3,10 +3,12 @@ from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
     QWidget, QLayout, QComboBox, \
     QFileDialog, QLineEdit, QProgressBar, QLabel, QDoubleSpinBox
 import pyqtgraph as pg
+from pyqtgraph.parametertree import ParameterTree
 import numpy as np
 import inspect
 
-from stytra.stimulation import protocols, ProtocolRunner
+from stytra.stimulation import protocols
+from stytra.stimulation.protocols import Protocol
 
 
 class DebugLabel(QLabel):
@@ -85,48 +87,61 @@ class ProtocolDropdown(QComboBox):
         self.setEditable(False)
         self.prot_classdict = {prot[1].name: prot[1]
                                for prot in prot_classes if issubclass(prot[1],
-                                                                      ProtocolRunner)}
+                                                                      Protocol)}
 
         self.addItems(list(self.prot_classdict.keys()))
 
 
 class ProtocolControlWindow(QWidget):
-    sig_calibrating = pyqtSignal()
     sig_closing = pyqtSignal()
 
-    def __init__(self, display_window=None, debug_mode=False, *args):
+    def __init__(self, display_window=None, debug_mode=False, protocol_runner=None,
+                 experiment=None, *args):
+        # TODO passing the experiment may overcome the necessity of the other parameters
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
         :param protocol: Protocol object with the stimulus
         :param display_window: ProjectorViewer object for the projector
+        :param protocol_runner: ProtocolRunner object with the stimuli
+        :param experiment: Experiment object
         """
         super().__init__(*args)
         self.display_window = display_window
+        self.protocol_runner = protocol_runner
         self.label_debug = DebugLabel(debug_on=debug_mode)
+        self.experiment = experiment
 
+        self.calibrator = self.experiment.calibrator
         if self.display_window:
             ROI_desc = self.display_window.params
             self.widget_view = ProjectorViewer(ROI_desc=ROI_desc)
         else:
             self.widget_view = None
 
+        # Create parametertree for protocol parameter control
+        self.protocol_params_tree = ParameterTree(showHeader=False)
+        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+
         # Widgets for calibration displaying
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
-        self.button_calibrate = QPushButton('Calibrate')
         self.label_calibrate = QLabel('size of calib. pattern in mm')
-        self.spin_calibrate = QDoubleSpinBox()
         self.layout_calibrate.addWidget(self.button_show_calib)
-        self.layout_calibrate.addWidget(self.button_calibrate)
-        self.layout_calibrate.addWidget(self.spin_calibrate)
         self.layout_calibrate.addWidget(self.label_calibrate)
-        self.layout_calibrate.addWidget(self.spin_calibrate)
+
+        # mm/px widget is instantiated with parametertree
+        self.calibrator_len_spin = ParameterTree(showHeader=False)
+        self.calibrator_len_spin.setParameters(self.experiment.calibrator.params.child('length_mm'))
+        self.layout_calibrate.addWidget(self.calibrator_len_spin)
+
+        self.button_show_calib.clicked.connect(self.toggle_calibration)
 
         # Widgets for protocol choosing
         self.layout_choose = QHBoxLayout()
         self.combo_prot = ProtocolDropdown()
-        self.protocol_params_butt = QPushButton()
+        self.protocol_params_butt = QPushButton('Protocol parameters')
+        self.protocol_params_butt.clicked.connect(self.show_stim_params_gui)
         self.layout_choose.addWidget(self.combo_prot)
         self.layout_choose.addWidget(self.protocol_params_butt)
 
@@ -139,6 +154,10 @@ class ProtocolControlWindow(QWidget):
         self.layout_run.addWidget(self.progress_bar)
 
         self.button_metadata = QPushButton('Edit metadata')
+        self.button_metadata.clicked.connect(self.experiment.metadata.show_metadata_gui)
+
+        self.button_toggle_prot.clicked.connect(self.toggle_protocol)
+        self.combo_prot.currentIndexChanged.connect(self.protocol_changed)
 
         self.timer = None
         self.layout = QVBoxLayout()
@@ -151,6 +170,8 @@ class ProtocolControlWindow(QWidget):
                 self.layout.addWidget(widget)
             if isinstance(widget, QLayout):
                 self.layout.addLayout(widget)
+
+        self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
 
         self.setLayout(self.layout)
         self.reset_ROI()
@@ -165,6 +186,52 @@ class ProtocolControlWindow(QWidget):
         if self.display_window:
             self.display_window.set_dims(tuple([int(p) for p in self.widget_view.roi_box.pos()]),
                                          tuple([int(p) for p in self.widget_view.roi_box.size()]))
+
+    def show_stim_params_gui(self):
+        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+        self.protocol_params_tree.show()
+        self.protocol_params_tree.setWindowTitle('Stimulus parameters')
+        self.protocol_params_tree.resize(300, 600)
+
+    def toggle_protocol(self):
+        # Start/stop the protocol:
+        if self.protocol_runner.running:
+            self.experiment.end_protocol()
+        else:
+            self.experiment.start_protocol()
+
+        # swap the symbol: #TODO still buggy!
+        if self.button_toggle_prot.text() == "▶":
+            self.button_toggle_prot.setText("■")
+        else:
+            self.button_toggle_prot.setText("▶")
+
+    def toggle_calibration(self):
+        self.calibrator.toggle()
+        print(self.calibrator)
+        if self.calibrator.enabled:
+            self.button_show_calib.setText('Hide calibration')
+        else:
+            self.button_show_calib.setText('Show calibration')
+        self.display_window.widget_display.update()
+        self.experiment.sig_calibrating.emit()
+
+    def update_stim_duration(self):
+        self.progress_bar.setMaximum(int(self.protocol_runner.duration))
+
+    def update_progress(self):
+        self.progress_bar.setValue(int(self.protocol_runner.t))
+
+    def protocol_changed(self):
+        self.experiment.change_protocol()
+        self.progress_bar.setValue(0)
+        self.protocol_runner.sig_timestep.connect(self.update_progress)
+
+
+
+
+
+
 
 
 

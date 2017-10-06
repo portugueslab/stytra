@@ -14,27 +14,24 @@ from stytra.stimulation.protocols import FlashProtocol
 class ProtocolRunner(QObject):
     """ Class that manages the stimulation protocol, includes a timer,
     updating signals etc.
-
     """
-    name = ''
+
     sig_timestep = pyqtSignal(int)
     sig_stim_change = pyqtSignal(int)
     sig_protocol_started = pyqtSignal()
     sig_protocol_finished = pyqtSignal()
+    sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
 
-    def __init__(self, calibrator=None, dt=1/60, log_print=True, asset_folder=''):
+    def __init__(self, experiment=None, dt=1/60, log_print=True):
         """ Constructor
-        :param stimuli: list of stimuli of the (list of Stimulus objects)
-        :param n_repeats: repetitions for the list of stimuli
-        :param pre_pause: interval before starting the protocol (seconds ?)
-        :param post_pause: interval after the protocol (seconds ?)
-        :param calibrator:
         :param dt:
         :param log_print:
-        :param asset_folder:
+        :param experiment: the Experiment class where directory,
+                           calibrator et similia will be found
         """
         super().__init__()
 
+        self.experiment = experiment
 
         self.t_start = None
         self.t_end = None
@@ -44,9 +41,6 @@ class ProtocolRunner(QObject):
         self.dt = dt
         self.timer = QTimer()
 
-        self.calibrator = calibrator
-        self.asset_folder = asset_folder
-
         self.protocol = None
         self.stimuli = []
         self.i_current_stimulus = None
@@ -55,45 +49,32 @@ class ProtocolRunner(QObject):
         self.duration = None
         self.dynamic_log = None
 
-        self.new_protocol()
+        self.set_new_protocol()
 
         # Log will be a list of stimuli states
         self.log = []
         self.log_print = log_print
         self.running = False
 
-    def set_new_protocol(self, protocol=FlashProtocol):  # change default to empty
+    def set_new_protocol(self, protocol=FlashProtocol()):  # change default to empty
         """Generate protocol from specified parameters
         """
         self.protocol = protocol
+        self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
         self.update_protocol()
+        self.reset()
 
     def update_protocol(self):
         self.stimuli = self.protocol.get_stimulus_list()
 
-        self.current_stimulus = stimuli[0]
-        for stimulus in stimuli:
-            stimulus.initialise_external(calibrator=self.calibrator,
-                                         asset_folder=self.asset_folder)
-
-        self.duration = self.get_duration()
+        self.current_stimulus = self.stimuli[0]
+        for stimulus in self.stimuli:
+            stimulus.initialise_external(self.experiment)
 
         self.dynamic_log = DynamicLog(self.stimuli)
         self.duration = self.get_duration()
 
-    def get_parameter_gui(self):
-        params_widget = QWidget()
-        params_layout = QLayout()
-
-        parameter_tree = ParameterTree(showHeader=False)
-        create_button = QPushButton(text='Create protocol!')
-        create_button.clicked.connect(self.update_protocol)
-
-        params_layout.addWidget(parameter_tree)
-        params_layout.addWidget(create_button)
-
-        params_widget.setLayout(params_widget)
-        params_widget.show()
+        self.sig_protocol_updated.emit()
 
     def start(self):
         self.t_start = datetime.datetime.now()
@@ -177,7 +158,6 @@ class ProtocolRunner(QObject):
 
         self.i_current_stimulus = 0
 
-        print(self.stimuli)
         if len(self.stimuli) > 0:
             self.current_stimulus = self.stimuli[0]
         else:

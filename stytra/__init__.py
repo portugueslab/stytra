@@ -13,9 +13,7 @@ from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
-# from stytra.metadata import MetadataFish, Metadata
-from pyqtgraph.parametertree import ParameterTree
-from stytra.collectors import NewDataCollector, HasPyQtGraphParams, Metadata
+from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
@@ -46,7 +44,6 @@ def get_default_args(func):
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
-
     def __init__(self, directory, calibrator=None,
                  save_csv=False,
                  app=None,
@@ -65,123 +62,71 @@ class Experiment(QMainWindow):
         self.app = app
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-        self.directory = directory
-        if not os.path.isdir(self.directory):
-            os.makedirs(self.directory)
-        # Maybe Experiment class can inherit from HasPyQtParams itself; but for now I just
-        # use metadata object to access the global _params later in the code.
-        # This entire Metadata() thing may be replaced by params in the experiment
-        self.metadata = Metadata()
-
-        self.save_csv = save_csv
-
-        self.dc = NewDataCollector(folder_path=self.directory)
-
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
 
-        # if not self.debug_mode: #TODO uncomment this!
-        #     self.check_if_committed()
-
-        self.protocol_runner = ProtocolRunner()
-        self.window_display = StimulusDisplayWindow()
-        self.widget_control = ProtocolControlWindow(self.window_display,
-                                                    self.debug_mode)
-
-        self.widget_control.combo_prot.currentIndexChanged.connect(self.change_protocol)
-        self.widget_control.button_metadata.clicked.connect(self.metadata.show_gui)
-        self.widget_control.button_toggle_prot.clicked.connect(self.toggle_protocol)
-
+        self.save_csv = save_csv
+        self.directory = directory
+        if not os.path.isdir(self.directory):
+            os.makedirs(self.directory)
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
         else:
             self.calibrator = calibrator
 
-        self.window_display.widget_display.calibrator = self.calibrator
-        self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
+        self.protocol_runner = ProtocolRunner(experiment=self)
+        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        self.widget_control.spin_calibrate.valueChanged.connect(
-            self.calibrator.set_physical_scale)
-        # self.widget_control.spin_calibrate.setValue(self.calibrator.params['length_mm'])
-        self.newcontrol = ParameterTree(showHeader=False)
-        self.newcontrol.setParameters(self.calibrator.params.child('length_mm'))
-        self.widget_control.layout_calibrate.addWidget(self.newcontrol)
-
-
-        self.change_protocol()
-        self.dc.add_data_source(self.protocol.log, name='stim_log')
-        self.widget_control.protocol_params_butt.clicked.connect(self.protocol.params_widget)
-
+        # Maybe Experiment class can inherit from HasPyQtParams itself; but for now I just
+        # use metadata object to access the global _params later in the code.
+        # This entire Metadata() thing may be replaced by params in the experiment
+        self.metadata = Metadata()
+        self.dc = DataCollector(folder_path=self.directory)
+        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
         self.dc.add_data_source(self.metadata)
 
-        self.widget_control.reset_ROI()
+        # Projector window and experiment control GUI
+        self.window_display = StimulusDisplayWindow()
+        self.window_display.widget_display.calibrator = self.calibrator
+        self.window_display.widget_display.set_protocol(self.protocol_runner)
 
+        self.widget_control = ProtocolControlWindow(display_window=self.window_display,
+                                                    debug_mode=self.debug_mode,
+                                                    protocol_runner=self.protocol_runner,
+                                                    experiment=self)
+        self.widget_control.protocol_changed()
+
+        # This has to happen after or version will be reset together with the rest
+        if not self.debug_mode:
+            self.check_if_committed()
+
+        self.widget_control.reset_ROI()  # update ROI to set to new loaded size
         self.init_ui()
         self.show()
 
         # Debug line:
-        self.metadata._params.sigTreeStateChanged.connect(self.change)
-
-
-    def change(self, param, changes):
-        print("tree changes:")
-        for param, change, data in changes:
-            path = self.metadata.params.childPath(param)
-            if path is not None:
-                childName = '.'.join(path)
-            else:
-                childName = param.name()
-            print('  parameter: %s'% childName)
-            print('  change:    %s'% change)
-            print('  data:      %s'% str(data))
-            print('  ----------')
+        # self.metadata._params.sigTreeStateChanged.connect(self.change)
+    #
+    #
+    # def change(self, param, changes):
+    #     print("tree changes:")
+    #     for param, change, data in changes:
+    #         path = self.metadata.params.childPath(param)
+    #         if path is not None:
+    #             childName = '.'.join(path)
+    #         else:
+    #             childName = param.name()
+    #         print('  parameter: %s' % childName)
+    #         print('  change:    %s' % change)
+    #         print('  data:      %s' % str(data))
+    #         print('  ----------')
 
     def init_ui(self):
         self.setCentralWidget(self.widget_control)
 
-    def toggle_protocol(self):
-        # Start/stop the protocol:
-        if self.protocol.running:
-            self.end_protocol()
-        else:
-            self.start_protocol()
-
-        # swap the symbol: #TODO still buggy!
-        if self.widget_control.button_toggle_prot.text() == "▶":
-            self.widget_control.button_toggle_prot.setText("■")
-        else:
-            self.widget_control.button_toggle_prot.setText("▶")
-
-    def change_protocol(self):
-        protocol_params = dict()
-        # TODO implement GUI for protocol params
-        Protclass = self.widget_control.combo_prot.prot_classdict[
-            self.widget_control.combo_prot.currentText()]
-        # n_repeats = self.widget_control.spn_n_repeats.value()
-        self.set_protocol(Protclass(calibrator=self.calibrator,
-                                    asset_folder=self.asset_dir,
-                                    **protocol_params))
-        self.reconfigure_ui()
-
     def reconfigure_ui(self):
         pass
-
-    def set_protocol(self, protocol):
-        """ Set a new experiment protocol
-        :param protocol: stytra Protocol object
-        """
-        self.protocol = protocol
-        self.protocol.reset()
-        self.window_display.widget_display.set_protocol(self.protocol)
-        self.protocol.sig_timestep.connect(self.update_progress)
-        self.protocol.sig_protocol_finished.connect(self.end_protocol)
-        self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
-        self.widget_control.progress_bar.setValue(0)
-
-
-    def update_progress(self, i_stim):
-        self.widget_control.progress_bar.setValue(int(self.protocol.t))
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -191,10 +136,9 @@ class Experiment(QMainWindow):
         # Get program name and version for saving:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
-        self.dc.add_data_source('general', 'git_hash', git_hash)
-        self.dc.add_data_source('general', 'program_name', __file__)
 
-        self.metadata.params.addChild({'name': 'program_version', 'type': 'group',
+        # Save to the metadata
+        self.metadata.params.addChild({'name': 'version', 'type': 'group',
                                        'value': [{'name': 'git_hash', 'value': git_hash},
                                                  {'name': 'program', 'value': __file__}]})
 
@@ -214,30 +158,30 @@ class Experiment(QMainWindow):
             except IndexError:
                 print('Second screen not available')
 
+    def change_protocol(self):
+        """Use dropdown menu to change the protocol. Maybe to be implemented in
+        the control widget and not here.
+        """
+        Protclass = self.widget_control.combo_prot.prot_classdict[
+            self.widget_control.combo_prot.currentText()]
+        protocol = Protclass()
+        self.protocol_runner.set_new_protocol(protocol)
+        self.reconfigure_ui()
+
     def start_protocol(self):
-        self.protocol.start()
+        self.protocol_runner.start()
 
     def end_protocol(self, do_not_save=None):
-        self.protocol.end()
+        self.protocol_runner.end()
         if not do_not_save and not self.debug_mode:
-            #TODO saving here
             self.dc.save(save_csv=False)
-            # put_experiment_in_db(self.dc.get_full_dict())
-        self.protocol.reset()
+            # put_experiment_in_db(self.dc.get_clean_dict())
+        self.protocol_runner.reset()
 
     def closeEvent(self, *args, **kwargs):
-        if self.protocol is not None:
+        if self.protocol_runner is not None:
             self.end_protocol(do_not_save=True)
         self.app.closeAllWindows()
-
-    def toggle_calibration(self):
-        self.calibrator.toggle()
-        if self.calibrator.enabled:
-            self.widget_control.button_show_calib.setText('Hide calibration')
-        else:
-            self.widget_control.button_show_calib.setText('Show calibration')
-        self.window_display.widget_display.update()
-        self.sig_calibrating.emit()
 
 
 class LightsheetExperiment(Experiment):
@@ -265,7 +209,7 @@ class LightsheetExperiment(Experiment):
             print(self.lightsheet_config)
             # send the duration of the protocol so that
             # the scanning can stop
-            self.zmq_socket.send_json(self.protocol.duration)
+            self.zmq_socket.send_json(self.protocol_runner.duration)
         super().start_protocol()
 
 

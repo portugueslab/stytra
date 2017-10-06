@@ -9,11 +9,12 @@ import param
 # from stytra.metadata import Metadata
 from copy import deepcopy
 from pyqtgraph.parametertree import Parameter, ParameterTree
+from stytra.dbconn import sanitize_item
 
 
 class HasPyQtGraphParams(object):
     """
-    This weird class is used to have a number of objects which
+    This maybe weird class is used to have a number of objects which
     constitute the experiment interfaces and protocols sharing a global
     params Parameter that will be used for saving metadata and restoring
     the app to the last used data.
@@ -21,23 +22,36 @@ class HasPyQtGraphParams(object):
     subclass will have an alias, params, providing access to its private
     parameters.
     """
-    _params = Parameter.create(name='unassigned_params', type='group')
+    _params = Parameter.create(name='global_params', type='group')
 
-    def __init__(self):
-        # Generally this name is then redefined inside the subclass
-        self.params = Parameter.create(name=self.__class__.__name__,
+    def __init__(self, name=None):
+        # Here passing the name gives the user the possibility of easily
+        # overwrite branches of the parameter tree. If not passed, children class
+        # name will be used
+        if name is None:
+            name = self.__class__.__name__
+        self.params = Parameter.create(name=name,
                                        type='group')
+
+        existing_children = self._params.children()
+
+        for child in existing_children:
+            if child.name() == name:
+                self._params.removeChild(child)
         self._params.addChild(self.params)
 
-    def set_new_param(self, name, value):
-        self.params.addChild({'name': name, 'value': value})
-
+    def set_new_param(self, name, value, var_type=True):
+        """Easy set for new parameters
+        """
+        if var_type:
+            self.params.addChild({'name': name, 'value': value, 'type': type(value).__name__})
+        else:
+            self.params.addChild({'name': name, 'value': value})
 
 
 class Metadata(HasPyQtGraphParams):
     def __init__(self):
         super().__init__()
-        self.gui = None  # avoid unnecessary Qwidgets around
 
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
@@ -90,21 +104,19 @@ class Metadata(HasPyQtGraphParams):
 
             ]
 
-        self.params.setName('general_metadata')
+        self.params.setName('general_experiment_metadata')
         self.params.addChildren(params)
+
+        self.protocol_params_tree = ParameterTree(showHeader=False)
 
     def get_param_dict(self):
         return self.params.getValues()
 
-    def show_gui(self):
-        self.gui = self.get_gui(self)
-        self.gui.show()
-
-    def get_gui(self, save_button=True):
-        t = ParameterTree()
-        t.setParameters(self._params, showTop=False)
-        t.setWindowTitle('pyqtgraph example: Parameter Tree')
-        return t
+    def show_metadata_gui(self):
+        self.protocol_params_tree.setParameters(self.params)
+        self.protocol_params_tree.show()
+        self.protocol_params_tree.setWindowTitle('Metadata')
+        self.protocol_params_tree.resize(450, 600)
 
     def get_state(self):
         return self._params.saveState()
@@ -191,7 +203,7 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
     return final_df
 
 
-class NewDataCollector:
+class DataCollector:
     def __init__(self, *data_tuples_list, folder_path='./'):
         """ It accept static data in a Metadata object, which will be restored
         to the last values, or dynamic data like tail tracking or stimulus log that
@@ -238,247 +250,50 @@ class NewDataCollector:
             self.log_data_dict[name] = entry
 
     def get_full_dict(self):
-        # data_dict = deepcopy(DataCollector.data_dict_template)
-        data_dict = {}
+        data_dict = dict()
         data_dict['log_data'] = self.log_data_dict
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
-        print(data_dict['static_metadata'])
-
         return data_dict
 
-    def save(self, timestamp=None, save_csv=False):
-        """
-        Save the HDF5 file considering the current value of all the entries of the class
-        """
+    def get_clean_dict(self):
+        clean_data_dict = dict(fish={}, stimulus={}, imaging={},
+                               behaviour={}, general={}, camera={},
+                               tracking={}, unassigned={})
 
-        data_dict = self.get_full_dict()
+        # Static metadata:
+        value_dict = deepcopy(self.static_metadata._params.getValues())
 
-        if timestamp is None:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Logs:
+        value_dict.update(deepcopy(self.log_data_dict))
 
-        # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
-        filename = self.folder_path + timestamp + '_metadata.h5'
-
-        dd.io.save(filename, data_dict)
-        print('saved '+filename)
-        # Save .csv file if required
-        if save_csv:
-            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
-            dataframe = metadata_dataframe(data_dict)
-            dataframe.to_csv(filename_df)
-
-    # def set_to_last_value(self, entry):
-    #     """
-    #     This function take restore the state of the metadata dictionary to the
-    #     one found in a log file, if there is one.
-    #     """
-    #     # It is a little bit messy. It may be made cleaner (?).
-    #
-
-
-
-class DataCollector:
-    """
-    Data collector class. You can throw here references for any kind of data
-    and when prompted it saves their current value in the nice HDF5 metadata file
-    ad maiorem dei gloriam.
-    """
-
-    # Categories are hardwired, to control integrity of the output HDF5 file
-    data_dict_template = dict(fish={}, stimulus={}, imaging={},
-                              behaviour={}, general={}, camera={},
-                              tracking={})
-
-    def __init__(self, *data_tuples_list, folder_path='./', use_last_val=True):
-        """
-        Init function.
-            - Metadata objects: can be added without specifications
-                                (e.g., DataCollector(MetadataFish()))
-            - Dictionaries: can be added in a tuple with the category
-                            (e.g., DataCollector(('imaging', parameters_dict))
-            - Single entries: can be added in a tuple with category and name
-                              (e.g., DataCollector(('imaging', 'frequency', freq_value))
-            -folder_path: destination of the HDF5 object
-
-        If more entries want to save data in the same destination of the HDF5
-        final file, the last of the two added to the DataCollector object will
-        overwrite the other.
-        """
-
-        # Check validity of directory:
-        if os.path.isdir(folder_path):
-            if not folder_path.endswith('/'):
-                folder_path += '/'
-            self.folder_path = folder_path
-        else:
-            raise ValueError('The specified directory does not exist!')
-
-        # Try to find previously saved metadata:
-        self.last_metadata = None
-        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
-        if len(list_metadata) > 0:
-            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
-
-        self.data_tuples = []
-
-        # Add all the data tuples provided upon instantiation:
-        for data_element in data_tuples_list:
-            if isinstance(data_element, Metadata):
-                self.add_data_source(data_element, use_last_val=use_last_val)
+        for key in value_dict.keys():
+            category = key.split('_')[0]
+            value = sanitize_item(value_dict[key], parametervalues=True)
+            if category in clean_data_dict.keys():
+                clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
             else:
-                self.add_data_source(*data_element, use_last_val=use_last_val)
+                clean_data_dict['unassigned'][key] = value
 
-    def add_data_source(self, *args, use_last_val=True):
-        """
-        Function for adding new data sources.
-            - Metadata objects: can be passed without specifications
-                                (e.g., add_data_source(MetadataFish()));
-            - Dictionaries: must be preceded by the data category
-                            (e.g., add_data_source('imaging', parameters_dict);
-            - Single values: can be added in a tuple with category and name
-                            (e.g., add_data_source('imaging', 'frequency', freq_value);
-            - Object attributes: can be added in a tuple with category, name, object and entry
-                            (e.g., add_data_source('stimulus', 'log', protocol_obj, 'log')
-            -folder_path: destination of the HDF5 object
-
-        At this point the value of the variables is not considered!
-        The set_to_last_value method can be used for restoring values from previous
-        sessions.
-        """
-        # The single values entry may be dismissed?
-
-        # If true, use the last values used for this parameter
-        if use_last_val:
-            self.set_to_last_value(*args)
-
-        # just some control on the incoming data
-        if len(args) == 1:  # parameterized objects don't need a category
-            if not isinstance(args[-1], Metadata):
-                ValueError('Only Metadata objects can be passed without category!')
-
-        if len(args) > 1:  # check validity of category value
-            if not isinstance(args[0], str):
-                ValueError('First argument must be a string with the category!')
-
-            if not args[0] in DataCollector.data_dict_template.keys():
-                ValueError('Unknown data category: ' + args[0])
-
-            if len(args) == 2:  # only dictionaries can have 2 args
-                if not isinstance(args[-1], dict):
-                    ValueError('Only dictionaries can be passed without an entry name!')
-
-        if len(args) > 2:
-            if not isinstance(args[1], str):
-                ValueError('Second argument must be a string with the entry name!')
-
-        if len(args) > 3:
-            if isinstance(args[2], dict):
-                if not args[3] in args[2].keys():
-                    ValueError('Fourth argument must be a key of the third!')
-            elif hasattr(args[2], args[3]):
-                    ValueError('Fourth argument must be an attribute of the third!')
-
-        if len(args) > 4:
-            if hasattr(args[2], args[3]) and hasattr(args[3], args[4]):
-                ValueError('Fourth argument must be an attribute of the third...!')
-
-        if len(args) > 5:
-            ValueError('Too many arguments!')
-
-        self.data_tuples.append(args)
-
-    def get_full_dict(self):
-        data_dict = deepcopy(DataCollector.data_dict_template)
-
-        for data_entry in self.data_tuples:
-            if isinstance(data_entry[-1], dict):  # dictionaries;
-                category = data_entry[0]
-                data_dict[category].update(data_entry[-1])
-
-            elif isinstance(data_entry[-1], Metadata):  # parameterized objects;
-                category = data_entry[-1].category
-                data_dict[category].update(data_entry[-1].get_param_dict())
-
-            if len(data_entry) > 2:
-                category = data_entry[0]
-                label = data_entry[1]
-                if len(data_entry) == 3: # single value entries;
-                    data_dict[category][label] = data_entry[2]
-
-                elif len(data_entry) == 4: # dict value entries;
-                    if isinstance(data_entry[2], dict):
-                        data_dict[category][label] = data_entry[2][data_entry[3]]
-                    else: # object attribute entries
-                        data_dict[category][label] = getattr(data_entry[2],
-                                                             data_entry[3])
-                elif len(data_entry) == 5:
-                    data_dict[category][label] = getattr(getattr(data_entry[2],
-                                                                 data_entry[3]),
-                                                         data_entry[4])
-
-        return data_dict
+        return clean_data_dict
 
     def save(self, timestamp=None, save_csv=False):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
 
-        data_dict = self.get_full_dict()
-
+        data_dict = deepcopy(self.get_full_dict())
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         filename = self.folder_path + timestamp + '_metadata.h5'
-
+        print(data_dict)
         dd.io.save(filename, data_dict)
-        print('saved '+filename)
+
+        filename = self.folder_path + timestamp + '_metadatacheck.h5'
+        dd.io.save(filename, self.get_clean_dict())
         # Save .csv file if required
         if save_csv:
             filename_df = self.folder_path + timestamp + '_metadata_df.csv'
             dataframe = metadata_dataframe(data_dict)
             dataframe.to_csv(filename_df)
-
-    def set_to_last_value(self, *args):
-        """
-        This function take arguments as the add_data_source function;
-        Then, if possible, it sets the value of all the referenced variables
-        to the corresponding value stored in the dictionary.
-        This is not possible for single value entries, and it will be applied
-        only for dictionaries, parameterized objects and attributes.
-        """
-        # It is a little bit messy. It may be made cleaner (?).
-
-        if self.last_metadata:
-            if not isinstance(args[-1], list): # avoid logs #TODO make logs pd DataFrame
-
-                if isinstance(args[-1], dict):  # dictionaries
-                    category = args[0]
-                    for key_new_dict in args[-1].keys():
-                        if key_new_dict in self.last_metadata[category].keys():
-                            args[-1][key_new_dict] = self.last_metadata[category][key_new_dict]
-
-                elif isinstance(args[-1], Metadata):  # parameterized objects
-                    category = args[-1].category
-                    for key_new_obj in args[-1].get_param_dict().keys():
-                        param_obj = args[-1].params()[key_new_obj]
-
-                        if not param_obj.constant:  # leave eventual constant values
-                            if key_new_obj in self.last_metadata[category].keys():  # check if stored
-                                old_entry = self.last_metadata[category][key_new_obj]
-                                if isinstance(param_obj, param.Integer):
-                                    old_entry = int(old_entry)
-                                elif isinstance(param_obj, param.String):
-                                    old_entry = str(old_entry)
-                                elif isinstance(param_obj, param.Boolean):
-                                    old_entry = bool(old_entry)
-                                setattr(args[-1], key_new_obj, old_entry)
-
-                elif len(args) == 4:  # dict entries and objects attributes
-                    category = args[0]
-                    label = args[1]
-                    if label in self.last_metadata[category].keys():  # dict
-                        if isinstance(args[2], dict):
-                            args[2][args[3]] = self.last_metadata[category][label]
-                        else:  # attribute
-                            setattr(args[2], args[3], self.last_metadata[category][label])
