@@ -131,28 +131,31 @@ class VideoFileSource(FrameProcessor):
     stytra without a camera available
 
     """
-    def __init__(self, frame_queue=None, signal=None, source_file=None, **kwargs):
+    def __init__(self, frame_queue=None, signal=None, source_file=None,
+                 loop=True, framerate=300,
+                 **kwargs):
         super().__init__(**kwargs)
         self.q = frame_queue
         self.signal = signal
+        self.loop = loop
         self.source_file = source_file
 
     def run(self):
         import cv2
         cap = cv2.VideoCapture(self.source_file)
         ret = True
-        current_framerate = 100
-        previous_time = datetime.now()
 
         while ret and not self.signal.is_set():
             ret, frame = cap.read()
-            time.sleep(1./24)
             if ret:
                 self.q.put((datetime.now(), frame[:, :, 0]))
             else:
-                break
+                if self.loop:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    ret = True
+                else:
+                    break
             self.update_framerate()
-
         return
 
 

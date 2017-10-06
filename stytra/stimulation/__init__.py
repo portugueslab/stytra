@@ -145,7 +145,8 @@ class ProtocolRunner(QObject):
 
     def update_dynamic_log(self):
         if isinstance(self.current_stimulus, DynamicStimulus):
-            self.dynamic_log.update_list((self.t,) + self.current_stimulus.get_dynamic_state())
+            self.dynamic_log.update_list((self.t,) + \
+                self.current_stimulus.get_dynamic_state())
 
     def reset(self):
         self.t_start = None
@@ -181,14 +182,12 @@ class DynamicLog(Accumulator):
     def __init__(self, stimuli):
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
-        self.starting_time = 0
         for stimulus in stimuli:
             if isinstance(stimulus, DynamicStimulus):
                 self.header_list = ['t'] + stimulus.dynamic_parameters
         self.stored_data = []
 
     def update_list(self, data):
+        self.check_start()
         self.stored_data.append(data)
 
-    def reset(self):
-        self.stored_data = []

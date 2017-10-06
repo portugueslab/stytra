@@ -132,8 +132,16 @@ class Accumulator:
     def __init__(self, fps_range=10):
         self.stored_data = []
         self.header_list = ['t']
-        self.starting_time = datetime.datetime.now()
+        self.starting_time = None
         self.fps_range = fps_range
+
+    def reset(self):
+        self.stored_data = []
+        self.starting_time = None
+
+    def check_start(self):
+        if self.starting_time is None:
+            self.starting_time = datetime.datetime.now()
 
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers
@@ -157,6 +165,11 @@ class Accumulator:
 
         obar = np.array(data_list)
         return obar
+
+    def get_last_t(self, t):
+        n = int(self.get_fps()*t)
+        return self.get_last_n(n)
+
 
 
 def metadata_dataframe(metadata_dict, time_step=0.005):

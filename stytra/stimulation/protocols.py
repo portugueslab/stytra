@@ -381,4 +381,15 @@ class VisualCodingProtocol(Protocol):
 #
 #         super().__init__(*args, stimuli=stimuli, **kwargs)
 
+class VRProtocol(Protocol):
+    name='VR protocol'
+    def __init__(self, *args, background_image='underwater_caustics.jpg',
+                 duration=240, asset_dir='',
+                 **kwargs):
+        bg = existing_file_background(asset_dir+'/'+background_image)
+        print(bg.shape)
+        stimuli = [
+            VRMotionStimulus(background=bg, duration=duration)
+        ]
+        super().__init__(*args, stimuli=stimuli, **kwargs)
 

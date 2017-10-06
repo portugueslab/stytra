@@ -20,7 +20,7 @@ from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
-from stytra.gui.plots import StreamingPlotWidget, StreamingPositionPlot
+from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
@@ -44,7 +44,8 @@ def get_default_args(func):
 
 class Experiment(QMainWindow):
     sig_calibrating = pyqtSignal()
-    def __init__(self, directory, calibrator=None,
+    def __init__(self, directory,
+                 calibrator=None,
                  save_csv=False,
                  app=None,
                  asset_directory='',
@@ -65,7 +66,6 @@ class Experiment(QMainWindow):
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
 
-        self.save_csv = save_csv
         self.directory = directory
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
@@ -104,23 +104,6 @@ class Experiment(QMainWindow):
         self.widget_control.reset_ROI()  # update ROI to set to new loaded size
         self.init_ui()
         self.show()
-
-        # Debug line:
-        # self.metadata._params.sigTreeStateChanged.connect(self.change)
-    #
-    #
-    # def change(self, param, changes):
-    #     print("tree changes:")
-    #     for param, change, data in changes:
-    #         path = self.metadata.params.childPath(param)
-    #         if path is not None:
-    #             childName = '.'.join(path)
-    #         else:
-    #             childName = param.name()
-    #         print('  parameter: %s' % childName)
-    #         print('  change:    %s' % change)
-    #         print('  data:      %s' % str(data))
-    #         print('  ----------')
 
     def init_ui(self):
         self.setCentralWidget(self.widget_control)
@@ -214,11 +197,11 @@ class LightsheetExperiment(Experiment):
 
 
 class CameraExperiment(Experiment):
-    def __init__(self, *args, video_input=None, **kwargs):
+    def __init__(self, *args, video_file=None, **kwargs):
         """
 
         :param args:
-        :param video_input: if not using a camera, the video
+        :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
@@ -233,7 +216,7 @@ class CameraExperiment(Experiment):
         self.metadata_camera = MetadataCamera()
         self.dc.add_data_source(self.metadata_camera)
 
-        if video_input is None:
+        if video_file is None:
             self.control_queue = Queue()
             self.camera = XimeaCamera(self.frame_queue,
                                       self.finished_sig,
@@ -242,7 +225,7 @@ class CameraExperiment(Experiment):
             self.control_queue = None
             self.camera = VideoFileSource(self.frame_queue,
                                           self.finished_sig,
-                                          video_input)
+                                          video_file)
 
         self.frame_dispatcher = None
 
@@ -267,8 +250,10 @@ class CameraExperiment(Experiment):
 
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
-                        tracking_method='angle_sweep',
-                        tracking_method_parameters=None, **kwargs):
+                 tracking_method='angle_sweep',
+                 tracking_method_parameters=None,
+                 motion_estimation=None, motion_estimation_parameters=None,
+                 **kwargs):
         """ An experiment which contains tail tracking,
         base for any experiment that tracks behaviour or employs
         closed loops
@@ -325,6 +310,11 @@ class TailTrackingExperiment(CameraExperiment):
         self.gui_refresh_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
+        if motion_estimation == 'LSTM':
+            self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
+                                                            self.asset_dir + '/' +
+                                                            motion_estimation_parameters['model'])
+
         self.go_live()
 
     def start_protocol(self):
@@ -337,6 +327,7 @@ class TailTrackingExperiment(CameraExperiment):
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
+        self.position_estimator.reset()
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
@@ -345,16 +336,36 @@ class TailTrackingExperiment(CameraExperiment):
     def reconfigure_ui(self):
         if isinstance(self.protocol, VRProtocol):
             self.main_layout = QSplitter()
-            self.setCentralWidget(self.main_layout)
+            self.monitoring_widget = QWidget()
             self.monitoring_layout = QVBoxLayout()
-            self.positionPlot = StreamingPositionPlot(self.protocol.dynamic_log)
-            self.main_layout.addItem(self.monitoring_layout)
-            self.main_layout.addItem(self.widget_control)
+            self.monitoring_widget.setLayout(self.monitoring_layout)
+
+            self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
+            self.monitoring_layout.addWidget(self.positionPlot)
+            self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
+
+            self.stream_plot = MultiStreamPlot()
+
+            self.monitoring_layout.addWidget(self.stream_plot)
+            self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+
+            self.stream_plot.add_stream(self.data_acc_tailpoints,
+                                        ['tail_sum', 'theta_01'])
+
+            self.stream_plot.add_stream(self.position_estimator.log, ['v_ax',
+                                             'v_lat',
+                                             'v_ang',
+                                             'middle_tail',
+                                             'indexes_from_past_end'])
+
+            self.main_layout.addWidget(self.monitoring_widget)
+            self.main_layout.addWidget(self.widget_control)
+            self.setCentralWidget(self.main_layout)
         else:
+            pass
             # GUI elements
-            self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                        data_acc_var='tail_sum')
-            self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
+            # TODO update for multistreamplot
+
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)
@@ -385,3 +396,9 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       gui_framerate=30)
+        self.go_live()
+
+    def init_ui(self):
+        self.setCentralWidget(self.splitter)
+        self.splitter.addWidget(self.camera_view)
+        self.splitter.addWidget(self.widget_control)

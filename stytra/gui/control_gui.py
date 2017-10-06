@@ -184,8 +184,10 @@ class ProtocolControlWindow(QWidget):
 
     def refresh_ROI(self):
         if self.display_window:
-            self.display_window.set_dims(tuple([int(p) for p in self.widget_view.roi_box.pos()]),
-                                         tuple([int(p) for p in self.widget_view.roi_box.size()]))
+            self.display_window.set_dims(tuple([int(p) for p in
+                                                self.widget_view.roi_box.pos()]),
+                                         tuple([int(p) for p in
+                                                self.widget_view.roi_box.size()]))
 
     def show_stim_params_gui(self):
         self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
