@@ -8,79 +8,6 @@ import time
 import pandas as pd
 import colorspacious
 
-class StreamingPlotWidget(pg.GraphicsWindow):
-    """
-    Class for displaying data retrieved from a data_accumulator
-    object. Use timestamp of the streamed data.
-    """
-    def __init__(self, data_accumulator=None, n_points=500, x_range_s=(-5, 0),
-                 y_range=(-1, 1), data_acc_var=None,
-                 xlink=None, *args, **kwargs):
-        """
-        :param data_accumulator: DataAccumulator object to be displayed
-        :param n_points: number of collected points
-        :param x_range_s: time range
-        :param y_range: variable range
-        :param data_acc_col: column of data accumulator plotted (index)
-        :param xlink: another axis to link y to (so that the time is synchronised)
-        """
-
-        super().__init__(*args, **kwargs)
-
-        assert isinstance(data_accumulator, Accumulator)
-        self.data_accumulator = data_accumulator
-
-        # initialise the widgets
-        self.streamplot = self.addPlot()
-
-        self.addItem(self.streamplot)
-        self.start = datetime.datetime.now()
-
-        if isinstance(data_acc_var, str):
-            data_acc_var = [data_acc_var]
-
-        self.data_accum_idxs = [self.data_accumulator.header_list.index(dv)
-                                for dv in data_acc_var]
-
-        self.curves = []
-        for i in range(len(data_acc_var)):
-            c = pg.PlotCurveItem(pen=(i, len(data_acc_var) * 1.3))
-            self.streamplot.addItem(c)
-            c.setPos(0, i * 6)
-            self.curves.append(c)
-
-        self.n_points = n_points
-        self.streamplot.setLabel('bottom', 'Time', 's')
-        self.streamplot.setLabel('left', self.data_accumulator.header_list[self.data_accum_idxs[0]])
-        self.streamplot.setXRange(x_range_s[0], x_range_s[1])
-        self.streamplot.setYRange(y_range[0], y_range[1])
-
-        if xlink is not None:
-            self.streamplot.setXLink(xlink)
-
-    def update(self):
-        """Function called by external timer to update the plot
-        """
-        self.start = datetime.datetime.now()
-        try:
-
-            # difference from data accumulator time and now in s...
-            delta_t = (self.data_accumulator.starting_time -
-                       self.start).total_seconds()
-
-            data_array = self.data_accumulator.get_last_n(self.n_points)
-            # ...to be added to the array of times in s in the data accumulator
-            time_array = delta_t + data_array[:, 0]
-            self.streamplot.setTitle('FPS: {:.2f}'.format(self.data_accumulator.get_fps()))
-            for idx, curve in zip(self.data_accum_idxs, self.curves):
-                curve.setData(x=time_array, y=data_array[:, idx])
-
-        except IndexError:
-            pass
-        except TypeError:
-            pass
-
-
 class StreamingPositionPlot(pg.GraphicsWindow):
     """ Plot that displays the virtual position of the fish
 
@@ -119,7 +46,8 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
         self.plotContainter = pg.PlotItem()
         self.addItem(self.plotContainter)
-        self.plotContainter.setXRange(-self.time_past*0.9, 0)
+        self.plotContainter.setXRange(-self.time_past*0.9, self.time_past*0.05)
+        self.plotContainter.showAxis('left', False)
 
         self.accumulators = []
         self.stream_names = []
@@ -130,16 +58,10 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.valueLabels = []
         self.stream_scales = []
 
-        self.vlinecolor = (210,200,200)
-        self.vLine = pg.InfiniteLine(angle=90, movable=False, pen=self.vlinecolor)
-        self.plotContainter.addItem(self.vLine)
         self.bounds = []
         self.bounds_update = bounds_update
 
         self.colors = []
-
-        self.proxy = pg.SignalProxy(self.plotContainter.scene().sigMouseMoved,
-                                    rateLimit=60, slot=self.mouseMoved)
 
     @staticmethod
     def get_colors(n_colors=1, lightness=50, saturation=50, shift=0):
@@ -173,32 +95,28 @@ class MultiStreamPlot(pg.GraphicsWindow):
             self.plotContainter.addItem(c)
             self.curves.append(c)
 
-            curvePoint = pg.CurvePoint(c)
+            curve_label = pg.TextItem(header_item, anchor=(0, 1))
+            curve_label.setPos(-self.time_past*0.9, i_curve)
+            self.plotContainter.addItem(curve_label)
+            max_label = pg.TextItem('', anchor=(0, 0))
+            max_label.setPos(0, i_curve+1)
+            min_label = pg.TextItem('', anchor=(0, 1))
+            min_label.setPos(0, i_curve)
+            fps_label = pg.TextItem('', anchor=(0, 0.5))
+            fps_label.setPos(0, i_curve+0.5)
 
-            value_label = pg.TextItem(anchor=(0, -1.0))
-            value_label.setParentItem(curvePoint)
+            self.plotContainter.addItem(min_label)
+            self.plotContainter.addItem(max_label)
+            self.plotContainter.addItem(fps_label)
 
-            self.curvePoints.append(curvePoint)
-            self.valueLabels.append(value_label)
+            self.valueLabels.append((min_label, max_label, fps_label, curve_label))
             i_curve += 1
 
-        for curve, color in zip(self.curves, self.colors):
-            print(color)
+        for curve, color, labels in zip(self.curves, self.colors, self.valueLabels):
             curve.setPen(color)
+            for label in labels:
+                label.setColor(color)
         self.plotContainter.setYRange(-0.1, len(self.curves)+1.1)
-
-    def mouseMoved(self, evt):
-        pos = evt[0]
-        if self.plotContainter.boundingRect().contains(pos):
-            mousePoint = self.plotContainter.vb.mapSceneToView(pos)
-            self.vLine.setPen(self.vlinecolor)
-            self.vLine.setPos(mousePoint.x())
-
-            active_curve = np.floor(mousePoint.y())
-            # curvePoint.setPos(float(index) / (len(x) - 1))
-            # text2.setText('[%0.1f, %0.1f]' % (x[index], y[index]))
-        else:
-            self.vLine.setPen(None)
 
     def update(self):
         """Function called by external timer to update the plot
@@ -214,8 +132,11 @@ class MultiStreamPlot(pg.GraphicsWindow):
                            self.start).total_seconds()
 
                 data_array = acc.get_last_t(self.time_past)
+
                 if len(data_array)>0:
                     # ...to be added to the array of times in s in the data accumulator
+                    fps = acc.get_fps()
+
                     time_array = delta_t + data_array[:, 0]
 
                     new_bounds = np.percentile(data_array[:, indexes], (0.5, 99.5), 0).T
@@ -228,6 +149,11 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         scale = ub - lb
                         if scale < 0.00001:
                             scale = 1
+                        self.valueLabels[i_stream][0].setText('{:.2f}'.format(lb))
+                        self.valueLabels[i_stream][1].setText('{:.2f}'.format(ub))
+                        self.valueLabels[i_stream][2].setText(
+                            '{:.2f}'.format(fps))
+
                         self.curves[i_stream].setData(x=time_array,
                                                       y=i_stream+((data_array[:, i_var]-lb)/scale))
                         i_stream += 1
