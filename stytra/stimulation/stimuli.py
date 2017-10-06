@@ -5,6 +5,7 @@ import qimage2ndarray
 from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
+from stytra.stimulation.backgrounds import existing_file_background
 from time import sleep
 try:
     from stytra.hardware.serial import PyboardConnection
@@ -87,9 +88,7 @@ class BackgroundStimulus(Stimulus):
         self.x = 0
         self.y = 0
         self.theta = 0
-        self._background = background
-        self._qbackground = None
-
+        self.background = background
 
 class FullFieldPainterStimulus(PainterStimulus):
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
@@ -128,32 +127,25 @@ class Pause(FullFieldPainterStimulus):
         self.name = 'pause'
 
 
-class SeamlessImageStimulus(PainterStimulus,
+class MovingSeamlessStimulus(PainterStimulus,
                             DynamicStimulus,
                             BackgroundStimulus):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def get_unit_dims(self, w, h):
-        w, h  =  self._qbackground.width(),  self._qbackground.height()
         return w, h
 
-    def rotTransform(self, w, h):
+    def get_rot_transform(self, w, h):
         xc = -w / 2
         yc = -h / 2
         return QTransform().translate(-xc, -yc).rotate(
             self.theta*180/np.pi).translate(xc, yc)
 
     def paint(self, p, w, h):
-        # draw the black background
-        if self._qbackground is None:
-            self._qbackground = qimage2ndarray.array2qimage(self._background)
-
         if self._experiment.calibrator is not None:
             mm_px = self._experiment.calibrator.params['mm_px']
         else:
             mm_px = 1
 
+        # draw the black background
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
@@ -171,7 +163,7 @@ class SeamlessImageStimulus(PainterStimulus,
         dy = display_centre[1] - image_centre[1] - cy
 
         # rotate the coordinate transform around the position of the fish
-        p.setTransform(self.rotTransform(w, h))
+        p.setTransform(self.get_rot_transform(w, h))
 
         nw = int(np.ceil(w/(imw*2)))
         nh = int(np.ceil(h/(imh*2)))
@@ -179,10 +171,29 @@ class SeamlessImageStimulus(PainterStimulus,
             self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
 
     def draw_block(self, p, point, w, h):
+        pass
+
+
+class SeamlessImageStimulus(MovingSeamlessStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._qbackground = None
+
+    def initialise_external(self, experiment):
+        super().initialise_external(experiment)
+        self._qbackground = qimage2ndarray.array2qimage(existing_file_background(
+            self._experiment.asset_dir + '/' + self.background))
+
+    def get_unit_dims(self, w, h):
+        w, h = self._qbackground.width(),  self._qbackground.height()
+        return w, h
+
+
+    def draw_block(self, p, point, w, h):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(SeamlessImageStimulus):
+class SeamlessGratingStimulus(MovingSeamlessStimulus):
     def __init__(self, *args, grating_angle=0, grating_period=10,
                  grating_color=(255, 255, 255), **kwargs):
         super().__init__(*args, **kwargs)

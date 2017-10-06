@@ -6,8 +6,8 @@ import inspect
 import qdarkstyle
 import git
 
-from PyQt5.QtWidgets import QMainWindow, QCheckBox
-from PyQt5.QtCore import QTimer, pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
+from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
 from stytra.gui.control_gui import ProtocolControlWindow
 from stytra.gui.display_gui import StimulusDisplayWindow
@@ -25,7 +25,8 @@ from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
 from stytra.metadata import MetadataCamera
-
+from stytra.stimulation.closed_loop import VigourMotionEstimator,\
+    LSTMLocationEstimator
 
 # imports for moving detector
 from stytra.hardware.video import MovingFrameDispatcher
@@ -42,7 +43,7 @@ def get_default_args(func):
     }
 
 
-class Experiment(QMainWindow):
+class Experiment(QObject):
     sig_calibrating = pyqtSignal()
     def __init__(self, directory,
                  calibrator=None,
@@ -89,27 +90,19 @@ class Experiment(QMainWindow):
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow()
         self.window_display.widget_display.calibrator = self.calibrator
-        self.window_display.widget_display.set_protocol(self.protocol_runner)
+        self.window_display.widget_display.set_protocol_runner(self.protocol_runner)
 
         self.widget_control = ProtocolControlWindow(display_window=self.window_display,
-                                                    debug_mode=self.debug_mode,
-                                                    protocol_runner=self.protocol_runner,
                                                     experiment=self)
-        self.widget_control.protocol_changed()
+
+        self.widget_control.show()
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
             self.check_if_committed()
 
         self.widget_control.reset_ROI()  # update ROI to set to new loaded size
-        self.init_ui()
-        self.show()
 
-    def init_ui(self):
-        self.setCentralWidget(self.widget_control)
-
-    def reconfigure_ui(self):
-        pass
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -140,16 +133,6 @@ class Experiment(QMainWindow):
                 self.window_display.showFullScreen()
             except IndexError:
                 print('Second screen not available')
-
-    def change_protocol(self):
-        """Use dropdown menu to change the protocol. Maybe to be implemented in
-        the control widget and not here.
-        """
-        Protclass = self.widget_control.combo_prot.prot_classdict[
-            self.widget_control.combo_prot.currentText()]
-        protocol = Protclass()
-        self.protocol_runner.set_new_protocol(protocol)
-        self.reconfigure_ui()
 
     def start_protocol(self):
         self.protocol_runner.start()
@@ -332,40 +315,6 @@ class TailTrackingExperiment(CameraExperiment):
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
-
-    def reconfigure_ui(self):
-        if isinstance(self.protocol, VRProtocol):
-            self.main_layout = QSplitter()
-            self.monitoring_widget = QWidget()
-            self.monitoring_layout = QVBoxLayout()
-            self.monitoring_widget.setLayout(self.monitoring_layout)
-
-            self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
-            self.monitoring_layout.addWidget(self.positionPlot)
-            self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
-
-            self.stream_plot = MultiStreamPlot()
-
-            self.monitoring_layout.addWidget(self.stream_plot)
-            self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-
-            self.stream_plot.add_stream(self.data_acc_tailpoints,
-                                        ['tail_sum', 'theta_01'])
-
-            self.stream_plot.add_stream(self.position_estimator.log, ['v_ax',
-                                             'v_lat',
-                                             'v_ang',
-                                             'middle_tail',
-                                             'indexes_from_past_end'])
-
-            self.main_layout.addWidget(self.monitoring_widget)
-            self.main_layout.addWidget(self.widget_control)
-            self.setCentralWidget(self.main_layout)
-        else:
-            pass
-            # GUI elements
-            # TODO update for multistreamplot
-
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)
