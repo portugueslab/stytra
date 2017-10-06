@@ -18,16 +18,10 @@ class Protocol(HasPyQtGraphParams):
 
     def __init__(self):
         super().__init__(name='stimulus_protocol_params')
-        print('super initiated')
-
 
         for child in self.params.children():
             self.params.removeChild(child)
 
-
-        # for name, val in zip(['n_repeats', 'pre_pause', 'post_pause'],
-        #                      [1, 0, 0]):
-        #     self.params.addChild({'name': name, 'value': val})
 
         standard_params_dict = {'n_repeats': 1,
                                 'pre_pause': 0.,
@@ -382,14 +376,21 @@ class VisualCodingProtocol(Protocol):
 #         super().__init__(*args, stimuli=stimuli, **kwargs)
 
 class VRProtocol(Protocol):
-    name='VR protocol'
-    def __init__(self, *args, background_image='underwater_caustics.jpg',
-                 duration=240, asset_dir='',
-                 **kwargs):
-        bg = existing_file_background(asset_dir+'/'+background_image)
-        print(bg.shape)
-        stimuli = [
-            VRMotionStimulus(background=bg, duration=duration)
-        ]
-        super().__init__(*args, stimuli=stimuli, **kwargs)
+    name = 'VR protocol'
 
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'background_image': 'underwater_caustics.jpg',
+                                'duration': 240}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = [
+            VRMotionStimulus(background=self.params['background_image'],
+                             duration=self.params['duration'])
+        ]
+
+        return stimuli

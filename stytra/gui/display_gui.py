@@ -28,7 +28,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.params['size'] = size
 
     def set_protocol(self, protocol):
-        self.widget_display.set_protocol(protocol)
+        self.widget_display.set_protocol_runner(protocol)
 
 
 class GLStimDisplay(QOpenGLWidget):
@@ -39,7 +39,7 @@ class GLStimDisplay(QOpenGLWidget):
         self.calibrator = None
         self.dims = None
 
-        self.protocol = None
+        self.protocol_runner = None
 
         self.n_fps_frames = 10
         self.i_fps = 0
@@ -50,18 +50,18 @@ class GLStimDisplay(QOpenGLWidget):
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
 
-    def set_protocol(self, protocol):
-        self.protocol = protocol
-        self.protocol.sig_timestep.connect(self.display_stimulus)
+    def set_protocol_runner(self, protocol_runner):
+        self.protocol_runner = protocol_runner
+        self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
         h = self.height()
-        if self.protocol is not None and \
-                isinstance(self.protocol.current_stimulus, PainterStimulus):
-            self.protocol.current_stimulus.paint(p, w, h)
+        if self.protocol_runner is not None and \
+                isinstance(self.protocol_runner.current_stimulus, PainterStimulus):
+            self.protocol_runner.current_stimulus.paint(p, w, h)
         else:
             p.drawRect(QRect(-1, -1, w+2, h+2))
             p.setRenderHint(QPainter.SmoothPixmapTransform, 1)

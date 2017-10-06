@@ -17,8 +17,10 @@ class Calibrator(HasPyQtGraphParams):
         self.enabled = False
 
         self.params.setName('stimulus_calibration_params')
-        self.params.addChildren([{'name': 'mm_px', 'value': mm_px,  'visible': True},
-                                 {'name': 'length_mm', 'value': None, 'type': 'float',  'suffix': 'mm', 'siPrefix': True,
+        self.params.addChildren([{'name': 'mm_px',
+                                  'value': mm_px, 'visible': True},
+                                 {'name': 'length_mm', 'value': None, 'type': 'float',
+                                  'suffix': 'mm', 'siPrefix': True, 'limits': (1, 200),
                                   'visible': True},
                                  {'name': 'length_px', 'value': None,  'visible': True}])
         self.length_to_measure = 'pixels'
