@@ -35,7 +35,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
-    def __init__(self, time_past=10, bounds_update =0.1,
+    def __init__(self, time_past=6, bounds_update =0.1,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 

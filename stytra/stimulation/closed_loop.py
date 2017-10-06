@@ -58,8 +58,9 @@ class LSTMLocationEstimator:
             self.log = EstimatorLog(headers=('v_ax',
                                              'v_lat',
                                              'v_ang',
+                                             'middle_tail-1',
                                              'middle_tail',
-                                             'indexes_from_past_end'))
+                                             'theta'))
         else:
             self.log = None
 
@@ -106,9 +107,12 @@ class LSTMLocationEstimator:
 
         self.past_t = t_estimation
 
-        new_coordinates = start_coords + \
-                          velocities_to_coordinates(Y,
-                                                    start_angle=start_coords[2])
+        displacement = velocities_to_coordinates(Y,
+                                            start_angle=start_coords[2],
+                                                    cumulative_angle=False)
+
+        new_coordinates = np.concatenate([start_coords[None, :2] + displacement[:, :2],
+                                    displacement[:, 2:]], 1)
         self.past_coords = new_coordinates
 
         if self.log is not None:
@@ -116,8 +120,10 @@ class LSTMLocationEstimator:
                                   Y[-1, 0],
                                   Y[-1, 1],
                                   Y[-1, 2],
+                                  tail[-1, 3],
                                   tail[-1, 5],
-                                  indexes_from_past_end))
+                                    new_coordinates[-1, 2]
+                                  ))
 
-        return new_coordinates[-1]
+        return new_coordinates[-1,:]
 

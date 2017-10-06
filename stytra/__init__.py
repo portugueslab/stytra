@@ -422,11 +422,8 @@ class TailTrackingExperiment(CameraExperiment):
             self.stream_plot.add_stream(self.data_acc_tailpoints,
                                         ['tail_sum', 'theta_01'])
 
-            self.stream_plot.add_stream(self.position_estimator.log, ['v_ax',
-                                             'v_lat',
-                                             'v_ang',
-                                             'middle_tail',
-                                             'indexes_from_past_end'])
+            self.stream_plot.add_stream(self.position_estimator.log,
+                                        self.position_estimator.log.header_list[1:])
 
             self.main_layout.addWidget(self.monitoring_widget)
             self.main_layout.addWidget(self.widget_control)
