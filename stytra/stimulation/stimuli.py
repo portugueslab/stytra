@@ -138,7 +138,7 @@ class SeamlessImageStimulus(PainterStimulus,
         super().__init__(*args, **kwargs)
 
     def get_unit_dims(self, w, h):
-        w, h  =  self._qbackground.width(),  self._qbackground.height()
+        w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 
     def rotTransform(self, w, h):
@@ -306,9 +306,7 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        print(self._experiment.asset_folder +
-              '/' + self.video_path)
-        self._video_seq = pims.Video(self._experiment.asset_folder +
+        self._video_seq = pims.Video(self._experiment.asset_dir +
                                      '/' + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)

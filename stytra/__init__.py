@@ -161,13 +161,11 @@ class Experiment(QMainWindow):
             self.widget_control.button_toggle_prot.setText("■")
 
     def change_protocol(self, _):
-        protocol_params = dict(asset_dir = self.asset_dir)
         # TODO implement GUI for protocol params
         Protclass = self.widget_control.combo_prot.prot_classdict[
             self.widget_control.combo_prot.currentText()]
         n_repeats = self.widget_control.spn_n_repeats.value()
-        self.set_protocol(Protclass(n_repeats=n_repeats, experiment=self,
-                                    **protocol_params))
+        self.set_protocol(Protclass(n_repeats=n_repeats, experiment=self))
         self.reconfigure_ui()
 
     def reconfigure_ui(self):
@@ -217,9 +215,11 @@ class Experiment(QMainWindow):
 
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
-        if not do_not_save and not self.debug_mode:
-            db_id = put_experiment_in_db(self.dc.get_full_dict())
-            self.dc.add_data_source('general', 'db_id', db_id)
+        if not not do_not_save:
+            if not self.debug_mode:
+                db_id = put_experiment_in_db(self.dc.get_full_dict())
+                self.dc.add_data_source('general', 'db_id', db_id)
+
             self.dc.save(save_csv=self.save_csv)
         self.protocol.reset()
 
@@ -385,6 +385,25 @@ class TailTrackingExperiment(CameraExperiment):
                                                             self.asset_dir + '/' +
                                                             motion_estimation_parameters['model'])
 
+
+        self.main_layout = QSplitter()
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        self.stream_plot = MultiStreamPlot()
+
+        self.monitoring_layout.addWidget(self.stream_plot)
+        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+
+        self.stream_plot.add_stream(self.data_acc_tailpoints,
+                                    ['tail_sum', 'theta_01'])
+
+
+        self.main_layout.addWidget(self.monitoring_widget)
+        self.main_layout.addWidget(self.widget_control)
+        self.setCentralWidget(self.main_layout)
+
         self.go_live()
 
     def start_protocol(self):
@@ -397,7 +416,10 @@ class TailTrackingExperiment(CameraExperiment):
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
-        self.position_estimator.reset()
+        try:
+            self.position_estimator.reset()
+        except AttributeError:
+            pass
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
@@ -405,33 +427,11 @@ class TailTrackingExperiment(CameraExperiment):
 
     def reconfigure_ui(self):
         if isinstance(self.protocol, VRProtocol):
-            self.main_layout = QSplitter()
-            self.monitoring_widget = QWidget()
-            self.monitoring_layout = QVBoxLayout()
-            self.monitoring_widget.setLayout(self.monitoring_layout)
-
             self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
             self.monitoring_layout.addWidget(self.positionPlot)
             self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
-
-            self.stream_plot = MultiStreamPlot()
-
-            self.monitoring_layout.addWidget(self.stream_plot)
-            self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-
-            self.stream_plot.add_stream(self.data_acc_tailpoints,
-                                        ['tail_sum', 'theta_01'])
-
             self.stream_plot.add_stream(self.position_estimator.log,
                                         self.position_estimator.log.header_list[1:])
-
-            self.main_layout.addWidget(self.monitoring_widget)
-            self.main_layout.addWidget(self.widget_control)
-            self.setCentralWidget(self.main_layout)
-        else:
-            pass
-            # GUI elements
-            # TODO update for multistreamplot
 
 
     def excepthook(self, exctype, value, tb):
