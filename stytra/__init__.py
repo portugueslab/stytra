@@ -9,7 +9,7 @@ import git
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
-from stytra.gui.control_gui import ProtocolControlWindow
+from stytra.gui.control_gui import ProtocolControlWidget
 from stytra.gui.display_gui import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
@@ -92,7 +92,7 @@ class Experiment(QObject):
         self.window_display.widget_display.calibrator = self.calibrator
         self.window_display.widget_display.set_protocol_runner(self.protocol_runner)
 
-        self.widget_control = ProtocolControlWindow(display_window=self.window_display,
+        self.widget_control = ProtocolControlWidget(display_window=self.window_display,
                                                     experiment=self)
 
         self.widget_control.show()

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 from stytra.stimulation.stimuli import Pause, MovingConstantly
 from stytra.stimulation import ProtocolRunner
 from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow
+from stytra.gui.control_gui import ProtocolControlWidget
 from stytra.triggering import ZmqLightsheetTrigger
 from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
 from stytra import DataCollector
@@ -115,7 +115,7 @@ class Experiment(QMainWindow):
         # Prepare control window and window for displaying the  stimulus
         # Instantiate display window and control window:
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
-        self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
+        self.win_control = ProtocolControlWidget(app, self.protocol, self.win_stim_disp)
 
         # Get info from microscope after setting connection with the LabView computer
         # IMPORTANT: Check IP!!!

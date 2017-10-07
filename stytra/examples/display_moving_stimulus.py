@@ -157,7 +157,7 @@ class Experiment(QMainWindow):
                                                           camera_parameters=self.camera_parameters)
         self.main_layout.addWidget(self.camera_view)
 
-        self.win_control = control_gui.ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
+        self.win_control = control_gui.ProtocolControlWidget(app, self.protocol, self.win_stim_disp)
         self.win_control.refresh_ROI()
         self.win_control.button_show_calib.clicked.connect(self.config_cam_calib)
         self.main_layout.addWidget(self.win_control)
