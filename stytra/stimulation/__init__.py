@@ -72,9 +72,9 @@ class Protocol(QObject):
         if self.running:
             # Time from start in seconds
             self.t = (datetime.datetime.now() - self.t_start).total_seconds()
-            self.current_stimulus.elapsed = (datetime.datetime.now() -
+            self.current_stimulus._elapsed = (datetime.datetime.now() -
                                              self.past_stimuli_elapsed).total_seconds()
-            if self.current_stimulus.elapsed > self.current_stimulus.duration:  # If stimulus time is over
+            if self.current_stimulus._elapsed > self.current_stimulus.duration:  # If stimulus time is over
                 self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_log()
 
@@ -117,7 +117,7 @@ class Protocol(QObject):
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
-                        t_start=self.t - self.current_stimulus.elapsed, t_stop=self.t)
+                        t_start=self.t - self.current_stimulus._elapsed, t_stop=self.t)
         if self.log_print:
             print(new_dict)
         self.log.append(new_dict)
@@ -134,7 +134,7 @@ class Protocol(QObject):
         self.t = 0
         for stimulus in self.stimuli:
             stimulus._started = None
-            stimulus.elapsed = 0.0
+            stimulus._elapsed = 0.0
 
         self.i_current_stimulus = 0
         self.current_stimulus = self.stimuli[0]

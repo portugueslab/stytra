@@ -257,14 +257,14 @@ class VisualCodingProtocol(Protocol):
     def __init__(self, *args,
                  video_file=r"3minUnderwater.mp4",
                  n_directions=8,
-                 n_split=4,
+                 n_split=4, #4
                  grating_period = 10,
                  grating_vel = 10,
                  part_field_duration=1,
                  part_field_pause=1,
                  inter_segment_pause=2,
-                 grating_move_duration=2,
-                 grating_pause_duration=1,
+                 grating_move_duration=5,
+                 grating_pause_duration=2,
                  **kwargs):
 
         stimuli = []
@@ -285,7 +285,7 @@ class VisualCodingProtocol(Protocol):
 
         delta_theta = np.pi*2/n_directions
 
-        grating_motion = pd.DataFrame(dict(t = [0,
+        grating_motion = pd.DataFrame(dict(t=[0,
              grating_pause_duration,
              grating_pause_duration+grating_move_duration,
              grating_pause_duration*2+grating_move_duration],

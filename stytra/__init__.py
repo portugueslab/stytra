@@ -82,13 +82,14 @@ class Experiment(QMainWindow):
 
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
+        print('Saving into '+self.directory )
 
         self.save_csv = save_csv
 
         self.dc = DataCollector(self.metadata_general, self.metadata_fish,
                                 folder_path=self.directory, use_last_val=True)
 
-        self.asset_dir = asset_directory
+        self.asset_folder = asset_directory
         self.debug_mode = debug_mode
         if not self.debug_mode:
             self.check_if_committed()
@@ -215,7 +216,7 @@ class Experiment(QMainWindow):
 
     def end_protocol(self, do_not_save=None):
         self.protocol.end()
-        if not not do_not_save:
+        if not do_not_save:
             if not self.debug_mode:
                 db_id = put_experiment_in_db(self.dc.get_full_dict())
                 self.dc.add_data_source('general', 'db_id', db_id)
@@ -382,7 +383,7 @@ class TailTrackingExperiment(CameraExperiment):
 
         if motion_estimation == 'LSTM':
             self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
-                                                            self.asset_dir + '/' +
+                                                            self.asset_folder + '/' +
                                                             motion_estimation_parameters['model'])
 
 
@@ -413,8 +414,9 @@ class TailTrackingExperiment(CameraExperiment):
     def end_protocol(self, *args, **kwargs):
         self.dc.add_data_source('behaviour', 'tail',
                                 self.data_acc_tailpoints.get_dataframe())
-        self.dc.add_data_source('stimulus', 'dynamic_parameters',
-                                self.protocol.dynamic_log.get_dataframe())
+        # temporary removal of dynamic log as it is not correct
+        # self.dc.add_data_source('stimulus', 'dynamic_parameters',
+        #                         self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
         try:
             self.position_estimator.reset()

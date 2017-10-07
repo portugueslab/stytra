@@ -31,22 +31,32 @@ class CrossCalibrator(Calibrator):
                  **kwargs):
         super().__init__(*args, **kwargs)
 
-        if fixed_length is not None:
-            self.length_px = fixed_length
-            self.length_is_fixed = True
-        else:
+        if calibration_length == 'outside':
+            self.outside = True
             self.length_is_fixed = False
             self.length_px = 1
+            self.length_to_measure = 'height of the rectangle'
+        else:
+            self.outside = False
+            self.length_to_measure = 'a line in the cross'
+            if fixed_length is not None:
+                self.length_px = fixed_length
+                self.length_is_fixed = True
+            else:
+                self.length_is_fixed = False
+                self.length_px = 1
 
         self.length_mm = 1
-        self.length_to_measure = 'a line in the cross'
 
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         if not self.length_is_fixed:
-            self.length_px = max(h/2, w/2)
+            if self.outside:
+                self.length_px = h
+            else:
+                self.length_px = max(h/2, w/2)
         l2 = self.length_px/2
         p.drawLine(w//2-l2, h // 2, w//2 + l2, h // 2)
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)

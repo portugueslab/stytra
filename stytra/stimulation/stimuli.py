@@ -90,6 +90,7 @@ class BackgroundStimulus(Stimulus):
         self.theta = 0
         self.background = background
 
+
 class FullFieldPainterStimulus(PainterStimulus):
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
         super().__init__(*args, **kwargs)
@@ -141,7 +142,7 @@ class MovingSeamlessStimulus(PainterStimulus,
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.params['mm_px']
+            mm_px = self._experiment.calibrator.mm_px
         else:
             mm_px = 1
 
@@ -188,7 +189,6 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 
-
     def draw_block(self, p, point, w, h):
         p.drawImage(point, self._qbackground)
 
@@ -202,14 +202,14 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus):
         self.grating_color = grating_color
 
     def get_unit_dims(self, w, h):
-        return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
+        return self.grating_period / max(self._experiment.calibrator.mm_px, 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.grating_color)))
         p.drawRect(point.x(), point.y(),
-                   int(self.grating_period / (2 * max(self._experiment.calibrator.params['mm_px'], 0.0001))),
+                   int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
                    w)
 
 
@@ -228,20 +228,20 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        grating_width = self.grating_period/max(self._experiment.calibrator.params['mm_px'], 0.0001) # in pixels
+        grating_width = self.grating_period/max(self._experiment.calibrator.mm_px, 0.0001) # in pixels
         p.setBrush(QBrush(QColor(*self.grating_color)))
 
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._experiment.calibrator.params['mm_px'] - \
-                    np.floor((-self.y / self._experiment.calibrator.params['mm_px']) / grating_width+1) * grating_width
+            start = -self.y / self._experiment.calibrator.mm_px - \
+                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width+1) * grating_width
 
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
                 start += grating_width
         else:
             n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self._experiment.calibrator.params['mm_px'] - \
+            start = self.x / self._experiment.calibrator.mm_px - \
                     np.floor(self.x / grating_width) * grating_width
             for i in range(n_gratings):
                 p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
@@ -266,6 +266,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
                          **kwargs)
         self.motion = motion
+        print(self.motion)
         self.name = 'moving seamless'
 
     def update(self):
@@ -274,6 +275,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
+        print("x: {}, y:{}".format(self.x, self.y))
 
 
 class MovingConstantVel(MovingStimulus):
