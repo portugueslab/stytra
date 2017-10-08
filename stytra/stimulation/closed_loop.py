@@ -1,6 +1,6 @@
 import numpy as np
 from stytra.tracking import QueueDataAccumulator
-#from keras.models import load_model
+from keras.models import load_model
 from bouter.kinematic_features import velocities_to_coordinates
 from bouter.angles import smooth_tail_angles_series, reduce_to_pi
 import datetime
@@ -15,7 +15,8 @@ class EstimatorLog(Accumulator):
 
     def update_list(self, data):
         self.check_start()
-        self.stored_data.append(data)
+        delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
+        self.stored_data.append((delta_t,) + data)
 
 
 class VigourMotionEstimator:
@@ -116,8 +117,7 @@ class LSTMLocationEstimator:
         self.past_coords = new_coordinates
 
         if self.log is not None:
-            self.log.update_list(((t_estimation-self.t_start).total_seconds(),
-                                  Y[-1, 0],
+            self.log.update_list((Y[-1, 0],
                                   Y[-1, 1],
                                   Y[-1, 2],
                                   tail[-1, 3],

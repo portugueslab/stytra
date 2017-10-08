@@ -90,6 +90,7 @@ class Experiment(QMainWindow):
                                 folder_path=self.directory, use_last_val=True)
 
         self.asset_folder = asset_directory
+
         self.debug_mode = debug_mode
         if not self.debug_mode:
             self.check_if_committed()

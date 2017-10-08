@@ -182,8 +182,9 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        self._qbackground = qimage2ndarray.array2qimage(existing_file_background(
-            self._experiment.asset_dir + '/' + self.background))
+        print(self._experiment.asset_folder)
+        self._qbackground = qimage2ndarray.array2qimage(
+            existing_file_background(self._experiment.asset_folder + '/' + self.background))
 
     def get_unit_dims(self, w, h):
         w, h = self._qbackground.width(),  self._qbackground.height()

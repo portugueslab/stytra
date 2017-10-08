@@ -199,8 +199,9 @@ def std_bp_filter(img, small_square=3, large_square=50):
 
 # Can't be jit-ted because of the cv2 library in the filtering
 # @jit(nopython=True, cache=True)
-def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1, tail_length_y=1, n_segments=20, window_size=30,
-                        color_invert=False, filtering=False, scale=0.2):
+def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1,
+                        tail_length_y=1, n_segments=20, window_size=9,
+                        color_invert=False, filtering=False, scale=0.20):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
@@ -215,6 +216,7 @@ def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1, tail_length_y
     :param image_filt: True for spatial filtering of the the image
     :return: list of cumulative sum + list of angles
     """
+    n_segments +=1
     if scale != 1:  # bandpass filter the image:
         im = cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
     if color_invert:
@@ -227,7 +229,7 @@ def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1, tail_length_y
     disp_y = int(tail_length_y / n_segments)
 
     cum_sum = 0  # cumulative tail sum
-    angles = [np.arctan2(tail_length_y, tail_length_x)]
+    angles = []
     start_x *= scale
     start_y *= scale
     for i in range(1, n_segments):
@@ -238,11 +240,10 @@ def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1, tail_length_y
         start_x, start_y, disp_x, disp_y, acc = \
             _next_segment(im, start_x, start_y, disp_x, disp_y, window_size, seg_length)
 
-        if i > 1:  # update cumulative angle sum
-            new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
-            abs_angle = np.arctan2(disp_y, disp_x)
-            cum_sum = cum_sum + new_angle
-            angles.append(-abs_angle)
+        new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
+        abs_angle = np.arctan2(disp_x, disp_y)
+        cum_sum = cum_sum + new_angle
+        angles.append(abs_angle)
 
     return [cum_sum, ] + angles[:]
 

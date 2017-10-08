@@ -16,6 +16,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         super().__init__(*args, **kwargs)
         assert isinstance(data_accumulator, Accumulator)
         self.positionPlot = self.addPlot()
+        self.positionPlot.setAspectLocked(True)
         self.curve = self.positionPlot.plot()
 
         self.n_points = n_points
@@ -35,7 +36,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
-    def __init__(self, time_past=6, bounds_update =0.1,
+    def __init__(self, time_past=6, bounds_update=0.1,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -48,6 +49,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.addItem(self.plotContainter)
         self.plotContainter.setXRange(-self.time_past*0.9, self.time_past*0.05)
         self.plotContainter.showAxis('left', False)
+        self.plotContainter.vb.setMouseEnabled(x=True, y=False)
 
         self.accumulators = []
         self.stream_names = []
@@ -116,7 +118,8 @@ class MultiStreamPlot(pg.GraphicsWindow):
             curve.setPen(color)
             for label in labels:
                 label.setColor(color)
-        self.plotContainter.setYRange(-0.1, len(self.curves)+1.1)
+        self.plotContainter.setYRange(-0.1, len(self.curves)+0.1)
+
 
     def update(self):
         """Function called by external timer to update the plot
