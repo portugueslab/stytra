@@ -11,6 +11,9 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--tail-tracking',
                         action='store_true')
+    parser.add_argument('--tail-tracking-method',
+                        action='store', default='angle_sweep')
+
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--vr',
@@ -50,6 +53,7 @@ if __name__ == '__main__':
         class_kwargs['tracking_method_parameters'] = dict(n_segments=12,
                                                           filtering=True,
                                                           color_invert=args.tail_invert)
+        class_kwargs['tracking_method'] = args.tail_tracking_method
         if args.vr:
             class_kwargs['motion_estimation'] = 'LSTM'
             class_kwargs['motion_estimation_parameters'] = dict(model='lstm_300Hz.h5')

@@ -199,35 +199,37 @@ def std_bp_filter(img, small_square=3, large_square=50):
 
 # Can't be jit-ted because of the cv2 library in the filtering
 # @jit(nopython=True, cache=True)
-def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segments=20, window_size=30,
-                         color_invert=False, image_filt=False):
+def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1, tail_length_y=1, n_segments=20, window_size=30,
+                        color_invert=False, filtering=False, scale=0.2):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
     :param im: image to process
     :param start_x: starting point x
     :param start_y: starting point y
-    :param tail_len_x: tail length on x
-    :param tail_len_y: tail length on y
+    :param tail_length_x: tail length on x
+    :param tail_length_y: tail length on y
     :param n_segments: number of desired segments
     :param window_size: size in pixel of the window for center-of-mass calculation
     :param color_invert: True for inverting luminosity of the image
     :param image_filt: True for spatial filtering of the the image
     :return: list of cumulative sum + list of angles
     """
-    if image_filt:  # bandpass filter the image:
-        im = std_bp_filter(im, small_square=3, large_square=50)
+    if scale != 1:  # bandpass filter the image:
+        im = cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
     if color_invert:
-        im = (255 - im).astype(np.uint8)  # invert image
-    length_tail = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)  # calculate tail length
-    seg_length = int(length_tail / n_segments)  # segment length from tail length and n of segments
+        im = (255 - im)  # invert image
+    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale  # calculate tail length
+    seg_length = length_tail / n_segments  # segment length from tail length and n of segments
 
     # Initial displacements in x and y:
-    disp_x = int(tail_len_x / n_segments)
-    disp_y = int(tail_len_y / n_segments)
+    disp_x = int(tail_length_x / n_segments)
+    disp_y = int(tail_length_y / n_segments)
 
     cum_sum = 0  # cumulative tail sum
-    angles = [np.arctan2(tail_len_y, tail_len_x)]
+    angles = [np.arctan2(tail_length_y, tail_length_x)]
+    start_x *= scale
+    start_y *= scale
     for i in range(1, n_segments):
         pre_disp_x = disp_x  # save previous displacements for angle calculation
         pre_disp_y = disp_y
@@ -240,9 +242,9 @@ def detect_tail_embedded(im, start_x, start_y, tail_len_x, tail_len_y, n_segment
             new_angle = angle(pre_disp_x, pre_disp_y, disp_x, disp_y)
             abs_angle = np.arctan2(disp_y, disp_x)
             cum_sum = cum_sum + new_angle
-            angles.append(abs_angle)
+            angles.append(-abs_angle)
 
-    return [cum_sum, ] + angles[::]
+    return [cum_sum, ] + angles[:]
 
 
 @jit(nopython=True, cache=True)
@@ -342,9 +344,9 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
     return angles
 
 
-def tail_trace_ls(img, start_x=0, start_y=0, tail_length_x=1,
-                  tail_length_y=1, n_segments=7, tail_length=None,
-                  filtering=True, color_invert=False):
+def trace_tail_radial_sweep(img, start_x=0, start_y=0, tail_length_x=1,
+                            tail_length_y=1, n_segments=7, tail_length=None,
+                            filtering=True, color_invert=False):
     """
     Tail tracing based on min (or max) detection on arches. Wraps _tail_trace_core_ls.
     Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.

@@ -10,7 +10,7 @@ from stytra.metadata import MetadataFish, MetadataCamera, MetadataLightsheet, Me
 from stytra import DataCollector
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.stimulation.backgrounds import gratings
-from stytra.tracking.tail import detect_tail_embedded
+from stytra.tracking.tail import trace_tail_centroid
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
@@ -63,7 +63,7 @@ class Experiment(QMainWindow):
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
         self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_embedded,
+                                                processing_function=trace_tail_centroid,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,

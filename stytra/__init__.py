@@ -13,7 +13,7 @@ import git
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
+from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
 from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
 from multiprocessing import Queue, Event
@@ -340,8 +340,8 @@ class TailTrackingExperiment(CameraExperiment):
         self.processing_parameter_queue = Queue()
         self.tail_position_queue = Queue()
 
-        dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
-                                       centroid=detect_tail_embedded)
+        dict_tracking_functions = dict(angle_sweep=trace_tail_radial_sweep,
+                                       centroid=trace_tail_centroid)
 
         current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
         if tracking_method_parameters is not None:
