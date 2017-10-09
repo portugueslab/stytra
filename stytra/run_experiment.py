@@ -51,7 +51,7 @@ if __name__ == '__main__':
         bases.append(TailTrackingExperiment)
         class_kwargs['video_file'] = args.video_file
         class_kwargs['tracking_method_parameters'] = dict(n_segments=12,
-                                                          filtering=True,
+                                                          filter_size=5,
                                                           color_invert=args.tail_invert)
         class_kwargs['tracking_method'] = args.tail_tracking_method
         if args.vr:
