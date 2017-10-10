@@ -311,11 +311,25 @@ class VisualCodingProtocol(Protocol):
 
 class VRProtocol(Protocol):
     name='VR protocol'
-    def __init__(self, *args, background_image='underwater_caustics.jpg', duration=240,
+    def __init__(self, *args, background_image='underwater_caustics.jpg',
+                 velocities=((10, 0, 0),
+                             (20, 10, 0),
+                             (20, 0, 10),
+                             (20, -10, 0),
+                             (20, 0, -10)),
                  **kwargs):
+        full_t = 0
+        motion = []
+        for dt, vx, vy in velocities:
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
+
+        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
 
         stimuli = [
-            VRMotionStimulus(background=background_image, duration=duration)
+            VRMotionStimulus(background=background_image, motion=motion,
+                             duration=motion.t.iat[-1])
         ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
 

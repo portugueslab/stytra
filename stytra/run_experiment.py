@@ -56,7 +56,8 @@ if __name__ == '__main__':
         class_kwargs['tracking_method'] = args.tail_tracking_method
         if args.vr:
             class_kwargs['motion_estimation'] = 'LSTM'
-            class_kwargs['motion_estimation_parameters'] = dict(model='lstm_300Hz.h5')
+            class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
+                                                                model_px_per_mm = 21)
 
     elif args.freely_swimming:
         bases.append(MovementRecordingExperiment)

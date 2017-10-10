@@ -413,14 +413,24 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
-class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
+class VRMotionStimulus(SeamlessImageStimulus,
+                       DynamicStimulus):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.motion = motion
         self.dynamic_parameters = ['x', 'y', 'theta']
+        self._past_t = 0
 
     def update(self):
-        self.x, self.y, self.theta = self._experiment.position_estimator.get_coords()
+        dt = self._elapsed - self._past_t
+        vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
+        vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
+        displacements = self._experiment.position_estimator.get_displacements()
+        self.x += vel_x*dt + displacements[0]
+        self.y += vel_y * dt + displacements[1]
+        self.theta = displacements[2]
+        self._past_t = self._elapsed
 
 
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
