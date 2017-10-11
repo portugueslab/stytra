@@ -39,7 +39,10 @@ class VigourMotionEstimator:
 class LSTMLocationEstimator:
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
                  gains=[1, 1, 1], lstm_sample_rate=300,
-                 logging=True, model_px_per_mm=1, thresholds=(0.03, 0.03, 0.01)):
+                 logging=True, model_px_per_mm=1,
+                 thresholds=(0.05, 0.05, 0.01), tail_first_mean=20,
+                 tail_thresholds=(0.01, 0.03)
+                 ):
         assert (isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
         self.PCA_weights = PCA_weights
@@ -51,6 +54,9 @@ class LSTMLocationEstimator:
         self.lstm_states = [np.zeros((1, self.lstm_shape)),
                             np.zeros((1, self.lstm_shape))]
         self.thresholds = np.array(thresholds)
+        self.tail_first_mean = tail_first_mean
+        self.tail_thresholds = [np.sqrt(t) for t in tail_thresholds]
+        self.tail_init = None
 
         self.processed_index = 0
         self.start_angle = 0
@@ -69,6 +75,7 @@ class LSTMLocationEstimator:
     def reset(self):
         self.processed_index = 0
         self.start_angle = 0
+        self.tail_init = None
 
     def get_displacements(self):
         """ Calculates the position and rotation displacement using the LSTM
@@ -84,15 +91,26 @@ class LSTMLocationEstimator:
 
         tail = np.array(self.data_acc.stored_data[self.processed_index:current_index])[:, 2:]
 
+
         tail -= tail[:, :1]
-        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:] # TODO sync the tail tracking model and teh
+        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:-1]
+
+        if self.tail_init is None:
+            self.tail_init = np.mean(tail[:self.tail_first_mean, :],0)
+
+        tail -= self.tail_first_mean
+        tail[np.abs(tail) < (np.linspace(self.tail_thresholds[0],
+                                         self.tail_thresholds[1],
+                                         tail.shape[1])**2)[None, :]] = 0
+
+
         if self.PCA_weights is not None:
             tail = tail @ self.PCA_weights
 
         Y, s1, s2 = self.model.predict([tail[None, :, :]] + self.lstm_states)
         self.lstm_states = [s1, s2]
         Y = Y[0]
-        Y[np.abs(Y) < self.thresholds[None, :]] = 0
+        Y[np.abs(Y)<self.thresholds[None, :]] = 0
 
         displacement = velocities_to_coordinates(Y,
                                             start_angle=self.start_angle,
