@@ -383,10 +383,12 @@ class TailTrackingExperiment(CameraExperiment):
             self.data_acc_tailpoints.update_list)
 
         if motion_estimation == 'LSTM':
+            lstm_name = motion_estimation_parameters['model']
+            del motion_estimation_parameters['model']
             self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
                                                             self.asset_folder + '/' +
-                                                            motion_estimation_parameters['model'])
-
+                                                            lstm_name,
+                                                            **motion_estimation_parameters)
 
         self.main_layout = QSplitter()
         self.monitoring_widget = QWidget()
@@ -401,10 +403,11 @@ class TailTrackingExperiment(CameraExperiment):
         self.stream_plot.add_stream(self.data_acc_tailpoints,
                                     ['tail_sum', 'theta_01'])
 
-
         self.main_layout.addWidget(self.monitoring_widget)
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
+
+        self.positionPlot = None
 
         self.go_live()
 
@@ -429,7 +432,7 @@ class TailTrackingExperiment(CameraExperiment):
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
     def reconfigure_ui(self):
-        if isinstance(self.protocol, VRProtocol):
+        if isinstance(self.protocol, VRProtocol) and self.positionPlot is None:
             self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
             self.monitoring_layout.addWidget(self.positionPlot)
             self.gui_refresh_timer.timeout.connect(self.positionPlot.update)

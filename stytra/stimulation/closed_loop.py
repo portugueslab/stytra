@@ -39,14 +39,13 @@ class VigourMotionEstimator:
 class LSTMLocationEstimator:
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
                  gains=[1, 1, 1], lstm_sample_rate=300,
-                 logging=True, model_px_per_mm=1, thresholds=(0.05, 0.05, 0.01)):
+                 logging=True, model_px_per_mm=1, thresholds=(0.03, 0.03, 0.01)):
         assert (isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
         self.PCA_weights = PCA_weights
         self.model = load_model(LSTM_file)
 
         self.gains = gains
-        self.last_acc_index = 0  # the position at which the last update occured
         self.lstm_sample_rate = lstm_sample_rate
         self.lstm_shape = self.model.input_shape[1][1]
         self.lstm_states = [np.zeros((1, self.lstm_shape)),
@@ -68,7 +67,7 @@ class LSTMLocationEstimator:
             self.log = None
 
     def reset(self):
-        self.last_acc_index = 0
+        self.processed_index = 0
         self.start_angle = 0
 
     def get_displacements(self):
@@ -86,14 +85,14 @@ class LSTMLocationEstimator:
         tail = np.array(self.data_acc.stored_data[self.processed_index:current_index])[:, 2:]
 
         tail -= tail[:, :1]
-        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:-1]
+        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:] # TODO sync the tail tracking model and teh
         if self.PCA_weights is not None:
             tail = tail @ self.PCA_weights
 
         Y, s1, s2 = self.model.predict([tail[None, :, :]] + self.lstm_states)
         self.lstm_states = [s1, s2]
         Y = Y[0]
-        Y[np.abs(Y)<self.thresholds[None,:]] = 0
+        Y[np.abs(Y) < self.thresholds[None, :]] = 0
 
         displacement = velocities_to_coordinates(Y,
                                             start_angle=self.start_angle,

@@ -159,12 +159,12 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         scale = ub - lb
                         if scale < 0.00001:
                             scale = 1
-                        self.valueLabels[i_stream][0].setText('{:6.2f}'.format(lb))
-                        self.valueLabels[i_stream][1].setText('{:6.2f}'.format(ub))
+                        self.valueLabels[i_stream][0].setText('{:7.3f}'.format(lb))
+                        self.valueLabels[i_stream][1].setText('{:7.3f}'.format(ub))
                         self.valueLabels[i_stream][2].setText(
                             '{:7.2f} FPS'.format(fps))
                         self.valueLabels[i_stream][4].setText(
-                            '{:6.2f}'.format(data_array[-1, i_var]))
+                            '{:7.3f}'.format(data_array[-1, i_var]))
 
                         self.curves[i_stream].setData(x=time_array,
                                                       y=i_stream+((data_array[:, i_var]-lb)/scale))

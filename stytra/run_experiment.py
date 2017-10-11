@@ -50,14 +50,18 @@ if __name__ == '__main__':
     if args.tail_tracking:
         bases.append(TailTrackingExperiment)
         class_kwargs['video_file'] = args.video_file
-        class_kwargs['tracking_method_parameters'] = dict(n_segments=12,
-                                                          filter_size=5,
-                                                          color_invert=args.tail_invert)
+        class_kwargs['tracking_method_parameters'] = dict(n_segments=11,
+                                                          filter_size=4,
+                                                          scale=0.2,
+                                                          window_size=10,
+                                                          color_invert=args.tail_invert,
+                                                          )
         class_kwargs['tracking_method'] = args.tail_tracking_method
         if args.vr:
             class_kwargs['motion_estimation'] = 'LSTM'
             class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
-                                                                model_px_per_mm = 21)
+                                                                model_px_per_mm=16.44,
+                                                                thresholds=(0.01, 0.01, 0.001))
 
     elif args.freely_swimming:
         bases.append(MovementRecordingExperiment)
