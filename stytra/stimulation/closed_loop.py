@@ -126,6 +126,6 @@ class LSTMLocationEstimator:
                                   ))
         self.processed_index = current_index
 
-        return np.concatenate([displacement[-1, :2]/self.px_per_mm,
+        return np.array([displacement[-1, 1]/self.px_per_mm, displacement[-1, 0]/self.px_per_mm,
                                displacement[-1, 2:3]])
 

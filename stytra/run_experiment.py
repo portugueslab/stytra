@@ -62,7 +62,7 @@ if __name__ == '__main__':
             class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
                                                                 model_px_per_mm=16.44,
                                                                 tail_thresholds=(0.02, 0.1),
-                                                                thresholds=(0.05, 0.05, 0.015))
+                                                                thresholds=(0.05, 0.05, 0.005))
 
     elif args.freely_swimming:
         bases.append(MovementRecordingExperiment)
