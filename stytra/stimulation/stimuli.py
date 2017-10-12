@@ -155,7 +155,8 @@ class MovingSeamlessStimulus(PainterStimulus,
 
         image_centre = (imw / 2, imh / 2)
 
-        cx = self.x - np.floor(self.x / imw) * imw
+        cx = self.x/mm_px - np.floor(
+             self.x/mm_px / imw) * imw
         cy = -self.y/mm_px - np.floor(
             -(self.y/mm_px) / imh) * imh
 
@@ -181,13 +182,13 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        self._qbackground = qimage2ndarray.array2qimage(existing_file_background(
-            self._experiment.asset_dir + '/' + self.background))
+        print(self._experiment.asset_folder)
+        self._qbackground = qimage2ndarray.array2qimage(
+            existing_file_background(self._experiment.asset_folder + '/' + self.background))
 
     def get_unit_dims(self, w, h):
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
-
 
     def draw_block(self, p, point, w, h):
         p.drawImage(point, self._qbackground)
@@ -233,8 +234,8 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
 
         if self.grating_orientation == 'horizontal':
             n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._experiment.calibrator.params['mm_px'] - \
-                    np.floor((-self.y / self._experiment.calibrator.params['mm_px']) / grating_width+1) * grating_width
+            start = -self.y / self._experiment.calibrator.mm_px - \
+                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width+1) * grating_width
 
             for i in range(n_gratings):
                 p.drawRect(-1, int(round(start)), w+2, grating_width/2)
@@ -266,6 +267,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
                          **kwargs)
         self.motion = motion
+        print(self.motion)
         self.name = 'moving seamless'
 
     def update(self):
@@ -274,6 +276,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
+        print("x: {}, y:{}".format(self.x, self.y))
 
 
 class MovingConstantVel(MovingStimulus):
@@ -410,14 +413,24 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
-class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
+class VRMotionStimulus(SeamlessImageStimulus,
+                       DynamicStimulus):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.motion = motion
         self.dynamic_parameters = ['x', 'y', 'theta']
+        self._past_t = 0
 
     def update(self):
-        self.x, self.y, self.theta = self._experiment.position_estimator.get_coords()
+        dt = self._elapsed - self._past_t
+        vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
+        vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
+        displacements = self._experiment.position_estimator.get_displacements()
+        self.x += vel_x * dt + displacements[0]
+        self.y += vel_y * dt + displacements[1]
+        self.theta = displacements[2]
+        self._past_t = self._elapsed
 
 
 class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):

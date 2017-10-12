@@ -16,6 +16,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         super().__init__(*args, **kwargs)
         assert isinstance(data_accumulator, Accumulator)
         self.positionPlot = self.addPlot()
+        self.positionPlot.setAspectLocked(True)
         self.curve = self.positionPlot.plot()
 
         self.n_points = n_points
@@ -35,7 +36,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
-    def __init__(self, time_past=10, bounds_update =0.1,
+    def __init__(self, time_past=6, bounds_update=0.1,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -48,6 +49,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.addItem(self.plotContainter)
         self.plotContainter.setXRange(-self.time_past*0.9, self.time_past*0.05)
         self.plotContainter.showAxis('left', False)
+        self.plotContainter.vb.setMouseEnabled(x=True, y=False)
 
         self.accumulators = []
         self.stream_names = []
@@ -97,26 +99,34 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past*0.9, i_curve)
-            self.plotContainter.addItem(curve_label)
+
             max_label = pg.TextItem('', anchor=(0, 0))
             max_label.setPos(0, i_curve+1)
+
             min_label = pg.TextItem('', anchor=(0, 1))
             min_label.setPos(0, i_curve)
-            fps_label = pg.TextItem('', anchor=(0, 0.5))
-            fps_label.setPos(0, i_curve+0.5)
 
+            fps_label = pg.TextItem('', anchor=(0, 0))
+            fps_label.setPos(-self.time_past*0.9, i_curve+1)
+
+            value_label = pg.TextItem('', anchor=(0, 0.5))
+            value_label.setPos(0, i_curve + 0.5)
+
+            self.plotContainter.addItem(curve_label)
             self.plotContainter.addItem(min_label)
             self.plotContainter.addItem(max_label)
             self.plotContainter.addItem(fps_label)
+            self.plotContainter.addItem(value_label)
 
-            self.valueLabels.append((min_label, max_label, fps_label, curve_label))
+            self.valueLabels.append((min_label, max_label, fps_label, curve_label, value_label))
             i_curve += 1
 
         for curve, color, labels in zip(self.curves, self.colors, self.valueLabels):
             curve.setPen(color)
             for label in labels:
                 label.setColor(color)
-        self.plotContainter.setYRange(-0.1, len(self.curves)+1.1)
+        self.plotContainter.setYRange(-0.1, len(self.curves)+0.1)
+
 
     def update(self):
         """Function called by external timer to update the plot
@@ -149,10 +159,12 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         scale = ub - lb
                         if scale < 0.00001:
                             scale = 1
-                        self.valueLabels[i_stream][0].setText('{:.2f}'.format(lb))
-                        self.valueLabels[i_stream][1].setText('{:.2f}'.format(ub))
+                        self.valueLabels[i_stream][0].setText('{:7.3f}'.format(lb))
+                        self.valueLabels[i_stream][1].setText('{:7.3f}'.format(ub))
                         self.valueLabels[i_stream][2].setText(
-                            '{:.2f}'.format(fps))
+                            '{:7.2f} FPS'.format(fps))
+                        self.valueLabels[i_stream][4].setText(
+                            '{:7.3f}'.format(data_array[-1, i_var]))
 
                         self.curves[i_stream].setData(x=time_array,
                                                       y=i_stream+((data_array[:, i_var]-lb)/scale))

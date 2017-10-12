@@ -18,7 +18,7 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
+from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
 from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
 from multiprocessing import Queue, Event
@@ -70,6 +70,7 @@ class Experiment(QObject):
         self.directory = directory
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
+        print('Saving into '+self.directory )
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -252,8 +253,8 @@ class TailTrackingExperiment(CameraExperiment):
         self.processing_parameter_queue = Queue()
         self.tail_position_queue = Queue()
 
-        dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
-                                       centroid=detect_tail_embedded)
+        dict_tracking_functions = dict(angle_sweep=trace_tail_radial_sweep,
+                                       centroid=trace_tail_centroid)
 
         current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
         if tracking_method_parameters is not None:
@@ -294,9 +295,31 @@ class TailTrackingExperiment(CameraExperiment):
             self.data_acc_tailpoints.update_list)
 
         if motion_estimation == 'LSTM':
+            lstm_name = motion_estimation_parameters['model']
+            del motion_estimation_parameters['model']
             self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
-                                                            self.asset_dir + '/' +
-                                                            motion_estimation_parameters['model'])
+                                                            self.asset_folder + '/' +
+                                                            lstm_name,
+                                                            **motion_estimation_parameters)
+
+        self.main_layout = QSplitter()
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        self.stream_plot = MultiStreamPlot()
+
+        self.monitoring_layout.addWidget(self.stream_plot)
+        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+
+        self.stream_plot.add_stream(self.data_acc_tailpoints,
+                                    ['tail_sum', 'theta_01'])
+
+        self.main_layout.addWidget(self.monitoring_widget)
+        self.main_layout.addWidget(self.widget_control)
+        self.setCentralWidget(self.main_layout)
+
+        self.positionPlot = None
 
         self.go_live()
 
@@ -307,10 +330,17 @@ class TailTrackingExperiment(CameraExperiment):
     def end_protocol(self, *args, **kwargs):
         self.dc.add_data_source('behaviour', 'tail',
                                 self.data_acc_tailpoints.get_dataframe())
+        self.dc.add_data_source('behaviour', 'vr',
+                                self.position_estimator.log.get_dataframe())
+        # temporary removal of dynamic log as it is not correct
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
-                                self.protocol.dynamic_log.get_dataframe())
+                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
-        self.position_estimator.reset()
+        try:
+            self.position_estimator.reset()
+            self.position_estimator.log.reset()
+        except AttributeError:
+            pass
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)

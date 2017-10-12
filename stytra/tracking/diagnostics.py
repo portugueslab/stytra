@@ -124,7 +124,7 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x,
     if not tail_length:
         tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
     # Get segment length:
-    tail_segment_length = tail_length / (len(angles) - 1)
+    tail_segment_length = tail_length / (len(angles))
 
     # Add color dimension:
     if len(display.shape) == 2:

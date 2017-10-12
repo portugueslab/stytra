@@ -387,8 +387,37 @@ class VRProtocol(Protocol):
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
+        stimuli.append(VideoStimulus(video_path=video_file, duration=180))
+        super().__init__(*args, stimuli=stimuli, **kwargs)
+
+
+class VRProtocol(Protocol):
+    name='VR protocol'
+    def __init__(self, *args, background_image='underwater_caustics.jpg',
+                 velocities=((10, 0, 0),
+                             (20, 10, 0),
+                             (20, 0, 10),
+                             (20, -10, 0),
+                             (20, 0, -10),
+                             (10, 0, 0),
+                             (20, 10, 0),
+                             (20, 0, 10),
+                             (20, -10, 0),
+                             (20, 0, -10)),
+                 **kwargs):
+        full_t = 0
+        motion = []
+        for dt, vx, vy in velocities:
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
+
+        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
+
     def get_stim_sequence(self):
         stimuli = [
+            VRMotionStimulus(background=background_image, motion=motion,
+                             duration=motion.t.iat[-1])
             VRMotionStimulus(background=self.params['background_image'],
                              duration=self.params['duration'])
         ]

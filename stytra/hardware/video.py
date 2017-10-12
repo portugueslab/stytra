@@ -62,7 +62,7 @@ class FrameProcessor(Process):
 
 
 class XimeaCamera(FrameProcessor):
-    def __init__(self, frame_queue=None, signal=None, control_queue=None, downsampling=2,
+    def __init__(self, frame_queue=None, signal=None, control_queue=None, downsampling=4,
                  **kwargs):
         """
         Class for controlling a XimeaCamera
@@ -80,18 +80,21 @@ class XimeaCamera(FrameProcessor):
 
     def run(self):
         self.cam = xiapi.Camera()
+
         self.cam.open_device()
         img = xiapi.Image()
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
+
         # for the camera on the lightsheet rig which supports hardware downsampling
         # MQ013MG-ON lightsheet
         # MQ003MG-CM behaviour
 
         if str(self.cam.get_device_name()) == 'MQ013MG-ON':
-            self.cam.set_downsampling(2)
+            self.cam.set_downsampling(self.downsampling)
             self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
+
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.signal.wait(0.0001)

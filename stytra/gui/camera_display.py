@@ -114,8 +114,10 @@ class CameraTailSelection(CameraViewWidget):
         self.roi_tail = pg.LineSegmentROI(((self.roi_dict['start_y'], self.roi_dict['start_x']),
                                            (self.roi_dict['start_y'] + self.roi_dict['tail_length_y'],
                                             self.roi_dict['start_x'] + self.roi_dict['tail_length_x'])),
-                                          pen=dict(color=(250, 10, 10),
-                                                   width=4))
+                                          pen=None)
+
+        self.tail_curve = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
+        self.display_area.addItem(self.tail_curve)
         self.display_area.addItem(self.roi_tail)
 
         self.get_tracking_params()
@@ -149,23 +151,23 @@ class CameraTailSelection(CameraViewWidget):
             print('not init')
         return self.tracking_params
 
-    def modify_frame(self, frame):
-        """Function for drawing the tail position on the frame with draw_fish_angles_embedd function
-        :param frame: camera frame
-        :return: modified frame
-        """
-        position_data = None
-        try:
-            if self.tail_position_data:  # draw the tail before displaying the frame:
-                position_data = self.tail_position_data.stored_data[-1][2:]
-                return draw_fish_angles_ls(frame, np.array(position_data),
-                                           self.roi_dict['start_x'], self.roi_dict['start_y'],
-                                           self.roi_dict['tail_length_x'], self.roi_dict['tail_length_y'])
-            else:
-                return frame
-
-        except IndexError:
-            return frame
+    def update_image(self):
+        super().update_image()
+        if len(self.tail_position_data.stored_data) > 1:
+            angles = self.tail_position_data.stored_data[-1][2:]
+            start_x = self.roi_dict['start_x']
+            start_y = self.roi_dict['start_y']
+            tail_len_x = self.roi_dict['tail_length_x']
+            tail_len_y = self.roi_dict['tail_length_y']
+            tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+            # Get segment length:
+            tail_segment_length = tail_length / (len(angles) - 1)
+            points = [np.array([start_x, start_y])]
+            for angle in angles:
+                points.append(points[-1] + tail_segment_length * np.array(
+                    [np.sin(angle), np.cos(angle)]))
+            points = np.array(points)
+            self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
 
 
 class CameraViewCalib(CameraViewWidget):

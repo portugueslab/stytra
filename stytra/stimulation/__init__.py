@@ -110,7 +110,7 @@ class ProtocolRunner(QObject):
                     # drifting
 
                     self.past_stimuli_elapsed += datetime.timedelta(
-                        seconds=self.current_stimulus.duration)
+                        seconds=float(self.current_stimulus.duration))
                     self.i_current_stimulus += 1
                     self.current_stimulus = self.stimuli[self.i_current_stimulus]
                     self.current_stimulus.start()
