@@ -1,6 +1,6 @@
 import numpy as np
 from stytra.tracking import QueueDataAccumulator
-from keras.models import load_model
+#from keras.models import load_model
 from bouter.kinematic_features import velocities_to_coordinates
 from bouter.angles import smooth_tail_angles_series, reduce_to_pi
 import datetime
@@ -136,7 +136,6 @@ class SimulatedLocationEstimator:
         self.start_t = None
         self.i_bout = 0
         self.past_theta = 0
-        self.next_bout = self.bouts[0]
 
     def get_displacements(self):
         if self.start_t is None:
@@ -150,6 +149,11 @@ class SimulatedLocationEstimator:
             return np.array([this_bout.dx, this_bout.dy,
                             self.past_theta])
         else:
-            return np.array(0, 0, self.past_theta)
+            return np.array([0, 0, self.past_theta])
+
+    def reset(self):
+        self.start_t = None
+        self.i_bout = 0
+        self.past_theta = 0
 
 

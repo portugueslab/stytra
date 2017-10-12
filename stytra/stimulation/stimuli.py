@@ -14,6 +14,7 @@ except ImportError:
 
 from itertools import product
 
+from bouter.angles import rot_mat
 
 class Stimulus:
     """ General class for a stimulus."""
@@ -427,10 +428,14 @@ class VRMotionStimulus(SeamlessImageStimulus,
         dt = self._elapsed - self._past_t
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
         vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
+
         displacements = self._experiment.position_estimator.get_displacements()
-        self.x += vel_x * dt + displacements[0]
-        self.y += vel_y * dt + displacements[1]
-        self.theta = displacements[2]
+        dxy = rot_mat(-self.theta+np.pi/2) @ displacements[:2]
+
+        self.x += vel_x * dt - dxy[0]
+        self.y -= vel_y * dt - dxy[1] # negative because the QPainter origin is
+        # on the upper right
+        self.theta = -displacements[2]
         self._past_t = self._elapsed
 
 
