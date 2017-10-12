@@ -40,8 +40,8 @@ class LSTMLocationEstimator:
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
                  gains=[1, 1, 1], lstm_sample_rate=300,
                  logging=True, model_px_per_mm=1,
-                 thresholds=(0.05, 0.05, 0.01), tail_first_mean=20,
-                 tail_thresholds=(0.01, 0.03)
+                 thresholds=(0.001, 0.001, 0.001), tail_first_mean=20,
+                 tail_thresholds=(0.01, 0.08)
                  ):
         assert (isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
@@ -87,18 +87,17 @@ class LSTMLocationEstimator:
 
         current_index = len(self.data_acc.stored_data)
         if current_index == 0 or self.processed_index == current_index:
-            return np.zeros(3)
+            return np.array([0, 0, self.start_angle])
 
         tail = np.array(self.data_acc.stored_data[self.processed_index:current_index])[:, 2:]
 
-
         tail -= tail[:, :1]
-        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:-1]
+        tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:]
 
         if self.tail_init is None:
-            self.tail_init = np.mean(tail[:self.tail_first_mean, :],0)
+            self.tail_init = np.mean(tail[:self.tail_first_mean, :], 0)
 
-        tail -= self.tail_first_mean
+        tail -= self.tail_init
         tail[np.abs(tail) < (np.linspace(self.tail_thresholds[0],
                                          self.tail_thresholds[1],
                                          tail.shape[1])**2)[None, :]] = 0
@@ -121,8 +120,8 @@ class LSTMLocationEstimator:
             self.log.update_list((Y[-1, 0],
                                   Y[-1, 1],
                                   Y[-1, 2],
-                                  tail[-1, 3],
-                                  tail[-1, 5],
+                                  tail[-1, 0],
+                                  tail[-1, 9],
                                     displacement[-1, 2]
                                   ))
         self.processed_index = current_index

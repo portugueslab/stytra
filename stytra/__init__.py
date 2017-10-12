@@ -418,12 +418,15 @@ class TailTrackingExperiment(CameraExperiment):
     def end_protocol(self, *args, **kwargs):
         self.dc.add_data_source('behaviour', 'tail',
                                 self.data_acc_tailpoints.get_dataframe())
+        self.dc.add_data_source('behaviour', 'vr',
+                                self.position_estimator.log.get_dataframe())
         # temporary removal of dynamic log as it is not correct
-        # self.dc.add_data_source('stimulus', 'dynamic_parameters',
-        #                         self.protocol.dynamic_log.get_dataframe())
+        self.dc.add_data_source('stimulus', 'dynamic_parameters',
+                                 self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
         try:
             self.position_estimator.reset()
+            self.position_estimator.log.reset()
         except AttributeError:
             pass
 

@@ -156,7 +156,8 @@ class MovingSeamlessStimulus(PainterStimulus,
 
         image_centre = (imw / 2, imh / 2)
 
-        cx = self.x - np.floor(self.x / imw) * imw
+        cx = self.x/mm_px - np.floor(
+             self.x/mm_px / imw) * imw
         cy = -self.y/mm_px - np.floor(
             -(self.y/mm_px) / imh) * imh
 
@@ -427,7 +428,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
         vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
         displacements = self._experiment.position_estimator.get_displacements()
-        self.x += vel_x*dt + displacements[0]
+        self.x += vel_x * dt + displacements[0]
         self.y += vel_y * dt + displacements[1]
         self.theta = displacements[2]
         self._past_t = self._elapsed
