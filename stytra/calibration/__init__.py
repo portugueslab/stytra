@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRect, QPoint
+from PyQt5.QtCore import QRect, QPoint, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 import math
 import cv2

@@ -6,7 +6,7 @@ import inspect
 import qdarkstyle
 import git
 
-from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
+
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
 from stytra.gui.control_gui import ProtocolControlWidget
@@ -19,8 +19,8 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
-from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
-from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
+
+from stytra.gui.container_windows import SimpleExperimentWindow
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
@@ -44,10 +44,9 @@ def get_default_args(func):
 
 
 class Experiment(QObject):
-    sig_calibrating = pyqtSignal()
+
     def __init__(self, directory,
                  calibrator=None,
-                 save_csv=False,
                  app=None,
                  asset_directory='',
                  debug_mode=True):
@@ -68,9 +67,9 @@ class Experiment(QObject):
         self.debug_mode = debug_mode
 
         self.directory = directory
+
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
-        print('Saving into '+self.directory )
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -93,17 +92,13 @@ class Experiment(QObject):
         self.window_display.widget_display.calibrator = self.calibrator
         self.window_display.widget_display.set_protocol_runner(self.protocol_runner)
 
-        self.widget_control = ProtocolControlWidget(display_window=self.window_display,
-                                                    experiment=self)
-
-        self.widget_control.show()
+        self.main_window = SimpleExperimentWindow(self)
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
             self.check_if_committed()
 
-        self.widget_control.reset_ROI()  # update ROI to set to new loaded size
-
+        self.main_window.show()
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -158,8 +153,6 @@ class LightsheetExperiment(Experiment):
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
-        self.chk_lightsheet = QCheckBox("Wait for lightsheet")
-        self.chk_lightsheet.setChecked(False)
 
         self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
 

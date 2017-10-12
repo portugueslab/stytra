@@ -386,7 +386,7 @@ class VRProtocol(Protocol):
                                 'moving_phase_duration': 10,
                                 'angle_between_phases': 90,
                                 'velocity': 10,
-                                'pause_duration':0}
+                                'pause_duration': 0}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])

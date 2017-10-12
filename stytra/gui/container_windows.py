@@ -1,11 +1,15 @@
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
-    QPushButton, QSplitter
+    QPushButton, QSplitter, QVBoxLayout
+
+from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
+from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
 
 import numpy as np
 import pyqtgraph as pg
 
 from stytra.gui.parameter_widgets import ParameterSpinBox
+from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
 
 class DebugLabel(QLabel):
     def __init__(self, *args, debug_on=False, **kwargs):
@@ -29,8 +33,10 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     set the stimulus display window
 
     """
-    def __init__(self, *args, display_size=(1280, 800), ROI_desc=None,  **kwargs):
+    def __init__(self, *args, display_size=(1280, 800), roi_params,  **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.roi_params = roi_params
 
         self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
                                    enableMouse=False)
@@ -38,8 +44,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box = pg.ROI(maxBounds=QRectF(0, 0, display_size[0],
                                                display_size[1]),
-                              size=ROI_desc['size'],
-                              pos=ROI_desc['pos'])
+                              size=roi_params['size'],
+                              pos=roi_params['pos'])
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
         self.view_box.addItem(self.roi_box)
@@ -49,13 +55,13 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                               display_size[1]-1), movable=False,
                                      pen=(80, 80, 80)),
                               )
+
         self.calibration_points = pg.ScatterPlotItem()
         self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10),
                                                   pen=(200, 10, 10),
                                                   fill_level=1)
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
-
 
     def display_calibration_pattern(self, calibrator,
                                     camera_resolution=(480, 640),
@@ -80,6 +86,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
 
 class ProjectorAndCalibrationWidget(QWidget):
+    sig_calibrating = pyqtSignal()
+
     def __init__(self, *args, calibrator, **kwargs):
         """ Instantiate the widget that controls the display on the projector
 
@@ -89,6 +97,11 @@ class ProjectorAndCalibrationWidget(QWidget):
         """
         super().__init__(*args, **kwargs)
         self.calibrator = calibrator
+        self.container_layout = QVBoxLayout()
+
+        self.widget_proj_viewer = ProjectorViewer()
+
+        self.container_layout.addWidget()
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton('Show calibration')
@@ -102,6 +115,8 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         self.button_show_calib.clicked.connect(self.toggle_calibration)
 
+
+        # TODO move to a more reasonable place
         self.widget_view.roi_box.sigRegionChangeFinished.connect(
             self.refresh_ROI)
 
@@ -134,14 +149,12 @@ class SimpleExperimentWindow(QMainWindow):
         self.experiment = experiment
 
         self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
-        self.win_display = self.experiment.win_display
-
-        if self.win_display:
-            self.proj_viewer = ProjectorViewer()
 
         self.button_metadata = QPushButton('Edit metadata')
         self.button_metadata.clicked.connect(
             self.experiment.metadata.show_metadata_gui)
+
+        self.widget_projection = ProjectorAndCalibrationWidget(experiment.calibrator)
 
 
 
@@ -174,3 +187,9 @@ class VRExperimentWindow(SimpleExperimentWindow):
         self.main_layout.addWidget(self.monitoring_widget)
         self.main_layout.addWidget(self.controls_widget)
         self.setCentralWidget(self.main_layout)
+
+
+class LightsheetGUI(SimpleExperimentWindow):
+    def init_ui(self):
+        self.chk_lightsheet = QCheckBox("Wait for lightsheet")
+        self.chk_lightsheet.setChecked(False)
