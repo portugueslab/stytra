@@ -129,3 +129,27 @@ class LSTMLocationEstimator:
         return np.concatenate([displacement[-1, :2]/self.px_per_mm,
                                displacement[-1, 2:3]])
 
+
+class SimulatedLocationEstimator:
+    def __init__(self, bouts):
+        self.bouts = bouts
+        self.start_t = None
+        self.i_bout = 0
+        self.past_theta = 0
+        self.next_bout = self.bouts[0]
+
+    def get_displacements(self):
+        if self.start_t is None:
+            self.start_t = datetime.datetime.now()
+
+        dt = (datetime.datetime.now()-self.start_t).total_seconds()
+        if self.i_bout< len(self.bouts) and dt > self.bouts[self.i_bout].t:
+            this_bout = self.bouts[self.i_bout]
+            self.past_theta = self.past_theta+this_bout.theta
+            self.i_bout +=1
+            return np.array([this_bout.dx, this_bout.dy,
+                            self.past_theta])
+        else:
+            return np.array(0, 0, self.past_theta)
+
+
