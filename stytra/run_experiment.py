@@ -1,5 +1,6 @@
 import argparse
-from stytra import TailTrackingExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
+from stytra import TailTrackingExperiment, Experiment, LightsheetExperiment,\
+    MovementRecordingExperiment, SimulatedVRExperiment
 import stytra.stimulation.protocols as prot
 
 from PyQt5.QtWidgets import QApplication
@@ -17,6 +18,8 @@ if __name__ == '__main__':
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--vr',
+                        action='store_true')
+    parser.add_argument('--sim-vr',
                         action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
@@ -47,7 +50,10 @@ if __name__ == '__main__':
 
     bases = []
 
-    if args.tail_tracking:
+    if args.sim_vr:
+        bases.append(SimulatedVRExperiment)
+
+    elif args.tail_tracking:
         bases.append(TailTrackingExperiment)
         class_kwargs['video_file'] = args.video_file
         class_kwargs['tracking_method_parameters'] = dict(n_segments=11,

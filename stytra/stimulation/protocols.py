@@ -311,17 +311,21 @@ class VisualCodingProtocol(Protocol):
 
 class VRProtocol(Protocol):
     name='VR protocol'
+
+    # For fish
+
     def __init__(self, *args, background_image='underwater_caustics.jpg',
-                 velocities=((10, 0, 0),
-                             (20, 10, 0),
-                             (20, 0, 10),
-                             (20, -10, 0),
-                             (20, 0, -10),
-                             (10, 0, 0),
-                             (20, 10, 0),
-                             (20, 0, 10),
-                             (20, -10, 0),
-                             (20, 0, -10)),
+                 velocities=[
+                     (10, 0, 0),
+                     (20, 10, 0),
+                     (20, 0, 10),
+                     (20, -10, 0),
+                     (20, 0, -10),
+                     (10, 0, 0),
+                     (20, 10, 0),
+                     (20, 0, 10),
+                     (20, -10, 0),
+                     (20, 0, -10)],
                  **kwargs):
         full_t = 0
         motion = []
@@ -334,7 +338,7 @@ class VRProtocol(Protocol):
 
         stimuli = [
             VRMotionStimulus(background=background_image, motion=motion,
-                             duration=motion.t.iat[-1])
+                             duration=full_t)
         ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
 

@@ -19,7 +19,7 @@ from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
 from multiprocessing import Queue, Event
 from stytra.stimulation import Protocol
 
-from stytra.stimulation.closed_loop import LSTMLocationEstimator
+from stytra.stimulation.closed_loop import LSTMLocationEstimator, SimulatedLocationEstimator
 from stytra.stimulation.protocols import VRProtocol, ReafferenceProtocol
 
 from PyQt5.QtCore import QTimer, pyqtSignal
@@ -27,7 +27,7 @@ from PyQt5.QtWidgets import QCheckBox
 from stytra.metadata import MetadataCamera
 import sys
 
-
+from collections import namedtuple
 
 import traceback
 
@@ -449,6 +449,42 @@ class TailTrackingExperiment(CameraExperiment):
         self.finished_sig.set()
         self.camera.terminate()
         self.frame_dispatcher.terminate()
+
+
+class SimulatedVRExperiment(Experiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
+        bouts = [
+            BoutTuple(4, 5, 1, 0),
+            BoutTuple(10, 0, 0, -np.pi/2),
+            BoutTuple(12, 5, 1, 0),
+            BoutTuple(18, 0, 0, np.pi/2),
+            BoutTuple(20, 5, 1, 0)
+        ]
+        self.set_protocol(VRProtocol(experiment=self,
+                                     background_image='arrow.png',
+                                     velocities=[
+                                     (8, 0, 5),
+                                     (8, 5, 0),
+                                     (8, 0, 5)]
+                                     ))
+        self.position_estimator = SimulatedLocationEstimator(bouts)
+        self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,
+                                                   n_points=1000)
+        self.main_layoutiem = QSplitter()
+        self.main_layoutiem.addWidget(self.position_plot)
+        self.main_layoutiem.addWidget(self.widget_control)
+        self.setCentralWidget(self.main_layoutiem)
+
+        self.gui_refresh_timer = QTimer()
+        self.gui_refresh_timer.setSingleShot(False)
+        self.gui_refresh_timer.start()
+        self.gui_refresh_timer.timeout.connect(self.position_plot.update)
+
+    def end_protocol(self, do_not_save=None):
+        super().end_protocol(do_not_save)
+        self.position_estimator.reset()
 
 
 class MovementRecordingExperiment(CameraExperiment):
