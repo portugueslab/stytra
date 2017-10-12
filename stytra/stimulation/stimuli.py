@@ -421,7 +421,8 @@ class VRMotionStimulus(SeamlessImageStimulus,
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
-        self.dynamic_parameters = ['x', 'y', 'theta']
+        self.dynamic_parameters = ['x', 'y', 'theta', 'dv']
+        self.dv = 0
         self._past_t = 0
 
     def update(self):
@@ -432,8 +433,12 @@ class VRMotionStimulus(SeamlessImageStimulus,
         displacements = self._experiment.position_estimator.get_displacements()
         dxy = rot_mat(-self.theta+np.pi/2) @ displacements[:2]
 
-        self.x += vel_x * dt - dxy[0]
-        self.y -= vel_y * dt - dxy[1] # negative because the QPainter origin is
+        dvx = vel_x * dt - dxy[0]
+        dvy = vel_y * dt - dxy[1]
+        self.dv = np.sqrt(dvx**2+dvy**2)
+
+        self.x += dvx
+        self.y -= dvy # negative because the QPainter origin is
         # on the upper right
         self.theta = -displacements[2]
         self._past_t = self._elapsed

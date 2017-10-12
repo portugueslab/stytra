@@ -441,6 +441,7 @@ class TailTrackingExperiment(CameraExperiment):
             self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
             self.stream_plot.add_stream(self.position_estimator.log,
                                         self.position_estimator.log.header_list[1:])
+            self.stream_plot.add_stream(self.protocol.dynamic_log, ['dv'])
 
 
     def excepthook(self, exctype, value, tb):

@@ -106,8 +106,8 @@ class CameraTailSelection(CameraViewWidget):
         self.label = pg.TextItem('Select tail of the fish:')
 
         if not roi_dict:  # use input dictionary
-            roi_dict = {'start_y': 320, 'start_x': 480,
-                        'tail_length_y': 0, 'tail_length_x': -400}
+            roi_dict = {'start_y': 242, 'start_x': 413,
+                        'tail_length_y': 0, 'tail_length_x': -190}
         self.roi_dict = roi_dict
 
         # Draw ROI for tail selection:

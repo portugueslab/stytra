@@ -1,6 +1,6 @@
 import numpy as np
 from stytra.tracking import QueueDataAccumulator
-#from keras.models import load_model
+from keras.models import load_model
 from bouter.kinematic_features import velocities_to_coordinates
 from bouter.angles import smooth_tail_angles_series, reduce_to_pi
 import datetime
@@ -126,7 +126,7 @@ class LSTMLocationEstimator:
                                   ))
         self.processed_index = current_index
 
-        return np.array([displacement[-1, 1]/self.px_per_mm, displacement[-1, 0]/self.px_per_mm,
+        return np.array([displacement[-1,0]/self.px_per_mm, displacement[-1, 1]/self.px_per_mm,
                                displacement[-1, 2:3]])
 
 

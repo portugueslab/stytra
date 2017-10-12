@@ -126,7 +126,6 @@ class Protocol(QObject):
         if isinstance(self.current_stimulus, DynamicStimulus):
             self.dynamic_log.update_list((self.t,) + \
                 self.current_stimulus.get_dynamic_state())
-            print(self.dynamic_log.stored_data[-1])
 
     def reset(self):
         self.t_start = None
