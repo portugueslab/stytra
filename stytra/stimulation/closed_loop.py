@@ -122,7 +122,7 @@ class LSTMLocationEstimator:
                                   Y[-1, 2],
                                   tail[-1, 0],
                                   tail[-1, 9],
-                                    displacement[-1, 2]
+                                  displacement[-1, 2]
                                   ))
         self.processed_index = current_index
 
