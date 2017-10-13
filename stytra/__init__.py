@@ -455,18 +455,22 @@ class SimulatedVRExperiment(Experiment):
         super().__init__(*args, **kwargs)
         BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
         bouts = [
-            BoutTuple(4, 5, 1, 0),
-            BoutTuple(10, 0, 0, -np.pi/2),
-            BoutTuple(12, 5, 1, 0),
-            BoutTuple(18, 0, 0, np.pi/2),
-            BoutTuple(20, 5, 1, 0)
+            BoutTuple(5, 5, 1, 0),
+            BoutTuple(15, 0, 0, np.pi/4),
+            BoutTuple(16, 10, 1, 0),
+            BoutTuple(25, 0, 0, np.pi/4),
+            BoutTuple(26, 10, 1, 0),
+            BoutTuple(36, 0, 0, np.pi / 4),
+            BoutTuple(36, 10, 1, 0)
         ]
         self.set_protocol(VRProtocol(experiment=self,
-                                     background_image='arrow.png',
-                                     velocities=[
-                                     (8, 0, 5),
-                                     (8, 5, 0),
-                                     (8, 0, 5)]
+                                     background_images=['arrow.png'],
+                                     initial_angle=np.pi/2,
+                                     delta_angle=np.pi/4,
+                                     n_velocities=5,
+                                     velocity_duration=10,
+                                     velocity_mean=10,
+                                     velocity_std=0
                                      ))
         self.position_estimator = SimulatedLocationEstimator(bouts)
         self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,

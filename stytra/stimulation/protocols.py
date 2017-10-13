@@ -318,6 +318,8 @@ class VRProtocol(Protocol):
                                                  'checkerboard.jpg',
                                                  'underwater_caustics.jpg'),
                  n_velocities=200,
+                 initial_angle=0,
+                 delta_angle = None,
                  velocity_duration=15,
                  velocity_mean=10,
                  velocity_std=5,
@@ -325,8 +327,11 @@ class VRProtocol(Protocol):
         full_t = 0
         motion = []
         dt = velocity_duration
+        angle = initial_angle
         for i in range(n_velocities):
-            angle = np.random.uniform(0, 2*np.pi)
+            if delta_angle is None:
+                angle = np.random.uniform(0, 2*np.pi)
+
             vel = np.maximum(np.random.randn(1)*velocity_std+velocity_mean, 0)[0]
             vy = np.sin(angle)*vel
             vx = np.cos(angle)*vel
@@ -334,6 +339,8 @@ class VRProtocol(Protocol):
             motion.append([full_t, vx, vy])
             motion.append([full_t+dt, vx, vy])
             full_t += dt
+            if delta_angle is not None:
+                angle += delta_angle
 
         motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
         print(motion)
@@ -344,4 +351,3 @@ class VRProtocol(Protocol):
             for bgim in background_images
         ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
-
