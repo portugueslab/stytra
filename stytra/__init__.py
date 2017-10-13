@@ -92,8 +92,8 @@ class Experiment(QMainWindow):
         self.asset_folder = asset_directory
 
         self.debug_mode = debug_mode
-        if not self.debug_mode:
-            self.check_if_committed()
+        #if not self.debug_mode:
+            #self.check_if_committed()
 
         self.window_display = StimulusDisplayWindow(experiment=self)
         self.widget_control = ProtocolControlWindow(self.window_display,
@@ -195,9 +195,7 @@ class Experiment(QMainWindow):
         git_hash = repo.head.object.hexsha
         self.dc.add_data_source('general', 'git_hash', git_hash)
         self.dc.add_data_source('general', 'program_name', __file__)
-
-        if len(repo.git.diff('HEAD~1..HEAD',
-                             name_only=True)) > 0:
+        if len(repo.git.diff("HEAD")) > 0:
             print('The following files contain uncommitted changes:')
             print(repo.git.diff('HEAD~1..HEAD', name_only=True))
             raise PermissionError(

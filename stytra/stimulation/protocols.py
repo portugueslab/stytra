@@ -314,9 +314,11 @@ class VRProtocol(Protocol):
 
     # For fish
 
-    def __init__(self, *args, background_image='SeamlessRocks.jpg',
-                 n_velocities=120,
-                 velocity_duration=20,
+    def __init__(self, *args, background_images=('SeamlessRocks.jpg',
+                                                 'checkerboard.jpg',
+                                                 'underwater_caustics.jpg'),
+                 n_velocities=200,
+                 velocity_duration=15,
                  velocity_mean=10,
                  velocity_std=5,
                  **kwargs):
@@ -335,13 +337,11 @@ class VRProtocol(Protocol):
 
         motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
         print(motion)
+
         stimuli = [
-            VRMotionStimulus(background='checkerboard.jpg', motion=motion,
-                             duration=full_t),
-            VRMotionStimulus(background='SeamlessRocks.jpg', motion=motion,
-                             duration=full_t),
-            VRMotionStimulus(background='underwater_caustics.jpg', motion=motion,
+            VRMotionStimulus(background=bgim, motion=motion,
                              duration=full_t)
+            for bgim in background_images
         ]
         super().__init__(*args, stimuli=stimuli, **kwargs)
 
