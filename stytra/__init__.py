@@ -418,7 +418,6 @@ class TailTrackingExperiment(CameraExperiment):
                                 self.data_acc_tailpoints.get_dataframe())
         self.dc.add_data_source('behaviour', 'vr',
                                 self.position_estimator.log.get_dataframe())
-        # temporary removal of dynamic log as it is not correct
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
                                  self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
@@ -455,24 +454,27 @@ class SimulatedVRExperiment(Experiment):
         super().__init__(*args, **kwargs)
         BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
         bouts = [
-            BoutTuple(5, 5, 1, 0),
-            BoutTuple(15, 0, 0, np.pi/4),
-            BoutTuple(16, 10, 1, 0),
-            BoutTuple(25, 0, 0, np.pi/4),
-            BoutTuple(26, 10, 1, 0),
-            BoutTuple(36, 0, 0, np.pi / 4),
-            BoutTuple(36, 10, 1, 0)
+            BoutTuple(2, 5, 1, 0),
+            BoutTuple(6, 0, 0, np.pi/4),
+            BoutTuple(7, 10, 1, 0),
+            BoutTuple(10, 0, 0, np.pi/4),
+            BoutTuple(11, 10, 1, 0),
+            BoutTuple(14, 0, 0, np.pi / 4),
+            BoutTuple(15, 10, 1, 0),
+            BoutTuple(18, 0, 0, np.pi / 4),
+            BoutTuple(19, 10, 1, 0)
         ]
         self.set_protocol(VRProtocol(experiment=self,
                                      background_images=['arrow.png'],
                                      initial_angle=np.pi/2,
                                      delta_angle=np.pi/4,
                                      n_velocities=5,
-                                     velocity_duration=10,
+                                     velocity_duration=4,
                                      velocity_mean=10,
                                      velocity_std=0
                                      ))
         self.position_estimator = SimulatedLocationEstimator(bouts)
+
         self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,
                                                    n_points=1000)
         self.main_layoutiem = QSplitter()
@@ -486,7 +488,10 @@ class SimulatedVRExperiment(Experiment):
         self.gui_refresh_timer.timeout.connect(self.position_plot.update)
 
     def end_protocol(self, do_not_save=None):
+        self.dc.add_data_source('stimulus', 'dynamic_parameters',
+                                self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(do_not_save)
+
         self.position_estimator.reset()
 
 

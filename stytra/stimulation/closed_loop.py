@@ -148,7 +148,7 @@ class SimulatedLocationEstimator:
         if self.i_bout < len(self.bouts) and dt > self.bouts[self.i_bout].t:
             this_bout = self.bouts[self.i_bout]
             print(this_bout)
-            delta =  rot_mat(self.past_theta) @ np.array([this_bout.dx, this_bout.dy])
+            delta = rot_mat(self.past_theta) @ np.array([this_bout.dx, this_bout.dy])
             self.current_coordinates += delta
             print(self.current_coordinates)
             self.past_theta = self.past_theta+this_bout.theta
