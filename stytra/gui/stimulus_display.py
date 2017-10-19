@@ -7,13 +7,15 @@ from stytra.collectors import HasPyQtGraphParams
 
 
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, protocol_runner, calibrator, **kwargs):
         """ Make a display window for a visual simulation protocol,
         with a display area that can be controlled and changed from a ProtocolControlWindow
         """
-        super().__init__(name='stimulus_display_params', *args, **kwargs)
-
-        self.widget_display = GLStimDisplay(self)
+        super().__init__(name='stimulus_display_params', **kwargs)
+        self.setWindowTitle('Stytra stimulus display')
+        self.widget_display = GLStimDisplay(self,
+                                            protocol_runner=protocol_runner,
+                                            calibrator=calibrator)
         self.widget_display.setMaximumSize(2000, 2000)
 
         # self.params.setName()
@@ -21,38 +23,28 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
                                  {'name': 'size', 'value': (400, 400), 'visible': False}])
 
         self.setStyleSheet('background-color:black;')
+        self.params.sigTreeStateChanged.connect(self.set_dims)
 
-    def set_dims(self, pos, size):
-        self.widget_display.setGeometry(*(pos+size))
-        self.params['pos'] = pos
-        self.params['size'] = size
+    def set_dims(self):
+        self.widget_display.setGeometry(*(self.params['pos']+self.params['size']))
 
     def set_protocol(self, protocol):
         self.widget_display.set_protocol_runner(protocol)
 
 
 class GLStimDisplay(QOpenGLWidget):
-    def __init__(self,  *args):
+    def __init__(self,  *args, protocol_runner, calibrator):
         super().__init__(*args)
         self.img = None
         self.calibrating = False
-        self.calibrator = None
+        self.calibrator = calibrator
         self.dims = None
 
-        self.protocol_runner = None
-
-        self.n_fps_frames = 10
-        self.i_fps = 0
-        self.previous_time_fps = None
-        self.current_framerate = None
-        self.print_framerate = True
+        self.protocol_runner = protocol_runner
+        self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
-
-    def set_protocol_runner(self, protocol_runner):
-        self.protocol_runner = protocol_runner
-        self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
     def paintEvent(self, QPaintEvent):
         p = QPainter(self)
@@ -70,23 +62,10 @@ class GLStimDisplay(QOpenGLWidget):
 
         if self.calibrator is not None and self.calibrator.enabled:
             self.calibrator.make_calibration_pattern(p, h, w)
+
         p.end()
-        pass
+
 
     def display_stimulus(self):
         self.dims = (self.height(), self.width())
-
-        self.update_framerate()
         self.update()
-
-    def update_framerate(self):
-        if self.i_fps == self.n_fps_frames - 1:
-            self.current_time = datetime.now()
-            if self.previous_time_fps is not None:
-                self.current_framerate = self.n_fps_frames / (
-                    self.current_time - self.previous_time_fps).total_seconds()
-                # if self.print_framerate:
-                #     print('{:.2f} FPS'.format(self.current_framerate))
-
-            self.previous_time_fps = self.current_time
-        self.i_fps = (self.i_fps + 1) % self.n_fps_frames

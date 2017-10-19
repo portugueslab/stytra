@@ -9,14 +9,15 @@ import git
 
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
-from stytra.gui.control_gui import ProtocolControlWidget
-from stytra.gui.display_gui import StimulusDisplayWindow
+from stytra.gui.protocol_control import ProtocolControlWidget
+from stytra.gui.stimulus_display import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
 from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 
 # imports for tracking
-from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
+from stytra.hardware.video import XimeaCamera, VideoFileSource
+from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
 
@@ -29,7 +30,6 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator,\
     LSTMLocationEstimator
 
 # imports for moving detector
-from stytra.hardware.video import MovingFrameDispatcher
 from stytra.dbconn import put_experiment_in_db
 
 
@@ -88,17 +88,16 @@ class Experiment(QObject):
         self.dc.add_data_source(self.metadata)
 
         # Projector window and experiment control GUI
-        self.window_display = StimulusDisplayWindow()
-        self.window_display.widget_display.calibrator = self.calibrator
-        self.window_display.widget_display.set_protocol_runner(self.protocol_runner)
+        self.window_display = StimulusDisplayWindow(self.protocol_runner,
+                                                    self.calibrator)
 
-        self.main_window = SimpleExperimentWindow(self)
+        self.window_main = SimpleExperimentWindow(self)
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
             self.check_if_committed()
 
-        self.main_window.show()
+        self.window_main.show()
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -133,16 +132,18 @@ class Experiment(QObject):
     def start_protocol(self):
         self.protocol_runner.start()
 
-    def end_protocol(self, do_not_save=None):
+    def end_protocol(self, save=True):
         self.protocol_runner.end()
-        if not do_not_save and not self.debug_mode:
-            self.dc.save(save_csv=False)
-            # put_experiment_in_db(self.dc.get_clean_dict())
+
+        if save:
+            self.dc.save()
+            if not self.debug_mode:
+                put_experiment_in_db(self.dc.get_clean_dict())
         self.protocol_runner.reset()
 
-    def closeEvent(self, *args, **kwargs):
+    def wrap_up(self, *args, **kwargs):
         if self.protocol_runner is not None:
-            self.end_protocol(do_not_save=True)
+            self.end_protocol(save=False)
         self.app.closeAllWindows()
 
 
@@ -213,8 +214,8 @@ class CameraExperiment(Experiment):
             self.frame_dispatcher.start()
         sys.excepthook = self.excepthook
 
-    def closeEvent(self, *args, **kwargs):
-        super().closeEvent(*args, **kwargs)
+    def wrap_up(self, *args, **kwargs):
+        super().wrap_up(*args, **kwargs)
         self.finished_sig.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
@@ -295,24 +296,7 @@ class TailTrackingExperiment(CameraExperiment):
                                                             lstm_name,
                                                             **motion_estimation_parameters)
 
-        self.main_layout = QSplitter()
-        self.monitoring_widget = QWidget()
-        self.monitoring_layout = QVBoxLayout()
-        self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        self.stream_plot = MultiStreamPlot()
-
-        self.monitoring_layout.addWidget(self.stream_plot)
-        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-
-        self.stream_plot.add_stream(self.data_acc_tailpoints,
-                                    ['tail_sum', 'theta_01'])
-
-        self.main_layout.addWidget(self.monitoring_widget)
-        self.main_layout.addWidget(self.widget_control)
-        self.setCentralWidget(self.main_layout)
-
-        self.positionPlot = None
 
         self.go_live()
 
@@ -353,13 +337,7 @@ class MovementRecordingExperiment(CameraExperiment):
     """
     def __init__(self, *args, **kwargs):
         self.framestart_queue = Queue()
-        self.splitter = QSplitter()
-        self.camera_view = CameraViewCalib(camera_queue=self.gui_frame_queue,
-                                           update_timer=self.gui_refresh_timer,
-                                           control_queue=self.control_queue,
-                                           camera_parameters=self.metadata_camera)
         super().__init__(*args, **kwargs)
-        self.calibrator = CircleCalibrator()
 
         self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
                                                       self.gui_frame_queue,

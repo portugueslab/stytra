@@ -32,13 +32,9 @@ class ProtocolControlWidget(QWidget):
     sig_closing = pyqtSignal()
 
     def __init__(self, experiment=None, *args):
-        # TODO passing the experiment may overcome the necessity of the other parameters
         """
         Widget for controlling the stimulation.
         :param app: Qt5 app
-        :param protocol: Protocol object with the stimulus
-        :param display_window: ProjectorViewer object for the projector
-        :param protocol_runner: ProtocolRunner object with the stimuli
         :param experiment: Experiment object
         """
         super().__init__(*args)
@@ -68,10 +64,14 @@ class ProtocolControlWidget(QWidget):
         self.layout_run.addWidget(self.progress_bar)
 
         self.button_toggle_prot.clicked.connect(self.toggle_protocol_running)
+        if self.protocol_runner.protocol is None:
+            self.button_toggle_prot.setEnabled(False)
         self.combo_prot.currentIndexChanged.connect(self.set_protocol)
 
         self.timer = None
         self.layout = QVBoxLayout()
+
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.layout.addLayout(self.layout_run)
         self.layout.addLayout(self.layout_choose)
@@ -89,15 +89,11 @@ class ProtocolControlWidget(QWidget):
 
     def toggle_protocol_running(self):
         # Start/stop the protocol:
-        if self.protocol_runner.running:
-            self.experiment.end_protocol()
-        else:
+        if not self.protocol_runner.running:
             self.experiment.start_protocol()
-
-        # swap the symbol: #TODO still buggy!
-        if self.button_toggle_prot.text() == "▶":
             self.button_toggle_prot.setText("■")
         else:
+            self.experiment.end_protocol()
             self.button_toggle_prot.setText("▶")
 
     def update_stim_duration(self):
@@ -117,4 +113,4 @@ class ProtocolControlWidget(QWidget):
             self.combo_prot.currentText()]
         protocol = Protclass()
         self.protocol_runner.set_new_protocol(protocol)
-        self.reconfigure_ui()
+        self.button_toggle_prot.setEnabled(True)

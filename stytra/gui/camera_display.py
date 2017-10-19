@@ -81,7 +81,6 @@ class CameraViewWidget(QWidget):
             except Empty:
                 break
         if im_in is not None:
-            #print('get frame!')
             self.image_item.setImage(self.modify_frame(im_in))
 
     def save_image(self):

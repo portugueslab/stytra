@@ -9,12 +9,13 @@ from stytra.stimulation import ProtocolRunner
 from stytra.stimulation.backgrounds import noise_background, poisson_disk_background, existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.gui import control_gui, display_gui, camera_display
+from stytra.gui import protocol_control, stimulus_display, camera_display
 import stytra.calibration as calibration
 import stytra.metadata as metadata
 from stytra.metadata.metalist_gui import MetaListGui
 from paramqt import ParameterGui
-from stytra.hardware.video import XimeaCamera, MovingFrameDispatcher, VideoWriter
+from stytra.hardware.video import XimeaCamera, VideoWriter
+from stytra import MovingFrameDispatcher
 from stytra.tracking import FishTrackingProcess
 from multiprocessing import Queue, Event, SimpleQueue
 from queue import Empty
@@ -145,7 +146,7 @@ class Experiment(QMainWindow):
                                      self.record_queue, finished_signal=self.finished_sig)
 
         self.calibrator = calibration.CircleCalibrator(dh=50)
-        self.win_stim_disp = display_gui.StimulusDisplayWindow(self.protocol)
+        self.win_stim_disp = stimulus_display.StimulusDisplayWindow(self.protocol)
         self.win_stim_disp.widget_display.calibration = self.calibrator
 
         self.main_layout = QSplitter(Qt.Horizontal)
@@ -157,7 +158,7 @@ class Experiment(QMainWindow):
                                                           camera_parameters=self.camera_parameters)
         self.main_layout.addWidget(self.camera_view)
 
-        self.win_control = control_gui.ProtocolControlWidget(app, self.protocol, self.win_stim_disp)
+        self.win_control = protocol_control.ProtocolControlWidget(app, self.protocol, self.win_stim_disp)
         self.win_control.refresh_ROI()
         self.win_control.button_show_calib.clicked.connect(self.config_cam_calib)
         self.main_layout.addWidget(self.win_control)
