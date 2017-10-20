@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
 
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib
+from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib, CameraViewWidget
 
 import numpy as np
 import pyqtgraph as pg
@@ -158,17 +158,33 @@ class SimpleExperimentWindow(QMainWindow):
         self.button_metadata.clicked.connect(
             self.experiment.metadata.show_metadata_gui)
 
-        self.setCentralWidget(QWidget())
-        self.centralWidget().setLayout(QVBoxLayout())
-        self.centralWidget().layout().addWidget(self.label_debug)
-        self.centralWidget().layout().addWidget(self.widget_projection)
-        self.centralWidget().layout().addWidget(self.widget_control)
-        self.centralWidget().layout().addWidget(self.button_metadata)
+        self.setCentralWidget(self.construct_ui())
 
-        self.show()
+
+    def construct_ui(self):
+        central_widget = QWidget()
+        central_widget.setLayout(QVBoxLayout())
+        central_widget.layout().addWidget(self.label_debug)
+        central_widget.layout().addWidget(self.widget_projection)
+        central_widget.layout().addWidget(self.widget_control)
+        central_widget.layout().addWidget(self.button_metadata)
+        return central_widget
 
     def closeEvent(self, *args, **kwargs):
         self.experiment.wrap_up()
+
+
+class CameraExperimentWindow(SimpleExperimentWindow):
+    def __init__(self, *args, **kwargs):
+        self.camera_splitter = QSplitter(Qt.Vertical)
+        self.camera_display = CameraViewWidget(kwargs['experiment'])
+        super().__init__(*args, **kwargs)
+
+    def construct_ui(self):
+        previous_widget = super().construct_ui()
+        self.camera_splitter.addWidget(self.camera_display)
+        self.camera_splitter.addWidget(previous_widget)
+        return self.camera_splitter
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

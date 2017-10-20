@@ -9,7 +9,6 @@ import git
 
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
-from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.gui.stimulus_display import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
@@ -21,7 +20,7 @@ from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
 
-from stytra.gui.container_windows import SimpleExperimentWindow
+from stytra.gui.container_windows import SimpleExperimentWindow, CameraExperimentWindow
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
@@ -90,7 +89,7 @@ class Experiment(QObject):
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator)
 
-        self.window_main = SimpleExperimentWindow(self)
+        self.window_main = self.make_window()
         self.dc.add_data_source(self.metadata)
 
         # This has to happen after or version will be reset together with the rest
@@ -98,6 +97,9 @@ class Experiment(QObject):
             self.check_if_committed()
 
         self.window_main.show()
+
+    def make_window(self):
+        return SimpleExperimentWindow(self)
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -154,7 +156,6 @@ class LightsheetExperiment(Experiment):
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
-
         self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
 
         self.lightsheet_config = dict()
@@ -183,47 +184,38 @@ class CameraExperiment(Experiment):
         file for the test input
         :param kwargs:
         """
-        super().__init__(*args, **kwargs)
-        self.frame_queue = Queue(500)
-        self.gui_frame_queue = Queue()
-        self.finished_sig = Event()
-
-        self.gui_refresh_timer = QTimer()
-        self.gui_refresh_timer.setSingleShot(False)
-
-        self.metadata_camera = MetadataCamera()
-        self.dc.add_data_source(self.metadata_camera)
-
         if video_file is None:
-            self.control_queue = Queue()
-            self.camera = XimeaCamera(self.frame_queue,
-                                      self.finished_sig,
-                                      self.control_queue)
+            self.camera = XimeaCamera()
         else:
-            self.control_queue = None
-            self.camera = VideoFileSource(self.frame_queue,
-                                          self.finished_sig,
-                                          video_file)
+            self.camera = VideoFileSource(video_file)
 
-        self.frame_dispatcher = None
+        self.gui_timer = QTimer()
+        self.gui_timer.setSingleShot(False)
+
+        super().__init__(*args, **kwargs)
+        self.go_live()
+
+    def make_window(self):
+        return CameraExperimentWindow(experiment=self)
 
     def go_live(self):
         self.camera.start()
-        self.gui_refresh_timer.start(1000//60)
-        if self.frame_dispatcher is not None:
-            self.frame_dispatcher.start()
+        self.gui_timer.start(1000 // 60)
         sys.excepthook = self.excepthook
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
-        self.finished_sig.set()
+        self.camera.kill_signal.set()
         # self.camera.join(timeout=1)
         self.camera.terminate()
         print('Camera process terminated')
-        if self.frame_dispatcher is not None:
-            self.frame_dispatcher.terminate()
-            print('Frame dispatcher terminated')
-        self.gui_refresh_timer.stop()
+        self.gui_timer.stop()
+
+    def excepthook(self, exctype, value, tb):
+        traceback.print_tb(tb)
+        print('{0}: {1}'.format(exctype, value))
+        self.camera.kill_signal.set()
+        self.camera.terminate()
 
 
 class TailTrackingExperiment(CameraExperiment):
@@ -273,7 +265,7 @@ class TailTrackingExperiment(CameraExperiment):
             tail_start_points_queue=self.processing_parameter_queue,
             camera_queue=self.gui_frame_queue,
             tail_position_data=self.data_acc_tailpoints,
-            update_timer=self.gui_refresh_timer,
+            update_timer=self.gui_timer,
             control_queue=self.control_queue,
             camera_parameters=self.metadata_camera,
             tracking_params=current_tracking_method_parameters)
@@ -285,7 +277,7 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        self.gui_refresh_timer.timeout.connect(
+        self.gui_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
 
         if motion_estimation == 'LSTM':

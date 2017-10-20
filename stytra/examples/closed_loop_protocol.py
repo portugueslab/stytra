@@ -32,8 +32,8 @@ class ClosedLoopExperiment(TailTrackingExperiment, LightsheetExperiment):
         self.fish_velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_var='fish_velocity',
                                                       xlink=self.tail_stream_plot.streamplot, y_range=(0, 5))
 
-        self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)
-        self.gui_refresh_timer.timeout.connect(self.fish_velocity_plot.update)
+        self.gui_timer.timeout.connect(self.velocity_plot.update)
+        self.gui_timer.timeout.connect(self.fish_velocity_plot.update)
         self.behaviour_layout.addWidget(self.velocity_plot)
         self.behaviour_layout.addWidget(self.fish_velocity_plot)
         self.show()

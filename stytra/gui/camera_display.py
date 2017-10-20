@@ -5,20 +5,20 @@ import pyqtgraph as pg
 from queue import Empty
 import numpy as np
 from paramqt import ParameterGui
-from stytra.tracking.diagnostics import draw_fish_angles_ls
-
+from multiprocessing import Queue
+from skimage.io import imsave
 
 class CameraViewWidget(QWidget):
-    def __init__(self, camera_queue, control_queue=None, camera_rotation=0,
-                 camera_parameters=None, update_timer=None):
+    def __init__(self, experiment):
         """
         A widget to show the camera and display the controls
-        :param camera_queue: queue dispatching frames to display
-        :param control_queue: queue with controls for the camera
-        :param camera_rotation:
+        :param experiment: experiment to which this belongs
+        :param camera: the camera object
         """
 
         super().__init__()
+
+        self.gui_frame_queue = Queue()
         self.camera_display_widget = pg.GraphicsLayoutWidget()
 
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
@@ -30,28 +30,33 @@ class CameraViewWidget(QWidget):
         self.image_item.setImage(np.zeros((640, 480), dtype=np.uint8))
         self.display_area.addItem(self.image_item)
 
-        self.camera_queue = camera_queue
-        self.control_queue = control_queue
-        self.camera_rotation = camera_rotation
-        self.update_timer = update_timer
-        self.update_timer.timeout.connect(self.update_image)
-        self.centre = np.array([0, 0])
+        self.experiment = experiment
+        self.camera = experiment.camera
+
+        self.frame_queue = self.camera.frame_queue
+        self.control_queue = self.camera.control_queue
+        self.camera_rotation = self.camera.rotation
+        experiment.gui_timer.timeout.connect(self.update_image)
 
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.layout.addWidget(self.camera_display_widget)
-        if control_queue is not None:
-            self.camera_parameters = camera_parameters
-            self.control_widget = ParameterGui(self.camera_parameters)
-            self.layout.addWidget(self.control_widget)
-            for control in self.control_widget.parameter_controls:
-                control.control_widget.valueChanged.connect(self.update_controls)
-            self.control_queue = control_queue
-            self.control_queue.put(self.camera_parameters.get_param_dict())
+        if self.control_queue is not None:
+            try:
+                self.camera_parameters = self.camera.camera_parameters
+                self.control_widget = ParameterGui(self.camera_parameters)
+                self.layout.addWidget(self.control_widget)
+                for control in self.control_widget.parameter_controls:
+                    control.control_widget.valueChanged.connect(self.update_controls)
+                self.control_queue.put(self.camera_parameters.get_param_dict())
+            except AttributeError:
+                pass
 
         self.captureButton = QPushButton('Capture frame')
         self.captureButton.clicked.connect(self.save_image)
         self.layout.addWidget(self.captureButton)
+        self.current_image = None
 
         self.setLayout(self.layout)
 
@@ -59,33 +64,27 @@ class CameraViewWidget(QWidget):
         self.control_widget.save_meta()
         self.control_queue.put(self.camera_parameters.get_param_dict())
 
-    def modify_frame(self, frame):
-        return frame
-
     def update_image(self):
         im_in = None
         first = True
         while True:
             try:
                 if first:
-                    time, im_in = self.camera_queue.get(timeout=0.001)
+                    time, self.current_image = self.camera.frame_queue.get(timeout=0.001)
                     first = False
                 else:
                     _, _ = self.camera_queue.get(timeout=0.001)
 
                 if self.camera_rotation >= 1:
-                    im_in = np.rot90(im_in, k=self.camera_rotation)
-
-                self.centre = np.array(im_in.shape[::-1])/2
+                    self.current_image = np.rot90(self.current_image, k=self.camera_rotation)
 
             except Empty:
                 break
-        if im_in is not None:
-            self.image_item.setImage(self.modify_frame(im_in))
+        if self.current_image is not None:
+            self.image_item.setImage(self.current_image)
 
     def save_image(self):
-        pass
-        # TODO write saving
+        imsave(self.experiment.directory + '/img.png', self.image_item) # TODO name image with time
 
 
 class CameraTailSelection(CameraViewWidget):

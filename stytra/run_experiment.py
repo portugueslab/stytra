@@ -1,5 +1,5 @@
 import argparse
-from stytra import TailTrackingExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
 import stytra.stimulation.protocols as prot
 
 from PyQt5.QtWidgets import QApplication
@@ -42,7 +42,11 @@ if __name__ == '__main__':
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir)
 
-    bases = []
+    base = Experiment
+
+    if args.video_file:
+        base = CameraExperiment
+        class_kwargs['video_file'] = args.video_file
 
     # if args.tail_tracking:
     #     bases.append(TailTrackingExperiment)
@@ -64,6 +68,6 @@ if __name__ == '__main__':
     #     bases.append(Experiment)
 
     #ExpClass = type('exp_class', tuple(bases), dict())
-    exp = Experiment(**class_kwargs)
+    exp = base(**class_kwargs)
     exp.show_stimulus_screen(full_screen=args.full_screen)
     app.exec_()
