@@ -96,7 +96,6 @@ class FishTrackingProcess(Process):
 
                     output = detect_fish_midline(frame, mask.copy(),
                                            params=self.processing_parameters)
-                    print(output)
                     self.fish_queue.put((time, output))
 
                     if self.diagnostics:
@@ -104,7 +103,6 @@ class FishTrackingProcess(Process):
                         for fish in output:
                             display = draw_fish_new(display, fish, self.processing_parameters)
                         self.diagnostic_queue.put(display)
-                        print('put display')
 
                 # calculate the framerate
                 if i_fps == n_fps_frames - 1:
@@ -117,5 +115,5 @@ class FishTrackingProcess(Process):
                 i_total += 1
 
             except Empty:
-                print('empty_queue ft')
+                pass
 

@@ -30,8 +30,6 @@ class Protocol(HasPyQtGraphParams):
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
-        print(self.params.children())
-        print(self.params.getValues())
 
     def get_stimulus_list(self):
         """Generate protocol from specified parameters

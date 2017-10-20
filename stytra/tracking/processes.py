@@ -191,10 +191,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                 if self.i == 0:
                     self.mem_use = psutil.virtual_memory().used/psutil.virtual_memory().total
                     self.gui_queue.put((current_time, current_frame)) # frame
-                    if self.current_framerate:
-                        print('processing FPS: {:.2f}, difsum is: {}, n_crossed is {}'.format(
-                            self.current_framerate, difsum, n_crossed))
+
                 self.i = (self.i + 1) % every_x
             except Empty:
-                print('empty_queue')
                 break

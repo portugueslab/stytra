@@ -52,13 +52,13 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
         self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
+        self.roi_params.sigTreeStateChanged.connect(self.set_roi)
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(QRectF(0, 0, display_size[0], display_size[1]),
                                update=True, disableAutoRange=True)
         self.view_box.addItem(pg.ROI(pos=(1, 1), size=(display_size[0]-1,
                               display_size[1]-1), movable=False,
-                                     pen=(80, 80, 80)),
-                              )
+                                     pen=(80, 80, 80)))
 
         self.calibration_points = pg.ScatterPlotItem()
         self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10),
@@ -67,9 +67,14 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
 
+    def set_roi(self):
+        self.roi_box.setPos(self.roi_params['pos'], finish=False)
+        self.roi_box.setSize(self.roi_params['size'])
+
     def set_param_val(self):
-        self.roi_params.param('size').setValue(tuple([int(p) for p in self.roi_box.size()]))
-        self.roi_params.param('pos').setValue(tuple([int(p) for p in self.roi_box.pos()]))
+        with self.roi_params.treeChangeBlocker():
+            self.roi_params.param('size').setValue(tuple([int(p) for p in self.roi_box.size()]))
+            self.roi_params.param('pos').setValue(tuple([int(p) for p in self.roi_box.pos()]))
 
     def display_calibration_pattern(self, calibrator,
                                     camera_resolution=(480, 640),

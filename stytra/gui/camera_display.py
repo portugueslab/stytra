@@ -147,7 +147,7 @@ class CameraTailSelection(CameraViewWidget):
             self.tracking_params.update(self.roi_dict)
 
         except np.linalg.LinAlgError:
-            print('not init')
+            print('tracking parameters not received yet')
         return self.tracking_params
 
     def update_image(self):

@@ -44,7 +44,6 @@ def get_default_args(func):
 
 
 class Experiment(QObject):
-
     def __init__(self, directory,
                  calibrator=None,
                  app=None,
@@ -85,13 +84,14 @@ class Experiment(QObject):
         self.metadata = Metadata()
         self.dc = DataCollector(folder_path=self.directory)
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-        self.dc.add_data_source(self.metadata)
+
 
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator)
 
         self.window_main = SimpleExperimentWindow(self)
+        self.dc.add_data_source(self.metadata)
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
