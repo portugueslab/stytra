@@ -1,7 +1,7 @@
-from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
+from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
-    SeamlessWindmillStimulus,PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, \
+    SeamlessWindmillStimulus, VRMotionStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
@@ -95,21 +95,20 @@ class FlashProtocol(Protocol):
 
 
 class Exp022Protocol(Protocol):
-    name = "exo022" \
-           " protocol"
+    name = "exp022 protocol"
 
     def __init__(self):
         super().__init__()
 
-        standard_params_dict = {'windmill_max_speed': .1,
+        standard_params_dict = {'windmill_amplitude': np.pi * 0.222,
                                 'windmill_duration': 5.,
                                 'windmill_arms_n': 8,
-                                'windmill_freq': 1.,
-                                'inter_stim_pause': 1.,
+                                'windmill_freq': 0.2,
+                                'inter_stim_pause': 5.,
                                 'grating_period': 10,
                                 'grating_vel': 10,
-                                'grating_duration': 4.,
-                                'flash_duration': 2.}
+                                'grating_duration': 5.,
+                                'flash_duration': 1.}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -118,83 +117,104 @@ class Exp022Protocol(Protocol):
         stimuli = list()
 
         # ---------------
-        # initial pause:
-        stimuli.append(Pause(duration=0.5))
-
+        # initial dark field:
+        stimuli.append(Pause(duration=self.params['inter_stim_pause']))
+        stim_color = (255, 0, 0)
         # ---------------
-        # Forward gratings of three different velocities:
-        # t = []
-        # x = []
-        # t_offset = 0  # these will be the vectors with positions and times
-        # x_offset = 0
-        # for speed_coef in [0.2, 0.5, 1]:
-        #     t.extend([t_offset,
-        #               t_offset + self.params['inter_stim_pause'],
-        #               t_offset + self.params['inter_stim_pause'] + \
-        #                             self.params['grating_duration'],
-        #               t_offset + self.params['inter_stim_pause'] * 2 + \
-        #                             self.params['grating_duration']])
-        #     x.extend([x_offset,
-        #               x_offset,
-        #               x_offset - self.params['grating_duration'] * \
-        #                  self.params['grating_vel'] * speed_coef,  # negative for backward mov
-        #               x_offset - self.params['grating_duration'] * \
-        #                  self.params['grating_vel'] * speed_coef]) # negative for backward mov
-        #     t_offset = t[-1]
-        #     x_offset = x[-1]
-        #
-        # grating_motion = pd.DataFrame(dict(t=t, x=x))
-        # stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
-        #                                        motion=grating_motion,
+        # Gratings
+        # Static gratings and three different velocities are implemented with a single
+        # grating stimulus whose positions are specified for having the forward velocities:
+        p = self.params['inter_stim_pause']
+        s = self.params['grating_duration']
+        v = self.params['grating_vel']
+        # Grating tuple: t  x  theta
+        dt_vel_tuple = [(0, 0, np.pi/2),  # set grid orientation to horizontal
+                        (p, 0, np.pi/2),
+                        (s, -0.3*v, np.pi/2),  # slow
+                        (p, 0, np.pi/2),
+                        (s, -v, np.pi/2),  # middle
+                        (p, 0, np.pi/2),
+                        (s, -3*v, np.pi/2),  # fast
+                        (p, 0, np.pi/2),
+                        (s, v, np.pi/2),  # backward
+                        (p/2, 0, np.pi/2),
+                        (0, 0, 0),  # change grid orientation to vertical
+                        (p/2, 0, 0),
+                        (s, v, 0),  # leftwards
+                        (p, 0, 0),
+                        (s, -v, 0),  # rightwards
+                        (p/2, 0, 0)
+                        ]
+
+        t = [0]
+        x = [0]
+        theta = [0]
+        for dt, vel, th in dt_vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        print(t)
+        print(x)
+        print(theta)
+
+        # stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
         #                                        grating_period=self.params['grating_period'],
-        #                                        grating_angle=np.pi/2))
-        #
-        # # ---------------
-        # # Lateral and backwards gratings:
-        # for theta in [0, np.pi/2, np.pi]:
-        #     grating_motion = pd.DataFrame(dict(t=[0,
-        #                                       self.params['inter_stim_pause'],
-        #                                       self.params['inter_stim_pause'] + \
-        #                                             self.params['grating_duration'],
-        #                                       self.params['inter_stim_pause'] * 2 + \
-        #                                             self.params['grating_duration']],
-        #                                       x=[0,
-        #                                          0,
-        #                                          self.params['grating_duration'] * \
-        #                                             self.params['grating_vel'],
-        #                                          self.params['grating_duration'] * \
-        #                                             self.params['grating_vel']]))
-        #
-        #     stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
-        #                                            motion=grating_motion,
-        #                                            grating_period=self.params['grating_period'],
-        #                                            grating_angle=theta))
+        #                                        color=stim_color))
 
         # ---------------
         # Windmill for OKR
-        # create velocity dataframe. Velocity is sinusoidal and starts from 0
-        t = np.arange(0, self.params['windmill_duration'], 0.05)
-        vel = np.sin(t * self.params['windmill_freq'])*self.params['windmill_max_speed']
-        grating_motion = pd.DataFrame(dict(t=t, theta=np.cumsum(vel)))
-        stimuli.append(SeamlessWindmillStimulus(duration=float(grating_motion.t.iat[-1]),
-                                                motion=grating_motion,
-                                                n_arms=self.params['windmill_arms_n']))
 
-        stimuli.append(SeamlessWindmillStimulus(duration=float(grating_motion.t.iat[-1]),
-                                                motion=grating_motion,
+        # create velocity dataframe. Velocity is sinusoidal and starts from 0:
+        osc_time_vect = np.arange(0, self.params['windmill_duration'], 0.04)
+        # Initial pause:
+        t = [0, p / 2]
+        theta = [self.params['windmill_amplitude']/2, ]*2  # initial pause
+
+        # CW starting OKR:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(np.cos(osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
+                     self.params['windmill_amplitude']/2)
+
+        # Middle pause:
+        t.extend([t[-1] + p])
+        theta.extend([theta[-1]])
+
+        # CCW starting OKR:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta[-1] + self.params['windmill_amplitude']/2 - \
+            np.cos(osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
+                     self.params['windmill_amplitude']/2)   # the offset avoid jumps in rotation
+
+        # Final pause:
+        t.extend([t[-1] + self.params['inter_stim_pause']])
+        theta.extend([theta[-1]])  # initial pause
+
+        print(t)
+        print(theta)
+
+        # Full field OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
+                                                n_arms=self.params['windmill_arms_n'], color=stim_color))
+        # Half-field left OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
-                                                clip_rect=(0, 0, 0.5, 1)))
-        stimuli.append(SeamlessWindmillStimulus(duration=float(grating_motion.t.iat[-1]),
-                                                motion=grating_motion,
+                                                clip_rect=(0, 0, 0.5, 1), color=stim_color))
+        # Half-field right OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
-                                                clip_rect=(0.5, 0, 1, 1)))
+                                                clip_rect=(0.5, 0, 0.5, 1), color=stim_color))
 
-        stimuli.append(Pause(duration=2))
+        stimuli.append(Pause(duration=p/2))
 
-        for i in range(5):
+        # ---------------
+        # Final flashes:
+        for i in range(4):
             stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
                                                     color=(255, 0, 0)))  # flash duration
+            stimuli.append(Pause(duration=self.params['flash_duration']))  # flash duration
 
+        stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
 
 

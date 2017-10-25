@@ -22,7 +22,9 @@ class Stimulus:
         Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
+        :param clip_rect: mask for clipping the stimulus, (x, y, w, h) tuple
         """
+
         self._started = None
         self._elapsed = 0.0
         self.duration = duration
@@ -56,10 +58,11 @@ class Stimulus:
         self._experiment = experiment
 
     def clip(self, p, w, h):
-        print(self.clip_rect)
-        print(w)
-        print(h)
-        print()
+        """ Clip image before painting
+        :param p: QPainter object used for painting
+        :param w: image width
+        :param h: image height
+        """
         if self.clip_rect is not None:
             p.setClipRect(self.clip_rect[0]*w, self.clip_rect[1]*h,
                           self.clip_rect[0]*w + self.clip_rect[2]*w,
@@ -120,6 +123,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
                          **kwargs)
         self.motion = motion
         self.name = 'moving seamless'
+        self.duration = float(motion.t.iat[-1])
 
     def update(self):
         for attr in ['x', 'y', 'theta']:
@@ -237,7 +241,7 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus, MovingStimulus):
     """ Class for moving a grating pattern.
     """
     def __init__(self, *args, grating_angle=0, grating_period=10,
-                 grating_color=(255, 255, 255), **kwargs):
+                 color=(255, 255, 255), **kwargs):
         """
         :param grating_angle: fixed angle for the stripes
         :param grating_period: spatial period of the gratings (unit?)
@@ -246,7 +250,7 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus, MovingStimulus):
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
-        self.grating_color = grating_color
+        self.color = color
         self.name = 'moving_gratings'
 
     def get_unit_dims(self, w, h):
@@ -259,7 +263,7 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus, MovingStimulus):
         """
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
-        p.setBrush(QBrush(QColor(*self.grating_color)))
+        p.setBrush(QBrush(QColor(*self.color)))
         p.drawRect(point.x(), point.y(),
                    int(self.grating_period / (2 * max(self._experiment.calibrator.params['mm_px'], 0.0001))),
                    w)
@@ -306,16 +310,11 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
 class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
     """ Class for drawing a rotating windmill.
     """
-    def __init__(self, *args, grating_period=10,
-                 color=(255, 255, 255), n_arms=8, **kwargs):
+    def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
         super().__init__(*args, **kwargs)
-        self.grating_period = grating_period
         self.color = color
         self.n_arms = n_arms
         self.name = 'windmill'
-
-    def get_unit_dims(self, w, h):
-        return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         # Painting settings:
@@ -335,8 +334,6 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
                             QPoint(int(mid_x + rad*np.cos(deg + size)), int(mid_y + rad*np.sin(deg + size)))]
             polygon = QPolygon(polyg_points)
             p.drawPolygon(polygon)
-
-
 
 
 class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
