@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QTransform
+from PyQt5.QtGui import QImage, QTransform, QPolygon
 import qimage2ndarray
 from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
@@ -19,9 +19,7 @@ class Stimulus:
     """ General class for a stimulus."""
     def __init__(self, duration=0.0):
         """ Make a stimulus, with the basic properties common to all stimuli
-        Initial values which do not change during the stimulus
-        are prefixed with _, so that they are not logged
-        at every time step
+        Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
         """
@@ -59,7 +57,7 @@ class Stimulus:
 
 class DynamicStimulus(Stimulus):
     """ Stimuli where parameters change during stimulation, used
-    to record form stimuli which react to the fish
+    to record stimuli with constant movements
 
     """
     def __init__(self, *args, dynamic_parameters=None, **kwargs):
@@ -73,38 +71,83 @@ class DynamicStimulus(Stimulus):
             self.dynamic_parameters = dynamic_parameters
 
     def get_dynamic_state(self):
+        """ Return the state of constantly varying parameters.
+        """
         return tuple(getattr(self, param, 0)
                      for param in self.dynamic_parameters)
 
 
 class PainterStimulus(Stimulus):
+    """ Stimulus class where image is programmatically drawn on a canvas.
+    """
     def paint(self, p, w, h):
+        """ Paint function (redefined in children classes)
+        :param p: QPainter object for drawing
+        :param w: width of the display window
+        :param h: height of the display window
+        """
         pass
 
 
 class BackgroundStimulus(Stimulus):
+    """ Stimulus consisting in a full field image that can be dragged around.
+    """
     def __init__(self, *args, background=None, **kwargs):
+        """
+        :param background: background image
+        """
         super().__init__(*args, **kwargs)
         self.x = 0
         self.y = 0
         self.theta = 0
         self.background = background
 
+
+class MovingStimulus(DynamicStimulus, BackgroundStimulus):
+    def __init__(self, *args, motion=None, **kwargs):
+        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
+                         **kwargs)
+        self.motion = motion
+        print(self.motion)
+        self.name = 'moving seamless'
+
+    def update(self):
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
+            except (AttributeError, KeyError):
+                pass
+        print("x: {}, y:{}".format(self.x, self.y))
+
+
 class FullFieldPainterStimulus(PainterStimulus):
+    """ Class for painting a full field flash of a specific color.
+    """
+
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
+        """
+        :param color: color of the full field flash (int tuple)
+        """
         super().__init__(*args, **kwargs)
         self.color = color
         self.name = 'flash'
 
     def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+        p.setBrush(QBrush(QColor(*self.color)))  # Use chosen color
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
 class PartFieldStimulus(PainterStimulus):
+    """ Class for painting a fraction of the field of a specific color.
+    """
     def __init__(self, *args, color=(255, 0, 0),
                  bounding_box=(0, 0, 1, 1), **kwargs):
+        """
+        :param color: color of the full field flash (int tuple)
+        :param bounding_box: tuple containing the boundaries for the desired flash
+                             (start_edge_x, start_edge_y, end_edge_x, end_edge_y)
+        """
         super().__init__(*args, **kwargs)
         self.name = 'part_field'
         self.color = color
@@ -113,6 +156,8 @@ class PartFieldStimulus(PainterStimulus):
     def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))
+
+        # Calculate rectangle edges from bounding box:
         p.drawRect(QRect(
               int(self.bounding_box[0] * w),
               int(self.bounding_box[1] * h),
@@ -122,6 +167,8 @@ class PartFieldStimulus(PainterStimulus):
 
 
 class Pause(FullFieldPainterStimulus):
+    """ Class for painting full field black stimuli
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
         self.name = 'pause'
@@ -130,6 +177,8 @@ class Pause(FullFieldPainterStimulus):
 class MovingSeamlessStimulus(PainterStimulus,
                             DynamicStimulus,
                             BackgroundStimulus):
+    """ Class for moving a stimulus image or pattern, thought for a VR setup.
+    """
     def get_unit_dims(self, w, h):
         return w, h
 
@@ -176,6 +225,8 @@ class MovingSeamlessStimulus(PainterStimulus,
 
 
 class SeamlessImageStimulus(MovingSeamlessStimulus):
+    """ Class for moving an image.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._qbackground = None
@@ -183,10 +234,14 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
         print(self._experiment.asset_folder)
+
+        # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
             existing_file_background(self._experiment.asset_folder + '/' + self.background))
 
     def get_unit_dims(self, w, h):
+        """ Update dimensions of the current background image.
+        """
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 
@@ -194,18 +249,30 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(MovingSeamlessStimulus):
+class SeamlessGratingStimulus(MovingSeamlessStimulus, MovingStimulus):
+    """ Class for moving a grating pattern.
+    """
     def __init__(self, *args, grating_angle=0, grating_period=10,
                  grating_color=(255, 255, 255), **kwargs):
+        """
+        :param grating_angle: fixed angle for the stripes
+        :param grating_period: spatial period of the gratings (unit?)
+        :param grating_color: color for the non-black stripes (int tuple)
+        """
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.grating_color = grating_color
+        self.name = 'moving_gratings'
 
     def get_unit_dims(self, w, h):
+        """
+        """
         return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
+        """ Function for drawing the gratings programmatically.
+        """
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.grating_color)))
@@ -249,6 +316,41 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
                 start += grating_width
 
 
+class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
+    """ Class for drawing a rotating windmill.
+    """
+    def __init__(self, *args, grating_period=10,
+                 color=(255, 255, 255), n_arms=8, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.grating_period = grating_period
+        self.color = color
+        self.n_arms = n_arms
+        self.name = 'windmill'
+
+    def get_unit_dims(self, w, h):
+        return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
+
+    def draw_block(self, p, point, w, h):
+        # Painting settings:
+        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(*self.color)))
+
+        # To draw a windmill, a set of consecutive triangles will be painted:
+        mid_x = int(w / 2)  # calculate image center
+        mid_y = int(h / 2)
+        angles = np.arange(0, np.pi*2, (np.pi * 2) / self.n_arms)  # calculate angles for each triangle
+        size = np.pi / self.n_arms  # angular width of the white arms, by default equal to dark ones
+        rad = (w**2 + h**2)**(1/2)  # radius of triangles (much larger than frame)
+
+        for deg in angles:  # loop over angles and draw consecutive rectangles
+            polyg_points = [QPoint(mid_x, mid_y),
+                            QPoint(int(mid_x + rad*np.cos(deg)), int(mid_y + rad*np.sin(deg))),
+                            QPoint(int(mid_x + rad*np.cos(deg + size)), int(mid_y + rad*np.sin(deg + size)))]
+            polygon = QPolygon(polyg_points)
+            p.drawPolygon(polygon)
+
+
 class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
     def __init__(self, *args, spot_radius=5, average_distance=20,
                  n_spots=10, **kwargs):
@@ -260,23 +362,6 @@ class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
 
     def paint(self, p, w, h):
         pass
-
-
-class MovingStimulus(DynamicStimulus, BackgroundStimulus):
-    def __init__(self, *args, motion=None, **kwargs):
-        super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
-                         **kwargs)
-        self.motion = motion
-        print(self.motion)
-        self.name = 'moving seamless'
-
-    def update(self):
-        for attr in ['x', 'y', 'theta']:
-            try:
-                setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
-            except (AttributeError, KeyError):
-                pass
-        print("x: {}, y:{}".format(self.x, self.y))
 
 
 class MovingConstantVel(MovingStimulus):
@@ -500,9 +585,14 @@ class ShockStimulus(Stimulus):
 
 
 if __name__ == '__main__':
-    pyb = PyboardConnection(com_port='COM3')
-    stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-                         pulse_n=1, pulse_dur_ms=5)
-    stim.start()
-    del pyb
+    # pyb = PyboardConnection(com_port='COM3')
+    # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+    #                      pulse_n=1, pulse_dur_ms=5)
+    # stim.start()
+    # del pyb
 
+    from PyQt5.QtGui import QPolygon
+    p = QPainter()
+    points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
+    pol = QPolygon(points)
+    p.drawPolygon(pol)

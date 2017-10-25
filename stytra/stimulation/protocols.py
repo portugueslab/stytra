@@ -1,7 +1,7 @@
 from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
-    PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
+    SeamlessWindmillStimulus,PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
@@ -29,7 +29,6 @@ class Protocol(HasPyQtGraphParams):
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
-
 
     def get_stimulus_list(self):
         """Generate protocol from specified parameters
@@ -91,6 +90,74 @@ class FlashProtocol(Protocol):
                                       self.params['flash_duration']))
         stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
                                                 color=(255, 255, 255)))  # flash duration
+
+        return stimuli
+
+
+class Exp022Protocol(Protocol):
+    name = "exo022" \
+           " protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'windmill_max_speed': .1,
+                                'windmill_duration': 20.,
+                                'windmill_arms_n': 8,
+                                'windmill_freq': 1.,
+                                'inter_stimulus_pause': 1.,
+                                'grating_period': 10,
+                                'grating_vel': 10,
+                                'grating_move_duration': 4.,
+                                'flash_duration': 2.}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = list()
+
+        # ---------------
+        # initial pause:
+        stimuli.append(Pause(duration=0.5))
+
+        # ---------------
+        # Forward gratings of different velocities:
+        for speed_coef in [0.2, 0.5, 1]:
+            grating_motion = pd.DataFrame(dict(t=[0,
+                                              self.params['inter_stimulus_pause'],
+                                              self.params['inter_stimulus_pause'] + \
+                                                    self.params['grating_move_duration'],
+                                              self.params['inter_stimulus_pause'] * 2 + \
+                                                    self.params['grating_move_duration']],
+                                              x=[0,
+                                                 0,
+                                                 self.params['grating_move_duration'] * self.params['grating_vel'] * speed_coef,
+                                                 self.params['grating_move_duration'] * self.params['grating_vel'] * speed_coef]))
+
+            stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
+                                                   motion=grating_motion,
+                                                   grating_period=self.params['grating_period']))
+
+
+        # ---------------
+        # Lateral and backwards gratings:
+
+        # ---------------
+        # Windmill for OKR
+        # create velocity dataframe. Velocity is sinusoidal and starts from 0
+        t = np.arange(0, self.params['windmill_duration'], 0.05)
+        vel = np.sin(t * self.params['windmill_freq'])*self.params['windmill_max_speed']
+        grating_motion = pd.DataFrame(dict(t=t, theta=np.cumsum(vel)))
+        stimuli.append(SeamlessWindmillStimulus(duration=float(grating_motion.t.iat[-1]),
+                                                motion=grating_motion,
+                                                n_arms=self.params['windmill_arms_n']))
+
+        stimuli.append(Pause(duration=2))
+
+        for i in range(5):
+            stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                                    color=(255, 0, 0)))  # flash duration
 
         return stimuli
 

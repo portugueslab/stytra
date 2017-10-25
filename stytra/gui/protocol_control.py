@@ -18,13 +18,14 @@ from stytra.stimulation.protocols import VRProtocol
 class ProtocolDropdown(QComboBox):
     def __init__(self):
         super().__init__()
-        prot_classes = inspect.getmembers(protocols, inspect.isclass)
-
         self.setEditable(False)
+
+        prot_classes = inspect.getmembers(protocols, inspect.isclass)
+        print(prot_classes)
         self.prot_classdict = {prot[1].name: prot[1]
                                for prot in prot_classes if issubclass(prot[1],
                                                                       Protocol)}
-
+        print(self.prot_classdict)
         self.addItems(list(self.prot_classdict.keys()))
 
 
@@ -81,6 +82,8 @@ class ProtocolControlWidget(QWidget):
 
         self.setLayout(self.layout)
 
+        self.set_protocol()
+
     def show_stim_params_gui(self):
         self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
         self.protocol_params_tree.show()
@@ -106,8 +109,7 @@ class ProtocolControlWidget(QWidget):
         self.progress_bar.setValue(0)
 
     def set_protocol(self):
-        """Use dropdown menu to change the protocol. Maybe to be implemented in
-        the control widget and not here.
+        """Use dropdown menu to change the protocol.
         """
         Protclass = self.combo_prot.prot_classdict[
             self.combo_prot.currentText()]

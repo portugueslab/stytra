@@ -63,6 +63,7 @@ class Experiment(QObject):
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
+        print(debug_mode)
 
         self.directory = directory
 
@@ -83,7 +84,6 @@ class Experiment(QObject):
         self.metadata = Metadata()
         self.dc = DataCollector(folder_path=self.directory)
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-
 
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
