@@ -105,10 +105,10 @@ class Exp022Protocol(Protocol):
                                 'windmill_duration': 20.,
                                 'windmill_arms_n': 8,
                                 'windmill_freq': 1.,
-                                'inter_stimulus_pause': 1.,
+                                'inter_stim_pause': 1.,
                                 'grating_period': 10,
                                 'grating_vel': 10,
-                                'grating_move_duration': 4.,
+                                'grating_duration': 4.,
                                 'flash_duration': 2.}
 
         for key in standard_params_dict.keys():
@@ -122,26 +122,56 @@ class Exp022Protocol(Protocol):
         stimuli.append(Pause(duration=0.5))
 
         # ---------------
-        # Forward gratings of different velocities:
+        # Forward gratings of three different velocities:
+        t = []
+        x = []
+        t_offset = 0
+        x_offset = 0
         for speed_coef in [0.2, 0.5, 1]:
-            grating_motion = pd.DataFrame(dict(t=[0,
-                                              self.params['inter_stimulus_pause'],
-                                              self.params['inter_stimulus_pause'] + \
-                                                    self.params['grating_move_duration'],
-                                              self.params['inter_stimulus_pause'] * 2 + \
-                                                    self.params['grating_move_duration']],
-                                              x=[0,
-                                                 0,
-                                                 self.params['grating_move_duration'] * self.params['grating_vel'] * speed_coef,
-                                                 self.params['grating_move_duration'] * self.params['grating_vel'] * speed_coef]))
+            t.extend([t_offset,
+                      t_offset + self.params['inter_stim_pause'],
+                      t_offset + self.params['inter_stim_pause'] + \
+                                    self.params['grating_duration'],
+                      t_offset + self.params['inter_stim_pause'] * 2 + \
+                                    self.params['grating_duration']])
+            x.extend([x_offset,
+                      x_offset,
+                      x_offset - self.params['grating_duration'] * \
+                         self.params['grating_vel'] * speed_coef,
+                      x_offset - self.params['grating_duration'] * \
+                         self.params['grating_vel'] * speed_coef])
+            t_offset = t[-1]
+            x_offset = x[-1]
+        print(t)
+        print(x)
 
-            stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
-                                                   motion=grating_motion,
-                                                   grating_period=self.params['grating_period']))
+        grating_motion = pd.DataFrame(dict(t=t, x=x))
+        stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
+                                               motion=grating_motion,
+                                               grating_period=self.params['grating_period'],
+                                               grating_angle=np.pi/2))
 
 
         # ---------------
         # Lateral and backwards gratings:
+        for theta in [0, np.pi/2, np.pi]:
+            grating_motion = pd.DataFrame(dict(t=[0,
+                                              self.params['inter_stim_pause'],
+                                              self.params['inter_stim_pause'] + \
+                                                    self.params['grating_duration'],
+                                              self.params['inter_stim_pause'] * 2 + \
+                                                    self.params['grating_duration']],
+                                              x=[0,
+                                                 0,
+                                                 self.params['grating_duration'] * \
+                                                    self.params['grating_vel'],
+                                                 self.params['grating_duration'] * \
+                                                    self.params['grating_vel']]))
+
+            stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
+                                                   motion=grating_motion,
+                                                   grating_period=self.params['grating_period'],
+                                                   grating_angle=theta))
 
         # ---------------
         # Windmill for OKR
