@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QTransform, QPolygon
+from PyQt5.QtGui import QImage, QTransform, QPolygon, QRegion
 import qimage2ndarray
 from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
@@ -17,7 +17,7 @@ from itertools import product
 
 class Stimulus:
     """ General class for a stimulus."""
-    def __init__(self, duration=0.0):
+    def __init__(self, duration=0.0, clip_rect=None):
         """ Make a stimulus, with the basic properties common to all stimuli
         Values not to be logged start with _
 
@@ -28,6 +28,7 @@ class Stimulus:
         self.duration = duration
         self.name = ''
         self._experiment = None
+        self.clip_rect = clip_rect
 
     def get_state(self):
         """ Returns a dictionary with stimulus features
@@ -53,6 +54,16 @@ class Stimulus:
         :return: None
         """
         self._experiment = experiment
+
+    def clip(self, p, w, h):
+        print(self.clip_rect)
+        print(w)
+        print(h)
+        print()
+        if self.clip_rect is not None:
+            p.setClipRect(self.clip_rect[0]*w, self.clip_rect[1]*h,
+                          self.clip_rect[0]*w + self.clip_rect[2]*w,
+                          self.clip_rect[1]*h + self.clip_rect[3]*h)
 
 
 class DynamicStimulus(Stimulus):
@@ -108,7 +119,6 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         super().__init__(*args, dynamic_parameters=['x', 'y', 'theta'],
                          **kwargs)
         self.motion = motion
-        print(self.motion)
         self.name = 'moving seamless'
 
     def update(self):
@@ -117,7 +127,6 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
             except (AttributeError, KeyError):
                 pass
-        print("x: {}, y:{}".format(self.x, self.y))
 
 
 class FullFieldPainterStimulus(PainterStimulus):
@@ -135,35 +144,8 @@ class FullFieldPainterStimulus(PainterStimulus):
     def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))  # Use chosen color
+        self.clip(p, w, h)
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
-
-
-class PartFieldStimulus(PainterStimulus):
-    """ Class for painting a fraction of the field of a specific color.
-    """
-    def __init__(self, *args, color=(255, 0, 0),
-                 bounding_box=(0, 0, 1, 1), **kwargs):
-        """
-        :param color: color of the full field flash (int tuple)
-        :param bounding_box: tuple containing the boundaries for the desired flash
-                             (start_edge_x, start_edge_y, end_edge_x, end_edge_y)
-        """
-        super().__init__(*args, **kwargs)
-        self.name = 'part_field'
-        self.color = color
-        self.bounding_box = bounding_box
-
-    def paint(self, p, w, h):
-        p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(*self.color)))
-
-        # Calculate rectangle edges from bounding box:
-        p.drawRect(QRect(
-              int(self.bounding_box[0] * w),
-              int(self.bounding_box[1] * h),
-              int(self.bounding_box[2] * w),
-              int(self.bounding_box[3] * h)
-        ))
 
 
 class Pause(FullFieldPainterStimulus):
@@ -197,6 +179,8 @@ class MovingSeamlessStimulus(PainterStimulus,
         # draw the black background
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        self.clip(p, w, h)
 
         # find the centres of the display and image
         display_centre = (w/2, h/2)
@@ -294,6 +278,9 @@ class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
         # draw the background
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(0, 0, 0)))
+
+        self.clip(p, w, h)
+
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
         grating_width = self.grating_period/max(self._experiment.calibrator.params['mm_px'], 0.0001) # in pixels
@@ -342,13 +329,14 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
         angles = np.arange(0, np.pi*2, (np.pi * 2) / self.n_arms)  # calculate angles for each triangle
         size = np.pi / self.n_arms  # angular width of the white arms, by default equal to dark ones
         rad = (w**2 + h**2)**(1/2)  # radius of triangles (much larger than frame)
-
         for deg in angles:  # loop over angles and draw consecutive rectangles
             polyg_points = [QPoint(mid_x, mid_y),
                             QPoint(int(mid_x + rad*np.cos(deg)), int(mid_y + rad*np.sin(deg))),
                             QPoint(int(mid_x + rad*np.cos(deg + size)), int(mid_y + rad*np.sin(deg + size)))]
             polygon = QPolygon(polyg_points)
             p.drawPolygon(polygon)
+
+
 
 
 class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
@@ -591,8 +579,10 @@ if __name__ == '__main__':
     # stim.start()
     # del pyb
 
-    from PyQt5.QtGui import QPolygon
+    from PyQt5.QtGui import QPolygon, QRegion
     p = QPainter()
     points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
     pol = QPolygon(points)
     p.drawPolygon(pol)
+    p.setClipping(True)
+    p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))
