@@ -1,5 +1,5 @@
 import argparse
-from stytra import CameraExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, MovementRecordingExperiment
 import stytra.stimulation.protocols as prot
 
 from PyQt5.QtWidgets import QApplication
@@ -18,7 +18,7 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
-    parser.add_argument('--lightsheet',
+    parser.add_argument('--scope-triggering',
                         action='store_true')
     parser.add_argument('--video-file',
                         action='store',
@@ -40,7 +40,8 @@ if __name__ == '__main__':
     class_kwargs = dict(app=app,
                         directory=args.directory,
                         debug_mode=args.debug,
-                        asset_directory=args.asset_dir)
+                        asset_directory=args.asset_dir,
+                        scope_triggered=args.scope_triggering)
 
     base = Experiment
 

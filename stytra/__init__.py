@@ -47,7 +47,8 @@ class Experiment(QObject):
                  calibrator=None,
                  app=None,
                  asset_directory='',
-                 debug_mode=True):
+                 debug_mode=True,
+                 scope_triggered=False):
         """General class for running experiments
         :param directory: data for saving options and data
         :param calibrator:
@@ -89,12 +90,17 @@ class Experiment(QObject):
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator)
 
+        self.scope_triggered = scope_triggered
         self.window_main = self.make_window()
         self.dc.add_data_source(self.metadata)
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
             self.check_if_committed()
+
+        if scope_triggered:
+            self.zmq_context = zmq.Context()
+            self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
         self.window_main.show()
 
@@ -132,6 +138,16 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
+        if self.scope_triggered and self.window_main.chk_scope.isChecked():
+            self.zmq_socket.bind("tcp://*:5555")
+            print('bound socket')
+            self.lightsheet_config = self.zmq_socket.recv_json()
+            print('received config')
+            self.dc.add_data_source(self.lightsheet_config, 'imaging_lightsheet_config')
+            # send the duration of the protocol so that
+            # the scanning can stop
+            self.zmq_socket.send_json(self.protocol_runner.duration)
+
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
@@ -148,31 +164,6 @@ class Experiment(QObject):
             self.end_protocol(save=False)
         self.app.closeAllWindows()
 
-
-class LightsheetExperiment(Experiment):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
-
-        self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
-
-        self.lightsheet_config = dict()
-        self.dc.add_data_source('imaging', 'lightsheet_config', self, 'lightsheet_config')
-
-    def start_protocol(self):
-        # Start only when received the GO signal from the lightsheet
-        if self.chk_lightsheet.isChecked():
-            self.zmq_socket.bind("tcp://*:5555")
-            print('bound socket')
-            self.lightsheet_config = self.zmq_socket.recv_json()
-            print('received config')
-            print(self.lightsheet_config)
-            # send the duration of the protocol so that
-            # the scanning can stop
-            self.zmq_socket.send_json(self.protocol_runner.duration)
-        super().start_protocol()
 
 
 class CameraExperiment(Experiment):
