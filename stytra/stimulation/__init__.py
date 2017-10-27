@@ -22,7 +22,7 @@ class ProtocolRunner(QObject):
     sig_protocol_finished = pyqtSignal()
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
 
-    def __init__(self, experiment=None, dt=1/60, log_print=True):
+    def __init__(self, experiment=None, dt=1/60, log_print=True, protocol=None):
         """ Constructor
         :param dt:
         :param log_print:
@@ -49,20 +49,21 @@ class ProtocolRunner(QObject):
         self.duration = None
         self.dynamic_log = None
 
-        self.set_new_protocol()
+        self.set_new_protocol(protocol)
 
         # Log will be a list of stimuli states
         self.log = []
         self.log_print = log_print
         self.running = False
 
-    def set_new_protocol(self, protocol=FlashProtocol()):  # change default to empty
-        """Generate protocol from specified parameters
+    def set_new_protocol(self, protocol):  # change default to empty
+        """ Generate protocol from specified parameters
         """
-        self.protocol = protocol
-        self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
-        self.update_protocol()
-        self.reset()
+        if protocol is not None:
+            self.protocol = protocol
+            self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
+            self.update_protocol()
+            self.reset()
 
     def update_protocol(self):
         self.stimuli = self.protocol.get_stimulus_list()

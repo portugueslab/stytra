@@ -30,6 +30,9 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator,\
 
 # imports for moving detector
 from stytra.dbconn import put_experiment_in_db
+from stytra.stimulation import protocols
+from stytra.stimulation.protocols import Protocol
+from collections import OrderedDict
 
 
 # this part is needed to find default arguments of functions
@@ -42,12 +45,20 @@ def get_default_args(func):
     }
 
 
+def get_classes_from_module(input_module, parent_class):
+    prot_classes = inspect.getmembers(input_module, inspect.isclass)
+    return OrderedDict({prot[1].name: prot[1]
+                        for prot in prot_classes if issubclass(prot[1],
+                                                               parent_class)})
+
+
 class Experiment(QObject):
     def __init__(self, directory,
                  calibrator=None,
                  app=None,
                  asset_directory='',
-                 debug_mode=True):
+                 debug_mode=True,
+                 scope_triggered=False):
         """General class for running experiments
         :param directory: data for saving options and data
         :param calibrator:
@@ -74,27 +85,40 @@ class Experiment(QObject):
         else:
             self.calibrator = calibrator
 
-        self.protocol_runner = ProtocolRunner(experiment=self)
-        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
-
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for now I just
         # use metadata object to access the global _params later in the code.
         # This entire Metadata() thing may be replaced by params in the experiment
         self.metadata = Metadata()
         self.dc = DataCollector(folder_path=self.directory)
-        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
 
+        self.last_protocol = self.dc.get_last_class_name('stimulus_protocol_params')
+
+        self.prot_class_dict = get_classes_from_module(protocols, Protocol)
+        if self.last_protocol is not None:
+            ProtocolClass = self.prot_class_dict[self.last_protocol]
+            self.protocol_runner = ProtocolRunner(experiment=self, protocol=ProtocolClass())
+        else:
+            self.protocol_runner = ProtocolRunner(experiment=self)
+
+        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
+
+        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
 
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator)
 
+        self.scope_triggered = scope_triggered
         self.window_main = self.make_window()
         self.dc.add_data_source(self.metadata)
 
         # This has to happen after or version will be reset together with the rest
         if not self.debug_mode:
             self.check_if_committed()
+
+        if scope_triggered:
+            self.zmq_context = zmq.Context()
+            self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
         self.window_main.show()
 
@@ -132,6 +156,16 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
+        if self.scope_triggered and self.window_main.chk_scope.isChecked():
+            self.zmq_socket.bind("tcp://*:5555")
+            print('bound socket')
+            self.lightsheet_config = self.zmq_socket.recv_json()
+            print('received config')
+            self.dc.add_data_source(self.lightsheet_config, 'imaging_lightsheet_config')
+            # send the duration of the protocol so that
+            # the scanning can stop
+            self.zmq_socket.send_json(self.protocol_runner.duration)
+
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
@@ -147,32 +181,6 @@ class Experiment(QObject):
         if self.protocol_runner is not None:
             self.end_protocol(save=False)
         self.app.closeAllWindows()
-
-
-class LightsheetExperiment(Experiment):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
-
-        self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
-
-        self.lightsheet_config = dict()
-        self.dc.add_data_source('imaging', 'lightsheet_config', self, 'lightsheet_config')
-
-    def start_protocol(self):
-        # Start only when received the GO signal from the lightsheet
-        if self.chk_lightsheet.isChecked():
-            self.zmq_socket.bind("tcp://*:5555")
-            print('bound socket')
-            self.lightsheet_config = self.zmq_socket.recv_json()
-            print('received config')
-            print(self.lightsheet_config)
-            # send the duration of the protocol so that
-            # the scanning can stop
-            self.zmq_socket.send_json(self.protocol_runner.duration)
-        super().start_protocol()
 
 
 class CameraExperiment(Experiment):

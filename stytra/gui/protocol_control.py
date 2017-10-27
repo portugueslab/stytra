@@ -14,13 +14,12 @@ from stytra.stimulation.protocols import Protocol
 class ProtocolDropdown(QComboBox):
     def __init__(self):
         super().__init__()
-        prot_classes = inspect.getmembers(protocols, inspect.isclass)
-
         self.setEditable(False)
+
+        prot_classes = inspect.getmembers(protocols, inspect.isclass)
         self.prot_classdict = {prot[1].name: prot[1]
                                for prot in prot_classes if issubclass(prot[1],
                                                                       Protocol)}
-
         self.addItems(list(self.prot_classdict.keys()))
 
 
@@ -40,12 +39,13 @@ class ProtocolControlWidget(QWidget):
 
         # Create parametertree for protocol parameter control
         self.protocol_params_tree = ParameterTree(showHeader=False)
-        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+        # self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
 
         # Widgets for protocol choosing
         self.layout_choose = QHBoxLayout()
-        self.combo_prot = ProtocolDropdown()
-        self.combo_prot.currentIndexChanged.connect(self.set_protocol)
+        # self.combo_prot = ProtocolDropdown()
+        self.combo_prot = QComboBox()
+        self.combo_prot.addItems(list(self.experiment.prot_class_dict.keys()))
         self.protocol_params_butt = QPushButton('Protocol parameters')
         self.protocol_params_butt.clicked.connect(self.show_stim_params_gui)
         self.layout_choose.addWidget(self.combo_prot)
@@ -62,7 +62,6 @@ class ProtocolControlWidget(QWidget):
         self.button_toggle_prot.clicked.connect(self.toggle_protocol_running)
         if self.protocol_runner.protocol is None:
             self.button_toggle_prot.setEnabled(False)
-        self.combo_prot.currentIndexChanged.connect(self.set_protocol)
 
         self.timer = None
         self.layout = QVBoxLayout()
@@ -76,6 +75,12 @@ class ProtocolControlWidget(QWidget):
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.setLayout(self.layout)
+
+        if self.experiment.last_protocol is not None:
+            self.set_protocol(self.experiment.prot_class_dict[self.experiment.last_protocol])
+            self.combo_prot.setCurrentIndex(list(self.experiment.prot_class_dict.keys()).index(
+                self.experiment.last_protocol))
+        self.combo_prot.currentIndexChanged.connect(self.set_prot_from_dropdown)
 
     def show_stim_params_gui(self):
         self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
@@ -101,15 +106,18 @@ class ProtocolControlWidget(QWidget):
     def protocol_changed(self):
         self.progress_bar.setValue(0)
 
-    def set_protocol(self):
-        """Use dropdown menu to change the protocol. Maybe to be implemented in
-        the control widget and not here.
+    def set_protocol(self, Protclass):
+        """Use dropdown menu to change the protocol.
         """
-        Protclass = self.combo_prot.prot_classdict[
-            self.combo_prot.currentText()]
         protocol = Protclass()
         self.protocol_runner.set_new_protocol(protocol)
         self.button_toggle_prot.setEnabled(True)
+        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+
+    def set_prot_from_dropdown(self):
+        Protclass = self.experiment.prot_class_dict[
+            self.combo_prot.currentText()]
+        self.set_protocol(Protclass)
 
 
 class TrackingMethodDropdown(QComboBox):

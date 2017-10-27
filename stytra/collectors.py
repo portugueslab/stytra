@@ -43,10 +43,15 @@ class HasPyQtGraphParams(object):
     def set_new_param(self, name, value, var_type=True):
         """Easy set for new parameters
         """
-        if var_type:
-            self.params.addChild({'name': name, 'value': value, 'type': type(value).__name__})
+        if isinstance(value, dict):
+            entry_dict = {'name': name}
+            entry_dict.update(value)
+            self.params.addChild(entry_dict)
         else:
-            self.params.addChild({'name': name, 'value': value})
+            if var_type:
+                self.params.addChild({'name': name, 'value': value, 'type': type(value).__name__})
+            else:
+                self.params.addChild({'name': name, 'value': value})
 
 
 class Metadata(HasPyQtGraphParams):
@@ -288,6 +293,13 @@ class DataCollector:
                 clean_data_dict['unassigned'][key] = value
 
         return clean_data_dict
+
+    def get_last_class_name(self, class_param_key):
+        if self.last_metadata is not None:
+            # This is atrocious.
+            return self.last_metadata['children'][class_param_key]['children']['name']['value']
+        else:
+            return None
 
     def save(self, timestamp=None, save_csv=False):
         """

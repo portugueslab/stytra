@@ -1,11 +1,10 @@
-from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
+from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    FullFieldPainterStimulus, MovingStimulus, \
-    PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
+    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, \
+    SeamlessWindmillStimulus, VRMotionStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.stimulation.backgrounds import gratings
 from stytra.collectors import Accumulator, HasPyQtGraphParams
 
 from itertools import product
@@ -22,7 +21,8 @@ class Protocol(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-        standard_params_dict = {'n_repeats': 1,
+        standard_params_dict = {'name': self.name,
+                                'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
@@ -30,8 +30,8 @@ class Protocol(HasPyQtGraphParams):
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """Generate protocol from specified parameters
-                """
+        """ Generate protocol from specified parameters
+        """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
         if self.params['pre_pause'] > 0:
@@ -52,19 +52,24 @@ class Protocol(HasPyQtGraphParams):
 
 
 class NoStimulation(Protocol):
+    """ A void protocol.
+    """
     name = 'no_stimulation'
 
-    def __init__(self, *args,  duration=60, **kwargs):
-        """
-        :param duration:
-        """
+    def __init__(self):
+        super().__init__()
 
+        standard_params_dict = {'duration': 5}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
         stimuli = []
-        stimuli.append(Pause(duration=duration))  # change here for duration (in s)
 
-        self.stimuli = stimuli
-        self.current_stimulus = stimuli[0]
-        super().__init__(*args, stimuli=stimuli, **kwargs)
+        stimuli.append(Pause(duration=self.params['duration']))
+
+        return stimuli
 
 
 class FlashProtocol(Protocol):
@@ -87,6 +92,124 @@ class FlashProtocol(Protocol):
         stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
                                                 color=(255, 255, 255)))  # flash duration
 
+        return stimuli
+
+
+class Exp022Protocol(Protocol):
+    name = "exp022 protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'windmill_amplitude': np.pi * 0.222,
+                                'windmill_duration': 5.,
+                                'windmill_arms_n': 8,
+                                'windmill_freq': 0.2,
+                                'inter_stim_pause': 5.,
+                                'grating_period': 10,
+                                'grating_vel': {'value': 10, 'type': 'int'},
+                                'grating_duration': 5.,
+                                'flash_duration': 1.}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = list()
+
+        # ---------------
+        # initial dark field:
+        stimuli.append(Pause(duration=self.params['inter_stim_pause']))
+        stim_color = (255, 0, 0)
+        # ---------------
+        # Gratings
+        # Static gratings and three different velocities are implemented with a single
+        # grating stimulus whose positions are specified for having the forward velocities:
+        p = self.params['inter_stim_pause']
+        s = self.params['grating_duration']
+        v = self.params['grating_vel']
+        # Grating tuple: t  x  theta
+        dt_vel_tuple = [(0, 0, np.pi/2),  # set grid orientation to horizontal
+                        (p, 0, np.pi/2),
+                        (s, -0.3*v, np.pi/2),  # slow
+                        (p, 0, np.pi/2),
+                        (s, -v, np.pi/2),  # middle
+                        (p, 0, np.pi/2),
+                        (s, -3*v, np.pi/2),  # fast
+                        (p, 0, np.pi/2),
+                        (s, v, np.pi/2),  # backward
+                        (p/2, 0, np.pi/2),
+                        (0, 0, 0),  # change grid orientation to vertical
+                        (p/2, 0, 0),
+                        (s, v, 0),  # leftwards
+                        (p, 0, 0),
+                        (s, -v, 0),  # rightwards
+                        (p/2, 0, 0)
+                        ]
+
+        t = [0]
+        x = [0]
+        theta = [0]
+        for dt, vel, th in dt_vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
+                                               grating_period=self.params['grating_period'],
+                                               color=stim_color))
+
+        # ---------------
+        # Windmill for OKR
+
+        # create velocity dataframe. Velocity is sinusoidal and starts from 0:
+        osc_time_vect = np.arange(0, self.params['windmill_duration'], 0.04)
+        # Initial pause:
+        t = [0, p / 2]
+        theta = [self.params['windmill_amplitude']/2, ]*2  # initial pause
+
+        # CW starting OKR:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(np.cos(osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
+                     self.params['windmill_amplitude']/2)
+
+        # Middle pause:
+        t.extend([t[-1] + p])
+        theta.extend([theta[-1]])
+
+        # CCW starting OKR:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta[-1] + self.params['windmill_amplitude']/2 - \
+            np.cos(osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
+                     self.params['windmill_amplitude']/2)   # the offset avoid jumps in rotation
+
+        # Final pause:
+        t.extend([t[-1] + self.params['inter_stim_pause']])
+        theta.extend([theta[-1]])  # initial pause
+
+
+        # Full field OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
+                                                n_arms=self.params['windmill_arms_n'], color=stim_color))
+        # Half-field left OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
+                                                n_arms=self.params['windmill_arms_n'],
+                                                clip_rect=(0, 0, 0.5, 1), color=stim_color))
+        # Half-field right OKR:
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
+                                                n_arms=self.params['windmill_arms_n'],
+                                                clip_rect=(0.5, 0, 0.5, 1), color=stim_color))
+
+        stimuli.append(Pause(duration=p/2))
+
+        # ---------------
+        # Final flashes:
+        for i in range(4):
+            stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                                    color=(255, 0, 0)))  # flash duration
+            stimuli.append(Pause(duration=self.params['flash_duration']))  # flash duration
+
+        stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
 
 
@@ -113,11 +236,11 @@ class VisualCodingProtocol(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-        n_split = self.params['n_split']
+        n_split = 2 # self.params['n_split']
 
         for (ix, iy) in product(range(n_split), repeat=2):
-            stimuli.append(PartFieldStimulus(
-                bounding_box=(
+            stimuli.append(FullFieldPainterStimulus(
+                clip_rect=(
                     ix / n_split,
                     iy / n_split,
                     1 / n_split,
@@ -139,15 +262,13 @@ class VisualCodingProtocol(Protocol):
                                               0,
                                               self.params['grating_move_duration'] * self.params['grating_vel'],
                                               self.params['grating_move_duration'] * self.params['grating_vel']]))
-        moving_grating_class = type('MovingGratings',
-                                    (MovingStimulus, SeamlessGratingStimulus),
-                                    dict(name='moving_gratings'))
+
         for i_dir in range(self.params['n_directions']):
-            stimuli.append(moving_grating_class(duration=float(grating_motion.t.iat[-1]),
-                                                motion=grating_motion,
-                                                grating_period=self.params['grating_period'],
-                                                grating_angle=i_dir * delta_theta
-                                                ))
+            stimuli.append(SeamlessGratingStimulus(duration=float(grating_motion.t.iat[-1]),
+                                                   motion=grating_motion,
+                                                   grating_period=self.params['grating_period'],
+                                                   grating_angle=i_dir * delta_theta
+                                                   ))
 
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
