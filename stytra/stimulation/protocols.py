@@ -152,15 +152,10 @@ class Exp022Protocol(Protocol):
         for dt, vel, th in dt_vel_tuple:
             t.append(t[-1] + dt)
             x.append(x[-1] + dt * vel)
-            theta.append(th)
 
-        print(t)
-        print(x)
-        print(theta)
-
-        # stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
-        #                                        grating_period=self.params['grating_period'],
-        #                                        color=stim_color))
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
+                                               grating_period=self.params['grating_period'],
+                                               color=stim_color))
 
         # ---------------
         # Windmill for OKR
@@ -190,8 +185,6 @@ class Exp022Protocol(Protocol):
         t.extend([t[-1] + self.params['inter_stim_pause']])
         theta.extend([theta[-1]])  # initial pause
 
-        print(t)
-        print(theta)
 
         # Full field OKR:
         stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
