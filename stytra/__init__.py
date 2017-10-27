@@ -30,6 +30,9 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator,\
 
 # imports for moving detector
 from stytra.dbconn import put_experiment_in_db
+from stytra.stimulation import protocols
+from stytra.stimulation.protocols import Protocol
+from collections import OrderedDict
 
 
 # this part is needed to find default arguments of functions
@@ -40,6 +43,13 @@ def get_default_args(func):
         for k, v in signature.parameters.items()
         if v.default is not inspect.Parameter.empty
     }
+
+
+def get_classes_from_module(input_module, parent_class):
+    prot_classes = inspect.getmembers(input_module, inspect.isclass)
+    return OrderedDict({prot[1].name: prot[1]
+                        for prot in prot_classes if issubclass(prot[1],
+                                                               parent_class)})
 
 
 class Experiment(QObject):
@@ -64,7 +74,6 @@ class Experiment(QObject):
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
-        print(debug_mode)
 
         self.directory = directory
 
@@ -76,14 +85,23 @@ class Experiment(QObject):
         else:
             self.calibrator = calibrator
 
-        self.protocol_runner = ProtocolRunner(experiment=self)
-        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
-
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for now I just
         # use metadata object to access the global _params later in the code.
         # This entire Metadata() thing may be replaced by params in the experiment
         self.metadata = Metadata()
         self.dc = DataCollector(folder_path=self.directory)
+
+        self.last_protocol = self.dc.get_last_class_name('stimulus_protocol_params')
+
+        self.prot_class_dict = get_classes_from_module(protocols, Protocol)
+        if self.last_protocol is not None:
+            ProtocolClass = self.prot_class_dict[self.last_protocol]
+            self.protocol_runner = ProtocolRunner(experiment=self, protocol=ProtocolClass())
+        else:
+            self.protocol_runner = ProtocolRunner(experiment=self)
+
+        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
+
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
 
         # Projector window and experiment control GUI
@@ -163,7 +181,6 @@ class Experiment(QObject):
         if self.protocol_runner is not None:
             self.end_protocol(save=False)
         self.app.closeAllWindows()
-
 
 
 class CameraExperiment(Experiment):

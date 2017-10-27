@@ -5,7 +5,6 @@ from stytra.stimulation.stimuli import Pause, \
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.stimulation.backgrounds import gratings
 from stytra.collectors import Accumulator, HasPyQtGraphParams
 
 from itertools import product
@@ -22,8 +21,8 @@ class Protocol(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-
-        standard_params_dict = {'n_repeats': 1,
+        standard_params_dict = {'name': self.name,
+                                'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
@@ -31,8 +30,8 @@ class Protocol(HasPyQtGraphParams):
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """Generate protocol from specified parameters
-                """
+        """ Generate protocol from specified parameters
+        """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
         if self.params['pre_pause'] > 0:
@@ -53,19 +52,24 @@ class Protocol(HasPyQtGraphParams):
 
 
 class NoStimulation(Protocol):
+    """ A void protocol.
+    """
     name = 'no_stimulation'
 
-    def __init__(self, *args,  duration=60, **kwargs):
-        """
-        :param duration:
-        """
+    def __init__(self):
+        super().__init__()
 
+        standard_params_dict = {'duration': 5}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
         stimuli = []
-        stimuli.append(Pause(duration=duration))  # change here for duration (in s)
 
-        self.stimuli = stimuli
-        self.current_stimulus = stimuli[0]
-        super().__init__(*args, stimuli=stimuli, **kwargs)
+        stimuli.append(Pause(duration=self.params['duration']))
+
+        return stimuli
 
 
 class FlashProtocol(Protocol):
@@ -106,7 +110,7 @@ class Exp022Protocol(Protocol):
                                 'windmill_freq': 0.2,
                                 'inter_stim_pause': 5.,
                                 'grating_period': 10,
-                                'grating_vel': 10,
+                                'grating_vel': {'value': 10, 'type': 'int'},
                                 'grating_duration': 5.,
                                 'flash_duration': 1.}
 
@@ -152,6 +156,7 @@ class Exp022Protocol(Protocol):
         for dt, vel, th in dt_vel_tuple:
             t.append(t[-1] + dt)
             x.append(x[-1] + dt * vel)
+            theta.append(th)
 
         stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
                                                grating_period=self.params['grating_period'],
