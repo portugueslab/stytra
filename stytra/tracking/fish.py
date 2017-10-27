@@ -1,11 +1,11 @@
 import numpy as np
 import cv2
-from stytra.tracking.tail import detect_tail_unknown_dir
 from numba import vectorize, uint8
 from stytra.tracking.tail import find_fish_midline
 
 import param as pa
 from stytra.metadata import Metadata
+
 
 class ContourScorer:
     def __init__(self, target_area, target_ratio, ratio_weight=1):

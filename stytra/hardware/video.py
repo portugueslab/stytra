@@ -128,8 +128,7 @@ class VideoFileSource(VideoSource):
     stytra without a camera available
 
     """
-    def __init__(self, signal=None,
-                 source_file=None,
+    def __init__(self, source_file=None,
                  loop=True, framerate=300,
                  **kwargs):
         super().__init__(**kwargs)

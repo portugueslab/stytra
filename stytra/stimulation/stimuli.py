@@ -90,6 +90,7 @@ class BackgroundStimulus(Stimulus):
         self.theta = 0
         self.background = background
 
+
 class FullFieldPainterStimulus(PainterStimulus):
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
         super().__init__(*args, **kwargs)
@@ -176,6 +177,10 @@ class MovingSeamlessStimulus(PainterStimulus,
 
 
 class SeamlessImageStimulus(MovingSeamlessStimulus):
+    """ Stimuli which can move and rotate in different directions
+    and are seamlessly repeated if necessary
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._qbackground = None
@@ -212,41 +217,6 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus):
         p.drawRect(point.x(), point.y(),
                    int(self.grating_period / (2 * max(self._experiment.calibrator.params['mm_px'], 0.0001))),
                    w)
-
-
-class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
-                             DynamicStimulus):
-    def __init__(self, *args, grating_orientation='horizontal', grating_period=10,
-                 grating_color=(255, 255, 255), **kwargs):
-        super().__init__(*args, **kwargs)
-        self.theta = grating_orientation
-        self.grating_period = grating_period
-        self.grating_color = grating_color
-
-    def paint(self, p, w, h):
-        # draw the background
-        p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(0, 0, 0)))
-        p.drawRect(QRect(-1, -1, w + 2, h + 2))
-
-        grating_width = self.grating_period/max(self._experiment.calibrator.params['mm_px'], 0.0001) # in pixels
-        p.setBrush(QBrush(QColor(*self.grating_color)))
-
-        if self.grating_orientation == 'horizontal':
-            n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._experiment.calibrator.mm_px - \
-                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width+1) * grating_width
-
-            for i in range(n_gratings):
-                p.drawRect(-1, int(round(start)), w+2, grating_width/2)
-                start += grating_width
-        else:
-            n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self._experiment.calibrator.params['mm_px'] - \
-                    np.floor(self.x / grating_width) * grating_width
-            for i in range(n_gratings):
-                p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
-                start += grating_width
 
 
 class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
@@ -433,21 +403,21 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = self._elapsed
 
 
-class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
-    def __init__(self, *args, motion, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.motion = motion
-        self.duration = motion.t.iloc[-1]
-
-    def update(self):
-        for attr in ['base_vel', 'gain', 'lag']:
-            try:
-                setattr(self, attr, np.interp(self._elapsed,
-                                              self.motion.t,
-                                              self.motion[attr]))
-            except (AttributeError, KeyError):
-                pass
-        super().update()
+# class ClosedLoop1D_variable_motion(ClosedLoop1D, SeamlessGratingStimulus):
+#     def __init__(self, *args, motion, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.motion = motion
+#         self.duration = motion.t.iloc[-1]
+#
+#     def update(self):
+#         for attr in ['base_vel', 'gain', 'lag']:
+#             try:
+#                 setattr(self, attr, np.interp(self._elapsed,
+#                                               self.motion.t,
+#                                               self.motion[attr]))
+#             except (AttributeError, KeyError):
+#                 pass
+#         super().update()
 
 
 class RandomDotKinematogram(PainterStimulus):

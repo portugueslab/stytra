@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QRectF, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
-    QPushButton, QSplitter, QVBoxLayout
+    QPushButton, QComboBox
 
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
@@ -144,6 +144,12 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.experiment.window_display.widget_display.update()
 
 
+class TrackingSettingsGui(QWidget):
+    def __init__(self):
+        self.combo_method = QComboBox()
+        self.combo_method.set_editable(False)
+
+
 class SimpleExperimentWindow(QMainWindow):
     def __init__(self, experiment, **kwargs):
         super().__init__()
@@ -185,6 +191,9 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(previous_widget)
         return self.camera_splitter
+
+
+
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

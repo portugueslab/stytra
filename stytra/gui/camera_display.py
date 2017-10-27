@@ -8,6 +8,7 @@ from paramqt import ParameterGui
 from multiprocessing import Queue
 from skimage.io import imsave
 
+
 class CameraViewWidget(QWidget):
     def __init__(self, experiment):
         """
@@ -18,7 +19,7 @@ class CameraViewWidget(QWidget):
 
         super().__init__()
 
-        self.gui_frame_queue = Queue()
+        self.camera_queue = Queue()
         self.camera_display_widget = pg.GraphicsLayoutWidget()
 
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)

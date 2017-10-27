@@ -2,7 +2,9 @@ import argparse
 from stytra import CameraExperiment, Experiment, LightsheetExperiment, MovementRecordingExperiment
 import stytra.stimulation.protocols as prot
 
+from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QIcon
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -68,6 +70,12 @@ if __name__ == '__main__':
     #     bases.append(Experiment)
 
     #ExpClass = type('exp_class', tuple(bases), dict())
+    app_icon = QIcon()
+    app_icon.addFile('icons/48.png', QSize(48, 48))
+    app_icon.addFile('icons/128.png', QSize(128, 128))
+    app_icon.addFile('icons/256.png', QSize(256, 256))
+    app.setWindowIcon(app_icon)
+
     exp = base(**class_kwargs)
     exp.show_stimulus_screen(full_screen=args.full_screen)
     app.exec_()

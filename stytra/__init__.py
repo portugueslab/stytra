@@ -18,7 +18,7 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.tail import trace_tail_radial_sweep, trace_tail_centroid
+from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 from stytra.gui.container_windows import SimpleExperimentWindow, CameraExperimentWindow
 from multiprocessing import Queue, Event
@@ -235,18 +235,14 @@ class TailTrackingExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
         self.metadata.params[('fish_metadata', 'embedded')] = True
 
-        # infrastructure for processing data from the camera
-        self.processing_parameter_queue = Queue()
-        self.tail_position_queue = Queue()
-
-        dict_tracking_functions = dict(angle_sweep=trace_tail_radial_sweep,
+        dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
                                        centroid=trace_tail_centroid)
 
         current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
         if tracking_method_parameters is not None:
             current_tracking_method_parameters.update(tracking_method_parameters)
 
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
+        self.frame_dispatcher = FrameDispatcher(in_frame_queue=self.frame_queue,
                                                 gui_queue=self.gui_frame_queue,
                                                 processing_function=dict_tracking_functions[tracking_method],
                                                 processing_parameter_queue=self.processing_parameter_queue,

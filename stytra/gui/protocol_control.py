@@ -10,10 +10,6 @@ import inspect
 from stytra.stimulation import protocols
 from stytra.stimulation.protocols import Protocol
 
-from stytra.gui.plots import MultiStreamPlot, StreamingPositionPlot
-
-from stytra.stimulation.protocols import VRProtocol
-
 
 class ProtocolDropdown(QComboBox):
     def __init__(self):
@@ -114,3 +110,24 @@ class ProtocolControlWidget(QWidget):
         protocol = Protclass()
         self.protocol_runner.set_new_protocol(protocol)
         self.button_toggle_prot.setEnabled(True)
+
+
+class TrackingMethodDropdown(QComboBox):
+    def __init__(self):
+        super().__init__()
+        prot_classes = inspect.getmembers(protocols, inspect.isclass)
+
+        self.setEditable(False)
+        self.prot_classdict = {prot[1].name: prot[1]
+                               for prot in prot_classes if issubclass(prot[1],
+                                                                      Protocol)}
+
+        self.addItems(list(self.prot_classdict.keys()))
+
+
+
+class TrackingProtocolControl(ProtocolControlWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.combo_tracking_method = QComboBox
+

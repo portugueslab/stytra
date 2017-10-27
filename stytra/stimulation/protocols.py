@@ -1,6 +1,6 @@
 from stytra.stimulation.stimuli import Pause, DynamicStimulus, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, MovingStimulus, \
+    FullFieldPainterStimulus, MovingStimulus, \
     PartFieldStimulus, VRMotionStimulus, SeamlessImageStimulus
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
@@ -22,14 +22,12 @@ class Protocol(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-
         standard_params_dict = {'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
-
 
     def get_stimulus_list(self):
         """Generate protocol from specified parameters
@@ -78,11 +76,8 @@ class FlashProtocol(Protocol):
         standard_params_dict = {'period_sec': 5.,
                                 'flash_duration': 2.}
 
-        for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
-
-        # self.set_new_param('period_sec', 5.)
-        # self.set_new_param('flash_duration', 2.)
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
 
     def get_stim_sequence(self):
         stimuli = []
