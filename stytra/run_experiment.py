@@ -1,6 +1,6 @@
 import argparse
-from stytra import CameraExperiment, Experiment, MovementRecordingExperiment
-import stytra.stimulation.protocols as prot
+from stytra import CameraExperiment, Experiment, TailTrackingExperiment
+    # MovementRecordingExperiment
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -51,9 +51,9 @@ if __name__ == '__main__':
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
 
-    # if args.tail_tracking:
-    #     bases.append(TailTrackingExperiment)
-    #     class_kwargs['video_file'] = args.video_file
+    if args.tail_tracking:
+        base = TailTrackingExperiment
+        class_kwargs['video_file'] = args.video_file
     #     if args.vr:
     #         class_kwargs['motion_estimation'] = 'LSTM'
     #         class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',

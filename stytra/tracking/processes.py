@@ -20,12 +20,12 @@ class FrameProcessingMethod(HasPyQtGraphParams):
 
     """
     def __init__(self):
-        super().__init__()
+        super().__init__(name='img_processing_params')
         for child in self.params.children():
             self.params.removeChild(child)
 
-        standard_params_dict = {'rescale': 1,
-                                'filter_size': 0}
+        standard_params_dict = dict(rescale=1,
+                                    filter_size=0)
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -37,20 +37,25 @@ class FrameProcessingMethod(HasPyQtGraphParams):
 
 
 class TailTrackingMethod(FrameProcessingMethod):
+    """ General tail tracking method.
+    """
     def __init__(self):
         super().__init__()
-        standard_params_dict = dict(n_tail_segments = 10,
-                                    color_invert = True,
-                                    tail_start_x = 0,
-                                    tail_start_y = 0,
-                                    tail_length_x = 1,
-                                    tail_length_y = 1)
+        standard_params_dict = dict(n_tail_segments=10,
+                                    function=['centroid', 'angle_sweep'],
+                                    color_invert=True,
+                                    tail_start={'value': (0, 0),
+                                                'visible': False},
+                                    tail_length={'value': (200, 50),
+                                                 'visible': False})
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
 
 
 class CentroidTrackingMethod(TailTrackingMethod):
+    """ Center-of-mass method to find consecutive segments.
+    """
     def __init__(self):
         super().__init__()
         standard_params_dict = dict(window_size=10)
@@ -59,110 +64,126 @@ class CentroidTrackingMethod(TailTrackingMethod):
             self.set_new_param(key, value)
 
     def process(self, image, parameters):
-        return trace_tail_centroid(image, **parameters)
+        return trace_tail_centroid(image, **self.getValues())
 
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
-
     """
-    def __init__(self, in_frame_queue, finished_signal=None, output_queue=None,
-                 processing_class=None, processing_parameter_queue=None,
+
+    def __init__(self, in_frame_queue, finished_signal=None,
+                 processing_parameter_queue=None,
                  gui_framerate=30, **kwargs):
         """
         :param in_frame_queue: queue dispatching frames from camera
-        :param gui_queue: queue where to put frames to be displayed on the GUI
         :param finished_signal: signal for the end of the acquisition
-        :param output_queue: queue for the output of the function applied on frames
-        :param control_queue:
-        :param processing_function: function to be applied to each frame
-        :param processing_parameter_queue: queue for the parameters to be passed to the function
+        :param processing_parameter_queue: queue for function&parameters
         :param gui_framerate: framerate of the display GUI
         """
 
         super().__init__(**kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = Queue()
-        self.output_queue = Queue()
-        self.processing_parameters = dict()
+        self.gui_queue = Queue()  # GUI queue for displaying the image
+        self.output_queue = Queue()  # queue for processing output (e.g., pos)
+        self.processing_parameters = None
 
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        self.processing_class = processing_class
+        #TODO this is just to start with some function
+        self.processing_function = None
         self.processing_parameter_queue = processing_parameter_queue
 
+        self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
+                                            centroid=trace_tail_centroid)
+
     def process_internal(self, frame):
-        return tuple(self.processing_function(frame,
+        """ Apply processing function to current frame with
+        self.processing parameters as additional inputs.
+        """
+        if self.processing_function is not None:
+            return tuple(self.processing_function(frame,
                                               **self.processing_parameters))
 
     def run(self):
+        """ Loop running the tracking function.
+        """
         every_x = 10
         i_frame = 100
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get()
 
-                # acquire the processing parameters from a separate queue
+                # acquire the processing parameters from a separate queue:
                 if self.processing_parameter_queue is not None:
                     try:
                         self.processing_parameters = \
                             self.processing_parameter_queue.get(timeout=0.0001)
+                        self.processing_function = \
+                            self.dict_tracking_functions[
+                                self.processing_parameters['function']]
+
                     except Empty:
                         pass
 
+                # If a processing function is specified, apply it:
                 if self.processing_function is not None:
-                    self.output_queue.put((datetime.now(), self.process_internal(frame)))
+                    self.output_queue.put((datetime.now(),
+                                           self.process_internal(frame)))
 
-                # calculate the frame rate
+                # calculate the frame rate:
                 self.update_framerate()
-                # put the current frame into the GUI queue
+
+                # put the current frame into the GUI queue:
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
                 self.i = (self.i+1) % every_x
-            except Empty:
+
+            except Empty:  # if there is nothing in frame queue
                 break
         return
 
 
-class TailTrackingDispatcher(FrameDispatcher, HasPyQtGraphParams):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.params.setName('tracking_algorithm_params')
-
-        self.params.addChildren([{'name': 'start_x',
-                                  'value': 0},
-                                 {'name': 'start_y',
-                                  'value': 0},
-                                 {'name': 'tail_length_x',
-                                  'value': 0},
-                                 {'name': 'tail_length_y',
-                                  'value': 0},
-                                 {'name': 'processing_function',
-                                  'type': 'list',
-                                'values': ['centroid', 'angular_sweep'],
-                                  'value': 'centroid'},
-                                 {'name': 'n_segments', 'type': 'int',
-                                  'value': 10},
-                                 {'name': 'color_invert', 'type': 'bool',
-                                  'value': False},
-                                 {'name': 'filter_size', 'type': 'int',
-                                  'value': 0},
-                                 {'name': 'window_size', 'type': 'int',
-                                  'value': 7},
-                                 {'name': 'image_scale', 'type': 'float',
-                                  'value': 0.5},
-                                 ])
-        self.processing_functions = dict(centroid=trace_tail_centroid,
-                                         angular_sweep=trace_tail_angular_sweep)
-
-    def process_internal(self, frame):
-        trace_tail_centroid(**self.params.getValues())
+# class TailTrackingDispatcher(FrameDispatcher, HasPyQtGraphParams):
+#     """ Child of FrameDispatcher for tail tracking.
+#     """
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.params.setName('tracking_algorithm_params')
+#
+#         self.params.addChildren([{'name': 'start_x',
+#                                   'value': 0},
+#                                  {'name': 'start_y',
+#                                   'value': 0},
+#                                  {'name': 'tail_length_x',
+#                                   'value': 0},
+#                                  {'name': 'tail_length_y',
+#                                   'value': 0},
+#                                  {'name': 'processing_function',
+#                                   'type': 'list',
+#                                 'values': ['centroid', 'angular_sweep'],
+#                                   'value': 'centroid'},
+#                                  {'name': 'n_segments', 'type': 'int',
+#                                   'value': 10},
+#                                  {'name': 'color_invert', 'type': 'bool',
+#                                   'value': False},
+#                                  {'name': 'filter_size', 'type': 'int',
+#                                   'value': 0},
+#                                  {'name': 'window_size', 'type': 'int',
+#                                   'value': 7},
+#                                  {'name': 'image_scale', 'type': 'float',
+#                                   'value': 0.5},
+#                                  ])
+#         self.processing_functions = dict(centroid=trace_tail_centroid,
+#                                          angular_sweep=trace_tail_angular_sweep)
+#
+#     def process_internal(self, frame):
+#         trace_tail_centroid(**self.params.getValues())
 
 
 class MovementDetectionParameters(pa.Parameterized):

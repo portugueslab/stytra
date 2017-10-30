@@ -1,7 +1,7 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, \
-    SeamlessWindmillStimulus, VRMotionStimulus
+    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus
+# , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
@@ -16,7 +16,7 @@ class Protocol(HasPyQtGraphParams):
     name = ''
 
     def __init__(self):
-        super().__init__(name='stimulus_protocol_params')
+        super().__init__(name='stim_protocol_params')
 
         for child in self.params.children():
             self.params.removeChild(child)

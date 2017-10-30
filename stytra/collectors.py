@@ -26,8 +26,8 @@ class HasPyQtGraphParams(object):
 
     def __init__(self, name=None):
         # Here passing the name gives the user the possibility of easily
-        # overwrite branches of the parameter tree. If not passed, children class
-        # name will be used
+        # overwrite branches of the parameter tree. If not passed,
+        # children class name will be used
         if name is None:
             name = self.__class__.__name__
         self.params = Parameter.create(name=name,
@@ -49,7 +49,8 @@ class HasPyQtGraphParams(object):
             self.params.addChild(entry_dict)
         else:
             if var_type:
-                self.params.addChild({'name': name, 'value': value, 'type': type(value).__name__})
+                self.params.addChild({'name': name, 'value': value,
+                                      'type': type(value).__name__})
             else:
                 self.params.addChild({'name': name, 'value': value})
 
@@ -60,7 +61,8 @@ class Metadata(HasPyQtGraphParams):
 
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
-                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15), 'tip': 'Fish age (days)'},
+                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15),
+                 'tip': 'Fish age (days)'},
                 {'name': 'genotype', 'type': 'list',
                  'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                             'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
@@ -69,10 +71,12 @@ class Metadata(HasPyQtGraphParams):
                             'PC:epNtr-tagRFP',
                             'NeuroD-6f'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
-                 'values': ['0', '30', '60', '90', 'lightsheet'], 'value': '60'},
+                 'values': ['0', '30', '60', '90', 'lightsheet'],
+                 'value': '60'},
 
                 {'name': 'comments', 'type': 'str', 'value': ""},
-                {'name': 'embedded', 'type': 'bool', 'value': True, 'tip': "This is a checkbox"},
+                {'name': 'embedded', 'type': 'bool', 'value': True,
+                 'tip': "This is a checkbox"},
                 {'name': 'treatment', 'type': 'list',
                  'values': ['',
                             '10mM MTz',
@@ -83,7 +87,8 @@ class Metadata(HasPyQtGraphParams):
             {'name': 'general_metadata', 'type': 'group', 'visible': True,
              'children': [
                 {'name': 'experiment_name', 'type': 'str', 'value': ''},
-                {'name': 'experimenter_name', 'type': 'list', 'value': 'Vilim Stih',
+                {'name': 'experimenter_name', 'type': 'list', 'value':
+                    'Vilim Stih',
                  'values': ['Elena Dragomir',
                             'Andreas Kist',
                             'Laura Knogler',

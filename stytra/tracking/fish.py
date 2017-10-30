@@ -3,7 +3,7 @@ import cv2
 from numba import vectorize, uint8
 from stytra.tracking.tail import find_fish_midline
 
-import param as pa
+from stytra.collectors import HasPyQtGraphParams
 from stytra.metadata import Metadata
 
 
@@ -131,15 +131,31 @@ def bgdif(x, y):
         return y-x
 
 
-class MidlineDetectionParams(Metadata):
-    target_area = pa.Integer(450, (0, 1500))
-    area_tolerance = pa.Integer(320, (0, 700))
-    n_tail_segments = pa.Integer(14, (1, 20))
-    tail_segment_length = pa.Number(4., (0.5, 10))
-    tail_detection_radius = pa.Integer(9, (1, 15),
-                                       doc='size of the area which is used to find the next segment')
-    eye_and_bladder_threshold = pa.Integer(100, (0, 255),
-        doc='Thresholding used to find the centre of mass of the head')
+class MidlineDetectionParams(HasPyQtGraphParams):
+    def __init__(self):
+        super().__init__(name='stimulus_protocol_params')
+
+        for child in self.params.children():
+            self.params.removeChild(child)
+
+        standard_params_dict = {'target_area': {'type': 'int', 'value': 450,
+                                                'limits': (0, 1500)},
+                                'area_tolerance': {'type': 'int', 'value': 320,
+                                                   'limits':  (0, 700)},
+                                'n_tail_segments': {'type': 'int', 'value': 14,
+                                                    'limits': (1, 20)},
+                                'tail_segment_length': {'type': 'float', 'value': 4.,
+                                                        'limits': (0.5, 10)},
+                                'tail_detection_radius': {'type': 'int', 'value': 450,
+                                                          'limits': (0, 1500),
+                                                          'tip': 'size of area used to find the next segment'},
+                                'eye_and_bladder_threshold': {'type': 'int', 'value': 100,
+                                                              'limits': (0, 255),
+                                                              'tip': 'Threshold used to find head centre of mass'}
+                }
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
 
 
 def find_fishes_midlines(frame, mask, params):
