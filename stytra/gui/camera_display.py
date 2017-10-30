@@ -117,91 +117,42 @@ class CameraTailSelection(CameraViewWidget):
         # self.roi_dict = roi_dict
         self.track_params = self.experiment.tracking_method.params
         # Draw ROI for tail selection:
-        print('start: {}'.format(self.track_params['tail_start']))
-        print('size: {}'.format(self.track_params['tail_length']))
-        self.roi_tail = pg.LineSegmentROI(self.track_params['tail_start'],
+        # print('start: {}'.format(self.track_params['tail_start']))
+        # print('size: {}'.format(self.track_params['tail_length']))
+        self.roi_tail = pg.LineSegmentROI((self.track_params['tail_start'],
                                           (self.track_params['tail_start'][0] +
                                            self.track_params['tail_length'][0],
                                            self.track_params['tail_start'][1] +
-                                           self.track_params['tail_length'][1]),
+                                           self.track_params['tail_length'][1])),
                                           pen=dict(color=(230, 40, 5),
                                                    width=3))
-        self.roi_tail.setPos(self.track_params['tail_start'])
-        self.roi_tail.setSize(self.track_params['tail_length'])
-        p1, p2 = self.roi_tail.getHandles()
-        #self.set_roi()
-        print('p1: {}, {}'.format(p1.x(), p1.y()))
-        print('p2: {}, {}'.format(p2.x(), p2.y()))
-                 #pen = None)
-        # self.roi_tail = pg.LineSegmentROI(((self.roi_dict['start_y'],
-        #                                     sel.roi_dict['start_x']),
-        #                                    (sel.roi_dict['start_y'] + \
-        #                                     sel.roi_dict['tail_length_y'],
-        #                                     sel.roi_dict['start_x'] + \
-        #                                     sel.roi_dict['tail_length_x'])),
-        #                                   pen=None)
 
         self.tail_curve = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
                                                     width=3))
         self.display_area.addItem(self.tail_curve)
         self.display_area.addItem(self.roi_tail)
 
-        # self.get_tracking_params()
         # self.tail_start_points_queue.put(self.get_tracking_params())
         self.roi_tail.sigRegionChangeFinished.connect(self.set_param_val)
         self.track_params.sigTreeStateChanged.connect(self.set_roi)
 
     def set_roi(self):
-        pass
-        # p1, p2 = self.roi_tail.getHandles()
-        #print('p1: {}, {}'.format(p1.x(), p1.y()))
-        #print('p2: {}, {}'.format(p2.x(), p2.y()))
-        # p1.setPos(QPointF(*self.track_params['tail_start']))
-        # p2.setPos(QPointF(self.track_params['tail_start'][0] + \
-        #                   self.track_params['tail_length'][0],
-        #                   self.track_params['tail_start'][1] + \
-        #                   self.track_params['tail_length'][1]))
-        # self.roi_box.setPos(self.roi_params['pos'], finish=False)
-        # self.roi_box.setSize(self.roi_params['size'])
-        # self.roi_tail.setPos()
+        p1, p2 = self.roi_tail.getHandles()
+        p1.setPos(QPointF(*self.track_params['tail_start']))
+        p2.setPos(QPointF(self.track_params['tail_start'][0] + \
+                           self.track_params['tail_length'][0],
+                           self.track_params['tail_start'][1] + \
+                           self.track_params['tail_length'][1]))
 
     def set_param_val(self):
         p1, p2 = self.roi_tail.getHandles()
         with self.track_params.treeChangeBlocker():
             self.track_params.param('tail_start').setValue((
-                p1.y(), p1.x()))
+                p1.x(), p1.y()))
             self.track_params.param('tail_length').setValue((
-                p1.y() - p2.y(), p1.x() - p2.x()))
+                p2.x() - p1.x(), p2.y() - p1.y()))
 
-    # def reset_ROI(self):
-    #     def set_roi(self):
-    #         self.roi_box.setPos(self.roi_params['pos'], finish=False)
-    #         self.roi_box.setSize(self.roi_params['size'])
-    #     # TODO figure out how to load handles
-    #     # pass
-    #     # self.roi_tail.setPoints(((self.roi_dict['start_y'], self.roi_dict['start_x']),
-    #     #                                    (self.roi_dict['start_y'] + self.roi_dict['tail_length_y'],
-    #     #                                     self.roi_dict['start_x'] + self.roi_dict['tail_length_x'])))
 
-    # def send_roi_to_queue(self):
-    #     self.tail_start_points_queue.put(self.get_tracking_params())
-
-    # def get_tracking_params(self):
-    #     # Invert x and y:
-    #     handle_pos = self.roi_tail.getSceneHandlePositions()
-    #     try:
-    #         p1 = self.display_area.mapSceneToView(handle_pos[0][1])
-    #         p2 = self.display_area.mapSceneToView(handle_pos[1][1])
-    #         self.roi_dict['start_y'] = p1.x()
-    #         self.roi_dict['start_x'] = p1.y()  # start x
-    #         self.roi_dict['tail_length_y'] = p2.x() - p1.x()  # delta y
-    #         self.roi_dict['tail_length_x'] = p2.y() - p1.y()  # delta x
-    #
-    #         self.tracking_params.update(self.roi_dict)
-    #
-    #     except np.linalg.LinAlgError:
-    #         print('tracking parameters not received yet')
-    #     return self.tracking_params
     #
     # def update_image(self):
     #     super().update_image()

@@ -11,6 +11,7 @@ import pyqtgraph as pg
 
 from stytra.gui.parameter_widgets import ParameterSpinBox
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
+from pyqtgraph.parametertree import ParameterTree
 
 
 class DebugLabel(QLabel):
@@ -172,7 +173,6 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.setCentralWidget(self.construct_ui())
 
-
     def construct_ui(self):
         central_widget = QWidget()
         central_widget.setLayout(QVBoxLayout())
@@ -227,13 +227,29 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         self.camera_splitter = QSplitter(Qt.Vertical)
         self.camera_display = CameraTailSelection(kwargs['experiment'])
 
+        self.button_tracking_params = QPushButton('Tracking params')
+        self.button_tracking_params.clicked.connect(
+            self.open_tracking_params_tree)
+
+        self.track_params_wnd = None
+        # self.tracking_layout.addWidget(self.camera_display)
+        # self.tracking_layout.addWidget(self.button_tracking_params)
+
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
         previous_widget = super().construct_ui()
+        previous_widget.layout().addWidget(self.button_tracking_params)
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(previous_widget)
         return self.camera_splitter
+
+    def open_tracking_params_tree(self):
+        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+                                            showTop=False)
+        self.track_params_wnd.setWindowTitle('Tracking data')
+        self.track_params_wnd.show()
 
 
 class VRExperimentWindow(SimpleExperimentWindow):
@@ -243,7 +259,8 @@ class VRExperimentWindow(SimpleExperimentWindow):
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
+        self.positionPlot = StreamingPositionPlot(data_accumulator=
+                                                  self.protocol.dynamic_log)
         self.monitoring_layout.addWidget(self.positionPlot)
         self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
 

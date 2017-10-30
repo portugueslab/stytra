@@ -17,12 +17,15 @@ class FrameProcessor(Process):
 
         :param n_fps_frames:
         :param print_framerate:
+        :param check_mem:
         """
-        #  frame_input_queue=None, frame_output_queue=None, start_signal=None, end_signal=None
+        #  frame_input_queue=None, frame_output_queue=None,
+        #  start_signal=None, end_signal=None
         # self.frame_input_queue = frame_input_queue
         # self.frame_output_queue = frame_input_queue
         # self.start_signal = start_signal
         # self.end_signal = end_signal
+        print(print_framerate)
         super().__init__()
 
         # framerate calculation parameters
@@ -35,6 +38,7 @@ class FrameProcessor(Process):
 
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
+        print(self.print_framerate)
 
     def update_framerate(self):
         if self.i_fps == self.n_fps_frames - 1:

@@ -253,6 +253,15 @@ class TailTrackingExperiment(CameraExperiment):
         self.tracking_method = CentroidTrackingMethod()
         self.processing_parameters_queue = Queue()
         super().__init__(*args, **kwargs)
+
+        self.frame_dispatcher = FrameDispatcher(in_frame_queue=
+                                                self.camera.frame_queue,
+                                                finished_signal=
+                                                self.camera.kill_signal,
+                                                processing_parameter_queue=
+                                                self.processing_parameters_queue,
+                                                gui_framerate=20,
+                                                print_framerate=True)
         # self.metadata.params[('fish_metadata', 'embedded')] = True
         #
         #
@@ -263,14 +272,6 @@ class TailTrackingExperiment(CameraExperiment):
         # if tracking_method_parameters is not None:
             # current_tracking_method_parameters.update(tracking_method_parameters)
 
-        self.frame_dispatcher = FrameDispatcher(in_frame_queue=
-                                                self.camera.frame_queue,
-                                                finished_signal=
-                                                self.camera.kill_signal,
-                                                processing_parameter_queue=
-                                                self.processing_parameters_queue,
-                                                gui_framerate=20,
-                                                print_framerate=False)
                                                 # gui_queue=self.gui_frame_queue,
                                                 # output_queue=self.tail_position_queue,)
 
@@ -301,6 +302,7 @@ class TailTrackingExperiment(CameraExperiment):
 
         self.gui_timer.timeout.connect(
             self.send_new_parameters)
+        self.start_frame_dispatcher()
 
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']
@@ -309,7 +311,6 @@ class TailTrackingExperiment(CameraExperiment):
         #                                                     self.asset_folder + '/' +
         #                                                     lstm_name,
         #                                                     **motion_estimation_parameters)
-
 
     def send_new_parameters(self):
         self.processing_parameters_queue.put(
@@ -331,7 +332,7 @@ class TailTrackingExperiment(CameraExperiment):
                                 self.position_estimator.log.get_dataframe())
         # temporary removal of dynamic log as it is not correct
         self.dc.add_data_source('stimulus', 'dynamic_parameters',
-                                 self.protocol.dynamic_log.get_dataframe())
+                                self.protocol.dynamic_log.get_dataframe())
         super().end_protocol(*args, **kwargs)
 
         try:
@@ -350,6 +351,11 @@ class TailTrackingExperiment(CameraExperiment):
         self.finished_sig.set()
         self.camera.terminate()
         self.frame_dispatcher.terminate()
+
+    # TODO solve this overwriting go_live, right now not possible because
+    # super.init is required before instantiating framedispatcher
+    def start_frame_dispatcher(self):
+        self.frame_dispatcher.start()
 
 
 class MovementRecordingExperiment(CameraExperiment):

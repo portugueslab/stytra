@@ -32,8 +32,8 @@ class FrameProcessingMethod(HasPyQtGraphParams):
 
         self.tracked_variables = []
 
-    def process(self, image):
-        return tuple()
+    # def process(self, image):
+    #     return tuple()
 
 
 class TailTrackingMethod(FrameProcessingMethod):
@@ -44,10 +44,10 @@ class TailTrackingMethod(FrameProcessingMethod):
         standard_params_dict = dict(n_tail_segments=10,
                                     function=['centroid', 'angle_sweep'],
                                     color_invert=True,
-                                    tail_start={'value': (0, 0),
-                                                'visible': False},
-                                    tail_length={'value': (200, 50),
-                                                 'visible': False})
+                                    tail_start={'value': (10, 400),
+                                                'visible': True},
+                                    tail_length={'value': (50, 150),
+                                                 'visible': True})
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -63,8 +63,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
 
-    def process(self, image, parameters):
-        return trace_tail_centroid(image, **self.getValues())
+    # def process(self, image, parameters):
+    #     return trace_tail_centroid(image, **self.getValues())
 
 
 class FrameDispatcher(FrameProcessor):
@@ -81,7 +81,7 @@ class FrameDispatcher(FrameProcessor):
         :param processing_parameter_queue: queue for function&parameters
         :param gui_framerate: framerate of the display GUI
         """
-
+        print(kwargs)
         super().__init__(**kwargs)
 
         self.frame_queue = in_frame_queue
@@ -92,7 +92,7 @@ class FrameDispatcher(FrameProcessor):
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        #TODO this is just to start with some function
+        # TODO this is just to start with some function
         self.processing_function = None
         self.processing_parameter_queue = processing_parameter_queue
 
@@ -105,7 +105,7 @@ class FrameDispatcher(FrameProcessor):
         """
         if self.processing_function is not None:
             return tuple(self.processing_function(frame,
-                                              **self.processing_parameters))
+                                                  **self.processing_parameters))
 
     def run(self):
         """ Loop running the tracking function.
@@ -148,50 +148,13 @@ class FrameDispatcher(FrameProcessor):
                 break
         return
 
-
-# class TailTrackingDispatcher(FrameDispatcher, HasPyQtGraphParams):
-#     """ Child of FrameDispatcher for tail tracking.
-#     """
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.params.setName('tracking_algorithm_params')
 #
-#         self.params.addChildren([{'name': 'start_x',
-#                                   'value': 0},
-#                                  {'name': 'start_y',
-#                                   'value': 0},
-#                                  {'name': 'tail_length_x',
-#                                   'value': 0},
-#                                  {'name': 'tail_length_y',
-#                                   'value': 0},
-#                                  {'name': 'processing_function',
-#                                   'type': 'list',
-#                                 'values': ['centroid', 'angular_sweep'],
-#                                   'value': 'centroid'},
-#                                  {'name': 'n_segments', 'type': 'int',
-#                                   'value': 10},
-#                                  {'name': 'color_invert', 'type': 'bool',
-#                                   'value': False},
-#                                  {'name': 'filter_size', 'type': 'int',
-#                                   'value': 0},
-#                                  {'name': 'window_size', 'type': 'int',
-#                                   'value': 7},
-#                                  {'name': 'image_scale', 'type': 'float',
-#                                   'value': 0.5},
-#                                  ])
-#         self.processing_functions = dict(centroid=trace_tail_centroid,
-#                                          angular_sweep=trace_tail_angular_sweep)
-#
-#     def process_internal(self, frame):
-#         trace_tail_centroid(**self.params.getValues())
-
-
-class MovementDetectionParameters(pa.Parameterized):
-    fish_threshold = pa.Integer(100, (0, 255))
-    motion_threshold = pa.Integer(255*8)
-    frame_margin = pa.Integer(10)
-    n_previous_save = pa.Integer(400)
-    n_next_save = pa.Integer(300)
+# class MovementDetectionParameters(pa.Parameterized):
+#     fish_threshold = pa.Integer(100, (0, 255))
+#     motion_threshold = pa.Integer(255*8)
+#     frame_margin = pa.Integer(10)
+#     n_previous_save = pa.Integer(400)
+#     n_next_save = pa.Integer(300)
 
 
 @jit(nopython=True)

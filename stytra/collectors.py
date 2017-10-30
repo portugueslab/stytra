@@ -14,10 +14,10 @@ from stytra.dbconn import sanitize_item
 
 class HasPyQtGraphParams(object):
     """
-    This maybe weird class is used to have a number of objects which
+    This class is used to have a number of objects which
     constitute the experiment interfaces and protocols sharing a global
-    params Parameter that will be used for saving metadata and restoring
-    the app to the last used data.
+    pyqtgraph Parameter object that will be used for saving metadata and
+    restoring the app to the last used data.
     _params is a class attribute and is shared among all subclasses; each
     subclass will have an alias, params, providing access to its private
     parameters.
@@ -25,9 +25,10 @@ class HasPyQtGraphParams(object):
     _params = Parameter.create(name='global_params', type='group')
 
     def __init__(self, name=None):
-        # Here passing the name gives the user the possibility of easily
+        # Here passing the name for the new branch allows the user to easily
         # overwrite branches of the parameter tree. If not passed,
-        # children class name will be used
+        # children class name will be used.
+
         if name is None:
             name = self.__class__.__name__
         self.params = Parameter.create(name=name,

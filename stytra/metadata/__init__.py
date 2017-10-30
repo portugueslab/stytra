@@ -71,7 +71,7 @@ class Metadata(HasPyQtGraphParams):
     def get_gui(self):
         t = ParameterTree()
         t.setParameters(self.params, showTop=False)
-        t.setWindowTitle('pyqtgraph example: Parameter Tree')
+        t.setWindowTitle('General metadata')
         return t
 
     def get_state(self):
@@ -111,6 +111,8 @@ class Metadata(HasPyQtGraphParams):
 #         return ParameterGui(metadata_obj=self, save_button=save_button)
 #
 #
+
+
 class MetadataFish(Metadata):
     """Fish description metadata class
     """
