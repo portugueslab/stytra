@@ -3,10 +3,11 @@ import numpy as np
 import datetime
 import time
 
-
 import numpy as np
 import datetime
-def sanitize_item(it, parametervalues=False):
+
+
+def sanitize_item(it, paramstree=False):
     """ Used to create a dictionary which will be safe to put in MongoDB
 
     :param it: the item which will be recursively sanitized
@@ -19,20 +20,21 @@ def sanitize_item(it, parametervalues=False):
     if isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
-            new_dict[key] = sanitize_item(value)
+            new_dict[key] = sanitize_item(value, paramstree=paramstree)
         return new_dict
     if isinstance(it, tuple):
-        tuple_out = tuple([sanitize_item(el) for el in it])
-        if len(tuple_out) == 2 and parametervalues:
-            if isinstance(tuple_out[1], dict):
-                if len(tuple_out[1]) == 0:
-                    return tuple_out[0]
-                else:
-                    return tuple_out[1]
+        tuple_out = tuple([sanitize_item(el, paramstree=paramstree)
+                           for el in it])
+        if len(tuple_out) == 2 and paramstree and \
+                isinstance(tuple_out[1], dict):
+            if len(tuple_out[1]) == 0:
+                return tuple_out[0]
+            else:
+                return tuple_out[1]
         else:
             return tuple_out
     if isinstance(it, list):
-        return [sanitize_item(el) for el in it]
+        return [sanitize_item(el, paramstree=paramstree) for el in it]
     if isinstance(it, np.generic):
         return np.asscalar(it)
     if isinstance(it, datetime.datetime):

@@ -123,9 +123,9 @@ class CameraTailSelection(CameraViewWidget):
                                           (self.track_params['tail_start'][0] +
                                            self.track_params['tail_length'][0],
                                            self.track_params['tail_start'][1] +
-                                           self.track_params['tail_length'][1])),
-                                          pen=dict(color=(230, 40, 5),
-                                                   width=3))
+                                           self.track_params['tail_length'][1]
+                                           )), pen=dict(color=(230, 40, 5),
+                                                        width=3))
 
         self.tail_curve = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
                                                     width=3))
@@ -152,25 +152,24 @@ class CameraTailSelection(CameraViewWidget):
             self.track_params.param('tail_length').setValue((
                 p2.x() - p1.x(), p2.y() - p1.y()))
 
+    def update_image(self):
+        super().update_image()
+        if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
+            angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]
+            start_x = self.track_params['tail_start'][0]
+            start_y = self.track_params['tail_start'][1]
+            tail_len_x = self.track_params['tail_length'][0]
+            tail_len_y = self.track_params['tail_length'][1]
+            tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
-    #
-    # def update_image(self):
-    #     super().update_image()
-    #     if len(self.tail_position_data.stored_data) > 1:
-    #         angles = self.tail_position_data.stored_data[-1][2:]
-    #         start_x = self.roi_dict['start_x']
-    #         start_y = self.roi_dict['start_y']
-    #         tail_len_x = self.roi_dict['tail_length_x']
-    #         tail_len_y = self.roi_dict['tail_length_y']
-    #         tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
-    #         # Get segment length:
-    #         tail_segment_length = tail_length / (len(angles) - 1)
-    #         points = [np.array([start_x, start_y])]
-    #         for angle in angles:
-    #             points.append(points[-1] + tail_segment_length * np.array(
-    #                 [np.sin(angle), np.cos(angle)]))
-    #         points = np.array(points)
-    #         self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
+            # Get segment length:
+            tail_segment_length = tail_length / (len(angles) - 1)
+            points = [np.array([start_x, start_y])]
+            for angle in angles:
+                points.append(points[-1] + tail_segment_length * np.array(
+                    [np.sin(angle), np.cos(angle)]))
+            points = np.array(points)
+            self.tail_curve.setData(x=points[:, 0], y=points[:, 1])
 
 
 class CameraViewCalib(CameraViewWidget):

@@ -120,33 +120,40 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     return xm + dx, ym + dy, dx, dy, acc
 
 
-def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1,
-                        tail_length_y=1, n_segments=12, window_size=7,
+def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
+                        n_segments=12, window_size=7,
                         color_invert=False, filter_size=0, image_scale=0.5):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
     :param im: image to process
-    :param start_x: starting point x
-    :param start_y: starting point y
-    :param tail_length_x: tail length on x
-    :param tail_length_y: tail length on y
+    :param tail_start: starting point (x, y)
+    :param tail_length: tail length (x, y)
     :param n_segments: number of desired segments
-    :param window_size: size in pixel of the window for center-of-mass calculation
+    :param window_size: window size in pixel for center-of-mass calculation
     :param color_invert: True for inverting luminosity of the image
     :param filter_size: Size of the box filter to filter the image
     :param image_scale: the amount of downscaling of the image
     :return: list of cumulative sum + list of angles
     """
+    start_x = tail_start[0]  # TODO remove
+    start_y = tail_start[1]
+    tail_length_x = tail_length[0]
+    tail_length_y = tail_length[1]
+
     n_segments += 1
     if image_scale != 1:  # bandpass filter the image:
-        im = cv2.resize(im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA)
+        im = cv2.resize(im, None, fx=image_scale, fy=image_scale,
+                        interpolation=cv2.INTER_AREA)
     if filter_size > 0:
         im = cv2.boxFilter(im, -1, (filter_size, filter_size))
     if color_invert:
         im = (255 - im)  # invert image
-    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale  # calculate tail length
-    seg_length = length_tail / n_segments  # segment length from tail length and n of segments
+    # calculate tail length
+    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+
+    # segment length from tail length and n of segments
+    seg_length = length_tail / n_segments
 
     # Initial displacements in x and y:
     disp_x = tail_length_x * image_scale / n_segments
@@ -157,9 +164,9 @@ def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1,
     start_y *= image_scale
 
     halfwin = window_size/2
-
     for i in range(1, n_segments):
-        # Use next segment function for find next point with center-of-mass displacement:
+        # Use next segment function for find next point
+        # with center-of-mass displacement:
         start_x, start_y, disp_x, disp_y, acc = \
             _next_segment(im, start_x, start_y, disp_x, disp_y, halfwin,
                           seg_length)

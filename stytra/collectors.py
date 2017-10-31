@@ -55,6 +55,9 @@ class HasPyQtGraphParams(object):
             else:
                 self.params.addChild({'name': name, 'value': value})
 
+    def get_clean_values(self):
+        return sanitize_item(self.params.getValues(), paramstree=True)
+
 
 class Metadata(HasPyQtGraphParams):
     def __init__(self):
@@ -292,7 +295,7 @@ class DataCollector:
 
         for key in value_dict.keys():
             category = key.split('_')[0]
-            value = sanitize_item(value_dict[key], parametervalues=True)
+            value = sanitize_item(value_dict[key], paramstree=True)
             if category in clean_data_dict.keys():
                 clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
             else:

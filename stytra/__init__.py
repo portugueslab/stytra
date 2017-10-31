@@ -238,8 +238,6 @@ class CameraExperiment(Experiment):
 
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
-                 tracking_method='angle_sweep',
-                 tracking_method_parameters=None,
                  motion_estimation=None, motion_estimation_parameters=None,
                  **kwargs):
         """ An experiment which contains tail tracking,
@@ -251,7 +249,8 @@ class TailTrackingExperiment(CameraExperiment):
         :param kwargs:
         """
         self.tracking_method = CentroidTrackingMethod()
-        self.processing_parameters_queue = Queue()
+        self.processing_params_queue = Queue()
+        self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
@@ -259,46 +258,28 @@ class TailTrackingExperiment(CameraExperiment):
                                                 finished_signal=
                                                 self.camera.kill_signal,
                                                 processing_parameter_queue=
-                                                self.processing_parameters_queue,
+                                                self.processing_params_queue,
                                                 gui_framerate=20,
-                                                print_framerate=True)
+                                                print_framerate=False)
+
         # self.metadata.params[('fish_metadata', 'embedded')] = True
-        #
-        #
-        # dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
-        #                                centroid=trace_tail_centroid)
 
-        # current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
-        # if tracking_method_parameters is not None:
-            # current_tracking_method_parameters.update(tracking_method_parameters)
+        self.data_acc_tailpoints = QueueDataAccumulator(
+                                          self.frame_dispatcher.output_queue,
+                                          header_list=['tail_sum'] +
+                                            ['theta_{:02}'.format(i)
+                                             for i in range(
+                                                self.tracking_method.params['n_segments'])])
 
-                                                # gui_queue=self.gui_frame_queue,
-                                                # output_queue=self.tail_position_queue,)
-
-        # self.data_acc_tailpoints = QueueDataAccumulator(self.tail_position_queue,
-        #                                                 header_list=['tail_sum'] +
-        #                                                 ['theta_{:02}'.format(i)
-        #                                                  for i in range(
-        #                                                     current_tracking_method_parameters['n_segments'])])
-
-        # self.camera_viewer = CameraTailSelection(experiment=self)
-        # tail_start_points_queue=self.processing_parameter_queue,
-        # camera_queue=self.gui_frame_queue,
-        # tail_position_data=self.data_acc_tailpoints,
-        # update_timer=self.gui_timer,
-        # control_queue=self.control_queue,
+        #tail_position_data=self.data_acc_tailpoints,
         # camera_parameters=self.metadata_camera,
-        # tracking_params=current_tracking_method_parameters)
-
-        # self.widget_control.layout.insertWidget(0, self.camera_viewer)
 
         # self.dc.add_data_source('tracking',
         #                         'tail_position', self.camera_viewer, 'roi_dict')
-        # # self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        # self.gui_timer.timeout.connect(
-        #     self.data_acc_tailpoints.update_list)
+        self.gui_timer.timeout.connect(
+            self.data_acc_tailpoints.update_list)
 
         self.gui_timer.timeout.connect(
             self.send_new_parameters)
@@ -313,8 +294,8 @@ class TailTrackingExperiment(CameraExperiment):
         #                                                     **motion_estimation_parameters)
 
     def send_new_parameters(self):
-        self.processing_parameters_queue.put(
-            self.tracking_method.params.getValues())
+        self.processing_params_queue.put(
+             self.tracking_method.get_clean_values())
 
     def make_window(self):
         return TailTrackingExperimentWindow(experiment=self)

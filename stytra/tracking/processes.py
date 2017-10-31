@@ -24,7 +24,7 @@ class FrameProcessingMethod(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-        standard_params_dict = dict(rescale=1,
+        standard_params_dict = dict(image_scale=1,
                                     filter_size=0)
 
         for key in standard_params_dict.keys():
@@ -32,17 +32,17 @@ class FrameProcessingMethod(HasPyQtGraphParams):
 
         self.tracked_variables = []
 
-    # def process(self, image):
-    #     return tuple()
-
 
 class TailTrackingMethod(FrameProcessingMethod):
     """ General tail tracking method.
     """
     def __init__(self):
         super().__init__()
-        standard_params_dict = dict(n_tail_segments=10,
-                                    function=['centroid', 'angle_sweep'],
+        # TODO maybe getting default values here:
+        standard_params_dict = dict(n_segments=10,
+                                    function={'values': ['centroid',
+                                                         'angle_sweep'],
+                                              'value': 'centroid'},
                                     color_invert=True,
                                     tail_start={'value': (10, 400),
                                                 'visible': True},
@@ -63,9 +63,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
 
-    # def process(self, image, parameters):
-    #     return trace_tail_centroid(image, **self.getValues())
-
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
@@ -81,7 +78,6 @@ class FrameDispatcher(FrameProcessor):
         :param processing_parameter_queue: queue for function&parameters
         :param gui_framerate: framerate of the display GUI
         """
-        print(kwargs)
         super().__init__(**kwargs)
 
         self.frame_queue = in_frame_queue
@@ -92,7 +88,6 @@ class FrameDispatcher(FrameProcessor):
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        # TODO this is just to start with some function
         self.processing_function = None
         self.processing_parameter_queue = processing_parameter_queue
 
@@ -104,8 +99,13 @@ class FrameDispatcher(FrameProcessor):
         self.processing parameters as additional inputs.
         """
         if self.processing_function is not None:
-            return tuple(self.processing_function(frame,
+            try:
+                output = tuple(self.processing_function(frame,
                                                   **self.processing_parameters))
+                return output
+            except:
+                raise ValueError('Unknown error while processing frame')
+
 
     def run(self):
         """ Loop running the tracking function.
@@ -123,7 +123,7 @@ class FrameDispatcher(FrameProcessor):
                             self.processing_parameter_queue.get(timeout=0.0001)
                         self.processing_function = \
                             self.dict_tracking_functions[
-                                self.processing_parameters['function']]
+                                self.processing_parameters.pop('function')]
 
                     except Empty:
                         pass
