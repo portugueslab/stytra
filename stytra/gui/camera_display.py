@@ -190,23 +190,4 @@ class CameraViewCalib(CameraViewWidget):
                                          brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)
-#
-#
-if __name__ == '__main__':
-    from PyQt5.QtWidgets import QApplication
 
-    app = QApplication([])
-    a = pg.LineSegmentROI((10, 2), (3, 2))
-    b,c = a.getHandles()
-    b.setPos(QPointF(3,2))
-    print(b.x())
-#     from multiprocessing import Queue
-#     from PyQt5.QtWidgets import QApplication
-#     app = QApplication([])
-#     q = Queue()
-#     for i in range(100):
-#         q.put(np.random.randint(0, 255, (640, 480), dtype=np.uint8))
-#
-#     w = CameraTailSelection(q, 'b')
-#     w.show()
-#     app.exec_()

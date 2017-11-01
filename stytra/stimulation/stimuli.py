@@ -550,17 +550,17 @@ class ShockStimulus(Stimulus):
         self.elapsed = 1
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # pyb = PyboardConnection(com_port='COM3')
     # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
     #                      pulse_n=1, pulse_dur_ms=5)
     # stim.start()
     # del pyb
-
-    from PyQt5.QtGui import QPolygon, QRegion
-    p = QPainter()
-    points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
-    pol = QPolygon(points)
-    p.drawPolygon(pol)
-    p.setClipping(True)
-    p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))
+    #
+    # from PyQt5.QtGui import QPolygon, QRegion
+    # p = QPainter()
+    # points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
+    # pol = QPolygon(points)
+    # p.drawPolygon(pol)
+    # p.setClipping(True)
+    # p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))

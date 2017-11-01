@@ -41,15 +41,20 @@ class HasPyQtGraphParams(object):
                 self._params.removeChild(child)
         self._params.addChild(self.params)
 
-    def set_new_param(self, name, value, var_type=True):
-        """Easy set for new parameters
+    def set_new_param(self, name, value, get_var_type=True):
+        """ Easy set for new parameters
+        :param name: name of new parameter
+        :param value: either a value entry or a dictionary of valid keys
+                      for a parameter (e.g. type, visible, editable, etc.)
+        :param get_var_type: if True, value type will be set as parameter type
+        :return:
         """
-        if isinstance(value, dict):
-            entry_dict = {'name': name}
+        if isinstance(value, dict):  # Allows passing dictionaries:
+            entry_dict = {'name': name}  # add name
             entry_dict.update(value)
             self.params.addChild(entry_dict)
         else:
-            if var_type:
+            if get_var_type:  # if specification of type is required, infer it
                 self.params.addChild({'name': name, 'value': value,
                                       'type': type(value).__name__})
             else:
@@ -250,7 +255,8 @@ class DataCollector:
 
         # Try to find previously saved metadata:
         self.last_metadata = None
-        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
+        list_metadata = sorted([fn for fn in os.listdir(folder_path) if
+                                fn.endswith('metadata.h5')])
         if len(list_metadata) > 0:
             self.last_metadata = dd.io.load(folder_path + list_metadata[-1])['static_metadata']
 
@@ -262,10 +268,11 @@ class DataCollector:
 
     def add_data_source(self, entry, name='unspecified_entry'):
         """
-        Function for adding new data sources.
-            - Metadata objects: can be passed without specifications
-                                (e.g., add_data_source(MetadataFish()));
-            - Log data, for stimulus log or tail tracking
+        Function for adding new data sources. entry can fall under two cases:
+            - Metadata object: will be used to get all the parameters from
+                               HasPyQtGraphParams children
+            - Log data, for stimulus log or tail tracking, or in general
+                        inputs that are not reset from saved data
         """
 
         # If true, use the last values used for this parameter
@@ -321,7 +328,6 @@ class DataCollector:
 
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         filename = self.folder_path + timestamp + '_metadata.h5'
-        print(data_dict)
         dd.io.save(filename, data_dict)
 
         filename = self.folder_path + timestamp + '_metadatacheck.h5'

@@ -19,8 +19,8 @@ class FrameProcessingMethod(HasPyQtGraphParams):
     """ The class for parametrisation fo various tail and fish tracking methods
 
     """
-    def __init__(self):
-        super().__init__(name='img_processing_params')
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         for child in self.params.children():
             self.params.removeChild(child)
 
@@ -37,7 +37,7 @@ class TailTrackingMethod(FrameProcessingMethod):
     """ General tail tracking method.
     """
     def __init__(self):
-        super().__init__()
+        super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
         standard_params_dict = dict(n_segments=20,
                                     function={'values': ['centroid',

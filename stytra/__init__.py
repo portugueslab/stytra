@@ -106,8 +106,6 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator)
@@ -183,6 +181,9 @@ class Experiment(QObject):
         metadata and put experiment data in pymongo database.
         """
         self.protocol_runner.end()
+        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
+                                name='stimulus_dynamic_log')
 
         if save:  # save metadata
             self.dc.save()
@@ -274,9 +275,7 @@ class TailTrackingExperiment(CameraExperiment):
                                             ['theta_{:02}'.format(i)
                                              for i in range(
                                                 self.tracking_method.params['n_segments'])])
-        #
-        # self.dc.add_data_source(self.data_acc_tailpoints.stored_data,
-        #                         name='tail_log')
+
 
         # start the processes and connect the timers
         self.gui_timer.timeout.connect(
@@ -312,7 +311,7 @@ class TailTrackingExperiment(CameraExperiment):
         """ Save tail position and dynamic parameters and terminate.
         """
         self.dc.add_data_source(self.data_acc_tailpoints.get_dataframe(),
-                                name='tail_log')
+                                name='behaviour_tail_log')
         # self.dc.add_data_source('behaviour', 'vr',
         #                         self.position_estimator.log.get_dataframe())
         # temporary removal of dynamic log as it is not correct

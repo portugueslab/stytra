@@ -121,7 +121,6 @@ class ProtocolRunner(QObject):
                 # Is this stimulus was also the last one end protocol:
                 if self.i_current_stimulus >= len(self.stimuli) - 1:
                     self.completed = True
-                    self.end()
                     self.sig_protocol_finished.emit()
 
                 else:
@@ -165,8 +164,8 @@ class ProtocolRunner(QObject):
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
                         t_start=self.t - self.current_stimulus._elapsed, t_stop=self.t)
-        if self.log_print:
-            print(new_dict)
+        # if self.log_print:
+        #     print(new_dict)
         self.log.append(new_dict)
 
     def update_dynamic_log(self):
