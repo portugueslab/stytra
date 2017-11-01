@@ -113,7 +113,6 @@ class Experiment(QObject):
                                                     self.calibrator)
 
         self.scope_triggered = scope_triggered
-        self.window_main = self.make_window()
         self.dc.add_data_source(self.metadata)
 
         # This has to happen  or version will also be reset to last value:
@@ -124,7 +123,9 @@ class Experiment(QObject):
             self.zmq_context = zmq.Context()
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
-        self.window_main.show()
+        # TODO check if instance of experiment or solve somehow
+        # self.window_main = self.make_window()
+        # self.window_main.show()
 
     def make_window(self):
         return SimpleExperimentWindow(self)
@@ -213,6 +214,9 @@ class CameraExperiment(Experiment):
 
         super().__init__(*args, **kwargs)
         self.go_live()
+        # TODO solve somehow
+        # self.window_main = self.make_window()
+        # self.window_main.show()
 
     def make_window(self):
         return CameraExperimentWindow(experiment=self)
@@ -270,12 +274,9 @@ class TailTrackingExperiment(CameraExperiment):
                                             ['theta_{:02}'.format(i)
                                              for i in range(
                                                 self.tracking_method.params['n_segments'])])
-
-        #tail_position_data=self.data_acc_tailpoints,
-        # camera_parameters=self.metadata_camera,
-
-        # self.dc.add_data_source('tracking',
-        #                         'tail_position', self.camera_viewer, 'roi_dict')
+        #
+        # self.dc.add_data_source(self.data_acc_tailpoints.stored_data,
+        #                         name='tail_log')
 
         # start the processes and connect the timers
         self.gui_timer.timeout.connect(
@@ -284,6 +285,9 @@ class TailTrackingExperiment(CameraExperiment):
         self.gui_timer.timeout.connect(
             self.send_new_parameters)
         self.start_frame_dispatcher()
+
+        self.window_main = self.make_window()
+        self.window_main.show()
 
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']
@@ -307,13 +311,13 @@ class TailTrackingExperiment(CameraExperiment):
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
         """
-        self.dc.add_data_source('behaviour', 'tail',
-                                self.data_acc_tailpoints.get_dataframe())
-        self.dc.add_data_source('behaviour', 'vr',
-                                self.position_estimator.log.get_dataframe())
+        self.dc.add_data_source(self.data_acc_tailpoints.get_dataframe(),
+                                name='tail_log')
+        # self.dc.add_data_source('behaviour', 'vr',
+        #                         self.position_estimator.log.get_dataframe())
         # temporary removal of dynamic log as it is not correct
-        self.dc.add_data_source('stimulus', 'dynamic_parameters',
-                                self.protocol.dynamic_log.get_dataframe())
+        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
+        #                         name='stimulus_log')
         super().end_protocol(*args, **kwargs)
 
         try:
@@ -325,6 +329,11 @@ class TailTrackingExperiment(CameraExperiment):
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+
+    def wrap_up(self, *args, **kwargs):
+        super().wrap_up(*args, **kwargs)
+        self.frame_dispatcher.terminate()
+        print('Dispatcher process terminated')
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)

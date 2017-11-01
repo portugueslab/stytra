@@ -156,10 +156,10 @@ class CameraTailSelection(CameraViewWidget):
         super().update_image()
         if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
             angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]
-            start_x = self.track_params['tail_start'][0]
-            start_y = self.track_params['tail_start'][1]
-            tail_len_x = self.track_params['tail_length'][0]
-            tail_len_y = self.track_params['tail_length'][1]
+            start_x = self.track_params['tail_start'][1]
+            start_y = self.track_params['tail_start'][0]
+            tail_len_x = self.track_params['tail_length'][1]
+            tail_len_y = self.track_params['tail_length'][0]
             tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
             # Get segment length:
@@ -169,7 +169,7 @@ class CameraTailSelection(CameraViewWidget):
                 points.append(points[-1] + tail_segment_length * np.array(
                     [np.sin(angle), np.cos(angle)]))
             points = np.array(points)
-            self.tail_curve.setData(x=points[:, 0], y=points[:, 1])
+            self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
 
 
 class CameraViewCalib(CameraViewWidget):

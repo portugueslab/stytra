@@ -39,14 +39,14 @@ class TailTrackingMethod(FrameProcessingMethod):
     def __init__(self):
         super().__init__()
         # TODO maybe getting default values here:
-        standard_params_dict = dict(n_segments=10,
+        standard_params_dict = dict(n_segments=20,
                                     function={'values': ['centroid',
                                                          'angle_sweep'],
                                               'value': 'centroid'},
                                     color_invert=True,
-                                    tail_start={'value': (10, 400),
+                                    tail_start={'value': (440, 225),
                                                 'visible': True},
-                                    tail_length={'value': (50, 150),
+                                    tail_length={'value': (-250, 30),
                                                  'visible': True})
 
         for key, value in standard_params_dict.items():
@@ -58,7 +58,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
     """
     def __init__(self):
         super().__init__()
-        standard_params_dict = dict(window_size=10)
+        standard_params_dict = dict(window_size=30)
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)

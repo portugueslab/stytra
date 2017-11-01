@@ -132,14 +132,14 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
     :param n_segments: number of desired segments
     :param window_size: window size in pixel for center-of-mass calculation
     :param color_invert: True for inverting luminosity of the image
-    :param filter_size: Size of the box filter to filter the image
+    :param filter_size: Size of the box filter to low-pass filter the image
     :param image_scale: the amount of downscaling of the image
     :return: list of cumulative sum + list of angles
     """
-    start_x = tail_start[0]  # TODO remove
-    start_y = tail_start[1]
-    tail_length_x = tail_length[0]
-    tail_length_y = tail_length[1]
+    start_x = tail_start[1]  # TODO remove
+    start_y = tail_start[0]
+    tail_length_x = tail_length[1]
+    tail_length_y = tail_length[0]
 
     n_segments += 1
     if image_scale != 1:  # bandpass filter the image:
