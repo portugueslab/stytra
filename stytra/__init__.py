@@ -94,7 +94,8 @@ class Experiment(QObject):
         self.metadata = Metadata()
         self.dc = DataCollector(folder_path=self.directory)
 
-        self.last_protocol = self.dc.get_last_class_name('stim_protocol_params')
+        self.last_protocol = \
+            self.dc.get_last_class_name('stimulus_protocol_params')
 
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
         if self.last_protocol is not None:
@@ -121,9 +122,11 @@ class Experiment(QObject):
             self.zmq_context = zmq.Context()
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
 
-        # TODO check if instance of experiment or solve somehow
-        # self.window_main = self.make_window()
-        # self.window_main.show()
+        # TODO check this:
+        if type(self) == Experiment:
+            print('eccoci')
+            self.window_main = self.make_window()
+            self.window_main.show()
 
     def make_window(self):
         return SimpleExperimentWindow(self)
@@ -182,13 +185,13 @@ class Experiment(QObject):
         """
         self.protocol_runner.end()
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-        self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
-                                name='stimulus_dynamic_log')
+        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
+        #                         name='stimulus_dynamic_log')
 
         if save:  # save metadata
             self.dc.save()
             if not self.debug_mode:  # upload to database
-                put_experiment_in_db(self.dc.get_clean_dict())
+                put_experiment_in_db(self.dc.get_clean_dict(paramstree=True))
         self.protocol_runner.reset()
 
     def wrap_up(self, *args, **kwargs):
@@ -215,9 +218,10 @@ class CameraExperiment(Experiment):
 
         super().__init__(*args, **kwargs)
         self.go_live()
-        # TODO solve somehow
-        # self.window_main = self.make_window()
-        # self.window_main.show()
+
+        if type(self) == CameraExperiment:
+            self.window_main = self.make_window()
+            self.window_main.show()
 
     def make_window(self):
         return CameraExperimentWindow(experiment=self)
@@ -285,8 +289,9 @@ class TailTrackingExperiment(CameraExperiment):
             self.send_new_parameters)
         self.start_frame_dispatcher()
 
-        self.window_main = self.make_window()
-        self.window_main.show()
+        if type(self) == TailTrackingExperiment:
+            self.window_main = self.make_window()
+            self.window_main.show()
 
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']

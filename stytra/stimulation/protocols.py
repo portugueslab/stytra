@@ -16,7 +16,7 @@ class Protocol(HasPyQtGraphParams):
     name = ''
 
     def __init__(self):
-        super().__init__(name='stim_protocol_params')
+        super().__init__(name='stimulus_protocol_params')
 
         for child in self.params.children():
             self.params.removeChild(child)

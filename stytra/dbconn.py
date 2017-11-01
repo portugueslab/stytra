@@ -2,28 +2,33 @@ import pymongo
 import numpy as np
 import datetime
 import time
+import pandas as pd
 
 import numpy as np
 import datetime
 
 
-def sanitize_item(it, paramstree=False):
+def sanitize_item(it, paramstree=False, convert_datetime=False):
     """ Used to create a dictionary which will be safe to put in MongoDB
 
     :param it: the item which will be recursively sanitized
     :return:
     """
+    # TODO handle better input arguments in calling recursively the function?
     safe_types = (int, float, str)
+
     for st in safe_types:
         if isinstance(it, st):
             return it
     if isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
-            new_dict[key] = sanitize_item(value, paramstree=paramstree)
+            new_dict[key] = sanitize_item(value, paramstree=paramstree,
+                                          convert_datetime=convert_datetime)
         return new_dict
     if isinstance(it, tuple):
-        tuple_out = tuple([sanitize_item(el, paramstree=paramstree)
+        tuple_out = tuple([sanitize_item(el, paramstree=paramstree,
+                                         convert_datetime=convert_datetime)
                            for el in it])
         if len(tuple_out) == 2 and paramstree and \
                 isinstance(tuple_out[1], dict):
@@ -34,12 +39,18 @@ def sanitize_item(it, paramstree=False):
         else:
             return tuple_out
     if isinstance(it, list):
-        return [sanitize_item(el, paramstree=paramstree) for el in it]
+        return [sanitize_item(el, paramstree=paramstree,
+                              convert_datetime=convert_datetime) for el in it]
     if isinstance(it, np.generic):
         return np.asscalar(it)
     if isinstance(it, datetime.datetime):
-        temptime = time.mktime(it.timetuple())
-        return datetime.datetime.utcfromtimestamp(temptime)
+        if convert_datetime:
+            return it.isoformat()
+        else:
+            temptime = time.mktime(it.timetuple())
+            return datetime.datetime.utcfromtimestamp(temptime)
+    if isinstance(it, pd.DataFrame):
+        return it.to_dict('list')
     return 0
 
 

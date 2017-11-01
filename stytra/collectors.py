@@ -5,6 +5,7 @@ import deepdish as dd
 import numpy as np
 import pandas as pd
 import param
+import json
 
 # from stytra.metadata import Metadata
 from copy import deepcopy
@@ -289,7 +290,7 @@ class DataCollector:
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
         return data_dict
 
-    def get_clean_dict(self):
+    def get_clean_dict(self, convert_datetime=False):
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
@@ -302,7 +303,8 @@ class DataCollector:
 
         for key in value_dict.keys():
             category = key.split('_')[0]
-            value = sanitize_item(value_dict[key], paramstree=True)
+            value = sanitize_item(value_dict[key], paramstree=True,
+                                  convert_datetime=convert_datetime)
             if category in clean_data_dict.keys():
                 clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
             else:
@@ -312,12 +314,12 @@ class DataCollector:
 
     def get_last_class_name(self, class_param_key):
         if self.last_metadata is not None:
-            # This is atrocious.
+            # TODO This is atrocious.
             return self.last_metadata['children'][class_param_key]['children']['name']['value']
         else:
             return None
 
-    def save(self, timestamp=None, save_csv=False):
+    def save(self, timestamp=None, save_json=True):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
@@ -330,10 +332,10 @@ class DataCollector:
         filename = self.folder_path + timestamp + '_metadata.h5'
         dd.io.save(filename, data_dict)
 
-        filename = self.folder_path + timestamp + '_metadatacheck.h5'
-        dd.io.save(filename, self.get_clean_dict())
-        # Save .csv file if required
-        if save_csv:
-            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
-            dataframe = metadata_dataframe(data_dict)
-            dataframe.to_csv(filename_df)
+        # Save also clean json file:
+        if save_json:
+            filename = self.folder_path + timestamp + '_metadata_json.txt'
+            # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
+            with open(filename, 'w') as outfile:
+                json.dump(self.get_clean_dict(convert_datetime=True),
+                          outfile)

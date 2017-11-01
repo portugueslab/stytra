@@ -435,13 +435,20 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
         # To draw a windmill, a set of consecutive triangles will be painted:
         mid_x = int(w / 2)  # calculate image center
         mid_y = int(h / 2)
-        angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)  # calculate angles for each triangle
-        size = np.pi / self.n_arms  # angular width of the white arms, by default equal to dark ones
-        rad = (w ** 2 + h ** 2) ** (1 / 2)  # radius of triangles (much larger than frame)
+
+        # calculate angles for each triangle:
+        angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
+        # TODO calculate offset to make it symmetrical
+        # angular width of the white arms, by default equal to dark ones
+        size = np.pi / self.n_arms
+        # radius of triangles (much larger than frame)
+        rad = (w ** 2 + h ** 2) ** (1 / 2)
         for deg in angles:  # loop over angles and draw consecutive rectangles
             polyg_points = [QPoint(mid_x, mid_y),
-                            QPoint(int(mid_x + rad * np.cos(deg)), int(mid_y + rad * np.sin(deg))),
-                            QPoint(int(mid_x + rad * np.cos(deg + size)), int(mid_y + rad * np.sin(deg + size)))]
+                            QPoint(int(mid_x + rad * np.cos(deg)),
+                                   int(mid_y + rad * np.sin(deg))),
+                            QPoint(int(mid_x + rad * np.cos(deg + size)),
+                                   int(mid_y + rad * np.sin(deg + size)))]
             polygon = QPolygon(polyg_points)
             p.drawPolygon(polygon)
 
