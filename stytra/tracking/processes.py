@@ -42,7 +42,8 @@ class TailTrackingMethod(FrameProcessingMethod):
         standard_params_dict = dict(n_segments=20,
                                     function={'values': ['centroid',
                                                          'angle_sweep'],
-                                              'value': 'centroid'},
+                                              'value': 'centroid',
+                                              'type': 'list'},
                                     color_invert=True,
                                     tail_start={'value': (440, 225),
                                                 'visible': True},
@@ -105,7 +106,6 @@ class FrameDispatcher(FrameProcessor):
                 return output
             except:
                 raise ValueError('Unknown error while processing frame')
-
 
     def run(self):
         """ Loop running the tracking function.

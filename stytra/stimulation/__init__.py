@@ -64,8 +64,10 @@ class ProtocolRunner(QObject):
         """
         if protocol is not None:
             self.protocol = protocol
+            # if self.experiment
             # Connect changes to protocol parameters to update function:
-            self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
+            self.protocol.params.sigTreeStateChanged.connect(
+                self.update_protocol)
             self.update_protocol()
             self.reset()
 
@@ -90,7 +92,7 @@ class ProtocolRunner(QObject):
         """ Function for starting the protocol
         """
         self.t_start = datetime.datetime.now()  # get starting time
-        self.timer.timeout.connect(self.timestep)  # connect timer to update function
+        self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
         self.timer.start()  # start the timer
         self.dynamic_log.starting_time = self.t_start  # save starting time
@@ -115,7 +117,7 @@ class ProtocolRunner(QObject):
 
             # If stimulus time is over:
             if self.current_stimulus._elapsed > self.current_stimulus.duration:
-                self.sig_stim_change.emit(self.i_current_stimulus)  # emit change signal
+                self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_log()
 
                 # Is this stimulus was also the last one end protocol:
@@ -163,7 +165,8 @@ class ProtocolRunner(QObject):
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         new_dict = dict(current_stim_dict,
-                        t_start=self.t - self.current_stimulus._elapsed, t_stop=self.t)
+                        t_start=self.t - self.current_stimulus._elapsed,
+                        t_stop=self.t)
         # if self.log_print:
         #     print(new_dict)
         self.log.append(new_dict)
@@ -174,8 +177,8 @@ class ProtocolRunner(QObject):
                 self.current_stimulus.get_dynamic_state())
 
     def reset(self):
-        """ Make the protocol ready to start again. Reset all ProtocolRunner and stimuli
-        timers and elapsed times.
+        """ Make the protocol ready to start again. Reset all ProtocolRunner
+        and stimuli timers and elapsed times.
         """
         self.t_start = None
         self.t_end = None

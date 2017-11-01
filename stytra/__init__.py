@@ -113,7 +113,6 @@ class Experiment(QObject):
 
         self.scope_triggered = scope_triggered
         self.dc.add_data_source(self.metadata)
-
         # This has to happen  or version will also be reset to last value:
         if not self.debug_mode:
             self.check_if_committed()
@@ -124,7 +123,6 @@ class Experiment(QObject):
 
         # TODO check this:
         if type(self) == Experiment:
-            print('eccoci')
             self.window_main = self.make_window()
             self.window_main.show()
 

@@ -106,9 +106,6 @@ class CameraTailSelection(CameraViewWidget):
         self.tail_position_data = Queue()  # tail_position_data
         super().__init__(experiment)
         self.tail_start_points_queue = Queue()  # tail_start_points_queue
-        print('hic et nunc')
-
-        # self.label = pg.TextItem('Select tail of the fish:')
 
         # if not roi_dict:  # use input dictionary
         # self.roi_dict = {'tail_start': self.experiment.tracking_method.params['tail_start'],

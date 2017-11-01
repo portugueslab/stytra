@@ -77,8 +77,8 @@ class ProtocolControlWidget(QWidget):
         self.setLayout(self.layout)
 
         if self.experiment.last_protocol is not None:
-            self.set_protocol(self.experiment.prot_class_dict[self.experiment.last_protocol])
-            self.combo_prot.setCurrentIndex(list(self.experiment.prot_class_dict.keys()).index(
+            self.combo_prot.setCurrentIndex(
+                list(self.experiment.prot_class_dict.keys()).index(
                 self.experiment.last_protocol))
         self.combo_prot.currentIndexChanged.connect(self.set_prot_from_dropdown)
 
@@ -110,6 +110,7 @@ class ProtocolControlWidget(QWidget):
         """Use dropdown menu to change the protocol.
         """
         protocol = Protclass()
+        print('setting protocol from UI')
         self.protocol_runner.set_new_protocol(protocol)
         self.button_toggle_prot.setEnabled(True)
         self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)

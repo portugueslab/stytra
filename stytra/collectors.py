@@ -267,6 +267,11 @@ class DataCollector:
         for data_element in data_tuples_list:
             self.add_data_source(*data_element)
 
+    def restore_from_saved(self):
+        if self.last_metadata is not None:
+            self.static_metadata._params.restoreState(self.last_metadata)
+
+
     def add_data_source(self, entry, name='unspecified_entry'):
         """
         Function for adding new data sources. entry can fall under two cases:
@@ -278,9 +283,9 @@ class DataCollector:
 
         # If true, use the last values used for this parameter
         if type(entry) == Metadata:
-            if self.last_metadata is not None:
-                entry._params.restoreState(self.last_metadata)
             self.static_metadata = entry
+            self.restore_from_saved()
+
         else:
             self.log_data_dict[name] = entry
 
@@ -338,4 +343,4 @@ class DataCollector:
             # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
             with open(filename, 'w') as outfile:
                 json.dump(self.get_clean_dict(convert_datetime=True),
-                          outfile)
+                          outfile, sort_keys=True)
