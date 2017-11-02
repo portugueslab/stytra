@@ -148,10 +148,11 @@ class Experiment(QObject):
                                                  {'name': 'program',
                                                   'value': __file__}]})
 
-        if len(repo.git.diff('HEAD~1..HEAD',
+        compare = 'HEAD'
+        if len(repo.git.diff(compare,
                              name_only=True)) > 0:
             print('The following files contain uncommitted changes:')
-            print(repo.git.diff('HEAD~1..HEAD', name_only=True))
+            print(repo.git.diff(compare, name_only=True))
             raise PermissionError(
                 'The project has to be committed before starting!')
 
