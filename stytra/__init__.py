@@ -101,6 +101,7 @@ class Experiment(QObject):
         if scope_triggered:
             self.zmq_context = zmq.Context()
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
+            self.zmq_socket.bind("tcp://*:5555")
 
         self.window_main.show()
 
@@ -139,8 +140,6 @@ class Experiment(QObject):
 
     def start_protocol(self):
         if self.scope_triggered and self.window_main.chk_scope.isChecked():
-            self.zmq_socket.bind("tcp://*:5555")
-            print('bound socket')
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
             self.dc.add_data_source(self.lightsheet_config, 'imaging_lightsheet_config')

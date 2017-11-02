@@ -277,7 +277,7 @@ class VisualCodingProtocol(Protocol):
 
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
-        # stimuli.append(VideoStimulus(video_path=video_file, duration=180))
+        stimuli.append(VideoStimulus(video_path=self.params['video_file'], duration=120))
 
         return stimuli
 

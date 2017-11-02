@@ -221,7 +221,7 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        print(self._experiment.asset_folder)
+        print(self._experiment.asset_dir)
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
@@ -388,9 +388,7 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        print(self._experiment.asset_folder +
-              '/' + self.video_path)
-        self._video_seq = pims.Video(self._experiment.asset_folder +
+        self._video_seq = pims.Video(self._experiment.asset_dir +
                                      '/' + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
