@@ -25,7 +25,7 @@ from stytra.gui.container_windows import SimpleExperimentWindow, \
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
 
-from stytra.metadata import MetadataCamera
+# from stytra.metadata import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator,\
     LSTMLocationEstimator
 

@@ -4,7 +4,7 @@ from numba import vectorize, uint8
 from stytra.tracking.tail import find_fish_midline
 
 from stytra.collectors import HasPyQtGraphParams
-from stytra.metadata import Metadata
+# from stytra.metadata import Metadata
 
 
 class ContourScorer:

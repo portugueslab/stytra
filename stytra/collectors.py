@@ -71,7 +71,7 @@ class Metadata(HasPyQtGraphParams):
 
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
-                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15),
+                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20),
                  'tip': 'Fish age (days)'},
                 {'name': 'genotype', 'type': 'list',
                  'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
@@ -79,7 +79,8 @@ class Metadata(HasPyQtGraphParams):
                             'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
                             'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
                             'PC:epNtr-tagRFP',
-                            'NeuroD-6f'], 'value': 'TL'},
+                            'NeuroD-6f',
+                            '156:Gal4;UAS:GCaMP6s'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
                  'values': ['0', '30', '60', '90', 'lightsheet'],
                  'value': '60'},
@@ -295,7 +296,8 @@ class DataCollector:
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
         return data_dict
 
-    def get_clean_dict(self, convert_datetime=False):
+    def get_clean_dict(self, paramstree=True,
+                       convert_datetime=False):
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
@@ -308,7 +310,7 @@ class DataCollector:
 
         for key in value_dict.keys():
             category = key.split('_')[0]
-            value = sanitize_item(value_dict[key], paramstree=True,
+            value = sanitize_item(value_dict[key], paramstree=paramstree,
                                   convert_datetime=convert_datetime)
             if category in clean_data_dict.keys():
                 clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
