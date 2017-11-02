@@ -41,17 +41,21 @@ class CrossCalibrator(Calibrator):
                  **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.params['length_px'] = 1
+        self.length_is_fixed = False
+
         if calibration_length == 'outside':
             self.outside = True
-            self.length_is_fixed = False
+
             self.length_to_measure = 'height of the rectangle'
-        if fixed_length is not None:
-            self.params['length_px'] = fixed_length
-            self.length_to_measure = 'a line of the cross'
-            self.length_is_fixed = True
+
         else:
-            self.length_is_fixed = False
-            self.params['length_px'] = 1
+            self.outside = False
+            self.length_to_measure = 'a line of the cross'
+            if fixed_length is not None:
+                self.params['length_px'] = fixed_length
+                self.length_is_fixed = True
+
 
         self.params['length_mm'] = 1
         self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)

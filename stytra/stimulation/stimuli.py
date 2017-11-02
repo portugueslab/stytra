@@ -436,7 +436,7 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
 
         # calculate angles for each triangle:
         angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
-        # TODO calculate offset to make it symmetrical
+        angles += np.pi/2 + np.pi/(2 * self.n_arms)
         # angular width of the white arms, by default equal to dark ones
         size = np.pi / self.n_arms
         # radius of triangles (much larger than frame)

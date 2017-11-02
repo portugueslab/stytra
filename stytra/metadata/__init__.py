@@ -10,14 +10,15 @@ class Metadata(HasPyQtGraphParams):
 
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
-                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15), 'tip': 'Fish age (days)'},
+                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20), 'tip': 'Fish age (days)'},
                 {'name': 'genotype', 'type': 'list',
                  'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                             'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
                             'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
                             'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
                             'PC:epNtr-tagRFP',
-                            'NeuroD-6f'], 'value': 'TL'},
+                            'NeuroD-6f',
+                            '156:Gal4;UAS:GCaMP6s'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
                  'values': ['0', '30', '60', '90', 'lightsheet'], 'value': '60'},
 
