@@ -12,7 +12,6 @@ class MetaListGui(QWidget):
 
         self.layout = QGridLayout()
         self.metadata_list = metadata_list
-        print(self.metadata_list)
         self.create_layout()
 
         self.setLayout(self.layout)
@@ -67,9 +66,6 @@ if __name__ == '__main__':
     fishmeta = MetadataFish()
     lightsheetmeta.piezo_frequency = 8
     metadata_gui = MetaListGui([lightsheetmeta, fishmeta])
-
-    print(fishmeta.get_param_dict())
-    print(lightsheetmeta.get_param_dict())
 
     metadata_gui.show()
     app.exec_()

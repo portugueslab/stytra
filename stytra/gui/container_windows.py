@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QRectF, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
-    QPushButton, QSplitter, QVBoxLayout
+    QPushButton, QComboBox
 
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
@@ -11,6 +11,7 @@ import pyqtgraph as pg
 
 from stytra.gui.parameter_widgets import ParameterSpinBox
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
+from pyqtgraph.parametertree import ParameterTree
 
 
 class DebugLabel(QLabel):
@@ -73,8 +74,10 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
     def set_param_val(self):
         with self.roi_params.treeChangeBlocker():
-            self.roi_params.param('size').setValue(tuple([int(p) for p in self.roi_box.size()]))
-            self.roi_params.param('pos').setValue(tuple([int(p) for p in self.roi_box.pos()]))
+            self.roi_params.param('size').setValue(tuple(
+                [int(p) for p in self.roi_box.size()]))
+            self.roi_params.param('pos').setValue(tuple(
+                [int(p) for p in self.roi_box.pos()]))
 
     def display_calibration_pattern(self, calibrator,
                                     camera_resolution=(480, 640),
@@ -104,15 +107,13 @@ class ProjectorAndCalibrationWidget(QWidget):
     def __init__(self, experiment, **kwargs):
         """ Instantiate the widget that controls the display on the projector
 
-        :param args:
-        :param calibrator:
-        :param kwargs:
+        :param experiment: Experiment class with calibrator and display window
         """
         super().__init__(**kwargs)
         self.experiment = experiment
         self.calibrator = experiment.calibrator
         self.container_layout = QVBoxLayout()
-        self.container_layout.setContentsMargins(0,0,0,0)
+        self.container_layout.setContentsMargins(0, 0, 0, 0)
 
         self.widget_proj_viewer = ProjectorViewer(roi_params=
                                                   experiment.window_display.params)
@@ -144,9 +145,18 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.experiment.window_display.widget_display.update()
 
 
+class TrackingSettingsGui(QWidget):
+    def __init__(self):
+        self.combo_method = QComboBox()
+        self.combo_method.set_editable(False)
+
+
 class SimpleExperimentWindow(QMainWindow):
     def __init__(self, experiment, **kwargs):
-        super().__init__()
+        """
+        :param experiment: Experiment class with metadata
+        """
+        super().__init__(**kwargs)
         self.experiment = experiment
 
         self.setWindowTitle('Stytra')
@@ -155,13 +165,13 @@ class SimpleExperimentWindow(QMainWindow):
         self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment)
         self.button_metadata = QPushButton('Edit metadata')
+
         if experiment.scope_triggered:
             self.chk_scope = QCheckBox('Wait for the scope')
         self.button_metadata.clicked.connect(
             self.experiment.metadata.show_metadata_gui)
 
         self.setCentralWidget(self.construct_ui())
-
 
     def construct_ui(self):
         central_widget = QWidget()
@@ -191,6 +201,72 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         return self.camera_splitter
 
 
+# TAIL TRACKING LAYOUT
+#     self.main_layout = QSplitter()
+#         self.monitoring_widget = QWidget()
+#         self.monitoring_layout = QVBoxLayout()
+#         self.monitoring_widget.setLayout(self.monitoring_layout)
+#
+#         self.stream_plot = MultiStreamPlot()
+#
+#         self.monitoring_layout.addWidget(self.stream_plot)
+#         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
+#
+#         self.stream_plot.add_stream(self.data_acc_tailpoints,
+#                                     ['tail_sum', 'theta_01'])
+#
+#         self.main_layout.addWidget(self.monitoring_widget)
+#         self.main_layout.addWidget(self.widget_control)
+#         self.setCentralWidget(self.main_layout)
+#
+#         self.positionPlot = None
+
+
+class TailTrackingExperimentWindow(SimpleExperimentWindow):
+    def __init__(self,  *args, **kwargs):
+        self.camera_display = CameraTailSelection(kwargs['experiment'])
+
+        self.camera_splitter = QSplitter(Qt.Vertical)
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        # Stream plot:
+        self.stream_plot = MultiStreamPlot()
+
+        self.monitoring_layout.addWidget(self.stream_plot)
+
+        # Tracking params button:
+        self.button_tracking_params = QPushButton('Tracking params')
+        self.button_tracking_params.clicked.connect(
+            self.open_tracking_params_tree)
+        self.monitoring_layout.addWidget(self.button_tracking_params)
+
+        self.track_params_wnd = None
+        # self.tracking_layout.addWidget(self.camera_display)
+        # self.tracking_layout.addWidget(self.button_tracking_params)
+
+        super().__init__(*args, **kwargs)
+
+    def construct_ui(self):
+        self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
+                                    ['tail_sum', 'theta_01'])
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
+        previous_widget = super().construct_ui()
+        self.monitoring_layout.addWidget(previous_widget)
+        # previous_widget.layout().addWidget(self.button_tracking_params)
+        self.camera_splitter.addWidget(self.camera_display)
+        self.camera_splitter.addWidget(self.monitoring_widget)
+        return self.camera_splitter
+
+    def open_tracking_params_tree(self):
+        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+                                            showTop=False)
+        self.track_params_wnd.setWindowTitle('Tracking data')
+        self.track_params_wnd.show()
+
+
 class VRExperimentWindow(SimpleExperimentWindow):
     def reconfigure_ui(self):
         self.main_layout = QSplitter()
@@ -198,7 +274,8 @@ class VRExperimentWindow(SimpleExperimentWindow):
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        self.positionPlot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log)
+        self.positionPlot = StreamingPositionPlot(data_accumulator=
+                                                  self.protocol.dynamic_log)
         self.monitoring_layout.addWidget(self.positionPlot)
         self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
 
@@ -226,24 +303,3 @@ class LightsheetGUI(SimpleExperimentWindow):
     def init_ui(self):
         self.chk_lightsheet = QCheckBox("Wait for lightsheet")
         self.chk_lightsheet.setChecked(False)
-
-
-# TAIL TRACKING LAYOUT
-#     self.main_layout = QSplitter()
-#         self.monitoring_widget = QWidget()
-#         self.monitoring_layout = QVBoxLayout()
-#         self.monitoring_widget.setLayout(self.monitoring_layout)
-#
-#         self.stream_plot = MultiStreamPlot()
-#
-#         self.monitoring_layout.addWidget(self.stream_plot)
-#         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-#
-#         self.stream_plot.add_stream(self.data_acc_tailpoints,
-#                                     ['tail_sum', 'theta_01'])
-#
-#         self.main_layout.addWidget(self.monitoring_widget)
-#         self.main_layout.addWidget(self.widget_control)
-#         self.setCentralWidget(self.main_layout)
-#
-#         self.positionPlot = None

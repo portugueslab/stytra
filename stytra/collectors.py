@@ -5,6 +5,7 @@ import deepdish as dd
 import numpy as np
 import pandas as pd
 import param
+import json
 
 # from stytra.metadata import Metadata
 from copy import deepcopy
@@ -14,10 +15,10 @@ from stytra.dbconn import sanitize_item
 
 class HasPyQtGraphParams(object):
     """
-    This maybe weird class is used to have a number of objects which
+    This class is used to have a number of objects which
     constitute the experiment interfaces and protocols sharing a global
-    params Parameter that will be used for saving metadata and restoring
-    the app to the last used data.
+    pyqtgraph Parameter object that will be used for saving metadata and
+    restoring the app to the last used data.
     _params is a class attribute and is shared among all subclasses; each
     subclass will have an alias, params, providing access to its private
     parameters.
@@ -25,9 +26,10 @@ class HasPyQtGraphParams(object):
     _params = Parameter.create(name='global_params', type='group')
 
     def __init__(self, name=None):
-        # Here passing the name gives the user the possibility of easily
-        # overwrite branches of the parameter tree. If not passed, children class
-        # name will be used
+        # Here passing the name for the new branch allows the user to easily
+        # overwrite branches of the parameter tree. If not passed,
+        # children class name will be used.
+
         if name is None:
             name = self.__class__.__name__
         self.params = Parameter.create(name=name,
@@ -40,13 +42,27 @@ class HasPyQtGraphParams(object):
                 self._params.removeChild(child)
         self._params.addChild(self.params)
 
-    def set_new_param(self, name, value, var_type=True):
-        """Easy set for new parameters
+    def set_new_param(self, name, value, get_var_type=True):
+        """ Easy set for new parameters
+        :param name: name of new parameter
+        :param value: either a value entry or a dictionary of valid keys
+                      for a parameter (e.g. type, visible, editable, etc.)
+        :param get_var_type: if True, value type will be set as parameter type
+        :return:
         """
-        if var_type:
-            self.params.addChild({'name': name, 'value': value, 'type': type(value).__name__})
+        if isinstance(value, dict):  # Allows passing dictionaries:
+            entry_dict = {'name': name}  # add name
+            entry_dict.update(value)
+            self.params.addChild(entry_dict)
         else:
-            self.params.addChild({'name': name, 'value': value})
+            if get_var_type:  # if specification of type is required, infer it
+                self.params.addChild({'name': name, 'value': value,
+                                      'type': type(value).__name__})
+            else:
+                self.params.addChild({'name': name, 'value': value})
+
+    def get_clean_values(self):
+        return sanitize_item(self.params.getValues(), paramstree=True)
 
 
 class Metadata(HasPyQtGraphParams):
@@ -55,7 +71,8 @@ class Metadata(HasPyQtGraphParams):
 
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
-                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15), 'tip': 'Fish age (days)'},
+                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (7, 15),
+                 'tip': 'Fish age (days)'},
                 {'name': 'genotype', 'type': 'list',
                  'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                             'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
@@ -64,10 +81,12 @@ class Metadata(HasPyQtGraphParams):
                             'PC:epNtr-tagRFP',
                             'NeuroD-6f'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
-                 'values': ['0', '30', '60', '90', 'lightsheet'], 'value': '60'},
+                 'values': ['0', '30', '60', '90', 'lightsheet'],
+                 'value': '60'},
 
                 {'name': 'comments', 'type': 'str', 'value': ""},
-                {'name': 'embedded', 'type': 'bool', 'value': True, 'tip': "This is a checkbox"},
+                {'name': 'embedded', 'type': 'bool', 'value': True,
+                 'tip': "This is a checkbox"},
                 {'name': 'treatment', 'type': 'list',
                  'values': ['',
                             '10mM MTz',
@@ -78,7 +97,8 @@ class Metadata(HasPyQtGraphParams):
             {'name': 'general_metadata', 'type': 'group', 'visible': True,
              'children': [
                 {'name': 'experiment_name', 'type': 'str', 'value': ''},
-                {'name': 'experimenter_name', 'type': 'list', 'value': 'Vilim Stih',
+                {'name': 'experimenter_name', 'type': 'list', 'value':
+                    'Vilim Stih',
                  'values': ['Elena Dragomir',
                             'Andreas Kist',
                             'Laura Knogler',
@@ -236,7 +256,8 @@ class DataCollector:
 
         # Try to find previously saved metadata:
         self.last_metadata = None
-        list_metadata = sorted([fn for fn in os.listdir(folder_path) if fn.endswith('metadata.h5')])
+        list_metadata = sorted([fn for fn in os.listdir(folder_path) if
+                                fn.endswith('metadata.h5')])
         if len(list_metadata) > 0:
             self.last_metadata = dd.io.load(folder_path + list_metadata[-1])['static_metadata']
 
@@ -246,19 +267,25 @@ class DataCollector:
         for data_element in data_tuples_list:
             self.add_data_source(*data_element)
 
+    def restore_from_saved(self):
+        if self.last_metadata is not None:
+            self.static_metadata._params.restoreState(self.last_metadata)
+
+
     def add_data_source(self, entry, name='unspecified_entry'):
         """
-        Function for adding new data sources.
-            - Metadata objects: can be passed without specifications
-                                (e.g., add_data_source(MetadataFish()));
-            - Log data, for stimulus log or tail tracking
+        Function for adding new data sources. entry can fall under two cases:
+            - Metadata object: will be used to get all the parameters from
+                               HasPyQtGraphParams children
+            - Log data, for stimulus log or tail tracking, or in general
+                        inputs that are not reset from saved data
         """
 
         # If true, use the last values used for this parameter
         if type(entry) == Metadata:
-            if self.last_metadata is not None:
-                entry._params.restoreState(self.last_metadata)
             self.static_metadata = entry
+            self.restore_from_saved()
+
         else:
             self.log_data_dict[name] = entry
 
@@ -268,7 +295,7 @@ class DataCollector:
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
         return data_dict
 
-    def get_clean_dict(self):
+    def get_clean_dict(self, convert_datetime=False):
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
@@ -281,7 +308,8 @@ class DataCollector:
 
         for key in value_dict.keys():
             category = key.split('_')[0]
-            value = sanitize_item(value_dict[key], parametervalues=True)
+            value = sanitize_item(value_dict[key], paramstree=True,
+                                  convert_datetime=convert_datetime)
             if category in clean_data_dict.keys():
                 clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
             else:
@@ -289,7 +317,14 @@ class DataCollector:
 
         return clean_data_dict
 
-    def save(self, timestamp=None, save_csv=False):
+    def get_last_class_name(self, class_param_key):
+        if self.last_metadata is not None:
+            # TODO This is atrocious.
+            return self.last_metadata['children'][class_param_key]['children']['name']['value']
+        else:
+            return None
+
+    def save(self, timestamp=None, save_json=True):
         """
         Save the HDF5 file considering the current value of all the entries of the class
         """
@@ -300,13 +335,12 @@ class DataCollector:
 
         # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
         filename = self.folder_path + timestamp + '_metadata.h5'
-        print(data_dict)
         dd.io.save(filename, data_dict)
 
-        filename = self.folder_path + timestamp + '_metadatacheck.h5'
-        dd.io.save(filename, self.get_clean_dict())
-        # Save .csv file if required
-        if save_csv:
-            filename_df = self.folder_path + timestamp + '_metadata_df.csv'
-            dataframe = metadata_dataframe(data_dict)
-            dataframe.to_csv(filename_df)
+        # Save also clean json file:
+        if save_json:
+            filename = self.folder_path + timestamp + '_metadata_json.txt'
+            # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
+            with open(filename, 'w') as outfile:
+                json.dump(self.get_clean_dict(convert_datetime=True),
+                          outfile, sort_keys=True)

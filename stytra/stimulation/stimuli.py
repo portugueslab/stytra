@@ -269,73 +269,6 @@ class SeamlessGratingStimulus(MovingSeamlessStimulus, MovingStimulus):
                    w)
 
 
-class GratingPainterStimulus(PainterStimulus, BackgroundStimulus,
-                             DynamicStimulus):
-    def __init__(self, *args, grating_orientation='horizontal', grating_period=10,
-                 grating_color=(255, 255, 255), **kwargs):
-        super().__init__(*args, **kwargs)
-        self.theta = grating_orientation
-        self.grating_period = grating_period
-        self.grating_color = grating_color
-
-    def paint(self, p, w, h):
-        # draw the background
-        p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(0, 0, 0)))
-
-        self.clip(p, w, h)
-
-        p.drawRect(QRect(-1, -1, w + 2, h + 2))
-
-        grating_width = self.grating_period/max(self._experiment.calibrator.params['mm_px'], 0.0001) # in pixels
-        p.setBrush(QBrush(QColor(*self.grating_color)))
-
-        if self.grating_orientation == 'horizontal':
-            n_gratings = int(np.round(w / grating_width + 2))
-            start = -self.y / self._experiment.calibrator.mm_px - \
-                    np.floor((-self.y / self._experiment.calibrator.mm_px) / grating_width+1) * grating_width
-
-            for i in range(n_gratings):
-                p.drawRect(-1, int(round(start)), w+2, grating_width/2)
-                start += grating_width
-        else:
-            n_gratings = int(np.round(h / grating_width + 2))
-            start = self.x / self._experiment.calibrator.params['mm_px'] - \
-                    np.floor(self.x / grating_width) * grating_width
-            for i in range(n_gratings):
-                p.drawRect(int(round(start)), -1, grating_width / 2, h+2)
-                start += grating_width
-
-
-class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
-    """ Class for drawing a rotating windmill.
-    """
-    def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.color = color
-        self.n_arms = n_arms
-        self.name = 'windmill'
-
-    def draw_block(self, p, point, w, h):
-        # Painting settings:
-        p.setPen(Qt.NoPen)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setBrush(QBrush(QColor(*self.color)))
-
-        # To draw a windmill, a set of consecutive triangles will be painted:
-        mid_x = int(w / 2)  # calculate image center
-        mid_y = int(h / 2)
-        angles = np.arange(0, np.pi*2, (np.pi * 2) / self.n_arms)  # calculate angles for each triangle
-        size = np.pi / self.n_arms  # angular width of the white arms, by default equal to dark ones
-        rad = (w**2 + h**2)**(1/2)  # radius of triangles (much larger than frame)
-        for deg in angles:  # loop over angles and draw consecutive rectangles
-            polyg_points = [QPoint(mid_x, mid_y),
-                            QPoint(int(mid_x + rad*np.cos(deg)), int(mid_y + rad*np.sin(deg))),
-                            QPoint(int(mid_x + rad*np.cos(deg + size)), int(mid_y + rad*np.sin(deg + size)))]
-            polygon = QPolygon(polyg_points)
-            p.drawPolygon(polygon)
-
-
 class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
     def __init__(self, *args, spot_radius=5, average_distance=20,
                  n_spots=10, **kwargs):
@@ -481,6 +414,61 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
+class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
+    """ Class for drawing a rotating windmill.
+    """
+
+    def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+        self.n_arms = n_arms
+        self.name = 'windmill'
+
+    def draw_block(self, p, point, w, h):
+        # Painting settings:
+        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(*self.color)))
+
+        # To draw a windmill, a set of consecutive triangles will be painted:
+        mid_x = int(w / 2)  # calculate image center
+        mid_y = int(h / 2)
+
+        # calculate angles for each triangle:
+        angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
+        # TODO calculate offset to make it symmetrical
+        # angular width of the white arms, by default equal to dark ones
+        size = np.pi / self.n_arms
+        # radius of triangles (much larger than frame)
+        rad = (w ** 2 + h ** 2) ** (1 / 2)
+        for deg in angles:  # loop over angles and draw consecutive rectangles
+            polyg_points = [QPoint(mid_x, mid_y),
+                            QPoint(int(mid_x + rad * np.cos(deg)),
+                                   int(mid_y + rad * np.sin(deg))),
+                            QPoint(int(mid_x + rad * np.cos(deg + size)),
+                                   int(mid_y + rad * np.sin(deg + size)))]
+            polygon = QPolygon(polyg_points)
+            p.drawPolygon(polygon)
+
+
+#
+# class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
+#     def __init__(self, *args, motion, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.motion = motion
+#         self.duration = motion.t.iloc[-1]
+#
+#     def update(self):
+#         for attr in ['base_vel', 'gain', 'lag']:
+#             try:
+#                 setattr(self, attr, np.interp(self._elapsed,
+#                                               self.motion.t,
+#                                               self.motion[attr]))
+#             except (AttributeError, KeyError):
+#                 pass
+#         super().update()
+
+
 class VRMotionStimulus(SeamlessImageStimulus,
                        DynamicStimulus):
 
@@ -501,21 +489,21 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = self._elapsed
 
 
-class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
-    def __init__(self, *args, motion, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.motion = motion
-        self.duration = motion.t.iloc[-1]
-
-    def update(self):
-        for attr in ['base_vel', 'gain', 'lag']:
-            try:
-                setattr(self, attr, np.interp(self._elapsed,
-                                              self.motion.t,
-                                              self.motion[attr]))
-            except (AttributeError, KeyError):
-                pass
-        super().update()
+# class ClosedLoop1D_variable_motion(ClosedLoop1D, SeamlessGratingStimulus):
+#     def __init__(self, *args, motion, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.motion = motion
+#         self.duration = motion.t.iloc[-1]
+#
+#     def update(self):
+#         for attr in ['base_vel', 'gain', 'lag']:
+#             try:
+#                 setattr(self, attr, np.interp(self._elapsed,
+#                                               self.motion.t,
+#                                               self.motion[attr]))
+#             except (AttributeError, KeyError):
+#                 pass
+#         super().update()
 
 
 class RandomDotKinematogram(PainterStimulus):
@@ -567,17 +555,17 @@ class ShockStimulus(Stimulus):
         self.elapsed = 1
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # pyb = PyboardConnection(com_port='COM3')
     # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
     #                      pulse_n=1, pulse_dur_ms=5)
     # stim.start()
     # del pyb
-
-    from PyQt5.QtGui import QPolygon, QRegion
-    p = QPainter()
-    points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
-    pol = QPolygon(points)
-    p.drawPolygon(pol)
-    p.setClipping(True)
-    p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))
+    #
+    # from PyQt5.QtGui import QPolygon, QRegion
+    # p = QPainter()
+    # points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
+    # pol = QPolygon(points)
+    # p.drawPolygon(pol)
+    # p.setClipping(True)
+    # p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))

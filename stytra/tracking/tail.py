@@ -3,56 +3,8 @@ from numba import jit
 import cv2
 
 
-@jit(nopython=True)
-def detect_segment(detect_angles, seglen, start, direction, image):
-    """
-    :param detect_angles: a list of angles at which to evaluate the next point
-    :param seglen: length of the segment
-    :param start: starting point
-    :param direction: angle to search around
-    :param image: image containing the tail
-    :return:
-    """
-    d_angles = direction + detect_angles
-
-    weighted_angles = 0.0
-    brightnesses = 0.0
-
-    for i in range(detect_angles.shape[0]):
-        coord = (int(start[0]+seglen*np.cos(d_angles[i])),
-                 int(start[1] + seglen * np.sin(d_angles[i])))
-        if ((coord[0] > 0) & (coord[0] < image.shape[1]) &
-           (coord[1] > 0) & (coord[1] < image.shape[0])):
-            brg = image[coord[1], coord[0]]
-            weighted_angles += brg*detect_angles[i]
-            brightnesses += brg
-
-    if brightnesses == 0.0:
-        return 0
-    return weighted_angles/brightnesses
-
-
-@jit(nopython=True)
-def detect_tail(image, start_point, start_dir=0, pixlen=100, segments=5,
-                max_segment_angle=np.pi*3/8):
-    seglen = pixlen * 1.0 / segments
-
-    detect_angles = np.linspace(-max_segment_angle, max_segment_angle, 17)
-    angles = np.zeros(segments, dtype=np.float32)
-    start_dir = start_dir
-    last_dir = start_dir
-    start_point = start_point.copy()
-    for i in range(segments):
-        angles[i] = detect_segment(detect_angles, seglen,
-                                        start_point, last_dir, image,
-                                        i / (segments + 1))
-        if angles[i] == np.nan:
-            break
-        last_dir += angles[i]
-        start_point += seglen * np.array(
-            [np.cos(last_dir), np.sin(last_dir)])
-
-    return angles
+def reduce_to_pi(angle):
+    return np.mod(angle, 2*np.pi)-np.pi
 
 
 @jit(nopython=True)
@@ -74,31 +26,6 @@ def find_direction(start, image, seglen):
             weighted_vector += brg * np.array([np.cos(detect_angles[i]), np.sin(detect_angles[i])])
 
     return np.arctan2(weighted_vector[1], weighted_vector[0])
-
-
-@jit(nopython=True)
-def detect_tail_unknown_dir(image, start_point, eyes_to_tail=10, tail_length=100,
-                            segments=5):
-    seglen = tail_length * 1.0 / segments
-
-    max_segment_angle = np.pi * 3 / 8
-    detect_angles = np.linspace(-max_segment_angle, max_segment_angle, 17)
-    angles = np.zeros(segments, dtype=np.float32)
-    start_dir = find_direction(start_point, image, eyes_to_tail)
-
-    last_dir = start_dir
-    start_point += eyes_to_tail * np.array([np.cos(start_dir),
-                                            np.sin(start_dir)])
-    for i in range(segments):
-        angles[i] = detect_segment(detect_angles, seglen,
-                                   start_point, last_dir, image)
-        if angles[i] == np.nan:
-            break
-        last_dir += angles[i]
-        start_point += seglen * np.array(
-            [np.cos(last_dir), np.sin(last_dir)])
-
-    return start_dir, angles
 
 
 @jit(nopython=True, cache=True)
@@ -130,14 +57,6 @@ def bp_filter_img(img, small_square=3, large_square=50):
     img_filt_lower = cv2.boxFilter(img, -1, (large_square, large_square))
     img_filt_low = cv2.boxFilter(img, -1, (small_square, small_square))
     return cv2.absdiff(img_filt_low, img_filt_lower)
-
-
-def std_bp_filter(img, small_square=3, large_square=50):
-    """ Function for returning the standard deviation of an image pixels from the mean after
-    band-pass filtering
-    """
-    filtered = bp_filter_img(img, small_square, large_square)
-    return (filtered - int(cv2.mean(filtered)[0])) ** 2
 
 
 @jit(nopython=True)
@@ -201,47 +120,53 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     return xm + dx, ym + dy, dx, dy, acc
 
 
-# Can't be jit-ted because of the cv2 library in the filtering
-# @jit(nopython=True, cache=True)
-def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1,
-                        tail_length_y=1, n_segments=12, window_size=7,
-                        color_invert=False, filter_size=0, scale=0.5):
+def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
+                        n_segments=12, window_size=7,
+                        color_invert=False, filter_size=0, image_scale=0.5):
     """ Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
     :param im: image to process
-    :param start_x: starting point x
-    :param start_y: starting point y
-    :param tail_length_x: tail length on x
-    :param tail_length_y: tail length on y
+    :param tail_start: starting point (x, y)
+    :param tail_length: tail length (x, y)
     :param n_segments: number of desired segments
-    :param window_size: size in pixel of the window for center-of-mass calculation
+    :param window_size: window size in pixel for center-of-mass calculation
     :param color_invert: True for inverting luminosity of the image
-    :param image_filt: True for spatial filtering of the the image
+    :param filter_size: Size of the box filter to low-pass filter the image
+    :param image_scale: the amount of downscaling of the image
     :return: list of cumulative sum + list of angles
     """
+    start_x = tail_start[1]  # TODO remove
+    start_y = tail_start[0]
+    tail_length_x = tail_length[1]
+    tail_length_y = tail_length[0]
+
     n_segments += 1
-    if scale != 1:  # bandpass filter the image:
-        im = cv2.resize(im, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    if image_scale != 1:  # bandpass filter the image:
+        im = cv2.resize(im, None, fx=image_scale, fy=image_scale,
+                        interpolation=cv2.INTER_AREA)
     if filter_size > 0:
         im = cv2.boxFilter(im, -1, (filter_size, filter_size))
     if color_invert:
         im = (255 - im)  # invert image
-    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale  # calculate tail length
-    seg_length = length_tail / n_segments  # segment length from tail length and n of segments
+    # calculate tail length
+    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+
+    # segment length from tail length and n of segments
+    seg_length = length_tail / n_segments
 
     # Initial displacements in x and y:
-    disp_x = tail_length_x * scale / n_segments
-    disp_y = tail_length_y * scale / n_segments
+    disp_x = tail_length_x * image_scale / n_segments
+    disp_y = tail_length_y * image_scale / n_segments
 
     angles = []
-    start_x *= scale
-    start_y *= scale
+    start_x *= image_scale
+    start_y *= image_scale
 
     halfwin = window_size/2
-
     for i in range(1, n_segments):
-        # Use next segment function for find next point with center-of-mass displacement:
+        # Use next segment function for find next point
+        # with center-of-mass displacement:
         start_x, start_y, disp_x, disp_y, acc = \
             _next_segment(im, start_x, start_y, disp_x, disp_y, halfwin,
                           seg_length)
@@ -252,40 +177,6 @@ def trace_tail_centroid(im, start_x=0, start_y=0, tail_length_x=1,
     return [reduce_to_pi(angles[-1]+angles[-2]-angles[0]-angles[1])] + angles[:]
 
 
-@jit(nopython=True, cache=True)
-def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
-    """ Finds a midline for a fish image, with the starting point and direction
-
-    :param im:
-    :param xm:
-    :param ym:
-    :param angle:
-    :param r:
-    :param m:
-    :param n_points_max:
-    :return:
-    """
-
-    dx = np.cos(angle) * m
-    dy = np.sin(angle) * m
-
-    points = [(xm, ym, 0)]
-    for i in range(1, n_points_max):
-        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
-        if xm > 0:
-            points.append((xm, ym, acc))
-        else:
-            return [(-1.0, -1.0, 0.0)]  # if the tail is not completely tracked, return invalid value
-
-    return points
-
-@jit(nopython=True)
-def reduce_to_pi(angle):
-    if angle > np.pi:
-        return angle - np.pi*2
-    if angle < -np.pi:
-        return angle + np.pi * 2
-    return angle
 
 @jit(nopython=True)
 def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
@@ -349,9 +240,9 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
     return angles
 
 
-def trace_tail_radial_sweep(img, start_x=0, start_y=0, tail_length_x=1,
-                            tail_length_y=1, n_segments=7, tail_length=None,
-                            filtering=True, color_invert=False):
+def trace_tail_angular_sweep(img, start_x=0, start_y=0, tail_length_x=1,
+                             tail_length_y=1, n_segments=7, tail_length=None,
+                             filter_size=0, color_invert=False):
     """
     Tail tracing based on min (or max) detection on arches. Wraps _tail_trace_core_ls.
     Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.
@@ -367,8 +258,8 @@ def trace_tail_radial_sweep(img, start_x=0, start_y=0, tail_length_x=1,
     :return:
     """
     # If required smooth the image:
-    if filtering:
-        img_filt = cv2.boxFilter(img, -1, (7, 7))
+    if filter_size>0:
+        img_filt = cv2.boxFilter(img, -1, (filter_size, filter_size))
     else:
         img_filt = img
 
@@ -382,3 +273,32 @@ def trace_tail_radial_sweep(img, start_x=0, start_y=0, tail_length_x=1,
 
 
     return angle_list
+
+
+@jit(nopython=True, cache=True)
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
+    """ Finds a midline for a fish image, with the starting point and direction
+
+    :param im:
+    :param xm:
+    :param ym:
+    :param angle:
+    :param r:
+    :param m:
+    :param n_points_max:
+    :return:
+    """
+
+    dx = np.cos(angle) * m
+    dy = np.sin(angle) * m
+
+    points = [(xm, ym, 0)]
+    for i in range(1, n_points_max):
+        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+        if xm > 0:
+            points.append((xm, ym, acc))
+        else:
+            return [(-1.0, -1.0, 0.0)]  # if the tail is not completely tracked, return invalid value
+
+    return points
+

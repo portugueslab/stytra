@@ -52,8 +52,7 @@ class Metadata(HasPyQtGraphParams):
                             'Saskin',
                             'Archimedes',
                             'Helmut',
-                            'Katysha'], 'value': 'Saskin'},
-                {'name': 'random_add', 'type': 'int', 'value': 3}],
+                            'Katysha'], 'value': 'Saskin'}]
              }
 
 
@@ -69,10 +68,10 @@ class Metadata(HasPyQtGraphParams):
         self.gui = self.get_gui(self)
         self.gui.show()
 
-    def get_gui(self, save_button=True):
+    def get_gui(self):
         t = ParameterTree()
         t.setParameters(self.params, showTop=False)
-        t.setWindowTitle('pyqtgraph example: Parameter Tree')
+        t.setWindowTitle('General metadata')
         return t
 
     def get_state(self):
@@ -112,6 +111,8 @@ class Metadata(HasPyQtGraphParams):
 #         return ParameterGui(metadata_obj=self, save_button=save_button)
 #
 #
+
+
 class MetadataFish(Metadata):
     """Fish description metadata class
     """

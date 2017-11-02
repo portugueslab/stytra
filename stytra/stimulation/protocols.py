@@ -1,11 +1,10 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    FullFieldPainterStimulus, ClosedLoop1D_variable_motion, \
-    SeamlessWindmillStimulus, VRMotionStimulus
+    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus
+# , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.stimulation.backgrounds import gratings
 from stytra.collectors import Accumulator, HasPyQtGraphParams
 
 from itertools import product
@@ -22,8 +21,8 @@ class Protocol(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-
-        standard_params_dict = {'n_repeats': 1,
+        standard_params_dict = {'name': self.name,
+                                'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
@@ -31,8 +30,8 @@ class Protocol(HasPyQtGraphParams):
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """Generate protocol from specified parameters
-                """
+        """ Generate protocol from specified parameters
+        """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
         if self.params['pre_pause'] > 0:
@@ -53,19 +52,24 @@ class Protocol(HasPyQtGraphParams):
 
 
 class NoStimulation(Protocol):
+    """ A void protocol.
+    """
     name = 'no_stimulation'
 
-    def __init__(self, *args,  duration=60, **kwargs):
-        """
-        :param duration:
-        """
+    def __init__(self):
+        super().__init__()
 
+        standard_params_dict = {'duration': 5}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
         stimuli = []
-        stimuli.append(Pause(duration=duration))  # change here for duration (in s)
 
-        self.stimuli = stimuli
-        self.current_stimulus = stimuli[0]
-        super().__init__(*args, stimuli=stimuli, **kwargs)
+        stimuli.append(Pause(duration=self.params['duration']))
+
+        return stimuli
 
 
 class FlashProtocol(Protocol):
@@ -77,11 +81,8 @@ class FlashProtocol(Protocol):
         standard_params_dict = {'period_sec': 5.,
                                 'flash_duration': 2.}
 
-        for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
-
-        # self.set_new_param('period_sec', 5.)
-        # self.set_new_param('flash_duration', 2.)
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
 
     def get_stim_sequence(self):
         stimuli = []
@@ -106,7 +107,7 @@ class Exp022Protocol(Protocol):
                                 'windmill_freq': 0.2,
                                 'inter_stim_pause': 5.,
                                 'grating_period': 10,
-                                'grating_vel': 10,
+                                'grating_vel': {'value': 10, 'type': 'int'},
                                 'grating_duration': 5.,
                                 'flash_duration': 1.}
 
@@ -154,13 +155,9 @@ class Exp022Protocol(Protocol):
             x.append(x[-1] + dt * vel)
             theta.append(th)
 
-        print(t)
-        print(x)
-        print(theta)
-
-        # stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
-        #                                        grating_period=self.params['grating_period'],
-        #                                        color=stim_color))
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
+                                               grating_period=self.params['grating_period'],
+                                               color=stim_color))
 
         # ---------------
         # Windmill for OKR
@@ -190,8 +187,6 @@ class Exp022Protocol(Protocol):
         t.extend([t[-1] + self.params['inter_stim_pause']])
         theta.extend([theta[-1]])  # initial pause
 
-        print(t)
-        print(theta)
 
         # Full field OKR:
         stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),

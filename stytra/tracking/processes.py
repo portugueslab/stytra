@@ -1,6 +1,7 @@
 from collections import deque
 from datetime import datetime
 from queue import Empty
+from multiprocessing import Queue
 
 import cv2
 import numpy as np
@@ -9,80 +10,151 @@ import psutil
 from numba import jit
 
 from stytra.hardware.video import FrameProcessor
+from stytra.tracking.tail import trace_tail_centroid,\
+                                 trace_tail_angular_sweep
+from stytra.metadata import HasPyQtGraphParams
+
+
+class FrameProcessingMethod(HasPyQtGraphParams):
+    """ The class for parametrisation fo various tail and fish tracking methods
+
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        for child in self.params.children():
+            self.params.removeChild(child)
+
+        standard_params_dict = dict(image_scale=1,
+                                    filter_size=0)
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+        self.tracked_variables = []
+
+
+class TailTrackingMethod(FrameProcessingMethod):
+    """ General tail tracking method.
+    """
+    def __init__(self):
+        super().__init__(name='tracking_tail_params')
+        # TODO maybe getting default values here:
+        standard_params_dict = dict(n_segments=20,
+                                    function={'values': ['centroid',
+                                                         'angle_sweep'],
+                                              'value': 'centroid',
+                                              'type': 'list'},
+                                    color_invert=True,
+                                    tail_start={'value': (440, 225),
+                                                'visible': True},
+                                    tail_length={'value': (-250, 30),
+                                                 'visible': True})
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+
+class CentroidTrackingMethod(TailTrackingMethod):
+    """ Center-of-mass method to find consecutive segments.
+    """
+    def __init__(self):
+        super().__init__()
+        standard_params_dict = dict(window_size=30)
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
 
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
-
     """
-    def __init__(self, frame_queue, gui_queue, finished_signal=None, output_queue=None,
-                 processing_function=None, processing_parameter_queue=None,
+
+    def __init__(self, in_frame_queue, finished_signal=None,
+                 processing_parameter_queue=None,
                  gui_framerate=30, **kwargs):
         """
-        :param frame_queue: queue dispatching frames from camera
-        :param gui_queue: queue where to put frames to be displayed on the GUI
+        :param in_frame_queue: queue dispatching frames from camera
         :param finished_signal: signal for the end of the acquisition
-        :param output_queue: queue for the output of the function applied on frames
-        :param control_queue:
-        :param processing_function: function to be applied to each frame
-        :param processing_parameter_queue: queue for the parameters to be passed to the function
+        :param processing_parameter_queue: queue for function&parameters
         :param gui_framerate: framerate of the display GUI
         """
         super().__init__(**kwargs)
 
-        self.frame_queue = frame_queue
-        self.gui_queue = gui_queue
+        self.frame_queue = in_frame_queue
+        self.gui_queue = Queue()  # GUI queue for displaying the image
+        self.output_queue = Queue()  # queue for processing output (e.g., pos)
+        self.processing_parameters = None
+
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        self.processing_function = processing_function
+        self.processing_function = None
         self.processing_parameter_queue = processing_parameter_queue
-        self.processing_parameters = dict()
-        self.output_queue = output_queue
-        self.control_queue = None
+
+        self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
+                                            centroid=trace_tail_centroid)
+
+    def process_internal(self, frame):
+        """ Apply processing function to current frame with
+        self.processing parameters as additional inputs.
+        """
+        if self.processing_function is not None:
+            try:
+                output = tuple(self.processing_function(frame,
+                                                  **self.processing_parameters))
+                return output
+            except:
+                raise ValueError('Unknown error while processing frame')
 
     def run(self):
+        """ Loop running the tracking function.
+        """
         every_x = 10
         i_frame = 100
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get()
 
-                # acquire the processing parameters from a separate queue
+                # acquire the processing parameters from a separate queue:
                 if self.processing_parameter_queue is not None:
                     try:
                         self.processing_parameters = \
                             self.processing_parameter_queue.get(timeout=0.0001)
+                        self.processing_function = \
+                            self.dict_tracking_functions[
+                                self.processing_parameters.pop('function')]
+
                     except Empty:
                         pass
 
+                # If a processing function is specified, apply it:
                 if self.processing_function is not None:
-                    output = self.processing_function(frame,
-                                                      **self.processing_parameters)
-                    self.output_queue.put((datetime.now(), tuple(output)))
+                    self.output_queue.put((datetime.now(),
+                                           self.process_internal(frame)))
 
-                # calculate the frame rate
+                # calculate the frame rate:
                 self.update_framerate()
-                # put the current frame into the GUI queue
+
+                # put the current frame into the GUI queue:
                 if self.current_framerate:
                     every_x = max(int(self.current_framerate/self.gui_framerate), 1)
                 i_frame += 1
                 if self.i == 0:
                     self.gui_queue.put((None, frame))
                 self.i = (self.i+1) % every_x
-            except Empty:
-                break
 
+            except Empty:  # if there is nothing in frame queue
+                break
         return
 
-
-class MovementDetectionParameters(pa.Parameterized):
-    fish_threshold = pa.Integer(100, (0, 255))
-    motion_threshold = pa.Integer(255*8)
-    frame_margin = pa.Integer(10)
-    n_previous_save = pa.Integer(400)
-    n_next_save = pa.Integer(300)
+#
+# class MovementDetectionParameters(pa.Parameterized):
+#     fish_threshold = pa.Integer(100, (0, 255))
+#     motion_threshold = pa.Integer(255*8)
+#     frame_margin = pa.Integer(10)
+#     n_previous_save = pa.Integer(400)
+#     n_next_save = pa.Integer(300)
 
 
 @jit(nopython=True)
@@ -130,10 +202,10 @@ class MovingFrameDispatcher(FrameDispatcher):
 
         while not self.finished_signal.is_set():
             try:
-
                 if self.processing_parameter_queue is not None:
                     try:
-                        self.processing_parameters = self.processing_parameter_queue.get(timeout=0.0001)
+                        self.processing_parameters = \
+                            self.processing_parameter_queue.get(timeout=0.0001)
                     except Empty:
                         pass
 
@@ -148,7 +220,8 @@ class MovingFrameDispatcher(FrameDispatcher):
                 # because the fish moves, start recording to file
                 difsum = 0
                 n_crossed = 0
-                image_crop = slice(self.processing_parameters.frame_margin, -self.processing_parameters.frame_margin)
+                image_crop = slice(self.processing_parameters.frame_margin,
+                                   -self.processing_parameters.frame_margin)
                 if i_frame >= n_previous_compare:
                     for j in range(n_previous_compare):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],

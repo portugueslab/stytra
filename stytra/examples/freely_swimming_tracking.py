@@ -4,7 +4,7 @@ import qdarkstyle
 from stytra.hardware.video import VideoFileSource
 from stytra import FrameDispatcher
 from stytra.tracking import FishTrackingProcess
-from stytra.tracking.fish import detect_fish_midline, MidlineDetectionParams
+from stytra.tracking.fish import find_fishes_midlines, MidlineDetectionParams
 from functools import partial
 from multiprocessing import Queue, Event
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     detection_params = MidlineDetectionParams()
     tracker = FishTrackingProcess(fish_frame_queue, data_queue, finished_sig,
-                                  detection_params.get_param_dict(), gui_frame_queue)
+                                  detection_params.params.getValues(), gui_frame_queue)
 
     win_main = QDialog()
     main_layout = QHBoxLayout()

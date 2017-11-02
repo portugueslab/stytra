@@ -62,7 +62,7 @@ class Experiment(QMainWindow):
 
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
+        self.frame_dispatcher = FrameDispatcher(in_frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
                                                 processing_function=trace_tail_centroid,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,

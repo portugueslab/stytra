@@ -17,8 +17,10 @@ class FrameProcessor(Process):
 
         :param n_fps_frames:
         :param print_framerate:
+        :param check_mem:
         """
-        #  frame_input_queue=None, frame_output_queue=None, start_signal=None, end_signal=None
+        #  frame_input_queue=None, frame_output_queue=None,
+        #  start_signal=None, end_signal=None
         # self.frame_input_queue = frame_input_queue
         # self.frame_output_queue = frame_input_queue
         # self.start_signal = start_signal
@@ -128,8 +130,7 @@ class VideoFileSource(VideoSource):
     stytra without a camera available
 
     """
-    def __init__(self, signal=None,
-                 source_file=None,
+    def __init__(self, source_file=None,
                  loop=True, framerate=300,
                  **kwargs):
         super().__init__(**kwargs)
