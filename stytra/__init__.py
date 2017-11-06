@@ -24,6 +24,7 @@ from stytra.gui.container_windows import SimpleExperimentWindow, \
     TailTrackingExperimentWindow, CameraExperimentWindow
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner
+from stytra.gui.camera_display import CameraControlMethod
 
 # from stytra.metadata import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator,\
@@ -210,6 +211,8 @@ class CameraExperiment(Experiment):
             self.camera = XimeaCamera()
         else:
             self.camera = VideoFileSource(video_file)
+
+        self.camera_control_params = CameraControlMethod()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)

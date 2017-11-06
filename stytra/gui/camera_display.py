@@ -1,25 +1,49 @@
-from PyQt5.QtCore import QTimer, Qt, QRectF, QObject, QPoint, QPointF
-from PyQt5.QtGui import QMouseEvent
+from PyQt5.QtCore import QRectF, QPointF
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 import pyqtgraph as pg
 from queue import Empty
 import numpy as np
-from paramqt import ParameterGui
 from multiprocessing import Queue
 from skimage.io import imsave
+from stytra.collectors import HasPyQtGraphParams
+from pyqtgraph.parametertree import ParameterTree
 
 
-class CameraViewWidget(QWidget):
+class CameraControlMethod(HasPyQtGraphParams):
+    """ General tail tracking method.
+    """
+    def __init__(self):
+        super().__init__(name='tracking_tail_params')
+        # TODO maybe getting default values here:
+        standard_params_dict = dict(exposure=1000)
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+
+class CameraViewWidget(QWidget, HasPyQtGraphParams):
     def __init__(self, experiment):
         """
         A widget to show the camera and display the controls
         :param experiment: experiment to which this belongs
-        :param camera: the camera object
         """
 
-        super().__init__()
+        super().__init__(name='tracking_tail_params')
 
-        self.camera_queue = Queue()
+        standard_params_dict = dict(exposure={'value': 1000.,
+                                              'type': 'float',
+                                              'limits': (0.1, 50),
+                                              'suffix': 'ms',
+                                              'tip': 'Exposure (ms)'},
+                                    gain={'value': 1.,
+                                          'type': 'float',
+                                          'limits': (0.1, 3),
+                                          'tip': 'Camera amplification gain'})
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+        self.camera_queue = Queue()  # What is this?
         self.camera_display_widget = pg.GraphicsLayoutWidget()
 
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
@@ -34,7 +58,9 @@ class CameraViewWidget(QWidget):
         self.experiment = experiment
         self.camera = experiment.camera
 
+        # Queue of frames coming from the camera
         self.frame_queue = self.camera.frame_queue
+        # Queue of control parameters for the camera
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
         experiment.gui_timer.timeout.connect(self.update_image)
@@ -42,17 +68,14 @@ class CameraViewWidget(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
 
+        self.protocol_params_tree = ParameterTree(showHeader=False)
+        self.params.sigTreeStateChanged.connect(self.update_controls)
+
         self.layout.addWidget(self.camera_display_widget)
         if self.control_queue is not None:
-            try:
-                self.camera_parameters = self.camera.camera_parameters
-                self.control_widget = ParameterGui(self.camera_parameters)
-                self.layout.addWidget(self.control_widget)
-                for control in self.control_widget.parameter_controls:
-                    control.control_widget.valueChanged.connect(self.update_controls)
-                self.control_queue.put(self.camera_parameters.get_param_dict())
-            except AttributeError:
-                pass
+            self.params_button = QPushButton('Camera params')
+            self.params_button.clicked.connect(self.show_params_gui)
+            self.layout.addWidget(self.params_button)
 
         self.captureButton = QPushButton('Capture frame')
         self.captureButton.clicked.connect(self.save_image)
@@ -62,16 +85,14 @@ class CameraViewWidget(QWidget):
         self.setLayout(self.layout)
 
     def update_controls(self):
-        self.control_widget.save_meta()
-        self.control_queue.put(self.camera_parameters.get_param_dict())
+        self.control_queue.put(self.get_clean_values())
 
     def update_image(self):
-        im_in = None
         first = True
         while True:
             try:
                 if first:
-                    time, self.current_image = self.camera.frame_queue.get(
+                    time, self.current_image = self.frame_queue.get(
                         timeout=0.001)
                     first = False
                 else:
@@ -93,52 +114,54 @@ class CameraViewWidget(QWidget):
         # TODO name image with time
         imsave(self.experiment.directory + '/img.png', self.image_item)
 
+    def show_params_gui(self):
+        self.protocol_params_tree.setParameters(self.params)
+        self.protocol_params_tree.show()
+        self.protocol_params_tree.setWindowTitle('Camera parameters')
+        self.protocol_params_tree.resize(450, 600)
+
 
 class CameraTailSelection(CameraViewWidget):
     def __init__(self, experiment, **kwargs):
-                 # tail_start_points_queue, tail_position_data,
-                 # roi_dict=None, tracking_params=None,
-        """ Widget for select tail points and monitoring tracking in embedded animal.
+        """ Widget for select tail pts and monitoring tracking in embedded fish.
         :param tail_start_points_queue: queue where to dispatch tail points
         :param tail_position_data: DataAccumulator object for tail pos data.
         :param roi_dict: dictionary for setting default tail position
         """
         self.tail_position_data = Queue()  # tail_position_data
-        super().__init__(experiment)
+        super().__init__(experiment,  **kwargs)
         self.tail_start_points_queue = Queue()  # tail_start_points_queue
 
-        # if not roi_dict:  # use input dictionary
-        # self.roi_dict = {'tail_start': self.experiment.tracking_method.params['tail_start'],
-        #                  'tail_length': self.experiment.tracking_method.params['tail_length']}
-        # self.roi_dict = roi_dict
+        # Redefine the source of the displayed images to be the FrameProcessor
+        # output queue:
+        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
+
         self.track_params = self.experiment.tracking_method.params
         # Draw ROI for tail selection:
-        # print('start: {}'.format(self.track_params['tail_start']))
-        # print('size: {}'.format(self.track_params['tail_length']))
         self.roi_tail = pg.LineSegmentROI((self.track_params['tail_start'],
                                           (self.track_params['tail_start'][0] +
                                            self.track_params['tail_length'][0],
                                            self.track_params['tail_start'][1] +
-                                           self.track_params['tail_length'][1]
-                                           )), pen=dict(color=(230, 40, 5),
-                                                        width=3))
+                                           self.track_params['tail_length'][1])
+                                           ),
+                                          pen=dict(color=(230, 40, 5),
+                                                   width=3))
 
         self.tail_curve = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
                                                     width=3))
         self.display_area.addItem(self.tail_curve)
         self.display_area.addItem(self.roi_tail)
 
-        # self.tail_start_points_queue.put(self.get_tracking_params())
         self.roi_tail.sigRegionChangeFinished.connect(self.set_param_val)
         self.track_params.sigTreeStateChanged.connect(self.set_roi)
 
     def set_roi(self):
         p1, p2 = self.roi_tail.getHandles()
         p1.setPos(QPointF(*self.track_params['tail_start']))
-        p2.setPos(QPointF(self.track_params['tail_start'][0] + \
-                           self.track_params['tail_length'][0],
-                           self.track_params['tail_start'][1] + \
-                           self.track_params['tail_length'][1]))
+        p2.setPos(QPointF(self.track_params['tail_start'][0] +
+                          self.track_params['tail_length'][0],
+                          self.track_params['tail_start'][1] +
+                          self.track_params['tail_length'][1]))
 
     def set_param_val(self):
         p1, p2 = self.roi_tail.getHandles()
@@ -150,6 +173,8 @@ class CameraTailSelection(CameraViewWidget):
 
     def update_image(self):
         super().update_image()
+
+
         if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
             angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]
             start_x = self.track_params['tail_start'][1]

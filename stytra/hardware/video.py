@@ -8,10 +8,12 @@ from queue import Empty, Full
 import numpy as np
 from datetime import datetime
 
+from stytra.collectors import HasPyQtGraphParams
+
 import cv2
 
 
-class FrameProcessor(Process):
+class FrameProcessor(Process, HasPyQtGraphParams):
     def __init__(self, n_fps_frames=10, check_mem=True, print_framerate=False):
         """ A basic class for a process that deals with frames, provides framerate calculation
 
@@ -48,7 +50,7 @@ class FrameProcessor(Process):
                 except ZeroDivisionError:
                     self.current_framerate = 0
                 if self.print_framerate:
-                    print('FPS: ' + str(self.current_framerate))# int(self.current_framerate*10/500)*'#')
+                    print('FPS: ' + str(self.current_framerate))
             self.previous_time_fps = self.current_time
         self.i_fps = (self.i_fps + 1) % self.n_fps_frames
 
@@ -68,7 +70,8 @@ class XimeaCamera(VideoSource):
         """
         Class for controlling a XimeaCamera
         :param frame_queue: queue for frame dispatching from camera
-        :param control_queue: queue with parameters to feed to the camera (gain, exposure, fps)
+        :param control_queue: queue with parameters to feed to the camera
+                              (gain, exposure, fps)
         :param downsampling: downsampling factor (default 1)
         """
         super().__init__(**kwargs)
@@ -98,8 +101,10 @@ class XimeaCamera(VideoSource):
                 try:
                     control_params = self.control_queue.get(timeout=0.0001)
                     try:
+                        self.cam.set_exposure(1000)
                         if 'exposure' in control_params.keys():
-                            self.cam.set_exposure(int(control_params['exposure']*1000))
+                            print('setting exposure')
+                            self.cam.set_exposure(int(control_params['exposure'])*1000)
                         if 'gain' in control_params.keys():
                             self.cam.set_gain(control_params['gain'])
                         if 'framerate' in control_params.keys():
