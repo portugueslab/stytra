@@ -337,7 +337,7 @@ class DataCollector:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        filename = self.folder_path + timestamp + '_metadata_json.txt'
+        filename = self.folder_path + timestamp + '_metadata.json'
         # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
         with open(filename, 'w') as outfile:
             json.dump(self.get_clean_dict(convert_datetime=True),

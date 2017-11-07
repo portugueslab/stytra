@@ -123,8 +123,9 @@ class Exp022Protocol(Protocol):
         stim_color = (255, 0, 0)
         # ---------------
         # Gratings
-        # Static gratings and three different velocities are implemented with a single
-        # grating stimulus whose positions are specified for having the forward velocities:
+        # Static gratings and three different velocities are implemented with
+        # a single grating stimulus whose positions are specified for having
+        # the forward velocities:
         p = self.params['inter_stim_pause']
         s = self.params['grating_duration']
         v = self.params['grating_vel']
@@ -155,7 +156,9 @@ class Exp022Protocol(Protocol):
             x.append(x[-1] + dt * vel)
             theta.append(th)
 
-        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t, x=x, theta=theta)),
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=theta)),
                                                grating_period=self.params['grating_period'],
                                                color=stim_color))
 
@@ -163,7 +166,9 @@ class Exp022Protocol(Protocol):
         # Windmill for OKR
 
         # create velocity dataframe. Velocity is sinusoidal and starts from 0:
-        osc_time_vect = np.arange(0, self.params['windmill_duration'], 0.04)
+        STEP = 0.005
+        osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+                                  STEP)
         # Initial pause:
         t = [0, p / 2]
         theta = [self.params['windmill_amplitude']/2, ]*2  # initial pause
@@ -179,9 +184,10 @@ class Exp022Protocol(Protocol):
 
         # CCW starting OKR:
         t.extend(t[-1] + osc_time_vect)
+        # the offset avoid jumps in rotation
         theta.extend(theta[-1] + self.params['windmill_amplitude']/2 - \
             np.cos(osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
-                     self.params['windmill_amplitude']/2)   # the offset avoid jumps in rotation
+                     self.params['windmill_amplitude']/2)
 
         # Final pause:
         t.extend([t[-1] + self.params['inter_stim_pause']])
@@ -189,16 +195,21 @@ class Exp022Protocol(Protocol):
 
 
         # Full field OKR:
-        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
-                                                n_arms=self.params['windmill_arms_n'], color=stim_color))
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                         theta=theta)),
+                                                n_arms=self.params['windmill_arms_n'],
+                                                color=stim_color))
         # Half-field left OKR:
         stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
-                                                clip_rect=(0, 0, 0.5, 1), color=stim_color))
+                                                clip_rect=(0, 0, 0.5, 1),
+                                                color=stim_color))
         # Half-field right OKR:
-        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
+        stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                         theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
-                                                clip_rect=(0.5, 0, 0.5, 1), color=stim_color))
+                                                clip_rect=(0.5, 0, 0.5, 1),
+                                                color=stim_color))
 
         stimuli.append(Pause(duration=p/2))
 
