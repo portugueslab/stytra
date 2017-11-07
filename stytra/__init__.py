@@ -96,7 +96,7 @@ class Experiment(QObject):
         self.dc = DataCollector(folder_path=self.directory)
 
         self.last_protocol = \
-            self.dc.get_last_class_name('stimulus_protocol_params')
+            self.dc.get_last('stimulus_protocol_params')
 
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
         if self.last_protocol is not None:
@@ -246,6 +246,26 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
+class CameraParams(HasPyQtGraphParams):
+    def __init__(self):
+        """
+        A widget to show the camera and display the controls
+        :param experiment: experiment to which this belongs
+        """
+
+        super().__init__(name='tracking_tail_params')
+
+        standard_params_dict = dict(exposure={'value': 1000.,
+                                              'type': 'float',
+                                              'limits': (0.1, 50),
+                                              'suffix': 'ms',
+                                              'tip': 'Exposure (ms)'},
+                                    gain={'value': 1.,
+                                          'type': 'float',
+                                          'limits': (0.1, 3),
+                                          'tip': 'Camera amplification gain'})
+
+
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
                  motion_estimation=None, motion_estimation_parameters=None,
@@ -259,6 +279,7 @@ class TailTrackingExperiment(CameraExperiment):
         :param kwargs:
         """
         self.tracking_method = CentroidTrackingMethod()
+        self.camera_params = CameraParams()
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)

@@ -250,7 +250,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
-                                    ['tail_sum', 'theta_01'])
+                                    ['tail_sum', 'theta_01', 'theta_05', 'theta_06'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)

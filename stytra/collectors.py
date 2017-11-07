@@ -258,9 +258,11 @@ class DataCollector:
         # Try to find previously saved metadata:
         self.last_metadata = None
         list_metadata = sorted([fn for fn in os.listdir(folder_path) if
-                                fn.endswith('metadata.h5')])
+                                fn.endswith('config.h5')])
+
         if len(list_metadata) > 0:
-            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])['static_metadata']
+            self.last_metadata = \
+                dd.io.load(folder_path + list_metadata[-1])
 
         self.log_data_dict = dict()
         self.static_metadata = None
@@ -271,7 +273,6 @@ class DataCollector:
     def restore_from_saved(self):
         if self.last_metadata is not None:
             self.static_metadata._params.restoreState(self.last_metadata)
-
 
     def add_data_source(self, entry, name='unspecified_entry'):
         """
@@ -319,30 +320,36 @@ class DataCollector:
 
         return clean_data_dict
 
-    def get_last_class_name(self, class_param_key):
+    def get_last(self, class_param_key):
         if self.last_metadata is not None:
             # TODO This is atrocious.
             return self.last_metadata['children'][class_param_key]['children']['name']['value']
         else:
             return None
 
-    def save(self, timestamp=None, save_json=True):
-        """
-        Save the HDF5 file considering the current value of all the entries of the class
-        """
+    def save_config(self):
+        data_dict = deepcopy(self.get_full_dict())
+        dd.io.save(self.folder_path + 'config.h5', data_dict['static_metadata'])
 
+    def save_log(self,  timestamp=None,):
         data_dict = deepcopy(self.get_full_dict())
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # HDF5 are saved as timestamped Ymd_HMS_metadata.h5 files:
-        filename = self.folder_path + timestamp + '_metadata.h5'
-        dd.io.save(filename, data_dict)
+        # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
+        filename = self.folder_path + timestamp + '_metadata_json.txt'
+        # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
+        with open(filename, 'w') as outfile:
+            json.dump(self.get_clean_dict(convert_datetime=True),
+                      outfile, sort_keys=True)
 
-        # Save also clean json file:
-        if save_json:
-            filename = self.folder_path + timestamp + '_metadata_json.txt'
-            # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
-            with open(filename, 'w') as outfile:
-                json.dump(self.get_clean_dict(convert_datetime=True),
-                          outfile, sort_keys=True)
+    def save(self, timestamp=None):
+        """
+        Save the HDF5 file considering the current value of all the entries
+        of the class
+        """
+
+        print('saving')
+        self.save_log(timestamp)
+        self.save_config()
+        print('saved')

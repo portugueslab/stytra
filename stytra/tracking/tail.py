@@ -4,7 +4,7 @@ import cv2
 
 
 def reduce_to_pi(angle):
-    return np.mod(angle, 2*np.pi)-np.pi
+    return np.mod(angle + np.pi, 2*np.pi)-np.pi
 
 
 @jit(nopython=True)
@@ -136,6 +136,7 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
     :param image_scale: the amount of downscaling of the image
     :return: list of cumulative sum + list of angles
     """
+    n_segments = 7
     start_x = tail_start[1]  # TODO remove
     start_y = tail_start[0]
     tail_length_x = tail_length[1]
@@ -175,7 +176,6 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
         angles.append(abs_angle)
 
     return [reduce_to_pi(angles[-1]+angles[-2]-angles[0]-angles[1])] + angles[:]
-
 
 
 @jit(nopython=True)
