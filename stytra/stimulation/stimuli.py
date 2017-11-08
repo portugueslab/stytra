@@ -65,8 +65,7 @@ class Stimulus:
         """
         if self.clip_rect is not None:
             p.setClipRect(self.clip_rect[0]*w, self.clip_rect[1]*h,
-                          self.clip_rect[0]*w + self.clip_rect[2]*w,
-                          self.clip_rect[1]*h + self.clip_rect[3]*h)
+                          self.clip_rect[2]*w, self.clip_rect[3]*h)
 
 
 class DynamicStimulus(Stimulus):

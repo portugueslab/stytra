@@ -236,7 +236,7 @@ class VisualCodingProtocol(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-        n_split = 2 # self.params['n_split']
+        n_split = self.params['n_split']
 
         for (ix, iy) in product(range(n_split), repeat=2):
             stimuli.append(FullFieldPainterStimulus(
@@ -272,7 +272,9 @@ class VisualCodingProtocol(Protocol):
 
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
-        stimuli.append(VideoStimulus(video_path=self.params['video_file'], duration=120))
+        stimuli.append(VideoStimulus(video_path=self.params['video_file']))
+
+        stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
         return stimuli
 
