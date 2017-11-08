@@ -42,12 +42,13 @@ class TailTrackingMethod(FrameProcessingMethod):
                                     function={'values': ['centroid',
                                                          'angle_sweep'],
                                               'value': 'centroid',
-                                              'type': 'list'},
+                                              'type': 'list',
+                                              'readonly': True},
                                     color_invert=True,
                                     tail_start={'value': (440, 225),
-                                                'visible': True},
+                                                'visible': False},
                                     tail_length={'value': (-250, 30),
-                                                 'visible': True})
+                                                 'visible': False})
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -58,7 +59,10 @@ class CentroidTrackingMethod(TailTrackingMethod):
     """
     def __init__(self):
         super().__init__()
-        standard_params_dict = dict(window_size=30)
+        standard_params_dict = dict(window_size=dict(value=30,
+                                                     suffix=' pxs',
+                                                     type='float',
+                                                     limits=(2, 100)))
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)

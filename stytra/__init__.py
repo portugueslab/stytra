@@ -25,7 +25,7 @@ from stytra.gui.container_windows import SimpleExperimentWindow, \
     TailTrackingExperimentWindow, CameraExperimentWindow
 from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner, protocols
-from stytra.gui.camera_display import CameraControlMethod
+from stytra.gui.camera_display import CameraControlParameters
 
 # from stytra.metadata import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator,\
@@ -211,7 +211,7 @@ class CameraExperiment(Experiment):
         else:
             self.camera = VideoFileSource(video_file)
 
-        self.camera_control_params = CameraControlMethod()
+        self.camera_control_params = CameraControlParameters()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
@@ -291,7 +291,7 @@ class TailTrackingExperiment(CameraExperiment):
                                                 gui_framerate=20,
                                                 print_framerate=False)
 
-        # self.metadata.params[('fish_metadata', 'embedded')] = True
+        self.metadata.params[('fish_metadata', 'embedded')] = True
 
         self.data_acc_tailpoints = QueueDataAccumulator(
                                           self.frame_dispatcher.output_queue,
@@ -304,9 +304,10 @@ class TailTrackingExperiment(CameraExperiment):
         # start the processes and connect the timers
         self.gui_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
-
         self.gui_timer.timeout.connect(
             self.send_new_parameters)
+        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
+            self.change_segment_numb)
         self.start_frame_dispatcher()
 
         # if motion_estimation == 'LSTM':
@@ -319,12 +320,15 @@ class TailTrackingExperiment(CameraExperiment):
 
     def change_segment_numb(self):
         print(self.tracking_method.params['n_segments'])
-        self.data_acc_tailpoints = QueueDataAccumulator(
-            self.frame_dispatcher.output_queue,
-            header_list=['tail_sum'] +
-                        ['theta_{:02}'.format(i)
-                         for i in range(
-                            self.tracking_method.params['n_segments'])])
+        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
+                            self.tracking_method.params['n_segments'])]
+        self.data_acc_tailpoints.reset(header_list=new_header)
+
+        # self.gui_timer.timeout.connect(
+        #     self.data_acc_tailpoints.update_list)
+        #
+        # self.window_main.stream_plot.add_stream(
+        #     self.data_acc_tailpoints, ['tail_sum'])
 
     def send_new_parameters(self):
         self.processing_params_queue.put(

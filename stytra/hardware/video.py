@@ -13,20 +13,15 @@ from stytra.collectors import HasPyQtGraphParams
 import cv2
 
 
-class FrameProcessor(Process, HasPyQtGraphParams):
+class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, check_mem=True, print_framerate=False):
-        """ A basic class for a process that deals with frames, provides framerate calculation
+        """ A basic class for a process that deals with frames, provides
+        framerate calculation
 
         :param n_fps_frames:
         :param print_framerate:
         :param check_mem:
         """
-        #  frame_input_queue=None, frame_output_queue=None,
-        #  start_signal=None, end_signal=None
-        # self.frame_input_queue = frame_input_queue
-        # self.frame_output_queue = frame_input_queue
-        # self.start_signal = start_signal
-        # self.end_signal = end_signal
         super().__init__()
 
         # framerate calculation parameters
@@ -85,7 +80,7 @@ class XimeaCamera(VideoSource):
         self.cam.start_acquisition()
         self.cam.set_exposure(1000)
 
-        # for the camera on the lightsheet rig which supports hardware downsampling
+        # for the camera on the lightsheet which supports hardware downsampling
         # MQ013MG-ON lightsheet
         # MQ003MG-CM behaviour
 
@@ -176,7 +171,8 @@ class VideoWriter(Process):
         previous_time = datetime.now()
         while True:
             try:
-                # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
+                # process frames as they come, threshold them to roughly find
+                # the fish (e.g. eyes)
                 current_frame = self.input_queue.get(timeout=1)
                 outfile.write(current_frame)
 

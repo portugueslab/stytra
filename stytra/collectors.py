@@ -72,7 +72,7 @@ class Metadata(HasPyQtGraphParams):
         params = [
             {'name': 'fish_metadata', 'type': 'group', 'children': [
                 {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20),
-                 'tip': 'Fish age (days)'},
+                 'tip': 'Fish age', 'suffix': ' dpf'},
                 {'name': 'genotype', 'type': 'list',
                  'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
                             'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
@@ -118,8 +118,7 @@ class Metadata(HasPyQtGraphParams):
                             'Saskin',
                             'Archimedes',
                             'Helmut',
-                            'Katysha'], 'value': 'Saskin'},
-                {'name': 'random_add', 'type': 'int', 'value': 3}],
+                            'Katysha'], 'value': 'Saskin'}],
              }
 
 
@@ -156,7 +155,9 @@ class Accumulator:
         self.starting_time = None
         self.fps_range = fps_range
 
-    def reset(self):
+    def reset(self, header_list=None):
+        if header_list is not None:
+            self.header_list = ['t'] + header_list
         self.stored_data = []
         self.starting_time = None
 
@@ -165,7 +166,7 @@ class Accumulator:
             self.starting_time = datetime.datetime.now()
 
     def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers
+        """ Returns pandas DataFrame with data and headers
         """
         return pd.DataFrame(self.stored_data,
                             columns=self.header_list)
