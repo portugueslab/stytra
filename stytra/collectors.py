@@ -239,10 +239,9 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 class DataCollector:
     def __init__(self, *data_tuples_list, folder_path='./'):
-        """ It accept static data in a Metadata object, which will be restored
-        to the last values, or dynamic data like tail tracking or stimulus log that
-        will not be restored.
-        Right now accept only one metadata object, can be extended to multiple ones.
+        """ It accept static data in a HasPyQtGraph class, which will be
+        restored to the last values, or dynamic data like tail tracking or
+        stimulus log that will not be restored.
         :param data_tuples_list: tuple of data to be added
         :param folder_path: destination for the final HDF5 object
         """
@@ -284,7 +283,7 @@ class DataCollector:
         """
 
         # If true, use the last values used for this parameter
-        if type(entry) == Metadata:
+        if isinstance(entry, HasPyQtGraphParams):
             self.static_metadata = entry
             self.restore_from_saved()
 
@@ -337,7 +336,7 @@ class DataCollector:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        filename = self.folder_path + timestamp + '_metadata_json.txt'
+        filename = self.folder_path + timestamp + '_metadata.json'
         # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
         with open(filename, 'w') as outfile:
             json.dump(self.get_clean_dict(convert_datetime=True),
@@ -349,7 +348,5 @@ class DataCollector:
         of the class
         """
 
-        print('saving')
         self.save_log(timestamp)
         self.save_config()
-        print('saved')

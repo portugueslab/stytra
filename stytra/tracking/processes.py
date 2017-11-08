@@ -16,7 +16,7 @@ from stytra.metadata import HasPyQtGraphParams
 
 
 class FrameProcessingMethod(HasPyQtGraphParams):
-    """ The class for parametrisation fo various tail and fish tracking methods
+    """ The class for parametrisation of various tail and fish tracking methods
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

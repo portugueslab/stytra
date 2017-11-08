@@ -15,7 +15,7 @@ class QueueDataAccumulator(QObject, Accumulator):
         out of a multiprocessing queue. Require triggering with some timer.
         This timer has to be set externally!!!
         :param data_queue: queue from witch to retrieve data (Queue object)
-        :param header_list: headers for the data that will be stored (strings list)
+        :param header_list: headers for the data to stored (strings list)
         """
         super().__init__()
 

@@ -5,7 +5,7 @@ import zmq
 import inspect
 import qdarkstyle
 import git
-
+from collections import OrderedDict
 
 from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 
@@ -16,27 +16,24 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
-from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
+from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
+    MovingFrameDispatcher
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 from stytra.gui.container_windows import SimpleExperimentWindow, \
     TailTrackingExperimentWindow, CameraExperimentWindow
 from multiprocessing import Queue, Event
-from stytra.stimulation import ProtocolRunner
+from stytra.stimulation import ProtocolRunner, protocols
 from stytra.gui.camera_display import CameraControlMethod
 
 # from stytra.metadata import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator,\
     LSTMLocationEstimator
+from stytra.stimulation.protocols import Protocol
 
 # imports for moving detector
 from stytra.dbconn import put_experiment_in_db
-from stytra.stimulation import protocols
-from stytra.stimulation.protocols import Protocol
-from collections import OrderedDict
-
-from stytra.tracking.processes import CentroidTrackingMethod
 
 
 # this part is needed to find default arguments of functions
@@ -50,9 +47,15 @@ def get_default_args(func):
 
 
 def get_classes_from_module(input_module, parent_class):
-    prot_classes = inspect.getmembers(input_module, inspect.isclass)
+    """ Find all the classes in a module that are children of a parent one.
+
+    :param input_module: module object
+    :param parent_class: parent class object
+    :return: OrderedDict of classes
+    """
+    classes = inspect.getmembers(input_module, inspect.isclass)
     return OrderedDict({prot[1].name: prot[1]
-                        for prot in prot_classes if issubclass(prot[1],
+                        for prot in classes if issubclass(prot[1],
                                                                parent_class)})
 
 
@@ -89,6 +92,8 @@ class Experiment(QObject):
         else:
             self.calibrator = calibrator
 
+        self.window_main = None
+
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for
         # now I just use metadata object to access the global _params later in
         # the code. This entire Metadata() thing may be replaced.
@@ -113,7 +118,6 @@ class Experiment(QObject):
                                                     self.calibrator)
 
         self.scope_triggered = scope_triggered
-        self.dc.add_data_source(self.metadata)
         # This has to happen  or version will also be reset to last value:
         if not self.debug_mode:
             self.check_if_committed()
@@ -123,13 +127,12 @@ class Experiment(QObject):
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
             self.zmq_socket.bind("tcp://*:5555")
 
-        # TODO check this:
-        if type(self) == Experiment:
-            self.window_main = self.make_window()
-            self.window_main.show()
-
     def make_window(self):
-        return SimpleExperimentWindow(self)
+        self.window_main = SimpleExperimentWindow(self)
+        self.window_main.show()
+
+    def initialize_metadata(self):
+        self.dc.add_data_source(self.metadata)
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
@@ -140,14 +143,10 @@ class Experiment(QObject):
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
 
-        # TODO: this has to change, version can't go with other metadata
-        # since it is not to be reset or manually changed
         # Save to the metadata
-        self.metadata.params.addChild({'name': 'version', 'type': 'group',
-                                       'value': [{'name': 'git_hash',
-                                                  'value': git_hash},
-                                                 {'name': 'program',
-                                                  'value': __file__}]})
+        self.dc.add_data_source(dict(git_hash=git_hash,
+                                     name=__file__),
+                                name='general_program_version')
 
         compare = 'HEAD'
         if len(repo.git.diff(compare,
@@ -220,12 +219,9 @@ class CameraExperiment(Experiment):
         super().__init__(*args, **kwargs)
         self.go_live()
 
-        if type(self) == CameraExperiment:
-            self.window_main = self.make_window()
-            self.window_main.show()
-
     def make_window(self):
-        return CameraExperimentWindow(experiment=self)
+        self.window_main = CameraExperimentWindow(experiment=self)
+        self.window_main.show()
 
     def go_live(self):
         self.camera.start()
@@ -253,7 +249,7 @@ class CameraParams(HasPyQtGraphParams):
         :param experiment: experiment to which this belongs
         """
 
-        super().__init__(name='tracking_tail_params')
+        super().__init__(name='tracking_camera_params')
 
         standard_params_dict = dict(exposure={'value': 1000.,
                                               'type': 'float',
@@ -278,11 +274,13 @@ class TailTrackingExperiment(CameraExperiment):
         :param tracking_method: the method used to track the tail
         :param kwargs:
         """
-        self.tracking_method = CentroidTrackingMethod()
-        self.camera_params = CameraParams()
+
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
+
+        self.tracking_method = CentroidTrackingMethod()
+        print(self.tracking_method.params.getValues())
 
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
@@ -311,10 +309,6 @@ class TailTrackingExperiment(CameraExperiment):
             self.send_new_parameters)
         self.start_frame_dispatcher()
 
-        if type(self) == TailTrackingExperiment:
-            self.window_main = self.make_window()
-            self.window_main.show()
-
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']
         #     del motion_estimation_parameters['model']
@@ -323,12 +317,22 @@ class TailTrackingExperiment(CameraExperiment):
         #                                                     lstm_name,
         #                                                     **motion_estimation_parameters)
 
+    def change_segment_numb(self):
+        print(self.tracking_method.params['n_segments'])
+        self.data_acc_tailpoints = QueueDataAccumulator(
+            self.frame_dispatcher.output_queue,
+            header_list=['tail_sum'] +
+                        ['theta_{:02}'.format(i)
+                         for i in range(
+                            self.tracking_method.params['n_segments'])])
+
     def send_new_parameters(self):
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
 
     def make_window(self):
-        return TailTrackingExperimentWindow(experiment=self)
+        self.window_main = TailTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
 
     def start_protocol(self):
         self.data_acc_tailpoints.reset()
@@ -345,7 +349,6 @@ class TailTrackingExperiment(CameraExperiment):
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_log')
         super().end_protocol(*args, **kwargs)
-
         try:
             self.position_estimator.reset()
             self.position_estimator.log.reset()
@@ -372,6 +375,11 @@ class TailTrackingExperiment(CameraExperiment):
     # super.init is required before instantiating framedispatcher
     def start_frame_dispatcher(self):
         self.frame_dispatcher.start()
+    #
+    # def initialize_metadata(self):
+    #     print(self.tracking_method._params.getValues())
+    #     self.dc.add_data_source(self.tracking_method)
+    #     # print(self.tracking_method._params.getValues())
 
 
 class MovementRecordingExperiment(CameraExperiment):

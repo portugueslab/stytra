@@ -450,24 +450,6 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
             p.drawPolygon(polygon)
 
 
-#
-# class ClosedLoop1D_variable_motion(ClosedLoop1D, GratingPainterStimulus):
-#     def __init__(self, *args, motion, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.motion = motion
-#         self.duration = motion.t.iloc[-1]
-#
-#     def update(self):
-#         for attr in ['base_vel', 'gain', 'lag']:
-#             try:
-#                 setattr(self, attr, np.interp(self._elapsed,
-#                                               self.motion.t,
-#                                               self.motion[attr]))
-#             except (AttributeError, KeyError):
-#                 pass
-#         super().update()
-
-
 class VRMotionStimulus(SeamlessImageStimulus,
                        DynamicStimulus):
 

@@ -13,7 +13,7 @@ class CameraControlMethod(HasPyQtGraphParams):
     """ General tail tracking method.
     """
     def __init__(self):
-        super().__init__(name='tracking_tail_params')
+        super().__init__(name='tracking_camera_params')
         # TODO maybe getting default values here:
         standard_params_dict = dict(exposure=1000)
 
@@ -28,13 +28,18 @@ class CameraViewWidget(QWidget, HasPyQtGraphParams):
         :param experiment: experiment to which this belongs
         """
 
-        super().__init__(name='tracking_tail_params')
+        super().__init__(name='tracking_camera_params')
 
-        standard_params_dict = dict(exposure={'value': 1000.,
+        standard_params_dict = dict(exposure={'value': 1.,
                                               'type': 'float',
                                               'limits': (0.1, 50),
-                                              'suffix': 'ms',
+                                              'suffix': ' ms',
                                               'tip': 'Exposure (ms)'},
+                                    framerate={'value': 150.,
+                                              'type': 'float',
+                                              'limits': (10, 200),
+                                              'suffix': ' Hz',
+                                              'tip': 'Framerate (Hz)'},
                                     gain={'value': 1.,
                                           'type': 'float',
                                           'limits': (0.1, 3),
