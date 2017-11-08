@@ -78,5 +78,7 @@ if __name__ == '__main__':
     app.setWindowIcon(app_icon)
 
     exp = base(**class_kwargs)
+    exp.make_window()
+    exp.initialize_metadata()
     exp.show_stimulus_screen(full_screen=args.full_screen)
     app.exec_()

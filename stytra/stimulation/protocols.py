@@ -90,7 +90,7 @@ class FlashProtocol(Protocol):
         stimuli.append(Pause(duration=self.params['period_sec'] - \
                                       self.params['flash_duration']))
         stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
-                                                color=(255, 255, 255)))  # flash duration
+                                                color=(255, 255, 255)))
 
         return stimuli
 
@@ -129,7 +129,7 @@ class Exp022Protocol(Protocol):
         p = self.params['inter_stim_pause']
         s = self.params['grating_duration']
         v = self.params['grating_vel']
-        # Grating tuple: t  x  theta
+        # Grating tuple: t, x, theta
         dt_vel_tuple = [(0, 0, np.pi/2),  # set grid orientation to horizontal
                         (p, 0, np.pi/2),
                         (s, -0.3*v, np.pi/2),  # slow
@@ -145,8 +145,7 @@ class Exp022Protocol(Protocol):
                         (s, v, 0),  # leftwards
                         (p, 0, 0),
                         (s, -v, 0),  # rightwards
-                        (p/2, 0, 0)
-                        ]
+                        (p/2, 0, 0)]
 
         t = [0]
         x = [0]
@@ -247,7 +246,7 @@ class VisualCodingProtocol(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-        n_split = 2 # self.params['n_split']
+        n_split = self.params['n_split']
 
         for (ix, iy) in product(range(n_split), repeat=2):
             stimuli.append(FullFieldPainterStimulus(
@@ -283,7 +282,8 @@ class VisualCodingProtocol(Protocol):
 
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
-        stimuli.append(VideoStimulus(video_path=self.params['video_file'], duration=120))
+        stimuli.append(VideoStimulus(video_path=self.params['video_file'],
+                                     duration=120))
 
         return stimuli
 

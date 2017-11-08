@@ -136,7 +136,6 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
     :param image_scale: the amount of downscaling of the image
     :return: list of cumulative sum + list of angles
     """
-    n_segments = 7
     start_x = tail_start[1]  # TODO remove
     start_y = tail_start[0]
     tail_length_x = tail_length[1]
