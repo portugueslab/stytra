@@ -6,6 +6,25 @@ import pandas as pd
 
 import numpy as np
 import datetime
+import requests
+import json
+
+
+class Slacker:
+    """ Class which posts updates on slack
+
+    """
+    def __init__(self):
+        # set up slack notifications
+        self.slack_message = dict(username='pythonbot', channel='#experiment_progress', text='Hello there from python!', icon_emoji=':robot_face:')
+        self.slack_headers = {'content-type': 'application/json'}
+        self.slack_url = 'https://hooks.slack.com/services/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'
+
+    def post_update(self, text):
+        self.slack_message['text'] = text
+        print(text)
+        return requests.post(self.slack_url, data=json.dumps(self.slack_message),
+                             headers=self.slack_headers)
 
 
 def sanitize_item(it, paramstree=False, convert_datetime=False):
