@@ -27,13 +27,13 @@ class Slacker:
                              headers=self.slack_headers)
 
 
-def sanitize_item(it, paramstree=False, convert_datetime=False):
+def sanitize_item(it, paramstree=False, convert_datetime=False,
+                  eliminate_df=False):
     """ Used to create a dictionary which will be safe to put in MongoDB
 
     :param it: the item which will be recursively sanitized
     :return:
     """
-    # TODO handle better input arguments in calling recursively the function?
     safe_types = (int, float, str)
 
     for st in safe_types:
@@ -69,7 +69,10 @@ def sanitize_item(it, paramstree=False, convert_datetime=False):
             temptime = time.mktime(it.timetuple())
             return datetime.datetime.utcfromtimestamp(temptime)
     if isinstance(it, pd.DataFrame):
-        return it.to_dict('list')
+        if eliminate_df:
+            return 0
+        else:
+            return it.to_dict('list')
     return 0
 
 

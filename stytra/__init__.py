@@ -195,7 +195,8 @@ class Experiment(QObject):
         if save:  # save metadata
 
             if not self.debug_mode:  # upload to database
-                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True))
+                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
+                                                                     eliminate_df=True))
                 self.dc.add_data_source(db_idx, 'general_db_index')
             self.dc.save()
         self.protocol_runner.reset()

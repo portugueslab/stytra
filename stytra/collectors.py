@@ -301,7 +301,7 @@ class DataCollector:
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
         return data_dict
 
-    def get_clean_dict(self, paramstree=True,
+    def get_clean_dict(self, paramstree=True, eliminate_df=False,
                        convert_datetime=False):
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
@@ -316,7 +316,8 @@ class DataCollector:
         for key in value_dict.keys():
             category = key.split('_')[0]
             value = sanitize_item(value_dict[key], paramstree=paramstree,
-                                  convert_datetime=convert_datetime)
+                                  convert_datetime=convert_datetime,
+                                  eliminate_df=eliminate_df)
             if category in clean_data_dict.keys():
                 split_name = key.split('_')
                 if split_name[1] == 'metadata':
