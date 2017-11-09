@@ -19,8 +19,10 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.widget_display.setMaximumSize(2000, 2000)
 
         # self.params.setName()
-        self.params.addChildren([{'name': 'pos', 'value': (0, 0), 'visible': False},
-                                 {'name': 'size', 'value': (400, 400), 'visible': False}])
+        self.params.addChildren([{'name': 'pos', 'value': (0, 0),
+                                  'visible': False},
+                                 {'name': 'size', 'value': (400, 400),
+                                  'visible': False}])
 
         self.setStyleSheet('background-color:black;')
         self.params.sigTreeStateChanged.connect(self.set_dims)
@@ -39,6 +41,10 @@ class GLStimDisplay(QOpenGLWidget):
         self.calibrating = False
         self.calibrator = calibrator
         self.dims = None
+
+        # storing of displayed frames
+        self.store_frames = False
+        self.stored_frames = []
 
         self.protocol_runner = protocol_runner
         self.protocol_runner.sig_timestep.connect(self.display_stimulus)
@@ -66,6 +72,10 @@ class GLStimDisplay(QOpenGLWidget):
         p.end()
 
 
+
     def display_stimulus(self):
         self.dims = (self.height(), self.width())
         self.update()
+        if self.store_frames:
+
+            self.render()

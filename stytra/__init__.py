@@ -34,7 +34,7 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator,\
 from stytra.stimulation.protocols import Protocol
 
 # imports for moving detector
-from stytra.dbconn import put_experiment_in_db
+from stytra.dbconn import put_experiment_in_db, Slacker
 
 
 # this part is needed to find default arguments of functions
@@ -66,7 +66,8 @@ class Experiment(QObject):
                  app=None,
                  asset_directory='',
                  debug_mode=True,
-                 scope_triggered=False):
+                 scope_triggered=False,
+                 notifier='slack'):
         """General class for running experiments
         :param directory: data for saving options and data
         :param calibrator:
@@ -129,6 +130,9 @@ class Experiment(QObject):
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
             self.zmq_socket.bind("tcp://*:5555")
 
+        if notifier == 'slack':
+            self.notifier = Slacker()
+
     def make_window(self):
         self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
@@ -187,7 +191,7 @@ class Experiment(QObject):
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
-
+        clean_dict = self.dc.get_clean_dict(paramstree=True)
         if save:  # save metadata
 
             if not self.debug_mode:  # upload to database
@@ -195,6 +199,15 @@ class Experiment(QObject):
                 self.dc.add_data_source(db_idx, 'general_db_index')
             self.dc.save()
         self.protocol_runner.reset()
+        if self.notifier is not None:
+            self.notifier.post_update("Experiment on setup " +
+                                      clean_dict['general']['setup_name'] +
+                                      " is finished :birthday:")
+            self.notifier.post_update("It was :tropical_fish: " +
+                                      str(clean_dict['fish']['id']) +
+                                      "of the day, session "
+                                      + str(clean_dict['general']['session_id']))
+
 
     def wrap_up(self, *args, **kwargs):
         if self.protocol_runner is not None:
