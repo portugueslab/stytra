@@ -71,7 +71,8 @@ class ProtocolControlWidget(QWidget):
         self.layout.addLayout(self.layout_run)
         self.layout.addLayout(self.layout_choose)
 
-        self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
+        self.protocol_runner.sig_protocol_updated.connect(
+            self.update_stim_duration)
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.setLayout(self.layout)
@@ -83,7 +84,8 @@ class ProtocolControlWidget(QWidget):
         self.combo_prot.currentIndexChanged.connect(self.set_prot_from_dropdown)
 
     def show_stim_params_gui(self):
-        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+        self.protocol_params_tree.setParameters(
+            self.protocol_runner.protocol.params)
         self.protocol_params_tree.show()
         self.protocol_params_tree.setWindowTitle('Stimulus parameters')
         self.protocol_params_tree.resize(300, 600)
@@ -121,22 +123,15 @@ class ProtocolControlWidget(QWidget):
         self.set_protocol(Protclass)
 
 
-class TrackingMethodDropdown(QComboBox):
-    def __init__(self):
-        super().__init__()
-        prot_classes = inspect.getmembers(protocols, inspect.isclass)
-
-        self.setEditable(False)
-        self.prot_classdict = {prot[1].name: prot[1]
-                               for prot in prot_classes if issubclass(prot[1],
-                                                                      Protocol)}
-
-        self.addItems(list(self.prot_classdict.keys()))
-
-
-
-class TrackingProtocolControl(ProtocolControlWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.combo_tracking_method = QComboBox
+# class TrackingMethodDropdown(QComboBox):
+#     def __init__(self):
+#         super().__init__()
+#         prot_classes = inspect.getmembers(protocols, inspect.isclass)
+#
+#         self.setEditable(False)
+#         self.prot_classdict = {prot[1].name: prot[1]
+#                                for prot in prot_classes if issubclass(prot[1],
+#                                                                       Protocol)}
+#
+#         self.addItems(list(self.prot_classdict.keys()))
 

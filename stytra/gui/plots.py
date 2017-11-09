@@ -127,7 +127,6 @@ class MultiStreamPlot(pg.GraphicsWindow):
                 label.setColor(color)
         self.plotContainter.setYRange(-0.1, len(self.curves)+0.1)
 
-
     def update(self):
         """Function called by external timer to update the plot
         """

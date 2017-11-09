@@ -3,43 +3,28 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 import pyqtgraph as pg
 from queue import Empty
 import numpy as np
+import datetime
 from multiprocessing import Queue
 from skimage.io import imsave
 from stytra.collectors import HasPyQtGraphParams
 from pyqtgraph.parametertree import ParameterTree
 
 
-class CameraControlMethod(HasPyQtGraphParams):
+class CameraControlParameters(HasPyQtGraphParams):
     """ General tail tracking method.
     """
     def __init__(self):
         super().__init__(name='tracking_camera_params')
-        # TODO maybe getting default values here:
-        standard_params_dict = dict(exposure=1000)
-
-        for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
-
-
-class CameraViewWidget(QWidget, HasPyQtGraphParams):
-    def __init__(self, experiment):
-        """
-        A widget to show the camera and display the controls
-        :param experiment: experiment to which this belongs
-        """
-
-        super().__init__(name='tracking_camera_params')
-
         standard_params_dict = dict(exposure={'value': 1.,
                                               'type': 'float',
                                               'limits': (0.1, 50),
                                               'suffix': ' ms',
                                               'tip': 'Exposure (ms)'},
                                     framerate={'value': 150.,
-                                              'type': 'float',
-                                              'limits': (10, 200),
-                                              'suffix': ' Hz',
-                                              'tip': 'Framerate (Hz)'},
+                                               'type': 'float',
+                                               'limits': (10, 200),
+                                               'suffix': ' Hz',
+                                               'tip': 'Framerate (Hz)'},
                                     gain={'value': 1.,
                                           'type': 'float',
                                           'limits': (0.1, 3),
@@ -47,6 +32,32 @@ class CameraViewWidget(QWidget, HasPyQtGraphParams):
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
+
+        self.exp = self.params.param('exposure')
+        self.fps = self.params.param('framerate')
+
+        self.exp.sigValueChanged.connect(self.change_fps)
+        self.fps.sigValueChanged.connect(self.change_exp)
+
+    def change_fps(self):
+        pass
+        # self.fps.setValue(1000 / self.exp.value(), blockSignal=self.change_exp)
+
+    def change_exp(self):
+        pass
+        # self.exp.setValue(1000 / self.fps.value(), blockSignal=self.change_fps)
+
+
+class CameraViewWidget(QWidget):
+    def __init__(self, experiment):
+        """
+        A widget to show the camera and display the controls
+        :param experiment: experiment to which this belongs
+        """
+
+        super().__init__()
+
+        self.control_params = CameraControlParameters()
 
         self.camera_queue = Queue()  # What is this?
         self.camera_display_widget = pg.GraphicsLayoutWidget()
@@ -74,7 +85,8 @@ class CameraViewWidget(QWidget, HasPyQtGraphParams):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.protocol_params_tree = ParameterTree(showHeader=False)
-        self.params.sigTreeStateChanged.connect(self.update_controls)
+        self.control_params.params.sigTreeStateChanged.connect(
+            self.update_controls)
 
         self.layout.addWidget(self.camera_display_widget)
         if self.control_queue is not None:
@@ -90,7 +102,7 @@ class CameraViewWidget(QWidget, HasPyQtGraphParams):
         self.setLayout(self.layout)
 
     def update_controls(self):
-        self.control_queue.put(self.get_clean_values())
+        self.control_queue.put(self.control_params.get_clean_values())
 
     def update_image(self):
         first = True
@@ -115,12 +127,12 @@ class CameraViewWidget(QWidget, HasPyQtGraphParams):
     def save_image(self):
         """ Save a frame to the current directory.
         """
-        # TODO getting errors here
-        # TODO name image with time
-        imsave(self.experiment.directory + '/img.png', self.image_item)
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        imsave(self.experiment.directory + '/' + timestamp + '_img.png',
+               self.image_item.image)
 
     def show_params_gui(self):
-        self.protocol_params_tree.setParameters(self.params)
+        self.protocol_params_tree.setParameters(self.control_params.params)
         self.protocol_params_tree.show()
         self.protocol_params_tree.setWindowTitle('Camera parameters')
         self.protocol_params_tree.resize(450, 600)
@@ -178,7 +190,6 @@ class CameraTailSelection(CameraViewWidget):
 
     def update_image(self):
         super().update_image()
-
 
         if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
             angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]

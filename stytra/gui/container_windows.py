@@ -190,7 +190,7 @@ class SimpleExperimentWindow(QMainWindow):
 
 class CameraExperimentWindow(SimpleExperimentWindow):
     def __init__(self, *args, **kwargs):
-        self.camera_splitter = QSplitter(Qt.Vertical)
+        self.camera_splitter = QSplitter(Qt.Horizontal)
         self.camera_display = CameraViewWidget(kwargs['experiment'])
         super().__init__(*args, **kwargs)
 
@@ -226,7 +226,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     def __init__(self,  *args, **kwargs):
         self.camera_display = CameraTailSelection(kwargs['experiment'])
 
-        self.camera_splitter = QSplitter(Qt.Vertical)
+        self.camera_splitter = QSplitter(Qt.Horizontal)
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
@@ -250,11 +250,12 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
-                                    ['tail_sum', 'theta_01', 'theta_05', 'theta_06'])
+                                    ['tail_sum'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)
-        # previous_widget.layout().addWidget(self.button_tracking_params)
+        self.monitoring_layout.setStretch(1, 1)
+        self.monitoring_layout.setStretch(0, 1)
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(self.monitoring_widget)
         return self.camera_splitter
