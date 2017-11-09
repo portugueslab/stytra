@@ -354,7 +354,7 @@ class DataCollector:
         # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
-        with open(dirname+'/metadata.json', 'w') as outfile:
+        with open(dirname+'/'+timestamp+'_metadata.json', 'w') as outfile:
             json.dump(clean_dict,
                       outfile, sort_keys=True)
 

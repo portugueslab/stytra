@@ -205,7 +205,7 @@ class Experiment(QObject):
                                       " is finished :birthday:")
             self.notifier.post_update("It was :tropical_fish: " +
                                       str(clean_dict['fish']['id']) +
-                                      "of the day, session "
+                                      " of the day, session "
                                       + str(clean_dict['general']['session_id']))
 
 
