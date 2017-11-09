@@ -12,7 +12,8 @@ from PyQt5.QtCore import QTimer, pyqtSignal, QObject
 from stytra.gui.stimulus_display import StimulusDisplayWindow
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
-from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
+from stytra.collectors import DataCollector, HasPyQtGraphParams,\
+    GeneralMetadata, FishMetadata
 
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
@@ -97,7 +98,8 @@ class Experiment(QObject):
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for
         # now I just use metadata object to access the global _params later in
         # the code. This entire Metadata() thing may be replaced.
-        self.metadata = Metadata()
+        self.metadata = GeneralMetadata()
+        self.fish_metadata = FishMetadata()
         self.dc = DataCollector(folder_path=self.directory)
 
         self.last_protocol = \
@@ -187,9 +189,11 @@ class Experiment(QObject):
         #                         name='stimulus_dynamic_log')
 
         if save:  # save metadata
-            self.dc.save()
+
             if not self.debug_mode:  # upload to database
-                put_experiment_in_db(self.dc.get_clean_dict(paramstree=True))
+                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True))
+                self.dc.add_data_source(db_idx, 'general_db_index')
+            self.dc.save()
         self.protocol_runner.reset()
 
     def wrap_up(self, *args, **kwargs):
@@ -291,7 +295,7 @@ class TailTrackingExperiment(CameraExperiment):
                                                 gui_framerate=20,
                                                 print_framerate=False)
 
-        self.metadata.params[('fish_metadata', 'embedded')] = True
+        self.fish_metadata.params['embedded'] = True
 
         self.data_acc_tailpoints = QueueDataAccumulator(
                                           self.frame_dispatcher.output_queue,
