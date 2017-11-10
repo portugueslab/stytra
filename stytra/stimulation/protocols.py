@@ -189,7 +189,7 @@ class Exp022Protocol(Protocol):
                      self.params['windmill_amplitude']/2)
 
         # Final pause:
-        t.extend([t[-1] + self.params['inter_stim_pause']])
+        t.extend([t[-1] + p/2])
         theta.extend([theta[-1]])  # initial pause
 
 
@@ -199,6 +199,7 @@ class Exp022Protocol(Protocol):
                                                 n_arms=self.params['windmill_arms_n'],
                                                 color=stim_color))
         # Half-field left OKR:
+
         stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
                                                 clip_rect=(0, 0, 0.5, 1),
