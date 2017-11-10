@@ -189,6 +189,9 @@ class Experiment(QObject):
         """
         self.protocol_runner.end()
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
+        self.dc.add_data_source(self.protocol_runner.t_end,
+                                name='general_t_protocol_end')
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
@@ -203,7 +206,9 @@ class Experiment(QObject):
         if self.notifier is not None:
             self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
-                                      " is finished :birthday:")
+                                      " is finished running the protocol" +
+                                      clean_dict['stimulus']['protocol_params']['name']
+                                      +" :birthday:")
             self.notifier.post_update("It was :tropical_fish: " +
                                       str(clean_dict['fish']['id']) +
                                       " of the day, session "

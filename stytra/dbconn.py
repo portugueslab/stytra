@@ -27,8 +27,7 @@ class Slacker:
                              headers=self.slack_headers)
 
 
-def sanitize_item(it, paramstree=False, convert_datetime=False,
-                  eliminate_df=False):
+def sanitize_item(it, **kwargs):
     """ Used to create a dictionary which will be safe to put in MongoDB
 
     :param it: the item which will be recursively sanitized
@@ -42,14 +41,12 @@ def sanitize_item(it, paramstree=False, convert_datetime=False,
     if isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
-            new_dict[key] = sanitize_item(value, paramstree=paramstree,
-                                          convert_datetime=convert_datetime)
+            new_dict[key] = sanitize_item(value, **kwargs)
         return new_dict
     if isinstance(it, tuple):
-        tuple_out = tuple([sanitize_item(el, paramstree=paramstree,
-                                         convert_datetime=convert_datetime)
+        tuple_out = tuple([sanitize_item(el, **kwargs)
                            for el in it])
-        if len(tuple_out) == 2 and paramstree and \
+        if len(tuple_out) == 2 and kwargs.get('paramstree', False) and \
                 isinstance(tuple_out[1], dict):
             if len(tuple_out[1]) == 0:
                 return tuple_out[0]
@@ -58,18 +55,17 @@ def sanitize_item(it, paramstree=False, convert_datetime=False,
         else:
             return tuple_out
     if isinstance(it, list):
-        return [sanitize_item(el, paramstree=paramstree,
-                              convert_datetime=convert_datetime) for el in it]
+        return [sanitize_item(el, **kwargs) for el in it]
     if isinstance(it, np.generic):
         return np.asscalar(it)
     if isinstance(it, datetime.datetime):
-        if convert_datetime:
+        if kwargs.get("convert_datetime", False):
             return it.isoformat()
         else:
             temptime = time.mktime(it.timetuple())
             return datetime.datetime.utcfromtimestamp(temptime)
     if isinstance(it, pd.DataFrame):
-        if eliminate_df:
+        if kwargs.get("eliminate_df", False):
             return 0
         else:
             return it.to_dict('list')
