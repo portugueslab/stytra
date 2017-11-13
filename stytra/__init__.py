@@ -398,6 +398,51 @@ class TailTrackingExperiment(CameraExperiment):
     #     self.dc.add_data_source(self.tracking_method)
     #     # print(self.tracking_method._params.getValues())
 
+class SimulatedVRExperiment(Experiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
+        bouts = [
+            BoutTuple(2, 5, 1, 0),
+            BoutTuple(6, 0, 0, np.pi/4),
+            BoutTuple(7, 10, 1, 0),
+            BoutTuple(10, 0, 0, np.pi/4),
+            BoutTuple(11, 10, 1, 0),
+            BoutTuple(14, 0, 0, np.pi / 4),
+            BoutTuple(15, 10, 1, 0),
+            BoutTuple(18, 0, 0, np.pi / 4),
+            BoutTuple(19, 10, 1, 0)
+        ]
+        self.set_protocol(VRProtocol(experiment=self,
+                                     background_images=['arrow.png'],
+                                     initial_angle=np.pi/2,
+                                     delta_angle=np.pi/4,
+                                     n_velocities=5,
+                                     velocity_duration=4,
+                                     velocity_mean=10,
+                                     velocity_std=0
+                                     ))
+        self.position_estimator = SimulatedLocationEstimator(bouts)
+
+        self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,
+                                                   n_points=1000)
+        self.main_layoutiem = QSplitter()
+        self.main_layoutiem.addWidget(self.position_plot)
+        self.main_layoutiem.addWidget(self.widget_control)
+        self.setCentralWidget(self.main_layoutiem)
+
+        self.gui_refresh_timer = QTimer()
+        self.gui_refresh_timer.setSingleShot(False)
+        self.gui_refresh_timer.start()
+        self.gui_refresh_timer.timeout.connect(self.position_plot.update)
+
+    def end_protocol(self, do_not_save=None):
+        self.dc.add_data_source('stimulus', 'dynamic_parameters',
+                                self.protocol.dynamic_log.get_dataframe())
+        super().end_protocol(do_not_save)
+
+        self.position_estimator.reset()
+
 
 class MovementRecordingExperiment(CameraExperiment):
     """ Experiment where the fish is recorded while it is moving

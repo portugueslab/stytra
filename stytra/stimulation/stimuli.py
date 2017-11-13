@@ -14,6 +14,7 @@ except ImportError:
 
 from itertools import product
 
+from bouter.angles import rot_mat
 
 class Stimulus:
     """ General class for a stimulus."""
@@ -193,8 +194,8 @@ class MovingSeamlessStimulus(PainterStimulus,
 
         cx = self.x/mm_px - np.floor(
              self.x/mm_px / imw) * imw
-        cy = -self.y/mm_px - np.floor(
-            -(self.y/mm_px) / imh) * imh
+        cy = self.y/mm_px - np.floor(
+            (self.y/mm_px) / imh) * imh
 
         dx = display_centre[0] - image_centre[0] + cx
         dy = display_centre[1] - image_centre[1] - cy
@@ -204,7 +205,7 @@ class MovingSeamlessStimulus(PainterStimulus,
 
         nw = int(np.ceil(w/(imw*2)))
         nh = int(np.ceil(h/(imh*2)))
-        for idx, idy in product(range(-nw, nw+1), range(-nh, nh+1)):
+        for idx, idy in product(range(-nw-1, nw+1), range(-nh-1, nh+1)):
             self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
 
     def draw_block(self, p, point, w, h):
@@ -456,17 +457,25 @@ class VRMotionStimulus(SeamlessImageStimulus,
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
-        self.dynamic_parameters = ['x', 'y', 'theta']
+        self.dynamic_parameters = ['x', 'y', 'theta', 'dv']
+        self._bg_x = 0
+        self._bg_y = 0
+        self.dv = 0
         self._past_t = 0
 
     def update(self):
         dt = self._elapsed - self._past_t
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
         vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
-        displacements = self._experiment.position_estimator.get_displacements()
-        self.x += vel_x * dt + displacements[0]
-        self.y += vel_y * dt + displacements[1]
-        self.theta = displacements[2]
+        self._bg_x += vel_x * dt
+        self._bg_y += vel_y * dt
+
+        fish_coordinates = self._experiment.position_estimator.get_displacements()
+
+        self.x = self._bg_x + fish_coordinates[1] # A right angle turn between the cooridnate systems
+        self.y = self._bg_y - fish_coordinates[0]
+        # on the upper right
+        self.theta = fish_coordinates[2]
         self._past_t = self._elapsed
 
 

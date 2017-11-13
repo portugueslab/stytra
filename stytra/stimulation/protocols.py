@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from stytra.collectors import Accumulator, HasPyQtGraphParams
 
+from stytra.stimulation.backgrounds import gratings
+import math
 from itertools import product
 
 from copy import deepcopy
@@ -518,7 +520,36 @@ class VRProtocol(Protocol):
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stim_sequence(self):
+    name='VR protocol'
+
+    # For fish
+
+    def __init__(self, *args, background_images=('checkerboard.jpg',
+            'SeamlessRocks.jpg',
+
+                                                 'underwater_caustics.jpg'),
+                 n_velocities=200,
+                 initial_angle=0,
+                 delta_angle_mean=np.pi/6,
+                 delta_angle_std =np.pi/6,
+                 velocity_duration=15,
+                 velocity_mean=7,
+                 velocity_std=2,
+                 **kwargs):
+        full_t = 0
         motion = []
+        dt = velocity_duration
+        angle = initial_angle
+        for i in range(n_velocities):
+            angle += np.random.randn(1)[0]*delta_angle_std
+
+            vel = np.maximum(np.random.randn(1)*velocity_std+velocity_mean, 0)[0]
+            vy = np.sin(angle)*vel
+            vx = np.cos(angle)*vel
+
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
 
         angle = 0
         t = 0
@@ -536,10 +567,11 @@ class VRProtocol(Protocol):
                 t += self.params['pause_duration']
 
         motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
-        stimuli = [
-            VRMotionStimulus(background=self.params['background_image'],
-                             motion=motion,
-                             duration=motion.t.iat[-1])
-        ]
+        print(motion)
 
-        return stimuli
+        stimuli = [
+            VRMotionStimulus(background=bgim, motion=motion,
+                             duration=full_t)
+            for bgim in background_images
+        ]
+        super().__init__(*args, stimuli=stimuli, **kwargs)
