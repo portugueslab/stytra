@@ -1,3 +1,5 @@
+from stytra import HasPyQtGraphParams
+
 try:
     from ximea import xiapi
 except ImportError:
@@ -191,3 +193,23 @@ class VideoWriter(Process):
                     break
         print('Finished saving, {} frames in total'.format(i))
         outfile.release()
+
+
+class CameraParams(HasPyQtGraphParams):
+    def __init__(self):
+        """
+        A widget to show the camera and display the controls
+        :param experiment: experiment to which this belongs
+        """
+
+        super().__init__(name='tracking_camera_params')
+
+        standard_params_dict = dict(exposure={'value': 1000.,
+                                              'type': 'float',
+                                              'limits': (0.1, 50),
+                                              'suffix': 'ms',
+                                              'tip': 'Exposure (ms)'},
+                                    gain={'value': 1.,
+                                          'type': 'float',
+                                          'limits': (0.1, 3),
+                                          'tip': 'Camera amplification gain'})
