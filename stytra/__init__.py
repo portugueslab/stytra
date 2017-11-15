@@ -1,47 +1,39 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow
+import inspect
+import os
+import sys
+import traceback
+from collections import OrderedDict
+from multiprocessing import Queue, Event
 
-from stytra.gui.control_gui import ProtocolControlWindow
-from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.calibration import CrossCalibrator
-
-from stytra.metadata import MetadataFish, MetadataGeneral
-from stytra.metadata.metalist_gui import MetaListGui
-from stytra.collectors import DataCollector
-import qdarkstyle
 import git
+import qdarkstyle
+import zmq
+from PyQt5.QtCore import QTimer, QObject
+from stytra.calibration import CrossCalibrator, CircleCalibrator
+
+from stytra.collectors import DataCollector, HasPyQtGraphParams,\
+    GeneralMetadata, FishMetadata
+
+from stytra.dbconn import put_experiment_in_db, Slacker
+from stytra.gui.container_windows import SimpleExperimentWindow,\
+    CameraExperimentWindow, TailTrackingExperimentWindow
+from stytra.hardware.video import CameraControlParameters
+from stytra.gui.stimulus_display import StimulusDisplayWindow
 
 # imports for tracking
-from stytra.hardware.video import XimeaCamera, VideoFileSource, FrameDispatcher
+from stytra.hardware.video import XimeaCamera, VideoFileSource
+from stytra.stimulation import ProtocolRunner, protocols
+# from stytra.metadata import MetadataCamera
+from stytra.stimulation.closed_loop import VigourMotionEstimator, \
+    LSTMLocationEstimator
+from stytra.stimulation.protocols import Protocol
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.tail import tail_trace_ls, detect_tail_embedded
-from stytra.gui.camera_display import CameraTailSelection
-from stytra.gui.plots import StreamingPlotWidget
-from multiprocessing import Queue, Event
-from stytra.stimulation import Protocol
+from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
+    MovingFrameDispatcher
+from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
-from PyQt5.QtCore import QTimer, pyqtSignal
-from PyQt5.QtWidgets import QCheckBox
-from stytra.metadata import MetadataCamera
-import sys
-
-import traceback
-
-# imports for accumulator
-import pandas as pd
-import numpy as np
-
-# imports for moving detector
-from stytra.hardware.video import MovingFrameDispatcher
-
-import os
-
-import zmq
-from stytra.dbconn import put_experiment_in_db
 
 # this part is needed to find default arguments of functions
-import inspect
-
-
 def get_default_args(func):
     signature = inspect.signature(func)
     return {
@@ -51,117 +43,118 @@ def get_default_args(func):
     }
 
 
-class Experiment(QMainWindow):
-    sig_calibrating = pyqtSignal()
-    def __init__(self, directory, name, calibrator=None,
-                 save_csv=False,
-                 app=None, debug_mode=True):
-        """ A general class for running experiments
+def get_classes_from_module(input_module, parent_class):
+    """ Find all the classes in a module that are children of a parent one.
 
-        :param directory:
-        :param name:
-        :param app: A QApplication in which to run the experiment
+    :param input_module: module object
+    :param parent_class: parent class object
+    :return: OrderedDict of classes
+    """
+    classes = inspect.getmembers(input_module, inspect.isclass)
+    return OrderedDict({prot[1].name: prot[1]
+                        for prot in classes if issubclass(prot[1],
+                                                               parent_class)})
+
+
+class Experiment(QObject):
+    def __init__(self, directory,
+                 calibrator=None,
+                 app=None,
+                 asset_directory='',
+                 debug_mode=True,
+                 scope_triggered=False,
+                 notifier='slack'):
+        """General class for running experiments
+        :param directory: data for saving options and data
+        :param calibrator:
+        :param save_csv:
+        :param app: app: A QApplication in which to run the experiment
+        :param asset_directory:
+        :param debug_mode:
         """
         super().__init__()
 
         self.app = app
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-        self.metadata_general = MetadataGeneral()
-        self.metadata_fish = MetadataFish()
+        self.asset_dir = asset_directory
+        self.debug_mode = debug_mode
 
         self.directory = directory
 
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
-        self.name = name
-
-        self.save_csv = save_csv
-
-        self.dc = DataCollector(self.metadata_general, self.metadata_fish,
-                                folder_path=self.directory, use_last_val=True)
-
-        self.debug_mode = debug_mode
-
-        self.window_display = StimulusDisplayWindow(experiment=self)
-        self.widget_control = ProtocolControlWindow(self.window_display,
-                                                    self.debug_mode)
-
-        self.metadata_gui = MetaListGui([self.metadata_general, self.metadata_fish])
-        self.widget_control.button_metadata.clicked.connect(self.metadata_gui.show)
-        self.widget_control.button_start.clicked.connect(self.start_protocol)
-        self.widget_control.button_end.clicked.connect(self.end_protocol)
-
-        # Connect the display window to the metadata collector
-        self.dc.add_data_source('stimulus', 'display_params',
-                                self.window_display, 'display_params',
-                                use_last_val=True)
-
-        self.widget_control.reset_ROI()
-
         if calibrator is None:
             self.calibrator = CrossCalibrator()
         else:
             self.calibrator = calibrator
 
-        self.window_display.widget_display.calibrator = self.calibrator
-        self.widget_control.button_show_calib.clicked.connect(self.toggle_calibration)
-        self.dc.add_data_source('stimulus', 'mm per px',
-                                self.calibrator, 'mm_px', use_last_val=True)
-        self.dc.add_data_source('stimulus', 'calibration_pattern_length_mm',
-                                self.calibrator, 'length_mm', use_last_val=True)
-        self.dc.add_data_source('stimulus', 'calibration_pattern_length_px',
-                                self.calibrator, 'length_px',
-                                use_last_val=True)
+        self.window_main = None
 
-        self.dc.add_data_source('general', 't_protocol_start',
-                                self, 'protocol', 't_start',
-                                use_last_val=False)
+        # Maybe Experiment class can inherit from HasPyQtParams itself; but for
+        # now I just use metadata object to access the global _params later in
+        # the code. This entire Metadata() thing may be replaced.
+        self.metadata = GeneralMetadata()
+        self.fish_metadata = FishMetadata()
+        self.dc = DataCollector(folder_path=self.directory)
 
-        self.dc.add_data_source('general', 't_protocol_end',
-                                self, 'protocol', 't_end',
-                                use_last_val=False)
+        self.last_protocol = \
+            self.dc.get_last('stimulus_protocol_params')
 
-        self.dc.add_data_source('general', 'is_protocol_completed',
-                                self, 'protocol', 'completed',
-                                use_last_val=False)
+        self.prot_class_dict = get_classes_from_module(protocols, Protocol)
+        if self.last_protocol is not None:
+            ProtocolClass = self.prot_class_dict[self.last_protocol]
+            self.protocol_runner = ProtocolRunner(experiment=self,
+                                                  protocol=ProtocolClass())
+        else:
+            self.protocol_runner = ProtocolRunner(experiment=self)
 
-        self.widget_control.spin_calibrate.valueChanged.connect(
-            self.calibrator.set_physical_scale)
-        self.widget_control.spin_calibrate.setValue(self.calibrator.length_mm)
+        self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        self.dc.add_data_source('stimulus', 'log', self, 'protocol', 'log', use_last_val=False)
+        # Projector window and experiment control GUI
+        self.window_display = StimulusDisplayWindow(self.protocol_runner,
+                                                    self.calibrator)
 
-        self.protocol = None
+        self.scope_triggered = scope_triggered
+        # This has to happen  or version will also be reset to last value:
+        if not self.debug_mode:
+            self.check_if_committed()
 
-    def set_protocol(self, protocol):
-        self.protocol = protocol
-        self.protocol.reset()
-        self.window_display.widget_display.set_protocol(protocol)
-        self.protocol.sig_timestep.connect(self.update_progress)
-        self.protocol.sig_protocol_finished.connect(self.end_protocol)
-        self.widget_control.progress_bar.setMaximum(int(self.protocol.duration))
-        self.widget_control.progress_bar.setValue(0)
+        if scope_triggered:
+            self.zmq_context = zmq.Context()
+            self.zmq_socket = self.zmq_context.socket(zmq.REP)
+            self.zmq_socket.bind("tcp://*:5555")
 
-    def update_progress(self, i_stim):
-        self.widget_control.progress_bar.setValue(int(self.protocol.t))
+        if notifier == 'slack':
+            self.notifier = Slacker()
+
+    def make_window(self):
+        self.window_main = SimpleExperimentWindow(self)
+        self.window_main.show()
+
+    def initialize_metadata(self):
+        self.dc.add_data_source(self.metadata)
 
     def check_if_committed(self):
-        """ Checks if the version of stytra used to run the experiment is commited,
+        """ Checks if the version of stytra used to run the experiment is committed,
         so that for each experiment it is known what code was used to record it
-
-        :return:
         """
+
+        # Get program name and version for saving:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
-        self.dc.add_data_source('general', 'git_hash', git_hash)
-        self.dc.add_data_source('general', 'program_name', __file__)
 
-        if len(repo.git.diff('HEAD~1..HEAD',
+        # Save to the metadata
+        self.dc.add_data_source(dict(git_hash=git_hash,
+                                     name=__file__),
+                                name='general_program_version')
+
+        compare = 'HEAD'
+        if len(repo.git.diff(compare,
                              name_only=True)) > 0:
             print('The following files contain uncommitted changes:')
-            print(repo.git.diff('HEAD~1..HEAD', name_only=True))
+            print(repo.git.diff(compare, name_only=True))
             raise PermissionError(
                 'The project has to be committed before starting!')
 
@@ -175,107 +168,103 @@ class Experiment(QMainWindow):
                 print('Second screen not available')
 
     def start_protocol(self):
-        # if self.run_committed:
-        #     self.check_if_committed()
-        self.protocol.start()
-
-    def end_protocol(self, do_not_save=None):
-        self.protocol.end()
-        if not do_not_save and not self.debug_mode:
-            self.dc.save(save_csv=self.save_csv)
-            put_experiment_in_db(self.dc.get_full_dict())
-        self.protocol.reset()
-
-    def closeEvent(self, *args, **kwargs):
-        self.end_protocol(do_not_save=True)
-        self.app.closeAllWindows()
-
-    def toggle_calibration(self):
-        self.calibrator.toggle()
-        if self.calibrator.enabled:
-            self.widget_control.button_show_calib.setText('Hide calibration')
-        else:
-            self.widget_control.button_show_calib.setText('Show calibration')
-        self.window_display.widget_display.update()
-        self.sig_calibrating.emit()
-
-
-class LightsheetExperiment(Experiment):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.zmq_context = zmq.Context()
-        self.zmq_socket = self.zmq_context.socket(zmq.REP)
-
-        self.chk_lightsheet = QCheckBox("Wait for lightsheet")
-        self.chk_lightsheet.setChecked(False)
-
-        self.widget_control.layout.addWidget(self.chk_lightsheet, 0)
-
-        self.lightsheet_config = dict()
-        self.dc.add_data_source('imaging', 'lightsheet_config', self, 'lightsheet_config')
-
-    def start_protocol(self):
-        # Start only when received the GO signal from the lightsheet
-        if self.chk_lightsheet.isChecked():
-            self.zmq_socket.bind("tcp://*:5555")
-            print('bound socket')
+        if self.scope_triggered and self.window_main.chk_scope.isChecked():
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
-            print(self.lightsheet_config)
+            self.dc.add_data_source(self.lightsheet_config,
+                                    'imaging_lightsheet_config')
             # send the duration of the protocol so that
             # the scanning can stop
-            self.zmq_socket.send_json(self.protocol.duration)
-        super().start_protocol()
+            self.zmq_socket.send_json(self.protocol_runner.duration)
+
+        self.protocol_runner.start()
+
+    def end_protocol(self, save=True):
+        """ Function called at protocol end. Reset protocol, save
+        metadata and put experiment data in pymongo database.
+        """
+        self.protocol_runner.end()
+        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
+        self.dc.add_data_source(self.protocol_runner.t_end,
+                                name='general_t_protocol_end')
+        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
+        #                         name='stimulus_dynamic_log')
+        clean_dict = self.dc.get_clean_dict(paramstree=True)
+        if save:  # save metadata
+
+            if not self.debug_mode:  # upload to database
+                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
+                                                                     eliminate_df=True))
+                self.dc.add_data_source(db_idx, 'general_db_index')
+            self.dc.save()
+        self.protocol_runner.reset()
+        if self.notifier is not None:
+            self.notifier.post_update("Experiment on setup " +
+                                      clean_dict['general']['setup_name'] +
+                                      " is finished running the protocol" +
+                                      clean_dict['stimulus']['protocol_params']['name']
+                                      +" :birthday:")
+            self.notifier.post_update("It was :tropical_fish: " +
+                                      str(clean_dict['fish']['id']) +
+                                      " of the day, session "
+                                      + str(clean_dict['general']['session_id']))
+
+
+    def wrap_up(self, *args, **kwargs):
+        if self.protocol_runner is not None:
+            if self.protocol_runner.protocol is not None:
+                self.end_protocol(save=False)
+        self.app.closeAllWindows()
 
 
 class CameraExperiment(Experiment):
-    def __init__(self, *args, video_input=None, **kwargs):
+    def __init__(self, *args, video_file=None, **kwargs):
         """
-
-        :param args:
-        :param video_input: if not using a camera, the video
+        :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
-        super().__init__(*args, **kwargs)
-        self.frame_queue = Queue(500)
-        self.gui_frame_queue = Queue()
-        self.finished_sig = Event()
-
-        self.gui_refresh_timer = QTimer()
-        self.gui_refresh_timer.setSingleShot(False)
-
-        self.metadata_camera = MetadataCamera()
-        self.dc.add_data_source(self.metadata_camera)
-
-        if video_input is None:
-            self.control_queue = Queue()
-            self.camera = XimeaCamera(self.frame_queue,
-                                      self.finished_sig,
-                                      self.control_queue)
+        if video_file is None:
+            self.camera = XimeaCamera()
         else:
-            self.control_queue = None
-            self.camera = VideoFileSource(self.frame_queue,
-                                          self.finished_sig,
-                                          video_input)
+            self.camera = VideoFileSource(video_file)
+
+        self.camera_control_params = CameraControlParameters()
+
+        self.gui_timer = QTimer()
+        self.gui_timer.setSingleShot(False)
+
+        super().__init__(*args, **kwargs)
+        self.go_live()
+
+    def make_window(self):
+        self.window_main = CameraExperimentWindow(experiment=self)
+        self.window_main.show()
 
     def go_live(self):
         self.camera.start()
-        self.gui_refresh_timer.start(1000//60)
+        self.gui_timer.start(1000 // 60)
+        sys.excepthook = self.excepthook
 
-    def closeEvent(self, *args, **kwargs):
-        super().closeEvent(*args, **kwargs)
-        self.finished_sig.set()
-        # self.camera.join(timeout=1)
+    def wrap_up(self, *args, **kwargs):
+        super().wrap_up(*args, **kwargs)
+        self.camera.kill_signal.set()
         self.camera.terminate()
         print('Camera process terminated')
+        self.gui_timer.stop()
+
+    def excepthook(self, exctype, value, tb):
+        traceback.print_tb(tb)
+        print('{0}: {1}'.format(exctype, value))
+        self.camera.kill_signal.set()
+        self.camera.terminate()
 
 
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
-                        tracking_method='angle_sweep',
-                        tracking_method_parameters=None, **kwargs):
+                 motion_estimation=None, motion_estimation_parameters=None,
+                 **kwargs):
         """ An experiment which contains tail tracking,
         base for any experiment that tracks behaviour or employs
         closed loops
@@ -284,85 +273,99 @@ class TailTrackingExperiment(CameraExperiment):
         :param tracking_method: the method used to track the tail
         :param kwargs:
         """
+
+        self.processing_params_queue = Queue()
+        self.finished_sig = Event()
         super().__init__(*args, **kwargs)
-        self.metadata_fish.embedded = True
 
-        # infrastructure for processing data from the camera
-        self.processing_parameter_queue = Queue()
-        self.tail_position_queue = Queue()
+        self.tracking_method = CentroidTrackingMethod()
+        print(self.tracking_method.params.getValues())
 
-        dict_tracking_functions = dict(angle_sweep=tail_trace_ls,
-                                       centroid=detect_tail_embedded)
-
-        current_tracking_method_parameters = get_default_args(dict_tracking_functions[tracking_method])
-        if tracking_method_parameters is not None:
-            current_tracking_method_parameters.update(tracking_method_parameters)
-
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue,
-                                                gui_queue=self.gui_frame_queue,
-                                                processing_function=dict_tracking_functions[tracking_method],
-                                                processing_parameter_queue=self.processing_parameter_queue,
-                                                finished_signal=self.finished_sig,
-                                                output_queue=self.tail_position_queue,
+        self.frame_dispatcher = FrameDispatcher(in_frame_queue=
+                                                self.camera.frame_queue,
+                                                finished_signal=
+                                                self.camera.kill_signal,
+                                                processing_parameter_queue=
+                                                self.processing_params_queue,
                                                 gui_framerate=20,
                                                 print_framerate=False)
 
-        self.data_acc_tailpoints = QueueDataAccumulator(self.tail_position_queue,
-                                                        header_list=['tail_sum'] +
-                                                        ['theta_{:02}'.format(i)
-                                                         for i in range(
-                                                            current_tracking_method_parameters['n_segments'])])
+        self.fish_metadata.params['embedded'] = True
 
-        # GUI elements
-        self.tail_stream_plot = StreamingPlotWidget(data_accumulator=self.data_acc_tailpoints,
-                                                    data_acc_var='tail_sum')
+        self.data_acc_tailpoints = QueueDataAccumulator(
+                                          self.frame_dispatcher.output_queue,
+                                          header_list=['tail_sum'] +
+                                            ['theta_{:02}'.format(i)
+                                             for i in range(
+                                                self.tracking_method.params['n_segments'])])
 
-        self.camera_viewer = CameraTailSelection(
-            tail_start_points_queue=self.processing_parameter_queue,
-            camera_queue=self.gui_frame_queue,
-            tail_position_data=self.data_acc_tailpoints,
-            update_timer=self.gui_refresh_timer,
-            control_queue=self.control_queue,
-            camera_parameters=self.metadata_camera,
-            tracking_params=current_tracking_method_parameters)
-
-        self.dc.add_data_source('tracking',
-                                'tail_position', self.camera_viewer, 'roi_dict')
-        self.camera_viewer.reset_ROI()
 
         # start the processes and connect the timers
-        self.gui_refresh_timer.timeout.connect(self.tail_stream_plot.update)
-        self.gui_refresh_timer.timeout.connect(
+        self.gui_timer.timeout.connect(
             self.data_acc_tailpoints.update_list)
+        self.gui_timer.timeout.connect(
+            self.send_new_parameters)
+        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
+            self.change_segment_numb)
+        self.start_frame_dispatcher()
 
-        self.go_live()
+        # if motion_estimation == 'LSTM':
+        #     lstm_name = motion_estimation_parameters['model']
+        #     del motion_estimation_parameters['model']
+        #     self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
+        #                                                     self.asset_folder + '/' +
+        #                                                     lstm_name,
+        #                                                     **motion_estimation_parameters)
 
-    def go_live(self):
-        super().go_live()
-        self.frame_dispatcher.start()
-        sys.excepthook = self.excepthook
+    def change_segment_numb(self):
+        print(self.tracking_method.params['n_segments'])
+        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
+                            self.tracking_method.params['n_segments'])]
+        self.data_acc_tailpoints.reset(header_list=new_header)
+
+        # self.gui_timer.timeout.connect(
+        #     self.data_acc_tailpoints.update_list)
+        #
+        # self.window_main.stream_plot.add_stream(
+        #     self.data_acc_tailpoints, ['tail_sum'])
+
+    def send_new_parameters(self):
+        self.processing_params_queue.put(
+             self.tracking_method.get_clean_values())
+
+    def make_window(self):
+        self.window_main = TailTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
 
     def start_protocol(self):
         self.data_acc_tailpoints.reset()
         super().start_protocol()
 
     def end_protocol(self, *args, **kwargs):
-        self.dc.add_data_source('behaviour', 'tail',
-                                self.data_acc_tailpoints.get_dataframe())
-        self.dc.add_data_source('stimulus', 'dynamic_parameters',
-                                self.protocol.dynamic_log.get_dataframe())
+        """ Save tail position and dynamic parameters and terminate.
+        """
+        self.dc.add_data_source(self.data_acc_tailpoints.get_dataframe(),
+                                name='behaviour_tail_log')
+        # self.dc.add_data_source('behaviour', 'vr',
+        #                         self.position_estimator.log.get_dataframe())
+        # temporary removal of dynamic log as it is not correct
+        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
+        #                         name='stimulus_log')
         super().end_protocol(*args, **kwargs)
-
+        try:
+            self.position_estimator.reset()
+            self.position_estimator.log.reset()
+        except AttributeError:
+            pass
 
     def set_protocol(self, protocol):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
 
-    def closeEvent(self, *args, **kwargs):
-        super().closeEvent(*args, **kwargs)
+    def wrap_up(self, *args, **kwargs):
+        super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
-        print('Frame dispatcher terminated')
-        self.gui_refresh_timer.stop()
+        print('Dispatcher process terminated')
 
     def excepthook(self, exctype, value, tb):
         traceback.print_tb(tb)
@@ -371,14 +374,76 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera.terminate()
         self.frame_dispatcher.terminate()
 
+    # TODO solve this overwriting go_live, right now not possible because
+    # super.init is required before instantiating framedispatcher
+    def start_frame_dispatcher(self):
+        self.frame_dispatcher.start()
+    #
+    # def initialize_metadata(self):
+    #     print(self.tracking_method._params.getValues())
+    #     self.dc.add_data_source(self.tracking_method)
+    #     # print(self.tracking_method._params.getValues())
+
+
+
+class VRExperiment(TailTrackingExperiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+# class SimulatedVRExperiment(Experiment):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
+#         bouts = [
+#             BoutTuple(2, 5, 1, 0),
+#             BoutTuple(6, 0, 0, np.pi/4),
+#             BoutTuple(7, 10, 1, 0),
+#             BoutTuple(10, 0, 0, np.pi/4),
+#             BoutTuple(11, 10, 1, 0),
+#             BoutTuple(14, 0, 0, np.pi / 4),
+#             BoutTuple(15, 10, 1, 0),
+#             BoutTuple(18, 0, 0, np.pi / 4),
+#             BoutTuple(19, 10, 1, 0)
+#         ]
+#         self.set_protocol(VRProtocol(experiment=self,
+#                                      background_images=['arrow.png'],
+#                                      initial_angle=np.pi/2,
+#                                      delta_angle=np.pi/4,
+#                                      n_velocities=5,
+#                                      velocity_duration=4,
+#                                      velocity_mean=10,
+#                                      velocity_std=0
+#                                      ))
+#         self.position_estimator = SimulatedLocationEstimator(bouts)
+#
+#         self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,
+#                                                    n_points=1000)
+#         self.main_layoutiem = QSplitter()
+#         self.main_layoutiem.addWidget(self.position_plot)
+#         self.main_layoutiem.addWidget(self.widget_control)
+#         self.setCentralWidget(self.main_layoutiem)
+#
+#         self.gui_refresh_timer = QTimer()
+#         self.gui_refresh_timer.setSingleShot(False)
+#         self.gui_refresh_timer.start()
+#         self.gui_refresh_timer.timeout.connect(self.position_plot.update)
+#
+#     def end_protocol(self, do_not_save=None):
+#         self.dc.add_data_source('stimulus', 'dynamic_parameters',
+#                                 self.protocol.dynamic_log.get_dataframe())
+#         super().end_protocol(do_not_save)
+#
+#         self.position_estimator.reset()
+
 
 class MovementRecordingExperiment(CameraExperiment):
     """ Experiment where the fish is recorded while it is moving
 
     """
     def __init__(self, *args, **kwargs):
+        self.framestart_queue = Queue()
         super().__init__(*args, **kwargs)
-        self.go_live()
 
         self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
                                                       self.gui_frame_queue,
@@ -387,3 +452,9 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       framestart_queue=self.framestart_queue,
                                                       signal_start_rec=self.start_rec_sig,
                                                       gui_framerate=30)
+        self.go_live()
+
+    def init_ui(self):
+        self.setCentralWidget(self.splitter)
+        self.splitter.addWidget(self.camera_view)
+        self.splitter.addWidget(self.widget_control)

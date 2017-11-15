@@ -2,18 +2,18 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
 
 from stytra.stimulation.stimuli import Pause, MovingConstantly
-from stytra.stimulation import Protocol
-from stytra.gui.display_gui import StimulusDisplayWindow
-from stytra.gui.control_gui import ProtocolControlWindow
+from stytra.stimulation import ProtocolRunner
+from stytra.gui.stimulus_display import StimulusDisplayWindow
+from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.triggering import ZmqLightsheetTrigger
-from stytra.metadata import MetadataFish, MetadataCamera, MetadataLightsheet, MetadataGeneral
-from stytra import DataCollector
+from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
+from stytra import DataCollector, FrameDispatcher
 from stytra.metadata.metalist_gui import MetaListGui
 from stytra.stimulation.backgrounds import gratings
-from stytra.tracking.tail import detect_tail_embedded
+from stytra.tracking.tail import trace_tail_centroid
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.camera_display import CameraTailSelection
-from stytra.hardware.video import XimeaCamera, FrameDispatcher, VideoFileSource
+from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.tracking import QueueDataAccumulator
 
 
@@ -62,8 +62,8 @@ class Experiment(QMainWindow):
 
         self.camera = XimeaCamera(self.frame_queue, self.finished_sig, self.control_queue)
 
-        self.frame_dispatcher = FrameDispatcher(frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
-                                                processing_function=detect_tail_embedded,
+        self.frame_dispatcher = FrameDispatcher(in_frame_queue=self.frame_queue, gui_queue=self.gui_frame_queue,
+                                                processing_function=trace_tail_centroid,
                                                 processing_parameter_queue=self.processing_parameter_queue,
                                                 finished_signal=self.finished_sig,
                                                 output_queue=self.tail_position_queue,
@@ -108,14 +108,14 @@ class Experiment(QMainWindow):
             #                                      duration=stim_duration, monitor_rate=refresh_rate))
             self.stimuli.append(MovingConstantly(background=self.bg, x_vel=-10, mm_px=mm_px,
                                                  duration=stim_duration, monitor_rate=refresh_rate))
-        self.protocol = Protocol(self.stimuli, 1/refresh_rate)
+        self.protocol = ProtocolRunner(self.stimuli, 1 / refresh_rate)
         self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
         self.protocol.sig_protocol_finished.connect(self.finishAndSave)
 
         # Prepare control window and window for displaying the  stimulus
         # Instantiate display window and control window:
         self.win_stim_disp = StimulusDisplayWindow(self.protocol)
-        self.win_control = ProtocolControlWindow(app, self.protocol, self.win_stim_disp)
+        self.win_control = ProtocolControlWidget(app, self.protocol, self.win_stim_disp)
 
         # Get info from microscope after setting connection with the LabView computer
         # IMPORTANT: Check IP!!!
