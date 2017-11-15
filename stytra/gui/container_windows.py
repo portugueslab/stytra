@@ -169,9 +169,19 @@ class SimpleExperimentWindow(QMainWindow):
         if experiment.scope_triggered:
             self.chk_scope = QCheckBox('Wait for the scope')
         self.button_metadata.clicked.connect(
-            self.experiment.metadata.show_metadata_gui)
+            self.show_metadata_gui)
 
         self.setCentralWidget(self.construct_ui())
+
+        self.metadata_win = None
+
+    def show_metadata_gui(self):
+        self.metadata_win = QWidget()
+        self.metadata_win.setLayout(QHBoxLayout())
+        self.metadata_win.layout().addWidget(self.experiment.metadata.show_metadata_gui())
+        self.metadata_win.layout().addWidget(self.experiment.fish_metadata.show_metadata_gui())
+        self.metadata_win.show()
+
 
     def construct_ui(self):
         central_widget = QWidget()

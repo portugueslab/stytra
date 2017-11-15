@@ -12,7 +12,7 @@ from numba import jit
 from stytra.hardware.video import FrameProcessor
 from stytra.tracking.tail import trace_tail_centroid,\
                                  trace_tail_angular_sweep
-from stytra.metadata import HasPyQtGraphParams
+from stytra.collectors import HasPyQtGraphParams
 
 
 class FrameProcessingMethod(HasPyQtGraphParams):
@@ -23,7 +23,7 @@ class FrameProcessingMethod(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-        standard_params_dict = dict(image_scale=1,
+        standard_params_dict = dict(image_scale=1.0,
                                     filter_size=0)
 
         for key in standard_params_dict.keys():

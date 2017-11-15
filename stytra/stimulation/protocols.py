@@ -96,6 +96,76 @@ class FlashProtocol(Protocol):
 
         return stimuli
 
+class Exp022ImagingProtocol(Protocol):
+    name = "exp022 imaging protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'initial_pause': 20.,
+                       'windmill_amplitude': np.pi * 0.222,
+                       'windmill_duration': 10.,
+                       'windmill_arms': 8,
+                       'windmill_freq': 0.2,
+                       'inter_stimulus_pause': 10.,
+                       'grating_cycle': 10,
+                       'grating_vel': 10.,
+                       'grating_duration': 10.,
+                       'flash_duration': 1.5}
+
+        for key in params_dict():
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+
+        # initial dark field
+        stimuli.append(Pause(duration=self.params['initial_pause']))
+        stim_color = (255, 0, 0)
+
+        # gratings
+        p = self.params['inter_stim_pause']
+        v = self.params['grating_vel']
+        d = self.params['grating_duration']
+
+        #tuple for x, t, theta
+
+        vel_tuple = [(0, 0, np.pi/2),
+                     (p, 0, np.pi/2),
+                     (d, -0.3*v, np.pi/2), #slow
+                     (p, 0, np.pi/2),
+                     (d, -v, np.pi/2), # middle
+                     (p, 0, np.pi/2),
+                     (d, -3*v, np.pi/2),
+                     (p, 0, np.pi/2),
+                     (d, v, np.pi/2), #backward
+                     (p/2, 0, np.pi/2)
+                     (0,0,0),   # set the grating to horizontal
+                     (p/2, 0, 0),
+                     (d, v, 0), #leftwards
+                     (p, 0, 0),
+                     (d, -v, 0),
+                     (p/2, 0, 0)] #rightwards
+
+        t = [0]
+        x = [0]
+        theta = [0]
+
+        for dt, vel, th in vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=theta)),
+                                               grating_period=self.params[
+                                                   'grating_cycle'],
+                                               color=stim_color))
+        # windmill for OKR
+
+        STEP = 0.005
 
 class Exp022Protocol(Protocol):
     name = "exp022 protocol"
@@ -109,7 +179,7 @@ class Exp022Protocol(Protocol):
                                 'windmill_freq': 0.2,
                                 'inter_stim_pause': 5.,
                                 'grating_period': 10,
-                                'grating_vel': {'value': 10, 'type': 'int'},
+                                'grating_vel': 10,
                                 'grating_duration': 5.,
                                 'flash_duration': 1.}
 
@@ -157,6 +227,7 @@ class Exp022Protocol(Protocol):
             x.append(x[-1] + dt * vel)
             theta.append(th)
 
+
         stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
                                                                         x=x,
                                                                         theta=theta)),
@@ -191,7 +262,7 @@ class Exp022Protocol(Protocol):
                      self.params['windmill_amplitude']/2)
 
         # Final pause:
-        t.extend([t[-1] + self.params['inter_stim_pause']])
+        t.extend([t[-1] + p/2])
         theta.extend([theta[-1]])  # initial pause
 
 
@@ -201,6 +272,7 @@ class Exp022Protocol(Protocol):
                                                 n_arms=self.params['windmill_arms_n'],
                                                 color=stim_color))
         # Half-field left OKR:
+
         stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t, theta=theta)),
                                                 n_arms=self.params['windmill_arms_n'],
                                                 clip_rect=(0, 0, 0.5, 1),

@@ -10,13 +10,10 @@ import qdarkstyle
 import zmq
 from PyQt5.QtCore import QTimer, QObject
 from stytra.calibration import CrossCalibrator, CircleCalibrator
-from stytra.collectors import DataCollector, HasPyQtGraphParams, Metadata
-# imports for moving detector
-from stytra.dbconn import put_experiment_in_db, Slacker
-from stytra.gui.camera_display import CameraControlParameters
-from stytra.gui.container_windows import SimpleExperimentWindow, \
-    TailTrackingExperimentWindow, CameraExperimentWindow
-from stytra.gui.stimulus_display import StimulusDisplayWindow
+
+from stytra.collectors import DataCollector, HasPyQtGraphParams,\
+    GeneralMetadata, FishMetadata
+
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
@@ -92,7 +89,8 @@ class Experiment(QObject):
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for
         # now I just use metadata object to access the global _params later in
         # the code. This entire Metadata() thing may be replaced.
-        self.metadata = Metadata()
+        self.metadata = GeneralMetadata()
+        self.fish_metadata = FishMetadata()
         self.dc = DataCollector(folder_path=self.directory)
 
         self.last_protocol = \
@@ -181,21 +179,29 @@ class Experiment(QObject):
         """
         self.protocol_runner.end()
         self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
+        self.dc.add_data_source(self.protocol_runner.t_end,
+                                name='general_t_protocol_end')
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
         if save:  # save metadata
-            self.dc.save()
+
             if not self.debug_mode:  # upload to database
-                put_experiment_in_db(clean_dict)
+                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
+                                                                     eliminate_df=True))
+                self.dc.add_data_source(db_idx, 'general_db_index')
+            self.dc.save()
         self.protocol_runner.reset()
         if self.notifier is not None:
             self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
-                                      " is finished :birthday:")
+                                      " is finished running the protocol" +
+                                      clean_dict['stimulus']['protocol_params']['name']
+                                      +" :birthday:")
             self.notifier.post_update("It was :tropical_fish: " +
                                       str(clean_dict['fish']['id']) +
-                                      "of the day, session "
+                                      " of the day, session "
                                       + str(clean_dict['general']['session_id']))
 
 
@@ -278,7 +284,7 @@ class TailTrackingExperiment(CameraExperiment):
                                                 gui_framerate=20,
                                                 print_framerate=False)
 
-        self.metadata.params[('fish_metadata', 'embedded')] = True
+        self.fish_metadata.params['embedded'] = True
 
         self.data_acc_tailpoints = QueueDataAccumulator(
                                           self.frame_dispatcher.output_queue,

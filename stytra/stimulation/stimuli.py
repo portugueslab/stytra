@@ -6,7 +6,7 @@ from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
 from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
 from stytra.stimulation.backgrounds import existing_file_background
-from time import sleep
+
 try:
     from stytra.hardware.serial import PyboardConnection
 except ImportError:

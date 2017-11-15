@@ -65,12 +65,63 @@ class HasPyQtGraphParams(object):
         return sanitize_item(self.params.getValues(), paramstree=True)
 
 
-class Metadata(HasPyQtGraphParams):
+class GuiMetadata(HasPyQtGraphParams):
     def __init__(self):
         super().__init__()
+        self.protocol_params_tree = ParameterTree(showHeader=False)
 
+    def get_param_dict(self):
+        return self.params.getValues()
+
+    def show_metadata_gui(self):
+        self.protocol_params_tree.setParameters(self.params)
+        self.protocol_params_tree.setWindowTitle('Metadata')
+        self.protocol_params_tree.resize(450, 600)
+        return self.protocol_params_tree
+
+    def get_state(self):
+        return self._params.saveState()
+
+    def restore_state(self):
+        pass
+
+
+class GeneralMetadata(GuiMetadata):
+    def __init__(self):
+        super().__init__()
+        params =[
+                dict(name='session_id', type='int', value=0),
+                {'name': 'experimenter_name', 'type': 'list', 'value':
+                    'Vilim Stih',
+                 'values': ['Elena Dragomir',
+                            'Andreas Kist',
+                            'Laura Knogler',
+                            'Daniil Markov',
+                            'Pablo Oteiza',
+                            'Virginia Palieri',
+                            'Luigi Petrucco',
+                            'Ruben Portugues',
+                            'Vilim Stih',
+                            'Tugce Yildizoglu'],
+                 },
+                {'name': 'setup_name',  'type': 'list',
+                 'values': ['2p',
+                            'Lightsheet',
+                            '42',
+                            'Saskin',
+                            'Archimedes',
+                            'Helmut',
+                            'Katysha'], 'value': 'Saskin'}]
+
+        self.params.setName('general_metadata')
+        self.params.addChildren(params)
+
+
+class FishMetadata(GuiMetadata):
+    def __init__(self):
+        super().__init__()
         params = [
-            {'name': 'fish_metadata', 'type': 'group', 'children': [
+                  dict(name='id', type='int', value=0),
                 {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20),
                  'tip': 'Fish age', 'suffix': ' dpf'},
                 {'name': 'genotype', 'type': 'list',
@@ -93,56 +144,9 @@ class Metadata(HasPyQtGraphParams):
                             '10mM MTz',
                             'Bungarotoxin'], 'value': ''},
                 {'name': 'screened', 'type': 'list',
-                 'values': ['not', 'dark', 'bright'], 'value': 'not'}]},
-
-            {'name': 'general_metadata', 'type': 'group', 'visible': True,
-             'children': [
-                {'name': 'experiment_name', 'type': 'str', 'value': ''},
-                {'name': 'experimenter_name', 'type': 'list', 'value':
-                    'Vilim Stih',
-                 'values': ['Elena Dragomir',
-                            'Andreas Kist',
-                            'Laura Knogler',
-                            'Daniil Markov',
-                            'Pablo Oteiza',
-                            'Virginia Palieri',
-                            'Luigi Petrucco',
-                            'Ruben Portugues',
-                            'Vilim Stih',
-                            'Tugce Yildizoglu'],
-                 },
-                {'name': 'setup_name',  'type': 'list',
-                 'values': ['2p',
-                            'Lightsheet',
-                            '42',
-                            'Saskin',
-                            'Archimedes',
-                            'Helmut',
-                            'Katysha'], 'value': 'Saskin'}],
-             }
-
-
-            ]
-
-        self.params.setName('general_experiment_metadata')
+                 'values': ['not', 'dark', 'bright'], 'value': 'not'}]
+        self.params.setName('fish_metadata')
         self.params.addChildren(params)
-
-        self.protocol_params_tree = ParameterTree(showHeader=False)
-
-    def get_param_dict(self):
-        return self.params.getValues()
-
-    def show_metadata_gui(self):
-        self.protocol_params_tree.setParameters(self.params)
-        self.protocol_params_tree.show()
-        self.protocol_params_tree.setWindowTitle('Metadata')
-        self.protocol_params_tree.resize(450, 600)
-
-    def get_state(self):
-        return self._params.saveState()
-
-    def restore_state(self):
-        pass
 
 
 class Accumulator:
@@ -297,7 +301,7 @@ class DataCollector:
         data_dict['static_metadata'] = self.static_metadata._params.saveState()
         return data_dict
 
-    def get_clean_dict(self, paramstree=True,
+    def get_clean_dict(self, paramstree=True, eliminate_df=False,
                        convert_datetime=False):
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
@@ -312,9 +316,14 @@ class DataCollector:
         for key in value_dict.keys():
             category = key.split('_')[0]
             value = sanitize_item(value_dict[key], paramstree=paramstree,
-                                  convert_datetime=convert_datetime)
+                                  convert_datetime=convert_datetime,
+                                  eliminate_df=eliminate_df)
             if category in clean_data_dict.keys():
-                clean_data_dict[category]['_'.join(key.split('_')[1:])] = value
+                split_name = key.split('_')
+                if split_name[1] == 'metadata':
+                    clean_data_dict[category] = value
+                else:
+                    clean_data_dict[category]['_'.join(split_name[1:])] = value
             else:
                 clean_data_dict['unassigned'][key] = value
 
@@ -332,15 +341,22 @@ class DataCollector:
         dd.io.save(self.folder_path + 'config.h5', data_dict['static_metadata'])
 
     def save_log(self,  timestamp=None,):
-        data_dict = deepcopy(self.get_full_dict())
+        clean_dict = self.get_clean_dict(convert_datetime=True)
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        filename = self.folder_path + timestamp + '_metadata.json'
+        print(str(clean_dict['fish']))
+        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + str(clean_dict['fish']['id'])
+        dirname = '/'.join([self.folder_path,
+                   clean_dict['stimulus']['protocol_params']['name'],
+                             fish_name,
+                             str(clean_dict['general']['session_id'])])
         # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
-        with open(filename, 'w') as outfile:
-            json.dump(self.get_clean_dict(convert_datetime=True),
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        with open(dirname+'/'+timestamp+'_metadata.json', 'w') as outfile:
+            json.dump(clean_dict,
                       outfile, sort_keys=True)
 
     def save(self, timestamp=None):
