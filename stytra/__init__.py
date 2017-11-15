@@ -14,6 +14,12 @@ from stytra.calibration import CrossCalibrator, CircleCalibrator
 from stytra.collectors import DataCollector, HasPyQtGraphParams,\
     GeneralMetadata, FishMetadata
 
+from stytra.dbconn import put_experiment_in_db, Slacker
+from stytra.gui.container_windows import SimpleExperimentWindow,\
+    CameraExperimentWindow, TailTrackingExperimentWindow
+from stytra.hardware.video import CameraControlParameters
+from stytra.gui.stimulus_display import StimulusDisplayWindow
+
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
