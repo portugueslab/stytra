@@ -46,7 +46,7 @@ def sanitize_item(it, **kwargs):
     if isinstance(it, tuple):
         tuple_out = tuple([sanitize_item(el, **kwargs)
                            for el in it])
-        if len(tuple_out) == 2 and kwargs['paramstree'] and \
+        if len(tuple_out) == 2 and kwargs.get('paramstree', False) and \
                 isinstance(tuple_out[1], dict):
             if len(tuple_out[1]) == 0:
                 return tuple_out[0]
@@ -59,13 +59,13 @@ def sanitize_item(it, **kwargs):
     if isinstance(it, np.generic):
         return np.asscalar(it)
     if isinstance(it, datetime.datetime):
-        if kwargs["convert_datetime"]:
+        if kwargs.get("convert_datetime", False):
             return it.isoformat()
         else:
             temptime = time.mktime(it.timetuple())
             return datetime.datetime.utcfromtimestamp(temptime)
     if isinstance(it, pd.DataFrame):
-        if kwargs["eliminate_df"]:
+        if kwargs.get("eliminate_df", False):
             return 0
         else:
             return it.to_dict('list')
