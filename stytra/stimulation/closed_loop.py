@@ -1,6 +1,7 @@
 import numpy as np
 from stytra.tracking import QueueDataAccumulator
-#from keras.models import load_model
+from keras.models import load_model
+from bouter.angles import rot_mat
 from bouter.kinematic_features import velocities_to_coordinates
 from bouter.angles import smooth_tail_angles_series, reduce_to_pi
 import datetime
@@ -13,10 +14,10 @@ class EstimatorLog(Accumulator):
         self.header_list = ('t', ) + tuple(headers)
         self.stored_data = []
 
+
     def update_list(self, data):
-        self.check_start()
-        delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
-        self.stored_data.append((delta_t,) + data)
+        #delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
+        self.stored_data.append(data)
 
 
 class VigourMotionEstimator:
@@ -59,22 +60,22 @@ class LSTMLocationEstimator:
         self.tail_init = None
 
         self.processed_index = 0
-        self.start_angle = 0
+        self.current_angle = 0
+        self.current_coordinates = np.zeros(2)
         self.px_per_mm = model_px_per_mm
 
         if logging:
             self.log = EstimatorLog(headers=('v_ax',
                                              'v_lat',
                                              'v_ang',
-                                             'middle_tail-1',
-                                             'middle_tail',
                                              'theta'))
         else:
             self.log = None
 
     def reset(self):
         self.processed_index = 0
-        self.start_angle = 0
+        self.current_angle = 0
+        self.current_coordinates = np.zeros(2)
         self.tail_init = None
 
     def get_displacements(self):
@@ -84,12 +85,15 @@ class LSTMLocationEstimator:
 
         :return:
         """
+        if self.log.starting_time is None:
+            self.log.starting_time = self.data_acc.starting_time
 
         current_index = len(self.data_acc.stored_data)
         if current_index == 0 or self.processed_index == current_index:
-            return np.array([0, 0, self.start_angle])
+            return np.r_[self.current_coordinates/self.px_per_mm, self.current_angle]
 
-        tail = np.array(self.data_acc.stored_data[self.processed_index:current_index])[:, 2:]
+        all_data = np.array(self.data_acc.stored_data[self.processed_index:current_index])
+        tail = all_data[:, 2:]
 
         tail -= tail[:, :1]
         tail = smooth_tail_angles_series(reduce_to_pi(tail))[:, 1:]
@@ -102,7 +106,6 @@ class LSTMLocationEstimator:
                                          self.tail_thresholds[1],
                                          tail.shape[1])**2)[None, :]] = 0
 
-
         if self.PCA_weights is not None:
             tail = tail @ self.PCA_weights
 
@@ -112,22 +115,24 @@ class LSTMLocationEstimator:
         Y[np.abs(Y)<self.thresholds[None, :]] = 0
 
         displacement = velocities_to_coordinates(Y,
-                                            start_angle=self.start_angle,
-                                            cumulative_angle=False)
-        self.start_angle = displacement[-1, 2]
+                                                 start_angle=self.current_angle,
+                                                 cumulative_angle=False)
+
+        self.current_coordinates += displacement[-1, :2]
+        self.current_angle = displacement[-1, 2]
 
         if self.log is not None:
-            self.log.update_list((Y[-1, 0],
-                                  Y[-1, 1],
-                                  Y[-1, 2],
-                                  tail[-1, 0],
-                                  tail[-1, 9],
-                                  displacement[-1, 2]
-                                  ))
+            for i_y in range(Y.shape[0]):
+                self.log.update_list((all_data[i_y, 0],
+                                      Y[i_y, 0],
+                                      Y[i_y, 1],
+                                      Y[i_y, 2],
+                                      displacement[i_y, 2]
+                                      ))
+
         self.processed_index = current_index
 
-        return np.concatenate([displacement[-1, :2]/self.px_per_mm,
-                               displacement[-1, 2:3]])
+        return np.r_[self.current_coordinates/self.px_per_mm, self.current_angle]
 
 
 class SimulatedLocationEstimator:
@@ -136,20 +141,28 @@ class SimulatedLocationEstimator:
         self.start_t = None
         self.i_bout = 0
         self.past_theta = 0
-        self.next_bout = self.bouts[0]
+        self.current_coordinates = np.zeros(2)
 
     def get_displacements(self):
         if self.start_t is None:
             self.start_t = datetime.datetime.now()
 
         dt = (datetime.datetime.now()-self.start_t).total_seconds()
-        if self.i_bout< len(self.bouts) and dt > self.bouts[self.i_bout].t:
+        if self.i_bout < len(self.bouts) and dt > self.bouts[self.i_bout].t:
             this_bout = self.bouts[self.i_bout]
+            print(this_bout)
+            delta = rot_mat(self.past_theta) @ np.array([this_bout.dx, this_bout.dy])
+            self.current_coordinates += delta
+            print(self.current_coordinates)
             self.past_theta = self.past_theta+this_bout.theta
-            self.i_bout +=1
-            return np.array([this_bout.dx, this_bout.dy,
-                            self.past_theta])
-        else:
-            return np.array(0, 0, self.past_theta)
+            self.i_bout += 1
+
+        return np.r_[self.current_coordinates, self.past_theta]
+
+    def reset(self):
+        self.current_coordinates = np.zeros(2)
+        self.start_t = None
+        self.i_bout = 0
+        self.past_theta = 0
 
 

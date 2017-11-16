@@ -7,6 +7,8 @@ import pandas as pd
 import numpy as np
 from stytra.collectors import Accumulator, HasPyQtGraphParams
 
+from stytra.stimulation.backgrounds import gratings
+import math
 from itertools import product
 
 from copy import deepcopy
@@ -645,39 +647,41 @@ class VRProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        standard_params_dict = {'background_image': 'underwater_caustics.jpg',
-                                'n_motions': 5,
-                                'moving_phase_duration': 10,
-                                'angle_between_phases': 90,
+        standard_params_dict = {'background_images': ('underwater_caustics.jpg;checkerboard.jpg;SeamlessRocks.jpg',),
+                                'n_velocities': 200,
+                                'velocity_duration': 15,
+                                'initial_angle': 0,
+                                'delta_angle_mean': np.pi/6,
+                                'delta_angle_std': np.pi / 6,
                                 'velocity': 10,
-                                'pause_duration': 0}
+                                'velocity_mean': 7,
+                                'velocity_std': 2,}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stim_sequence(self):
+        full_t = 0
         motion = []
+        dt = self.params['velocity_duration']
+        angle = self.params['initial_angle']
+        for i in range(self.params['n_velocities']):
+            angle += np.random.randn(1)[0]*self.params['delta_angle_std']
 
-        angle = 0
-        t = 0
-        for i in range(self.params['n_motions']):
-            vx = np.cos(angle)*self.params['velocity']
-            vy = np.sin(angle) * self.params['velocity']
-            motion.append([t, vx, vy])
-            motion.append([t + self.params['moving_phase_duration'], vx, vy])
-            angle += self.params['angle_between_phases']
-            t += self.params['moving_phase_duration']
-            if self.params['pause_duration'] > 0:
-                motion.append([t, 0, 0])
-                motion.append(
-                    [t + self.params['pause_duration'], 0, 0])
-                t += self.params['pause_duration']
+            vel = np.maximum(np.random.randn(1)*self.params['velocity_std'] +
+                             self.params['velocity_mean'], 0)[0]
+            vy = np.sin(angle)*vel
+            vx = np.cos(angle)*vel
+
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
+
 
         motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
-        stimuli = [
-            VRMotionStimulus(background=self.params['background_image'],
-                             motion=motion,
-                             duration=motion.t.iat[-1])
-        ]
 
-        return stimuli
+        return [
+            VRMotionStimulus(background=bgim, motion=motion,
+                             duration=full_t)
+            for bgim in self.params['background_images'].split(';')
+        ]

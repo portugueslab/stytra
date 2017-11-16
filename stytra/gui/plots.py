@@ -28,8 +28,14 @@ class StreamingPositionPlot(pg.GraphicsWindow):
     def update(self):
         try:
             data_array = self.data_accumulator.get_last_n(self.n_points)
-
-            self.curve.setData(x=data_array[:, self.ind_x], y=data_array[:, self.ind_y])
+            velocity = np.r_[np.clip(np.diff(data_array[:, self.ind_x])**2 + \
+                       np.diff(data_array[:, self.ind_y])**2, 0, 30)/30, [0]]
+            self.curve.setData(x=data_array[:, self.ind_x],
+                               y=data_array[:, self.ind_y],
+                               color=np.stack([0.5+0.5*velocity,
+                                               0.2+0.8*velocity,
+                                               velocity,
+                                               np.ones_like(velocity)], 1))
 
         except (IndexError, TypeError):
             pass
@@ -142,7 +148,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
                 data_array = acc.get_last_t(self.time_past)
 
-                if len(data_array)>0:
+                if len(data_array) > 0:
                     # ...to be added to the array of times in s in the data accumulator
                     fps = acc.get_fps()
 

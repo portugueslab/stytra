@@ -18,6 +18,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--vr',
                         action='store_true')
+    parser.add_argument('--sim-vr',
+                        action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
     parser.add_argument('--scope-triggering',
