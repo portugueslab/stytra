@@ -1,40 +1,36 @@
+import inspect
+import os
 import sys
 import traceback
-import os
-import zmq
-import inspect
-import qdarkstyle
-import git
 from collections import OrderedDict
+from multiprocessing import Queue, Event
 
-from PyQt5.QtCore import QTimer, pyqtSignal, QObject
-
-from stytra.gui.stimulus_display import StimulusDisplayWindow
+import git
+import qdarkstyle
+import zmq
+from PyQt5.QtCore import QTimer, QObject
 from stytra.calibration import CrossCalibrator, CircleCalibrator
 
 from stytra.collectors import DataCollector, HasPyQtGraphParams,\
     GeneralMetadata, FishMetadata
 
+from stytra.dbconn import put_experiment_in_db, Slacker
+from stytra.gui.container_windows import SimpleExperimentWindow,\
+    CameraExperimentWindow, TailTrackingExperimentWindow
+from stytra.hardware.video import CameraControlParameters
+from stytra.gui.stimulus_display import StimulusDisplayWindow
+
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
-from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
-    MovingFrameDispatcher
-from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
-
-from stytra.gui.container_windows import SimpleExperimentWindow, \
-    TailTrackingExperimentWindow, CameraExperimentWindow
-from multiprocessing import Queue, Event
 from stytra.stimulation import ProtocolRunner, protocols
-from stytra.gui.camera_display import CameraControlParameters
-
 # from stytra.metadata import MetadataCamera
-from stytra.stimulation.closed_loop import VigourMotionEstimator,\
+from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
-
-# imports for moving detector
-from stytra.dbconn import put_experiment_in_db, Slacker
+from stytra.tracking import QueueDataAccumulator
+from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
+    MovingFrameDispatcher
+from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 
 # this part is needed to find default arguments of functions
@@ -265,26 +261,6 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
-class CameraParams(HasPyQtGraphParams):
-    def __init__(self):
-        """
-        A widget to show the camera and display the controls
-        :param experiment: experiment to which this belongs
-        """
-
-        super().__init__(name='tracking_camera_params')
-
-        standard_params_dict = dict(exposure={'value': 1000.,
-                                              'type': 'float',
-                                              'limits': (0.1, 50),
-                                              'suffix': 'ms',
-                                              'tip': 'Exposure (ms)'},
-                                    gain={'value': 1.,
-                                          'type': 'float',
-                                          'limits': (0.1, 3),
-                                          'tip': 'Camera amplification gain'})
-
-
 class TailTrackingExperiment(CameraExperiment):
     def __init__(self, *args,
                  motion_estimation=None, motion_estimation_parameters=None,
@@ -407,6 +383,58 @@ class TailTrackingExperiment(CameraExperiment):
     #     print(self.tracking_method._params.getValues())
     #     self.dc.add_data_source(self.tracking_method)
     #     # print(self.tracking_method._params.getValues())
+
+
+
+class VRExperiment(TailTrackingExperiment):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+# class SimulatedVRExperiment(Experiment):
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         BoutTuple = namedtuple('BoutTuple', ['t', 'dx', 'dy', 'theta'])
+#         bouts = [
+#             BoutTuple(2, 5, 1, 0),
+#             BoutTuple(6, 0, 0, np.pi/4),
+#             BoutTuple(7, 10, 1, 0),
+#             BoutTuple(10, 0, 0, np.pi/4),
+#             BoutTuple(11, 10, 1, 0),
+#             BoutTuple(14, 0, 0, np.pi / 4),
+#             BoutTuple(15, 10, 1, 0),
+#             BoutTuple(18, 0, 0, np.pi / 4),
+#             BoutTuple(19, 10, 1, 0)
+#         ]
+#         self.set_protocol(VRProtocol(experiment=self,
+#                                      background_images=['arrow.png'],
+#                                      initial_angle=np.pi/2,
+#                                      delta_angle=np.pi/4,
+#                                      n_velocities=5,
+#                                      velocity_duration=4,
+#                                      velocity_mean=10,
+#                                      velocity_std=0
+#                                      ))
+#         self.position_estimator = SimulatedLocationEstimator(bouts)
+#
+#         self.position_plot = StreamingPositionPlot(data_accumulator=self.protocol.dynamic_log,
+#                                                    n_points=1000)
+#         self.main_layoutiem = QSplitter()
+#         self.main_layoutiem.addWidget(self.position_plot)
+#         self.main_layoutiem.addWidget(self.widget_control)
+#         self.setCentralWidget(self.main_layoutiem)
+#
+#         self.gui_refresh_timer = QTimer()
+#         self.gui_refresh_timer.setSingleShot(False)
+#         self.gui_refresh_timer.start()
+#         self.gui_refresh_timer.timeout.connect(self.position_plot.update)
+#
+#     def end_protocol(self, do_not_save=None):
+#         self.dc.add_data_source('stimulus', 'dynamic_parameters',
+#                                 self.protocol.dynamic_log.get_dataframe())
+#         super().end_protocol(do_not_save)
+#
+#         self.position_estimator.reset()
 
 
 class MovementRecordingExperiment(CameraExperiment):

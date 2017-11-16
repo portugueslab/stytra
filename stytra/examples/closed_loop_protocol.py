@@ -14,6 +14,7 @@ class ClosedLoopExperiment(TailTrackingExperiment, LightsheetExperiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CrossCalibrator(fixed_length=160),
                          **kwargs)
+        self.metadata_general.experiment_name = 'reafference'
         self.main_layout = QSplitter(Qt.Horizontal)
         self.behaviour_layout = QSplitter(Qt.Vertical)
         self.behaviour_layout.addWidget(self.camera_viewer)
