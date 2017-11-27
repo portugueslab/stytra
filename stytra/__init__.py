@@ -2,6 +2,7 @@ import inspect
 import os
 import sys
 import traceback
+import datetime
 from collections import OrderedDict
 from multiprocessing import Queue, Event
 
@@ -177,6 +178,11 @@ class Experiment(QObject):
             # the scanning can stop
             self.zmq_socket.send_json(self.protocol_runner.duration)
 
+        self.notifier.post_update("Experiment on setup " +
+                                  self.metadata.params['setup_name'] +
+                                  " started, it will finish in {}s, or at ".format(self.protocol_runner.duration) +
+                                  (datetime.datetime.now()+datetime.timedelta(seconds=self.protocol_runner.duration)).strftime("%H:%M:%S")
+                                  )
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
@@ -202,7 +208,7 @@ class Experiment(QObject):
         if self.notifier is not None:
             self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
-                                      " is finished running the protocol" +
+                                      " is finished running the " +
                                       clean_dict['stimulus']['protocol_params']['name']
                                       +" :birthday:")
             self.notifier.post_update("It was :tropical_fish: " +
