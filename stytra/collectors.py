@@ -131,6 +131,7 @@ class FishMetadata(GuiMetadata):
                             'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
                             'PC:epNtr-tagRFP',
                             'NeuroD-6f',
+                            '152:Gal4;UAS:GCaMP6s',
                             '156:Gal4;UAS:GCaMP6s'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
                  'values': ['0', '30', '60', '90', 'lightsheet'],
