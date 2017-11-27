@@ -369,16 +369,16 @@ class VisualCodingProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        standard_params_dict = {'video_file': r"3minUnderwater.mp4",
+        standard_params_dict = {'video_file': r"red.mp4",
                                 'n_directions': 8,
                                 'n_split': 4,
                                 'grating_period': 10.,
                                 'grating_vel': 10.,
                                 'part_field_duration': 1.,
-                                'part_field_pause': 1.,
-                                'inter_segment_pause': 2.,
+                                'part_field_pause': 2.,
+                                'inter_segment_pause': 3.,
                                 'grating_move_duration': 2.,
-                                'grating_pause_duration': 1.}
+                                'grating_pause_duration': 2.}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
