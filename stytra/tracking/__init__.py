@@ -1,23 +1,21 @@
 from PyQt5.QtCore import QObject
 from multiprocessing import Process
 from queue import Empty
-from stytra.tracking.fish import detect_fish_midline
+from stytra.tracking.fish import find_fishes_midlines
 import cv2
 from datetime import datetime
-from stytra.tracking.diagnostics import draw_fish_new
+from stytra.tracking.diagnostics import draw_found_fish
 from stytra.collectors import Accumulator
-
-import pandas as pd
 
 
 class QueueDataAccumulator(QObject, Accumulator):
-    def __init__(self, data_queue, header_list=['tail_sum']):
+    def __init__(self, data_queue, header_list=None):
         """
         General class for accumulating (for saving or dispatching) data
         out of a multiprocessing queue. Require triggering with some timer.
         This timer has to be set externally!!!
         :param data_queue: queue from witch to retrieve data (Queue object)
-        :param header_list: headers for the data that will be stored (strings list)
+        :param header_list: headers for the data to stored (strings list)
         """
         super().__init__()
 
@@ -51,11 +49,6 @@ class QueueDataAccumulator(QObject, Accumulator):
             except Empty:
                 break
 
-    def reset(self):
-        """Reset data list
-        """
-        self.stored_data = []
-        print('resetted')
 
 
 class FishTrackingProcess(Process):
@@ -103,7 +96,6 @@ class FishTrackingProcess(Process):
 
                     output = detect_fish_midline(frame, mask.copy(),
                                            params=self.processing_parameters)
-                    print(output)
                     self.fish_queue.put((time, output))
 
                     if self.diagnostics:
@@ -111,7 +103,6 @@ class FishTrackingProcess(Process):
                         for fish in output:
                             display = draw_fish_new(display, fish, self.processing_parameters)
                         self.diagnostic_queue.put(display)
-                        print('put display')
 
                 # calculate the framerate
                 if i_fps == n_fps_frames - 1:
@@ -124,5 +115,5 @@ class FishTrackingProcess(Process):
                 i_total += 1
 
             except Empty:
-                print('empty_queue ft')
+                pass
 

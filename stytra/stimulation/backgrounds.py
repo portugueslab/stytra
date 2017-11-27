@@ -29,6 +29,7 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 
 
 def existing_file_background(filepath):
+    print('loading ', filepath)
     if filepath.endswith('.h5'):
         return dio.load(filepath)
     else:

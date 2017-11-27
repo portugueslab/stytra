@@ -33,8 +33,8 @@ class ClosedLoopExperiment(TailTrackingExperiment, LightsheetExperiment):
         self.fish_velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_var='fish_velocity',
                                                       xlink=self.tail_stream_plot.streamplot, y_range=(0, 5))
 
-        self.gui_refresh_timer.timeout.connect(self.velocity_plot.update)
-        self.gui_refresh_timer.timeout.connect(self.fish_velocity_plot.update)
+        self.gui_timer.timeout.connect(self.velocity_plot.update)
+        self.gui_timer.timeout.connect(self.fish_velocity_plot.update)
         self.behaviour_layout.addWidget(self.velocity_plot)
         self.behaviour_layout.addWidget(self.fish_velocity_plot)
         self.show()
@@ -51,10 +51,10 @@ if __name__ == '__main__':
     print(args)
     app = QApplication([])
     exp = ClosedLoopExperiment(app=app, name='closed_loop',
-                              directory=r'D:\vilim/closed_loop/',
-                              tracking_method='angle_sweep',
-                              tracking_method_parameters={'n_segments': 9,
-                                                          'filtering': True,
-                                                          'color_invert': args.tail_invert},
+                               directory=r'D:\vilim/closed_loop/',
+                               tracking_method='angle_sweep',
+                               tracking_method_parameters={'n_segments': 9,
+                                                           'filtering': True,
+                                                           'color_invert': args.tail_invert},
                                debug_mode=args.debug)
     app.exec_()
