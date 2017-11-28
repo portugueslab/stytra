@@ -315,6 +315,10 @@ class TailTrackingExperiment(CameraExperiment):
             self.change_segment_numb)
         self.start_frame_dispatcher()
 
+        # Reset tail et experiment start:
+        self.protocol_runner.sig_protocol_started.connect(
+            self.data_acc_tailpoints.reset)
+
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']
         #     del motion_estimation_parameters['model']
@@ -342,10 +346,6 @@ class TailTrackingExperiment(CameraExperiment):
     def make_window(self):
         self.window_main = TailTrackingExperimentWindow(experiment=self)
         self.window_main.show()
-
-    def start_protocol(self):
-        self.data_acc_tailpoints.reset()
-        super().start_protocol()
 
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
