@@ -1,6 +1,6 @@
 import numpy as np
 from stytra.tracking import QueueDataAccumulator
-from keras.models import load_model
+# from keras.models import load_model
 from bouter.angles import rot_mat
 from bouter.kinematic_features import velocities_to_coordinates
 from bouter.angles import smooth_tail_angles_series, reduce_to_pi
