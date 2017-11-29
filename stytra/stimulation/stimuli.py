@@ -65,8 +65,13 @@ class Stimulus:
         :param h: image height
         """
         if self.clip_rect is not None:
-            p.setClipRect(self.clip_rect[0]*w, self.clip_rect[1]*h,
-                          self.clip_rect[2]*w, self.clip_rect[3]*h)
+            if isinstance(self.clip_rect[0], tuple):
+                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                p.setClipRegion(QRegion(QPolygon(points)))
+            else:
+                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
+                              self.clip_rect[2] * w, self.clip_rect[3] * h)
+
 
 
 class DynamicStimulus(Stimulus):
@@ -545,17 +550,20 @@ class ShockStimulus(Stimulus):
         self.elapsed = 1
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
     # pyb = PyboardConnection(com_port='COM3')
     # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
     #                      pulse_n=1, pulse_dur_ms=5)
     # stim.start()
     # del pyb
     #
-    # from PyQt5.QtGui import QPolygon, QRegion
-    # p = QPainter()
-    # points = [QPoint(0, 0), QPoint(10, 0), QPoint(0, 10)]
-    # pol = QPolygon(points)
-    # p.drawPolygon(pol)
-    # p.setClipping(True)
-    # p.setClipRegion(QRegion(QRect(-1, -1, 10 / 2, 10 / 2)))
+    from PyQt5.QtGui import QPolygon, QRegion
+    p = QPainter()
+    clip_rect = [(0, 0), (1, 0), (0.5, 0.5), (1, 1), (0, 1)]
+    w = 100
+    h = 200
+    points = [QPoint(int(w * x), int(h * y)) for (x, y) in clip_rect]
+    print(points)
+    pol = QPolygon(points)
+    p.setClipping(True)
+    p.setClipRegion(QRegion(pol))
