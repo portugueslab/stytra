@@ -136,6 +136,8 @@ class Exp022ImagingProtocol(Protocol):
                      (d, -0.3*v, np.pi/2),  # slow
                      (p, 0, np.pi/2),
                      (d, -v, np.pi/2),  # medium
+                     (p, 0, np.pi / 2),
+                     (d, -3*v, np.pi / 2),  # fast
                      (p, 0, np.pi/2),
                      (d, v, np.pi/2),  # backward
                      (p/2, 0, np.pi/2),
