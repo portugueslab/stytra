@@ -9,20 +9,24 @@ def df_from_metadata(metadata, timestep=0.2):
     :param timestep: timestep for the dictionary
     """
 
-    stim_list = metadata['stimulus']['log']
+    stim_list = metadata['log']
 
-    if 'tail_log' in metadata['behaviour'].keys():
-        df = pd.DataFrame(metadata['behaviour']['tail_log'])[['t', 'tail_sum']]
-        df = df.set_index('t')
+    if 'tail_log' in metadata.keys():
+        pass
+        # df = pd.DataFrame(metadata['behaviour']['tail_log'])[['t', 'tail_sum']]
+        # df = df.set_index('t')
     else:
         df = pd.DataFrame(index=np.arange(timestep,
                                           stim_list[-1]['t_stop'], timestep))
 
     df['stim_id'] = 0
     df['trial_t'] = 0
+    df['trial_id'] = 0
 
-    if metadata['stimulus']['protocol_params']['name'] == 'exp022 protocol':
-        return df_from_exp022_list(df, metadata['stimulus'])
+    if metadata['protocol_params']['name'] == 'exp022 protocol':
+        return df_from_exp022_list(df, metadata)
+    if metadata['protocol_params']['name'] == 'exp022 imaging protocol':
+        return df_from_exp022_img_list(df, metadata)
     else:
         print('no function defined for converting this protocol')
 
@@ -36,9 +40,15 @@ def df_from_exp022_list(df, metadata):
     gd = metadata['protocol_params']['grating_duration']
     wd = metadata['protocol_params']['windmill_duration']
 
-    for s in metadata['stimulus']['log']:
-        if s['name'] == 'pause' and s['duration'] == 5:
-            df.loc[s['t_start']:, 'trial_t'] = df.index[:len(df[s['t_start']:])]
+    k=0
+    for s in metadata['log']:
+        if s['name'] == 'pause' :
+            if s['duration'] == 5:
+                df.loc[s['t_start']:, 'trial_t'] = df.index[:len(df[s['t_start']:])]
+                df.loc[s['t_start']:, 'trial_id'] = k
+                k += 1
+
+
         if s['name'] == 'moving_gratings':
             t_list = s['motion']['t']
             x_list = s['motion']['x']
@@ -72,5 +82,48 @@ def df_from_exp022_list(df, metadata):
 
         elif s['name'] == 'flash':
             df.loc[s['t_start']:s['t_stop'], 'stim_id'] = 13
+
+    return df
+
+
+def df_from_exp022_img_list(df, metadata):
+    """ Update stimulus dataframe based on stimulus list coming from an
+    Exp022 experiment.
+    """
+
+    p = metadata['protocol_params']['inter_stim_pause']
+    gd = metadata['protocol_params']['grating_duration']
+    wd = metadata['protocol_params']['windmill_duration']
+
+    k = 0
+    for s in metadata['log']:
+        if s['name'] == 'pause' and s['duration'] == 20:
+            df.loc[s['t_start']:, 'trial_t'] = df.index[:len(df[s['t_start']:])]
+            df.loc[s['t_start']:, 'trial_id'] = k
+            k += 1
+        if s['name'] == 'moving_gratings':
+            t_list = s['motion']['t']
+            x_list = s['motion']['x']
+            th_list = s['motion']['theta']
+            gratings = []
+            for i in range(1, len(t_list)):
+                dt = t_list[i] - t_list[i - 1]
+                dx = x_list[i] - x_list[i - 1]
+                if dt != 0 and dx != 0:
+                    try:
+                        j = gratings.index((dx / dt, th_list[i]))
+                    except ValueError:
+                        gratings.append((dx / dt, th_list[i]))
+                        j = gratings.index((dx / dt, th_list[i]))
+                    df.loc[s['t_start'] + t_list[i-1]: s['t_start'] + t_list[i],
+                           'stim_id'] = j + 1
+
+        elif s['name'] == 'windmill':
+            df.loc[s['t_start'] + p / 2: s['t_start'] + gd + p / 2,
+            'stim_id'] = 6
+
+
+        elif s['name'] == 'flash':
+            df.loc[s['t_start']:s['t_stop'], 'stim_id'] = 7
 
     return df
