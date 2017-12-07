@@ -32,6 +32,10 @@ from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
     MovingFrameDispatcher
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
+import deepdish as dd
+
+import qimage2ndarray
+
 
 # this part is needed to find default arguments of functions
 def get_default_args(func):
@@ -179,6 +183,7 @@ class Experiment(QObject):
 
         self.protocol_runner.start()
 
+
     def end_protocol(self, save=True):
         """ Function called at protocol end. Reset protocol, save
         metadata and put experiment data in pymongo database.
@@ -209,6 +214,9 @@ class Experiment(QObject):
                                       str(clean_dict['fish']['id']) +
                                       " of the day, session "
                                       + str(clean_dict['general']['session_id']))
+
+        movie = self.window_display.widget_display.get_movie()
+        dd.io.save(r'D:\Imaging\Lightsheet\Exp_022' + '\\stim_movie.h5', movie)
 
 
     def wrap_up(self, *args, **kwargs):

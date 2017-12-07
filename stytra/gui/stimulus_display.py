@@ -1,9 +1,12 @@
-from PyQt5.QtCore import QPoint, QRect
-from PyQt5.QtGui import QPainter, QBrush, QColor
-from PyQt5.QtWidgets import QDialog, QOpenGLWidget
+from PyQt5.QtCore import QPoint, QRect, QSize
+from PyQt5.QtGui import QPainter, QBrush, QColor, QImage, QPixmap
+from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QWidget
 from datetime import datetime
 from stytra.stimulation.stimuli import PainterStimulus
 from stytra.collectors import HasPyQtGraphParams
+import numpy as np
+import qimage2ndarray
+
 
 
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
@@ -34,7 +37,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.widget_display.set_protocol_runner(protocol)
 
 
-class GLStimDisplay(QOpenGLWidget):
+
+class GLStimDisplay(QWidget):
     def __init__(self,  *args, protocol_runner, calibrator):
         super().__init__(*args)
         self.img = None
@@ -52,14 +56,21 @@ class GLStimDisplay(QOpenGLWidget):
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
 
+        self.k = 0
+
+        self.movie = []
+
     def paintEvent(self, QPaintEvent):
+        self.new_img = QImage()
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
         h = self.height()
+
         if self.protocol_runner is not None and \
                 isinstance(self.protocol_runner.current_stimulus, PainterStimulus):
             self.protocol_runner.current_stimulus.paint(p, w, h)
+
         else:
             p.drawRect(QRect(-1, -1, w+2, h+2))
             p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
@@ -71,11 +82,24 @@ class GLStimDisplay(QOpenGLWidget):
 
         p.end()
 
-
-
     def display_stimulus(self):
+
         self.dims = (self.height(), self.width())
         self.update()
         if self.store_frames:
 
             self.render()
+
+        self.k += 1
+        if self.k == 10:
+            a = self.grab()
+            arr = qimage2ndarray.recarray_view(a.toImage())
+            self.movie.append(arr['r'])
+            self.k = 0
+
+    def get_movie(self):
+        movie_arr = np.array(self.movie)
+        self.movie = []
+
+        return movie_arr
+
