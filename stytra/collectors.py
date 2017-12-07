@@ -74,6 +74,7 @@ class GuiMetadata(HasPyQtGraphParams):
         return self.params.getValues()
 
     def show_metadata_gui(self):
+        self.protocol_params_tree = ParameterTree(showHeader=False)
         self.protocol_params_tree.setParameters(self.params)
         self.protocol_params_tree.setWindowTitle('Metadata')
         self.protocol_params_tree.resize(450, 600)
