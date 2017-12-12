@@ -33,12 +33,12 @@ from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 import deepdish as dd
+import datetime
 
-import qimage2ndarray
 
-
-# this part is needed to find default arguments of functions
 def get_default_args(func):
+    """ Find default arguments of functions
+    """
     signature = inspect.signature(func)
     return {
         k: v.default
@@ -67,14 +67,16 @@ class Experiment(QObject):
                  asset_directory='',
                  debug_mode=True,
                  scope_triggered=False,
+                 rec_stim_every=None,
                  notifier='slack'):
         """General class for running experiments
         :param directory: data for saving options and data
         :param calibrator:
-        :param save_csv:
-        :param app: app: A QApplication in which to run the experiment
-        :param asset_directory:
+        :param app: app: a QApplication in which to run the experiment
+        :param asset_directory: directory with files for stimuli (movies etc.)
+        :param scope_triggered:
         :param debug_mode:
+        :param notifier:
         """
         super().__init__()
 
@@ -107,6 +109,7 @@ class Experiment(QObject):
             self.dc.get_last('stimulus_protocol_params')
 
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
+
         if self.last_protocol is not None:
             ProtocolClass = self.prot_class_dict[self.last_protocol]
             self.protocol_runner = ProtocolRunner(experiment=self,
@@ -118,7 +121,8 @@ class Experiment(QObject):
 
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
-                                                    self.calibrator)
+                                                    self.calibrator,
+                                                    record_stim_every=rec_stim_every)
 
         self.scope_triggered = scope_triggered
         # This has to happen  or version will also be reset to last value:
@@ -145,11 +149,10 @@ class Experiment(QObject):
         so that for each experiment it is known what code was used to record it
         """
 
-        # Get program name and version for saving:
+        # Get program name and version and save to the metadata:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
 
-        # Save to the metadata
         self.dc.add_data_source(dict(git_hash=git_hash,
                                      name=__file__),
                                 name='general_program_version')
@@ -183,7 +186,6 @@ class Experiment(QObject):
 
         self.protocol_runner.start()
 
-
     def end_protocol(self, save=True):
         """ Function called at protocol end. Reset protocol, save
         metadata and put experiment data in pymongo database.
@@ -196,34 +198,44 @@ class Experiment(QObject):
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
-        if save:  # save metadata
 
+        if save:
             if not self.debug_mode:  # upload to database
                 db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
                                                                      eliminate_df=True))
                 self.dc.add_data_source(db_idx, 'general_db_index')
-            self.dc.save()
+
+            self.dc.save()  # save metadata
+
+            # Send notification of experiment end:
+            if self.notifier is not None:
+                self.notifier.post_update("Experiment on setup " +
+                                          clean_dict['general']['setup_name'] +
+                                          " is finished running the protocol" +
+                                          clean_dict['stimulus']['protocol_params']['name']
+                                          +" :birthday:")
+                self.notifier.post_update("It was :tropical_fish: " +
+                                          str(clean_dict['fish']['id']) +
+                                          " of the day, session "
+                                          + str(clean_dict['general']['session_id']))
+
+            # Save stimulus movie in .h5 file:
+
+            movie = self.window_display.widget_display.get_movie()
+            if movie is not None:
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                dd.io.save(self.directory + '\\' + timestamp +
+                           'stim_movie.h5', movie)
+
         self.protocol_runner.reset()
-        if self.notifier is not None:
-            self.notifier.post_update("Experiment on setup " +
-                                      clean_dict['general']['setup_name'] +
-                                      " is finished running the protocol" +
-                                      clean_dict['stimulus']['protocol_params']['name']
-                                      +" :birthday:")
-            self.notifier.post_update("It was :tropical_fish: " +
-                                      str(clean_dict['fish']['id']) +
-                                      " of the day, session "
-                                      + str(clean_dict['general']['session_id']))
-
-        movie = self.window_display.widget_display.get_movie()
-        dd.io.save(r'D:\Imaging\Lightsheet\Exp_022' + '\\stim_movie.h5', movie)
-
 
     def wrap_up(self, *args, **kwargs):
         if self.protocol_runner is not None:
+            self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
                 self.end_protocol(save=False)
         self.app.closeAllWindows()
+        print('done')
 
 
 class CameraExperiment(Experiment):
@@ -270,8 +282,8 @@ class CameraExperiment(Experiment):
 
 
 class TailTrackingExperiment(CameraExperiment):
-    def __init__(self, *args,
-                 motion_estimation=None, motion_estimation_parameters=None,
+    def __init__(self, *args, motion_estimation=None,
+                 motion_estimation_parameters=None,
                  **kwargs):
         """ An experiment which contains tail tracking,
         base for any experiment that tracks behaviour or employs
@@ -306,7 +318,6 @@ class TailTrackingExperiment(CameraExperiment):
                                             ['theta_{:02}'.format(i)
                                              for i in range(
                                                 self.tracking_method.params['n_segments'])])
-
 
         # start the processes and connect the timers
         self.gui_timer.timeout.connect(
@@ -382,15 +393,8 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera.terminate()
         self.frame_dispatcher.terminate()
 
-    # TODO solve this overwriting go_live, right now not possible because
-    # super.init is required before instantiating framedispatcher
     def start_frame_dispatcher(self):
         self.frame_dispatcher.start()
-    #
-    # def initialize_metadata(self):
-    #     print(self.tracking_method._params.getValues())
-    #     self.dc.add_data_source(self.tracking_method)
-    #     # print(self.tracking_method._params.getValues())
 
 
 

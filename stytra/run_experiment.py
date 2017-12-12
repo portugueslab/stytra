@@ -29,6 +29,8 @@ if __name__ == '__main__':
                         default=None)
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
+    parser.add_argument('--rec_stim_every', action='store',
+                        default=None)
     parser.add_argument('--asset-dir', action='store',
                         default='/Users/vilimstich/PhD/j_sync/underwater')
     parser.add_argument('--full-screen',
@@ -45,7 +47,8 @@ if __name__ == '__main__':
                         directory=args.directory,
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir,
-                        scope_triggered=args.scope_triggering)
+                        scope_triggered=args.scope_triggering,
+                        rec_stim_every=int(args.rec_stim_every))
 
     base = Experiment
 

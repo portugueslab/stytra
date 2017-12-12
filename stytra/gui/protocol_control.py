@@ -39,7 +39,6 @@ class ProtocolControlWidget(QWidget):
 
         # Create parametertree for protocol parameter control
         self.protocol_params_tree = ParameterTree(showHeader=False)
-        # self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
 
         # Widgets for protocol choosing
         self.layout_choose = QHBoxLayout()
@@ -112,7 +111,6 @@ class ProtocolControlWidget(QWidget):
         """Use dropdown menu to change the protocol.
         """
         protocol = Protclass()
-        print('setting protocol from UI')
         self.protocol_runner.set_new_protocol(protocol)
         self.button_toggle_prot.setEnabled(True)
         self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
