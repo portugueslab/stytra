@@ -338,8 +338,8 @@ class TailTrackingExperiment(CameraExperiment):
         self.window_main.show()
 
     def start_protocol(self):
-        self.data_acc_tailpoints.reset()
         super().start_protocol()
+        self.data_acc_tailpoints.reset()
 
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
