@@ -220,12 +220,12 @@ class Experiment(QObject):
                                           + str(clean_dict['general']['session_id']))
 
             # Save stimulus movie in .h5 file:
-
             movie = self.window_display.widget_display.get_movie()
             if movie is not None:
+                movie_dict = dict(movie=movie[0], movie_times=movie[1])
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 dd.io.save(self.directory + '\\' + timestamp +
-                           'stim_movie.h5', movie)
+                           'stim_movie.h5', movie_dict)
 
         self.protocol_runner.reset()
 

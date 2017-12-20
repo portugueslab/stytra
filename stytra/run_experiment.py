@@ -43,12 +43,18 @@ if __name__ == '__main__':
 
     app = QApplication([])
 
+    try:
+        rec_stim_every = int(args.rec_stim_every)
+    except TypeError:
+        rec_stim_every = None
+
+
     class_kwargs = dict(app=app,
                         directory=args.directory,
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir,
                         scope_triggered=args.scope_triggering,
-                        rec_stim_every=int(args.rec_stim_every))
+                        rec_stim_every=rec_stim_every)
 
     base = Experiment
 

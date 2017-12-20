@@ -21,7 +21,17 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         """
         super().__init__(name='stimulus_display_params', **kwargs)
         self.setWindowTitle('Stytra stimulus display')
-        self.widget_display = GLStimDisplay(self, calibrator=calibrator,
+
+        # QOpenGLWidget is faster in painting complicated stimuli (but slower
+        # with easy ones!) but does not allow stimulus recording. Therefore,
+        # parent class for the StimDisplay window is created at runtime:
+        if record_stim_every is not None:
+            QWidgetClass = QWidget
+        else:
+            QWidgetClass = QOpenGLWidget
+
+        StimDisplay = type('StimDisplay', (GLStimDisplay, QWidgetClass), {})
+        self.widget_display = StimDisplay(self, calibrator=calibrator,
                                             protocol_runner=protocol_runner,
                                             record_stim_every=record_stim_every)
         self.widget_display.setMaximumSize(2000, 2000)
@@ -42,7 +52,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.widget_display.set_protocol_runner(protocol)
 
 
-class GLStimDisplay(QWidget):
+class GLStimDisplay():
     """ Widget for the actual display area contained inside the
     StimulusDisplayWindow.
     """
@@ -70,13 +80,11 @@ class GLStimDisplay(QWidget):
         # Connect protocol_runner timer to stimulus updating function:
         self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
-        #TODO do we need this?
-        self.current_time = datetime.now()
+        self.k = 0
         self.starting_time = datetime.now()
 
-        self.k = 0
-
         self.movie = []
+        self.movie_timestamps = []
 
     def paintEvent(self, QPaintEvent):
         """ Generate the stimulus that will be displayed. A QPainter object is
@@ -110,6 +118,7 @@ class GLStimDisplay(QWidget):
         the displayed image and, if required, grab a picture of the current
         widget state for recording the stimulus movie.
         """
+
         self.dims = (self.height(), self.width())  # Update dimensions
         self.update()  # update image
 
@@ -123,6 +132,8 @@ class GLStimDisplay(QWidget):
                 img = self.grab().toImage()
                 arr = qimage2ndarray.recarray_view(img)  # Convert to np array
                 self.movie.append(np.array([arr[k] for k in ['r', 'g', 'b']]))
+                self.movie_timestamps.append(
+                    (datetime.now() - self.starting_time).total_seconds())
 
                 self.k = 0
 
@@ -133,8 +144,11 @@ class GLStimDisplay(QWidget):
         if self.record_stim_every is not None:
             movie_arr = np.array(self.movie)
             movie_arr = movie_arr.swapaxes(1, 3)
+
+            movie_timestamps = np.array(self.movie_timestamps)
             self.movie = []
-            return movie_arr
+            self.movie_timestamps = []
+            return movie_arr, movie_timestamps
 
         else:
             return None
