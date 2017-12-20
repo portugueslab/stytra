@@ -232,6 +232,77 @@ class Exp022ImagingProtocol(Protocol):
         stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
 
+class Exp014Protocol(Protocol):
+    name = "exp014 protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'inter_stim_pause': 5.,
+                                'grating_period': 10,
+                                'grating_vel': 10,
+                                'grating_duration': 5.,
+                                'flash_duration': 1.}
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = list()
+
+        # dark field
+
+        stimuli.append(Pause(duration=self.params['inter_stim_pause']))
+        stim_color = (255, 0, )
+
+        # ---------------
+
+        # ---------------
+        # Gratings with three different velocities
+
+        p = self.params['inter_stim_pause']
+        s= self.params['grating_duration']
+        v= self.params['grating_vel']
+        theta= np.pi/2
+
+        dt_vel_tuple = [(0, 0, theta),  # set grid orientation to horizontal
+                        (p, 0, theta),
+                        (s, -0.3 * v, theta),  # slow
+                        (p, 0, theta),
+                        (s, -v, theta),  # middle
+                        (p, 0, theta),
+                        (s, -3 * v, theta),  # fast
+                        (p, 0, theta)]
+
+        x = [0]
+        t= [0]
+        theta = [0]
+
+
+        for dt, vel, th in dt_vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=theta)),
+                                               grating_period=self.params[
+                                                   'grating_period'],
+                                               color=stim_color))
+
+        # ---------------
+        # Final flashes:
+        for i in range(4):
+            stimuli.append(
+                FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                         color=(255, 0, 0)))  # flash duration
+            stimuli.append(
+                Pause(duration=self.params['flash_duration']))  # flash duration
+
+        stimuli.append(Pause(duration=p - self.params['flash_duration']))
+        return stimuli
+
+
 class Exp022Protocol(Protocol):
     name = "exp022 protocol"
 
