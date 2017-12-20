@@ -2,6 +2,7 @@ import inspect
 import os
 import sys
 import traceback
+import datetime
 from collections import OrderedDict
 from multiprocessing import Queue, Event
 
@@ -184,6 +185,11 @@ class Experiment(QObject):
             # the scanning can stop
             self.zmq_socket.send_json(self.protocol_runner.duration)
 
+        self.notifier.post_update("Experiment on setup " +
+                                  self.metadata.params['setup_name'] +
+                                  " started, it will finish in {}s, or at ".format(self.protocol_runner.duration) +
+                                  (datetime.datetime.now()+datetime.timedelta(seconds=self.protocol_runner.duration)).strftime("%H:%M:%S")
+                                  )
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
@@ -228,6 +234,16 @@ class Experiment(QObject):
                            'stim_movie.h5', movie_dict)
 
         self.protocol_runner.reset()
+        if self.notifier is not None:
+            self.notifier.post_update("Experiment on setup " +
+                                      clean_dict['general']['setup_name'] +
+                                      " is finished running the " +
+                                      clean_dict['stimulus']['protocol_params']['name']
+                                      +" :birthday:")
+            self.notifier.post_update("It was :tropical_fish: " +
+                                      str(clean_dict['fish']['id']) +
+                                      " of the day, session "
+                                      + str(clean_dict['general']['session_id']))
 
     def wrap_up(self, *args, **kwargs):
         if self.protocol_runner is not None:
@@ -327,6 +343,10 @@ class TailTrackingExperiment(CameraExperiment):
         self.tracking_method.params.param('n_segments').sigValueChanged.connect(
             self.change_segment_numb)
         self.start_frame_dispatcher()
+
+        # Reset tail et experiment start:
+        self.protocol_runner.sig_protocol_started.connect(
+            self.data_acc_tailpoints.reset)
 
         # if motion_estimation == 'LSTM':
         #     lstm_name = motion_estimation_parameters['model']
