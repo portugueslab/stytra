@@ -232,6 +232,7 @@ class Exp022ImagingProtocol(Protocol):
         stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
 
+
 class Exp014Protocol(Protocol):
     name = "exp014 protocol"
 
@@ -241,7 +242,7 @@ class Exp014Protocol(Protocol):
         standard_params_dict = {'inter_stim_pause': 5.,
                                 'grating_period': 10,
                                 'grating_vel': 10,
-                                'grating_duration': 5.,
+                                'grating_duration': 10.,
                                 'flash_duration': 1.}
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -252,7 +253,7 @@ class Exp014Protocol(Protocol):
         # dark field
 
         stimuli.append(Pause(duration=self.params['inter_stim_pause']))
-        stim_color = (255, 0, )
+        stim_color = (255, 0, 0)
 
         # ---------------
 
@@ -260,9 +261,9 @@ class Exp014Protocol(Protocol):
         # Gratings with three different velocities
 
         p = self.params['inter_stim_pause']
-        s= self.params['grating_duration']
-        v= self.params['grating_vel']
-        theta= np.pi/2
+        s = self.params['grating_duration']
+        v = self.params['grating_vel']
+        theta = np.pi/2
 
         dt_vel_tuple = [(0, 0, theta),  # set grid orientation to horizontal
                         (p, 0, theta),
@@ -274,7 +275,7 @@ class Exp014Protocol(Protocol):
                         (p, 0, theta)]
 
         x = [0]
-        t= [0]
+        t = [0]
         theta = [0]
 
 
