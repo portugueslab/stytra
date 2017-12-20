@@ -112,7 +112,8 @@ class GeneralMetadata(GuiMetadata):
                             'Saskin',
                             'Archimedes',
                             'Helmut',
-                            'Katysha'], 'value': 'Saskin'}]
+                            'Katyusha',
+                            'WeltAmDraht'], 'value': 'Saskin'}]
 
         self.params.setName('general_metadata')
         self.params.addChildren(params)

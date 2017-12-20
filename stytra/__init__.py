@@ -451,7 +451,7 @@ class MovementRecordingExperiment(CameraExperiment):
         self.framestart_queue = Queue()
         super().__init__(*args, **kwargs)
 
-        self.frame_dispatcher = MovingFrameDispatcher(self.frame_queue,
+        self.frame_dispatcher = MovingFrameDispatcher(self.camera.frame_queue,
                                                       self.gui_frame_queue,
                                                       self.finished_sig,
                                                       output_queue=self.record_queue,

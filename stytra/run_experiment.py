@@ -1,6 +1,5 @@
 import argparse
-from stytra import CameraExperiment, Experiment, TailTrackingExperiment
-    # MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, TailTrackingExperiment, MovementRecordingExperiment
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -63,8 +62,8 @@ if __name__ == '__main__':
     #                                                             tail_thresholds=(0.02, 0.1),
     #                                                             thresholds=(0.05, 0.05, 0.015))
 
-    # elif args.freely_swimming:
-    #     bases.append(MovementRecordingExperiment)
+    elif args.freely_swimming:
+         base = MovementRecordingExperiment
     #
     # if args.lightsheet:
     #     bases.append(LightsheetExperiment)
