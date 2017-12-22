@@ -18,7 +18,7 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams,\
 from stytra.dbconn import put_experiment_in_db, Slacker
 from stytra.gui.container_windows import SimpleExperimentWindow,\
     CameraExperimentWindow, TailTrackingExperimentWindow
-from stytra.hardware.video import CameraControlParameters
+from stytra.hardware.video import CameraControlParameters, VideoWriter
 from stytra.gui.stimulus_display import StimulusDisplayWindow
 
 # imports for tracking
@@ -272,16 +272,18 @@ class CameraExperiment(Experiment):
         self.gui_timer.setSingleShot(False)
 
         super().__init__(*args, **kwargs)
-        self.go_live()
 
     def make_window(self):
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
+        self.go_live()
+        self.initialize_metadata()
 
     def go_live(self):
-        self.camera.start()
         self.gui_timer.start(1000 // 60)
         sys.excepthook = self.excepthook
+        self.camera.start()
+
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
@@ -474,17 +476,24 @@ class MovementRecordingExperiment(CameraExperiment):
 
     """
     def __init__(self, *args, **kwargs):
-        self.framestart_queue = Queue()
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, calibrator=CircleCalibrator(), **kwargs)
 
+        self.processing_params_queue = Queue()
+        self.signal_start_rec = Event()
+        self.finished_signal = Event()
         self.frame_dispatcher = MovingFrameDispatcher(self.camera.frame_queue,
-                                                      self.gui_frame_queue,
-                                                      self.finished_sig,
-                                                      output_queue=self.record_queue,
-                                                      framestart_queue=self.framestart_queue,
-                                                      signal_start_rec=self.start_rec_sig,
+                                                      finished_signal=self.camera.kill_signal,
+                                                      signal_start_rec=self.signal_start_rec,
                                                       gui_framerate=30)
-        self.go_live()
+
+        self.frame_recorder = VideoWriter(self.directory+'/out.mp4',
+                                          self.frame_dispatcher.output_queue,
+                                          self.finished_signal) # TODO proper filename
+
+    def go_live(self):
+        super().go_live()
+        self.frame_dispatcher.start()
+        self.frame_recorder.start()
 
     def init_ui(self):
         self.setCentralWidget(self.splitter)

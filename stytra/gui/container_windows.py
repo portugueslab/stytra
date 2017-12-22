@@ -2,6 +2,8 @@ from PyQt5.QtCore import Qt, QRectF, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
     QPushButton, QComboBox
 
+
+from stytra.calibration import CircleCalibrator
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib, CameraViewWidget
@@ -124,6 +126,11 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.button_show_calib = QPushButton('Show calibration')
         self.button_show_calib.clicked.connect(self.toggle_calibration)
 
+        if isinstance(experiment.calibrator, CircleCalibrator):
+            self.button_calibrate = QPushButton('Calibrate')
+            self.button_calibrate.clicked.connect(self.calibrate)
+            self.layout_calibrate.addWidget(self.button_calibrate)
+
         self.label_calibrate = QLabel('size of calib. pattern in mm')
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
@@ -143,6 +150,9 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_show_calib.setText('Show calibration')
         self.sig_calibrating.emit()
         self.experiment.window_display.widget_display.update()
+
+    def calibrate(self):
+        pass
 
 
 class TrackingSettingsGui(QWidget):

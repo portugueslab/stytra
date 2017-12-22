@@ -106,14 +106,15 @@ class GeneralMetadata(GuiMetadata):
                             'Tugce Yildizoglu'],
                  },
                 {'name': 'setup_name',  'type': 'list',
-                 'values': ['2p',
+                 'values': ['test',
+                            '2p',
                             'Lightsheet',
                             '42',
                             'Saskin',
                             'Archimedes',
                             'Helmut',
                             'Katyusha',
-                            'WeltAmDraht'], 'value': 'Saskin'}]
+                            'WeltAmDraht'], 'value': 'test'}]
 
         self.params.setName('general_metadata')
         self.params.addChildren(params)

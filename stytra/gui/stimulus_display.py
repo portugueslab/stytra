@@ -99,7 +99,8 @@ class GLStimDisplay():
         # If a protocol runner is active, use it for painting the stimulus
         if self.protocol_runner is not None and \
                 isinstance(self.protocol_runner.current_stimulus, PainterStimulus):
-            self.protocol_runner.current_stimulus.paint(p, w, h)
+            if self.protocol_runner.running:
+                self.protocol_runner.current_stimulus.paint(p, w, h)
 
         else:
             p.drawRect(QRect(-1, -1, w+2, h+2))

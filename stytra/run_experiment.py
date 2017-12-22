@@ -72,7 +72,8 @@ if __name__ == '__main__':
     #                                                             thresholds=(0.05, 0.05, 0.015))
 
     elif args.freely_swimming:
-         base = MovementRecordingExperiment
+        base = MovementRecordingExperiment
+
     #
     # if args.lightsheet:
     #     bases.append(LightsheetExperiment)
@@ -89,6 +90,5 @@ if __name__ == '__main__':
 
     exp = base(**class_kwargs)
     exp.make_window()
-    exp.initialize_metadata()
     exp.show_stimulus_screen(full_screen=args.full_screen)
     app.exec_()

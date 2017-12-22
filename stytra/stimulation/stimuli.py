@@ -7,10 +7,7 @@ from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
 from stytra.stimulation.backgrounds import existing_file_background
 
-try:
-    from stytra.hardware.serial import PyboardConnection
-except ImportError:
-    print('Serial pyboard connection not installed')
+
 
 from itertools import product
 
@@ -526,6 +523,11 @@ class ShockStimulus(Stimulus):
         :param pulse_dur_ms: pulses duration (ms)
         :param pyboard: PyboardConnection object
         """
+        try:
+            from stytra.hardware.serial import PyboardConnection
+        except ImportError:
+            print('Serial pyboard connection not installed')
+
         super().__init__(**kwargs)
         self.name = 'shock'
         # assert isinstance(pyboard, PyboardConnection)
