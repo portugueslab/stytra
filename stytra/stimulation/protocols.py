@@ -449,7 +449,8 @@ class VisualCodingProtocol(Protocol):
                                 'part_field_pause': 2.,
                                 'inter_segment_pause': 3.,
                                 'grating_move_duration': 2.,
-                                'grating_pause_duration': 2.}
+                                'grating_pause_duration': 2.,
+                                'flash_size': 0.5}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -458,14 +459,15 @@ class VisualCodingProtocol(Protocol):
         stimuli = []
 
         n_split = self.params['n_split']
-
+        fieldsize = self.params['flash_size']
+        start = (1-fieldsize/2)
         for (ix, iy) in product(range(n_split), repeat=2):
             stimuli.append(FullFieldPainterStimulus(
                 clip_rect=(
-                    ix / n_split,
-                    iy / n_split,
-                    1 / n_split,
-                    1 / n_split),
+                    start+ix*fieldsize / n_split,
+                    start+iy*fieldsize / n_split,
+                    fieldsize / n_split,
+                    fieldsize / n_split),
                 duration=self.params['part_field_duration']))
             stimuli.append(Pause(duration=self.params['part_field_pause']))
 
