@@ -345,14 +345,17 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
             if self.duration is None:
                 self.duration = self._video_seq.duration
 
-
     def update(self):
+        # if the video restarted, it means the last display time
+        # is incorrect, it has to be reset
+        if self._elapsed < self._last_frame_display_time:
+            self._last_frame_display_time = 0
         if self._elapsed >= self._last_frame_display_time+1/self.framerate:
+            self.i_frame = int(round(self._elapsed*self.framerate))
             next_frame = self._video_seq.get_frame(self.i_frame)
             if next_frame is not None:
                 self._current_frame = next_frame
                 self._last_frame_display_time = self._elapsed
-                self.i_frame += 1
 
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)
