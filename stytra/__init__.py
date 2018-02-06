@@ -169,6 +169,15 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
+        self.notifier.post_update("Experiment on setup " +
+                                  self.metadata.params['setup_name'] +
+                                  " started, it will finish in {}s, or at ".format(
+                                      self.protocol_runner.duration) +
+                                  (datetime.datetime.now() + datetime.timedelta(
+                                      seconds=self.protocol_runner.duration)).strftime(
+                                      "%H:%M:%S")
+                                  )
+
         if self.scope_triggered and self.window_main.chk_scope.isChecked():
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
@@ -178,11 +187,6 @@ class Experiment(QObject):
             # the scanning can stop
             self.zmq_socket.send_json(self.protocol_runner.duration)
 
-        self.notifier.post_update("Experiment on setup " +
-                                  self.metadata.params['setup_name'] +
-                                  " started, it will finish in {}s, or at ".format(self.protocol_runner.duration) +
-                                  (datetime.datetime.now()+datetime.timedelta(seconds=self.protocol_runner.duration)).strftime("%H:%M:%S")
-                                  )
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
