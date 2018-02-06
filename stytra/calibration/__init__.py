@@ -25,12 +25,16 @@ class Calibrator(HasPyQtGraphParams):
                                  {'name': 'length_px', 'value': None,  'visible': True}])
         self.length_to_measure = 'pixels'
 
+        self.params['length_mm'] = 1
+        self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
 
     def toggle(self):
         self.enabled = ~self.enabled
 
-    def set_physical_scale(self, measured_distance):
-        self.params['mm_px'] = measured_distance
+    def set_physical_scale(self):
+        """ Calculate mm/px from calibrator length
+        """
+        self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
 
     def make_calibration_pattern(self, p, h, w):
         pass
@@ -57,9 +61,6 @@ class CrossCalibrator(Calibrator):
                 self.length_is_fixed = True
 
 
-        self.params['length_mm'] = 1
-        self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
-
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -74,18 +75,16 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
-    def set_physical_scale(self):
-        """ Calculate mm/px from calibrator length
-        """
-        self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
 
 
 class CircleCalibrator(Calibrator):
     """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle
     """
     def __init__(self, *args, dh=80, r=3, **kwargs):
+        super().__init__(*args, **kwargs)
         self.dh = dh
         self.r = r
+        self.params['length_px'] = dh
         self.points = None
         self.points_cam = None
         self.proj_to_cam = None
@@ -109,9 +108,6 @@ class CircleCalibrator(Calibrator):
             p.setBrush(QBrush(QColor(255, 0, 0)))
             for centre in centres:
                 p.drawEllipse(QPoint(*centre), self.r, self.r)
-
-    def set_physical_scale(self, measured_distance):
-        self.params['mm_px'] = measured_distance/self.dh
 
     @staticmethod
     def _find_angles(kps):

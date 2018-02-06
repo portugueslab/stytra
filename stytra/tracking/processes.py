@@ -192,6 +192,8 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.output_queue = Queue()
         self.framestart_queue = Queue()
 
+        self.processing_parameters = MovementDetectionParameters().get_clean_values()
+
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
 
@@ -244,7 +246,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                         difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],
                                                           current_frame_thresh[image_crop, image_crop]))[0]
 
-                        if difsum > self.processing_parameters["motion_threshold"]:
+                        if difsum > self.processing_parameters["motion_threshold_n_pix"]:
                             n_crossed += 1
 
                     if n_crossed == n_previous_compare:
