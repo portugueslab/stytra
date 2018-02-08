@@ -10,5 +10,5 @@ setup(name='stytra',
       install_requires=['pyqtgraph>=0.10.0', 'numpy', 'numba',
                         'matplotlib', 'pandas', 'qdarkstyle', 'qimage2ndarray',
                         'deepdish', 'param', 'pims',
-                        'gitpython', 'pymongo', 'colorpacious'])
+                        'gitpython', 'pymongo', 'colorspacious'])
 
