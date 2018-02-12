@@ -58,21 +58,6 @@ class Stimulus:
         """
         self._experiment = experiment
 
-    def clip(self, p, w, h):
-        """ Clip image before painting
-        :param p: QPainter object used for painting
-        :param w: image width
-        :param h: image height
-        """
-        if self.clip_rect is not None:
-            if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
-                p.setClipRegion(QRegion(QPolygon(points)))
-            else:
-                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
-                              self.clip_rect[2] * w, self.clip_rect[3] * h)
-
-
 
 class DynamicStimulus(Stimulus):
     """ Stimuli where parameters change during stimulation, used
@@ -106,6 +91,20 @@ class PainterStimulus(Stimulus):
         :param h: height of the display window
         """
         pass
+
+    def clip(self, p, w, h):
+        """ Clip image before painting
+        :param p: QPainter object used for painting
+        :param w: image width
+        :param h: image height
+        """
+        if self.clip_rect is not None:
+            if isinstance(self.clip_rect[0], tuple):
+                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                p.setClipRegion(QRegion(QPolygon(points)))
+            else:
+                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
+                              self.clip_rect[2] * w, self.clip_rect[3] * h)
 
 
 class BackgroundStimulus(Stimulus):
