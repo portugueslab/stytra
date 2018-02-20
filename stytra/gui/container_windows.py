@@ -152,7 +152,9 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.experiment.window_display.widget_display.update()
 
     def calibrate(self):
-        pass
+        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        self.calibrator.find_transform_matrix(frame)
+        self.widget_proj_viewer.display_calibration_pattern(self.calibrator, frame.shape, frame)
 
 
 class TrackingSettingsGui(QWidget):

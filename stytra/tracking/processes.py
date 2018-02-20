@@ -206,7 +206,6 @@ class MovingFrameDispatcher(FrameDispatcher):
 
     def run(self):
         t, frame_0 = self.frame_queue.get(timeout=10)
-        print('got 0th frame')
         n_previous_compare = 3
 
         image_crop = slice(self.processing_parameters["frame_margin"],
