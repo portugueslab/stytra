@@ -255,14 +255,14 @@ class Experiment(QObject):
 
 
 class CameraExperiment(Experiment):
-    def __init__(self, *args, video_file=None, **kwargs):
+    def __init__(self, *args, video_file=None, camera_rotation=0, **kwargs):
         """
         :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
         if video_file is None:
-            self.camera = XimeaCamera()
+            self.camera = XimeaCamera(rotation=camera_rotation)
         else:
             self.camera = VideoFileSource(video_file)
 
@@ -283,7 +283,6 @@ class CameraExperiment(Experiment):
         self.gui_timer.start(1000 // 60)
         sys.excepthook = self.excepthook
         self.camera.start()
-
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
@@ -377,6 +376,7 @@ class TailTrackingExperiment(CameraExperiment):
     def make_window(self):
         self.window_main = TailTrackingExperimentWindow(experiment=self)
         self.window_main.show()
+        self.go_live()
 
     def start_protocol(self):
         super().start_protocol()

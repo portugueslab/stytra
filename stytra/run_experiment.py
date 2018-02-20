@@ -9,6 +9,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--freely-swimming',
                         action='store_true')
+    parser.add_argument('--camera-rotation',
+                        default=0,
+                        type=int,
+                        action='store')
     parser.add_argument('--tail-tracking',
                         action='store_true')
     parser.add_argument('--tail-tracking-method',
@@ -47,7 +51,6 @@ if __name__ == '__main__':
     except TypeError:
         rec_stim_every = None
 
-
     class_kwargs = dict(app=app,
                         directory=args.directory,
                         debug_mode=args.debug,
@@ -60,6 +63,9 @@ if __name__ == '__main__':
     if args.video_file:
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
+
+    if args.tail_tracking or args.freely_swimming:
+        class_kwargs['camera_rotation'] = int(args.camera_rotation)
 
     if args.tail_tracking:
         base = TailTrackingExperiment
@@ -90,5 +96,6 @@ if __name__ == '__main__':
 
     exp = base(**class_kwargs)
     exp.make_window()
+    exp.initialize_metadata()
     exp.show_stimulus_screen(full_screen=args.full_screen)
     app.exec_()

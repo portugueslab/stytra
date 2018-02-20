@@ -13,7 +13,7 @@ from stytra.hardware.video import FrameProcessor
 from stytra.tracking.tail import trace_tail_centroid,\
                                  trace_tail_angular_sweep
 from stytra.collectors import HasPyQtGraphParams
-
+import math
 
 class FrameProcessingMethod(HasPyQtGraphParams):
     """ The class for parametrisation of various tail and fish tracking methods
@@ -98,7 +98,6 @@ class FrameDispatcher(FrameProcessor):
         self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
                                             centroid=trace_tail_centroid)
 
-
     def process_internal(self, frame):
         """ Apply processing function to current frame with
         self.processing parameters as additional inputs.
@@ -117,7 +116,6 @@ class FrameDispatcher(FrameProcessor):
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get()
-
                 # acquire the processing parameters from a separate queue:
                 if self.processing_parameter_queue is not None:
                     try:
@@ -125,7 +123,7 @@ class FrameDispatcher(FrameProcessor):
                             self.processing_parameter_queue.get(timeout=0.0001)
                         self.processing_function = \
                             self.dict_tracking_functions[
-                                self.processing_parameters["pop"]('function')]
+                                self.processing_parameters.pop('function')]
 
                     except Empty:
                         pass
@@ -151,7 +149,6 @@ class FrameDispatcher(FrameProcessor):
             every_x = 1
         if self.i == 0:
             self.gui_queue.put((None, frame))
-            print('sent to GUI')
         self.i = (self.i + 1) % every_x
 
 
@@ -186,6 +183,16 @@ def update_bg(bg, current, alpha):
     return dif
 
 
+@jit(nopython=True)
+def _compare_to_previous(current, previous):
+    n_dif = np.zeros(previous.shape[0], dtype=np.uint32)
+    for k in range(previous.shape[0]):
+        for i in range(current.shape[0]):
+            for j in range(current.shape[1]):
+                n_dif[k] += np.bitwise_xor(current[i, j],  previous[k, i, j])//255
+    return n_dif
+
+
 class MovingFrameDispatcher(FrameDispatcher):
     def __init__(self, *args, signal_start_rec, **kwargs):
         super().__init__(*args, **kwargs)
@@ -201,7 +208,11 @@ class MovingFrameDispatcher(FrameDispatcher):
         t, frame_0 = self.frame_queue.get(timeout=10)
         print('got 0th frame')
         n_previous_compare = 3
-        previous_ims = np.zeros((n_previous_compare, ) + frame_0.shape,
+
+        image_crop = slice(self.processing_parameters["frame_margin"],
+                           -self.processing_parameters["frame_margin"])
+
+        previous_ims = np.zeros((n_previous_compare, ) + frame_0[image_crop].shape,
                                 dtype=np.uint8)
 
         image_buffer = deque()
@@ -212,14 +223,9 @@ class MovingFrameDispatcher(FrameDispatcher):
 
         i_recorded = 0
 
-        first=True
-
         while not self.finished_signal.is_set():
-
             try:
-                current_time, current_frame = self.frame_queue.get(
-                        timeout=0.001)
-                print('Got another frame')
+                current_time, current_frame = self.frame_queue.get()
                 if self.processing_parameter_queue is not None:
                     try:
                         self.processing_parameters = \
@@ -229,27 +235,18 @@ class MovingFrameDispatcher(FrameDispatcher):
                         continue
 
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
-                
                 _, current_frame_thresh =  \
-                    cv2.threshold(cv2.boxFilter(current_frame, -1, (3, 3)),
+                    cv2.threshold(cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
                                   self.processing_parameters["fish_threshold"],
                                   255, cv2.THRESH_BINARY)
 
                 # compare the thresholded frame to the previous ones, if there are enough differences
                 # because the fish moves, start recording to file
-                n_crossed = 0
-                image_crop = slice(self.processing_parameters["frame_margin"],
-                                   -self.processing_parameters["frame_margin"])
-                
                 if i_frame >= n_previous_compare:
-                    for j in range(n_previous_compare):
-                        difsum = cv2.sumElems(cv2.absdiff(previous_ims[j, image_crop, image_crop],
-                                                          current_frame_thresh[image_crop, image_crop]))[0]
-
-                        if difsum > self.processing_parameters["motion_threshold_n_pix"]:
-                            n_crossed += 1
-
-                    if n_crossed == n_previous_compare:
+                    n_crossed = 0
+                    difsum = _compare_to_previous(current_frame_thresh, previous_ims)
+                    difsum = np.zeros(3)
+                    if np.all(difsum > self.processing_parameters["motion_threshold_n_pix"]):
                         record_counter = self.processing_parameters["n_next_save"]
 
                     if record_counter > 0:
@@ -277,8 +274,9 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 # calculate the framerate
                 self.update_framerate()
+                print(self.current_framerate)
+
                 self.send_to_gui(current_frame)
 
-
             except Empty:
-                continue
+                break

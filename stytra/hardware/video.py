@@ -53,16 +53,16 @@ class FrameProcessor(Process):
 
 
 class VideoSource(FrameProcessor):
-    def __init__(self, max_frames_in_queue=500):
+    def __init__(self, rotation=0, max_frames_in_queue=500):
         super().__init__()
-        self.rotation = 0
+        self.rotation = rotation
         self.control_queue = Queue()
         self.frame_queue = Queue(maxsize=max_frames_in_queue)
         self.kill_signal = Event()
 
 
 class XimeaCamera(VideoSource):
-    def __init__(self, downsampling=4,
+    def __init__(self, downsampling=2,
                  **kwargs):
         """
         Class for controlling a XimeaCamera
@@ -85,11 +85,13 @@ class XimeaCamera(VideoSource):
         # for the camera on the lightsheet which supports hardware downsampling
         # MQ013MG-ON lightsheet
         # MQ003MG-CM behaviour
-
-        if str(self.cam.get_device_name()) == 'MQ013MG-ON':
-            self.cam.set_downsampling(self.downsampling)
+        print(str(self.cam.get_device_name()))
+        if self.cam.get_device_name() == b'MQ013MG-ON':
             self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
+            print("Python camera")
+            self.cam.set_downsampling_type("XI_SKIPPING")
+            self.cam.set_downsampling("XI_DWN_2x2")
 
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
@@ -118,6 +120,8 @@ class XimeaCamera(VideoSource):
                 # TODO check if it does anything to add np.array
                 arr = np.array(img.get_image_data_numpy())
                 try:
+                    if self.rotation != 0:
+                        arr = np.rot90(arr, self.rotation)
                     self.frame_queue.put((datetime.now(), arr))
                 except Full:
                     print('frame dropped')
