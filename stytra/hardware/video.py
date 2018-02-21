@@ -14,6 +14,7 @@ from stytra.collectors import HasPyQtGraphParams
 
 import cv2
 
+import av
 
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, check_mem=True, print_framerate=False):
@@ -163,33 +164,43 @@ class VideoFileSource(VideoSource):
 
 
 class VideoWriter(FrameProcessor):
-    def __init__(self, filename, input_queue, finished_signal):
+    def __init__(self, filename, input_queue, finished_signal, kbit_rate=2000):
         super().__init__()
         self.filename = filename
         self.input_queue = input_queue
         self.finished_signal = finished_signal
+        self.kbit_rate = kbit_rate
 
     def run(self):
-        fc = cv2.VideoWriter_fourcc(*'H264')
-        outfile = None
+        out_container = av.open(self.filename, mode='w')
+        out_stream = None
+        video_frame = None
         while True:
             try:
-                # process frames as they come, threshold them to roughly find
-                # the fish (e.g. eyes)
-                current_frame = self.input_queue.get(timeout=1)
-                if outfile is None:
+                if out_stream is None:
+                    current_frame = self.input_queue.get(timeout=1)
                     print("Writing to ", self.filename)
-                    outfile = cv2.VideoWriter(self.filename, fc, 25, current_frame.shape)
-                outfile.write(current_frame)
+                    out_stream = out_container.add_stream('mpeg4', rate=50)
+                    out_stream.width, out_stream.height = current_frame.shape
+                    out_stream.pix_fmt = 'yuv420p'
+                    out_stream.bit_rate = self.kbit_rate*1000
+                    video_frame = av.VideoFrame(current_frame.shape[1], current_frame.shape[0], "gray")
+                    video_frame.planes[0].update(current_frame)
+                else:
+                    video_frame.planes[0].update(self.input_queue.get(timeout=1))
 
+                video_frame = av.VideoFrame(current_frame.shape[1], current_frame.shape[0], "gray")
+
+                packet = out_stream.encode(video_frame)
+                out_container.mux(packet)
                 self.update_framerate()
-                print("Writing framerate ", self.current_framerate)
 
             except Empty:
                 if self.finished_signal.is_set():
                     print('Empty and finished')
                     break
-        outfile.release()
+
+        out_container.close()
 
 
 class CameraParams(HasPyQtGraphParams):
