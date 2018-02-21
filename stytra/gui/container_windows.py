@@ -63,7 +63,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                               display_size[1]-1), movable=False,
                                      pen=(80, 80, 80)))
 
-        self.calibration_points = pg.ScatterPlotItem()
+        self.calibration_points = pg.ScatterPlotItem(pen=None, brush=(255, 0, 0))
         self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10),
                                                   pen=(200, 10, 10),
                                                   fill_level=1)

@@ -133,6 +133,7 @@ class FrameDispatcher(FrameProcessor):
                     self.output_queue.put((datetime.now(),
                                            self.process_internal(frame)))
 
+
                 # calculate the frame rate:
                 self.update_framerate()
                 self.send_to_gui(frame)
@@ -160,7 +161,7 @@ class MovementDetectionParameters(HasPyQtGraphParams):
         for child in self.params.children():
             self.params.removeChild(child)
 
-        standard_params_dict = dict(fish_threshold=100,
+        standard_params_dict = dict(fish_threshold=50,
                                     motion_threshold_n_pix = 8,
                                     frame_margin = 10,
                                     n_previous_save = 400,
@@ -242,9 +243,8 @@ class MovingFrameDispatcher(FrameDispatcher):
                 # compare the thresholded frame to the previous ones, if there are enough differences
                 # because the fish moves, start recording to file
                 if i_frame >= n_previous_compare:
-                    n_crossed = 0
                     difsum = _compare_to_previous(current_frame_thresh, previous_ims)
-                    difsum = np.zeros(3)
+
                     if np.all(difsum > self.processing_parameters["motion_threshold_n_pix"]):
                         record_counter = self.processing_parameters["n_next_save"]
 
@@ -273,7 +273,6 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 # calculate the framerate
                 self.update_framerate()
-                print(self.current_framerate)
 
                 self.send_to_gui(current_frame)
 

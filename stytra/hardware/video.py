@@ -162,7 +162,7 @@ class VideoFileSource(VideoSource):
         return
 
 
-class VideoWriter(Process):
+class VideoWriter(FrameProcessor):
     def __init__(self, filename, input_queue, finished_signal):
         super().__init__()
         self.filename = filename
@@ -171,31 +171,24 @@ class VideoWriter(Process):
 
     def run(self):
         fc = cv2.VideoWriter_fourcc(*'H264')
-        outfile = cv2.VideoWriter(self.filename, -1, 25, (648, 488))
-        n_fps_frames = 10
-        i = 0
-        previous_time = datetime.now()
+        outfile = None
         while True:
             try:
                 # process frames as they come, threshold them to roughly find
                 # the fish (e.g. eyes)
                 current_frame = self.input_queue.get(timeout=1)
+                if outfile is None:
+                    print("Writing to ", self.filename)
+                    outfile = cv2.VideoWriter(self.filename, fc, 25, current_frame.shape)
                 outfile.write(current_frame)
 
-                if (i % n_fps_frames) == 0:
-                    current_time = datetime.now()
-                    current_framerate = n_fps_frames / (
-                        current_time - previous_time).total_seconds()
-
-                    print('Saving framerate: {:.2f} FPS'.format(current_framerate))
-                    previous_time = current_time
-                i += 1
+                self.update_framerate()
+                print("Writing framerate ", self.current_framerate)
 
             except Empty:
                 if self.finished_signal.is_set():
                     print('Empty and finished')
                     break
-        print('Finished saving, {} frames in total'.format(i))
         outfile.release()
 
 
@@ -231,7 +224,7 @@ class CameraControlParameters(HasPyQtGraphParams):
                                               'tip': 'Exposure (ms)'},
                                     framerate={'value': 150.,
                                                'type': 'float',
-                                               'limits': (10, 200),
+                                               'limits': (10, 700),
                                                'suffix': ' Hz',
                                                'tip': 'Framerate (Hz)'},
                                     gain={'value': 1.,

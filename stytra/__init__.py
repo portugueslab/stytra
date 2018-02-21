@@ -485,7 +485,7 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       finished_signal=self.camera.kill_signal,
                                                       signal_start_rec=self.signal_start_rec,
                                                       gui_framerate=30)
-
+        print(self.directory+'/out.mp4')
         self.frame_recorder = VideoWriter(self.directory+'/out.mp4',
                                           self.frame_dispatcher.output_queue,
                                           self.finished_signal) # TODO proper filename
@@ -499,3 +499,15 @@ class MovementRecordingExperiment(CameraExperiment):
         self.setCentralWidget(self.splitter)
         self.splitter.addWidget(self.camera_view)
         self.splitter.addWidget(self.widget_control)
+
+    def start_protocol(self):
+        self.signal_start_rec.set()
+        super().start_protocol()
+
+    def end_protocol(self, *args, **kwargs):
+        """ Save tail position and dynamic parameters and terminate.
+        """
+        self.finished_signal.set()
+        self.dc.add_data_source(self.calibrator.calib_dict(),
+                                name='camera_calibration')
+        super().end_protocol(*args, **kwargs)

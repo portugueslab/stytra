@@ -155,3 +155,7 @@ class CircleCalibrator(Calibrator):
 
         self.proj_to_cam = self.points_cam.T @ np.linalg.inv(x_proj)
         self.cam_to_proj = points_proj.T @ np.linalg.inv(x_cam)
+
+    def calib_dict(self):
+        return dict(cam_to_proj = [[j for j in row] for row in self.cam_to_proj],
+                    proj_to_cam=[[j for j in row] for row in self.proj_to_cam])
