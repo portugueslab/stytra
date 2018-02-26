@@ -245,8 +245,14 @@ class CameraExperimentWindow(SimpleExperimentWindow):
 
 
 class TailTrackingExperimentWindow(SimpleExperimentWindow):
-    def __init__(self,  *args, **kwargs):
-        self.camera_display = CameraTailSelection(kwargs['experiment'])
+    def __init__(self, tail_tracking=True, *args, **kwargs):
+
+        self.tail_tracking = tail_tracking
+
+        if tail_tracking:
+            self.camera_display = CameraTailSelection(kwargs['experiment'])
+        else:
+            self.camera_display = CameraViewWidget(kwargs['experiment'])
 
         self.camera_splitter = QSplitter(Qt.Horizontal)
         self.monitoring_widget = QWidget()
@@ -259,20 +265,25 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         self.monitoring_layout.addWidget(self.stream_plot)
 
         # Tracking params button:
-        self.button_tracking_params = QPushButton('Tracking params')
+        self.button_tracking_params = QPushButton('Tracking params'
+                                                  if tail_tracking else
+                                                  'Movement detection params')
         self.button_tracking_params.clicked.connect(
             self.open_tracking_params_tree)
         self.monitoring_layout.addWidget(self.button_tracking_params)
 
         self.track_params_wnd = None
-        # self.tracking_layout.addWidget(self.camera_display)
-        # self.tracking_layout.addWidget(self.button_tracking_params)
 
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
-        self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
-                                    ['tail_sum'])
+        if self.tail_tracking:
+            self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
+                                        ['tail_sum'])
+        else:
+            self.stream_plot.add_stream(self.experiment.motion_acc,
+                                        self.experiment.motion_acc.header_list[1:])
+
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)
@@ -284,9 +295,17 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def open_tracking_params_tree(self):
         self.track_params_wnd = ParameterTree()
-        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+        if self.tail_tracking:
+            self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
                                             showTop=False)
-        self.track_params_wnd.setWindowTitle('Tracking data')
+
+            self.track_params_wnd.setWindowTitle('Tracking data')
+        else:
+            self.track_params_wnd.setParameters(self.experiment.motion_detection_params.params,
+                                                showTop=False)
+
+            self.track_params_wnd.setWindowTitle('Tracking data')
+
         self.track_params_wnd.show()
 
 

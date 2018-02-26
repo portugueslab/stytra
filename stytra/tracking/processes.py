@@ -165,7 +165,8 @@ class MovementDetectionParameters(HasPyQtGraphParams):
                                     motion_threshold_n_pix = 8,
                                     frame_margin = 10,
                                     n_previous_save = 400,
-                                    n_next_save = 300)
+                                    n_next_save = 300,
+                                    show_thresholded = False)
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
@@ -199,6 +200,7 @@ class MovingFrameDispatcher(FrameDispatcher):
         super().__init__(*args, **kwargs)
         self.output_queue = Queue()
         self.framestart_queue = Queue()
+        self.diagnostic_queue = Queue()
 
         self.processing_parameters = MovementDetectionParameters().get_clean_values()
 
@@ -245,6 +247,8 @@ class MovingFrameDispatcher(FrameDispatcher):
                 if i_frame >= n_previous_compare:
                     difsum = _compare_to_previous(current_frame_thresh, previous_ims)
 
+                    # put the difference in the diagnostic queue so that the threshold can be set correctly
+
                     if np.all(difsum > self.processing_parameters["motion_threshold_n_pix"]):
                         record_counter = self.processing_parameters["n_next_save"]
 
@@ -267,14 +271,21 @@ class MovingFrameDispatcher(FrameDispatcher):
                         if len(image_buffer) > self.processing_parameters["n_previous_save"]:
                             image_buffer.popleft()
 
+                    self.diagnostic_queue.put((current_time, (
+                                               difsum[i_frame % n_previous_compare],
+                                               recording_state,
+                                               len(image_buffer))))
+
                 i_frame += 1
 
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
 
                 # calculate the framerate
                 self.update_framerate()
-
-                self.send_to_gui(current_frame)
+                if self.processing_parameters["show_thresholded"]:
+                    self.send_to_gui(current_frame_thresh)
+                else:
+                    self.send_to_gui(current_frame)
 
             except Empty:
                 break

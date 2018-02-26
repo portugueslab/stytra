@@ -50,7 +50,6 @@ class QueueDataAccumulator(QObject, Accumulator):
                 break
 
 
-
 class FishTrackingProcess(Process):
     def __init__(self, image_queue, fish_queue, stop_event,
                  processing_parameters, diagnostic_queue=None):

@@ -30,7 +30,7 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator, \
 from stytra.stimulation.protocols import Protocol
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
-    MovingFrameDispatcher
+    MovingFrameDispatcher, MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 import deepdish as dd
@@ -316,7 +316,6 @@ class TailTrackingExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
 
         self.tracking_method = CentroidTrackingMethod()
-        print(self.tracking_method.params.getValues())
 
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
@@ -362,12 +361,6 @@ class TailTrackingExperiment(CameraExperiment):
         new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
                             self.tracking_method.params['n_segments'])]
         self.data_acc_tailpoints.reset(header_list=new_header)
-
-        # self.gui_timer.timeout.connect(
-        #     self.data_acc_tailpoints.update_list)
-        #
-        # self.window_main.stream_plot.add_stream(
-        #     self.data_acc_tailpoints, ['tail_sum'])
 
     def send_new_parameters(self):
         self.processing_params_queue.put(
@@ -417,7 +410,6 @@ class TailTrackingExperiment(CameraExperiment):
 
     def start_frame_dispatcher(self):
         self.frame_dispatcher.start()
-
 
 
 class VRExperiment(TailTrackingExperiment):
@@ -481,24 +473,39 @@ class MovementRecordingExperiment(CameraExperiment):
         self.processing_params_queue = Queue()
         self.signal_start_rec = Event()
         self.finished_signal = Event()
+
         self.frame_dispatcher = MovingFrameDispatcher(self.camera.frame_queue,
                                                       finished_signal=self.camera.kill_signal,
                                                       signal_start_rec=self.signal_start_rec,
+                                                      processing_parameter_queue=self.processing_params_queue,
                                                       gui_framerate=30)
         print(self.directory+'/out.mp4')
         self.frame_recorder = VideoWriter(self.directory+'/out.mp4',
                                           self.frame_dispatcher.output_queue,
-                                          self.finished_signal) # TODO proper filename
+                                          self.finished_signal)  # TODO proper filename
+
+        self.motion_acc = QueueDataAccumulator(self.frame_dispatcher.diagnostic_queue,
+                                               header_list=["n_pixels_difference",
+                                                            "recording_state",
+                                                            "n_images_in_buffer"])
+
+        self.motion_detection_params = MovementDetectionParameters()
+        self.gui_timer.timeout.connect(self.send_params)
+        self.gui_timer.timeout.connect(
+            self.motion_acc.update_list)
+
+    def make_window(self):
+        self.window_main = TailTrackingExperimentWindow(experiment=self, tail_tracking=False)
+        self.window_main.show()
+        self.go_live()
 
     def go_live(self):
         super().go_live()
         self.frame_dispatcher.start()
         self.frame_recorder.start()
 
-    def init_ui(self):
-        self.setCentralWidget(self.splitter)
-        self.splitter.addWidget(self.camera_view)
-        self.splitter.addWidget(self.widget_control)
+    def send_params(self):
+        self.processing_params_queue.put(self.motion_detection_params.get_clean_values())
 
     def start_protocol(self):
         self.signal_start_rec.set()

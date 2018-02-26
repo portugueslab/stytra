@@ -200,7 +200,8 @@ class VideoWriter(FrameProcessor):
                     print('Empty and finished')
                     break
 
-        out_container.close()
+        if out_stream is not None:
+            out_container.close()
 
 
 class CameraParams(HasPyQtGraphParams):
