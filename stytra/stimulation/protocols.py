@@ -768,7 +768,8 @@ class GratingsWindmillsProtocol(Protocol):
         super().__init__()
 
         standard_params_dict = {'period_sec': 14.,
-                                'flash_duration': 7.}
+                                'flash_duration': 7.,
+                                'shuffled_reps': 8}
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -776,12 +777,12 @@ class GratingsWindmillsProtocol(Protocol):
     def get_stim_sequence(self):
         temp_stimuli = []
         N_DIRECTIONS = 8
-        PAUSE_DUR = 1
-        STIM_DUR = 2
+        PAUSE_DUR = 5
+        STIM_DUR = 10
         GRATINGS_VEL = 10
         GRATINGS_PERIOD = 10
         OKR_VEL = (1/9)*(1/2)  # periods/sec
-        N_REPS = 5
+        N_REPS = self.params['shuffled_reps']
         # Gratings
         # Eight possible direction, constant vel of 10 mm/s
         # p = self.params['inter_stim_pause']
@@ -861,43 +862,4 @@ def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,
                                     ))
 
     return stimuli
-
-
-        # t = [0]
-        # x = [0]
-        # theta = [0]
-        # for dt, vel, th in dt_vel_tuple:
-        #     t.append(t[-1] + dt)
-        #     x.append(x[-1] + dt * vel)
-        #     theta.append(th)
-        #
-        # # Define individual stimuli intervals as
-        # # (duration, end luminance, "starts with step"*) *(1=yes, 0=no)
-        # double_step = [(p, l0, 1), (p, l1, 1), (p, l2, 1), (p, l1, 1)]
-        # full_step = [(p, l0, 1), (p, l2, 1)]
-        # long_step = [(p, l0, 1), (p*3, l2, 1)]
-        # ramp_step = [(p, l0, 1), (p*2, l2, 0), (p, l2, 0), (p*2, l0, 0)]
-        #
-        # stim = [double_step, full_step, long_step, ramp_step]
-        #
-
-        #
-        # time = [0, ]
-        # lum = [l0, ]
-        #
-        # # Convert list of luminance steps and ramps into the DataFrame for the
-        # # stimulus class
-        # for stimulus in stim_full:
-        #     for param in stimulus:
-        #         if param[2] == 0:  # non-step
-        #             time.append(time[-1] + param[0])
-        #             lum.append(param[1])
-        #
-        #         else:  # step
-        #             time.append(time[-1])
-        #             time.append(time[-1] + param[0])
-        #             lum.extend([param[1], param[1]])
-        #
-        # lum_df = pd.DataFrame(dict(t=np.asarray(time),
-        #                            lum=np.asarray(lum)))
 
