@@ -846,8 +846,8 @@ class LuminanceRamp(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-        l0 = 80  # luminance level 0
-        l1 = 206  # luminance level 1
+        l0 = 0  # luminance level 0
+        l1 = 125  # luminance level 1
         l2 = 255  # luminance level 2
         p = 7  # period (fir both luminance length and pause length)
         n_reps = self.params['shuffled_reps']  # number of repetitions
