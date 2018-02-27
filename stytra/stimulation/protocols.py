@@ -1,6 +1,7 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus
+    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
+    DynamicFullFieldStimulus
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
@@ -767,9 +768,7 @@ class GratingsWindmillsProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        standard_params_dict = {'period_sec': 14.,
-                                'flash_duration': 7.,
-                                'shuffled_reps': 8}
+        standard_params_dict = {'shuffled_reps': 8}
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -830,6 +829,72 @@ class GratingsWindmillsProtocol(Protocol):
                 stimuli.append(sublist)
 
         return stimuli
+
+
+class LuminanceRamp(Protocol):
+
+    name = 'luminance ramps/steps'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'shuffled_reps': 8}
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        l0 = 80  # luminance level 0
+        l1 = 206  # luminance level 1
+        l2 = 255  # luminance level 2
+        p = 7  # period (fir both luminance length and pause length)
+        n_reps = self.params['shuffled_reps']  # number of repetitions
+        shuffle = True
+
+        # Define individual stimuli intervals as
+        # (duration, end luminance, "starts with step"*) *(1=yes, 0=no)
+        double_step = [(p, l0, 1), (p, l1, 1), (p, l2, 1), (p, l1, 1)]
+        full_step = [(p, l0, 1), (p, l2, 1)]
+        long_step = [(p, l0, 1), (p*3, l2, 1)]
+        ramp_step = [(p, l0, 1), (p*2, l2, 0), (p, l2, 0), (p*2, l0, 0)]
+
+        stim = [double_step, full_step, long_step, ramp_step]
+
+        stim_full = []
+        for n in range(n_reps):
+            if shuffle:
+                stim_full += sample(stim, 4)
+            else:
+                stim_full += stim
+
+        time = [0, ]
+        lum = [l0, ]
+
+        # Convert list of luminance steps and ramps into the DataFrame for the
+        # stimulus class
+        for stimulus in stim_full:
+            for param in stimulus:
+                if param[2] == 0:  # non-step
+                    time.append(time[-1] + param[0])
+                    lum.append(param[1])
+
+                else:  # step
+                    time.append(time[-1])
+                    time.append(time[-1] + param[0])
+                    lum.extend([param[1], param[1]])
+
+        lum_df = pd.DataFrame(dict(t=np.asarray(time),
+                                   lum=np.asarray(lum)))
+
+        stimuli.append(DynamicFullFieldStimulus(lum_df=lum_df,
+                                                color_0=(l0, )*3))
+        stimuli.append(FullFieldPainterStimulus(duration=1,
+                                                color=(l0, )*3))
+
+        return stimuli
+
 
 
 def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,

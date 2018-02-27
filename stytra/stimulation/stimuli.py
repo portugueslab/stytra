@@ -156,6 +156,21 @@ class FullFieldPainterStimulus(PainterStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
+class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
+    def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
+        super().__init__(*args, dynamic_parameters=['lum', ],
+                         **kwargs)
+        self.color = color_0
+        self.lum_df = lum_df
+        self.name = 'moving seamless'
+        self.duration = float(lum_df.t.iat[-1])
+
+    def update(self):
+        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
+        print(lum)
+        setattr(self, 'color', (lum, )*3)
+
+
 class Pause(FullFieldPainterStimulus):
     """ Class for painting full field black stimuli
     """
