@@ -16,6 +16,7 @@ import cv2
 
 import av
 
+
 class FrameProcessor(Process):
     def __init__(self, n_fps_frames=10, check_mem=True, print_framerate=False):
         """ A basic class for a process that deals with frames, provides
@@ -190,8 +191,6 @@ class VideoWriter(FrameProcessor):
                     video_frame.planes[0].update(current_frame)
                 else:
                     video_frame.planes[0].update(self.input_queue.get(timeout=1))
-
-                video_frame = av.VideoFrame(current_frame.shape[1], current_frame.shape[0], "gray")
 
                 packet = out_stream.encode(video_frame)
                 out_container.mux(packet)

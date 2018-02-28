@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
     QPushButton, QComboBox
 
 
-from stytra.calibration import CircleCalibrator
+from stytra.calibration import CircleCalibrator, CalibrationException
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib, CameraViewWidget
@@ -93,7 +93,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                             mode='constant', constant_values=1)
         points_calib = np.pad(calibrator.points, ((0, 0), (0, 1)),
                               mode='constant', constant_values=1)
-        points_proj = (points_cam @ calibrator.cam_to_proj.T)
+        points_proj = (points_cam @ np.array(calibrator.params["cam_to_proj"]).T)
         x0, y0 = self.roi_box.pos()
         self.calibration_frame.setData(x=points_proj[:, 0]+x0,
                                        y=points_proj[:, 1]+y0)
@@ -153,8 +153,12 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def calibrate(self):
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        self.calibrator.find_transform_matrix(frame)
-        self.widget_proj_viewer.display_calibration_pattern(self.calibrator, frame.shape, frame)
+        try:
+            self.calibrator.find_transform_matrix(frame)
+            self.widget_proj_viewer.display_calibration_pattern(self.calibrator, frame.shape, frame)
+
+        except CalibrationException:
+            pass
 
 
 class TrackingSettingsGui(QWidget):

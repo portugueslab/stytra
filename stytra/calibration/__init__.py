@@ -22,7 +22,9 @@ class Calibrator(HasPyQtGraphParams):
                                  {'name': 'length_mm', 'value': None, 'type': 'float',
                                   'suffix': 'mm', 'siPrefix': True, 'limits': (1, 200),
                                   'visible': True},
-                                 {'name': 'length_px', 'value': None,  'visible': True}])
+                                 {'name': 'length_px', 'value': None,  'visible': True},
+                                 {'name': 'cam_to_proj', 'value': None, 'visible': False},
+                                 {'name': 'proj_to_cam', 'value': None, 'visible': False}])
         self.length_to_measure = 'pixels'
 
         self.params['length_mm'] = 1
@@ -60,7 +62,6 @@ class CrossCalibrator(Calibrator):
                 self.params['length_px'] = fixed_length
                 self.length_is_fixed = True
 
-
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -74,7 +75,6 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w//2-l2, h // 2, w//2 + l2, h // 2)
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
-
 
 
 class CircleCalibrator(Calibrator):
@@ -146,6 +146,10 @@ class CircleCalibrator(Calibrator):
 
         return kps[np.argsort(CircleCalibrator._find_angles(kps)), :]
 
+    @staticmethod
+    def arr_to_tuple(arr):
+        return tuple(tuple(r for r in row) for row in arr)
+
     def find_transform_matrix(self, image):
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
@@ -153,9 +157,5 @@ class CircleCalibrator(Calibrator):
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
 
-        self.proj_to_cam = self.points_cam.T @ np.linalg.inv(x_proj)
-        self.cam_to_proj = points_proj.T @ np.linalg.inv(x_cam)
-
-    def calib_dict(self):
-        return dict(cam_to_proj = [[j for j in row] for row in self.cam_to_proj],
-                    proj_to_cam=[[j for j in row] for row in self.proj_to_cam])
+        self.params["proj_to_cam"] = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
+        self.params["cam_to_proj"] = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))

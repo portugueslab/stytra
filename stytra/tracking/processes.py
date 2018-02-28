@@ -232,16 +232,14 @@ class MovingFrameDispatcher(FrameDispatcher):
                     try:
                         self.processing_parameters = \
                             self.processing_parameter_queue.get(timeout=0.0001)
-
                     except Empty:
-                        continue
+                        pass
 
                 # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
                 _, current_frame_thresh =  \
                     cv2.threshold(cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
                                   self.processing_parameters["fish_threshold"],
                                   255, cv2.THRESH_BINARY)
-
                 # compare the thresholded frame to the previous ones, if there are enough differences
                 # because the fish moves, start recording to file
                 if i_frame >= n_previous_compare:
@@ -282,6 +280,7 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 # calculate the framerate
                 self.update_framerate()
+
                 if self.processing_parameters["show_thresholded"]:
                     self.send_to_gui(current_frame_thresh)
                 else:

@@ -188,7 +188,7 @@ class Experiment(QObject):
         self.notifier.post_update("Experiment on setup " +
                                   self.metadata.params['setup_name'] +
                                   " started, it will finish in {}s, or at ".format(self.protocol_runner.duration) +
-                                  (datetime.datetime.now()+datetime.timedelta(seconds=self.protocol_runner.duration)).strftime("%H:%M:%S")
+                                  (datetime.datetime.now()+datetime.timedelta(seconds=float(self.protocol_runner.duration))).strftime("%H:%M:%S")
                                   )
         self.protocol_runner.start()
 
@@ -511,10 +511,12 @@ class MovementRecordingExperiment(CameraExperiment):
         self.signal_start_rec.set()
         super().start_protocol()
 
+    def wrap_up(self, *args, **kwargs):
+        super().wrap_up(*args, **kwargs)
+        self.frame_recorder.terminate()
+
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
         """
         self.finished_signal.set()
-        self.dc.add_data_source(self.calibrator.calib_dict(),
-                                name='camera_calibration')
         super().end_protocol(*args, **kwargs)
