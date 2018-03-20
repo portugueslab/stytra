@@ -55,21 +55,6 @@ class Stimulus:
         """
         self._experiment = experiment
 
-    def clip(self, p, w, h):
-        """ Clip image before painting
-        :param p: QPainter object used for painting
-        :param w: image width
-        :param h: image height
-        """
-        if self.clip_rect is not None:
-            if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
-                p.setClipRegion(QRegion(QPolygon(points)))
-            else:
-                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
-                              self.clip_rect[2] * w, self.clip_rect[3] * h)
-
-
 
 class DynamicStimulus(Stimulus):
     """ Stimuli where parameters change during stimulation, used
@@ -103,6 +88,20 @@ class PainterStimulus(Stimulus):
         :param h: height of the display window
         """
         pass
+
+    def clip(self, p, w, h):
+        """ Clip image before painting
+        :param p: QPainter object used for painting
+        :param w: image width
+        :param h: image height
+        """
+        if self.clip_rect is not None:
+            if isinstance(self.clip_rect[0], tuple):
+                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                p.setClipRegion(QRegion(QPolygon(points)))
+            else:
+                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
+                              self.clip_rect[2] * w, self.clip_rect[3] * h)
 
 
 class BackgroundStimulus(Stimulus):
@@ -364,14 +363,17 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
             if self.duration is None:
                 self.duration = self._video_seq.duration
 
-
     def update(self):
+        # if the video restarted, it means the last display time
+        # is incorrect, it has to be reset
+        if self._elapsed < self._last_frame_display_time:
+            self._last_frame_display_time = 0
         if self._elapsed >= self._last_frame_display_time+1/self.framerate:
+            self.i_frame = int(round(self._elapsed*self.framerate))
             next_frame = self._video_seq.get_frame(self.i_frame)
             if next_frame is not None:
                 self._current_frame = next_frame
                 self._last_frame_display_time = self._elapsed
-                self.i_frame += 1
 
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)

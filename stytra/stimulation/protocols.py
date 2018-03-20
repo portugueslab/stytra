@@ -7,7 +7,7 @@ from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
 from stytra.collectors import Accumulator, HasPyQtGraphParams
-
+from random import shuffle, sample
 from stytra.stimulation.backgrounds import gratings
 import math
 from itertools import product
@@ -234,6 +234,78 @@ class Exp022ImagingProtocol(Protocol):
         return stimuli
 
 
+class Exp014Protocol(Protocol):
+    name = "exp014 protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'inter_stim_pause': 5.,
+                                'grating_period': 10,
+                                'grating_vel': 10,
+                                'grating_duration': 10.,
+                                'flash_duration': 1.}
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = list()
+
+        # dark field
+
+        stimuli.append(Pause(duration=self.params['inter_stim_pause']))
+        stim_color = (255, 0, 0)
+
+        # ---------------
+
+        # ---------------
+        # Gratings with three different velocities
+
+        p = self.params['inter_stim_pause']
+        s = self.params['grating_duration']
+        v = self.params['grating_vel']
+        theta = np.pi/2
+
+        dt_vel_tuple = [(0, 0, theta),  # set grid orientation to horizontal
+                        (p, 0, theta),
+                        (s, -0.3 * v, theta),  # slow
+                        (p, 0, theta),
+                        (s, -v, theta),  # middle
+                        (p, 0, theta),
+                        (s, -3 * v, theta),  # fast
+                        (p, 0, theta)]
+
+        x = [0]
+        t = [0]
+        theta = [0]
+
+
+        for dt, vel, th in dt_vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=theta)),
+                                               grating_period=self.params[
+                                                   'grating_period'],
+                                               color=stim_color))
+
+        # ---------------
+        # Final flashes:
+        for i in range(4):
+            stimuli.append(
+                FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                         color=(255, 0, 0)))  # flash duration
+            stimuli.append(
+                Pause(duration=self.params['flash_duration']))  # flash duration
+
+        stimuli.append(Pause(duration=p - self.params['flash_duration']))
+        return stimuli
+
+
+
 class Exp022Protocol(Protocol):
     name = "exp022 protocol"
 
@@ -379,7 +451,8 @@ class VisualCodingProtocol(Protocol):
                                 'part_field_pause': 2.,
                                 'inter_segment_pause': 3.,
                                 'grating_move_duration': 2.,
-                                'grating_pause_duration': 2.}
+                                'grating_pause_duration': 2.,
+                                'flash_size': 0.33}
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -388,14 +461,15 @@ class VisualCodingProtocol(Protocol):
         stimuli = []
 
         n_split = self.params['n_split']
-
+        fieldsize = self.params['flash_size']
+        start = (1-fieldsize)/2
         for (ix, iy) in product(range(n_split), repeat=2):
             stimuli.append(FullFieldPainterStimulus(
                 clip_rect=(
-                    ix / n_split,
-                    iy / n_split,
-                    1 / n_split,
-                    1 / n_split),
+                    start+ix*fieldsize / n_split,
+                    start+iy*fieldsize / n_split,
+                    fieldsize / n_split,
+                    fieldsize / n_split),
                 duration=self.params['part_field_duration']))
             stimuli.append(Pause(duration=self.params['part_field_pause']))
 
@@ -693,4 +767,147 @@ class MovingBackgroundProtocol(Protocol):
 #
 #         super().__init__(*args, stimuli=stimuli, **kwargs)
 
+
+
+
+class GratingsWindmillsProtocol(Protocol):
+
+    name = 'Gratings windmills protocol'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'period_sec': 14.,
+                                'flash_duration': 7.}
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+    def get_stim_sequence(self):
+        temp_stimuli = []
+        N_DIRECTIONS = 8
+        PAUSE_DUR = 1
+        STIM_DUR = 2
+        GRATINGS_VEL = 10
+        GRATINGS_PERIOD = 10
+        OKR_VEL = (1/9)*(1/2)  # periods/sec
+        N_REPS = 5
+        # Gratings
+        # Eight possible direction, constant vel of 10 mm/s
+        # p = self.params['inter_stim_pause']
+        # s = self.params['grating_duration']
+        # v = self.params['grating_vel']
+        # Grating tuple: t, x, theta
+
+        temp_stimuli = many_directions_gratings(N_DIRECTIONS, PAUSE_DUR,
+                                                STIM_DUR, GRATINGS_VEL,
+                                                GRATINGS_PERIOD)
+
+        # OKR base (numpy array to take negative later)
+        final_pos = (OKR_VEL*STIM_DUR)*2*np.pi
+        t = np.array([0, PAUSE_DUR, PAUSE_DUR+STIM_DUR, PAUSE_DUR*2+STIM_DUR])
+        theta = np.array([0,  0, final_pos,  final_pos])
+
+        # CW and CCW OKRs:
+        temp_stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                              theta=theta)),
+                                                     n_arms=9, color=[255, 0, 0]))
+        temp_stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                              theta=-theta)),
+                                                     n_arms=9, color=[255, 0, 0]))
+
+        # Flash:
+        flash = []
+        flash.append(Pause(duration=PAUSE_DUR))
+        flash.append(FullFieldPainterStimulus(duration=STIM_DUR,
+                                     color=(255, 0, 0)))  # flash duration
+        flash.append(Pause(duration=PAUSE_DUR))
+
+        temp_stimuli.append(flash)
+
+        # cumbersome but necessary for randomization preserving flash integrity:
+        stim_full = []
+        for n in range(N_REPS):
+            stim_full += sample(temp_stimuli, len(temp_stimuli))
+
+        stimuli = []
+        for sublist in stim_full:
+            try:
+                for item in sublist:
+                    stimuli.append(item)
+            except TypeError:
+                stimuli.append(sublist)
+
+        return stimuli
+
+
+def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,
+                             grating_period):
+    """ Function that create stimuli list of gratings moving in different
+    directions.
+    :param n_dirs:
+    :param pause_len:
+    :param gratings_len:
+    :param gratings_vel:
+    :return:
+    """
+
+    grat_mot = pd.DataFrame(dict(t=[0, pause_len,
+                                    pause_len + gratings_len,
+                                    pause_len * 2 + gratings_len],
+                                 x=[0, 0,
+                                    gratings_len * gratings_vel,
+                                    gratings_len * gratings_vel]))
+
+    delta_theta = np.pi * 2 / n_dirs
+
+    stimuli = []
+    for i_dir in range(n_dirs):
+        stimuli.append(
+            SeamlessGratingStimulus(duration=float(grat_mot.t.iat[-1]),
+                                    motion=grat_mot,
+                                    grating_period=grating_period,
+                                    grating_angle=i_dir * delta_theta
+                                    ))
+
+    return stimuli
+
+
+        # t = [0]
+        # x = [0]
+        # theta = [0]
+        # for dt, vel, th in dt_vel_tuple:
+        #     t.append(t[-1] + dt)
+        #     x.append(x[-1] + dt * vel)
+        #     theta.append(th)
+        #
+        # # Define individual stimuli intervals as
+        # # (duration, end luminance, "starts with step"*) *(1=yes, 0=no)
+        # double_step = [(p, l0, 1), (p, l1, 1), (p, l2, 1), (p, l1, 1)]
+        # full_step = [(p, l0, 1), (p, l2, 1)]
+        # long_step = [(p, l0, 1), (p*3, l2, 1)]
+        # ramp_step = [(p, l0, 1), (p*2, l2, 0), (p, l2, 0), (p*2, l0, 0)]
+        #
+        # stim = [double_step, full_step, long_step, ramp_step]
+        #
+
+        #
+        # time = [0, ]
+        # lum = [l0, ]
+        #
+        # # Convert list of luminance steps and ramps into the DataFrame for the
+        # # stimulus class
+        # for stimulus in stim_full:
+        #     for param in stimulus:
+        #         if param[2] == 0:  # non-step
+        #             time.append(time[-1] + param[0])
+        #             lum.append(param[1])
+        #
+        #         else:  # step
+        #             time.append(time[-1])
+        #             time.append(time[-1] + param[0])
+        #             lum.extend([param[1], param[1]])
+        #
+        # lum_df = pd.DataFrame(dict(t=np.asarray(time),
+        #                            lum=np.asarray(lum)))
 
