@@ -31,6 +31,7 @@ from stytra.stimulation.protocols import Protocol
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
     MovingFrameDispatcher, MovementDetectionParameters
+from stytra.tracking.shared_arrays import ArrayQueue
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 import deepdish as dd

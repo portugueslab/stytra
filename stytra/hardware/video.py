@@ -12,6 +12,8 @@ from datetime import datetime
 
 from stytra.collectors import HasPyQtGraphParams
 
+from stytra.tracking.shared_arrays import ArrayQueue
+
 import cv2
 
 import av
@@ -55,11 +57,11 @@ class FrameProcessor(Process):
 
 
 class VideoSource(FrameProcessor):
-    def __init__(self, rotation=0, max_frames_in_queue=500):
+    def __init__(self, rotation=0, max_frames_in_queue=100):
         super().__init__()
         self.rotation = rotation
         self.control_queue = Queue()
-        self.frame_queue = Queue(maxsize=max_frames_in_queue)
+        self.frame_queue = ArrayQueue(maxsize=max_frames_in_queue)
         self.kill_signal = Event()
 
 

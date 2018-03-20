@@ -12,6 +12,7 @@ from numba import jit
 from stytra.hardware.video import FrameProcessor
 from stytra.tracking.tail import trace_tail_centroid,\
                                  trace_tail_angular_sweep
+from stytra.tracking.shared_arrays import ArrayQueue
 from stytra.collectors import HasPyQtGraphParams
 import math
 
@@ -86,8 +87,8 @@ class FrameDispatcher(FrameProcessor):
         super().__init__(**kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = Queue()  # GUI queue for displaying the image
-        self.output_queue = Queue()  # queue for processing output (e.g., pos)
+        self.gui_queue = ArrayQueue()  # GUI queue for displaying the image
+        self.output_queue = ArrayQueue()  # queue for processing output (e.g., pos)
         self.processing_parameters = None
 
         self.finished_signal = finished_signal
@@ -199,7 +200,7 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     def __init__(self, *args, signal_start_rec, **kwargs):
         super().__init__(*args, **kwargs)
-        self.output_queue = Queue()
+        self.output_queue = ArrayQueue()
         self.framestart_queue = Queue()
         self.diagnostic_queue = Queue()
 
