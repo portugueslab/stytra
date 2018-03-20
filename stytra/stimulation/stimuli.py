@@ -129,10 +129,53 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
 
     def update(self):
         for attr in ['x', 'y', 'theta']:
+            print(attr, getattr(self, attr))
             try:
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
+
             except (AttributeError, KeyError):
                 pass
+
+
+class MovingConstantVel(MovingStimulus):
+    def __init__(self, *args, x_vel=0, y_vel=0, **kwargs):
+        """
+        :param x_vel: x drift velocity (mm/s)
+        :param y_vel: x drift velocity (mm/s)
+        :param mm_px: mm per pixel
+        :param monitor_rate: monitor rate (in Hz)
+        """
+        super().__init__(*args, **kwargs)
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+        self._past_t = 0
+
+    def update(self):
+        dt = (self._elapsed - self._past_t)
+        self.x += self.x_vel*dt
+        self.y += self.y_vel*dt
+        self._past_t = self._elapsed
+
+
+class MovingDynamicVel(MovingStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._past_t = 0
+
+    def update(self):
+        dt = self._elapsed - self._past_t
+
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, attr,
+                        getattr(self, attr) +
+                        dt*np.interp(self._elapsed, self.motion.t, self.motion['vel_'+attr]))
+
+            except (AttributeError, KeyError):
+                pass
+
+        self._past_t = self._elapsed
+
 
 
 class FullFieldPainterStimulus(PainterStimulus):
@@ -163,8 +206,8 @@ class Pause(FullFieldPainterStimulus):
 
 
 class MovingSeamlessStimulus(PainterStimulus,
-                            DynamicStimulus,
-                            BackgroundStimulus):
+                             DynamicStimulus,
+                             BackgroundStimulus):
     """ Class for moving a stimulus image or pattern, thought for a VR setup.
     """
     def get_unit_dims(self, w, h):
@@ -223,11 +266,10 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        print(self._experiment.asset_dir)
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_folder + '/' + self.background))
+            existing_file_background(self._experiment.asset_dir + '/' + self.background))
 
     def get_unit_dims(self, w, h):
         """ Update dimensions of the current background image.
@@ -282,26 +324,6 @@ class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
 
     def paint(self, p, w, h):
         pass
-
-
-class MovingConstantVel(MovingStimulus):
-    def __init__(self, *args, x_vel=0, y_vel=0, **kwargs):
-        """
-        :param x_vel: x drift velocity (mm/s)
-        :param y_vel: x drift velocity (mm/s)
-        :param mm_px: mm per pixel
-        :param monitor_rate: monitor rate (in Hz)
-        """
-        super().__init__(*args, **kwargs)
-        self.x_vel = x_vel
-        self.y_vel = y_vel
-        self._past_t = 0
-
-    def update(self):
-        dt = (self._elapsed - self._past_t)
-        self.x += self.x_vel*dt
-        self.y += self.y_vel*dt
-        self._past_t = self._elapsed
 
 
 class VideoStimulus(PainterStimulus, DynamicStimulus):
@@ -481,23 +503,6 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = self._elapsed
 
 
-# class ClosedLoop1D_variable_motion(ClosedLoop1D, SeamlessGratingStimulus):
-#     def __init__(self, *args, motion, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.motion = motion
-#         self.duration = motion.t.iloc[-1]
-#
-#     def update(self):
-#         for attr in ['base_vel', 'gain', 'lag']:
-#             try:
-#                 setattr(self, attr, np.interp(self._elapsed,
-#                                               self.motion.t,
-#                                               self.motion[attr]))
-#             except (AttributeError, KeyError):
-#                 pass
-#         super().update()
-
-
 class RandomDotKinematogram(PainterStimulus):
     def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
         super().__init__(*args, **kwargs)
@@ -548,24 +553,4 @@ class ShockStimulus(Stimulus):
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
             print(self.mex)
-
         self.elapsed = 1
-
-
-if __name__ == '__main__':
-    # pyb = PyboardConnection(com_port='COM3')
-    # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-    #                      pulse_n=1, pulse_dur_ms=5)
-    # stim.start()
-    # del pyb
-    #
-    from PyQt5.QtGui import QPolygon, QRegion
-    p = QPainter()
-    clip_rect = [(0, 0), (1, 0), (0.5, 0.5), (1, 1), (0, 1)]
-    w = 100
-    h = 200
-    points = [QPoint(int(w * x), int(h * y)) for (x, y) in clip_rect]
-    print(points)
-    pol = QPolygon(points)
-    p.setClipping(True)
-    p.setClipRegion(QRegion(pol))

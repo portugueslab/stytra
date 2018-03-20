@@ -1,6 +1,7 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus
+    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
+    SeamlessImageStimulus, MovingDynamicVel
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
@@ -232,6 +233,7 @@ class Exp022ImagingProtocol(Protocol):
         stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
 
+
 class Exp022Protocol(Protocol):
     name = "exp022 protocol"
 
@@ -426,6 +428,57 @@ class VisualCodingProtocol(Protocol):
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
         return stimuli
+
+
+class MovingBackgroundProtocol(Protocol):
+    name = 'moving_backgound_protocol'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'background_images': 'underwater_caustics.jpg;checkerboard.jpg;SeamlessRocks.jpg',
+                                'n_velocities': 200,
+                                'velocity_duration': 15,
+                                'initial_angle': 0,
+                                'delta_angle_mean': np.pi/6,
+                                'delta_angle_std': np.pi / 6,
+                                'velocity': 10,
+                                'velocity_mean': 7,
+                                'velocity_std': 2,
+                                'vr': False}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        full_t = 0
+        motion = []
+        dt = self.params['velocity_duration']
+        angle = self.params['initial_angle']
+        for i in range(self.params['n_velocities']):
+            angle += np.random.randn(1)[0]*self.params['delta_angle_std']
+
+            vel = np.maximum(np.random.randn(1)*self.params['velocity_std'] +
+                             self.params['velocity_mean'], 0)[0]
+            vy = np.sin(angle)*vel
+            vx = np.cos(angle)*vel
+
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
+
+        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
+
+        if self.params["vr"]:
+            cls = VRMotionStimulus
+        else:
+            cls = type('image_bg_stim', (SeamlessImageStimulus, MovingDynamicVel), dict())
+            print("We are doing a seamless image stimulus")
+        return [
+            cls(background=bgim, motion=motion,
+                duration=full_t)
+            for bgim in self.params['background_images'].split(';')
+        ]
 
 
 # class ShockProtocol(Protocol):
@@ -640,47 +693,4 @@ class VisualCodingProtocol(Protocol):
 #
 #         super().__init__(*args, stimuli=stimuli, **kwargs)
 
-class VRProtocol(Protocol):
-    name = 'VR protocol'
 
-    def __init__(self):
-        super().__init__()
-
-        standard_params_dict = {'background_images': ('underwater_caustics.jpg;checkerboard.jpg;SeamlessRocks.jpg',),
-                                'n_velocities': 200,
-                                'velocity_duration': 15,
-                                'initial_angle': 0,
-                                'delta_angle_mean': np.pi/6,
-                                'delta_angle_std': np.pi / 6,
-                                'velocity': 10,
-                                'velocity_mean': 7,
-                                'velocity_std': 2,}
-
-        for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
-
-    def get_stim_sequence(self):
-        full_t = 0
-        motion = []
-        dt = self.params['velocity_duration']
-        angle = self.params['initial_angle']
-        for i in range(self.params['n_velocities']):
-            angle += np.random.randn(1)[0]*self.params['delta_angle_std']
-
-            vel = np.maximum(np.random.randn(1)*self.params['velocity_std'] +
-                             self.params['velocity_mean'], 0)[0]
-            vy = np.sin(angle)*vel
-            vx = np.cos(angle)*vel
-
-            motion.append([full_t, vx, vy])
-            motion.append([full_t+dt, vx, vy])
-            full_t += dt
-
-
-        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
-
-        return [
-            VRMotionStimulus(background=bgim, motion=motion,
-                             duration=full_t)
-            for bgim in self.params['background_images'].split(';')
-        ]

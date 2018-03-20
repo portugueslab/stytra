@@ -92,7 +92,7 @@ class XimeaCamera(VideoSource):
             self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
             print("Python camera")
-            if self.downsampling>1:
+            if self.downsampling > 1:
                 self.cam.set_downsampling_type("XI_SKIPPING")
                 self.cam.set_downsampling("XI_DWN_{}x{}".format(self.downsampling,
                                                                 self.downsampling))

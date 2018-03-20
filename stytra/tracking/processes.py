@@ -15,6 +15,7 @@ from stytra.tracking.tail import trace_tail_centroid,\
 from stytra.collectors import HasPyQtGraphParams
 import math
 
+
 class FrameProcessingMethod(HasPyQtGraphParams):
     """ The class for parametrisation of various tail and fish tracking methods
     """
