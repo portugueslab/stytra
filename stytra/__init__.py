@@ -37,6 +37,12 @@ import deepdish as dd
 import datetime
 
 
+try:
+    from stytra.hardware.serial import PyboardConnection
+except ImportError:
+    print('Serial pyboard connection not installed')
+
+
 def get_default_args(func):
     """ Find default arguments of functions
     """
@@ -68,6 +74,7 @@ class Experiment(QObject):
                  asset_directory='',
                  debug_mode=True,
                  scope_triggered=False,
+                 shock_stimulus=False,
                  rec_stim_every=None,
                  notifier='slack'):
         """General class for running experiments
@@ -137,6 +144,9 @@ class Experiment(QObject):
 
         if notifier == 'slack':
             self.notifier = Slacker()
+
+        if shock_stimulus:
+            self.pyb = PyboardConnection(com_port='COM3')
 
     def make_window(self):
         self.window_main = SimpleExperimentWindow(self)

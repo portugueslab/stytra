@@ -15,6 +15,8 @@ if __name__ == '__main__':
                         action='store', default='angle_sweep')
     parser.add_argument('--tail-invert',
                         action='store_true')
+    parser.add_argument('--shock-stimulus',
+                        action='store_true')
     parser.add_argument('--vr',
                         action='store_true')
     parser.add_argument('--sim-vr',
@@ -53,7 +55,8 @@ if __name__ == '__main__':
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir,
                         scope_triggered=args.scope_triggering,
-                        rec_stim_every=rec_stim_every)
+                        rec_stim_every=rec_stim_every,
+                        shock_stimulus=args.shock_stimulus)
 
     base = Experiment
 

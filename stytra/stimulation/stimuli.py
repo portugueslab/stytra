@@ -56,6 +56,7 @@ class Stimulus:
         :param experiment: the experiment object to which link the stimulus
         :return: None
         """
+        print('initialize')
         self._experiment = experiment
 
 
@@ -533,8 +534,7 @@ class RandomDotKinematogram(PainterStimulus):
 
 
 class ShockStimulus(Stimulus):
-    def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
-                 pulse_dur_ms=2, pyboard=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Burst of electric shocks through pyboard (Anki's code)
         :param burst_freq: burst frequency (Hz)
@@ -545,7 +545,13 @@ class ShockStimulus(Stimulus):
         """
         super().__init__(**kwargs)
         self.name = 'shock'
-        # assert isinstance(pyboard, PyboardConnection)
+
+    def start(self):
+        burst_freq = 100
+        pulse_amp = 3.
+        pulse_n = 1
+        pulse_dur_ms = 5
+        pyboard = self._experiment.pyb
         self._pyb = pyboard
         self.burst_freq = burst_freq
         self.pulse_dur_ms = pulse_dur_ms
@@ -553,13 +559,11 @@ class ShockStimulus(Stimulus):
         self.pulse_amp_mA = pulse_amp
 
         # Pause between shocks in the burst in ms:
-        self.pause = 1000/burst_freq - pulse_dur_ms
+        self.pause = 1000 / burst_freq - pulse_dur_ms
 
-        amp_dac = str(int(255*pulse_amp/3.5))
+        amp_dac = str(int(255 * pulse_amp / 3.5))
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str('shock' + amp_dac + pulse_dur_str)
-
-    def start(self):
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
             print(self.mex)
@@ -568,19 +572,9 @@ class ShockStimulus(Stimulus):
 
 
 if __name__ == '__main__':
-    # pyb = PyboardConnection(com_port='COM3')
-    # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-    #                      pulse_n=1, pulse_dur_ms=5)
-    # stim.start()
-    # del pyb
-    #
-    from PyQt5.QtGui import QPolygon, QRegion
-    p = QPainter()
-    clip_rect = [(0, 0), (1, 0), (0.5, 0.5), (1, 1), (0, 1)]
-    w = 100
-    h = 200
-    points = [QPoint(int(w * x), int(h * y)) for (x, y) in clip_rect]
-    print(points)
-    pol = QPolygon(points)
-    p.setClipping(True)
-    p.setClipRegion(QRegion(pol))
+    pyb = PyboardConnection(com_port='COM3')
+    stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+                         pulse_n=10, pulse_dur_ms=5)
+    stim.start()
+    del pyb
+

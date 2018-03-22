@@ -97,6 +97,29 @@ class FlashProtocol(Protocol):
 
         return stimuli
 
+
+class ShockProtocol(Protocol):
+    name = 'shock protocol'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'period_sec': 5.,
+                                'flash_duration': 2.}
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        stimuli.append(Pause(duration=self.params['period_sec'] - \
+                                      self.params['flash_duration']))
+        stimuli.append(ShockStimulus())
+
+        return stimuli
+
+
 class Exp022ImagingProtocol(Protocol):
     name = "exp022 imaging protocol"
 
