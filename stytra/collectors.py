@@ -351,7 +351,8 @@ class DataCollector:
 
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         print(str(clean_dict['fish']))
-        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + str(clean_dict['fish']['id'])
+        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
+                    str(clean_dict['fish']['id'])
         dirname = '/'.join([self.folder_path,
                    clean_dict['stimulus']['protocol_params']['name'],
                              fish_name,
