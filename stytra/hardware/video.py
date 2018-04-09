@@ -2,6 +2,7 @@ from stytra import HasPyQtGraphParams
 
 try:
     from ximea import xiapi
+    import av
 except ImportError:
     pass
 
@@ -15,8 +16,6 @@ from stytra.collectors import HasPyQtGraphParams
 from stytra.tracking.shared_arrays import ArrayQueue
 
 import cv2
-
-import av
 
 
 class FrameProcessor(Process):
