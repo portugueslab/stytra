@@ -257,6 +257,60 @@ class Exp022ImagingProtocol(Protocol):
         return stimuli
 
 
+class OMRProtocol(Protocol):
+    name = "OMR  protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'initial_pause': 0.,
+                       'inter_stim_pause': 5.,
+                       'grating_vel': 10.,
+                       'grating_duration': 10.,
+                       'grating_cycle': 10}
+
+        for key in params_dict:
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+
+        # # initial dark field
+        stimuli.append(Pause(duration=self.params['initial_pause']))
+        stim_color = (255, 0, 0)
+        #
+        # # gratings
+        p = self.params['inter_stim_pause']
+        v = self.params['grating_vel']
+        d = self.params['grating_duration']
+
+        # tuple for x, t, theta
+
+        vel_tuple = [(0, 0, np.pi/2),
+                     (p, 0, np.pi/2),
+                     (d, -v, np.pi/2),  # slow
+                     (p, 0, np.pi/2)]
+
+        t = [0]
+        x = [0]
+        theta = [0]
+
+
+        for dt, vel, th in vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=th)),
+                                               grating_period=self.params[
+                                                   'grating_cycle'],
+                                               color=stim_color))
+        return stimuli
+
+
 class Exp014Protocol(Protocol):
     name = "exp014 protocol"
 
