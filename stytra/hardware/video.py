@@ -9,10 +9,12 @@ from multiprocessing import Process, Queue, Event
 from queue import Empty, Full
 import numpy as np
 from datetime import datetime
+from time import sleep
 
 from stytra.collectors import HasPyQtGraphParams
 
 import cv2
+import glob
 
 
 class FrameProcessor(Process):
@@ -140,17 +142,33 @@ class VideoFileSource(VideoSource):
         self.loop = loop
 
     def run(self):
+        # If the file is a Ximea Camera sequence, frames in the  corresponding
+        # folder are read.
         import cv2
-        cap = cv2.VideoCapture(self.source_file)
+        if self.source_file.split('.')[-1] == 'xiseq':
+            frames_fn = glob.glob('{}_files/*'.format(self.source_file.split('.')[-2]))
+            frames_fn.sort()
+            k = 0
+        else:
+            cap = cv2.VideoCapture(self.source_file)
         ret = True
 
         while ret and not self.kill_signal.is_set():
-            ret, frame = cap.read()
+            if self.source_file.split('.')[-1] == 'xiseq':
+                frame = cv2.imread(frames_fn[k])
+                print('read frame...{}: {}'.format(frames_fn[k], k))
+                k += 1
+                if k == len(frames_fn) - 2:
+                    ret = False
+            else:
+                ret, frame = cap.read()
+
             if ret:
                 self.frame_queue.put((datetime.now(), frame[:, :, 0]))
             else:
                 if self.loop:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    k = 0
                     ret = True
                 else:
                     break

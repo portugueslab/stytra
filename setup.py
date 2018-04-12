@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(name='stytra',
       version='0.1',
-      author='Luigi Petrucco & Vilim Stich @portugueslab',
+      author='Vilim Stich, Andreas Kist & Luigi Petrucco @portugueslab',
       author_email='vilim@neuro.mpg.de',
       packages=find_packages(),
       install_requires=['pyqtgraph>=0.10.0', 'numpy', 'numba',
