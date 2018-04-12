@@ -1,0 +1,74 @@
+import numpy as np
+from skimage.filters import threshold_local, threshold_otsu
+import cv2
+
+def _pad(im, padding=0, val=0):
+    """
+    Lazy function for padding image
+    :param im:
+    :param padding:
+    :param val:
+    :return:
+    """
+    padded = np.lib.pad(im,
+                        ((padding, padding), (padding, padding)),
+                        mode='constant',
+                        constant_values=((val, val), (val, val)))
+    return padded
+
+def local(im, padding=2, block_size=17, offset=70):
+    """
+    Local thresholding
+    :param im: The camera frame with the eyes
+    :param padding: padding of the camera frame
+    :param block_size:
+    :param offset:
+    :return: thresholded image
+    """
+    padded = _pad(im, padding, im.min())
+    return padded > threshold_local(padded, block_size=block_size, offset=offset)
+
+
+def fit_ellipse(thresholded_image):
+    """
+    finds contours and fits an ellipse to thresholded image
+    :param thresholded_image: Binary image containing two eyes
+    :return: When eyes were found, the two ellipses, otherwise False
+    """
+    _, contours, hierarchy = cv2.findContours(thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) >= 2:
+        # Get the two largest ellipses (i.e. the eyes, not any dirt)
+        contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)[:2]
+        # Sort them that first ellipse is always the left eye (in the image)
+        contours = sorted(contours, key=np.max)
+
+        # Fit the ellipses for the two eyes
+        e = [cv2.fitEllipse(contours[i]) for i in range(2)]
+        return e
+
+    else:
+        # Not at least two eyes + maybe dirt found...
+        return False
+
+
+def draw_ellipse(im, e, c=None):
+    """
+    Draws provided ellipses on image copy
+    :param im: the image
+    :param e: the ellipses from fit_ellipse
+    :param c: colors in uint8 tuples (RGBA)
+    :return: new image with ellipses
+    """
+    imc = im.copy()
+
+    if c is None:
+        c = [(255, 0, 255, 255), (20, 255, 20, 255), (20, 255, 20, 255), (20, 255, 20, 255)]
+
+    else:
+        assert len(e) == len(c), 'There are not as many colors as ellipses to be drawn!'
+
+    for i, eye in enumerate(e):
+        cv2.ellipse(imc, eye, c[i], 1)
+
+    return imc
