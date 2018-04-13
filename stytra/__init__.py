@@ -17,7 +17,8 @@ from stytra.collectors import DataCollector, HasPyQtGraphParams,\
 
 from stytra.dbconn import put_experiment_in_db, Slacker
 from stytra.gui.container_windows import SimpleExperimentWindow,\
-    CameraExperimentWindow, TailTrackingExperimentWindow
+    CameraExperimentWindow, TailTrackingExperimentWindow, \
+    EyeTrackingExperimentWindow
 from stytra.hardware.video import CameraControlParameters
 from stytra.gui.stimulus_display import StimulusDisplayWindow
 
@@ -29,18 +30,13 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
-    MovingFrameDispatcher
+from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
+from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
+    CentroidTrackingMethod
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 import deepdish as dd
 import datetime
-
-
-try:
-    from stytra.hardware.serial import PyboardConnection
-except ImportError:
-    print('Serial pyboard connection not installed')
 
 
 def get_default_args(func):
@@ -146,6 +142,11 @@ class Experiment(QObject):
             self.notifier = Slacker()
 
         if shock_stimulus:
+            try:
+                from stytra.hardware.serial import PyboardConnection
+            except ImportError:
+                print('Serial pyboard connection not installed')
+
             self.pyb = PyboardConnection(com_port='COM3')
 
     def make_window(self):
@@ -215,6 +216,8 @@ class Experiment(QObject):
         self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
         self.dc.add_data_source(self.protocol_runner.t_end,
                                 name='general_t_protocol_end')
+
+        # TODO saving of synamic_log should be conditional
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
@@ -227,19 +230,7 @@ class Experiment(QObject):
 
             self.dc.save()  # save metadata
 
-            # Send notification of experiment end:
-            if self.notifier is not None:
-                self.notifier.post_update("Experiment on setup " +
-                                          clean_dict['general']['setup_name'] +
-                                          " is finished running the protocol" +
-                                          clean_dict['stimulus']['protocol_params']['name']
-                                          +" :birthday:")
-                self.notifier.post_update("It was :tropical_fish: " +
-                                          str(clean_dict['fish']['id']) +
-                                          " of the day, session "
-                                          + str(clean_dict['general']['session_id']))
-
-            # Save stimulus movie in .h5 file:
+            # Save stimulus movie in .h5 file if required:
             movie = self.window_display.widget_display.get_movie()
             if movie is not None:
                 movie_dict = dict(movie=movie[0], movie_times=movie[1])
@@ -248,6 +239,8 @@ class Experiment(QObject):
                            'stim_movie.h5', movie_dict)
 
         self.protocol_runner.reset()
+
+        # Send notification of experiment end:
         if self.notifier is not None:
             self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
@@ -311,26 +304,37 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
-class TailTrackingExperiment(CameraExperiment):
-    def __init__(self, *args, motion_estimation=None,
-                 motion_estimation_parameters=None,
-                 **kwargs):
-        """ An experiment which contains tail tracking,
-        base for any experiment that tracks behaviour or employs
-        closed loops
+class TrackingExperiment(CameraExperiment):
+    def __init__(self, *args, tracking_method=None,
+                 header_list=None, data_name=None, **kwargs):
+        """ An experiment which contains tracking, base for any experiment that
+        tracks behaviour (beoing it eyes, tail, or anything else).
+        The general purpose of the class is handle a frame dispatcher,
+        the relative parameters queue and the output queue.
 
-        :param args:
-        :param tracking_method: the method used to track the tail
-        :param kwargs:
+        The frame dispatcher take two input queues:
+            - frame queue from the camera;
+            - parameters queue from parameter window.
+
+        and it put data in three queues:
+            - subset of frames are dispatched to the GUI, for displaying;
+            - all the frames, together with the parameters, are dispatched
+              to perform tracking;
+            - the result of the tracking function, is dispatched to a data
+              accumulator for saving or other purposes (e.g. VR control).
+
+        :param tracking_method: class with the parameters for tracking (instance
+                                of TrackingMethod class);
+        :param header_list: headers for the data accumulator (list of strings);
+        :param data_name:  name of the data in the final experiment log.
         """
 
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
-
-        self.tracking_method = CentroidTrackingMethod()
-        print(self.tracking_method.params.getValues())
-
+        print(tracking_method)
+        self.tracking_method = tracking_method
+        self.data_name = data_name
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
                                                 finished_signal=
@@ -342,68 +346,47 @@ class TailTrackingExperiment(CameraExperiment):
 
         self.fish_metadata.params['embedded'] = True
 
-        self.data_acc_tailpoints = QueueDataAccumulator(
-                                          self.frame_dispatcher.output_queue,
-                                          header_list=['tail_sum'] +
-                                            ['theta_{:02}'.format(i)
-                                             for i in range(
-                                                self.tracking_method.params['n_segments'])])
+        self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
+                                             header_list=header_list)
 
-        # start the processes and connect the timers
-        self.gui_timer.timeout.connect(
-            self.data_acc_tailpoints.update_list)
-        self.gui_timer.timeout.connect(
-            self.send_new_parameters)
-        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
-            self.change_segment_numb)
-        self.start_frame_dispatcher()
-
-        # Reset tail et experiment start:
+        # Data accumulator is updated with GUI timer:
+        self.gui_timer.timeout.connect(self.data_acc.update_list)
+        # New parameters are sent with GUI timer:
+        self.gui_timer.timeout.connect(self.send_new_parameters)
+        # Tracking is reset at experiment start:
         self.protocol_runner.sig_protocol_started.connect(
-            self.data_acc_tailpoints.reset)
+            self.data_acc.reset)
 
-        # if motion_estimation == 'LSTM':
-        #     lstm_name = motion_estimation_parameters['model']
-        #     del motion_estimation_parameters['model']
-        #     self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
-        #                                                     self.asset_folder + '/' +
-        #                                                     lstm_name,
-        #                                                     **motion_estimation_parameters)
-
-    def change_segment_numb(self):
-        print(self.tracking_method.params['n_segments'])
-        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
-                            self.tracking_method.params['n_segments'])]
-        self.data_acc_tailpoints.reset(header_list=new_header)
-
-        # self.gui_timer.timeout.connect(
-        #     self.data_acc_tailpoints.update_list)
-        #
-        # self.window_main.stream_plot.add_stream(
-        #     self.data_acc_tailpoints, ['tail_sum'])
+        # start frame dispatcher process:
+        self.frame_dispatcher.start()
 
     def send_new_parameters(self):
+        """ Called upon gui timeout, put tracking parameters in the relative
+        queue.
+        """
+        # TODO do we need this linked to GUI timeout? why not value change?
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
 
     def make_window(self):
-        self.window_main = TailTrackingExperimentWindow(experiment=self)
-        self.window_main.show()
+        """ Make experiment GUI, defined in instances depending on tracking.
+        """
+        pass
 
     def start_protocol(self):
+        """ Reset data accumulator when starting the protocol.
+        """
+        # TODO camera queue should be emptied to avoid accumulation of frames
+        # when waiting for the microscope!
         super().start_protocol()
-        self.data_acc_tailpoints.reset()
+        self.data_acc.reset()
 
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
         """
-        self.dc.add_data_source(self.data_acc_tailpoints.get_dataframe(),
-                                name='behaviour_tail_log')
-        # self.dc.add_data_source('behaviour', 'vr',
-        #                         self.position_estimator.log.get_dataframe())
-        # temporary removal of dynamic log as it is not correct
-        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
-        #                         name='stimulus_log')
+        self.dc.add_data_source(self.data_acc.get_dataframe(),
+                                name=self.data_name)
+
         super().end_protocol(*args, **kwargs)
         try:
             self.position_estimator.reset()
@@ -412,8 +395,10 @@ class TailTrackingExperiment(CameraExperiment):
             pass
 
     def set_protocol(self, protocol):
+        """ Connect new protocol start to resetting of the data accumulator.
+        """
         super().set_protocol(protocol)
-        self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+        self.protocol.sig_protocol_started.connect(self.data_acc.reset)
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
@@ -427,14 +412,77 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera.terminate()
         self.frame_dispatcher.terminate()
 
-    def start_frame_dispatcher(self):
-        self.frame_dispatcher.start()
 
+class TailTrackingExperiment(TrackingExperiment):
+    def __init__(self, *args, **kwargs):
+        """ An experiment which contains tail tracking,
+        base for experiments that  employs closed loops.
+        """
+
+        tracking_method = CentroidTrackingMethod()
+        header_list = ['tail_sum'] + ['theta_{:02}'.format(i)
+                                      for i in range(20)]
+                #self.tracking_method.params['n_segments'])]
+
+        super().__init__(*args, **kwargs,
+                         tracking_method=tracking_method,
+                         header_list=header_list,
+                         data_name='behaviour_tail_log')
+
+        # This probably should happen before starting the camera process??
+        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
+            self.change_segment_numb)
+
+    def change_segment_numb(self):
+        print(self.tracking_method.params['n_segments'])
+        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
+            self.tracking_method.params['n_segments'])]
+        self.data_acc.reset(header_list=new_header)
+
+        # self.gui_timer.timeout.connect(
+        #     self.data_acc_tailpoints.update_list)
+        #
+        # self.window_main.stream_plot.add_stream(
+        #     self.data_acc_tailpoints, ['tail_sum'])
+
+    def make_window(self):
+        self.window_main = TailTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
+
+
+class EyeTrackingExperiment(TrackingExperiment):
+    def __init__(self, *args, **kwargs):
+        """ An experiment which contains eye tracking.
+        """
+
+        tracking_method = ThresholdEyeTrackingMethod()
+        header_list = ['eye_1', 'eye_2']
+
+        print(tracking_method)
+
+        super().__init__(*args, tracking_method=tracking_method,
+                         header_list=header_list,
+                         data_name='behaviour_eyes_log',
+                         **kwargs)
+
+    def make_window(self):
+        self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
 
 
 class VRExperiment(TailTrackingExperiment):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+
+# Randomp piece of code for motion estimation:
+        # if motion_estimation == 'LSTM':
+        #     lstm_name = motion_estimation_parameters['model']
+        #     del motion_estimation_parameters['model']
+        #     self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
+        #                                                     self.asset_folder + '/' +
+        #                                                     lstm_name,
+        #                                                     **motion_estimation_parameters)
 
 
 # class SimulatedVRExperiment(Experiment):

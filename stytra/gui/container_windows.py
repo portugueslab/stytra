@@ -4,7 +4,8 @@ from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
 
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib, CameraViewWidget
+from stytra.gui.camera_display import CameraTailSelection, \
+    CameraViewCalib, CameraViewWidget, CameraEyesSelection
 
 import numpy as np
 import pyqtgraph as pg
@@ -31,29 +32,35 @@ class DebugLabel(QLabel):
             self.setStyleSheet('background-color: #002b36')
 
 
+# TODO: probably these widget parts should go elsewhere to leave here only
+#       complete windows
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """ Widget that displays the whole projector screen and allows to
     set the stimulus display window
 
     """
-    def __init__(self, *args, display_size=(1280, 800), roi_params,  **kwargs):
+    def __init__(self, *args, display_size=(1280, 800), params_roi, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.roi_params = roi_params
 
         self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
                                    enableMouse=False)
         self.addItem(self.view_box)
 
+        # Create a ROI tool for selecting the area on the projector where the
+        # stimulus will be displayed.
+
+        # The ROI in Params is passed to log and restore the position:
+        self.params_roi = params_roi
         self.roi_box = pg.ROI(maxBounds=QRectF(0, 0, display_size[0],
                                                display_size[1]),
-                              size=roi_params['size'],
-                              pos=roi_params['pos'])
+                              size=params_roi['size'],
+                              pos=params_roi['pos'])
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
-        self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
-        self.roi_params.sigTreeStateChanged.connect(self.set_roi)
+        self.roi_box.sigRegionChangeFinished.connect(self.set_pos_from_roi)
+        self.params_roi.sigTreeStateChanged.connect(self.set_pos_from_tree)
+
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(QRectF(0, 0, display_size[0], display_size[1]),
                                update=True, disableAutoRange=True)
@@ -61,6 +68,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                               display_size[1]-1), movable=False,
                                      pen=(80, 80, 80)))
 
+        # Visualization of the calibration patterns:
         self.calibration_points = pg.ScatterPlotItem()
         self.calibration_frame = pg.PlotCurveItem(brush=(120, 10, 10),
                                                   pen=(200, 10, 10),
@@ -68,15 +76,21 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
 
-    def set_roi(self):
-        self.roi_box.setPos(self.roi_params['pos'], finish=False)
-        self.roi_box.setSize(self.roi_params['size'])
+    def set_pos_from_tree(self):
+        """ Called when ROI position values are changed in the ParameterTree.
+        Change the position of the displayed ROI:
+        """
+        self.roi_box.setPos(self.params_roi['pos'], finish=False)
+        self.roi_box.setSize(self.params_roi['size'])
 
-    def set_param_val(self):
-        with self.roi_params.treeChangeBlocker():
-            self.roi_params.param('size').setValue(tuple(
+    def set_pos_from_roi(self):
+        """ Called when ROI position values are changed in the displayed ROI.
+        Change the position in the ParameterTree values.
+        """
+        with self.params_roi.treeChangeBlocker():
+            self.params_roi.param('size').setValue(tuple(
                 [int(p) for p in self.roi_box.size()]))
-            self.roi_params.param('pos').setValue(tuple(
+            self.params_roi.param('pos').setValue(tuple(
                 [int(p) for p in self.roi_box.pos()]))
 
     def display_calibration_pattern(self, calibrator,
@@ -98,7 +112,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.calibration_points.setData(x=points_calib[:, 0]+x0,
                                         y=points_calib[:, 1]+y0)
         if image is not None:
-            pass # TODO place transformed image
+            pass  # TODO place transformed image
 
 
 class ProjectorAndCalibrationWidget(QWidget):
@@ -106,8 +120,7 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def __init__(self, experiment, **kwargs):
         """ Instantiate the widget that controls the display on the projector
-
-        :param experiment: Experiment class with calibrator and display window
+        :param experiment: Experiment class with calibrator and display window.
         """
         super().__init__(**kwargs)
         self.experiment = experiment
@@ -115,7 +128,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.container_layout = QVBoxLayout()
         self.container_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.widget_proj_viewer = ProjectorViewer(roi_params=
+        self.widget_proj_viewer = ProjectorViewer(params_roi=
                                                   experiment.window_display.params)
 
         self.container_layout.addWidget(self.widget_proj_viewer)
@@ -234,6 +247,9 @@ class CameraExperimentWindow(SimpleExperimentWindow):
 
 class TailTrackingExperimentWindow(SimpleExperimentWindow):
     def __init__(self,  *args, **kwargs):
+        """ Window for controlling an experiment where the tail of an
+        embedded fish is tracked.
+        """
         self.camera_display = CameraTailSelection(kwargs['experiment'])
 
         self.camera_splitter = QSplitter(Qt.Horizontal)
@@ -261,6 +277,55 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     def construct_ui(self):
         self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
                                     ['tail_sum'])
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
+        previous_widget = super().construct_ui()
+        self.monitoring_layout.addWidget(previous_widget)
+        self.monitoring_layout.setStretch(1, 1)
+        self.monitoring_layout.setStretch(0, 1)
+        self.camera_splitter.addWidget(self.camera_display)
+        self.camera_splitter.addWidget(self.monitoring_widget)
+        return self.camera_splitter
+
+    def open_tracking_params_tree(self):
+        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+                                            showTop=False)
+        self.track_params_wnd.setWindowTitle('Tracking data')
+        self.track_params_wnd.show()
+
+
+class EyeTrackingExperimentWindow(SimpleExperimentWindow):
+    def __init__(self,  *args, **kwargs):
+        """ Window for controlling an experiment where the tail and the eyes
+        of an embedded fish are tracked.
+        """
+        self.camera_display = CameraEyesSelection(kwargs['experiment'])
+
+        self.camera_splitter = QSplitter(Qt.Horizontal)
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        # Stream plot:
+        self.stream_plot = MultiStreamPlot()
+
+        self.monitoring_layout.addWidget(self.stream_plot)
+
+        # Tracking params button:
+        self.button_tracking_params = QPushButton('Tracking params')
+        self.button_tracking_params.clicked.connect(
+            self.open_tracking_params_tree)
+        self.monitoring_layout.addWidget(self.button_tracking_params)
+
+        self.track_params_wnd = None
+        # self.tracking_layout.addWidget(self.camera_display)
+        # self.tracking_layout.addWidget(self.button_tracking_params)
+
+        super().__init__(*args, **kwargs)
+
+    def construct_ui(self):
+        # self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
+        #                             ['tail_sum'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)

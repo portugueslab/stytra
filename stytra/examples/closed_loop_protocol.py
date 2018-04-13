@@ -24,9 +24,9 @@ class ClosedLoopExperiment(TailTrackingExperiment, LightsheetExperiment):
         self.main_layout.addWidget(self.widget_control)
         self.setCentralWidget(self.main_layout)
         self.set_protocol(ReafferenceProtocol(n_repeats=20, n_backwards=7, forward_duration=5, pause_duration=5,
-            fish_motion_estimator=VigourMotionEstimator(
-                                 self.data_acc_tailpoints, vigour_window=0.05),
-            calibrator=self.calibrator, base_gain=40))
+                                              fish_motion_estimator=VigourMotionEstimator(
+                                 self.data_acc, vigour_window=0.05),
+                                              calibrator=self.calibrator, base_gain=40))
 
         self.velocity_plot = StreamingPlotWidget(self.protocol.dynamic_log, data_acc_var='vel',
                                                  xlink=self.tail_stream_plot.streamplot, y_range=(-25, 15))

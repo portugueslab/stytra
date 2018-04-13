@@ -173,6 +173,83 @@ class CameraTailSelection(CameraViewWidget):
             self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
 
 
+class CameraEyesSelection(CameraViewWidget):
+    def __init__(self, experiment, **kwargs):
+        """ Widget for select tail pts and monitoring tracking in embedded fish.
+        :param tail_start_points_queue: queue where to dispatch tail points
+        :param tail_position_data: DataAccumulator object for tail pos data.
+        :param roi_dict: dictionary for setting default tail position
+        """
+        self.queue_eyes_position_data = Queue()
+        super().__init__(experiment,  **kwargs)
+        self.queue_eyes_square = Queue()
+
+        # Redefine the source of the displayed images to be the FrameProcessor
+        # output queue:
+        self.queue_frame = self.experiment.frame_dispatcher.frame_queue
+
+        self.params_eyes_track = self.experiment.tracking_method.params
+
+        # Draw ROI for tail selection:
+        self.roi_eyes = pg.ROI(pos=self.params_eyes_track['wnd_pos'],
+                               size=self.params_eyes_track['wnd_dim'],
+                               pen=dict(color=(230, 40, 5),
+                                        width=3))
+
+        self.roi_eyes.addScaleHandle([0, 0], [1, 1])
+        self.roi_eyes.addScaleHandle([1, 1], [0, 0])
+        self.display_area.addItem(self.roi_eyes)
+
+        # Prepare curve for displaying the eyes:
+        self.curves_eyes = [pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
+                                                      width=3))]
+        for c in self.curves_eyes:
+            self.display_area.addItem(c)
+
+        # Connect signals for modifying the tracking parameters
+        self.roi_eyes.sigRegionChangeFinished.connect(self.set_pos_from_roi)
+        self.params_eyes_track.sigTreeStateChanged.connect(self.set_pos_from_tree)
+
+    def set_pos_from_tree(self):
+        """ Called when ROI position values are changed in the ParameterTree.
+        Change the position of the displayed ROI:
+        """
+        self.roi_eyes.setPos(self.params_eyes_track['wnd_pos'], finish=False)
+        self.roi_eyes.setSize(self.params_eyes_track['wnd_dim'])
+
+    def set_pos_from_roi(self):
+        """ Called when ROI position values are changed in the displayed ROI.
+        Change the position in the ParameterTree values.
+        """
+
+        # Set values in the ParameterTree:
+        with self.params_eyes_track.treeChangeBlocker():
+            self.params_eyes_track.param('wnd_dim').setValue(tuple(
+                [int(p) for p in self.roi_eyes.size()]))
+            self.params_eyes_track.param('wnd_pos').setValue(tuple(
+                [int(p) for p in self.roi_eyes.pos()]))
+
+    def update_image(self):
+        super().update_image()
+
+        # if len(self.experiment.data_acc_eyes_angles.stored_data) > 1:
+        #     angles = self.experiment.data_acc_tailpoints.stored_data[-1][:2]
+        #     start_x = self.track_params['tail_start'][1]
+        #     start_y = self.track_params['tail_start'][0]
+        #     tail_len_x = self.track_params['tail_length'][1]
+        #     tail_len_y = self.track_params['tail_length'][0]
+        #     tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+        #
+        #     # Get segment length:
+        #     tail_segment_length = tail_length / (len(angles) - 1)
+        #     points = [np.array([start_x, start_y])]
+        #     for angle in angles:
+        #         points.append(points[-1] + tail_segment_length * np.array(
+        #             [np.sin(angle), np.cos(angle)]))
+        #     points = np.array(points)
+        #     self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
+
+
 class CameraViewCalib(CameraViewWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

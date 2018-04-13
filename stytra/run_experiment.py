@@ -1,5 +1,5 @@
 import argparse
-from stytra import CameraExperiment, Experiment, TailTrackingExperiment, MovementRecordingExperiment
+from stytra import *
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -20,6 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--vr',
                         action='store_true')
     parser.add_argument('--sim-vr',
+                        action='store_true')
+    parser.add_argument('--eye-tracking',
                         action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
@@ -59,7 +61,6 @@ if __name__ == '__main__':
                         shock_stimulus=args.shock_stimulus)
 
     base = Experiment
-
     if args.video_file:
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
@@ -75,7 +76,9 @@ if __name__ == '__main__':
     #                                                             thresholds=(0.05, 0.05, 0.015))
 
     elif args.freely_swimming:
-         base = MovementRecordingExperiment
+        base = MovementRecordingExperiment
+    elif args.eye_tracking:
+        base = EyeTrackingExperiment
     #
     # if args.lightsheet:
     #     bases.append(LightsheetExperiment)

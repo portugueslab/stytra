@@ -32,8 +32,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
         StimDisplay = type('StimDisplay', (GLStimDisplay, QWidgetClass), {})
         self.widget_display = StimDisplay(self, calibrator=calibrator,
-                                            protocol_runner=protocol_runner,
-                                            record_stim_every=record_stim_every)
+                                                protocol_runner=protocol_runner,
+                                                record_stim_every=record_stim_every)
         self.widget_display.setMaximumSize(2000, 2000)
 
         # self.params.setName()
