@@ -112,7 +112,8 @@ class GeneralMetadata(GuiMetadata):
                             'Saskin',
                             'Archimedes',
                             'Helmut',
-                            'Katysha'], 'value': 'Saskin'}]
+                            'Katyusha',
+                            'WeltAmDraht'], 'value': 'Saskin'}]
 
         self.params.setName('general_metadata')
         self.params.addChildren(params)
@@ -132,8 +133,10 @@ class FishMetadata(GuiMetadata):
                             'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
                             'PC:epNtr-tagRFP',
                             'NeuroD-6f',
+                            'GR90:Gal4;UAS:GCaMP6s',
                             '152:Gal4;UAS:GCaMP6s',
-                            '156:Gal4;UAS:GCaMP6s'], 'value': 'TL'},
+                            '156:Gal4;UAS:GCaMP6s',
+                            'IO:Gal4;UAS:GCaMP6sef05'], 'value': 'TL'},
                 {'name': 'dish_diameter', 'type': 'list',
                  'values': ['0', '30', '60', '90', 'lightsheet'],
                  'value': '60'},

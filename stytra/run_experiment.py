@@ -1,6 +1,5 @@
 import argparse
-from stytra import CameraExperiment, Experiment, TailTrackingExperiment
-    # MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, TailTrackingExperiment, MovementRecordingExperiment
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -16,6 +15,8 @@ if __name__ == '__main__':
                         action='store', default='angle_sweep')
     parser.add_argument('--tail-invert',
                         action='store_true')
+    parser.add_argument('--shock-stimulus',
+                        action='store_true')
     parser.add_argument('--vr',
                         action='store_true')
     parser.add_argument('--sim-vr',
@@ -29,6 +30,8 @@ if __name__ == '__main__':
                         default=None)
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
+    parser.add_argument('--rec_stim_every', action='store',
+                        default=None)
     parser.add_argument('--asset-dir', action='store',
                         default='/Users/vilimstich/PhD/j_sync/underwater')
     parser.add_argument('--full-screen',
@@ -41,11 +44,19 @@ if __name__ == '__main__':
 
     app = QApplication([])
 
+    try:
+        rec_stim_every = int(args.rec_stim_every)
+    except TypeError:
+        rec_stim_every = None
+
+
     class_kwargs = dict(app=app,
                         directory=args.directory,
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir,
-                        scope_triggered=args.scope_triggering)
+                        scope_triggered=args.scope_triggering,
+                        rec_stim_every=rec_stim_every,
+                        shock_stimulus=args.shock_stimulus)
 
     base = Experiment
 
@@ -63,8 +74,8 @@ if __name__ == '__main__':
     #                                                             tail_thresholds=(0.02, 0.1),
     #                                                             thresholds=(0.05, 0.05, 0.015))
 
-    # elif args.freely_swimming:
-    #     bases.append(MovementRecordingExperiment)
+    elif args.freely_swimming:
+         base = MovementRecordingExperiment
     #
     # if args.lightsheet:
     #     bases.append(LightsheetExperiment)

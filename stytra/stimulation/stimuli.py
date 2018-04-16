@@ -56,22 +56,8 @@ class Stimulus:
         :param experiment: the experiment object to which link the stimulus
         :return: None
         """
+        print('initialize')
         self._experiment = experiment
-
-    def clip(self, p, w, h):
-        """ Clip image before painting
-        :param p: QPainter object used for painting
-        :param w: image width
-        :param h: image height
-        """
-        if self.clip_rect is not None:
-            if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
-                p.setClipRegion(QRegion(QPolygon(points)))
-            else:
-                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
-                              self.clip_rect[2] * w, self.clip_rect[3] * h)
-
 
 
 class DynamicStimulus(Stimulus):
@@ -106,6 +92,20 @@ class PainterStimulus(Stimulus):
         :param h: height of the display window
         """
         pass
+
+    def clip(self, p, w, h):
+        """ Clip image before painting
+        :param p: QPainter object used for painting
+        :param w: image width
+        :param h: image height
+        """
+        if self.clip_rect is not None:
+            if isinstance(self.clip_rect[0], tuple):
+                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                p.setClipRegion(QRegion(QPolygon(points)))
+            else:
+                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
+                              self.clip_rect[2] * w, self.clip_rect[3] * h)
 
 
 class BackgroundStimulus(Stimulus):
@@ -155,6 +155,21 @@ class FullFieldPainterStimulus(PainterStimulus):
         p.setBrush(QBrush(QColor(*self.color)))  # Use chosen color
         self.clip(p, w, h)
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
+
+
+class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
+    def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
+        super().__init__(*args, dynamic_parameters=['lum', ],
+                         **kwargs)
+        self.color = color_0
+        self.lum_df = lum_df
+        self.name = 'moving seamless'
+        self.duration = float(lum_df.t.iat[-1])
+
+    def update(self):
+        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
+        print(lum)
+        setattr(self, 'color', (lum, )*3)
 
 
 class Pause(FullFieldPainterStimulus):
@@ -345,14 +360,17 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
             if self.duration is None:
                 self.duration = self._video_seq.duration
 
-
     def update(self):
+        # if the video restarted, it means the last display time
+        # is incorrect, it has to be reset
+        if self._elapsed < self._last_frame_display_time:
+            self._last_frame_display_time = 0
         if self._elapsed >= self._last_frame_display_time+1/self.framerate:
+            self.i_frame = int(round(self._elapsed*self.framerate))
             next_frame = self._video_seq.get_frame(self.i_frame)
             if next_frame is not None:
                 self._current_frame = next_frame
                 self._last_frame_display_time = self._elapsed
-                self.i_frame += 1
 
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)
@@ -516,8 +534,7 @@ class RandomDotKinematogram(PainterStimulus):
 
 
 class ShockStimulus(Stimulus):
-    def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
-                 pulse_dur_ms=2, pyboard=None, **kwargs):
+    def __init__(self, **kwargs):
         """
         Burst of electric shocks through pyboard (Anki's code)
         :param burst_freq: burst frequency (Hz)
@@ -528,7 +545,13 @@ class ShockStimulus(Stimulus):
         """
         super().__init__(**kwargs)
         self.name = 'shock'
-        # assert isinstance(pyboard, PyboardConnection)
+
+    def start(self):
+        burst_freq = 100
+        pulse_amp = 3.
+        pulse_n = 1
+        pulse_dur_ms = 5
+        pyboard = self._experiment.pyb
         self._pyb = pyboard
         self.burst_freq = burst_freq
         self.pulse_dur_ms = pulse_dur_ms
@@ -536,13 +559,11 @@ class ShockStimulus(Stimulus):
         self.pulse_amp_mA = pulse_amp
 
         # Pause between shocks in the burst in ms:
-        self.pause = 1000/burst_freq - pulse_dur_ms
+        self.pause = 1000 / burst_freq - pulse_dur_ms
 
-        amp_dac = str(int(255*pulse_amp/3.5))
+        amp_dac = str(int(255 * pulse_amp / 3.5))
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str('shock' + amp_dac + pulse_dur_str)
-
-    def start(self):
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
             print(self.mex)
@@ -551,19 +572,9 @@ class ShockStimulus(Stimulus):
 
 
 if __name__ == '__main__':
-    # pyb = PyboardConnection(com_port='COM3')
-    # stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-    #                      pulse_n=1, pulse_dur_ms=5)
-    # stim.start()
-    # del pyb
-    #
-    from PyQt5.QtGui import QPolygon, QRegion
-    p = QPainter()
-    clip_rect = [(0, 0), (1, 0), (0.5, 0.5), (1, 1), (0, 1)]
-    w = 100
-    h = 200
-    points = [QPoint(int(w * x), int(h * y)) for (x, y) in clip_rect]
-    print(points)
-    pol = QPolygon(points)
-    p.setClipping(True)
-    p.setClipRegion(QRegion(pol))
+    pyb = PyboardConnection(com_port='COM3')
+    stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
+                         pulse_n=10, pulse_dur_ms=5)
+    stim.start()
+    del pyb
+
