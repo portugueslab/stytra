@@ -2,9 +2,9 @@ import numpy as np
 from skimage.filters import threshold_local, threshold_otsu
 import cv2
 
+
 def _pad(im, padding=0, val=0):
-    """
-    Lazy function for padding image
+    """ Lazy function for padding image
     :param im:
     :param padding:
     :param val:
@@ -16,9 +16,9 @@ def _pad(im, padding=0, val=0):
                         constant_values=((val, val), (val, val)))
     return padded
 
-def local(im, padding=2, block_size=17, offset=70):
-    """
-    Local thresholding
+
+def _local_thresholding(im, padding=2, block_size=17, offset=70):
+    """ Local thresholding
     :param im: The camera frame with the eyes
     :param padding: padding of the camera frame
     :param block_size:
@@ -29,9 +29,8 @@ def local(im, padding=2, block_size=17, offset=70):
     return padded > threshold_local(padded, block_size=block_size, offset=offset)
 
 
-def fit_ellipse(thresholded_image):
-    """
-    finds contours and fits an ellipse to thresholded image
+def _fit_ellipse(thresholded_image):
+    """ Finds contours and fits an ellipse to thresholded image
     :param thresholded_image: Binary image containing two eyes
     :return: When eyes were found, the two ellipses, otherwise False
     """
@@ -52,9 +51,33 @@ def fit_ellipse(thresholded_image):
         return False
 
 
-def draw_ellipse(im, e, c=None):
+# TODO: function for scaling/filtering/invert should be unique for both
+# tail and eye tracking
+def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
+               color_invert):
     """
-    Draws provided ellipses on image copy
+    :param im: image (numpy array);
+    :param win_pos: position of the window on the eyes (x, y);
+    :param win_dim: dimension of the window on the eyes (w, h);
+    :param threshold: threshold for ellipse fitting (int).
+    :return:
+    """
+    PAD = 5
+
+    print('cropping')
+    cropped = _pad(im[wnd_pos[0]:wnd_pos[0] + wnd_dim[0],
+                   wnd_pos[1]:wnd_pos[1] + wnd_dim[1]].copy(),
+                   padding=PAD, val=255)
+    print(cropped)
+
+    thresholded = (cropped < threshold).astype(np.uint8)
+
+    print('fitting...')
+    e = _fit_ellipse(thresholded)
+
+
+def draw_ellipse(im, e, c=None):
+    """ Draws provided ellipses on image copy
     :param im: the image
     :param e: the ellipses from fit_ellipse
     :param c: colors in uint8 tuples (RGBA)

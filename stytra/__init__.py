@@ -332,7 +332,7 @@ class TrackingExperiment(CameraExperiment):
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
-        print(tracking_method)
+
         self.tracking_method = tracking_method
         self.data_name = data_name
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
@@ -457,8 +457,6 @@ class EyeTrackingExperiment(TrackingExperiment):
 
         tracking_method = ThresholdEyeTrackingMethod()
         header_list = ['eye_1', 'eye_2']
-
-        print(tracking_method)
 
         super().__init__(*args, tracking_method=tracking_method,
                          header_list=header_list,

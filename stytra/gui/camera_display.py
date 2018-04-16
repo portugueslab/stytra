@@ -14,18 +14,22 @@ from stytra.hardware.video import CameraControlParameters
 
 class CameraViewWidget(QWidget):
     def __init__(self, experiment):
-        """
-        A widget to show the camera and display the controls
-        :param experiment: experiment to which this belongs
+        """ A widget to show the camera and display the controls.
+
+        :param experiment: experiment to which this belongs (Experiment class)
         """
 
         super().__init__()
 
+        self.experiment = experiment
+        self.camera = experiment.camera
+
         self.control_params = CameraControlParameters()
 
-        self.camera_queue = Queue()  # What is this?
-        self.camera_display_widget = pg.GraphicsLayoutWidget()
+        self.camera_queue = Queue()  # queue for camera frames
 
+        # Create the layout for the camera view:
+        self.camera_display_widget = pg.GraphicsLayoutWidget()
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.camera_display_widget.addItem(self.display_area)
 
@@ -34,9 +38,6 @@ class CameraViewWidget(QWidget):
         self.image_item = pg.ImageItem()
         self.image_item.setImage(np.zeros((640, 480), dtype=np.uint8))
         self.display_area.addItem(self.image_item)
-
-        self.experiment = experiment
-        self.camera = experiment.camera
 
         # Queue of frames coming from the camera
         self.frame_queue = self.camera.frame_queue
@@ -96,56 +97,104 @@ class CameraViewWidget(QWidget):
                self.image_item.image)
 
     def show_params_gui(self):
+        """ Parameters window for the protocol parameters.
+        """
         self.protocol_params_tree.setParameters(self.control_params.params)
         self.protocol_params_tree.show()
         self.protocol_params_tree.setWindowTitle('Camera parameters')
         self.protocol_params_tree.resize(450, 600)
 
 
-class CameraTailSelection(CameraViewWidget):
+class CameraSelection(CameraViewWidget):
+    """ Generic class for handling display of frames from a frame dispatcher
+    instead of directly from the camera, and for display ROIs that can be
+    used to select regions of the image and communicate their position to the
+    tracking algorithm (e.g., tail starting point or eyes region).
+    The changes of parameters  read through the ROI position are handled by
+    via the track_params class, so they must have a corresponding entry in the
+    definition of the FrameProcessingMethod of the tracking function.
+    Children should define a ROI before calling parent's __init__.
+    """
+
     def __init__(self, experiment, **kwargs):
-        """ Widget for select tail pts and monitoring tracking in embedded fish.
-        :param tail_start_points_queue: queue where to dispatch tail points
-        :param tail_position_data: DataAccumulator object for tail pos data.
-        :param roi_dict: dictionary for setting default tail position
-        """
-        self.tail_position_data = Queue()  # tail_position_data
-        super().__init__(experiment,  **kwargs)
-        self.tail_start_points_queue = Queue()  # tail_start_points_queue
+        super().__init__(experiment, **kwargs)
+        # Redefine the source of the displayed images to be the FrameProcessor
+        # output queue:
+        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
+        self.track_params = self.experiment.tracking_method.params
 
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
         self.frame_queue = self.experiment.frame_dispatcher.gui_queue
 
+        # Get the tracking parameters from the experiment class and connect
+        # their change signal to update ROI position:
         self.track_params = self.experiment.tracking_method.params
-        # Draw ROI for tail selection:
-        self.roi_tail = pg.LineSegmentROI((self.track_params['tail_start'],
-                                          (self.track_params['tail_start'][0] +
-                                           self.track_params['tail_length'][0],
-                                           self.track_params['tail_start'][1] +
-                                           self.track_params['tail_length'][1])
-                                           ),
-                                          pen=dict(color=(230, 40, 5),
-                                                   width=3))
+        self.track_params.sigTreeStateChanged.connect(self.set_pos_from_tree)
 
+    def initialise_roi(self):
+        """ ROI is initialised separately, so it can first be defined in the
+        child __init__.
+        """
+        try:
+            # Add ROI to image and connect it to the function for updating
+            # the relative params:
+            self.display_area.addItem(self.roi)
+            self.roi.sigRegionChangeFinished.connect(self.set_pos_from_roi)
+        except AttributeError:
+            print('No ROI defined in CameraSelection child')
+
+    def set_pos_from_tree(self):
+        """ Called when ROI position values are changed in the ParameterTree.
+        Change the position of the displayed ROI:
+        """
+        pass
+
+    def set_pos_from_roi(self):
+        """ Called when ROI position values are changed in the displayed ROI.
+        Change the position in the ParameterTree values.
+        """
+        pass
+
+
+class CameraTailSelection(CameraSelection):
+    def __init__(self, experiment, **kwargs):
+        """ Widget for select tail pts and monitoring tracking in embedded fish.
+        :param experiment:  experiment in which it is used.
+
+        """
+
+        super().__init__(experiment, **kwargs)
+
+        # Draw ROI for tail selection:
+        self.roi = pg.LineSegmentROI((self.track_params['tail_start'],
+                                     (self.track_params['tail_start'][0] +
+                                      self.track_params['tail_length'][0],
+                                      self.track_params['tail_start'][1] +
+                                      self.track_params['tail_length'][1])),
+                                     pen=dict(color=(230, 40, 5),
+                                              width=3))
+        self.initialise_roi()
+
+        # Prepare curve for plotting tracked tail position:
         self.tail_curve = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
                                                     width=3))
         self.display_area.addItem(self.tail_curve)
-        self.display_area.addItem(self.roi_tail)
 
-        self.roi_tail.sigRegionChangeFinished.connect(self.set_param_val)
-        self.track_params.sigTreeStateChanged.connect(self.set_roi)
-
-    def set_roi(self):
-        p1, p2 = self.roi_tail.getHandles()
+    def set_pos_from_tree(self):
+        """ Go to parent for definition.
+        """
+        p1, p2 = self.roi.getHandles()
         p1.setPos(QPointF(*self.track_params['tail_start']))
         p2.setPos(QPointF(self.track_params['tail_start'][0] +
                           self.track_params['tail_length'][0],
                           self.track_params['tail_start'][1] +
                           self.track_params['tail_length'][1]))
 
-    def set_param_val(self):
-        p1, p2 = self.roi_tail.getHandles()
+    def set_pos_from_roi(self):
+        """ Go to parent for definition.
+        """
+        p1, p2 = self.roi.getHandles()
         with self.track_params.treeChangeBlocker():
             self.track_params.param('tail_start').setValue((
                 p1.x(), p1.y()))
@@ -153,10 +202,16 @@ class CameraTailSelection(CameraViewWidget):
                 p2.x() - p1.x(), p2.y() - p1.y()))
 
     def update_image(self):
+        """ Go to parent for definition.
+        """
         super().update_image()
 
+        # Check for data to be displayied:
         if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
+            # Retrieve tail angles from tail:
             angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]
+
+            # Get tail position and length from the parameters:
             start_x = self.track_params['tail_start'][1]
             start_y = self.track_params['tail_start'][0]
             tail_len_x = self.track_params['tail_length'][1]
@@ -166,6 +221,8 @@ class CameraTailSelection(CameraViewWidget):
             # Get segment length:
             tail_segment_length = tail_length / (len(angles) - 1)
             points = [np.array([start_x, start_y])]
+
+            # Calculate tail points from angles and position:
             for angle in angles:
                 points.append(points[-1] + tail_segment_length * np.array(
                     [np.sin(angle), np.cos(angle)]))
@@ -173,63 +230,54 @@ class CameraTailSelection(CameraViewWidget):
             self.tail_curve.setData(x=points[:, 1], y=points[:, 0])
 
 
-class CameraEyesSelection(CameraViewWidget):
+class CameraEyesSelection(CameraSelection):
     def __init__(self, experiment, **kwargs):
         """ Widget for select tail pts and monitoring tracking in embedded fish.
         :param tail_start_points_queue: queue where to dispatch tail points
         :param tail_position_data: DataAccumulator object for tail pos data.
         :param roi_dict: dictionary for setting default tail position
         """
-        self.queue_eyes_position_data = Queue()
-        super().__init__(experiment,  **kwargs)
-        self.queue_eyes_square = Queue()
 
-        # Redefine the source of the displayed images to be the FrameProcessor
-        # output queue:
-        self.queue_frame = self.experiment.frame_dispatcher.frame_queue
+        super().__init__(experiment, **kwargs)
 
-        self.params_eyes_track = self.experiment.tracking_method.params
+        # Draw ROI for eyes region selection:
+        self.roi = pg.ROI(pos=self.track_params['wnd_pos'],
+                          size=self.track_params['wnd_dim'],
+                          pen=dict(color=(230, 40, 5),
+                                   width=3))
 
-        # Draw ROI for tail selection:
-        self.roi_eyes = pg.ROI(pos=self.params_eyes_track['wnd_pos'],
-                               size=self.params_eyes_track['wnd_dim'],
-                               pen=dict(color=(230, 40, 5),
-                                        width=3))
+        self.roi.addScaleHandle([0, 0], [1, 1])
+        self.roi.addScaleHandle([1, 1], [0, 0])
 
-        self.roi_eyes.addScaleHandle([0, 0], [1, 1])
-        self.roi_eyes.addScaleHandle([1, 1], [0, 0])
-        self.display_area.addItem(self.roi_eyes)
+        self.initialise_roi()
 
-        # Prepare curve for displaying the eyes:
+        # Prepare curves for displaying the eyes:
         self.curves_eyes = [pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
+                                                      width=3)),
+                            pg.PlotCurveItem(pen=dict(color=(40, 230, 5),
                                                       width=3))]
         for c in self.curves_eyes:
             self.display_area.addItem(c)
 
-        # Connect signals for modifying the tracking parameters
-        self.roi_eyes.sigRegionChangeFinished.connect(self.set_pos_from_roi)
-        self.params_eyes_track.sigTreeStateChanged.connect(self.set_pos_from_tree)
-
     def set_pos_from_tree(self):
-        """ Called when ROI position values are changed in the ParameterTree.
-        Change the position of the displayed ROI:
+        """ Go to parent for definition.
         """
-        self.roi_eyes.setPos(self.params_eyes_track['wnd_pos'], finish=False)
-        self.roi_eyes.setSize(self.params_eyes_track['wnd_dim'])
+        self.roi_eyes.setPos(self.track_params['wnd_pos'], finish=False)
+        self.roi_eyes.setSize(self.track_params['wnd_dim'])
 
     def set_pos_from_roi(self):
-        """ Called when ROI position values are changed in the displayed ROI.
-        Change the position in the ParameterTree values.
+        """ Go to parent for definition.
         """
-
         # Set values in the ParameterTree:
-        with self.params_eyes_track.treeChangeBlocker():
-            self.params_eyes_track.param('wnd_dim').setValue(tuple(
+        with self.track_params.treeChangeBlocker():
+            self.track_params.param('wnd_dim').setValue(tuple(
                 [int(p) for p in self.roi_eyes.size()]))
-            self.params_eyes_track.param('wnd_pos').setValue(tuple(
+            self.track_params.param('wnd_pos').setValue(tuple(
                 [int(p) for p in self.roi_eyes.pos()]))
 
     def update_image(self):
+        """ Go to parent for definition.
+        """
         super().update_image()
 
         # if len(self.experiment.data_acc_eyes_angles.stored_data) > 1:

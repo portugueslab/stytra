@@ -70,7 +70,11 @@ class EyeTrackingMethod(FrameProcessingMethod):
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
-        standard_params_dict = dict(color_invert=True,
+        standard_params_dict = dict(function={'values': ['eye_threshold'],
+                                              'value': 'centroid',
+                                              'type': 'list',
+                                              'readonly': True},
+                                    color_invert=True,
                                     wnd_pos={'value': (0, 0),
                                              'visible': False},
                                     wnd_dim={'value': (50, 80),

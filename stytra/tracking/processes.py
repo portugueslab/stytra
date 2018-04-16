@@ -10,8 +10,8 @@ import psutil
 from numba import jit
 
 from stytra.hardware.video import FrameProcessor
-from stytra.tracking.tail import trace_tail_centroid,\
-                                 trace_tail_angular_sweep
+from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
+from stytra.tracking.eyes import trace_eyes
 
 
 class FrameDispatcher(FrameProcessor):
@@ -42,7 +42,8 @@ class FrameDispatcher(FrameProcessor):
         self.processing_parameter_queue = processing_parameter_queue
 
         self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
-                                            centroid=trace_tail_centroid)
+                                            centroid=trace_tail_centroid,
+                                            eye_threshold=trace_eyes)
 
     def process_internal(self, frame):
         """ Apply processing function to current frame with
@@ -68,8 +69,17 @@ class FrameDispatcher(FrameProcessor):
                 # acquire the processing parameters from a separate queue:
                 if self.processing_parameter_queue is not None:
                     try:
+                        # Read all parameters from the queue:
                         self.processing_parameters = \
                             self.processing_parameter_queue.get(timeout=0.0001)
+
+                        # The first parameter is the function that will be used
+                        # for the tracing:
+
+                        # TODO this is a bit baroque and required only to change
+                        # tracking function during the experiment, do we really
+                        # need this?
+                        print(self.processing_parameters)
                         self.processing_function = \
                             self.dict_tracking_functions[
                                 self.processing_parameters.pop('function')]

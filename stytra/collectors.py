@@ -202,7 +202,6 @@ class Accumulator:
         return self.get_last_n(n)
 
 
-
 def metadata_dataframe(metadata_dict, time_step=0.005):
     """
     Function for converting a metadata dictionary into a pandas dataframe

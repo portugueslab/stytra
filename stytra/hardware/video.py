@@ -145,7 +145,9 @@ class VideoFileSource(VideoSource):
         # If the file is a Ximea Camera sequence, frames in the  corresponding
         # folder are read.
         import cv2
-        if self.source_file.split('.')[-1] == 'xiseq':
+
+        im_sequence_flag = self.source_file.split('.')[-1] == 'xiseq'
+        if im_sequence_flag:
             frames_fn = glob.glob('{}_files/*'.format(self.source_file.split('.')[-2]))
             frames_fn.sort()
             k = 0
@@ -156,7 +158,7 @@ class VideoFileSource(VideoSource):
         while ret and not self.kill_signal.is_set():
             if self.source_file.split('.')[-1] == 'xiseq':
                 frame = cv2.imread(frames_fn[k])
-                print('read frame...{}: {}'.format(frames_fn[k], k))
+                # print('read frame...{}: {}'.format(frames_fn[k], k))
                 k += 1
                 if k == len(frames_fn) - 2:
                     ret = False
@@ -167,8 +169,10 @@ class VideoFileSource(VideoSource):
                 self.frame_queue.put((datetime.now(), frame[:, :, 0]))
             else:
                 if self.loop:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    k = 0
+                    if im_sequence_flag:
+                        k = 0
+                    else:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ret = True
                 else:
                     break
