@@ -31,7 +31,7 @@ from stytra.stimulation.protocols import Protocol
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
     MovingFrameDispatcher, MovementDetectionParameters
-from stytra.tracking.shared_arrays import ArrayQueue
+
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 import deepdish as dd
@@ -265,14 +265,14 @@ class Experiment(QObject):
 
 
 class CameraExperiment(Experiment):
-    def __init__(self, *args, video_file=None, camera_rotation=0, **kwargs):
+    def __init__(self, *args, video_file=None, camera_rotation=0, camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
         if video_file is None:
-            self.camera = XimeaCamera(rotation=camera_rotation)
+            self.camera = XimeaCamera(rotation=camera_rotation, max_mbytes_queue=camera_queue_mb)
         else:
             self.camera = VideoFileSource(video_file)
 
@@ -478,7 +478,7 @@ class MovementRecordingExperiment(CameraExperiment):
 
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, calibrator=CircleCalibrator(), **kwargs)
+        super().__init__(*args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs)
 
         self.processing_params_queue = Queue()
         self.signal_start_rec = Event()
@@ -489,8 +489,8 @@ class MovementRecordingExperiment(CameraExperiment):
                                                       signal_start_rec=self.signal_start_rec,
                                                       processing_parameter_queue=self.processing_params_queue,
                                                       gui_framerate=30)
-        print(self.directory+'/out.mp4')
-        self.frame_recorder = VideoWriter(self.directory+'/out.mp4',
+
+        self.frame_recorder = VideoWriter(self.directory+"/video/",
                                           self.frame_dispatcher.output_queue,
                                           self.finished_signal)  # TODO proper filename
 
@@ -529,4 +529,5 @@ class MovementRecordingExperiment(CameraExperiment):
         """ Save tail position and dynamic parameters and terminate.
         """
         self.finished_signal.set()
+        self.frame_recorder.reset_signal.set()
         super().end_protocol(*args, **kwargs)

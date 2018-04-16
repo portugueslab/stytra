@@ -9,10 +9,11 @@ import param as pa
 import psutil
 from numba import jit
 
-from stytra.hardware.video import FrameProcessor
+from arrayqueues.processes import FrameProcessor
+from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 from stytra.tracking.tail import trace_tail_centroid,\
                                  trace_tail_angular_sweep
-from stytra.tracking.shared_arrays import ArrayQueue
+
 from stytra.collectors import HasPyQtGraphParams
 import math
 
@@ -87,8 +88,8 @@ class FrameDispatcher(FrameProcessor):
         super().__init__(**kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = ArrayQueue()  # GUI queue for displaying the image
-        self.output_queue = ArrayQueue()  # queue for processing output (e.g., pos)
+        self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
+        self.output_queue = Queue()  # queue for processing output (e.g., pos)
         self.processing_parameters = None
 
         self.finished_signal = finished_signal
@@ -125,7 +126,7 @@ class FrameDispatcher(FrameProcessor):
                             self.processing_parameter_queue.get(timeout=0.0001)
                         self.processing_function = \
                             self.dict_tracking_functions[
-                                self.processing_parameters.pop('function')]
+                                self.processing_parameters.get('function')]
 
                     except Empty:
                         pass
@@ -151,7 +152,7 @@ class FrameDispatcher(FrameProcessor):
         else:
             every_x = 1
         if self.i == 0:
-            self.gui_queue.put((None, frame))
+            self.gui_queue.put(frame)
         self.i = (self.i + 1) % every_x
 
 
@@ -165,9 +166,9 @@ class MovementDetectionParameters(HasPyQtGraphParams):
 
         standard_params_dict = dict(fish_threshold=50,
                                     motion_threshold_n_pix = 8,
-                                    frame_margin = 10,
-                                    n_previous_save = 400,
-                                    n_next_save = 300,
+                                    frame_margin=10,
+                                    n_previous_save=400,
+                                    n_next_save=300,
                                     show_thresholded = False)
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
@@ -198,9 +199,9 @@ def _compare_to_previous(current, previous):
 
 
 class MovingFrameDispatcher(FrameDispatcher):
-    def __init__(self, *args, signal_start_rec, **kwargs):
+    def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
         super().__init__(*args, **kwargs)
-        self.output_queue = ArrayQueue()
+        self.output_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
         self.diagnostic_queue = Queue()
 
