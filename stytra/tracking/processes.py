@@ -152,7 +152,7 @@ class FrameDispatcher(FrameProcessor):
         else:
             every_x = 1
         if self.i == 0:
-            self.gui_queue.put((None, frame))
+            self.gui_queue.put(frame)
         self.i = (self.i + 1) % every_x
 
 
@@ -199,9 +199,9 @@ def _compare_to_previous(current, previous):
 
 
 class MovingFrameDispatcher(FrameDispatcher):
-    def __init__(self, *args, signal_start_rec, **kwargs):
+    def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
         super().__init__(*args, **kwargs)
-        self.output_queue = ArrayQueue()
+        self.output_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
         self.diagnostic_queue = Queue()
 

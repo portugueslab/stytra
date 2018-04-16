@@ -41,7 +41,6 @@ class CameraViewWidget(QWidget):
         # Queue of frames coming from the camera
         if hasattr(experiment, 'frame_dispatcher'):
             self.frame_queue = self.experiment.frame_dispatcher.gui_queue
-            print('Got a gui_queue')
         else:
             self.frame_queue = self.camera.frame_queue
         # Queue of control parameters for the camera
