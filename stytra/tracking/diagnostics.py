@@ -146,3 +146,27 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x,
     cv2.circle(display, a_to_tc(points[-1]), circle_size, circle_color,
                thickness=circle_thickness)
     return display
+
+
+def draw_ellipse(im, e, c=None):
+    """ Draws provided ellipses on image copy
+    :param im: the image
+    :param e: the ellipses from fit_ellipse
+    :param c: colors in uint8 tuples (RGBA)
+    :return: new image with ellipses
+    """
+    imc = im.copy()
+
+    if c is None:
+        c = [(255, 0, 255, 255), (20, 255, 20, 255),
+             (20, 255, 20, 255), (20, 255, 20, 255)]
+
+    else:
+        assert len(e) == len(c), 'There are not as many colors as ellipses to be drawn!'
+
+    for i, eye in enumerate(e):
+        try:
+            cv2.ellipse(imc, eye, c[i], 1)
+        except cv2.error:
+            pass
+    return imc

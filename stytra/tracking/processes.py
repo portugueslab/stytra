@@ -79,7 +79,6 @@ class FrameDispatcher(FrameProcessor):
                         # TODO this is a bit baroque and required only to change
                         # tracking function during the experiment, do we really
                         # need this?
-                        print(self.processing_parameters)
                         self.processing_function = \
                             self.dict_tracking_functions[
                                 self.processing_parameters.pop('function')]

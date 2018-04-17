@@ -456,7 +456,7 @@ class EyeTrackingExperiment(TrackingExperiment):
         """
 
         tracking_method = ThresholdEyeTrackingMethod()
-        header_list = ['eye_1', 'eye_2']
+        header_list = ['', ]*4 + ['eye_1_th', ] + ['', ]*4 + ['eye_1_th', ]
 
         super().__init__(*args, tracking_method=tracking_method,
                          header_list=header_list,

@@ -75,9 +75,9 @@ class EyeTrackingMethod(FrameProcessingMethod):
                                               'type': 'list',
                                               'readonly': True},
                                     color_invert=True,
-                                    wnd_pos={'value': (0, 0),
+                                    wnd_pos={'value': (140, 200),
                                              'visible': False},
-                                    wnd_dim={'value': (50, 80),
+                                    wnd_dim={'value': (110, 60),
                                              'visible': False})
 
         for key, value in standard_params_dict.items():
@@ -89,7 +89,7 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
     """
     def __init__(self):
         super().__init__()
-        standard_params_dict = dict(threshold=dict(value=50,
+        standard_params_dict = dict(threshold=dict(value=64,
                                                    type='int',
                                                    limits=(0, 255)))
 

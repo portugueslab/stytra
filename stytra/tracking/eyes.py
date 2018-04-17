@@ -62,36 +62,40 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
     :param threshold: threshold for ellipse fitting (int).
     :return:
     """
-    PAD = 5
+    PAD = 0
 
-    print('cropping')
     cropped = _pad(im[wnd_pos[0]:wnd_pos[0] + wnd_dim[0],
                    wnd_pos[1]:wnd_pos[1] + wnd_dim[1]].copy(),
                    padding=PAD, val=255)
-    print(cropped)
 
     thresholded = (cropped < threshold).astype(np.uint8)
+    # print('padded_shape: {}'.format(thresholded.shape))
 
-    print('fitting...')
-    e = _fit_ellipse(thresholded)
+    try:
+        e = _fit_ellipse(thresholded)
+        if e is False:
+            print("I don't find eyes here...")
+            e = (np.nan,)*10
+        else:
+            # TODO I am sure there is a smarter way here...
+            e = e[0][0] + e[0][1] + (e[0][2],) + \
+                e[1][0] + e[1][1] + (e[1][2],)
+        # e = (32.980018615722656, 25.86171531677246, 14.079926490783691,
+        #      29.263633728027344, 99.96418762207031,
+        #      27.956050872802734, 78.79829406738281,
+        #      26.021833419799805, 39.332557678222656,
+        #      99.84758758544922)
 
+    except cv2.error:
+        print("I don't find eyes here...")
+        e = (np.nan,)*10
+    # print('padded_shape: {}'.format(thresholded.shape))
+    # print('Position: {}, size: {}'.format(wnd_pos, wnd_dim))
 
-def draw_ellipse(im, e, c=None):
-    """ Draws provided ellipses on image copy
-    :param im: the image
-    :param e: the ellipses from fit_ellipse
-    :param c: colors in uint8 tuples (RGBA)
-    :return: new image with ellipses
-    """
-    imc = im.copy()
+    #     # e = False
+    #
+    # if e is False:
+    #     print('Somethong wrong with eyes!')
+    #     e = [np.nan, np.nan]
 
-    if c is None:
-        c = [(255, 0, 255, 255), (20, 255, 20, 255), (20, 255, 20, 255), (20, 255, 20, 255)]
-
-    else:
-        assert len(e) == len(c), 'There are not as many colors as ellipses to be drawn!'
-
-    for i, eye in enumerate(e):
-        cv2.ellipse(imc, eye, c[i], 1)
-
-    return imc
+    return e

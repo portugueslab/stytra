@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
+from stytra.tracking.diagnostics import draw_ellipse
+
 from stytra.hardware.video import CameraControlParameters
 
 
@@ -206,10 +208,10 @@ class CameraTailSelection(CameraSelection):
         """
         super().update_image()
 
-        # Check for data to be displayied:
-        if len(self.experiment.data_acc_tailpoints.stored_data) > 1:
+        # Check for data to be displayed:
+        if len(self.experiment.data_acc.stored_data) > 1:
             # Retrieve tail angles from tail:
-            angles = self.experiment.data_acc_tailpoints.stored_data[-1][2:]
+            angles = self.experiment.data_acc.stored_data[-1][2:]
 
             # Get tail position and length from the parameters:
             start_x = self.track_params['tail_start'][1]
@@ -262,8 +264,8 @@ class CameraEyesSelection(CameraSelection):
     def set_pos_from_tree(self):
         """ Go to parent for definition.
         """
-        self.roi_eyes.setPos(self.track_params['wnd_pos'], finish=False)
-        self.roi_eyes.setSize(self.track_params['wnd_dim'])
+        self.roi.setPos(self.track_params['wnd_pos'], finish=False)
+        self.roi.setSize(self.track_params['wnd_dim'])
 
     def set_pos_from_roi(self):
         """ Go to parent for definition.
@@ -271,14 +273,31 @@ class CameraEyesSelection(CameraSelection):
         # Set values in the ParameterTree:
         with self.track_params.treeChangeBlocker():
             self.track_params.param('wnd_dim').setValue(tuple(
-                [int(p) for p in self.roi_eyes.size()]))
+                [int(p) for p in self.roi.size()]))
             self.track_params.param('wnd_pos').setValue(tuple(
-                [int(p) for p in self.roi_eyes.pos()]))
+                [int(p) for p in self.roi.pos()]))
 
     def update_image(self):
         """ Go to parent for definition.
         """
         super().update_image()
+        if len(self.experiment.data_acc.stored_data) > 1:
+            e = self.experiment.data_acc.stored_data[-1][1:]
+            im = self.current_image
+            if e[0] == e[0]:
+                pos = self.track_params['wnd_pos']
+                # im < self.track_params['threshold']).astype(np.uint8)
+                imc = draw_ellipse(im,
+                                   [((e[0]+pos[1], e[1]+pos[0]), tuple(e[2:4]), e[4]),
+                                    ((e[5]+pos[1], e[6]+pos[0]), tuple(e[7:9]), e[9])],
+                                   c=[(150, )*3, (150, )*3])
+
+                self.image_item.setImage(imc)
+
+                ### WHY THE ROIS ARE MOVING??????????????????????????
+                ### WHY THE ROIS ARE MOVING??????????????????????????
+                ### WHY THE ROIS ARE MOVING??????????????????????????
+                ### WHY THE ROIS ARE MOVING??????????????????????????
 
         # if len(self.experiment.data_acc_eyes_angles.stored_data) > 1:
         #     angles = self.experiment.data_acc_tailpoints.stored_data[-1][:2]

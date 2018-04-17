@@ -7,11 +7,6 @@ from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
 from stytra.stimulation.backgrounds import existing_file_background
 
-try:
-    from stytra.hardware.serial import PyboardConnection
-except ImportError:
-    print('Serial pyboard connection not installed')
-
 from itertools import product
 
 from bouter.angles import rot_mat
@@ -572,6 +567,7 @@ class ShockStimulus(Stimulus):
 
 
 if __name__ == '__main__':
+    from stytra.hardware.serial import PyboardConnection
     pyb = PyboardConnection(com_port='COM3')
     stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
                          pulse_n=10, pulse_dur_ms=5)

@@ -275,7 +275,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
-        self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
+        self.stream_plot.add_stream(self.experiment.data_acc,
                                     ['tail_sum'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
@@ -324,8 +324,8 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
-        # self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
-        #                             ['tail_sum'])
+        self.stream_plot.add_stream(self.experiment.data_acc,
+                                    ['eye_1_th', 'eye_1_th'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)
