@@ -1,27 +1,25 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QMainWindow,\
-    QWidget, QSplitter, QProgressBar
-import qdarkstyle
-
-import stytra.collectors
-from stytra.stimulation.stimuli import MovingSeamless
-from stytra.stimulation import ProtocolRunner
-from stytra.stimulation.backgrounds import noise_background, poisson_disk_background, existing_file_background
-import pandas as pd
-import numpy as np
-from stytra.gui import protocol_control, stimulus_display, camera_display
-import stytra.calibration as calibration
-import stytra.metadata as metadata
-from stytra.metadata.metalist_gui import MetaListGui
-from paramqt import ParameterGui
-from stytra.hardware.video import XimeaCamera, VideoWriter
-from stytra import MovingFrameDispatcher
-from stytra.tracking import FishTrackingProcess
-from multiprocessing import Queue, Event, SimpleQueue
-from queue import Empty
-from PyQt5.QtCore import QTimer
 import datetime
-import param as pa
+from multiprocessing import Queue, Event
+from queue import Empty
+
+import numpy as np
+import pandas as pd
+import qdarkstyle
+from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, \
+    QSplitter, QProgressBar
+from stytra.metadata.metalist_gui import MetaListGui
+
+import stytra.calibration as calibration
+import stytra.collectors
+import stytra.metadata as metadata
+from stytra import MovingFrameDispatcher
+from stytra.gui import protocol_control, camera_display
+from stytra.hardware.video import XimeaCamera, VideoWriter
+from stytra.stimulation import ProtocolRunner, stimulus_display
+from stytra.stimulation.backgrounds import existing_file_background
+from stytra.stimulation.stimuli import MovingSeamless
 
 
 def make_moving_protocol(n_vels=240*3, stim_duration=5,

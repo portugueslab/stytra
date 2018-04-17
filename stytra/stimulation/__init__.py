@@ -68,7 +68,9 @@ class ProtocolRunner(QObject):
             # Connect changes to protocol parameters to update function:
             self.protocol.params.sigTreeStateChanged.connect(
                 self.update_protocol)
+
             self.update_protocol()
+            # Why where we resetting here?
             self.reset()
 
     def update_protocol(self):
@@ -87,6 +89,26 @@ class ProtocolRunner(QObject):
         self.duration = self.get_duration()  # set new duration
 
         self.sig_protocol_updated.emit()
+
+    def reset(self):
+        """ Make the protocol ready to start again. Reset all ProtocolRunner
+        and stimuli timers and elapsed times.
+        """
+        self.t_start = None
+        self.t_end = None
+        self.completed = False
+        self.t = 0
+
+        for stimulus in self.stimuli:
+            stimulus._started = None
+            stimulus._elapsed = 0.0
+
+        self.i_current_stimulus = 0
+
+        if len(self.stimuli) > 0:
+            self.current_stimulus = self.stimuli[0]
+        else:
+            self.current_stimulus = None
 
     def start(self):
         """ Function for starting the protocol
@@ -175,25 +197,6 @@ class ProtocolRunner(QObject):
         if isinstance(self.current_stimulus, DynamicStimulus):
             self.dynamic_log.update_list((self.t,) + \
                 self.current_stimulus.get_dynamic_state())
-
-    def reset(self):
-        """ Make the protocol ready to start again. Reset all ProtocolRunner
-        and stimuli timers and elapsed times.
-        """
-        self.t_start = None
-        self.t_end = None
-        self.completed = False
-        self.t = 0
-        for stimulus in self.stimuli:
-            stimulus._started = None
-            stimulus._elapsed = 0.0
-
-        self.i_current_stimulus = 0
-
-        if len(self.stimuli) > 0:
-            self.current_stimulus = self.stimuli[0]
-        else:
-            self.current_stimulus = None
 
     def get_duration(self):
         """ Get total duration of the protocol.

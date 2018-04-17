@@ -1,27 +1,25 @@
+import datetime
 import inspect
 import os
 import sys
 import traceback
-import datetime
 from collections import OrderedDict
 from multiprocessing import Queue, Event
 
+import deepdish as dd
 import git
 import qdarkstyle
 import zmq
 from PyQt5.QtCore import QTimer, QObject
+
 from stytra.calibration import CrossCalibrator, CircleCalibrator
-
-from stytra.collectors import DataCollector, HasPyQtGraphParams,\
+from stytra.collectors import DataCollector, HasPyQtGraphParams, \
     GeneralMetadata, FishMetadata
-
 from stytra.dbconn import put_experiment_in_db, Slacker
-from stytra.gui.container_windows import SimpleExperimentWindow,\
+from stytra.gui.container_windows import SimpleExperimentWindow, \
     CameraExperimentWindow, TailTrackingExperimentWindow, \
     EyeTrackingExperimentWindow
 from stytra.hardware.video import CameraControlParameters
-from stytra.gui.stimulus_display import StimulusDisplayWindow
-
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
@@ -29,14 +27,12 @@ from stytra.stimulation import ProtocolRunner, protocols
 from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
+from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
     CentroidTrackingMethod
+from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
-
-import deepdish as dd
-import datetime
 
 
 def get_default_args(func):
@@ -90,9 +86,7 @@ class Experiment(QObject):
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
-
         self.directory = directory
-
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
@@ -124,6 +118,8 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
+        # TODO this could potentially be refactored in the
+        # ProjectorCalibratorWindow class
         # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator,
@@ -159,7 +155,7 @@ class Experiment(QObject):
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
-        so that for each experiment it is known what code was used to record it
+        so that for each experiment it is known what code was used to run it.
         """
 
         # Get program name and version and save to the metadata:
@@ -179,6 +175,9 @@ class Experiment(QObject):
                 'The project has to be committed before starting!')
 
     def show_stimulus_screen(self, full_screen=True):
+        """ Open window to display the visual stimulus and make it full-screen
+        if necessary.
+        """
         self.window_display.show()
         if full_screen:
             try:
@@ -188,6 +187,10 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
+        """ Start the protocol from the ProtocolRunner. Before that, send a
+        a notification and if required communicate with the microscope to
+        synchronize and read configuration.
+        """
         self.notifier.post_update("Experiment on setup " +
                                   self.metadata.params['setup_name'] +
                                   " started, it will finish in {}s, or at ".format(
@@ -209,7 +212,7 @@ class Experiment(QObject):
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
-        """ Function called at protocol end. Reset protocol, save
+        """ Function called at Protocol end. Reset Protocol, save
         metadata and put experiment data in pymongo database.
         """
         self.protocol_runner.end()
@@ -254,6 +257,8 @@ class Experiment(QObject):
                                       + str(clean_dict['general']['session_id']))
 
     def wrap_up(self, *args, **kwargs):
+        """ Clean up things before closing gui. Called by close button.
+        """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
@@ -263,6 +268,12 @@ class Experiment(QObject):
 
 
 class CameraExperiment(Experiment):
+    """ General class for Experiment that need to handle a camera.
+    It implements a view of frames from the camera in the control GUI, and the
+    respective parameters.
+    For debugging it can be used with a video read from file with the
+    VideoFileSource class.
+    """
     def __init__(self, *args, video_file=None, **kwargs):
         """
         :param video_file: if not using a camera, the video
@@ -316,13 +327,14 @@ class TrackingExperiment(CameraExperiment):
         - frame queue from the camera;
         - parameters queue from parameter window.
 
-    and it put data in three queues:
+    and it puts data in three queues:
         - subset of frames are dispatched to the GUI, for displaying;
         - all the frames, together with the parameters, are dispatched
           to perform tracking;
         - the result of the tracking function, is dispatched to a data
           accumulator for saving or other purposes (e.g. VR control).
     """
+
     def __init__(self, *args, tracking_method=None,
                  header_list=None, data_name=None, **kwargs):
         """

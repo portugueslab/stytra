@@ -1,25 +1,22 @@
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
-
-from stytra.stimulation.stimuli import Pause, MovingConstantly
-from stytra.stimulation import ProtocolRunner
-from stytra.gui.stimulus_display import StimulusDisplayWindow
-from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.triggering import ZmqLightsheetTrigger
-from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
-from stytra import DataCollector, FrameDispatcher
-from stytra.metadata.metalist_gui import MetaListGui
-from stytra.stimulation.backgrounds import gratings
-from stytra.tracking.tail import trace_tail_centroid
-from stytra.gui.plots import StreamingPlotWidget
-from stytra.gui.camera_display import CameraTailSelection
-from stytra.hardware.video import XimeaCamera, VideoFileSource
-from stytra.tracking import QueueDataAccumulator
-
-
 import multiprocessing
 
 import qdarkstyle
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
+from stytra.metadata.metalist_gui import MetaListGui
+
+from stytra import DataCollector, FrameDispatcher
+from stytra.gui.camera_display import CameraTailSelection
+from stytra.gui.plots import StreamingPlotWidget
+from stytra.gui.protocol_control import ProtocolControlWidget
+from stytra.hardware.video import XimeaCamera
+from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
+from stytra.stimulation import ProtocolRunner
+from stytra.stimulation.backgrounds import gratings
+from stytra.stimulation.stimuli import Pause, MovingConstantly
+from stytra.stimulation.stimulus_display import StimulusDisplayWindow
+from stytra.tracking import QueueDataAccumulator
+from stytra.tracking.tail import trace_tail_centroid
 
 
 class Experiment(QMainWindow):

@@ -45,8 +45,6 @@ class CameraViewWidget(QWidget):
 
         self.camera_display_widget.addItem(self.display_area)
 
-        # TODO I don't understand this duplicated queue
-        self.camera_queue = Queue()  # queue for camera frames
         # Queue of frames coming from the camera:
         self.frame_queue = self.camera.frame_queue
 
@@ -79,16 +77,21 @@ class CameraViewWidget(QWidget):
         self.control_queue.put(self.control_params.get_clean_values())
 
     def update_image(self):
+        """ Update displayed frame and empty frame source queue. This is done
+        through a while loop that takes all available frames at every update.
+        """
+
         first = True
         while True:
             try:
+                # In this way, the frame displayed is actually the first one
+                # in the queue:
                 if first:
                     time, self.current_image = self.frame_queue.get(
                         timeout=0.001)
                     first = False
                 else:
-                    # pass
-                    _, _ = self.camera_queue.get(timeout=0.001)
+                    _, _ = self.frame_queue.get(timeout=0.001)
 
                 if self.camera_rotation >= 1:
                     self.current_image = np.rot90(self.current_image,
@@ -96,6 +99,8 @@ class CameraViewWidget(QWidget):
 
             except Empty:
                 break
+
+        # Once obtained current image, display it:
         if self.current_image is not None:
             self.image_item.setImage(self.current_image)
 
