@@ -15,9 +15,12 @@ from stytra.hardware.video import CameraControlParameters
 
 
 class CameraViewWidget(QWidget):
+    """ A widget to show images from the camera and display the controls.
+    It does not implement a frame dispatcher so it may lag behind
+    the camera at high frame rates.
+    """
     def __init__(self, experiment):
-        """ A widget to show the camera and display the controls.
-
+        """
         :param experiment: experiment to which this belongs (Experiment class)
         """
 
@@ -28,22 +31,26 @@ class CameraViewWidget(QWidget):
 
         self.control_params = CameraControlParameters()
 
-        self.camera_queue = Queue()  # queue for camera frames
-
         # Create the layout for the camera view:
         self.camera_display_widget = pg.GraphicsLayoutWidget()
-        self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
-        self.camera_display_widget.addItem(self.display_area)
 
+        # Display area for showing the camera image:
+        self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.display_area.setRange(QRectF(0, 0, 640, 640), update=True,
                                    disableAutoRange=True)
+        # Image to which the frame will be set, initially black:
         self.image_item = pg.ImageItem()
         self.image_item.setImage(np.zeros((640, 480), dtype=np.uint8))
         self.display_area.addItem(self.image_item)
 
-        # Queue of frames coming from the camera
+        self.camera_display_widget.addItem(self.display_area)
+
+        # TODO I don't understand this duplicated queue
+        self.camera_queue = Queue()  # queue for camera frames
+        # Queue of frames coming from the camera:
         self.frame_queue = self.camera.frame_queue
-        # Queue of control parameters for the camera
+
+        # Queue of control parameters for the camera:
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
         experiment.gui_timer.timeout.connect(self.update_image)
@@ -80,6 +87,7 @@ class CameraViewWidget(QWidget):
                         timeout=0.001)
                     first = False
                 else:
+                    # pass
                     _, _ = self.camera_queue.get(timeout=0.001)
 
                 if self.camera_rotation >= 1:
@@ -112,6 +120,7 @@ class CameraSelection(CameraViewWidget):
     instead of directly from the camera, and for display ROIs that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).
+
     The changes of parameters  read through the ROI position are handled by
     via the track_params class, so they must have a corresponding entry in the
     definition of the FrameProcessingMethod of the tracking function.
@@ -160,8 +169,10 @@ class CameraSelection(CameraViewWidget):
 
 
 class CameraTailSelection(CameraSelection):
+    """ Widget for select tail pts and monitoring tracking in embedded fish.
+    """
     def __init__(self, experiment, **kwargs):
-        """ Widget for select tail pts and monitoring tracking in embedded fish.
+        """
         :param experiment:  experiment in which it is used.
 
         """
@@ -233,11 +244,11 @@ class CameraTailSelection(CameraSelection):
 
 
 class CameraEyesSelection(CameraSelection):
+    """ Widget for select tail pts and monitoring tracking in embedded fish.
+    """
     def __init__(self, experiment, **kwargs):
-        """ Widget for select tail pts and monitoring tracking in embedded fish.
-        :param tail_start_points_queue: queue where to dispatch tail points
-        :param tail_position_data: DataAccumulator object for tail pos data.
-        :param roi_dict: dictionary for setting default tail position
+        """
+        :param experiment:
         """
 
         super().__init__(experiment, **kwargs)

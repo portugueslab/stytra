@@ -64,6 +64,7 @@ def get_classes_from_module(input_module, parent_class):
 
 
 class Experiment(QObject):
+    """ General class that runs an experiment."""
     def __init__(self, directory,
                  calibrator=None,
                  app=None,
@@ -73,7 +74,7 @@ class Experiment(QObject):
                  shock_stimulus=False,
                  rec_stim_every=None,
                  notifier='slack'):
-        """General class for running experiments
+        """
         :param directory: data for saving options and data
         :param calibrator:
         :param app: app: a QApplication in which to run the experiment
@@ -305,28 +306,32 @@ class CameraExperiment(Experiment):
 
 
 class TrackingExperiment(CameraExperiment):
+    """ Abstract class for an experiment which contains tracking,
+    base for any experiment that tracks behaviour (being it eyes, tail,
+    or anything else).
+    The general purpose of the class is handle a frame dispatcher,
+    the relative parameters queue and the output queue.
+
+    The frame dispatcher take two input queues:
+        - frame queue from the camera;
+        - parameters queue from parameter window.
+
+    and it put data in three queues:
+        - subset of frames are dispatched to the GUI, for displaying;
+        - all the frames, together with the parameters, are dispatched
+          to perform tracking;
+        - the result of the tracking function, is dispatched to a data
+          accumulator for saving or other purposes (e.g. VR control).
+    """
     def __init__(self, *args, tracking_method=None,
                  header_list=None, data_name=None, **kwargs):
-        """ An experiment which contains tracking, base for any experiment that
-        tracks behaviour (beoing it eyes, tail, or anything else).
-        The general purpose of the class is handle a frame dispatcher,
-        the relative parameters queue and the output queue.
-
-        The frame dispatcher take two input queues:
-            - frame queue from the camera;
-            - parameters queue from parameter window.
-
-        and it put data in three queues:
-            - subset of frames are dispatched to the GUI, for displaying;
-            - all the frames, together with the parameters, are dispatched
-              to perform tracking;
-            - the result of the tracking function, is dispatched to a data
-              accumulator for saving or other purposes (e.g. VR control).
-
+        """
         :param tracking_method: class with the parameters for tracking (instance
-                                of TrackingMethod class);
-        :param header_list: headers for the data accumulator (list of strings);
-        :param data_name:  name of the data in the final experiment log.
+                                of TrackingMethod class, defined in the child);
+        :param header_list: headers for the data accumulator (list of strings,
+                            defined in the child);
+        :param data_name:  name of the data in the final experiment log (defined
+                           in the child).
         """
 
         self.processing_params_queue = Queue()
@@ -376,7 +381,7 @@ class TrackingExperiment(CameraExperiment):
     def start_protocol(self):
         """ Reset data accumulator when starting the protocol.
         """
-        # TODO camera queue should be emptied to avoid accumulation of frames
+        # TODO camera queue should be emptied to avoid accumulation of frames!!
         # when waiting for the microscope!
         super().start_protocol()
         self.data_acc.reset()
@@ -414,10 +419,10 @@ class TrackingExperiment(CameraExperiment):
 
 
 class TailTrackingExperiment(TrackingExperiment):
+    """ An experiment which contains tail tracking,
+    base for experiments that  employs closed loops.
+    """
     def __init__(self, *args, **kwargs):
-        """ An experiment which contains tail tracking,
-        base for experiments that  employs closed loops.
-        """
 
         tracking_method = CentroidTrackingMethod()
         header_list = ['tail_sum'] + ['theta_{:02}'.format(i)

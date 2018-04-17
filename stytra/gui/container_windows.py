@@ -37,7 +37,6 @@ class DebugLabel(QLabel):
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """ Widget that displays the whole projector screen and allows to
     set the stimulus display window
-
     """
     def __init__(self, *args, display_size=(1280, 800), params_roi, **kwargs):
         super().__init__(*args, **kwargs)
@@ -195,7 +194,6 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win.layout().addWidget(self.experiment.fish_metadata.show_metadata_gui())
         self.metadata_win.show()
 
-
     def construct_ui(self):
         central_widget = QWidget()
         central_widget.setLayout(QVBoxLayout())
@@ -295,10 +293,10 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
 
 class EyeTrackingExperimentWindow(SimpleExperimentWindow):
+    """ Window for controlling an experiment where the tail and the eyes
+    of an embedded fish are tracked.
+    """
     def __init__(self,  *args, **kwargs):
-        """ Window for controlling an experiment where the tail and the eyes
-        of an embedded fish are tracked.
-        """
         self.camera_display = CameraEyesSelection(kwargs['experiment'])
 
         self.camera_splitter = QSplitter(Qt.Horizontal)

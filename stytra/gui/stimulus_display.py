@@ -8,13 +8,15 @@ import numpy as np
 import qimage2ndarray
 
 
+# TODO this entire module should be moved to the stimulation
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
+    """ Make a display window for a visual simulation protocol,
+    with a display area that can be controlled and changed from a
+    ProtocolControlWindow.
+    """
     def __init__(self, protocol_runner, calibrator,
                  record_stim_every=10, **kwargs):
-        """ Make a display window for a visual simulation protocol,
-        with a display area that can be controlled and changed from a
-        ProtocolControlWindow.
-
+        """
         :param protocol_runner:
         :param calibrator:
         :param record_stim_every:
@@ -25,6 +27,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
+
         if record_stim_every is not None:
             QWidgetClass = QWidget
         else:

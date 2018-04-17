@@ -12,9 +12,15 @@ from itertools import product
 from bouter.angles import rot_mat
 
 class Stimulus:
-    """ General class for a stimulus."""
+    """ General class for a stimulus. Each stimulus can act through two
+    functions:
+     - start(): the start function of a stimulus is called when the
+                ProtocolRunner sets it as the new stimulus. It can for example
+                trigger external events (e.g., activate a Pyboard)
+     - paint(): the paint function is called by the StimulusDispla
+    """
     def __init__(self, duration=0.0, clip_rect=None):
-        """ Make a stimulus, with the basic properties common to all stimuli
+        """ Make a stimulus, with the basic properties common to all stimuli.
         Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
@@ -45,8 +51,10 @@ class Stimulus:
         pass
 
     def initialise_external(self, experiment):
-        """ Functions that initiate each stimulus,
-        gets around problems with copying
+        """ Make a reference to the Experiment class inside the Stimulus.
+        This is required to access from inside the Stimulus class to the
+        Calibrator, the Pyboard, the asset directories with movies or the motor
+        estimator for virtual reality.
 
         :param experiment: the experiment object to which link the stimulus
         :return: None
@@ -236,7 +244,6 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        print(self._experiment.asset_dir)
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(

@@ -58,10 +58,13 @@ class VideoSource(FrameProcessor):
     def __init__(self, max_frames_in_queue=500):
         super().__init__()
         self.rotation = 0
+        # TODO refactor! Control queue should be defined at the source
         self.control_queue = Queue()
         self.frame_queue = Queue(maxsize=max_frames_in_queue)
         self.kill_signal = Event()
 
+
+#TODO add a general camera class
 
 class XimeaCamera(VideoSource):
     def __init__(self, downsampling=4,
