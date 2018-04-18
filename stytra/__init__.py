@@ -34,6 +34,8 @@ from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
+from requests.exceptions import ConnectionError
+
 
 def get_default_args(func):
     """ Find default arguments of functions
@@ -110,9 +112,8 @@ class Experiment(QObject):
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
 
         if self.last_protocol is not None:
-            ProtocolClass = self.prot_class_dict[self.last_protocol]
             self.protocol_runner = ProtocolRunner(experiment=self,
-                                                  protocol=ProtocolClass())
+                                                  protocol=self.last_protocol)
         else:
             self.protocol_runner = ProtocolRunner(experiment=self)
 
@@ -191,7 +192,9 @@ class Experiment(QObject):
         a notification and if required communicate with the microscope to
         synchronize and read configuration.
         """
-        self.notifier.post_update("Experiment on setup " +
+        if self.notifier is not None and not self.debug_mode:
+            try:
+                self.notifier.post_update("Experiment on setup " +
                                   self.metadata.params['setup_name'] +
                                   " started, it will finish in {}s, or at ".format(
                                       self.protocol_runner.duration) +
@@ -199,6 +202,9 @@ class Experiment(QObject):
                                       seconds=self.protocol_runner.duration)).strftime(
                                       "%H:%M:%S")
                                   )
+
+            except ConnectionError:
+                print('No internet connection, disabled notifications...')
 
         if self.scope_triggered and self.window_main.chk_scope.isChecked():
             self.lightsheet_config = self.zmq_socket.recv_json()
@@ -245,16 +251,19 @@ class Experiment(QObject):
         self.protocol_runner.reset()
 
         # Send notification of experiment end:
-        if self.notifier is not None:
-            self.notifier.post_update("Experiment on setup " +
+        if self.notifier is not None and not self.debug_mode:
+            try:
+                self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
                                       " is finished running the " +
                                       clean_dict['stimulus']['protocol_params']['name']
                                       +" :birthday:")
-            self.notifier.post_update("It was :tropical_fish: " +
+                self.notifier.post_update("It was :tropical_fish: " +
                                       str(clean_dict['fish']['id']) +
                                       " of the day, session "
                                       + str(clean_dict['general']['session_id']))
+            except ConnectionError:
+                pass
 
     def wrap_up(self, *args, **kwargs):
         """ Clean up things before closing gui. Called by close button.

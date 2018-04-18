@@ -30,18 +30,23 @@ class HasPyQtGraphParams(object):
         # overwrite branches of the parameter tree. If not passed,
         # children class name will be used.
 
-        with self._params.treeChangeBlocker():
-            if name is None:
-                name = self.__class__.__name__
-            self.params = Parameter.create(name=name,
-                                           type='group')
+        if name is None:
+            name = self.__class__.__name__
 
-            existing_children = self._params.children()
+        self.params = Parameter.create(name=name,
+                                       type='group')
 
-            for child in existing_children:
-                if child.name() == name:
-                    self._params.removeChild(child)
-            self._params.addChild(self.params)
+        existing_children = self._params.children()
+
+        # WARNING!!
+        # Here there can be undesired emissions of the StateChanged signal!
+        # If you are removing a child params, it will emit a signal you have
+        # to block.
+        for child in existing_children:
+            if child.name() == name:
+                self._params.removeChild(child)
+
+        self._params.addChild(self.params)
 
     def set_new_param(self, name, value, get_var_type=True):
         """ Easy set for new parameters

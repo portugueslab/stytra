@@ -58,19 +58,30 @@ class ProtocolRunner(QObject):
         self.log_print = log_print
         self.running = False
 
-    def set_new_protocol(self, protocol):
+    def set_new_protocol(self, protocol_name):
         """ Set input protocol
-        :param protocol: Protocol object
+        :param protocol: protocol name from the GUI
         """
-        if protocol is not None:
+        # If there was a protocol before, block params signal to avoid duplicate
+        # call of the ProtocolRunner update_protocol function.
+        # Otherwise it would be called by the change of the params three caused
+        # by its deletion from the  _params called in the Protocol __init__().
+        # For some reason with params.treeChangeBlocker() is not working.
+        if protocol_name is not None:
+            if self.protocol is not None:
+                self.protocol.params.blockSignals(True)
+            ProtocolClass = self.experiment.prot_class_dict[protocol_name]
+            protocol = ProtocolClass()
+
             self.protocol = protocol
-            # if self.experiment
+
+            self.update_protocol()
+
             # Connect changes to protocol parameters to update function:
             self.protocol.params.sigTreeStateChanged.connect(
                 self.update_protocol)
 
-            self.update_protocol()
-            # Why where we resetting here?
+            # Why were we resetting here?
             self.reset()
 
     def update_protocol(self):

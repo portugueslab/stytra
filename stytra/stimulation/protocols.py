@@ -35,10 +35,7 @@ class Protocol(HasPyQtGraphParams):
     def __init__(self):
         """Add standard parameters common to all kind of protocols.
         """
-        print('init')
-        ### SOMETHING WRONG HERE!
         super().__init__(name='stimulus_protocol_params')
-        print('finished super init')
 
         # Pre- and post- pause will be periods with a Pause stimulus before
         # and after the entire sequence of n repetitions of the stimulus.
@@ -52,7 +49,6 @@ class Protocol(HasPyQtGraphParams):
 
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
-
 
     def get_stimulus_list(self):
         """ Generate protocol from specified parameters. Called by the

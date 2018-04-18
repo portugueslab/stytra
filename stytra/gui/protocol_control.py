@@ -1,7 +1,7 @@
-from PyQt5.QtCore import QRectF, pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
-    QWidget, QLayout, QComboBox, \
-     QProgressBar, QLabel, QSplitter
+    QWidget, QComboBox, \
+     QProgressBar
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -81,7 +81,7 @@ class ProtocolControlWidget(QWidget):
         self.protocol_runner.sig_protocol_updated.connect(
             self.update_stim_duration)
         self.protocol_runner.sig_timestep.connect(self.update_progress)
-        self.combo_prot.currentIndexChanged.connect(self.set_prot_from_dropdown)
+        self.combo_prot.currentIndexChanged.connect(self.set_protocol)
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
@@ -120,21 +120,21 @@ class ProtocolControlWidget(QWidget):
     def protocol_changed(self):
         self.progress_bar.setValue(0)
 
-    def set_protocol(self, Protclass):
+    def set_protocol(self): #, prot_name=None):
         """Use dropdown menu to change the protocol.
         """
-        print('duedaqua')
-        protocol = Protclass()
-        print('duequa')
-        self.protocol_runner.set_new_protocol(protocol)
-        print('duequi')
-        self.button_toggle_prot.setEnabled(True)
-        self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
 
-    def set_prot_from_dropdown(self):
-        Protclass = self.experiment.prot_class_dict[
-            self.combo_prot.currentText()]
-        self.set_protocol(Protclass)
+        #if prot_name is None:
+        self.protocol_runner.set_new_protocol(self.combo_prot.currentText())
+        #else:
+        #    self.protocol_runner.set_new_protocol(prot_name)
+        self.button_toggle_prot.setEnabled(True)
+        # self.protocol_params_tree.setParameters(self.protocol_runner.protocol.params)
+
+    # def set_prot_from_dropdown(self):
+    #     Protclass = self.experiment.prot_class_dict[
+    #         self.combo_prot.currentText()]
+    #     self.set_protocol(Protclass)
 
 
 # class TrackingMethodDropdown(QComboBox):
