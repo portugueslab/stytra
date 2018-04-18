@@ -80,6 +80,9 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         """ Called when ROI position values are changed in the displayed ROI.
         Change the position in the ParameterTree values.
         """
+
+        # the treeChangeBlocker send a single signal at the end of all the
+        # changes:
         with self.params_roi.treeChangeBlocker():
             self.params_roi.param('size').setValue(tuple(
                 [int(p) for p in self.roi_box.size()]))

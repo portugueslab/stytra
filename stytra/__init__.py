@@ -119,15 +119,12 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        # TODO this could potentially be refactored in the
-        # ProjectorCalibratorWindow class
-        # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator,
                                                     record_stim_every=rec_stim_every)
 
         self.scope_triggered = scope_triggered
-        # This has to happen  or version will also be reset to last value:
+        # This has to happen here or version will also be reset to last value:
         if not self.debug_mode:
             self.check_if_committed()
 
@@ -152,7 +149,12 @@ class Experiment(QObject):
         self.window_main.show()
 
     def initialize_metadata(self):
+        # When restoring here metadata to previous values, there may be
+        # multiple (one per parameter), calls of functions connected to
+        # a change in the params three state.
+        # See comment in DataCollector.restore_from_saved()
         self.dc.add_data_source(self.metadata)
+        # self.protocol_runner.protocol.params.blockSignals(False)
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,

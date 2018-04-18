@@ -286,7 +286,12 @@ class DataCollector:
 
     def restore_from_saved(self):
         if self.last_metadata is not None:
-            self.static_metadata._params.restoreState(self.last_metadata)
+            # Here using the restoreState of the _params for some reason do not
+            # block signals from restoring the values of children. This means
+            # that functions connected to the treeStateChange of the params of
+            # HasPyQtGraphParams instances may be called multiple times.
+            self.static_metadata._params.restoreState(self.last_metadata,
+                                                      blockSignals=True)
 
     def add_data_source(self, entry, name='unspecified_entry'):
         """

@@ -66,7 +66,6 @@ class ProtocolRunner(QObject):
         # call of the ProtocolRunner update_protocol function.
         # Otherwise it would be called by the change of the params three caused
         # by its deletion from the  _params called in the Protocol __init__().
-        # For some reason with params.treeChangeBlocker() is not working.
         if protocol_name is not None:
             if self.protocol is not None:
                 self.protocol.params.blockSignals(True)
@@ -80,6 +79,7 @@ class ProtocolRunner(QObject):
             # Connect changes to protocol parameters to update function:
             self.protocol.params.sigTreeStateChanged.connect(
                 self.update_protocol)
+
 
             # Why were we resetting here?
             self.reset()
