@@ -6,6 +6,8 @@
 Welcome to Stytra's documentation!
 ==================================
 
+Stytra is a package to build and run behavioural experiments
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
