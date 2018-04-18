@@ -100,9 +100,9 @@ class Experiment(QMainWindow):
 
         self.dc = stytra.collectors.DataCollector(folder_path=experiment_folder)
 
-        self.dc.add_data_source(fish_data)
-        self.dc.add_data_source(general_data)
-        self.dc.add_data_source(self.camera_parameters, use_last_val=True)
+        self.dc.add_static_data(fish_data)
+        self.dc.add_static_data(general_data)
+        self.dc.add_static_data(self.camera_parameters, use_last_val=True)
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
@@ -166,7 +166,7 @@ class Experiment(QMainWindow):
         self.win_stim_disp.show()
         self.win_stim_disp.windowHandle().setScreen(app.screens()[1])
         self.win_stim_disp.showFullScreen()
-        self.dc.add_data_source('stimulus', 'display_params',
+        self.dc.add_static_data('stimulus', 'display_params',
                                 self.win_stim_disp.params)
         self.win_stim_disp.update_display_params()
         self.win_control.reset_ROI()
@@ -176,12 +176,12 @@ class Experiment(QMainWindow):
         self.stimulus_data = dict(background=bg, motion=motion)
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.win_control.button_calibrate.clicked.connect(self.calibrate)
-        self.dc.add_data_source('stimulus', 'image_file', self.im_filename)
-        self.dc.add_data_source('stimulus', 'protocol', self.stimulus_data, use_last_val=False)
-        self.dc.add_data_source('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
-        self.dc.add_data_source('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
-        self.dc.add_data_source('stimulus', 'calibration_points', self.calibrator, 'points')
-        self.dc.add_data_source('behaviour', 'video_file', vidfile)
+        self.dc.add_static_data('stimulus', 'image_file', self.im_filename)
+        self.dc.add_static_data('stimulus', 'protocol', self.stimulus_data, use_last_val=False)
+        self.dc.add_static_data('stimulus', 'calibration_to_cam', self.calibrator, 'proj_to_cam')
+        self.dc.add_static_data('stimulus', 'calibration_to_proj', self.calibrator, 'cam_to_proj')
+        self.dc.add_static_data('stimulus', 'calibration_points', self.calibrator, 'points')
+        self.dc.add_static_data('behaviour', 'video_file', vidfile)
 
         self.protocol.sig_protocol_started.connect(self.start_rec_sig.set)
         self.protocol.sig_protocol_finished.connect(self.start_rec_sig.clear)
@@ -242,7 +242,7 @@ class Experiment(QMainWindow):
 
         timedata = np.array(timedata)
         print('{} breaks '.format(len(timedata)))
-        self.dc.add_data_source('behaviour', 'frame_times', timedata)
+        self.dc.add_static_data('behaviour', 'frame_times', timedata)
         self.dc.save(self.expid)
 
         self.recorder.join(timeout=600)

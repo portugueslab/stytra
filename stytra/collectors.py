@@ -13,12 +13,25 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 from stytra.dbconn import sanitize_item
 
 
+from pyqtgraph.pgcollections import OrderedDict
+
+
+def strip_values(it):
+    if isinstance(it, OrderedDict) or isinstance(it, dict):
+        new_dict = dict()
+        for key, value in it.items():
+            if not key == 'value':
+                new_dict[key] = strip_values(value)
+        return new_dict
+    else:
+        return it
+
+
 class HasPyQtGraphParams(object):
     """
-    This class is used to have a number of objects which
-    constitute the experiment interfaces and protocols sharing a global
-    pyqtgraph Parameter object that will be used for saving metadata and
-    restoring the app to the last used data.
+    This class is used to have a number of objects (experiment interfaces and
+    protocols) sharing a global pyqtgraph Parameter object that will be used
+    for saving metadata and restoring the app to the last used state.
     _params is a class attribute and is shared among all subclasses; each
     subclass will have an alias, params, providing access to its private
     parameters.
@@ -26,9 +39,12 @@ class HasPyQtGraphParams(object):
     _params = Parameter.create(name='global_params', type='group')
 
     def __init__(self, name=None):
-        # Here passing the name for the new branch allows the user to easily
-        # overwrite branches of the parameter tree. If not passed,
-        # children class name will be used.
+        """ Create the params of the instance and add it to the global _params
+        of the class. If the name passed already exists in the tree, it will be
+        overwritten.
+        :param name: Name for the tree branch where this parameters are stored.
+                     If nothing is passed, child class name will be used.
+        """
 
         if name is None:
             name = self.__class__.__name__
@@ -49,7 +65,7 @@ class HasPyQtGraphParams(object):
         self._params.addChild(self.params)
 
     def set_new_param(self, name, value, get_var_type=True):
-        """ Easy set for new parameters
+        """ Easy set for new parameters.
         :param name: name of new parameter
         :param value: either a value entry or a dictionary of valid keys
                       for a parameter (e.g. type, visible, editable, etc.)
@@ -109,7 +125,8 @@ class GeneralMetadata(GuiMetadata):
                             'Luigi Petrucco',
                             'Ruben Portugues',
                             'Vilim Stih',
-                            'Tugce Yildizoglu'],
+                            'Tugce Yildizoglu',
+                            'Ot Prat'],
                  },
                 {'name': 'setup_name',  'type': 'list',
                  'values': ['2p',
@@ -209,9 +226,8 @@ class Accumulator:
 
 
 def metadata_dataframe(metadata_dict, time_step=0.005):
-    """
-    Function for converting a metadata dictionary into a pandas dataframe
-    for saving
+    """ Function for converting a metadata dictionary into a pandas DataFrame
+    for saving.
     :param metadata_dict: metadata dictionary (containing stimulus log!)
     :param time_step: time step (used only if tracking is not present!)
     :return: a pandas DataFrame with a 'stimulus' column for the stimulus
@@ -253,12 +269,46 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 
 class DataCollector:
+    """ Class for saving all data and metadata produced during an experiment.
+    There are two kind of data that are collected:
+     - Metadata/parameters: values that should restored from previous
+                            sessions.
+                            These values don't have to be explicitely added.
+                            they are automatically read from all the objects
+                            in the stytra Experiment process which are
+                            instances of HasPyQtGraphParams.
+     - Static data:         (tail tracking, stimulus log...), that should not
+                            be restored. Those have to be added one by one
+                            via the add_data_source() method.
+
+    Inputs from both types of sources are eventually saved in the .json file
+    containing all the information from the experiment.
+    In this file data are divided into fixed categories:
+     - general:    info about the experiment (date, setup, session...)
+     - fish:       info about the fish (line, age, etc.)
+     - stimulus:   info about the stimulation (stimuli log, screen
+                   dimensions, etc.)
+     - imaging:    info about the connected microscope, if present
+     - behaviour:  info about fish behaviour (tail log...)
+     - camera:     parameters of the camera for behaviour, if one is present
+     - tracking:   parameters for tracking
+    See documentation of the clean_data_dict() method for a description
+    of conventions for dividing the entries among the categories.
+    In the future this function may structure its output in other standard
+    formats for scientific data (e.g., NWB).
+
+    In addition to the .json file, metadata and parameters from
+    HasPyQtGraphParams objects are stored in a config.h5 file (located in the
+    experiment directory) which is used for restoring the last configuration
+    of the GUI and of the experiment parameters.
+    """
+
     def __init__(self, *data_tuples_list, folder_path='./'):
-        """ It accept static data in a HasPyQtGraph class, which will be
+        """ It accepts static data in a HasPyQtGraph class, which will be
         restored to the last values, or dynamic data like tail tracking or
         stimulus log that will not be restored.
         :param data_tuples_list: tuple of data to be added
-        :param folder_path: destination for the final HDF5 object
+        :param folder_path: destination for the final .json file
         """
 
         # Check validity of directory:
@@ -279,53 +329,81 @@ class DataCollector:
                 dd.io.load(folder_path + list_metadata[-1])
 
         self.log_data_dict = dict()
-        self.static_metadata = None
+        self.params_metadata = None
         # Add all the data tuples provided upon instantiation:
         for data_element in data_tuples_list:
-            self.add_data_source(*data_element)
+            self.add_static_data(*data_element)
 
     def restore_from_saved(self):
+        """ If a config.h5 file is available, use the data there to
+        restore the state of the HasPyQtGraph._params tree to last
+        session values.
+        Before, we make sure that the dictionary that we try to restore
+        differs from our parameter structure only in the values.
+        Without this control, changing any of the parameters in the code
+        could result in bugs and headaches due to the change of the values
+        from a config.h5 file from the previous program version.
+        """
         if self.last_metadata is not None:
-            # Here using the restoreState of the _params for some reason do not
-            # block signals from restoring the values of children. This means
-            # that functions connected to the treeStateChange of the params of
-            # HasPyQtGraphParams instances may be called multiple times.
-            self.static_metadata._params.restoreState(self.last_metadata,
-                                                      blockSignals=True)
+            # Make clean dictionaries without the values:
+            current_dict = strip_values(self.params_metadata.saveState())
+            prev_dict = strip_values(self.last_metadata)
 
-    def add_data_source(self, entry, name='unspecified_entry'):
+            # Restore only if equal:
+            if current_dict == prev_dict:
+                self.params_metadata.restoreState(self.last_metadata,
+                                                  blockSignals=True)
+                # Here using the restoreState of the _params for some reason
+                #  does not block signals coming from restoring the values
+                # of its params children.
+                # This means that functions connected to the treeStateChange
+                # of the params of HasPyQtGraphParams instances may be called
+                # multiple times.
+
+    def add_params(self, params_tree):
+        """ Add the params tree that will be used for reading and restoring
+        the parameters from the previous session.
+        It should be the HasPyQtGraph._params tree for it to
+        contain all the params branches in all the different experiment objects.
         """
-        Function for adding new data sources. entry can fall under two cases:
-            - Metadata object: will be used to get all the parameters from
-                               HasPyQtGraphParams children
-            - Log data, for stimulus log or tail tracking, or in general
-                        inputs that are not reset from saved data
-        """
-
-        # If true, use the last values used for this parameter
-        if isinstance(entry, HasPyQtGraphParams):
-            self.static_metadata = entry
-            self.restore_from_saved()
-
+        if isinstance(params_tree, Parameter):
+            self.params_metadata = params_tree;
+            #self.restore_from_saved()  # restoring is called by experiment
+            # at a different time!
         else:
-            self.log_data_dict[name] = entry
+            print('Invalid params source passed!')
 
-    def get_full_dict(self):
-        data_dict = dict()
-        data_dict['log_data'] = self.log_data_dict
-        data_dict['static_metadata'] = self.static_metadata._params.saveState()
-        return data_dict
+    def add_static_data(self, entry, name='unspecified_entry'):
+        """ Add new data to the dictionary.
+        :param entry: data that will be stored;
+        :param name: name in the dictionary. It should start with "category_",
+                     where "category" should be one of the possible keys
+                     of the dictionary produced in get_clean_dict().
+        """
+        self.log_data_dict[name] = entry
 
     def get_clean_dict(self, paramstree=True, eliminate_df=False,
                        convert_datetime=False):
+        """ Collect data from all sources and put them together in
+        the final hierarchical dictionary that will be saved in the .json file.
+        The first level in the dictionary is fixed and defined by the keys
+        of the clean_data_dict that will be returned. data from all sources
+        are divided in these categories according to the key preceding the
+        underscore in their name (e.g., value of general_db_idx will be put in
+        ['general']['db_idx']).
+        :param paramstree: see sanitize_item docs;
+        :param eliminate_df: see sanitize_item docs;
+        :param convert_datetime: see sanitize_item docs;
+        :return: dictionary with the sorted data.
+        """
         clean_data_dict = dict(fish={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
 
-        # Static metadata:
-        value_dict = deepcopy(self.static_metadata._params.getValues())
+        # Params metadata:
+        value_dict = deepcopy(self.params_metadata.getValues())
 
-        # Logs:
+        # Static data dictionary:
         value_dict.update(deepcopy(self.log_data_dict))
 
         for key in value_dict.keys():
@@ -344,24 +422,34 @@ class DataCollector:
 
         return clean_data_dict
 
-    def get_last(self, class_param_key):
+    def get_last_value(self, class_param_key):
+        """ Get the last saved value for a specific class_param_key.
+        """
         if self.last_metadata is not None:
-            # TODO This is atrocious.
-            return self.last_metadata['children'][class_param_key]['children']['name']['value']
+            # This syntax is horrible but apparently necessary to scan through
+            # the dictionary saved by pyqtgraph.Parameter.saveState().
+            return self.last_metadata['children'][
+                class_param_key]['children']['name']['value']
         else:
             return None
 
-    def save_config(self):
-        data_dict = deepcopy(self.get_full_dict())
-        dd.io.save(self.folder_path + 'config.h5', data_dict['static_metadata'])
+    def save_config_file(self):
+        """ Save the config.h5 file with the current state of the params
+        metadata.
+        """
+        dd.io.save(self.folder_path + 'config.h5',
+                   self.params_metadata.saveState())
 
-    def save_log(self,  timestamp=None,):
+    def save_json_log(self, timestamp=None):
+        """ Save the .json file with all the data from both static sources
+        and the updated params.
+        :param timestamp:
+        """
         clean_dict = self.get_clean_dict(convert_datetime=True)
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        print(str(clean_dict['fish']))
         fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + str(clean_dict['fish']['id'])
         dirname = '/'.join([self.folder_path,
                    clean_dict['stimulus']['protocol_params']['name'],
@@ -375,10 +463,8 @@ class DataCollector:
                       outfile, sort_keys=True)
 
     def save(self, timestamp=None):
-        """
-        Save the HDF5 file considering the current value of all the entries
-        of the class
+        """ Save both the metadata.json log and the config.h5 file
         """
 
-        self.save_log(timestamp)
-        self.save_config()
+        self.save_json_log(timestamp)
+        self.save_config_file()

@@ -49,7 +49,7 @@ class Experiment(QMainWindow):
         self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
                                             self.camera_data, folder_path=self.experiment_folder,
                                             use_last_val=True)
-        self.data_collector.add_data_source('tracking', self.roi_dict)
+        self.data_collector.add_static_data('tracking', self.roi_dict)
 
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
@@ -127,12 +127,12 @@ class Experiment(QMainWindow):
 
         # Metadata window and data collector for saving experiment data:
 
-        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-        self.data_collector.add_data_source('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state,
+        self.data_collector.add_static_data('stimulus', 'log', self.protocol.log)
+        self.data_collector.add_static_data('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state,
                                             'pos')
-        self.data_collector.add_data_source('stimulus', 'window_size',
+        self.data_collector.add_static_data('stimulus', 'window_size',
                                             self.win_control.widget_view.roi_box.state, 'size')
-        self.data_collector.add_data_source('camera', 'fish_pos', self.camera_viewer.roi_dict)
+        self.data_collector.add_static_data('camera', 'fish_pos', self.camera_viewer.roi_dict)
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.protocol.sig_protocol_finished.connect(self.data_collector.save)
@@ -171,9 +171,9 @@ class Experiment(QMainWindow):
 
         self.dataframe = self.data_acc_tailpoints.get_dataframe()
 
-        self.data_collector.add_data_source('behaviour', 'tail_tracking',
+        self.data_collector.add_static_data('behaviour', 'tail_tracking',
                                             self.dataframe)
-        self.data_collector.add_data_source('behaviour', 'tail_tracking_start',
+        self.data_collector.add_static_data('behaviour', 'tail_tracking_start',
                                             self.data_acc_tailpoints.starting_time)
 
         self.data_collector.save()

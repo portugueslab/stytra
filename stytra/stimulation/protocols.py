@@ -106,7 +106,8 @@ class FlashProtocol(Protocol):
         super().__init__()
 
         standard_params_dict = {'period_sec': 5.,
-                                'flash_duration': 2.}
+                                'flash_duration': 2., #,
+                                'pino': 3}
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -115,8 +116,8 @@ class FlashProtocol(Protocol):
         stimuli = []
 
         stimuli.append(Pause(duration=self.params['period_sec'] - \
-                                      self.params['flash_duration']))
-        stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                      3))  # self.params['flash_duration']))
+        stimuli.append(FullFieldPainterStimulus(duration=5, # self.params['flash_duration'],
                                                 color=(255, 255, 255)))
 
         return stimuli

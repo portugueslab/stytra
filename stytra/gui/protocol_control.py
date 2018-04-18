@@ -108,6 +108,7 @@ class ProtocolControlWidget(QWidget):
         """
         if self.button_toggle_prot.text() == "■":
             self.button_toggle_prot.setText("▶")
+            self.progress_bar.setValue(0)
         else:
             self.button_toggle_prot.setText("■")
 

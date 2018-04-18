@@ -105,9 +105,11 @@ class Experiment(QObject):
         self.metadata = GeneralMetadata()
         self.fish_metadata = FishMetadata()
         self.dc = DataCollector(folder_path=self.directory)
+        self.dc.add_params(self.metadata._params)
 
+        # Use the DataCollector object to find the last used protocol:
         self.last_protocol = \
-            self.dc.get_last('stimulus_protocol_params')
+            self.dc.get_last_value('stimulus_protocol_params')
 
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
 
@@ -153,7 +155,7 @@ class Experiment(QObject):
         # multiple (one per parameter), calls of functions connected to
         # a change in the params three state.
         # See comment in DataCollector.restore_from_saved()
-        self.dc.add_data_source(self.metadata)
+        self.dc.restore_from_saved()
         # self.protocol_runner.protocol.params.blockSignals(False)
 
     def check_if_committed(self):
@@ -165,7 +167,7 @@ class Experiment(QObject):
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
 
-        self.dc.add_data_source(dict(git_hash=git_hash,
+        self.dc.add_static_data(dict(git_hash=git_hash,
                                      name=__file__),
                                 name='general_program_version')
 
@@ -211,7 +213,7 @@ class Experiment(QObject):
         if self.scope_triggered and self.window_main.chk_scope.isChecked():
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
-            self.dc.add_data_source(self.lightsheet_config,
+            self.dc.add_static_data(self.lightsheet_config,
                                     'imaging_lightsheet_config')
             # send the duration of the protocol so that
             # the scanning can stop
@@ -224,9 +226,9 @@ class Experiment(QObject):
         metadata and put experiment data in pymongo database.
         """
         self.protocol_runner.end()
-        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-        self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
-        self.dc.add_data_source(self.protocol_runner.t_end,
+        self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
+        self.dc.add_static_data(self.protocol_runner.t_end,
                                 name='general_t_protocol_end')
 
         # TODO saving of synamic_log should be conditional
@@ -238,7 +240,7 @@ class Experiment(QObject):
             if not self.debug_mode:  # upload to database
                 db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
                                                                      eliminate_df=True))
-                self.dc.add_data_source(db_idx, 'general_db_index')
+                self.dc.add_static_data(db_idx, 'general_db_index')
 
             self.dc.save()  # save metadata
 
@@ -412,7 +414,7 @@ class TrackingExperiment(CameraExperiment):
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
         """
-        self.dc.add_data_source(self.data_acc.get_dataframe(),
+        self.dc.add_static_data(self.data_acc.get_dataframe(),
                                 name=self.data_name)
 
         super().end_protocol(*args, **kwargs)
