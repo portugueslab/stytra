@@ -1,19 +1,17 @@
-from PyQt5.QtCore import Qt, QRectF, pyqtSignal
-from PyQt5.QtWidgets import QMainWindow, QLabel, QWidget, QHBoxLayout,\
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout,\
     QPushButton, QComboBox
 
 
 from stytra.calibration import CircleCalibrator, CalibrationException
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraTailSelection, CameraViewCalib, CameraViewWidget
+from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget,\
+    CameraEyesSelection
 
-import numpy as np
-import pyqtgraph as pg
-
-from stytra.gui.parameter_widgets import ParameterSpinBox
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
 from pyqtgraph.parametertree import ParameterTree
+from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 
 
 class DebugLabel(QLabel):
@@ -33,6 +31,7 @@ class DebugLabel(QLabel):
             self.setStyleSheet('background-color: #002b36')
 
 
+# TODO IMPORTANT move
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """ Widget that displays the whole projector screen and allows to
     set the stimulus display window
@@ -168,6 +167,9 @@ class TrackingSettingsGui(QWidget):
 
 
 class SimpleExperimentWindow(QMainWindow):
+    """ Window for controlling a simple experiment including only a monitor
+    the relative controls and the buttons for metadata and protocol control.
+    """
     def __init__(self, experiment, **kwargs):
         """
         :param experiment: Experiment class with metadata
@@ -198,7 +200,6 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win.layout().addWidget(self.experiment.fish_metadata.show_metadata_gui())
         self.metadata_win.show()
 
-
     def construct_ui(self):
         central_widget = QWidget()
         central_widget.setLayout(QVBoxLayout())
@@ -227,30 +228,12 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         return self.camera_splitter
 
 
-# TAIL TRACKING LAYOUT
-#     self.main_layout = QSplitter()
-#         self.monitoring_widget = QWidget()
-#         self.monitoring_layout = QVBoxLayout()
-#         self.monitoring_widget.setLayout(self.monitoring_layout)
-#
-#         self.stream_plot = MultiStreamPlot()
-#
-#         self.monitoring_layout.addWidget(self.stream_plot)
-#         self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-#
-#         self.stream_plot.add_stream(self.data_acc_tailpoints,
-#                                     ['tail_sum', 'theta_01'])
-#
-#         self.main_layout.addWidget(self.monitoring_widget)
-#         self.main_layout.addWidget(self.widget_control)
-#         self.setCentralWidget(self.main_layout)
-#
-#         self.positionPlot = None
-
-
 class TailTrackingExperimentWindow(SimpleExperimentWindow):
+    """ Window for controlling an experiment where the tail of an
+    embedded fish is tracked.
+    """
     def __init__(self, tail_tracking=True, *args, **kwargs):
-
+        # TODO refactor movement detection
         self.tail_tracking = tail_tracking
 
         if tail_tracking:
@@ -311,6 +294,56 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
             self.track_params_wnd.setWindowTitle('Tracking data')
 
         self.track_params_wnd.show()
+
+
+class EyeTrackingExperimentWindow(SimpleExperimentWindow):
+    """ Window for controlling an experiment where the tail and the eyes
+    of an embedded fish are tracked.
+    """
+    def __init__(self,  *args, **kwargs):
+        self.camera_display = CameraEyesSelection(kwargs['experiment'])
+
+        self.camera_splitter = QSplitter(Qt.Horizontal)
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        # Stream plot:
+        self.stream_plot = MultiStreamPlot()
+
+        self.monitoring_layout.addWidget(self.stream_plot)
+
+        # Tracking params button:
+        self.button_tracking_params = QPushButton('Tracking params')
+        self.button_tracking_params.clicked.connect(
+            self.open_tracking_params_tree)
+        self.monitoring_layout.addWidget(self.button_tracking_params)
+
+        self.track_params_wnd = None
+        # self.tracking_layout.addWidget(self.camera_display)
+        # self.tracking_layout.addWidget(self.button_tracking_params)
+
+        super().__init__(*args, **kwargs)
+
+    def construct_ui(self):
+        self.stream_plot.add_stream(self.experiment.data_acc,
+                                    ['eye_1_th', 'eye_1_th'])
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
+        previous_widget = super().construct_ui()
+        self.monitoring_layout.addWidget(previous_widget)
+        self.monitoring_layout.setStretch(1, 1)
+        self.monitoring_layout.setStretch(0, 1)
+        self.camera_splitter.addWidget(self.camera_display)
+        self.camera_splitter.addWidget(self.monitoring_widget)
+        return self.camera_splitter
+
+    def open_tracking_params_tree(self):
+        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+                                            showTop=False)
+        self.track_params_wnd.setWindowTitle('Tracking data')
+        self.track_params_wnd.show()
+
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

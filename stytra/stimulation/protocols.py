@@ -2,6 +2,8 @@ from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
     SeamlessImageStimulus, MovingDynamicVel
+    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
+    DynamicFullFieldStimulus
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
@@ -16,24 +18,46 @@ from copy import deepcopy
 
 
 class Protocol(HasPyQtGraphParams):
+    """ The Protocol class is thought as an easily subclassable class that
+     generate a list of stimuli according to some parameterization.
+     It basically constitutes a way of keeping together:
+      - the parameters that describe the protocol
+      - the function to generate the list of stimuli.
+
+     The function get_stimulus_list is the core of the class: it is called
+     by the ProtocolRunner and it generates a list with the stimuli that
+     have to be used in the protocol. Everything else concerning e.g.
+     calibration, or asset directories that have to be passed to the
+     stimulus, is handled in the ProtocolRunner class to leave this class
+     as light as possible.
+     """
+
     name = ''
 
     def __init__(self):
+        """Add standard parameters common to all kind of protocols.
+        """
         super().__init__(name='stimulus_protocol_params')
 
-        for child in self.params.children():
-            self.params.removeChild(child)
-
+        # Pre- and post- pause will be periods with a Pause stimulus before
+        # and after the entire sequence of n repetitions of the stimulus.
         standard_params_dict = {'name': self.name,
                                 'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
+        for child in self.params.children():
+            self.params.removeChild(child)
+
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """ Generate protocol from specified parameters
+        """ Generate protocol from specified parameters. Called by the
+        ProtocolRunner class where the Protocol instance is defined.
+        This function puts together the stimulus sequence defined by each
+        child class with the initial and final pause and repeats it the
+        specified number of times. It should not change in subclasses.
         """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
@@ -49,7 +73,8 @@ class Protocol(HasPyQtGraphParams):
         return stimuli
 
     def get_stim_sequence(self):
-        """ Get the stimulus list for each different protocol
+        """ To be specified in each child class to return the proper list of
+        stimuli.
         """
         return [Pause()]
 
@@ -82,6 +107,30 @@ class FlashProtocol(Protocol):
         super().__init__()
 
         standard_params_dict = {'period_sec': 5.,
+                                'flash_duration': 2., #,
+                                'pino': 3}
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        stimuli.append(Pause(duration=self.params['period_sec'] - \
+                                      3))  # self.params['flash_duration']))
+        stimuli.append(FullFieldPainterStimulus(duration=5, # self.params['flash_duration'],
+                                                color=(255, 255, 255)))
+
+        return stimuli
+
+
+class ShockProtocol(Protocol):
+    name = 'shock protocol'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'period_sec': 5.,
                                 'flash_duration': 2.}
 
         for key, value in standard_params_dict.items():
@@ -92,8 +141,7 @@ class FlashProtocol(Protocol):
 
         stimuli.append(Pause(duration=self.params['period_sec'] - \
                                       self.params['flash_duration']))
-        stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
-                                                color=(255, 255, 255)))
+        stimuli.append(ShockStimulus())
 
         return stimuli
 
@@ -245,6 +293,7 @@ class OKRstim(Protocol):
         return stimuli
 
 
+
 class Exp022ImagingProtocol(Protocol):
     name = "exp022 imaging protocol"
 
@@ -382,6 +431,60 @@ class Exp022ImagingProtocol(Protocol):
         return stimuli
 
 
+class OMRProtocol(Protocol):
+    name = "OMR  protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'initial_pause': 0.,
+                       'inter_stim_pause': 5.,
+                       'grating_vel': 10.,
+                       'grating_duration': 10.,
+                       'grating_cycle': 10}
+
+        for key in params_dict:
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+
+        # # initial dark field
+        stimuli.append(Pause(duration=self.params['initial_pause']))
+        stim_color = (255, 0, 0)
+        #
+        # # gratings
+        p = self.params['inter_stim_pause']
+        v = self.params['grating_vel']
+        d = self.params['grating_duration']
+
+        # tuple for x, t, theta
+
+        vel_tuple = [(0, 0, np.pi/2),
+                     (p, 0, np.pi/2),
+                     (d, -v, np.pi/2),  # slow
+                     (p, 0, np.pi/2)]
+
+        t = [0]
+        x = [0]
+        theta = [0]
+
+
+        for dt, vel, th in vel_tuple:
+            t.append(t[-1] + dt)
+            x.append(x[-1] + dt * vel)
+            theta.append(th)
+
+        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
+                                                                        x=x,
+                                                                        theta=th)),
+                                               grating_period=self.params[
+                                                   'grating_cycle'],
+                                               color=stim_color))
+        return stimuli
+
+
 class Exp014Protocol(Protocol):
     name = "exp014 protocol"
 
@@ -451,7 +554,6 @@ class Exp014Protocol(Protocol):
 
         stimuli.append(Pause(duration=p - self.params['flash_duration']))
         return stimuli
-
 
 
 class Exp022Protocol(Protocol):
@@ -926,6 +1028,7 @@ class GratingsWindmillsProtocol(Protocol):
         super().__init__()
 
         standard_params_dict = {'period_sec': 14.,
+                                'shuffled_reps': 8,
                                 'flash_duration': 7.}
 
         for key, value in standard_params_dict.items():
@@ -934,12 +1037,12 @@ class GratingsWindmillsProtocol(Protocol):
     def get_stim_sequence(self):
         temp_stimuli = []
         N_DIRECTIONS = 8
-        PAUSE_DUR = 1
-        STIM_DUR = 2
+        PAUSE_DUR = 5
+        STIM_DUR = 10
         GRATINGS_VEL = 10
         GRATINGS_PERIOD = 10
         OKR_VEL = (1/9)*(1/2)  # periods/sec
-        N_REPS = 5
+        N_REPS = self.params['shuffled_reps']
         # Gratings
         # Eight possible direction, constant vel of 10 mm/s
         # p = self.params['inter_stim_pause']
@@ -989,6 +1092,72 @@ class GratingsWindmillsProtocol(Protocol):
         return stimuli
 
 
+class LuminanceRamp(Protocol):
+
+    name = 'luminance ramps/steps'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'shuffled_reps': 8}
+
+        for key, value in standard_params_dict.items():
+            self.set_new_param(key, value)
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        l0 = 0  # luminance level 0
+        l1 = 125  # luminance level 1
+        l2 = 255  # luminance level 2
+        p = 7  # period (fir both luminance length and pause length)
+        n_reps = self.params['shuffled_reps']  # number of repetitions
+        shuffle = True
+
+        # Define individual stimuli intervals as
+        # (duration, end luminance, "starts with step"*) *(1=yes, 0=no)
+        double_step = [(p, l0, 1), (p, l1, 1), (p, l2, 1), (p, l1, 1)]
+        full_step = [(p, l0, 1), (p, l2, 1)]
+        long_step = [(p, l0, 1), (p*3, l2, 1)]
+        ramp_step = [(p, l0, 1), (p*2, l2, 0), (p, l2, 0), (p*2, l0, 0)]
+
+        stim = [double_step, full_step, long_step, ramp_step]
+
+        stim_full = []
+        for n in range(n_reps):
+            if shuffle:
+                stim_full += sample(stim, 4)
+            else:
+                stim_full += stim
+
+        time = [0, ]
+        lum = [l0, ]
+
+        # Convert list of luminance steps and ramps into the DataFrame for the
+        # stimulus class
+        for stimulus in stim_full:
+            for param in stimulus:
+                if param[2] == 0:  # non-step
+                    time.append(time[-1] + param[0])
+                    lum.append(param[1])
+
+                else:  # step
+                    time.append(time[-1])
+                    time.append(time[-1] + param[0])
+                    lum.extend([param[1], param[1]])
+
+        lum_df = pd.DataFrame(dict(t=np.asarray(time),
+                                   lum=np.asarray(lum)))
+
+        stimuli.append(DynamicFullFieldStimulus(lum_df=lum_df,
+                                                color_0=(l0, )*3))
+        stimuli.append(FullFieldPainterStimulus(duration=1,
+                                                color=(l0, )*3))
+
+        return stimuli
+
+
+
 def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,
                              grating_period):
     """ Function that create stimuli list of gratings moving in different
@@ -1019,43 +1188,4 @@ def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,
                                     ))
 
     return stimuli
-
-
-        # t = [0]
-        # x = [0]
-        # theta = [0]
-        # for dt, vel, th in dt_vel_tuple:
-        #     t.append(t[-1] + dt)
-        #     x.append(x[-1] + dt * vel)
-        #     theta.append(th)
-        #
-        # # Define individual stimuli intervals as
-        # # (duration, end luminance, "starts with step"*) *(1=yes, 0=no)
-        # double_step = [(p, l0, 1), (p, l1, 1), (p, l2, 1), (p, l1, 1)]
-        # full_step = [(p, l0, 1), (p, l2, 1)]
-        # long_step = [(p, l0, 1), (p*3, l2, 1)]
-        # ramp_step = [(p, l0, 1), (p*2, l2, 0), (p, l2, 0), (p*2, l0, 0)]
-        #
-        # stim = [double_step, full_step, long_step, ramp_step]
-        #
-
-        #
-        # time = [0, ]
-        # lum = [l0, ]
-        #
-        # # Convert list of luminance steps and ramps into the DataFrame for the
-        # # stimulus class
-        # for stimulus in stim_full:
-        #     for param in stimulus:
-        #         if param[2] == 0:  # non-step
-        #             time.append(time[-1] + param[0])
-        #             lum.append(param[1])
-        #
-        #         else:  # step
-        #             time.append(time[-1])
-        #             time.append(time[-1] + param[0])
-        #             lum.extend([param[1], param[1]])
-        #
-        # lum_df = pd.DataFrame(dict(t=np.asarray(time),
-        #                            lum=np.asarray(lum)))
 

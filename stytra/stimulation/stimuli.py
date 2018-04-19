@@ -13,26 +13,35 @@ from itertools import product
 
 from bouter.angles import rot_mat
 
+
 class Stimulus:
-    """ General class for a stimulus."""
-    def __init__(self, duration=0.0, clip_rect=None):
-        """ Make a stimulus, with the basic properties common to all stimuli
+    """ General class for a stimulus. Each stimulus can act one through the
+     start() function. It is called when the ProtocolRunner sets it as the
+     new stimulus. It can for example trigger external events
+     (e.g., activate a Pyboard).
+
+    Different stimuli categories are implemented subclassing this class, e.g.:
+     - visual stimuli (children of PainterStimulus subclass);
+     ...
+
+    """
+    def __init__(self, duration=0.0):
+        """ Make a stimulus, with the basic properties common to all stimuli.
         Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
-        :param clip_rect: mask for clipping the stimulus, (x, y, w, h) tuple
         """
 
-        self._started = None
-        self._elapsed = 0.0
         self.duration = duration
+
+        self._started = None
+        self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = ''
         self._experiment = None
-        self.clip_rect = clip_rect
 
     def get_state(self):
-        """ Returns a dictionary with stimulus features
-        ignores the properties which are private (start with _)
+        """ Returns a dictionary with stimulus features for the log.
+        Ignores the properties which are private (start with _)
         """
         state_dict = dict()
         for key, value in self.__dict__.items():
@@ -47,8 +56,10 @@ class Stimulus:
         pass
 
     def initialise_external(self, experiment):
-        """ Functions that initiate each stimulus,
-        gets around problems with copying
+        """ Make a reference to the Experiment class inside the Stimulus.
+        This is required to access from inside the Stimulus class to the
+        Calibrator, the Pyboard, the asset directories with movies or the motor
+        estimator for virtual reality.
 
         :param experiment: the experiment object to which link the stimulus
         :return: None
@@ -57,13 +68,13 @@ class Stimulus:
 
 
 class DynamicStimulus(Stimulus):
-    """ Stimuli where parameters change during stimulation, used
-    to record stimuli with constant movements
-
+    """ Stimuli where parameters change during stimulation on a frame-by-frame
+    base, implements the recording changing parameters.
     """
     def __init__(self, *args, dynamic_parameters=None, **kwargs):
         """
-        :param dynamic_parameters: A list of all parameters that are to be recorded
+        :param dynamic_parameters: A list of all parameters that are to be
+                                   recorded frame by frame;
         """
         super().__init__(*args, **kwargs)
         if dynamic_parameters is None:
@@ -80,7 +91,17 @@ class DynamicStimulus(Stimulus):
 
 class PainterStimulus(Stimulus):
     """ Stimulus class where image is programmatically drawn on a canvas.
+    Their paint() function is called by the StimulusDisplayWindow
+    paintEvent(), and ensure that at every time the function used
+    to paint the new frame is the one from the current stimulus.
     """
+    def __init__(self, *args, clip_rect=None, **kwargs):
+        """
+        :param clip_rect: mask for clipping the stimulus ((x, y, w, h) tuple);
+        """
+        super().__init__(*args, **kwargs)
+        self.clip_rect = clip_rect
+
     def paint(self, p, w, h):
         """ Paint function (redefined in children classes)
         :param p: QPainter object for drawing
@@ -128,7 +149,6 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
 
     def update(self):
         for attr in ['x', 'y', 'theta']:
-            print(attr, getattr(self, attr))
             try:
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
 
@@ -196,6 +216,25 @@ class FullFieldPainterStimulus(PainterStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
+class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
+    """ Class for painting a full field flash of a specific color, where
+    luminance is dynamically changed. (Could be easily change to change color
+    as well).
+    """
+    def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
+        super().__init__(*args, dynamic_parameters=['lum', ],
+                         **kwargs)
+        self.color = color_0
+        self.lum_df = lum_df
+        self.name = 'moving seamless'
+        self.duration = float(lum_df.t.iat[-1])
+
+    def update(self):
+        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
+        print(lum)
+        setattr(self, 'color', (lum, )*3)
+
+
 class Pause(FullFieldPainterStimulus):
     """ Class for painting full field black stimuli
     """
@@ -204,6 +243,7 @@ class Pause(FullFieldPainterStimulus):
         self.name = 'pause'
 
 
+# TODO why not use MovingStimulus?
 class MovingSeamlessStimulus(PainterStimulus,
                              DynamicStimulus,
                              BackgroundStimulus):
@@ -268,7 +308,8 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_dir + '/' + self.background))
+            existing_file_background(self._experiment.asset_dir + '/' +
+                                     self.background))
 
     def get_unit_dims(self, w, h):
         """ Update dimensions of the current background image.

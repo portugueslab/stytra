@@ -1,16 +1,15 @@
-from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton
-import qdarkstyle
-
-from stytra.hardware.video import VideoFileSource
-from stytra import FrameDispatcher
-from stytra.tracking import FishTrackingProcess
-from stytra.tracking.fish import find_fishes_midlines, MidlineDetectionParams
-from functools import partial
 from multiprocessing import Queue, Event
 
 import numpy as np
+import qdarkstyle
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QDialog, QPushButton
 
-from stytra.gui import protocol_control, stimulus_display, camera_display
+from stytra import FrameDispatcher
+from stytra.gui import camera_display
+from stytra.hardware.video import VideoFileSource
+from stytra.tracking import FishTrackingProcess
+from stytra.tracking.fish import MidlineDetectionParams
+
 
 def proc(frame, mask):
     return [np.mean(frame), np.mean(mask)]

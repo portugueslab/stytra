@@ -58,17 +58,30 @@ class ProtocolRunner(QObject):
         self.log_print = log_print
         self.running = False
 
-    def set_new_protocol(self, protocol):
+    def set_new_protocol(self, protocol_name):
         """ Set input protocol
-        :param protocol: Protocol object
+        :param protocol: protocol name from the GUI
         """
-        if protocol is not None:
+        # If there was a protocol before, block params signal to avoid duplicate
+        # call of the ProtocolRunner update_protocol function.
+        # Otherwise it would be called by the change of the params three caused
+        # by its deletion from the  _params called in the Protocol __init__().
+        if protocol_name is not None:
+            if self.protocol is not None:
+                self.protocol.params.blockSignals(True)
+            ProtocolClass = self.experiment.prot_class_dict[protocol_name]
+            protocol = ProtocolClass()
+
             self.protocol = protocol
-            # if self.experiment
+
+            self.update_protocol()
+
             # Connect changes to protocol parameters to update function:
             self.protocol.params.sigTreeStateChanged.connect(
                 self.update_protocol)
-            self.update_protocol()
+
+
+            # Why were we resetting here?
             self.reset()
 
     def update_protocol(self):
@@ -87,6 +100,26 @@ class ProtocolRunner(QObject):
         self.duration = self.get_duration()  # set new duration
 
         self.sig_protocol_updated.emit()
+
+    def reset(self):
+        """ Make the protocol ready to start again. Reset all ProtocolRunner
+        and stimuli timers and elapsed times.
+        """
+        self.t_start = None
+        self.t_end = None
+        self.completed = False
+        self.t = 0
+
+        for stimulus in self.stimuli:
+            stimulus._started = None
+            stimulus._elapsed = 0.0
+
+        self.i_current_stimulus = 0
+
+        if len(self.stimuli) > 0:
+            self.current_stimulus = self.stimuli[0]
+        else:
+            self.current_stimulus = None
 
     def start(self):
         """ Function for starting the protocol
@@ -175,25 +208,6 @@ class ProtocolRunner(QObject):
         if isinstance(self.current_stimulus, DynamicStimulus):
             self.dynamic_log.update_list((self.t,) + \
                 self.current_stimulus.get_dynamic_state())
-
-    def reset(self):
-        """ Make the protocol ready to start again. Reset all ProtocolRunner
-        and stimuli timers and elapsed times.
-        """
-        self.t_start = None
-        self.t_end = None
-        self.completed = False
-        self.t = 0
-        for stimulus in self.stimuli:
-            stimulus._started = None
-            stimulus._elapsed = 0.0
-
-        self.i_current_stimulus = 0
-
-        if len(self.stimuli) > 0:
-            self.current_stimulus = self.stimuli[0]
-        else:
-            self.current_stimulus = None
 
     def get_duration(self):
         """ Get total duration of the protocol.

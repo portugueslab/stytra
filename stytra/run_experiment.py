@@ -1,5 +1,6 @@
 import argparse
-from stytra import CameraExperiment, Experiment, TailTrackingExperiment, MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, TailTrackingExperiment, \
+    MovementRecordingExperiment, EyeTrackingExperiment
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -19,9 +20,13 @@ if __name__ == '__main__':
                         action='store', default='angle_sweep')
     parser.add_argument('--tail-invert',
                         action='store_true')
+    parser.add_argument('--shock-stimulus',
+                        action='store_true')
     parser.add_argument('--vr',
                         action='store_true')
     parser.add_argument('--sim-vr',
+                        action='store_true')
+    parser.add_argument('--eye-tracking',
                         action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
@@ -56,10 +61,10 @@ if __name__ == '__main__':
                         debug_mode=args.debug,
                         asset_directory=args.asset_dir,
                         scope_triggered=args.scope_triggering,
-                        rec_stim_every=rec_stim_every)
+                        rec_stim_every=rec_stim_every,
+                        shock_stimulus=args.shock_stimulus)
 
     base = Experiment
-
     if args.video_file:
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
@@ -79,6 +84,8 @@ if __name__ == '__main__':
 
     elif args.freely_swimming:
         base = MovementRecordingExperiment
+    elif args.eye_tracking:
+        base = EyeTrackingExperiment
 
     #
     # if args.lightsheet:

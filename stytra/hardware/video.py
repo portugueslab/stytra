@@ -9,6 +9,8 @@ except ImportError:
 from multiprocessing import Process, Queue, Event
 from queue import Empty, Full
 import numpy as np
+from datetime import datetime
+from time import sleep
 
 from stytra.collectors import HasPyQtGraphParams
 
@@ -16,7 +18,7 @@ from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 from arrayqueues.processes import FrameProcessor
 import cv2
 import datetime
-
+import glob
 
 class VideoSource(FrameProcessor):
     def __init__(self, rotation=0, max_mbytes_queue=100):
@@ -26,6 +28,8 @@ class VideoSource(FrameProcessor):
         self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
         self.kill_signal = Event()
 
+
+#TODO add a general camera class
 
 class XimeaCamera(VideoSource):
     def __init__(self, downsampling=2,
@@ -51,7 +55,6 @@ class XimeaCamera(VideoSource):
         # for the camera on the lightsheet which supports hardware downsampling
         # MQ013MG-ON lightsheet
         # MQ003MG-CM behaviour
-        print(str(self.cam.get_device_name()))
         if self.cam.get_device_name() == b'MQ013MG-ON':
             self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
@@ -112,17 +115,37 @@ class VideoFileSource(VideoSource):
         self.loop = loop
 
     def run(self):
+        # If the file is a Ximea Camera sequence, frames in the  corresponding
+        # folder are read.
         import cv2
-        cap = cv2.VideoCapture(self.source_file)
+
+        im_sequence_flag = self.source_file.split('.')[-1] == 'xiseq'
+        if im_sequence_flag:
+            frames_fn = glob.glob('{}_files/*'.format(self.source_file.split('.')[-2]))
+            frames_fn.sort()
+            k = 0
+        else:
+            cap = cv2.VideoCapture(self.source_file)
         ret = True
 
         while ret and not self.kill_signal.is_set():
-            ret, frame = cap.read()
+            if self.source_file.split('.')[-1] == 'xiseq':
+                frame = cv2.imread(frames_fn[k])
+                # print('read frame...{}: {}'.format(frames_fn[k], k))
+                k += 1
+                if k == len(frames_fn) - 2:
+                    ret = False
+            else:
+                ret, frame = cap.read()
+
             if ret:
                 self.frame_queue.put(frame[:, :, 0])
             else:
                 if self.loop:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                    if im_sequence_flag:
+                        k = 0
+                    else:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ret = True
                 else:
                     break

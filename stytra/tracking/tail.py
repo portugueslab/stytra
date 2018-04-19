@@ -142,17 +142,22 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
     tail_length_y = tail_length[0]
 
     n_segments += 1
-    if image_scale != 1:  # bandpass filter the image:
+
+    # Image preprocessing. Resize if required:
+    if image_scale != 1:
         im = cv2.resize(im, None, fx=image_scale, fy=image_scale,
                         interpolation=cv2.INTER_AREA)
+    # Filter if required:
     if filter_size > 0:
         im = cv2.boxFilter(im, -1, (filter_size, filter_size))
+    # Invert if required:
     if color_invert:
-        im = (255 - im)  # invert image
-    # calculate tail length
+        im = (255 - im)
+
+    # Calculate tail length:
     length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
 
-    # segment length from tail length and n of segments
+    # Segment length from tail length and n of segments:
     seg_length = length_tail / n_segments
 
     # Initial displacements in x and y:
@@ -181,7 +186,8 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
 def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
                         num_points, tail_length, color_invert):
     """
-    Tail tracing based on min (or max) detection on arches. Wrapped by tail_trace_ls.
+    Tail tracing based on min (or max) detection on arches. Wrapped by
+    tail_trace_ls.
     """
     # Define starting angle based on tail dimensions:
     start_angle = np.arctan2(tail_len_x, tail_len_y)
@@ -243,15 +249,18 @@ def trace_tail_angular_sweep(img, start_x=0, start_y=0, tail_length_x=1,
                              tail_length_y=1, n_segments=7, tail_length=None,
                              filter_size=0, color_invert=False):
     """
-    Tail tracing based on min (or max) detection on arches. Wraps _tail_trace_core_ls.
-    Speed testing: 20 us for a 514x640 image without smoothing, 300 us with smoothing.
+    Tail tracing based on min (or max) detection on arches. Wraps
+    _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
+    smoothing, 300 us with smoothing.
     :param img: input image
     :param start_x: tail starting point (x)
     :param start_y: tail starting point (y)
-    :param tail_length_x: tail length x (if tail length is fixed, only orientation matters)
+    :param tail_length_x: tail length x (if tail length is fixed, only
+                          orientation matters)
     :param tail_length_y: tail length y
     :param n_segments: number of segments
-    :param tail_length: total tail length; if unspecified, calculated from tail_len_x and y
+    :param tail_length: total tail length; if unspecified, calculated from
+                        tail_len_x and y
     :param filtering: True for smoothing the image
     :param color_invert: True for inverting image colors
     :return:

@@ -1,26 +1,28 @@
+import datetime
 import inspect
 import os
 import sys
 import traceback
-import datetime
 from collections import OrderedDict
 from multiprocessing import Queue, Event
 
+import deepdish as dd
 import git
 import qdarkstyle
 import zmq
 from PyQt5.QtCore import QTimer, QObject
+
 from stytra.calibration import CrossCalibrator, CircleCalibrator
-
-from stytra.collectors import DataCollector, HasPyQtGraphParams,\
+from stytra.collectors import DataCollector, HasPyQtGraphParams, \
     GeneralMetadata, FishMetadata
-
 from stytra.dbconn import put_experiment_in_db, Slacker
-from stytra.gui.container_windows import SimpleExperimentWindow,\
-    CameraExperimentWindow, TailTrackingExperimentWindow
 from stytra.hardware.video import CameraControlParameters, VideoWriter
-from stytra.gui.stimulus_display import StimulusDisplayWindow
 
+
+from stytra.gui.container_windows import SimpleExperimentWindow, \
+    CameraExperimentWindow, TailTrackingExperimentWindow, \
+    EyeTrackingExperimentWindow
+from stytra.hardware.video import CameraControlParameters
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
@@ -28,14 +30,15 @@ from stytra.stimulation import ProtocolRunner, protocols
 from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
+from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.processes import CentroidTrackingMethod, FrameDispatcher, \
-    MovingFrameDispatcher, MovementDetectionParameters
-
+from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
+    CentroidTrackingMethod
+from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher,\
+    MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
-import deepdish as dd
-import datetime
+from requests.exceptions import ConnectionError
 
 
 def get_default_args(func):
@@ -63,15 +66,17 @@ def get_classes_from_module(input_module, parent_class):
 
 
 class Experiment(QObject):
+    """ General class that runs an experiment."""
     def __init__(self, directory,
                  calibrator=None,
                  app=None,
                  asset_directory='',
                  debug_mode=True,
                  scope_triggered=False,
+                 shock_stimulus=False,
                  rec_stim_every=None,
                  notifier='slack'):
-        """General class for running experiments
+        """
         :param directory: data for saving options and data
         :param calibrator:
         :param app: app: a QApplication in which to run the experiment
@@ -87,9 +92,7 @@ class Experiment(QObject):
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
-
         self.directory = directory
-
         if not os.path.isdir(self.directory):
             os.makedirs(self.directory)
 
@@ -106,28 +109,28 @@ class Experiment(QObject):
         self.metadata = GeneralMetadata()
         self.fish_metadata = FishMetadata()
         self.dc = DataCollector(folder_path=self.directory)
+        self.dc.add_params(self.metadata._params)
 
+        # Use the DataCollector object to find the last used protocol:
         self.last_protocol = \
-            self.dc.get_last('stimulus_protocol_params')
+            self.dc.get_last_value('stimulus_protocol_params')
 
         self.prot_class_dict = get_classes_from_module(protocols, Protocol)
 
         if self.last_protocol is not None:
-            ProtocolClass = self.prot_class_dict[self.last_protocol]
             self.protocol_runner = ProtocolRunner(experiment=self,
-                                                  protocol=ProtocolClass())
+                                                  protocol=self.last_protocol)
         else:
             self.protocol_runner = ProtocolRunner(experiment=self)
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        # Projector window and experiment control GUI
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator,
                                                     record_stim_every=rec_stim_every)
 
         self.scope_triggered = scope_triggered
-        # This has to happen  or version will also be reset to last value:
+        # This has to happen here or version will also be reset to last value:
         if not self.debug_mode:
             self.check_if_committed()
 
@@ -139,23 +142,36 @@ class Experiment(QObject):
         if notifier == 'slack':
             self.notifier = Slacker()
 
+        if shock_stimulus:
+            try:
+                from stytra.hardware.serial import PyboardConnection
+            except ImportError:
+                print('Serial pyboard connection not installed')
+
+            self.pyb = PyboardConnection(com_port='COM3')
+
     def make_window(self):
         self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
 
     def initialize_metadata(self):
-        self.dc.add_data_source(self.metadata)
+        # When restoring here metadata to previous values, there may be
+        # multiple (one per parameter), calls of functions connected to
+        # a change in the params three state.
+        # See comment in DataCollector.restore_from_saved()
+        self.dc.restore_from_saved()
+        # self.protocol_runner.protocol.params.blockSignals(False)
 
     def check_if_committed(self):
         """ Checks if the version of stytra used to run the experiment is committed,
-        so that for each experiment it is known what code was used to record it
+        so that for each experiment it is known what code was used to run it.
         """
 
         # Get program name and version and save to the metadata:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
 
-        self.dc.add_data_source(dict(git_hash=git_hash,
+        self.dc.add_static_data(dict(git_hash=git_hash,
                                      name=__file__),
                                 name='general_program_version')
 
@@ -168,6 +184,9 @@ class Experiment(QObject):
                 'The project has to be committed before starting!')
 
     def show_stimulus_screen(self, full_screen=True):
+        """ Open window to display the visual stimulus and make it full-screen
+        if necessary.
+        """
         self.window_display.show()
         if full_screen:
             try:
@@ -177,7 +196,13 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
-        self.notifier.post_update("Experiment on setup " +
+        """ Start the protocol from the ProtocolRunner. Before that, send a
+        a notification and if required communicate with the microscope to
+        synchronize and read configuration.
+        """
+        if self.notifier is not None and not self.debug_mode:
+            try:
+                self.notifier.post_update("Experiment on setup " +
                                   self.metadata.params['setup_name'] +
                                   " started, it will finish in {}s, or at ".format(
                                       self.protocol_runner.duration) +
@@ -186,31 +211,31 @@ class Experiment(QObject):
                                       "%H:%M:%S")
                                   )
 
+            except ConnectionError:
+                print('No internet connection, disabled notifications...')
+
         if self.scope_triggered and self.window_main.chk_scope.isChecked():
             self.lightsheet_config = self.zmq_socket.recv_json()
             print('received config')
-            self.dc.add_data_source(self.lightsheet_config,
+            self.dc.add_static_data(self.lightsheet_config,
                                     'imaging_lightsheet_config')
             # send the duration of the protocol so that
             # the scanning can stop
             self.zmq_socket.send_json(self.protocol_runner.duration)
 
-        self.notifier.post_update("Experiment on setup " +
-                                  self.metadata.params['setup_name'] +
-                                  " started, it will finish in {}s, or at ".format(self.protocol_runner.duration) +
-                                  (datetime.datetime.now()+datetime.timedelta(seconds=float(self.protocol_runner.duration))).strftime("%H:%M:%S")
-                                  )
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
-        """ Function called at protocol end. Reset protocol, save
+        """ Function called at Protocol end. Reset Protocol, save
         metadata and put experiment data in pymongo database.
         """
         self.protocol_runner.end()
-        self.dc.add_data_source(self.protocol_runner.log, name='stimulus_log')
-        self.dc.add_data_source(self.protocol_runner.t_start, name='general_t_protocol_start')
-        self.dc.add_data_source(self.protocol_runner.t_end,
+        self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
+        self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
+        self.dc.add_static_data(self.protocol_runner.t_end,
                                 name='general_t_protocol_end')
+
+        # TODO saving of synamic_log should be conditional
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
@@ -219,23 +244,11 @@ class Experiment(QObject):
             if not self.debug_mode:  # upload to database
                 db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
                                                                      eliminate_df=True))
-                self.dc.add_data_source(db_idx, 'general_db_index')
+                self.dc.add_static_data(db_idx, 'general_db_index')
 
             self.dc.save()  # save metadata
 
-            # Send notification of experiment end:
-            if self.notifier is not None:
-                self.notifier.post_update("Experiment on setup " +
-                                          clean_dict['general']['setup_name'] +
-                                          " is finished running the protocol" +
-                                          clean_dict['stimulus']['protocol_params']['name']
-                                          +" :birthday:")
-                self.notifier.post_update("It was :tropical_fish: " +
-                                          str(clean_dict['fish']['id']) +
-                                          " of the day, session "
-                                          + str(clean_dict['general']['session_id']))
-
-            # Save stimulus movie in .h5 file:
+            # Save stimulus movie in .h5 file if required:
             movie = self.window_display.widget_display.get_movie()
             if movie is not None:
                 movie_dict = dict(movie=movie[0], movie_times=movie[1])
@@ -244,18 +257,25 @@ class Experiment(QObject):
                            'stim_movie.h5', movie_dict)
 
         self.protocol_runner.reset()
-        if self.notifier is not None:
-            self.notifier.post_update("Experiment on setup " +
+
+        # Send notification of experiment end:
+        if self.notifier is not None and not self.debug_mode:
+            try:
+                self.notifier.post_update("Experiment on setup " +
                                       clean_dict['general']['setup_name'] +
                                       " is finished running the " +
                                       clean_dict['stimulus']['protocol_params']['name']
                                       +" :birthday:")
-            self.notifier.post_update("It was :tropical_fish: " +
+                self.notifier.post_update("It was :tropical_fish: " +
                                       str(clean_dict['fish']['id']) +
                                       " of the day, session "
                                       + str(clean_dict['general']['session_id']))
+            except ConnectionError:
+                pass
 
     def wrap_up(self, *args, **kwargs):
+        """ Clean up things before closing gui. Called by close button.
+        """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
@@ -265,6 +285,12 @@ class Experiment(QObject):
 
 
 class CameraExperiment(Experiment):
+    """ General class for Experiment that need to handle a camera.
+    It implements a view of frames from the camera in the control GUI, and the
+    respective parameters.
+    For debugging it can be used with a video read from file with the
+    VideoFileSource class.
+    """
     def __init__(self, *args, video_file=None, camera_rotation=0, camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video
@@ -308,25 +334,42 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
-class TailTrackingExperiment(CameraExperiment):
-    def __init__(self, *args, motion_estimation=None,
-                 motion_estimation_parameters=None,
-                 **kwargs):
-        """ An experiment which contains tail tracking,
-        base for any experiment that tracks behaviour or employs
-        closed loops
+class TrackingExperiment(CameraExperiment):
+    """ Abstract class for an experiment which contains tracking,
+    base for any experiment that tracks behaviour (being it eyes, tail,
+    or anything else).
+    The general purpose of the class is handle a frame dispatcher,
+    the relative parameters queue and the output queue.
 
-        :param args:
-        :param tracking_method: the method used to track the tail
-        :param kwargs:
+    The frame dispatcher take two input queues:
+        - frame queue from the camera;
+        - parameters queue from parameter window.
+
+    and it puts data in three queues:
+        - subset of frames are dispatched to the GUI, for displaying;
+        - all the frames, together with the parameters, are dispatched
+          to perform tracking;
+        - the result of the tracking function, is dispatched to a data
+          accumulator for saving or other purposes (e.g. VR control).
+    """
+
+    def __init__(self, *args, tracking_method=None,
+                 header_list=None, data_name=None, **kwargs):
+        """
+        :param tracking_method: class with the parameters for tracking (instance
+                                of TrackingMethod class, defined in the child);
+        :param header_list: headers for the data accumulator (list of strings,
+                            defined in the child);
+        :param data_name:  name of the data in the final experiment log (defined
+                           in the child).
         """
 
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.tracking_method = CentroidTrackingMethod()
-
+        self.tracking_method = tracking_method
+        self.data_name = data_name
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
                                                 finished_signal=
@@ -338,63 +381,47 @@ class TailTrackingExperiment(CameraExperiment):
 
         self.fish_metadata.params['embedded'] = True
 
-        self.data_acc_tailpoints = QueueDataAccumulator(
-                                          self.frame_dispatcher.output_queue,
-                                          header_list=['tail_sum'] +
-                                            ['theta_{:02}'.format(i)
-                                             for i in range(
-                                                self.tracking_method.params['n_segments'])])
+        self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
+                                             header_list=header_list)
 
-        # start the processes and connect the timers
-        self.gui_timer.timeout.connect(
-            self.data_acc_tailpoints.update_list)
-        self.gui_timer.timeout.connect(
-            self.send_new_parameters)
-        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
-            self.change_segment_numb)
-        self.start_frame_dispatcher()
-
-        # Reset tail et experiment start:
+        # Data accumulator is updated with GUI timer:
+        self.gui_timer.timeout.connect(self.data_acc.update_list)
+        # New parameters are sent with GUI timer:
+        self.gui_timer.timeout.connect(self.send_new_parameters)
+        # Tracking is reset at experiment start:
         self.protocol_runner.sig_protocol_started.connect(
-            self.data_acc_tailpoints.reset)
+            self.data_acc.reset)
 
-        # if motion_estimation == 'LSTM':
-        #     lstm_name = motion_estimation_parameters['model']
-        #     del motion_estimation_parameters['model']
-        #     self.position_estimator = LSTMLocationEstimator(self.data_acc_tailpoints,
-        #                                                     self.asset_folder + '/' +
-        #                                                     lstm_name,
-        #                                                     **motion_estimation_parameters)
-
-    def change_segment_numb(self):
-        print(self.tracking_method.params['n_segments'])
-        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
-                            self.tracking_method.params['n_segments'])]
-        self.data_acc_tailpoints.reset(header_list=new_header)
+        # start frame dispatcher process:
+        self.frame_dispatcher.start()
 
     def send_new_parameters(self):
+        """ Called upon gui timeout, put tracking parameters in the relative
+        queue.
+        """
+        # TODO do we need this linked to GUI timeout? why not value change?
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
 
     def make_window(self):
-        self.window_main = TailTrackingExperimentWindow(experiment=self)
-        self.window_main.show()
-        self.go_live()
+        """ Make experiment GUI, defined in instances depending on tracking.
+        """
+        pass
 
     def start_protocol(self):
+        """ Reset data accumulator when starting the protocol.
+        """
+        # TODO camera queue should be emptied to avoid accumulation of frames!!
+        # when waiting for the microscope!
         super().start_protocol()
-        self.data_acc_tailpoints.reset()
+        self.data_acc.reset()
 
     def end_protocol(self, *args, **kwargs):
         """ Save tail position and dynamic parameters and terminate.
         """
-        self.dc.add_data_source(self.data_acc_tailpoints.get_dataframe(),
-                                name='behaviour_tail_log')
-        # self.dc.add_data_source('behaviour', 'vr',
-        #                         self.position_estimator.log.get_dataframe())
-        # temporary removal of dynamic log as it is not correct
-        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
-        #                         name='stimulus_log')
+        self.dc.add_static_data(self.data_acc.get_dataframe(),
+                                name=self.data_name)
+
         super().end_protocol(*args, **kwargs)
         try:
             self.position_estimator.reset()
@@ -403,8 +430,10 @@ class TailTrackingExperiment(CameraExperiment):
             pass
 
     def set_protocol(self, protocol):
+        """ Connect new protocol start to resetting of the data accumulator.
+        """
         super().set_protocol(protocol)
-        self.protocol.sig_protocol_started.connect(self.data_acc_tailpoints.reset)
+        self.protocol.sig_protocol_started.connect(self.data_acc.reset)
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
@@ -418,8 +447,60 @@ class TailTrackingExperiment(CameraExperiment):
         self.camera.terminate()
         self.frame_dispatcher.terminate()
 
-    def start_frame_dispatcher(self):
-        self.frame_dispatcher.start()
+
+class TailTrackingExperiment(TrackingExperiment):
+    """ An experiment which contains tail tracking,
+    base for experiments that  employs closed loops.
+    """
+    def __init__(self, *args, **kwargs):
+
+        tracking_method = CentroidTrackingMethod()
+        header_list = ['tail_sum'] + ['theta_{:02}'.format(i)
+                                      for i in range(20)]
+                #self.tracking_method.params['n_segments'])]
+
+        super().__init__(*args, **kwargs,
+                         tracking_method=tracking_method,
+                         header_list=header_list,
+                         data_name='behaviour_tail_log')
+
+        # This probably should happen before starting the camera process??
+        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
+            self.change_segment_numb)
+
+    def change_segment_numb(self):
+        print(self.tracking_method.params['n_segments'])
+        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
+            self.tracking_method.params['n_segments'])]
+        self.data_acc.reset(header_list=new_header)
+
+        # self.gui_timer.timeout.connect(
+        #     self.data_acc_tailpoints.update_list)
+        #
+        # self.window_main.stream_plot.add_stream(
+        #     self.data_acc_tailpoints, ['tail_sum'])
+
+    def make_window(self):
+        self.window_main = TailTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
+
+
+class EyeTrackingExperiment(TrackingExperiment):
+    def __init__(self, *args, **kwargs):
+        """ An experiment which contains eye tracking.
+        """
+
+        tracking_method = ThresholdEyeTrackingMethod()
+        header_list = ['', ]*4 + ['eye_1_th', ] + ['', ]*4 + ['eye_1_th', ]
+
+        super().__init__(*args, tracking_method=tracking_method,
+                         header_list=header_list,
+                         data_name='behaviour_eyes_log',
+                         **kwargs)
+
+    def make_window(self):
+        self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
 
 
 class VRExperiment(TailTrackingExperiment):
