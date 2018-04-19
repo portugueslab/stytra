@@ -1,8 +1,7 @@
 from stytra.stimulation.stimuli import Pause, \
     ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
     SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
-    SeamlessImageStimulus, MovingDynamicVel
-    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
+    SeamlessImageStimulus, MovingDynamicVel, \
     DynamicFullFieldStimulus
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background

@@ -5,14 +5,13 @@ from multiprocessing import Queue
 
 import cv2
 import numpy as np
-import param as pa
-import psutil
 from numba import jit
 
 from arrayqueues.processes import FrameProcessor
 from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
+
+from stytra import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
-from stytra.tracking.eyes import trace_eyes
 
 
 class FrameDispatcher(FrameProcessor):
@@ -106,24 +105,6 @@ class FrameDispatcher(FrameProcessor):
         if self.i == 0:
             self.gui_queue.put(frame)
         self.i = (self.i + 1) % every_x
-
-
-class MovementDetectionParameters(HasPyQtGraphParams):
-    """ The class for parametrisation of various tail and fish tracking methods
-    """
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        for child in self.params.children():
-            self.params.removeChild(child)
-
-        standard_params_dict = dict(fish_threshold=50,
-                                    motion_threshold_n_pix = 8,
-                                    frame_margin=10,
-                                    n_previous_save=400,
-                                    n_next_save=300,
-                                    show_thresholded = False)
-        for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
 
 
 @jit(nopython=True)

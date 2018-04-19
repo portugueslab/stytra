@@ -8,6 +8,7 @@ import numpy as np
 import qimage2ndarray
 
 
+
 # TODO this entire module should be moved to the stimulation
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
     """ Make a display window for a visual simulation protocol,

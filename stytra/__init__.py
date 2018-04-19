@@ -33,9 +33,8 @@ from stytra.stimulation.protocols import Protocol
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
-    CentroidTrackingMethod
-from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher,\
-    MovementDetectionParameters
+    CentroidTrackingMethod, MovementDetectionParameters
+from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
 from requests.exceptions import ConnectionError
