@@ -12,6 +12,7 @@ from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 
 from stytra import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
+from stytra.tracking.eyes import trace_eyes
 
 
 class FrameDispatcher(FrameProcessor):
@@ -32,7 +33,7 @@ class FrameDispatcher(FrameProcessor):
 
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
-        self.output_queue = TimestampedArrayQueue()  # queue for processing output (e.g., pos)
+        self.output_queue = Queue()  # queue for processing output (e.g., pos)
         self.processing_parameters = None
 
         self.finished_signal = finished_signal
@@ -41,8 +42,10 @@ class FrameDispatcher(FrameProcessor):
         self.processing_function = None
         self.processing_parameter_queue = processing_parameter_queue
 
+        # TODO this hardcoded dictionary may produce headaches
         self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
-                                            centroid=trace_tail_centroid)
+                                            centroid=trace_tail_centroid,
+                                            eye_threshold=trace_eyes)
 
     def process_internal(self, frame):
         """ Apply processing function to current frame with
@@ -50,8 +53,9 @@ class FrameDispatcher(FrameProcessor):
         """
         if self.processing_function is not None:
             try:
-                output = tuple(self.processing_function(frame,
-                                                  **self.processing_parameters))
+                parameters = self.processing_parameters
+                output = self.processing_function(frame,
+                                                  **self.processing_parameters)
                 return output
             except:
                 raise ValueError('Unknown error while processing frame')
@@ -69,24 +73,17 @@ class FrameDispatcher(FrameProcessor):
                         self.processing_parameters = \
                             self.processing_parameter_queue.get(timeout=0.0001)
 
-                        # The first parameter is the function that will be used
-                        # for the tracing:
-
-                        # TODO this is a bit baroque and required only to change
-                        # tracking function during the experiment, do we really
-                        # need this?
                         self.processing_function = \
                             self.dict_tracking_functions[
-                                self.processing_parameters.get('function')]
+                                self.processing_parameters.pop('function')]
 
                     except Empty:
                         pass
 
                 # If a processing function is specified, apply it:
                 if self.processing_function is not None:
-                    self.output_queue.put((datetime.now(),
-                                           self.process_internal(frame)))
-
+                    a = (datetime.now(), self.process_internal(frame))
+                    self.output_queue.put(a)
 
                 # calculate the frame rate:
                 self.update_framerate()

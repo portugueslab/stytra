@@ -4,7 +4,7 @@ import math
 import cv2
 import numpy as np
 from pyqtgraph.parametertree import Parameter, parameterTypes
-from stytra.collectors import HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):

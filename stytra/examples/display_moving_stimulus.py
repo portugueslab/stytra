@@ -9,11 +9,11 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QSplitter, QProgressBar
-from stytra.metadata.metalist_gui import MetaListGui
+from stytra.data_log.metalist_gui import MetaListGui
 
 import stytra.calibration as calibration
 import stytra.collectors
-import stytra.metadata as metadata
+import stytra.data_log as metadata
 from stytra import MovingFrameDispatcher
 from stytra.gui import protocol_control, camera_display
 from stytra.hardware.video import XimeaCamera, VideoWriter
@@ -91,12 +91,12 @@ class Experiment(QMainWindow):
         self.expid = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         vidfile = self.expid+'.avi'
 
-        general_data = metadata.MetadataGeneral()
-        fish_data = metadata.MetadataFish()
+        general_data = data_log.MetadataGeneral()
+        fish_data = data_log.MetadataFish()
 
         self.im_filename = r"C:\Users\vilim\experimental\underwater\66_underwater beach sand texture-seamless.jpg"
 
-        self.camera_parameters = metadata.MetadataCamera()
+        self.camera_parameters = data_log.MetadataCamera()
 
         self.dc = stytra.collectors.DataCollector(folder_path=experiment_folder)
 

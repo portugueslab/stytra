@@ -8,6 +8,7 @@ from stytra.tracking.diagnostics import draw_found_fish
 from stytra.collectors import Accumulator
 
 
+# TODO this I think should stay together with the dataaccumulator parent
 class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=None):
         """
@@ -45,7 +46,8 @@ class QueueDataAccumulator(QObject, Accumulator):
                 t_ms = (t - self.starting_time).total_seconds()
 
                 # append:
-                self.stored_data.append((t_ms, ) + data)
+                l = (t_ms, ) + tuple(data)
+                self.stored_data.append(l)
             except Empty:
                 break
 

@@ -7,7 +7,7 @@ from builtins import print
 from copy import deepcopy
 
 from stytra.stimulation.stimuli import DynamicStimulus, Pause
-from stytra.collectors import Accumulator, HasPyQtGraphParams
+from stytra.collectors import Accumulator
 from stytra.stimulation.protocols import FlashProtocol
 
 

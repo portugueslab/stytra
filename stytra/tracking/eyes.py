@@ -69,26 +69,20 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
                    padding=PAD, val=255)
 
     thresholded = (cropped < threshold).astype(np.uint8)
-    # print('padded_shape: {}'.format(thresholded.shape))
 
     try:
         e = _fit_ellipse(thresholded)
         if e is False:
             print("I don't find eyes here...")
-            e = (np.nan,)*10
+            e = (None,)*10
         else:
             # TODO I am sure there is a smarter way here...
             e = e[0][0] + e[0][1] + (e[0][2],) + \
                 e[1][0] + e[1][1] + (e[1][2],)
-        # e = (32.980018615722656, 25.86171531677246, 14.079926490783691,
-        #      29.263633728027344, 99.96418762207031,
-        #      27.956050872802734, 78.79829406738281,
-        #      26.021833419799805, 39.332557678222656,
-        #      99.84758758544922)
 
     except cv2.error:
         print("I don't find eyes here...")
-        e = (np.nan,)*10
+        e = (None,)*10
     # print('padded_shape: {}'.format(thresholded.shape))
     # print('Position: {}, size: {}'.format(wnd_pos, wnd_dim))
 
@@ -98,4 +92,4 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
     #     print('Somethong wrong with eyes!')
     #     e = [np.nan, np.nan]
 
-    return e
+    return np.array(e)

@@ -8,6 +8,7 @@ import time
 import pandas as pd
 import colorspacious
 
+
 class StreamingPositionPlot(pg.GraphicsWindow):
     """ Plot that displays the virtual position of the fish
 
@@ -42,6 +43,10 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
+    """ Window to plot live data that are accumulated by a DAtaAccumulator
+    object.
+    New plots can be added via the addstream() method.
+    """
     def __init__(self, time_past=6, bounds_update=0.1,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,14 +92,17 @@ class MultiStreamPlot(pg.GraphicsWindow):
         ], 1), 'CIELCh', 'sRGB1'), 0, 1)*255
 
     def add_stream(self, accumulator, header_items):
-        """ Adds a data collector stream to the plot
-
+        """ Adds a data collector stream to the plot:
+        :param accumulator: instance of the DataAccumulator class
+        :param header_items: specify elements in the DataAccumulator to be plot
+               by their header name.
+        :return:
         """
         self.colors = self.get_colors(len(self.curves) + len(header_items))
         self.accumulators.append(accumulator)
         self.stream_names.append(header_items)
         self.header_indexes.append([accumulator.header_list.index(dv)
-                                for dv in header_items])
+                                    for dv in header_items])
         self.bounds.append(None)
         i_curve = len(self.curves)
         for header_item in header_items:
@@ -139,9 +147,9 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.start = datetime.datetime.now()
 
         i_stream = 0
-        for i_acc, (acc, indexes) in enumerate(zip(self.accumulators, self.header_indexes)):
+        for i_acc, (acc, indexes) in enumerate(zip(self.accumulators,
+                                                   self.header_indexes)):
             try:
-
                 # difference from data accumulator time and now in s...
                 delta_t = (acc.starting_time -
                            self.start).total_seconds()

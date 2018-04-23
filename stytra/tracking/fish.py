@@ -3,7 +3,7 @@ import cv2
 from numba import vectorize, uint8
 from stytra.tracking.tail import find_fish_midline
 
-from stytra.collectors import HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 # from stytra.metadata import Metadata
 
 

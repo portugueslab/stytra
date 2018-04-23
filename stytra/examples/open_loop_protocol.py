@@ -3,14 +3,14 @@ import multiprocessing
 import qdarkstyle
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
-from stytra.metadata.metalist_gui import MetaListGui
+from stytra.data_log.metalist_gui import MetaListGui
 
 from stytra import DataCollector, FrameDispatcher
 from stytra.gui.camera_display import CameraTailSelection
 from stytra.gui.plots import StreamingPlotWidget
 from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.hardware.video import XimeaCamera
-from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
+from stytra.data_log import MetadataFish, MetadataCamera, MetadataGeneral
 from stytra.stimulation import ProtocolRunner
 from stytra.stimulation.backgrounds import gratings
 from stytra.stimulation.stimuli import Pause, MovingConstantly
@@ -25,8 +25,8 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
 
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        #self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/data_log/'
+        #self.experiment_folder = '/Users/luigipetrucco/Desktop/data_log/'
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -36,7 +36,7 @@ class Experiment(QMainWindow):
         self.tail_position_queue = multiprocessing.Queue()
         self.finished_sig = multiprocessing.Event()
 
-        # Take care of metadata:
+        # Take care of data_log:
         self.general_data = MetadataGeneral()
         self.fish_data = MetadataFish()
         self.imaging_data = MetadataLightsheet()

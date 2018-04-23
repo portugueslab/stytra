@@ -1,4 +1,4 @@
-from stytra.collectors import HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 
 
 class FrameProcessingMethod(HasPyQtGraphParams):
@@ -21,18 +21,20 @@ class FrameProcessingMethod(HasPyQtGraphParams):
 """ 
 Tail tracking methods 
 """
+
+
 class TailTrackingMethod(FrameProcessingMethod):
     """ General tail tracking method.
     """
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
-        standard_params_dict = dict(n_segments=20,
-                                    function={'values': ['centroid',
+        standard_params_dict = dict(function={'values': ['centroid',
                                                          'angle_sweep'],
                                               'value': 'centroid',
                                               'type': 'list',
                                               'readonly': True},
+                                    n_segments=20,
                                     color_invert=True,
                                     tail_start={'value': (440, 225),
                                                 'visible': False},
@@ -60,6 +62,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
 """ 
 Eyes tracking methods 
 """
+
+
 class EyeTrackingMethod(FrameProcessingMethod):
     """ General eyes tracking method.
     """
@@ -67,7 +71,7 @@ class EyeTrackingMethod(FrameProcessingMethod):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
         standard_params_dict = dict(function={'values': ['eye_threshold'],
-                                              'value': 'centroid',
+                                              'value': 'eye_threshold',
                                               'type': 'list',
                                               'readonly': True},
                                     color_invert=True,

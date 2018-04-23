@@ -1,5 +1,3 @@
-from stytra import HasPyQtGraphParams
-
 try:
     from ximea import xiapi
     import av
@@ -12,7 +10,7 @@ import numpy as np
 from datetime import datetime
 from time import sleep
 
-from stytra.collectors import HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 
 from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 from arrayqueues.processes import FrameProcessor
@@ -118,7 +116,6 @@ class VideoFileSource(VideoSource):
         # If the file is a Ximea Camera sequence, frames in the  corresponding
         # folder are read.
         import cv2
-
         im_sequence_flag = self.source_file.split('.')[-1] == 'xiseq'
         if im_sequence_flag:
             frames_fn = glob.glob('{}_files/*'.format(self.source_file.split('.')[-2]))
@@ -131,7 +128,6 @@ class VideoFileSource(VideoSource):
         while ret and not self.kill_signal.is_set():
             if self.source_file.split('.')[-1] == 'xiseq':
                 frame = cv2.imread(frames_fn[k])
-                # print('read frame...{}: {}'.format(frames_fn[k], k))
                 k += 1
                 if k == len(frames_fn) - 2:
                     ret = False

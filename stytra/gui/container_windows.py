@@ -25,7 +25,7 @@ class DebugLabel(QLabel):
             self.setText('Debug mode is on, data will not be saved!')
             self.setStyleSheet('background-color: #dc322f;color:#fff')
         else:
-            self.setText('Experiment ready, please ensure the metadata is correct')
+            self.setText('Experiment ready, please ensure the data_log is correct')
             self.setStyleSheet('background-color: #002b36')
 
 
@@ -38,11 +38,11 @@ class TrackingSettingsGui(QWidget):
 
 class SimpleExperimentWindow(QMainWindow):
     """ Window for controlling a simple experiment including only a monitor
-    the relative controls and the buttons for metadata and protocol control.
+    the relative controls and the buttons for data_log and protocol control.
     """
     def __init__(self, experiment, **kwargs):
         """
-        :param experiment: Experiment class with metadata
+        :param experiment: Experiment class with data_log
         """
         super().__init__(**kwargs)
         self.experiment = experiment
@@ -52,7 +52,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment)
-        self.button_metadata = QPushButton('Edit metadata')
+        self.button_metadata = QPushButton('Edit data_log')
 
         if experiment.scope_triggered:
             self.chk_scope = QCheckBox('Wait for the scope')
@@ -135,7 +135,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         if self.tail_tracking:
-            self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
+            self.stream_plot.add_stream(self.experiment.data_acc,
                                         ['tail_sum'])
         else:
             self.stream_plot.add_stream(self.experiment.motion_acc,

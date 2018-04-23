@@ -7,7 +7,7 @@ from stytra.stimulation.stimuli import Pause, \
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.collectors import Accumulator, HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 from random import shuffle, sample
 from stytra.stimulation.backgrounds import gratings
 import math

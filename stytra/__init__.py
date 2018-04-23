@@ -13,8 +13,10 @@ import zmq
 from PyQt5.QtCore import QTimer, QObject
 
 from stytra.calibration import CrossCalibrator, CircleCalibrator
-from stytra.collectors import DataCollector, HasPyQtGraphParams, \
-    GeneralMetadata, FishMetadata
+from stytra.collectors import DataCollector
+from stytra.data_log import HasPyQtGraphParams
+from stytra.data_log.metadata import GeneralMetadata, FishMetadata
+
 from stytra.dbconn import put_experiment_in_db, Slacker
 from stytra.hardware.video import CameraControlParameters, VideoWriter
 
@@ -26,7 +28,7 @@ from stytra.hardware.video import CameraControlParameters
 # imports for tracking
 from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
-# from stytra.metadata import MetadataCamera
+# from stytra.data_log import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
@@ -65,7 +67,8 @@ def get_classes_from_module(input_module, parent_class):
 
 
 class Experiment(QObject):
-    """ General class that runs an experiment."""
+    """ General class that runs an experiment.
+    """
     def __init__(self, directory,
                  calibrator=None,
                  app=None,
@@ -103,7 +106,7 @@ class Experiment(QObject):
         self.window_main = None
 
         # Maybe Experiment class can inherit from HasPyQtParams itself; but for
-        # now I just use metadata object to access the global _params later in
+        # now I just use data_log object to access the global _params later in
         # the code. This entire Metadata() thing may be replaced.
         self.metadata = GeneralMetadata()
         self.fish_metadata = FishMetadata()
@@ -149,12 +152,18 @@ class Experiment(QObject):
 
             self.pyb = PyboardConnection(com_port='COM3')
 
+    def start_experiment(self):
+        self.make_window()
+        self.initialize_metadata()
+
     def make_window(self):
+        """ Make experiment GUI, defined in children depending on experiments.
+        """
         self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
 
     def initialize_metadata(self):
-        # When restoring here metadata to previous values, there may be
+        # When restoring here data_log to previous values, there may be
         # multiple (one per parameter), calls of functions connected to
         # a change in the params three state.
         # See comment in DataCollector.restore_from_saved()
@@ -166,7 +175,7 @@ class Experiment(QObject):
         so that for each experiment it is known what code was used to run it.
         """
 
-        # Get program name and version and save to the metadata:
+        # Get program name and version and save to the data_log:
         repo = git.Repo(search_parent_directories=True)
         git_hash = repo.head.object.hexsha
 
@@ -226,7 +235,7 @@ class Experiment(QObject):
 
     def end_protocol(self, save=True):
         """ Function called at Protocol end. Reset Protocol, save
-        metadata and put experiment data in pymongo database.
+        data_log and put experiment data in pymongo database.
         """
         self.protocol_runner.end()
         self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
@@ -245,7 +254,7 @@ class Experiment(QObject):
                                                                      eliminate_df=True))
                 self.dc.add_static_data(db_idx, 'general_db_index')
 
-            self.dc.save()  # save metadata
+            self.dc.save()  # save data_log
 
             # Save stimulus movie in .h5 file if required:
             movie = self.window_display.widget_display.get_movie()
@@ -308,16 +317,21 @@ class CameraExperiment(Experiment):
 
         super().__init__(*args, **kwargs)
 
+    def start_experiment(self):
+        self.go_live()
+        super().start_experiment()
+
     def make_window(self):
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
         self.go_live()
-        self.initialize_metadata()
+        # self.initialize_metadata()
 
     def go_live(self):
         self.gui_timer.start(1000 // 60)
         sys.excepthook = self.excepthook
         self.camera.start()
+        print('started')
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
@@ -401,11 +415,6 @@ class TrackingExperiment(CameraExperiment):
         # TODO do we need this linked to GUI timeout? why not value change?
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
-
-    def make_window(self):
-        """ Make experiment GUI, defined in instances depending on tracking.
-        """
-        pass
 
     def start_protocol(self):
         """ Reset data accumulator when starting the protocol.

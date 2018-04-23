@@ -5,7 +5,7 @@ from queue import Empty
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import QRectF, QPointF
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
@@ -67,14 +67,18 @@ class CameraViewWidget(QWidget):
             self.update_controls)
 
         self.layout.addWidget(self.camera_display_widget)
+
+        self.layout_control = QHBoxLayout()
         if self.control_queue is not None:
             self.params_button = QPushButton('Camera params')
             self.params_button.clicked.connect(self.show_params_gui)
-            self.layout.addWidget(self.params_button)
+            self.layout_control.addWidget(self.params_button)
 
         self.captureButton = QPushButton('Capture frame')
         self.captureButton.clicked.connect(self.save_image)
-        self.layout.addWidget(self.captureButton)
+        self.layout_control.addWidget(self.captureButton)
+
+        self.layout.addLayout(self.layout_control)
         self.current_image = None
 
         self.setLayout(self.layout)
@@ -97,6 +101,7 @@ class CameraViewWidget(QWidget):
                         timeout=0.001)
                     first = False
                 else:
+                    # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)
 
                 if self.camera_rotation >= 1:
@@ -306,7 +311,7 @@ class CameraEyesSelection(CameraSelection):
         if len(self.experiment.data_acc.stored_data) > 1:
             e = self.experiment.data_acc.stored_data[-1][1:]
             im = self.current_image
-            if e[0] == e[0]:
+            if e[0] is not None:  # == e[0]:
                 pos = self.track_params['wnd_pos']
                 # im < self.track_params['threshold']).astype(np.uint8)
                 imc = draw_ellipse(im,
@@ -315,6 +320,7 @@ class CameraEyesSelection(CameraSelection):
                                    c=[(150, )*3, (150, )*3])
 
                 self.image_item.setImage(imc)
+
 
 class CameraViewCalib(CameraViewWidget):
     def __init__(self, *args, **kwargs):

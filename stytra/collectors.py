@@ -1,19 +1,15 @@
 import datetime
 import os
-
 import deepdish as dd
 import numpy as np
 import pandas as pd
-import param
 import json
 
-# from stytra.metadata import Metadata
 from copy import deepcopy
-from pyqtgraph.parametertree import Parameter, ParameterTree
-from stytra.dbconn import sanitize_item
-
-
+from pyqtgraph.parametertree import Parameter
 from pyqtgraph.pgcollections import OrderedDict
+
+from stytra.dbconn import sanitize_item
 
 
 def strip_values(it):
@@ -25,157 +21,6 @@ def strip_values(it):
         return new_dict
     else:
         return it
-
-
-class HasPyQtGraphParams(object):
-    """
-    This class is used to have a number of objects (experiment interfaces and
-    protocols) sharing a global pyqtgraph Parameter object that will be used
-    for saving metadata and restoring the app to the last used state.
-    _params is a class attribute and is shared among all subclasses; each
-    subclass will have an alias, params, providing access to its private
-    parameters.
-    """
-    _params = Parameter.create(name='global_params', type='group')
-
-    def __init__(self, name=None):
-        """ Create the params of the instance and add it to the global _params
-        of the class. If the name passed already exists in the tree, it will be
-        overwritten.
-        :param name: Name for the tree branch where this parameters are stored.
-                     If nothing is passed, child class name will be used.
-        """
-
-        if name is None:
-            name = self.__class__.__name__
-
-        self.params = Parameter.create(name=name,
-                                       type='group')
-
-        existing_children = self._params.children()
-
-        # WARNING!!
-        # Here there can be undesired emissions of the StateChanged signal!
-        # If you are removing a child params, it will emit a signal you have
-        # to block.
-        for child in existing_children:
-            if child.name() == name:
-                self._params.removeChild(child)
-
-        self._params.addChild(self.params)
-
-    def set_new_param(self, name, value, get_var_type=True):
-        """ Easy set for new parameters.
-        :param name: name of new parameter
-        :param value: either a value entry or a dictionary of valid keys
-                      for a parameter (e.g. type, visible, editable, etc.)
-        :param get_var_type: if True, value type will be set as parameter type
-        :return:
-        """
-        if isinstance(value, dict):  # Allows passing dictionaries:
-            entry_dict = {'name': name}  # add name
-            entry_dict.update(value)
-            self.params.addChild(entry_dict)
-        else:
-            if get_var_type:  # if specification of type is required, infer it
-                self.params.addChild({'name': name, 'value': value,
-                                      'type': type(value).__name__})
-            else:
-                self.params.addChild({'name': name, 'value': value})
-
-    def get_clean_values(self):
-        return sanitize_item(self.params.getValues(), paramstree=True)
-
-
-class GuiMetadata(HasPyQtGraphParams):
-    def __init__(self):
-        super().__init__()
-        self.protocol_params_tree = ParameterTree(showHeader=False)
-
-    def get_param_dict(self):
-        return self.params.getValues()
-
-    def show_metadata_gui(self):
-        self.protocol_params_tree = ParameterTree(showHeader=False)
-        self.protocol_params_tree.setParameters(self.params)
-        self.protocol_params_tree.setWindowTitle('Metadata')
-        self.protocol_params_tree.resize(450, 600)
-        return self.protocol_params_tree
-
-    def get_state(self):
-        return self._params.saveState()
-
-    def restore_state(self):
-        pass
-
-
-class GeneralMetadata(GuiMetadata):
-    def __init__(self):
-        super().__init__()
-        params =[
-                dict(name='session_id', type='int', value=0),
-                {'name': 'experimenter_name', 'type': 'list', 'value':
-                    'Vilim Stih',
-                 'values': ['Elena Dragomir',
-                            'Andreas Kist',
-                            'Laura Knogler',
-                            'Daniil Markov',
-                            'Pablo Oteiza',
-                            'Virginia Palieri',
-                            'Luigi Petrucco',
-                            'Ruben Portugues',
-                            'Vilim Stih',
-                            'Tugce Yildizoglu',
-                            'Ot Prat'],
-                 },
-                {'name': 'setup_name',  'type': 'list',
-                 'values': ['test',
-                            '2p',
-                            'Lightsheet',
-                            '42',
-                            'Saskin',
-                            'Archimedes',
-                            'Helmut',
-                            'Katyusha',
-                            'WeltAmDraht'], 'value': 'test'}]
-
-        self.params.setName('general_metadata')
-        self.params.addChildren(params)
-
-
-class FishMetadata(GuiMetadata):
-    def __init__(self):
-        super().__init__()
-        params = [
-                  dict(name='id', type='int', value=0),
-                {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20),
-                 'tip': 'Fish age', 'suffix': ' dpf'},
-                {'name': 'genotype', 'type': 'list',
-                 'values': ['TL', 'Huc:GCaMP6f', 'Huc:GCaMP6s',
-                            'Huc:H2B-GCaMP6s', 'Fyn-tagRFP:PC:NLS-6f',
-                            'Fyn-tagRFP:PC:NLS-6s', 'Fyn-tagRFP:PC',
-                            'Aldoca:Gal4;UAS:GFP+mnn:Gal4;UAS:GFP',
-                            'PC:epNtr-tagRFP',
-                            'NeuroD-6f',
-                            'GR90:Gal4;UAS:GCaMP6s',
-                            '152:Gal4;UAS:GCaMP6s',
-                            '156:Gal4;UAS:GCaMP6s',
-                            'IO:Gal4;UAS:GCaMP6sef05'], 'value': 'TL'},
-                {'name': 'dish_diameter', 'type': 'list',
-                 'values': ['0', '30', '60', '90', 'lightsheet'],
-                 'value': '60'},
-
-                {'name': 'comments', 'type': 'str', 'value': ""},
-                {'name': 'embedded', 'type': 'bool', 'value': True,
-                 'tip': "This is a checkbox"},
-                {'name': 'treatment', 'type': 'list',
-                 'values': ['',
-                            '10mM MTz',
-                            'Bungarotoxin'], 'value': ''},
-                {'name': 'screened', 'type': 'list',
-                 'values': ['not', 'dark', 'bright'], 'value': 'not'}]
-        self.params.setName('fish_metadata')
-        self.params.addChildren(params)
 
 
 class Accumulator:
@@ -227,9 +72,9 @@ class Accumulator:
 
 
 def metadata_dataframe(metadata_dict, time_step=0.005):
-    """ Function for converting a metadata dictionary into a pandas DataFrame
+    """ Function for converting a data_log dictionary into a pandas DataFrame
     for saving.
-    :param metadata_dict: metadata dictionary (containing stimulus log!)
+    :param metadata_dict: data_log dictionary (containing stimulus log!)
     :param time_step: time step (used only if tracking is not present!)
     :return: a pandas DataFrame with a 'stimulus' column for the stimulus
     """
@@ -270,7 +115,7 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 
 class DataCollector:
-    """ Class for saving all data and metadata produced during an experiment.
+    """ Class for saving all data and data_log produced during an experiment.
     There are two kind of data that are collected:
      - Metadata/parameters: values that should restored from previous
                             sessions.
@@ -298,7 +143,7 @@ class DataCollector:
     In the future this function may structure its output in other standard
     formats for scientific data (e.g., NWB).
 
-    In addition to the .json file, metadata and parameters from
+    In addition to the .json file, data_log and parameters from
     HasPyQtGraphParams objects are stored in a config.h5 file (located in the
     experiment directory) which is used for restoring the last configuration
     of the GUI and of the experiment parameters.
@@ -320,7 +165,7 @@ class DataCollector:
         else:
             raise ValueError('The specified directory does not exist!')
 
-        # Try to find previously saved metadata:
+        # Try to find previously saved data_log:
         self.last_metadata = None
         list_metadata = sorted([fn for fn in os.listdir(folder_path) if
                                 fn.endswith('config.h5')])
@@ -401,7 +246,7 @@ class DataCollector:
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
 
-        # Params metadata:
+        # Params data_log:
         value_dict = deepcopy(self.params_metadata.getValues())
 
         # Static data dictionary:
@@ -414,7 +259,7 @@ class DataCollector:
                                   eliminate_df=eliminate_df)
             if category in clean_data_dict.keys():
                 split_name = key.split('_')
-                if split_name[1] == 'metadata':
+                if split_name[1] == 'data_log':
                     clean_data_dict[category] = value
                 else:
                     clean_data_dict[category]['_'.join(split_name[1:])] = value
@@ -436,7 +281,7 @@ class DataCollector:
 
     def save_config_file(self):
         """ Save the config.h5 file with the current state of the params
-        metadata.
+        data_log.
         """
         dd.io.save(self.folder_path + 'config.h5',
                    self.params_metadata.saveState())
@@ -465,7 +310,7 @@ class DataCollector:
                       outfile, sort_keys=True)
 
     def save(self, timestamp=None):
-        """ Save both the metadata.json log and the config.h5 file
+        """ Save both the data_log.json log and the config.h5 file
         """
 
         self.save_json_log(timestamp)
