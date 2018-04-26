@@ -81,7 +81,7 @@ class Protocol(HasPyQtGraphParams):
 class NoStimulation(Protocol):
     """ A void protocol.
     """
-    name = 'no_stimulation'
+    name = 'no stimulation'
 
     def __init__(self):
         super().__init__()
@@ -754,7 +754,7 @@ class VisualCodingProtocol(Protocol):
 
 
 class MovingBackgroundProtocol(Protocol):
-    name = 'moving_backgound_protocol'
+    name = 'moving backgound protocol'
 
     def __init__(self):
         super().__init__()
@@ -1154,7 +1154,6 @@ class LuminanceRamp(Protocol):
                                                 color=(l0, )*3))
 
         return stimuli
-
 
 
 def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,

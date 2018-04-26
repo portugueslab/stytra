@@ -61,9 +61,11 @@ def get_classes_from_module(input_module, parent_class):
     :return: OrderedDict of classes
     """
     classes = inspect.getmembers(input_module, inspect.isclass)
-    return OrderedDict({prot[1].name: prot[1]
-                        for prot in classes if issubclass(prot[1],
-                                                               parent_class)})
+    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
+                              if issubclass(c[1], parent_class)
+                              and not c[1] is parent_class})
+
+    return ls_classes
 
 
 class Experiment(QObject):

@@ -282,19 +282,12 @@ class CameraEyesSelection(CameraSelection):
 
         self.initialise_roi()
 
-        # Prepare curves for displaying the eyes:
-        # self.curves_eyes = [pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
-        #                                               width=3)),
-        #                     pg.PlotCurveItem(pen=dict(color=(40, 230, 5),
-        #                                               width=3))]
-
         self.curves_eyes = [pg.EllipseROI(pos=(0, 0), size=(10, 10),
                                           movable=False,
                                           pen=dict(color=k, width=3))
                             for k in [(5, 40, 230), (40, 230, 5)]]
 
         self.pre_th = [0, 0]
-
 
         for c in self.curves_eyes:
             self.display_area.addItem(c)
@@ -334,16 +327,17 @@ class CameraEyesSelection(CameraSelection):
             e = self.experiment.data_acc.stored_data[-1][1:]
             for i, o in enumerate([0, 5]):
                 if e[0] == e[0]:
-                    # for ell, col in zip(self.curves_eyes, [(5, 40, 230),
-                    #                                        (40, 230, 5)]):
+                    for ell, col in zip(self.curves_eyes, [(5, 40, 230),
+                                                           (40, 230, 5)]):
+                        ell.setPen(col, width=3)
 
                     pos = self.track_params['wnd_pos']
 
                     # This long annoying part take care of the calculation
                     # of rotation and translation for the ROI starting from
                     # ellipse center, axis and rotation.
-                    # The ugly annoying part with angles is required because
-                    # pyqtgraph rotation rotates around lower corner and not
+                    # Some geometry is required because pyqtgraph rotation
+                    # happens around lower corner and not
                     # around center.
                     th = - e[o + 4]  # eye angle from tracked ellipse
                     c_x = int(e[o + 2] / 2)  # ellipse center x and y
@@ -373,9 +367,9 @@ class CameraEyesSelection(CameraSelection):
 
                         self.pre_th[i] = th
 
-                # else:
-                #     for ell in self.curves_eyes:
-                #         ell.setPen(None)
+                else:
+                    for ell in self.curves_eyes:
+                        ell.setPen(None)
 
         self.image_item.setImage(im)
 
