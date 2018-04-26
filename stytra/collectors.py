@@ -259,7 +259,7 @@ class DataCollector:
                                   eliminate_df=eliminate_df)
             if category in clean_data_dict.keys():
                 split_name = key.split('_')
-                if split_name[1] == 'data_log':
+                if split_name[1] == 'metadata':
                     clean_data_dict[category] = value
                 else:
                     clean_data_dict[category]['_'.join(split_name[1:])] = value
@@ -295,6 +295,7 @@ class DataCollector:
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
+        print(clean_dict)
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
                     str(clean_dict['fish']['id'])

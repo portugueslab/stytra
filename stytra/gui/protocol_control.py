@@ -1,7 +1,6 @@
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
-    QWidget, QComboBox, \
-     QProgressBar
+    QWidget, QComboBox, QProgressBar
 
 from pyqtgraph.parametertree import ParameterTree
 

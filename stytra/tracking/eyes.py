@@ -37,14 +37,21 @@ def _fit_ellipse(thresholded_image):
     _, contours, hierarchy = cv2.findContours(thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     if len(contours) >= 2:
+
         # Get the two largest ellipses (i.e. the eyes, not any dirt)
         contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)[:2]
         # Sort them that first ellipse is always the left eye (in the image)
         contours = sorted(contours, key=np.max)
 
         # Fit the ellipses for the two eyes
-        e = [cv2.fitEllipse(contours[i]) for i in range(2)]
-        return e
+        if len(contours[0]) > 4 and len(contours[1]) > 4:
+            e = [cv2.fitEllipse(contours[i]) for i in range(2)]
+            return e
+        else:
+            return False
+        # except cv2.error:
+        #     print('unknown error')
+        #     return False
 
     else:
         # Not at least two eyes + maybe dirt found...
@@ -70,26 +77,14 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
 
     thresholded = (cropped < threshold).astype(np.uint8)
 
-    try:
-        e = _fit_ellipse(thresholded)
-        if e is False:
-            print("I don't find eyes here...")
-            e = (None,)*10
-        else:
-            # TODO I am sure there is a smarter way here...
-            e = e[0][0] + e[0][1] + (e[0][2],) + \
-                e[1][0] + e[1][1] + (e[1][2],)
-
-    except cv2.error:
+    # try:
+    e = _fit_ellipse(thresholded)
+    if e is False:
         print("I don't find eyes here...")
-        e = (None,)*10
-    # print('padded_shape: {}'.format(thresholded.shape))
-    # print('Position: {}, size: {}'.format(wnd_pos, wnd_dim))
-
-    #     # e = False
-    #
-    # if e is False:
-    #     print('Somethong wrong with eyes!')
-    #     e = [np.nan, np.nan]
+        e = (np.nan,)*10
+    else:
+        # TODO I am sure there is a smarter way here...
+        e = e[0][0] + e[0][1] + (e[0][2],) + \
+            e[1][0] + e[1][1] + (e[1][2],)
 
     return np.array(e)

@@ -52,7 +52,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment)
-        self.button_metadata = QPushButton('Edit data_log')
+        self.button_metadata = QPushButton('Edit metadata')
 
         if experiment.scope_triggered:
             self.chk_scope = QCheckBox('Wait for the scope')
@@ -197,7 +197,7 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         self.stream_plot.add_stream(self.experiment.data_acc,
-                                    ['eye_1_th', 'eye_1_th'])
+                                    ['th_e0', 'th_e1'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)

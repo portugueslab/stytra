@@ -64,8 +64,7 @@ class GeneralMetadata(GuiMetadata):
 class FishMetadata(GuiMetadata):
     def __init__(self):
         super().__init__()
-        params = [
-                  dict(name='id', type='int', value=0),
+        params = [dict(name='id', type='int', value=0),
                 {'name': 'age', 'type': 'int', 'value': 7, 'limits': (4, 20),
                  'tip': 'Fish age', 'suffix': ' dpf'},
                 {'name': 'genotype', 'type': 'list',
