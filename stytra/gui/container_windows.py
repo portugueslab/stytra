@@ -179,7 +179,7 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot()
+        self.stream_plot = MultiStreamPlot(time_past=30)
 
         self.monitoring_layout.addWidget(self.stream_plot)
 

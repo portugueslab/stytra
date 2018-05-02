@@ -154,7 +154,9 @@ class OKRstim(Protocol):
         params_dict = {'windmill_amplitude': np.pi/4,
                        'windmill_duration': 2.,
                        'windmill_arms': 12,
-                       'inter_stim_pause': 10.,
+                       'inter_stim_pause': 5.,
+                       'inter_rot_pause': 1.,
+                       'internal_reps': 20,
                        'rotate': False}
 
         for key in params_dict:
@@ -165,17 +167,28 @@ class OKRstim(Protocol):
 
         stim_color = (255, 0, 0)
         p = self.params['inter_stim_pause']
+        p2 = self.params['inter_rot_pause']
         windmill_freq = 1 / (self.params['windmill_duration'] * 2)
 
         STEP = 0.005
         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
                                   STEP)
 
-        stimlist = ['FCLW', 'FCCW', 'FCLW', 'FCCW', 'RCLW', 'RCCW', 'LCLW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
-
-        reps = 10
+        stimlist = ['FCLW', 'FCCW', 'FCLW', 'FCCW'] #, 'RCLW', 'RCCW', 'LCLW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
+        stimlistR = ['RCLW', 'RCCW']
+        stimlistL = ['LCLW', 'LCCW']
+        reps = int(self.params['inter_rot_pause'])
         stimlist.extend(stimlist * (reps - 1))
-        shuffle(stimlist)
+        # shuffle(stimlist)
+        stimlistR.extend(stimlistR * (reps - 1))
+        # shuffle(stimlistR)
+        stimlistL.extend(stimlistL * (reps - 1))
+        # shuffle(stimlistL)
+
+        lrlist = [stimlistR, stimlistL]
+        shuffle(lrlist)
+        for l in lrlist:
+            stimlist.extend(l)
         print(stimlist)
         # self.params['stim_seq'] = self.stimlist
 
@@ -194,7 +207,7 @@ class OKRstim(Protocol):
             theta.extend(theta_vect_clw)
 
             # Second pause:
-            t.extend([t[-1] + p])
+            t.extend([t[-1] + p2])
             theta.extend([theta[-1]])
 
             # Rotation back:
