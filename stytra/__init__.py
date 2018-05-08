@@ -61,9 +61,11 @@ def get_classes_from_module(input_module, parent_class):
     :return: OrderedDict of classes
     """
     classes = inspect.getmembers(input_module, inspect.isclass)
-    return OrderedDict({prot[1].name: prot[1]
-                        for prot in classes if issubclass(prot[1],
-                                                               parent_class)})
+    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
+                              if issubclass(c[1], parent_class)
+                              and not c[1] is parent_class})
+
+    return ls_classes
 
 
 class Experiment(QObject):
@@ -243,7 +245,7 @@ class Experiment(QObject):
         self.dc.add_static_data(self.protocol_runner.t_end,
                                 name='general_t_protocol_end')
 
-        # TODO saving of synamic_log should be conditional
+        # TODO saving of dynamic_log should be conditional
         # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
         #                         name='stimulus_dynamic_log')
         clean_dict = self.dc.get_clean_dict(paramstree=True)
@@ -499,7 +501,10 @@ class EyeTrackingExperiment(TrackingExperiment):
         """
 
         tracking_method = ThresholdEyeTrackingMethod()
-        header_list = ['', ]*4 + ['eye_1_th', ] + ['', ]*4 + ['eye_1_th', ]
+        header_list = []
+        [header_list.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
+                             'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
+                             'th_e{}'.format(i)]) for i in range(2)]
 
         super().__init__(*args, tracking_method=tracking_method,
                          header_list=header_list,

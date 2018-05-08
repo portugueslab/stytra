@@ -149,20 +149,28 @@ class MultiStreamPlot(pg.GraphicsWindow):
         i_stream = 0
         for i_acc, (acc, indexes) in enumerate(zip(self.accumulators,
                                                    self.header_indexes)):
+
+            # try:
+            # difference from data accumulator time and now in seconds:
             try:
-                # difference from data accumulator time and now in s...
                 delta_t = (acc.starting_time -
-                           self.start).total_seconds()
+                       self.start).total_seconds()
+            except TypeError:
+                delta_t = 0
+            data_array = acc.get_last_t(self.time_past)
+            if len(data_array) > 1:
+                # ...to be added to the array of times in s in the data accumulator
+                fps = acc.get_fps()
 
-                data_array = acc.get_last_t(self.time_past)
+                time_array = delta_t + data_array[:, 0]
 
-                if len(data_array) > 0:
-                    # ...to be added to the array of times in s in the data accumulator
-                    fps = acc.get_fps()
+                # Exclude nans from calculation of percentile boundaries:
+                b = ~(np.isnan(data_array[:, indexes])).any(1)
+                non_nan_data = data_array[b, :]
 
-                    time_array = delta_t + data_array[:, 0]
-
-                    new_bounds = np.percentile(data_array[:, indexes], (0.5, 99.5), 0).T
+                try:
+                    new_bounds = np.percentile(non_nan_data[:, indexes],
+                                               (0.5, 99.5), 0).T
                     if self.bounds[i_acc] is None:
                         self.bounds[i_acc] = new_bounds
                     else:
@@ -182,11 +190,13 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         self.curves[i_stream].setData(x=time_array,
                                                       y=i_stream+((data_array[:, i_var]-lb)/scale))
                         i_stream += 1
+                except IndexError:
+                    pass
 
-            except IndexError:
-                pass
-            except TypeError:
-                pass
+            # except IndexError:
+            #     pass
+            # except TypeError:
+            #     pass
 
 
 

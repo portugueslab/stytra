@@ -81,7 +81,7 @@ class Protocol(HasPyQtGraphParams):
 class NoStimulation(Protocol):
     """ A void protocol.
     """
-    name = 'no_stimulation'
+    name = 'no stimulation'
 
     def __init__(self):
         super().__init__()
@@ -151,17 +151,10 @@ class OKRstim(Protocol):
     def __init__(self):
         super().__init__()
 
-        params_dict = {'initial_pause': 0.,
-                       'windmill_amplitude': np.pi * 0.444,
-                       'windmill_duration': 10.,
-                       'windmill_arms': 10,
-                       'windmill_freq': 0.1,
+        params_dict = {'windmill_amplitude': np.pi/4,
+                       'windmill_duration': 2.,
+                       'windmill_arms': 12,
                        'inter_stim_pause': 10.,
-                       'grating_cycle': 10,
-                       'grating_vel': 10.,
-                       'grating_duration': 10.,
-                       'flash_duration': 2,
-                       'stim_seq': [],
                        'rotate': False}
 
         for key in params_dict:
@@ -170,124 +163,73 @@ class OKRstim(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-
-        # # initial dark field
-        stimuli.append(Pause(duration=self.params['initial_pause']))
         stim_color = (255, 0, 0)
-        #
-        # # gratings
         p = self.params['inter_stim_pause']
-        v = self.params['grating_vel']
-        d = self.params['grating_duration']
-
-
-        # windmill for OKR
-        import random
+        windmill_freq = 1 / (self.params['windmill_duration'] * 2)
 
         STEP = 0.005
-
         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
                                   STEP)
 
-        self.stimlist = ['FCW', 'FCCW', 'FCW', 'FCCW', 'RCW', 'RCCW', 'LCW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
-        self.cwstims = ['FCW', 'RCW', 'LCW', 'FCW2', 'RCW2', 'LCW2']
-        self.ccwstims = ['FCCW', 'RCCW', 'LCCW', 'FCCW2', 'RCCW2', 'LCCW2']
+        stimlist = ['FCLW', 'FCCW', 'FCLW', 'FCCW', 'RCLW', 'RCCW', 'LCLW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
 
-        self.reps = 10
-        self.stimlist.extend(self.stimlist * (self.reps - 1))
-        random.shuffle(self.stimlist)
-        print(self.stimlist)
+        reps = 10
+        stimlist.extend(stimlist * (reps - 1))
+        shuffle(stimlist)
+        print(stimlist)
         # self.params['stim_seq'] = self.stimlist
 
-        for stim in self.stimlist:
+        for stim in stimlist:
+            theta_vect_clw = np.cos(
+                osc_time_vect * 2 * np.pi * windmill_freq) * \
+                            self.params['windmill_amplitude'] / 2 - \
+                            self.params['windmill_amplitude'] / 2
 
-            if stim[-1]=='2':
-                theta_vect_cw = np.cos(
-                    osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
-                                self.params['windmill_amplitude']
-            else:
-                theta_vect_cw = np.cos(
-                    osc_time_vect * 2 * np.pi * self.params['windmill_freq']) * \
-                                self.params['windmill_amplitude']/2
+            # Initial pause:
+            t = [0, p / 2]
+            theta = [0, 0]
 
-            #Initial pause
-            if stim in self.ccwstims:
-                if stim[-1] == '2':
-                    t = [0, p / 2]
-                    theta = [self.params['windmill_amplitude']] * 2  # initial pause
-                else:
-                    t = [0, p / 2]
-                    theta = [self.params['windmill_amplitude'] / 2] * 2  # initial pause
-            else:
-                if stim[-1] == '2':
-                    t = [0, p / 2]
-                    theta = [theta_vect_cw[int(len(theta_vect_cw)/2)]] * 2  # initial pause
-                else:
-                    t = [0, p / 2]
-                    theta = [theta_vect_cw[int(len(theta_vect_cw)/2)]] * 2  # initial pause
+            # First half rotation:
+            t.extend(t[-1] + osc_time_vect)
+            theta.extend(theta_vect_clw)
 
-            # OKR stimulus:
-            if stim in self.cwstims:
-                t.extend(t[-1] + osc_time_vect[:int(len(osc_time_vect) / 2)])
-                theta.extend(theta_vect_cw[int(len(theta_vect_cw) / 2):])
-            else:
-                t.extend(t[-1] + osc_time_vect[:int(len(osc_time_vect) / 2)])
-                theta.extend(theta_vect_cw[:int(len(theta_vect_cw) / 2)])
+            # Second pause:
+            t.extend([t[-1] + p])
+            theta.extend([theta[-1]])
+
+            # Rotation back:
+            t.extend(t[-1] + osc_time_vect)
+            theta.extend(theta[-1] - theta_vect_clw)
 
             # Final pause:
             t.extend([t[-1] + p / 2])
             theta.extend([theta[-1]])
 
-            b = 0.1
+            if 'CLW' in stim:
+                theta = -np.array(theta)
 
+            mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+
+            b = 0.1  # factor specifying endpoints of clip mask from center
+            # Set clip rectangle to full field or left/right hemi-field:
             if stim[0] == 'F':
-                stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                         theta=theta)),
-                                                        n_arms=self.params[
-                                                            'windmill_arms'],
-                                                        color=stim_color))
+                clip_rect = None
             elif stim[0] == 'L':
-                if self.params['rotate']:
-                    stimuli.append(
-                        SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                          theta=theta)),
-                                                 n_arms=self.params[
-                                                     'windmill_arms'],
-                                                 color=stim_color,
-                                                 clip_rect=[(b, 0),
-                                                            (0.5, 0.5),
-                                                            (1-b, 0)]))
-                else:
-                    stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                             theta=theta)),
-                                                            n_arms=self.params[
-                                                                'windmill_arms'],
-                                                            color=stim_color,
-                                                            clip_rect=[(0, b),
-                                                                       (0.5, 0.5),
-                                                                       (0, 1-b)]))
-            else:
-                if self.params['rotate']:
-                    stimuli.append(
-                        SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                          theta=theta)),
-                                                 n_arms=self.params[
-                                                     'windmill_arms'],
-                                                 color=stim_color,
-                                                 clip_rect=[(b, 1),
-                                                            (0.5, 0.5),
-                                                            (1-b, 1)]))
-                else:
-                    stimuli.append(SeamlessWindmillStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                             theta=theta)),
-                                                            n_arms=self.params[
-                                                                'windmill_arms'],
-                                                            color=stim_color,
-                                                            clip_rect=[(1, b),
-                                                                       (0.5, 0.5),
-                                                                       (1, 1-b)]))
+                clip_rect = [(0, b), (0.5, 0.5), (0, 1-b)]
+            elif stim[0] == 'R':
+                clip_rect = [(1, b), (0.5, 0.5), (1, 1-b)]
 
-        stimuli.append(Pause(duration=p / 2))
+            # If rotation is required, swap x and y coords of clip masks:
+            if self.params['rotate'] and clip_rect is not None:
+                for j, i in enumerate(clip_rect):
+                    clip_rect[j] = (i[1], i[0])
+
+            stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
+                                                    n_arms=self.params[
+                                                            'windmill_arms'],
+                                                    color=stim_color,
+                                                    clip_rect=clip_rect))
+
 
         return stimuli
 
@@ -754,7 +696,7 @@ class VisualCodingProtocol(Protocol):
 
 
 class MovingBackgroundProtocol(Protocol):
-    name = 'moving_backgound_protocol'
+    name = 'moving backgound protocol'
 
     def __init__(self):
         super().__init__()
@@ -1154,7 +1096,6 @@ class LuminanceRamp(Protocol):
                                                 color=(l0, )*3))
 
         return stimuli
-
 
 
 def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,

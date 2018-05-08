@@ -5,7 +5,9 @@ from queue import Empty
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import QRectF, QPointF
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, \
+    QCheckBox, QLabel
+from PyQt5.Qt import QPainter
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
@@ -280,13 +282,21 @@ class CameraEyesSelection(CameraSelection):
 
         self.initialise_roi()
 
-        # Prepare curves for displaying the eyes:
-        self.curves_eyes = [pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
-                                                      width=3)),
-                            pg.PlotCurveItem(pen=dict(color=(40, 230, 5),
-                                                      width=3))]
+        self.curves_eyes = [pg.EllipseROI(pos=(0, 0), size=(10, 10),
+                                          movable=False,
+                                          pen=dict(color=k, width=3))
+                            for k in [(5, 40, 230), (40, 230, 5)]]
+
+        self.pre_th = [0, 0]
+
         for c in self.curves_eyes:
             self.display_area.addItem(c)
+            [c.removeHandle(h) for h in c.getHandles()]
+
+        self.tgl_threshold_view = QCheckBox()
+        self.lbl_threshold_view = QLabel('View thresholded image')
+        self.layout_control.addWidget(self.tgl_threshold_view)
+        self.layout_control.addWidget(self.lbl_threshold_view)
 
     def set_pos_from_tree(self):
         """ Go to parent for definition.
@@ -308,18 +318,60 @@ class CameraEyesSelection(CameraSelection):
         """ Go to parent for definition.
         """
         super().update_image()
+        im = self.current_image
+
+        if self.tgl_threshold_view.isChecked():
+            im = (im < self.track_params['threshold']).astype(np.uint8)
+
         if len(self.experiment.data_acc.stored_data) > 1:
             e = self.experiment.data_acc.stored_data[-1][1:]
-            im = self.current_image
-            if e[0] is not None:  # == e[0]:
-                pos = self.track_params['wnd_pos']
-                # im < self.track_params['threshold']).astype(np.uint8)
-                imc = draw_ellipse(im,
-                                   [((e[0]+pos[1], e[1]+pos[0]), tuple(e[2:4]), e[4]),
-                                    ((e[5]+pos[1], e[6]+pos[0]), tuple(e[7:9]), e[9])],
-                                   c=[(150, )*3, (150, )*3])
+            for i, o in enumerate([0, 5]):
+                if e[0] == e[0]:
+                    for ell, col in zip(self.curves_eyes, [(5, 40, 230),
+                                                           (40, 230, 5)]):
+                        ell.setPen(col, width=3)
 
-                self.image_item.setImage(imc)
+                    pos = self.track_params['wnd_pos']
+
+                    # This long annoying part take care of the calculation
+                    # of rotation and translation for the ROI starting from
+                    # ellipse center, axis and rotation.
+                    # Some geometry is required because pyqtgraph rotation
+                    # happens around lower corner and not
+                    # around center.
+                    th = - e[o + 4]  # eye angle from tracked ellipse
+                    c_x = int(e[o + 2] / 2)  # ellipse center x and y
+                    c_y = int(e[o + 3] / 2)
+
+                    if c_x != 0 and c_y != 0:
+                        th_conv = th * (np.pi/180)  # in radiants now
+                        # rotate based on different from previous angle:
+                        self.curves_eyes[i].rotate(th - self.pre_th[i])
+
+                        # Angle and rad of center point from left lower corner:
+                        c_th = np.arctan(c_x / c_y)
+                        c_r = np.sqrt(c_x**2 + c_y**2)
+
+                        # Coords of the center after rotation around left lower
+                        # corner, to be corrected when setting position:
+                        center_after = (np.sin(c_th + th_conv)*c_r,
+                                        np.cos(c_th + th_conv)*c_r)
+
+                        # Calculate pos for eye ROIs. This require correction
+                        # for the box position, for the ellipse dimensions and
+                        # for the rotation around corner instead of center.
+                        self.curves_eyes[i].setPos(
+                             e[o + 1] + pos[0] - c_x + (c_x - center_after[1]),
+                             e[o + 0] + pos[1] - c_y + (c_y - center_after[0]))
+                        self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
+
+                        self.pre_th[i] = th
+
+                else:
+                    for ell in self.curves_eyes:
+                        ell.setPen(None)
+
+        self.image_item.setImage(im)
 
 
 class CameraViewCalib(CameraViewWidget):
