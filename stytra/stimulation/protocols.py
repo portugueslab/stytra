@@ -177,7 +177,7 @@ class OKRstim(Protocol):
         stimlist = ['FCLW', 'FCCW', 'FCLW', 'FCCW'] #, 'RCLW', 'RCCW', 'LCLW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
         stimlistR = ['RCLW', 'RCCW']
         stimlistL = ['LCLW', 'LCCW']
-        reps = int(self.params['inter_rot_pause'])
+        reps = self.params['internal_reps']
         stimlist.extend(stimlist * (reps - 1))
         # shuffle(stimlist)
         stimlistR.extend(stimlistR * (reps - 1))
@@ -243,9 +243,7 @@ class OKRstim(Protocol):
                                                     color=stim_color,
                                                     clip_rect=clip_rect))
 
-
         return stimuli
-
 
 
 class Exp022ImagingProtocol(Protocol):
