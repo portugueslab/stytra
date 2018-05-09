@@ -11,8 +11,6 @@ from stytra.stimulation.backgrounds import existing_file_background
 
 from itertools import product
 
-from bouter.angles import rot_mat
-
 
 class Stimulus:
     """ General class for a stimulus. Each stimulus can act one through the
