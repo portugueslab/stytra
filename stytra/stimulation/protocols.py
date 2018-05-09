@@ -246,6 +246,84 @@ class OKRstim(Protocol):
         return stimuli
 
 
+class ContinuousOKRstim(Protocol):
+    name = "OKR continuous protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'windmill_amplitude': np.pi/4,
+                       'windmill_duration': 2.,
+                       'windmill_arms': 12,
+                       'inter_stim_pause': 0.,
+                       'rotate': False,
+                       'field': 'F',
+                       'edge_1': 0.1,
+                       'edge_2': 2,
+                       'center_off': 0.1}
+
+        for key in params_dict:
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        stim_color = (255, 0, 0)
+        p = self.params['inter_stim_pause']
+        windmill_freq = 1 / (self.params['windmill_duration'] * 2)
+
+        STEP = 0.005
+        osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+                                  STEP)
+
+        theta_vect_clw = np.cos(osc_time_vect * 2 * np.pi * windmill_freq) * \
+                        self.params['windmill_amplitude'] / 2 - \
+                        self.params['windmill_amplitude'] / 2
+
+        # Initial pause:
+        t = [0, p / 2]
+        theta = [0, 0]
+
+        # First half rotation:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta_vect_clw)
+
+        # Rotation back:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta[-1] - theta_vect_clw)
+
+        # Final pause:
+        t.extend([t[-1] + p / 2])
+        theta.extend([theta[-1]])
+
+        mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+
+        b_1 = self.params['edge_1']  # factor specifying endpoints of clip mask from center
+        b_2 = self.params['edge_2']
+        c = self.params['center_off']
+
+        # Set clip rectangle to full field or left/right hemi-field:
+        if self.params['field'] == 'F':
+            clip_rect = None
+        elif self.params['field'] == 'L':
+            clip_rect = [(0, b_1), (0.5 - c, 0.5), (0, 1-b_2)]
+        elif self.params['field'] == 'R':
+            clip_rect = [(1, b_1), (0.5 + c, 0.5), (1, 1-b_2)]
+
+        # If rotation is required, swap x and y coords of clip masks:
+        if self.params['rotate'] and clip_rect is not None:
+            for j, i in enumerate(clip_rect):
+                clip_rect[j] = (i[1], i[0])
+
+        stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
+                                                n_arms=self.params[
+                                                        'windmill_arms'],
+                                                color=stim_color,
+                                                clip_rect=clip_rect))
+
+        return stimuli
+
+
 class Exp022ImagingProtocol(Protocol):
     name = "exp022 imaging protocol"
 
