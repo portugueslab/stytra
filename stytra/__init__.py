@@ -18,17 +18,15 @@ from stytra.data_log import HasPyQtGraphParams
 from stytra.data_log.metadata import GeneralMetadata, FishMetadata
 
 from stytra.dbconn import put_experiment_in_db, Slacker
-from stytra.hardware.video import CameraControlParameters, VideoWriter
+from stytra.hardware.video import CameraControlParameters, VideoWriter, \
+                    XimeaCamera, AVTCamera, VideoFileSource
 
 
 from stytra.gui.container_windows import SimpleExperimentWindow, \
     CameraExperimentWindow, TailTrackingExperimentWindow, \
     EyeTrackingExperimentWindow
-from stytra.hardware.video import CameraControlParameters
 # imports for tracking
-from stytra.hardware.video import XimeaCamera, VideoFileSource
 from stytra.stimulation import ProtocolRunner, protocols
-# from stytra.data_log import MetadataCamera
 from stytra.stimulation.closed_loop import VigourMotionEstimator, \
     LSTMLocationEstimator
 from stytra.stimulation.protocols import Protocol
@@ -107,9 +105,6 @@ class Experiment(QObject):
 
         self.window_main = None
 
-        # Maybe Experiment class can inherit from HasPyQtParams itself; but for
-        # now I just use data_log object to access the global _params later in
-        # the code. This entire Metadata() thing may be replaced.
         self.metadata = GeneralMetadata()
         self.fish_metadata = FishMetadata()
         self.dc = DataCollector(folder_path=self.directory)
@@ -301,14 +296,19 @@ class CameraExperiment(Experiment):
     For debugging it can be used with a video read from file with the
     VideoFileSource class.
     """
-    def __init__(self, *args, video_file=None, camera_rotation=0, camera_queue_mb=100, **kwargs):
+    def __init__(self, *args, video_file=None,  camera=None,
+                 camera_rotation=0, camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video
         file for the test input
         :param kwargs:
         """
+        cameras_dict = dict(ximea=XimeaCamera,
+                            avt=AVTCamera)
         if video_file is None:
-            self.camera = XimeaCamera(rotation=camera_rotation, max_mbytes_queue=camera_queue_mb)
+            CameraClass = cameras_dict[camera]
+            self.camera = CameraClass(rotation=camera_rotation,
+                                      max_mbytes_queue=camera_queue_mb)
         else:
             self.camera = VideoFileSource(video_file)
 

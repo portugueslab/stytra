@@ -16,12 +16,17 @@ from stytra.tracking.diagnostics import draw_ellipse
 from stytra.hardware.video import CameraControlParameters
 
 
+class SimpleCameraViewWWidget(QWidget):
+    """ Core of a widget to stream images from a camera or a video source.
+    """
+
+
 class CameraViewWidget(QWidget):
     """ A widget to show images from the camera and display the controls.
     It does not implement a frame dispatcher so it may lag behind
     the camera at high frame rates.
     """
-    def __init__(self, experiment):
+    def __init__(self, experiment=None, camera=None):
         """
         :param experiment: experiment to which this belongs (Experiment class)
         """
@@ -29,7 +34,13 @@ class CameraViewWidget(QWidget):
         super().__init__()
 
         self.experiment = experiment
-        self.camera = experiment.camera
+        if experiment is not None:
+            self.camera = experiment.camera
+            experiment.gui_timer.timeout.connect(self.update_image)
+        else:
+            self.camera = camera
+            self.gui_timer = QTimer()
+            self.gui_timer.setSingleShot(False)
 
         self.control_params = CameraControlParameters()
 
@@ -59,7 +70,7 @@ class CameraViewWidget(QWidget):
         # Queue of control parameters for the camera:
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
-        experiment.gui_timer.timeout.connect(self.update_image)
+
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)

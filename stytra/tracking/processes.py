@@ -66,6 +66,7 @@ class FrameDispatcher(FrameProcessor):
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get()
+
                 # acquire the processing parameters from a separate queue:
                 if self.processing_parameter_queue is not None:
                     try:

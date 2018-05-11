@@ -1,103 +1,130 @@
 try:
-    from ximea import xiapi
     import av
 except ImportError:
     pass
 
-from multiprocessing import Process, Queue, Event
+from multiprocessing import Event
 from queue import Empty, Full
 import numpy as np
 from datetime import datetime
-from time import sleep
 
 from stytra.data_log import HasPyQtGraphParams
+from stytra.hardware import VideoSource
 
-from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
-from arrayqueues.processes import FrameProcessor
-import cv2
 import datetime
 import glob
 
-class VideoSource(FrameProcessor):
-    def __init__(self, rotation=0, max_mbytes_queue=100):
-        super().__init__()
-        self.rotation = rotation
-        self.control_queue = Queue()
-        self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
-        self.kill_signal = Event()
-
-
-#TODO add a general camera class
-
-class XimeaCamera(VideoSource):
-    def __init__(self, downsampling=2,
-                 **kwargs):
-        """
-        Class for controlling a XimeaCamera
-        :param frame_queue: queue for frame dispatching from camera
-        :param control_queue: queue with parameters to feed to the camera
-                              (gain, exposure, fps)
-        :param downsampling: downsampling factor (default 1)
-        """
-        super().__init__(**kwargs)
-        self.downsampling = downsampling
+class Camera(VideoSource):
+    """ Class for controlling a camera.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.cam = None
 
     def run(self):
-        self.cam = xiapi.Camera()
+        self.initialize_camera()
 
-        self.cam.open_device()
-        img = xiapi.Image()
-        self.cam.start_acquisition()
-        self.cam.set_exposure(1000)
-
-        # for the camera on the lightsheet which supports hardware downsampling
-        # MQ013MG-ON lightsheet
-        # MQ003MG-CM behaviour
-        if self.cam.get_device_name() == b'MQ013MG-ON':
-            self.cam.set_sensor_feature_selector('XI_SENSOR_FEATURE_ZEROROT_ENABLE')
-            self.cam.set_sensor_feature_value(1)
-            print("Python camera")
-            if self.downsampling > 1:
-                self.cam.set_downsampling_type("XI_SKIPPING")
-                self.cam.set_downsampling("XI_DWN_{}x{}".format(self.downsampling,
-                                                                self.downsampling))
-
-        self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
         while True:
             self.kill_signal.wait(0.0001)
             if self.control_queue is not None:
                 try:
                     control_params = self.control_queue.get(timeout=0.0001)
-                    try:
-                        self.cam.set_exposure(1000)
-                        if 'exposure' in control_params.keys():
-                            print('setting exposure')
-                            self.cam.set_exposure(int(control_params['exposure'])*1000)
-                        if 'gain' in control_params.keys():
-                            self.cam.set_gain(control_params['gain'])
-                        if 'framerate' in control_params.keys():
-                            print(self.cam.get_framerate())
-                            self.cam.set_framerate(control_params['framerate'])
-                    except xiapi.Xi_error:
-                        print('Invalid camera settings')
+                    self.set(control_params)
                 except Empty:
                     pass
             if self.kill_signal.is_set():
                 break
-            try:
-                self.cam.get_image(img)
-                # TODO check if it does anything to add np.array
-                arr = np.array(img.get_image_data_numpy())
+
+            arr = self.grab_frame()
+            if arr is not None:
                 try:
                     if self.rotation != 0:
                         arr = np.rot90(arr, self.rotation)
                     self.frame_queue.put(arr)
                 except Full:
                     print('frame dropped')
-            except xiapi.Xi_error:
-                print('Unable to acquire frame')
-                pass
-        self.cam.close_device()
+            else:
+                print('None frame')
+
+        self.close_camera()
+
+    def initialize_camera(self):
+        pass
+
+    def close_camera(self):
+        pass
+
+    def set(self, control_params):
+        pass
+
+    def grab_frame(self):
+        pass
+
+
+# class XimeaCamera(Camera):
+#     """ Class for controlling a XimeaCamera.
+#     """
+#     def __init__(self, downsampling=2,
+#                  **kwargs):
+#         """
+#         :param frame_queue: queue for frame dispatching from camera
+#         :param control_queue: queue with parameters to feed to the camera
+#                               (gain, exposure, fps)
+#         :param downsampling: downsampling factor (default 1)
+#         """
+#         super().__init__(**kwargs)
+#         self.downsampling = downsampling
+#
+#     def initialize_camera(self):
+#         self.cam = xiapi.Camera()
+#
+#         self.cam.open_device()
+#         self.img = xiapi.Image()
+#         self.cam.start_acquisition()
+#         self.cam.set_exposure(1000)
+#
+#         # for the camera on the lightsheet which supports hardware downsampling
+#         # MQ013MG-ON lightsheet
+#         # MQ003MG-CM behaviour
+#         if self.cam.get_device_name() == b'MQ013MG-ON':
+#             self.cam.set_sensor_feature_selector(
+#                 'XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+#             self.cam.set_sensor_feature_value(1)
+#             print("Python camera")
+#             if self.downsampling > 1:
+#                 self.cam.set_downsampling_type("XI_SKIPPING")
+#                 self.cam.set_downsampling(
+#                     "XI_DWN_{}x{}".format(self.downsampling,
+#                                           self.downsampling))
+#
+#         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
+#
+#     def set(self, control_params):
+#         try:
+#             self.cam.set_exposure(1000)
+#             if 'exposure' in control_params.keys():
+#                 print('setting exposure')
+#                 self.cam.set_exposure(int(control_params['exposure']) * 1000)
+#             if 'gain' in control_params.keys():
+#                 self.cam.set_gain(control_params['gain'])
+#             if 'framerate' in control_params.keys():
+#                 print(self.cam.get_framerate())
+#                 self.cam.set_framerate(control_params['framerate'])
+#         except xiapi.Xi_error:
+#             print('Invalid camera settings')
+#
+#     def grab_frame(self):
+#         try:
+#             self.cam.get_image(self.img)
+#             # TODO check if it does anything to add np.array
+#             arr = np.array(self.img.get_image_data_numpy())
+#         except xiapi.Xi_error:
+#             print('Unable to acquire frame')
+#             arr = None
+#         return arr
+#
+#     def close_camera(self):
+#         self.cam.close_device()
 
 
 class VideoFileSource(VideoSource):
@@ -194,26 +221,6 @@ class VideoWriter(FrameProcessor):
             out_container.close()
 
 
-class CameraParams(HasPyQtGraphParams):
-    def __init__(self):
-        """
-        A widget to show the camera and display the controls
-        :param experiment: experiment to which this belongs
-        """
-
-        super().__init__(name='tracking_camera_params')
-
-        standard_params_dict = dict(exposure={'value': 1000.,
-                                              'type': 'float',
-                                              'limits': (0.1, 50),
-                                              'suffix': 'ms',
-                                              'tip': 'Exposure (ms)'},
-                                    gain={'value': 1.,
-                                          'type': 'float',
-                                          'limits': (0.1, 3),
-                                          'tip': 'Camera amplification gain'})
-
-
 class CameraControlParameters(HasPyQtGraphParams):
     """ General tail tracking method.
     """
@@ -250,3 +257,7 @@ class CameraControlParameters(HasPyQtGraphParams):
     def change_exp(self):
         pass
         # self.exp.setValue(1000 / self.fps.value(), blockSignal=self.change_fps)
+
+
+if __name__=="__main__":
+

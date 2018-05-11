@@ -18,6 +18,8 @@ if __name__ == '__main__':
                         action='store_true')
     parser.add_argument('--tail-tracking-method',
                         action='store', default='angle_sweep')
+    parser.add_argument('--camera',
+                        action='store', default='ximea')
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--shock-stimulus',
@@ -62,15 +64,17 @@ if __name__ == '__main__':
                         asset_directory=args.asset_dir,
                         scope_triggered=args.scope_triggering,
                         rec_stim_every=rec_stim_every,
-                        shock_stimulus=args.shock_stimulus)
+                        shock_stimulus=args.shock_stimulus,
+                        camera=args.camera)
 
     base = Experiment
     if args.video_file:
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
 
-    if args.tail_tracking or args.freely_swimming:
+    if args.tail_tracking or args.freely_swimming or args.eye_tracking:
         class_kwargs['camera_rotation'] = int(args.camera_rotation)
+        class_kwargs['camera'] = args.camera
 
     if args.tail_tracking:
         base = TailTrackingExperiment
