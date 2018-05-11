@@ -11,9 +11,9 @@ from multiprocessing.queues import Empty, Full
 from arrayqueues.processes import FrameProcessor
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 
-from .cameras import XimeaCamera, AvtCamera
-from .write import VideoWriter
-from .interfaces import CameraControlParameters
+from stytra.hardware.video.cameras import XimeaCamera, AvtCamera
+from stytra.hardware.video.write import VideoWriter
+from stytra.hardware.video.interfaces import CameraControlParameters
 
 
 class VideoSource(FrameProcessor):
@@ -66,28 +66,29 @@ class CameraSource(VideoSource):
     ======== ===========================================
     """
 
+    camera_class_dict = dict(ximea=XimeaCamera,
+                             avt=AvtCamera)
+
     def __init__(self, camera_type, *args, **kwargs):
         """
         :param camera_type: string indicating camera type ('ximea' or 'avt')
         """
         super().__init__(*args, **kwargs)
 
-        camera_class_dict = dict(ximea=XimeaCamera,
-                                 avt=AvtCamera)
-
-        try:
-            CameraClass = camera_class_dict[camera_type]
-            self.cam = CameraClass()
-        except KeyError:
-            print('{} is not a valid camera type!'.format(camera_type))
+        self.camera_type = camera_type
+        self.cam = None
 
     def run(self):
         """
         This process constantly try to read frames from the camera and to get
         parameters from the parameter queue to update the camera params.
         """
-        self.cam.start()
-
+        try:
+            CameraClass = self.camera_class_dict[self.camera_type]
+            self.cam = CameraClass(debug=True)
+        except KeyError:
+            print('{} is not a valid camera type!'.format(self.camera_type))
+        self.cam.open_camera()
         while True:
             # Kill if signal is set:
             self.kill_signal.wait(0.0001)
@@ -97,28 +98,25 @@ class CameraSource(VideoSource):
             # Try to get new parameters from the control queue:
             if self.control_queue is not None:
                 try:
-                    control_params = self.control_queue.get(timeout=0.0001)
-                    for k in control_params.keys():
-                        print(k, control_params[k])
-                        self.cam.set(control_params)
+                    param, value = self.control_queue.get(timeout=0.0001)
+                    self.cam.set(param, value)
                 except Empty:
                     pass
 
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             if arr is not None:
-                # If the queue is full, arrayqueues should print a warning
+                # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
                     arr = np.rot90(arr, self.rotation)
                 self.frame_queue.put(arr)
 
-        self.close_camera()
+        self.cam.release()
 
 
 class VideoFileSource(VideoSource):
     """ A class to stream videos from a file to test parts of
     stytra without a camera available
-
     """
     def __init__(self, source_file=None,
                  loop=True, framerate=300,
@@ -162,3 +160,8 @@ class VideoFileSource(VideoSource):
                     break
             self.update_framerate()
         return
+
+if __name__=='__main__':
+    process = CameraSource('ximea')
+    process.start()
+    process.kill_signal.set()

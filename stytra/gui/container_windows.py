@@ -107,9 +107,11 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         self.tail_tracking = tail_tracking
 
         if tail_tracking:
-            self.camera_display = CameraTailSelection(kwargs['experiment'])
+            self.camera_display = CameraTailSelection(experiment=
+                                                      kwargs['experiment'])
         else:
-            self.camera_display = CameraViewWidget(kwargs['experiment'])
+            self.camera_display = CameraViewWidget(experiment=
+                                                   kwargs['experiment'])
 
         self.camera_splitter = QSplitter(Qt.Horizontal)
         self.monitoring_widget = QWidget()

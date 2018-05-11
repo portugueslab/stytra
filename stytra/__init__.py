@@ -19,7 +19,7 @@ from stytra.data_log.metadata import GeneralMetadata, FishMetadata
 
 from stytra.dbconn import put_experiment_in_db, Slacker
 from stytra.hardware.video import CameraControlParameters, VideoWriter, \
-                    XimeaCamera, AVTCamera, VideoFileSource
+    VideoFileSource, CameraSource
 
 
 from stytra.gui.container_windows import SimpleExperimentWindow, \
@@ -299,18 +299,16 @@ class CameraExperiment(Experiment):
     def __init__(self, *args, video_file=None,  camera=None,
                  camera_rotation=0, camera_queue_mb=100, **kwargs):
         """
-        :param video_file: if not using a camera, the video
+        :param video_file: if not using a camera, the video file
         file for the test input
         :param kwargs:
         """
-        cameras_dict = dict(ximea=XimeaCamera,
-                            avt=AVTCamera)
         if video_file is None:
-            CameraClass = cameras_dict[camera]
-            self.camera = CameraClass(rotation=camera_rotation,
-                                      max_mbytes_queue=camera_queue_mb)
+            self.camera = CameraSource(camera, rotation=camera_rotation,
+                                       max_mbytes_queue=camera_queue_mb)
         else:
-            self.camera = VideoFileSource(video_file)
+            self.camera = VideoFileSource(video_file, rotation=camera_rotation,
+                                          max_mbytes_queue=camera_queue_mb)
 
         self.camera_control_params = CameraControlParameters()
 
@@ -327,11 +325,10 @@ class CameraExperiment(Experiment):
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
         self.go_live()
-        # self.initialize_metadata()
 
     def go_live(self):
         self.gui_timer.start(1000 // 60)
-        sys.excepthook = self.excepthook
+        # sys.excepthook = self.excepthook
         self.camera.start()
         print('started')
 
