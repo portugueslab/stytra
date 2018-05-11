@@ -2,7 +2,7 @@ import datetime
 try:
     import av
 except ImportError:
-    print('No av library detected!')
+    pass
 
 from arrayqueues.processes import FrameProcessor
 from multiprocessing import Event

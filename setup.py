@@ -9,7 +9,7 @@ setup(name='stytra',
       packages=find_packages(),
       install_requires=['pyqtgraph>=0.10.0', 'numpy', 'numba',
                         'matplotlib', 'pandas', 'qdarkstyle', 'qimage2ndarray',
-                        'deepdish', 'param', 'pims',
+                        'deepdish', 'param', 'pims', 'git',
                         'gitpython', 'pymongo', 'colorspacious' ,
                         'arrayqueues'])
 

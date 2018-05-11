@@ -1,34 +1,38 @@
 import datetime
-from multiprocessing import Queue
 from queue import Empty
 
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtCore import QRectF, QPointF
+from PyQt5.QtCore import QRectF, QPointF, QTimer
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, \
     QCheckBox, QLabel
-from PyQt5.Qt import QPainter
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
-from stytra.tracking.diagnostics import draw_ellipse
-
 from stytra.hardware.video import CameraControlParameters
+from stytra.dbconn import sanitize_item
 
 
 class SimpleCameraViewWWidget(QWidget):
-    """ Core of a widget to stream images from a camera or a video source.
+    """
+    Core of a widget to stream images from a camera or a video source.
+    It does not require a :class:Experiment <stytra.Experiment> to run.
+
+    # TODO implement this
     """
 
 
 class CameraViewWidget(QWidget):
-    """ A widget to show images from the camera and display the controls.
-    It does not implement a frame dispatcher so it may lag behind
-    the camera at high frame rates.
+    """
+    A widget to show images from a frame source and display the camera controls.
+
+    ***It does not implement a frame dispatcher by itself so it may lag behind
+    the camera at high frame rates!***
     """
     def __init__(self, experiment=None, camera=None):
         """
-        :param experiment: experiment to which this belongs (Experiment class)
+        :param experiment: experiment to which this belongs
+                           (:class:Experiment <stytra.Experiment> object)
         """
 
         super().__init__()
@@ -71,13 +75,14 @@ class CameraViewWidget(QWidget):
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
 
+        self.camera_params_tree = ParameterTree(showHeader=False)
+
+        # Connect changes in the camera parameters:
+        for c in self.control_params.params.children():
+            c.sigValueChanged.connect(self.update_controls)
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-
-        self.protocol_params_tree = ParameterTree(showHeader=False)
-        self.control_params.params.sigTreeStateChanged.connect(
-            self.update_controls)
 
         self.layout.addWidget(self.camera_display_widget)
 
@@ -96,12 +101,21 @@ class CameraViewWidget(QWidget):
 
         self.setLayout(self.layout)
 
-    def update_controls(self):
-        self.control_queue.put(self.control_params.get_clean_values())
+    def update_controls(self, value):
+        """
+        :param value: Parameter object that have changed
+        :return:
+        """
+        # Put in the queue tuple with name and new value of the parameter:
+        self.control_queue.put((value.name(), value.value()))
 
     def update_image(self):
-        """ Update displayed frame and empty frame source queue. This is done
+        """
+        Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
+        # TODO fix this somehow?
+        **Important!** if the input queue is too fast this will produce an
+        infinite loop and block the interface!
         """
 
         first = True
@@ -129,35 +143,39 @@ class CameraViewWidget(QWidget):
             self.image_item.setImage(self.current_image)
 
     def save_image(self):
-        """ Save a frame to the current directory.
+        """
+        Save a frame to the current directory.
         """
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         imsave(self.experiment.directory + '/' + timestamp + '_img.png',
                self.image_item.image)
 
     def show_params_gui(self):
-        """ Parameters window for the protocol parameters.
         """
-        self.protocol_params_tree.setParameters(self.control_params.params)
-        self.protocol_params_tree.show()
-        self.protocol_params_tree.setWindowTitle('Camera parameters')
-        self.protocol_params_tree.resize(450, 600)
+        Parameters window for the protocol parameters.
+        """
+        self.camera_params_tree.setParameters(self.control_params.params)
+        self.camera_params_tree.show()
+        self.camera_params_tree.setWindowTitle('Camera parameters')
+        self.camera_params_tree.resize(450, 600)
 
 
 class CameraSelection(CameraViewWidget):
-    """ Generic class for handling display of frames from a frame dispatcher
-    instead of directly from the camera, and for display ROIs that can be
+    """
+    **Bases:** :class:CameraViewWidget <CameraViewWidget>
+
+    Generic class to overlay on video an ROI that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).
 
-    The changes of parameters  read through the ROI position are handled by
+    The changes of parameters read through the ROI position are handled
     via the track_params class, so they must have a corresponding entry in the
-    definition of the FrameProcessingMethod of the tracking function.
-    Children should define a ROI before calling parent's __init__.
+    definition of the FrameProcessingMethod of the tracking function of choice.
+
     """
 
-    def __init__(self, experiment, **kwargs):
-        super().__init__(experiment, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
         self.frame_queue = self.experiment.frame_dispatcher.gui_queue
@@ -173,7 +191,8 @@ class CameraSelection(CameraViewWidget):
         self.track_params.sigTreeStateChanged.connect(self.set_pos_from_tree)
 
     def initialise_roi(self):
-        """ ROI is initialised separately, so it can first be defined in the
+        """
+        ROI is initialised separately, so it can first be defined in the
         child __init__.
         """
         try:
@@ -185,28 +204,31 @@ class CameraSelection(CameraViewWidget):
             print('No ROI defined in CameraSelection child')
 
     def set_pos_from_tree(self):
-        """ Called when ROI position values are changed in the ParameterTree.
+        """
+        Called when ROI position values are changed in the ParameterTree.
         Change the position of the displayed ROI:
         """
         pass
 
     def set_pos_from_roi(self):
-        """ Called when ROI position values are changed in the displayed ROI.
+        """
+        Called when ROI position values are changed in the displayed ROI.
         Change the position in the ParameterTree values.
         """
         pass
 
 
 class CameraTailSelection(CameraSelection):
-    """ Widget for select tail pts and monitoring tracking in embedded fish.
     """
-    def __init__(self, experiment, **kwargs):
+    Widget for select tail pts and monitoring tracking in embedded fish.
+    """
+    def __init__(self, **kwargs):
         """
         :param experiment:  experiment in which it is used.
 
         """
 
-        super().__init__(experiment, **kwargs)
+        super().__init__(**kwargs)
 
         # Draw ROI for tail selection:
         self.roi = pg.LineSegmentROI((self.track_params['tail_start'],
@@ -224,7 +246,8 @@ class CameraTailSelection(CameraSelection):
         self.display_area.addItem(self.tail_curve)
 
     def set_pos_from_tree(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         p1, p2 = self.roi.getHandles()
         p1.setPos(QPointF(*self.track_params['tail_start']))
@@ -234,7 +257,8 @@ class CameraTailSelection(CameraSelection):
                           self.track_params['tail_length'][1]))
 
     def set_pos_from_roi(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         p1, p2 = self.roi.getHandles()
         with self.track_params.treeChangeBlocker():
@@ -244,7 +268,8 @@ class CameraTailSelection(CameraSelection):
                 p2.x() - p1.x(), p2.y() - p1.y()))
 
     def update_image(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         super().update_image()
 
@@ -273,14 +298,12 @@ class CameraTailSelection(CameraSelection):
 
 
 class CameraEyesSelection(CameraSelection):
-    """ Widget for select tail pts and monitoring tracking in embedded fish.
     """
-    def __init__(self, experiment, **kwargs):
-        """
-        :param experiment:
-        """
+    Widget for select tail pts and monitoring tracking in embedded fish.
+    """
+    def __init__(self, **kwargs):
 
-        super().__init__(experiment, **kwargs)
+        super().__init__(**kwargs)
 
         # Draw ROI for eyes region selection:
         self.roi = pg.ROI(pos=self.track_params['wnd_pos'],
@@ -310,13 +333,15 @@ class CameraEyesSelection(CameraSelection):
         self.layout_control.addWidget(self.lbl_threshold_view)
 
     def set_pos_from_tree(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         self.roi.setPos(self.track_params['wnd_pos'], finish=False)
         self.roi.setSize(self.track_params['wnd_dim'])
 
     def set_pos_from_roi(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         # Set values in the ParameterTree:
         with self.track_params.treeChangeBlocker():
@@ -326,11 +351,14 @@ class CameraEyesSelection(CameraSelection):
                 [int(p) for p in self.roi.pos()]))
 
     def update_image(self):
-        """ Go to parent for definition.
+        """
+        Go to parent for definition.
         """
         super().update_image()
         im = self.current_image
 
+        # In this widget a toggle button allows the user to see the
+        # thresholded image used by the ellipse fitting function:
         if self.tgl_threshold_view.isChecked():
             im = (im < self.track_params['threshold']).astype(np.uint8)
 
@@ -356,6 +384,7 @@ class CameraEyesSelection(CameraSelection):
 
                     if c_x != 0 and c_y != 0:
                         th_conv = th * (np.pi/180)  # in radiants now
+
                         # rotate based on different from previous angle:
                         self.curves_eyes[i].rotate(th - self.pre_th[i])
 
@@ -379,6 +408,7 @@ class CameraEyesSelection(CameraSelection):
                         self.pre_th[i] = th
 
                 else:
+                    # No eyes detected:
                     for ell in self.curves_eyes:
                         ell.setPen(None)
 

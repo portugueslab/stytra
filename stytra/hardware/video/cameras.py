@@ -1,4 +1,5 @@
 import numpy as np
+
 try:
     from ximea import xiapi
 except ImportError:
@@ -18,9 +19,10 @@ class Camera:
 
     Simple usage example::
         cam = AvtCamera()
+        cam.open_camera()  # initialize the camera
         cam.set('exposure', 10)  # set exposure time in ms
         frame = cam.read()  # read frame
-        cam.release()
+        cam.release()  # close the camera
 
     """
     def __init__(self, debug=False):
@@ -30,7 +32,7 @@ class Camera:
         self.cam = None
         self.debug = debug
 
-    def start(self):
+    def open_camera(self):
         """
         Initialise the camera.
         """
@@ -76,7 +78,7 @@ class XimeaCamera(Camera):
         except NameError:
             print('The xiapi package must be installed to use a Ximea camera!')
 
-    def start(self):
+    def open_camera(self):
         """
         Description in parent class.
         """
@@ -94,7 +96,7 @@ class XimeaCamera(Camera):
             self.cam.set_sensor_feature_selector(
                 'XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
-            print("Python camera")
+
             if self.downsampling > 1:
                 self.cam.set_downsampling_type("XI_SKIPPING")
                 self.cam.set_downsampling(
@@ -142,6 +144,9 @@ class AvtCamera(Camera):
     Module documentation .. _here: https://github.com/morefigs/pymba .
     """
     def __init__(self, **kwargs):
+        # Set timeout for frame acquisition. Give this as input?
+        self.timeout_ms = 1000
+
         super().__init__(**kwargs)
 
         try:
@@ -149,10 +154,9 @@ class AvtCamera(Camera):
         except NameError:
             print('The pymba package must be installed to use an AVT camera!')
 
-            # Set timeout for frame acquisition. Give this as input?
-            self.timeout_ms = 1000
+        self.frame = None
 
-    def start(self):
+    def open_camera(self):
         """
         Description in parent class.
         """
@@ -183,23 +187,28 @@ class AvtCamera(Camera):
         """
         Description in parent class.
         """
-        if param == 'exposure':
-            # camera wants exposure in us:
-            self.cam.ExposureTime = int(val * 1000)
+        try:
+            if param == 'exposure':
+                # camera wants exposure in us:
+                self.cam.ExposureTime = int(val * 1000)
 
-        if param == 'framerate':
-            # To set new frame rate for AVT cameras acquisition has to be
-            # interrupted:
-            self.frame.waitFrameCapture(self.timeout_ms)
-            self.cam.runFeatureCommand('AcquisitionStop')
-            self.cam.endCapture()
-            self.cam.revokeAllFrames()
+            if param == 'framerate':
+                # To set new frame rate for AVT cameras acquisition has to be
+                # interrupted:
+                # TODO Handle this in a cleaner way
+                if val < 210:
+                    self.frame.waitFrameCapture(self.timeout_ms)
+                    self.cam.runFeatureCommand('AcquisitionStop')
+                    self.cam.endCapture()
+                    self.cam.revokeAllFrames()
 
-            self.cam.AcquisitionFrameRate = val
+                    self.cam.AcquisitionFrameRate = val
 
-            self.cam.startCapture()
-            self.frame.queueFrameCapture()
-            self.cam.runFeatureCommand('AcquisitionStart')
+                    self.cam.startCapture()
+                    self.frame.queueFrameCapture()
+                    self.cam.runFeatureCommand('AcquisitionStart')
+        except VimbaException:
+            print('Invalid value! The parameter will not be changed.')
 
     def read(self):
         """
@@ -232,3 +241,10 @@ class AvtCamera(Camera):
         self.cam.endCapture()
         self.cam.revokeAllFrames()
         self.vimba.shutdown()
+
+if __name__=='__main__':
+    cam = AvtCamera()
+    cam.open_camera()
+    cam.set('framerate', 220)  # set exposure time in ms
+    frame = cam.read()  # read frame
+    cam.release()
