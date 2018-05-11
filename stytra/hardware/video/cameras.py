@@ -1,6 +1,9 @@
 import numpy as np
 try:
     from ximea import xiapi
+except ImportError:
+    pass
+try:
     from pymba import Vimba
     from pymba.vimbaexception import VimbaException
 except ImportError:
@@ -21,21 +24,28 @@ class Camera:
 
     """
     def __init__(self, debug=False):
-        """ Initialize and start the camera.
+        """
         :param debug: if True, info about the camera state will be printed.
         """
         self.cam = None
         self.debug = debug
 
+    def start(self):
+        """
+        Initialise the camera.
+        """
+
     def set(self, param, val):
-        """ Set exposure time or framerate to the camera.
+        """
+        Set exposure time or framerate to the camera.
         :param param: parameter key ('exposure', 'framerate'));
         :param val: value to be set (exposure time in ms, or framerate in Hz);
         """
         pass
 
     def read(self):
-        """ Grab frame from the camera and returns it as an NxM numpy array.
+        """
+        Grab frame from the camera and returns it as an NxM numpy array.
         :return: np.array with the grabbed frame, or None if an error occurred.
         """
         return None
@@ -47,16 +57,29 @@ class Camera:
 
 
 class XimeaCamera(Camera):
-    """ Class for simple control of a Ximea camera. Uses ximea API.
+    """
+    **Bases:** :class:Camera <Camera>
+    Class for simple control of a Ximea camera. Uses ximea API.
     Module documentation .. _here:
     https://www.ximea.com/support/wiki/apis/Python .
     """
     def __init__(self, downsampling=None, **kwargs):
-        """ Description in parent class.
+        """
+        :param downsampling:
         """
         super().__init__(**kwargs)
-        # start the camera:
-        self.cam = xiapi.Camera()
+        self.downsampling = downsampling
+
+        # Test if API for the camera is available
+        try:
+            self.cam = xiapi.Camera()
+        except NameError:
+            print('The xiapi package must be installed to use a Ximea camera!')
+
+    def start(self):
+        """
+        Description in parent class.
+        """
         self.cam.open_device()
 
         self.im = xiapi.Image()
@@ -64,6 +87,7 @@ class XimeaCamera(Camera):
 
         if self.debug:
             print('Detected camera {}.'.format(self.cam.get_device_name()))
+
         # If camera supports hardware downsampling (MQ013MG-ON does,
         # MQ003MG-CM does not):
         if self.cam.get_device_name() == b'MQ013MG-ON':
@@ -71,16 +95,17 @@ class XimeaCamera(Camera):
                 'XI_SENSOR_FEATURE_ZEROROT_ENABLE')
             self.cam.set_sensor_feature_value(1)
             print("Python camera")
-            if downsampling > 1:
+            if self.downsampling > 1:
                 self.cam.set_downsampling_type("XI_SKIPPING")
                 self.cam.set_downsampling(
-                    "XI_DWN_{}x{}".format(downsampling,
-                                          downsampling))
+                    "XI_DWN_{}x{}".format(self.downsampling,
+                                          self.downsampling))
 
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
 
     def set(self, param, val):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         if param == 'exposure':
             self.cam.set_exposure(int(val * 1000))
@@ -89,7 +114,8 @@ class XimeaCamera(Camera):
             self.cam.set_framerate(val)
 
     def read(self):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         try:
             self.cam.get_image(self.im)
@@ -102,26 +128,36 @@ class XimeaCamera(Camera):
         return frame
 
     def release(self):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         self.cam.stop_acquisition()
         self.cam.close_device()
 
 
 class AvtCamera(Camera):
-    """ Class for controlling an AVT camera. Uses the Vimba interface pymba.
+    """
+    **Bases:** :class:Camera <Camera>
+    Class for controlling an AVT camera. Uses the Vimba interface pymba.
     Module documentation .. _here: https://github.com/morefigs/pymba .
     """
     def __init__(self, **kwargs):
-        """ Description in parent class.
-        """
         super().__init__(**kwargs)
 
-        self.vimba = Vimba()
-        self.vimba.startup()
+        try:
+            self.vimba = Vimba()
+        except NameError:
+            print('The pymba package must be installed to use an AVT camera!')
 
-        # Set timeout for frame acquisition. Give this as input?
-        self.timeout_ms = 1000
+            # Set timeout for frame acquisition. Give this as input?
+            self.timeout_ms = 1000
+
+    def start(self):
+        """
+        Description in parent class.
+        """
+
+        self.vimba.startup()
 
         # If there are multiple cameras, only the first one is used (this may
         # change):
@@ -129,7 +165,7 @@ class AvtCamera(Camera):
         if self.debug:
             if len(camera_ids) > 1:
                 print('Multiple cameras detected: {}. {} wiil be used.'.format(
-                      camera_ids, camera_ids[0]))
+                    camera_ids, camera_ids[0]))
             else:
                 print('Detected camera {}.'.format(camera_ids[0]))
         self.cam = self.vimba.getCamera(camera_ids[0])
@@ -144,7 +180,8 @@ class AvtCamera(Camera):
         self.cam.runFeatureCommand('AcquisitionStart')
 
     def set(self, param, val):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         if param == 'exposure':
             # camera wants exposure in us:
@@ -165,7 +202,8 @@ class AvtCamera(Camera):
             self.cam.runFeatureCommand('AcquisitionStart')
 
     def read(self):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         try:
             self.frame.waitFrameCapture(self.timeout_ms)
@@ -186,7 +224,8 @@ class AvtCamera(Camera):
         return frame
 
     def release(self):
-        """ Description in parent class.
+        """
+        Description in parent class.
         """
         self.frame.waitFrameCapture(self.timeout_ms)
         self.cam.runFeatureCommand('AcquisitionStop')
