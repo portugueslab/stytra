@@ -1,5 +1,5 @@
-from PyQt5.QtCore import QPoint, QRect, QSize
-from PyQt5.QtGui import QPainter, QBrush, QColor, QImage, QPixmap
+from PyQt5.QtCore import QPoint, QRect
+from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QWidget
 from datetime import datetime
 from stytra.stimulation.stimuli import PainterStimulus
@@ -8,19 +8,36 @@ import numpy as np
 import qimage2ndarray
 
 
+# TODO what do we gain from two different widgets defined?
 
-# TODO this entire module should be moved to the stimulation
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
-    """ Make a display window for a visual simulation protocol,
+    """
+    Display window for a visual simulation protocol,
     with a display area that can be controlled and changed from a
     ProtocolControlWindow.
+
+    The display area (either a QWidget or a QOpenGLWidget, see below)
+    is where the paint() method of  the current Stimulus will draw
+    the current image. The paint() method is called in the paintEvent() of
+    the QWidget.
+
+    Stimuli sequence and its timing is handled via a linked ProtocolRunner
+    object.
+
+    Information about real dimensions of the display comes from a
+    calibrator object.
+
+    If required, a movie of the displayed stimulus can be acquired and saved.
     """
+
     def __init__(self, protocol_runner, calibrator,
                  record_stim_every=10, **kwargs):
         """
-        :param protocol_runner:
-        :param calibrator:
-        :param record_stim_every:
+        :param protocol_runner: ProtocolRunner object that handles the stim
+        sequence.
+        :param calibrator: Calibrator object
+        :param record_stim_every: either None or the number of events every
+        which a displayed frame is acquired and stored.
         """
         super().__init__(name='stimulus_display_params', **kwargs)
         self.setWindowTitle('Stytra stimulus display')
@@ -52,17 +69,18 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
     def set_dims(self):
         self.widget_display.setGeometry(*(self.params['pos']+self.params['size']))
 
-    def set_protocol(self, protocol):
-        self.widget_display.set_protocol_runner(protocol)
 
-
-class GLStimDisplay():
-    """ Widget for the actual display area contained inside the
+# TODO why here paintEvent draws the stimulus and display_stimulus update
+# stimulus-related stuff? Do we need this?
+class GLStimDisplay:
+    """
+    Widget for the actual display area contained inside the
     StimulusDisplayWindow.
     """
 
     def __init__(self, *args, protocol_runner, calibrator, record_stim_every):
-        """ Check ProtocolControlWindow __init__ documentation for description
+        """
+        Check ProtocolControlWindow __init__ documentation for description
         of arguments.
         """
         super().__init__(*args)
@@ -91,7 +109,8 @@ class GLStimDisplay():
         self.movie_timestamps = []
 
     def paintEvent(self, QPaintEvent):
-        """ Generate the stimulus that will be displayed. A QPainter object is
+        """
+        Generate the stimulus that will be displayed. A QPainter object is
         defined, which is then passed to the current stimulus paint function
         for drawing the stimulus.
         """
@@ -99,23 +118,30 @@ class GLStimDisplay():
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
         h = self.height()
-        if self.calibrator is not None and self.calibrator.enabled:
-            self.calibrator.make_calibration_pattern(p, h, w)
-        else:
-            if self.protocol_runner is not None and \
-                    isinstance(self.protocol_runner.current_stimulus, PainterStimulus):
-                if self.protocol_runner.running:
+
+        if self.protocol_runner is not None:
+            if self.protocol_runner.running:
+                try:
                     self.protocol_runner.current_stimulus.paint(p, w, h)
+                except AttributeError:
+                    pass
             else:
-                p.drawRect(QRect(-1, -1, w+2, h+2))
+                p.drawRect(QRect(-1, -1, w + 2, h + 2))
                 p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
                 if self.img is not None:
                     p.drawImage(QPoint(0, 0), self.img)
 
+        if self.calibrator is not None:
+            if self.calibrator.enabled and not self.protocol_runner.running:
+                self.calibrator.make_calibration_pattern(p, h, w)
+
+
+
         p.end()
 
     def display_stimulus(self):
-        """ Function called by the protocol_runner timestep timer that update
+        """
+        Function called by the protocol_runner timestep timer that update
         the displayed image and, if required, grab a picture of the current
         widget state for recording the stimulus movie.
         """
@@ -139,7 +165,8 @@ class GLStimDisplay():
                 self.k = 0
 
     def get_movie(self):
-        """ Finalize stimulus movie.
+        """
+        Finalize stimulus movie.
         :return: a channel x time x N x M  array with stimulus movie
         """
         if self.record_stim_every is not None:

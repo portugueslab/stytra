@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--tail-tracking-method',
                         action='store', default='angle_sweep')
     parser.add_argument('--camera',
-                        action='store', default='ximea')
+                        action='store', default=None)
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--shock-stimulus',
@@ -64,8 +64,7 @@ if __name__ == '__main__':
                         asset_directory=args.asset_dir,
                         scope_triggered=args.scope_triggering,
                         rec_stim_every=rec_stim_every,
-                        shock_stimulus=args.shock_stimulus,
-                        camera=args.camera)
+                        shock_stimulus=args.shock_stimulus)
 
     base = Experiment
     if args.video_file:
@@ -78,7 +77,6 @@ if __name__ == '__main__':
 
     if args.tail_tracking:
         base = TailTrackingExperiment
-        class_kwargs['video_file'] = args.video_file
     #     if args.vr:
     #         class_kwargs['motion_estimation'] = 'LSTM'
     #         class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
@@ -91,14 +89,6 @@ if __name__ == '__main__':
     elif args.eye_tracking:
         base = EyeTrackingExperiment
 
-    #
-    # if args.lightsheet:
-    #     bases.append(LightsheetExperiment)
-
-    # if len(bases) == 0:
-    #     bases.append(Experiment)
-
-    #ExpClass = type('exp_class', tuple(bases), dict())
     app_icon = QIcon()
     app_icon.addFile('icons/48.png', QSize(48, 48))
     app_icon.addFile('icons/128.png', QSize(128, 128))

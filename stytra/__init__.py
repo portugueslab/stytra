@@ -3,7 +3,6 @@ import inspect
 import os
 import sys
 import traceback
-from collections import OrderedDict
 from multiprocessing import Queue, Event
 
 import deepdish as dd
@@ -41,7 +40,8 @@ from requests.exceptions import ConnectionError
 
 
 def get_default_args(func):
-    """ Find default arguments of functions
+    """
+    Find default arguments of functions
     """
     signature = inspect.signature(func)
     return {
@@ -49,21 +49,6 @@ def get_default_args(func):
         for k, v in signature.parameters.items()
         if v.default is not inspect.Parameter.empty
     }
-
-
-def get_classes_from_module(input_module, parent_class):
-    """ Find all the classes in a module that are children of a parent one.
-
-    :param input_module: module object
-    :param parent_class: parent class object
-    :return: OrderedDict of classes
-    """
-    classes = inspect.getmembers(input_module, inspect.isclass)
-    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
-                              if issubclass(c[1], parent_class)
-                              and not c[1] is parent_class})
-
-    return ls_classes
 
 
 class Experiment(QObject):
@@ -110,17 +95,13 @@ class Experiment(QObject):
         self.dc = DataCollector(folder_path=self.directory)
         self.dc.add_params(self.metadata._params)
 
-        # Use the DataCollector object to find the last used protocol:
+        # Use the DataCollector object to find the last used protocol, to
+        # restore it
         self.last_protocol = \
             self.dc.get_last_value('stimulus_protocol_params')
 
-        self.prot_class_dict = get_classes_from_module(protocols, Protocol)
-
-        if self.last_protocol is not None:
-            self.protocol_runner = ProtocolRunner(experiment=self,
-                                                  protocol=self.last_protocol)
-        else:
-            self.protocol_runner = ProtocolRunner(experiment=self)
+        self.protocol_runner = ProtocolRunner(experiment=self,
+                                              protocol=self.last_protocol)
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
@@ -154,21 +135,24 @@ class Experiment(QObject):
         self.initialize_metadata()
 
     def make_window(self):
-        """ Make experiment GUI, defined in children depending on experiments.
+        """
+        Make experiment GUI, defined in children depending on experiments.
         """
         self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
 
     def initialize_metadata(self):
+        """ Restore parameters from saved config.h5 file.
+        """
         # When restoring here data_log to previous values, there may be
         # multiple (one per parameter), calls of functions connected to
         # a change in the params three state.
         # See comment in DataCollector.restore_from_saved()
         self.dc.restore_from_saved()
-        # self.protocol_runner.protocol.params.blockSignals(False)
 
     def check_if_committed(self):
-        """ Checks if the version of stytra used to run the experiment is committed,
+        """
+        Checks if the version of stytra used to run the experiment is committed,
         so that for each experiment it is known what code was used to run it.
         """
 
@@ -234,7 +218,7 @@ class Experiment(QObject):
         """ Function called at Protocol end. Reset Protocol, save
         data_log and put experiment data in pymongo database.
         """
-        self.protocol_runner.end()
+        self.protocol_runner.stop()
         self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
         self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
         self.dc.add_static_data(self.protocol_runner.t_end,

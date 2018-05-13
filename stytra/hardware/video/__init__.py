@@ -18,30 +18,29 @@ from stytra.hardware.video.interfaces import CameraControlParameters
 
 class VideoSource(FrameProcessor):
     """
-    **Bases:** :class:FrameProcessor from arrayqueues module.
-
     Abstract class for a process that generates frames, being it a camera
     or a file source. A maximum size of the memory used by the process can be
     set.
 
-    ===================== =======================================
+    ===================== ===================================================
     **Input Queues:**
     self.control_queue    queue with control parameters for the source,
                           e.g. from a
                           :class:CameraControlParameters
-                         <.interfaces.CameraControlParameters> object
-    ===================== =======================================
+                          <.interfaces.CameraControlParameters> object
+    ===================== ===================================================
 
-    ===================== =======================================
+    ===================== ===================================================
     **Output Queues**
     self.frame_queue      TimestampedArrayQueue from the arrayqueues module
                           where the frames read from the camera are sent.
-    ===================== =======================================
+    ===================== ===================================================
 
-    ===================== =======================================
+    ===================== ===================================================
     **Events**
     self.kill_signal      When set kill the process.
-    ===================== =======================================
+    ===================== ===================================================
+
     """
     def __init__(self, rotation=False, max_mbytes_queue=100):
         """
@@ -57,13 +56,20 @@ class VideoSource(FrameProcessor):
 
 class CameraSource(VideoSource):
     """
-    **Bases:** :class:FrameProcessor <arrayqueues.processes.FrameProcessor>
     Process for controlling a camera.
     Cameras currently implemented:
+
+    Module documentation ..
+
+    _here:<https://www.ximea.com/support/wiki/apis/Python>
+
+    .
+
     ======== ===========================================
     Ximea    Add some info
     Avt      Add some info
     ======== ===========================================
+
     """
 
     camera_class_dict = dict(ximea=XimeaCamera,
@@ -115,8 +121,9 @@ class CameraSource(VideoSource):
 
 
 class VideoFileSource(VideoSource):
-    """ A class to stream videos from a file to test parts of
-    stytra without a camera available
+    """
+    A class to stream videos from a file to test parts of
+    stytra without a camera available.
     """
     def __init__(self, source_file=None,
                  loop=True, framerate=300,

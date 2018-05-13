@@ -113,7 +113,9 @@ class CameraViewWidget(QWidget):
         """
         Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
+
         # TODO fix this somehow?
+
         **Important!** if the input queue is too fast this will produce an
         infinite loop and block the interface!
         """
@@ -162,8 +164,6 @@ class CameraViewWidget(QWidget):
 
 class CameraSelection(CameraViewWidget):
     """
-    **Bases:** :class:CameraViewWidget <CameraViewWidget>
-
     Generic class to overlay on video an ROI that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).

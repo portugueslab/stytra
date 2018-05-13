@@ -1,22 +1,42 @@
 import numpy as np
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QTransform, QPolygon, QRegion
-import qimage2ndarray
-from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
-from stytra.stimulation.backgrounds import existing_file_background
-
-
 
 from itertools import product
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QTransform, QPolygon, QRegion
+import qimage2ndarray
+from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtCore import QPoint, QRect, QPointF
+from stytra.stimulation.backgrounds import existing_file_background
+
+
+# TODO right now Stimulus is not parameterized via HasPyQtGraphParams
 
 class Stimulus:
-    """ General class for a stimulus. Each stimulus can act one through the
-     start() function. It is called when the ProtocolRunner sets it as the
-     new stimulus. It can for example trigger external events
-     (e.g., activate a Pyboard).
+    """
+    General class for a Stimulus. In stytra, a Stimulus is something that
+    makes things happen at some point of an experiment.
+    The Stimulus class is just a building block: successions of Stimuli
+    are assembled in a meaningful order by Protocol objects, and are looped
+    over by the ProtocolRunner object.
+
+    A Stimulus runs for a time defined by its duration. to do so, the
+    ProtocolRunner compares at every timestep the duration of the stimulus
+    with the time elapsed from its start.
+
+    Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
+    By defining this method in subclasses, we can trigger events at
+    the beginning of the stimulus (e.g., activate a Pyboard).
+
+    At every successive time, until the end of the Stimulus, its update()
+    method is called. By defining this method in sublcasses, we can trigger
+    events throughout the length of the Stimulus time.
+
+    Stimulus have parameters that are important to be logged in the final
+    metadata and parameters that are not relevant. The get_state() method
+    used to generate the log saves all attributes not starting with _.
+
 
     Different stimuli categories are implemented subclassing this class, e.g.:
      - visual stimuli (children of PainterStimulus subclass);
@@ -24,7 +44,8 @@ class Stimulus:
 
     """
     def __init__(self, duration=0.0):
-        """ Make a stimulus, with the basic properties common to all stimuli.
+        """
+        Make a stimulus, with the basic properties common to all stimuli.
         Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
@@ -38,7 +59,8 @@ class Stimulus:
         self._experiment = None
 
     def get_state(self):
-        """ Returns a dictionary with stimulus features for the log.
+        """
+        Returns a dictionary with stimulus features for logging.
         Ignores the properties which are private (start with _)
         """
         state_dict = dict()
@@ -48,9 +70,16 @@ class Stimulus:
         return state_dict
 
     def update(self):
+        """
+        Function called by the ProtocolRunner every timestep until the Stimulus
+        is over.
+        """
         pass
 
     def start(self):
+        """
+        Function called by the ProtocolRunner when a new stimulus is set.
+        """
         pass
 
     def initialise_external(self, experiment):
@@ -66,8 +95,10 @@ class Stimulus:
 
 
 class DynamicStimulus(Stimulus):
-    """ Stimuli where parameters change during stimulation on a frame-by-frame
-    base, implements the recording changing parameters.
+    """
+    Stimuli where parameters change during stimulation on a frame-by-frame
+    base.
+    It implements the recording changing parameters.
     """
     def __init__(self, *args, dynamic_parameters=None, **kwargs):
         """
@@ -88,11 +119,15 @@ class DynamicStimulus(Stimulus):
 
 
 class PainterStimulus(Stimulus):
-    """ Stimulus class where image is programmatically drawn on a canvas.
-    Their paint() function is called by the StimulusDisplayWindow
-    paintEvent(), and ensure that at every time the function used
-    to paint the new frame is the one from the current stimulus.
     """
+    Stimulus class to paint programmatically on a canvas.
+    For this subclass of Stimulus, their core function (paint()) is
+    not called by the ProtocolRunner, but directly from the
+    StimulusDisplayWindow. Since a StimulusDisplayWindow is directly linked to
+    a ProtocolRunner, at every time the paint() method that is called
+    is the one from the correct current stimulus.
+    """
+
     def __init__(self, *args, clip_rect=None, **kwargs):
         """
         :param clip_rect: mask for clipping the stimulus ((x, y, w, h) tuple);
@@ -101,7 +136,8 @@ class PainterStimulus(Stimulus):
         self.clip_rect = clip_rect
 
     def paint(self, p, w, h):
-        """ Paint function (redefined in children classes)
+        """
+        Paint function. Called by the StimulusDisplayWindow update method.
         :param p: QPainter object for drawing
         :param w: width of the display window
         :param h: height of the display window
@@ -109,14 +145,16 @@ class PainterStimulus(Stimulus):
         pass
 
     def clip(self, p, w, h):
-        """ Clip image before painting
+        """
+        Clip image before painting
         :param p: QPainter object used for painting
         :param w: image width
         :param h: image height
         """
         if self.clip_rect is not None:
             if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                points = [QPoint(int(w*x), int(h*y))
+                          for (x, y) in self.clip_rect]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
                 p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
@@ -124,7 +162,8 @@ class PainterStimulus(Stimulus):
 
 
 class BackgroundStimulus(Stimulus):
-    """ Stimulus consisting in a full field image that can be dragged around.
+    """
+    Stimulus consisting in a full field image that can be dragged around.
     """
     def __init__(self, *args, background=None, **kwargs):
         """
@@ -146,12 +185,46 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         self.duration = float(motion.t.iat[-1])
 
     def update(self):
+        print('updating {}'.format(self.name))
         for attr in ['x', 'y', 'theta']:
             try:
-                setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
+                setattr(self, attr, np.interp(self._elapsed, self.motion.t,
+                                              self.motion[attr]))
+                print('updated {}'.format(self.name))
 
             except (AttributeError, KeyError):
                 pass
+
+
+class PainterStimulusCombiner(PainterStimulus):
+    """
+    Stimulus to combine multiple paint stimuli on the same canvas.
+    Their respective domains can be defined via their clipping boxes.
+    """
+
+    def __init__(self, stim_list):
+        self.stimuli = stim_list
+        self.duration = max([s.duration for s in stim_list])
+        self.name = '+'.join([s.name for s in stim_list])
+
+    def start(self):
+        [s.start() for s in self.stimuli]
+
+    def update(self):
+        print('updating')
+        for s in self.stimuli:
+            s._elapsed = self._elapsed
+            print('updating s')
+            s.update()
+
+    def get_state(self):
+        return {s.name: s.get_state() for s in self.stimuli}
+
+    def initialise_external(self, experiment):
+        [s.initialise_external(experiment) for s in self.stimuli]
+
+    def paint(self, p, w, h):
+        [s.paint(p, w, h) for s in self.stimuli]
 
 
 class MovingConstantVel(MovingStimulus):
@@ -194,9 +267,9 @@ class MovingDynamicVel(MovingStimulus):
         self._past_t = self._elapsed
 
 
-
 class FullFieldPainterStimulus(PainterStimulus):
-    """ Class for painting a full field flash of a specific color.
+    """
+    Class for painting a full field flash of a specific color.
     """
 
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
@@ -480,7 +553,8 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
 
 class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
-    """ Class for drawing a rotating windmill.
+    """
+    Class for drawing a rotating windmill.
     """
 
     def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
@@ -506,7 +580,11 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
         size = np.pi / self.n_arms
         # radius of triangles (much larger than frame)
         rad = (w ** 2 + h ** 2) ** (1 / 2)
-        for deg in angles:  # loop over angles and draw consecutive rectangles
+
+        if self.arms_subset is None:
+            self.arms_subset = list(range(self.n_arms))
+        # loop over angles and draw consecutive rectangles
+        for deg in np.array(angles)[self.arms_subset]:
             polyg_points = [QPoint(mid_x, mid_y),
                             QPoint(int(mid_x + rad * np.cos(deg)),
                                    int(mid_y + rad * np.sin(deg))),
@@ -537,7 +615,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
 
         fish_coordinates = self._experiment.position_estimator.get_displacements()
 
-        self.x = self._bg_x + fish_coordinates[1] # A right angle turn between the cooridnate systems
+        self.x = self._bg_x + fish_coordinates[1]  # A right angle turn between the cooridnate systems
         self.y = self._bg_y - fish_coordinates[0]
         # on the upper right
         self.theta = fish_coordinates[2]

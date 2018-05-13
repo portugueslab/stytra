@@ -12,7 +12,8 @@ except ImportError:
 
 
 class Camera:
-    """ Abstract class for controlling a camera. Subclasses implement
+    """
+    Abstract class for controlling a camera. Subclasses implement
     minimal control over the following cameras:
      - Ximea (uses ximea API)
      - AVT   (uses pymba, a python binding for AVT Vimba package)

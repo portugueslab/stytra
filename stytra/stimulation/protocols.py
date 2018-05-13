@@ -1,8 +1,4 @@
-from stytra.stimulation.stimuli import Pause, \
-    ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
-    SeamlessImageStimulus, MovingDynamicVel, \
-    DynamicFullFieldStimulus
+from stytra.stimulation.stimuli import *
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
@@ -10,7 +6,6 @@ import numpy as np
 from stytra.data_log import HasPyQtGraphParams
 from random import shuffle, sample
 from stytra.stimulation.backgrounds import gratings
-import math
 from itertools import product
 
 from copy import deepcopy
@@ -324,6 +319,97 @@ class ContinuousOKRstim(Protocol):
         return stimuli
 
 
+# class ContinuousDoubleOKRstim(Protocol):
+#     name = "OKR continuous double protocol"
+#
+#     def __init__(self):
+#         super().__init__()
+#
+#         params_dict = {'windmill_amplitude': np.pi/4,
+#                        'windmill_duration': 2.,
+#                        'windmill_arms': 8,
+#                        'inter_stim_pause': 0.,
+#                        'rotate': False,
+#                        'field': 'L',
+#                        'edge_1': 10,
+#                        'edge_2': 10,
+#                        'center_off': 0.}
+#
+#         for key in params_dict:
+#             self.set_new_param(key, params_dict[key])
+#
+#     def get_stim_sequence(self):
+#         stimuli = []
+#
+#         stim_color = (255, 0, 0)
+#         p = self.params['inter_stim_pause']
+#         windmill_freq = 1 / (self.params['windmill_duration'] * 2)
+#
+#         STEP = 0.005
+#         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+#                                   STEP)
+#
+#         theta_vect_clw = np.cos(osc_time_vect * 2 * np.pi * windmill_freq) * \
+#                         self.params['windmill_amplitude'] / 2 - \
+#                         self.params['windmill_amplitude'] / 2
+#
+#         # Initial pause:
+#         t = [0, p / 2]
+#         theta = [0, 0]
+#
+#         # First half rotation:
+#         t.extend(t[-1] + osc_time_vect)
+#         theta.extend(theta_vect_clw)
+#
+#         # Rotation back:
+#         t.extend(t[-1] + osc_time_vect)
+#         theta.extend(theta[-1] - theta_vect_clw)
+#
+#         # Final pause:
+#         t.extend([t[-1] + p / 2])
+#         theta.extend([theta[-1]])
+#
+#         mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+#         mov_dict_still = pd.DataFrame(dict(t=[t[0], t[-1]],
+#                                            theta=theta[:1]*2))
+#
+#         # factor specifying endpoints of clip mask from center
+#         b_1 = self.params['edge_1']
+#         b_2 = self.params['edge_2']
+#         c = self.params['center_off']
+#
+#         # Set clip rectangle to full field or left/right hemi-field:
+#         clip_rect_l = [(0, b_1), (0.5 - c, 0.5), (0, 1-b_2)]
+#         clip_rect_r = [(1, b_1), (0.5 + c, 0.5), (1, 1-b_2)]
+#
+#         # If rotation is required, swap x and y coords of clip masks:
+#         if self.params['rotate']:
+#             for clip_rect in [clip_rect_l, clip_rect_r]:
+#                 for j, i in enumerate(clip_rect):
+#                     clip_rect[j] = (i[1], i[0])
+#
+#         if self.params['field'] == 'L':
+#             left_dict = mov_dict
+#             right_dict = mov_dict_still
+#         else:
+#             right_dict = mov_dict
+#             left_dict = mov_dict_still
+#
+#         windmill_l = SeamlessWindmillStimulus(motion=left_dict,
+#                                               n_arms=self.params[
+#                                                         'windmill_arms'],
+#                                               color=stim_color)
+#         windmill_r = SeamlessWindmillStimulus(motion=right_dict,
+#                                               n_arms=self.params[
+#                                                      'windmill_arms'],
+#                                               color=stim_color)
+#
+#         stimuli.append(PainterStimulusCombiner([windmill_r, windmill_l]))#,
+#                                               #  windmill_r]))
+#
+#         return stimuli
+
+
 class Exp022ImagingProtocol(Protocol):
     name = "exp022 imaging protocol"
 
@@ -566,12 +652,13 @@ class Exp014Protocol(Protocol):
             x.append(x[-1] + dt * vel)
             theta.append(th)
 
-        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                        x=x,
-                                                                        theta=theta)),
-                                               grating_period=self.params[
-                                                   'grating_period'],
-                                               color=stim_color))
+        stimuli.append(SeamlessGratingStimulus(
+            motion=pd.DataFrame(dict(t=t,
+                                     x=x,
+                                     theta=theta)),
+            grating_period=self.params[
+               'grating_period'],
+            color=stim_color))
 
         # ---------------
         # Final flashes:

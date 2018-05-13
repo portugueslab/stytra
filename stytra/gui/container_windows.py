@@ -51,7 +51,13 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.widget_control = ProtocolControlWidget(experiment)
+        self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
+
+        # Connect signals from the protocol_control:
+        self.widget_control.sig_start_protocol.connect(
+            experiment.start_protocol)
+        self.widget_control.sig_stop_protocol.connect(
+            experiment.end_protocol)
         self.button_metadata = QPushButton('Edit metadata')
 
         if experiment.scope_triggered:
@@ -66,8 +72,10 @@ class SimpleExperimentWindow(QMainWindow):
     def show_metadata_gui(self):
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
-        self.metadata_win.layout().addWidget(self.experiment.metadata.show_metadata_gui())
-        self.metadata_win.layout().addWidget(self.experiment.fish_metadata.show_metadata_gui())
+        self.metadata_win.layout().addWidget(
+            self.experiment.metadata.show_metadata_gui())
+        self.metadata_win.layout().addWidget(
+            self.experiment.fish_metadata.show_metadata_gui())
         self.metadata_win.show()
 
     def construct_ui(self):
