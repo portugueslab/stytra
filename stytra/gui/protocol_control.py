@@ -86,20 +86,19 @@ class ProtocolControlWidget(QWidget):
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
 
     def show_stim_params_gui(self):
-        self.protocol_params_tree.setParameters(
-            self.protocol_runner.protocol.params)
-        self.protocol_params_tree.show()
-        self.protocol_params_tree.setWindowTitle('Stimulus parameters')
-        self.protocol_params_tree.resize(300, 600)
+        if self.protocol_runner.protocol is not None:
+            self.protocol_params_tree.setParameters(
+                self.protocol_runner.protocol.params)
+            self.protocol_params_tree.show()
+            self.protocol_params_tree.setWindowTitle('Stimulus parameters')
+            self.protocol_params_tree.resize(300, 600)
 
     def toggle_protocol_running(self):
         # Start/stop the protocol:
         if not self.protocol_runner.running:
             self.experiment.start_protocol()
-            # self.button_toggle_prot.setText("■")
         else:
             self.experiment.end_protocol()
-            # self.button_toggle_prot.setText("▶")
             self.toggle_icon()
 
     def toggle_icon(self):
@@ -120,7 +119,7 @@ class ProtocolControlWidget(QWidget):
     def protocol_changed(self):
         self.progress_bar.setValue(0)
 
-    def set_protocol(self): #, prot_name=None):
+    def set_protocol(self):
         """Use dropdown menu to change the protocol.
         """
 
