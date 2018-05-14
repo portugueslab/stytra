@@ -65,7 +65,7 @@ class XimeaCamera(Camera):
     Module documentation .. _here:
     https://www.ximea.com/support/wiki/apis/Python .
     """
-    def __init__(self, downsampling=None, **kwargs):
+    def __init__(self, downsampling=1, **kwargs):
         """
         :param downsampling:
         """
