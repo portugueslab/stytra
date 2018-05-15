@@ -1,7 +1,10 @@
 Introduction
 ============
 
-Stytra: something
------------------
+Overview
+--------
+Stytra is a package to build and run behavioural experiments.
 
-asdfljsdlaskdj
+
+Features
+--------

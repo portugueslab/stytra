@@ -29,7 +29,8 @@ class Protocol(HasPyQtGraphParams):
     name = ''
 
     def __init__(self):
-        """Add standard parameters common to all kind of protocols.
+        """
+        Add standard parameters common to all kind of protocols.
         """
         super().__init__(name='stimulus_protocol_params')
 
@@ -47,7 +48,8 @@ class Protocol(HasPyQtGraphParams):
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """ Generate protocol from specified parameters. Called by the
+        """
+        Generate protocol from specified parameters. Called by the
         ProtocolRunner class where the Protocol instance is defined.
         This function puts together the stimulus sequence defined by each
         child class with the initial and final pause and repeats it the
@@ -101,8 +103,7 @@ class FlashProtocol(Protocol):
         super().__init__()
 
         standard_params_dict = {'period_sec': 5.,
-                                'flash_duration': 2., #,
-                                'pino': 3}
+                                'flash_duration': 2.}
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)

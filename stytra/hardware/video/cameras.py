@@ -15,8 +15,10 @@ class Camera:
     """
     Abstract class for controlling a camera. Subclasses implement
     minimal control over the following cameras:
-     - Ximea (uses ximea API)
-     - AVT   (uses pymba, a python binding for AVT Vimba package)
+     - Ximea (uses ximea python API `xiAPI <https://www.ximea.com/support/wiki/apis/Python>`_
+
+     - AVT   (uses `pymba <https://github.com/morefigs/pymba>`_,
+       a python wrapper for AVT Vimba package)
 
     Simple usage example::
         cam = AvtCamera()
@@ -62,8 +64,10 @@ class Camera:
 class XimeaCamera(Camera):
     """
     Class for simple control of a Ximea camera. Uses ximea API.
-    Module documentation here:
-    https://www.ximea.com/support/wiki/apis/Python .
+    Module documentation here_.
+
+    .. _here: https://www.ximea.com/support/wiki/apis/Python
+    .
     """
     def __init__(self, downsampling=1, **kwargs):
         """
@@ -140,8 +144,13 @@ class XimeaCamera(Camera):
 class AvtCamera(Camera):
     """
     Class for controlling an AVT camera. Uses the Vimba interface pymba.
-    Module documentation here: https://github.com/morefigs/pymba .
+
+    Module documentation here_.
+
+    .. _here: https://github.com/morefigs/pymba
+    .
     """
+
     def __init__(self, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
