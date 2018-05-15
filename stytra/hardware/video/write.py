@@ -11,7 +11,6 @@ from multiprocessing import Event
 # TODO documentation
 class VideoWriter(FrameProcessor):
     """
-    **Bases:** :class:FrameProcessor from arrayqueues module.
     """
     def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):
         super().__init__()

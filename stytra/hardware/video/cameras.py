@@ -15,10 +15,9 @@ class Camera:
     """
     Abstract class for controlling a camera. Subclasses implement
     minimal control over the following cameras:
-     - Ximea (uses ximea python API `xiAPI <https://www.ximea.com/support/wiki/apis/Python>`_
-
+     - Ximea (uses ximea python API `xiAPI <https://www.ximea.com/support/wiki/apis/Python>`_;
      - AVT   (uses `pymba <https://github.com/morefigs/pymba>`_,
-       a python wrapper for AVT Vimba package)
+       a python wrapper for AVT Vimba package).
 
     Simple usage example::
         cam = AvtCamera()
@@ -64,9 +63,8 @@ class Camera:
 class XimeaCamera(Camera):
     """
     Class for simple control of a Ximea camera. Uses ximea API.
-    Module documentation here_.
-
-    .. _here: https://www.ximea.com/support/wiki/apis/Python
+    Module documentation `here
+    <https://www.ximea.com/support/wiki/apis/Python>`_
     .
     """
     def __init__(self, downsampling=1, **kwargs):
@@ -83,9 +81,6 @@ class XimeaCamera(Camera):
             print('The xiapi package must be installed to use a Ximea camera!')
 
     def open_camera(self):
-        """
-        Description in parent class.
-        """
         self.cam.open_device()
 
         self.im = xiapi.Image()
@@ -110,9 +105,6 @@ class XimeaCamera(Camera):
         self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
 
     def set(self, param, val):
-        """
-        Description in parent class.
-        """
         if param == 'exposure':
             self.cam.set_exposure(int(val * 1000))
 
@@ -120,9 +112,6 @@ class XimeaCamera(Camera):
             self.cam.set_framerate(val)
 
     def read(self):
-        """
-        Description in parent class.
-        """
         try:
             self.cam.get_image(self.im)
             frame = self.im.get_image_data_numpy()
@@ -134,9 +123,6 @@ class XimeaCamera(Camera):
         return frame
 
     def release(self):
-        """
-        Description in parent class.
-        """
         self.cam.stop_acquisition()
         self.cam.close_device()
 
@@ -145,12 +131,8 @@ class AvtCamera(Camera):
     """
     Class for controlling an AVT camera. Uses the Vimba interface pymba.
 
-    Module documentation here_.
-
-    .. _here: https://github.com/morefigs/pymba
-    .
+    Module documentation `here <https://github.com/morefigs/pymba>`_.
     """
-
     def __init__(self, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
@@ -165,10 +147,6 @@ class AvtCamera(Camera):
         self.frame = None
 
     def open_camera(self):
-        """
-        Description in parent class.
-        """
-
         self.vimba.startup()
 
         # If there are multiple cameras, only the first one is used (this may
@@ -192,9 +170,6 @@ class AvtCamera(Camera):
         self.cam.runFeatureCommand('AcquisitionStart')
 
     def set(self, param, val):
-        """
-        Description in parent class.
-        """
         try:
             if param == 'exposure':
                 # camera wants exposure in us:
@@ -204,7 +179,7 @@ class AvtCamera(Camera):
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
                 # TODO Handle this in a cleaner way
-                if val < 210:
+                if val < 210:  # empirically found maximum frame rate
                     self.frame.waitFrameCapture(self.timeout_ms)
                     self.cam.runFeatureCommand('AcquisitionStop')
                     self.cam.endCapture()
@@ -219,9 +194,6 @@ class AvtCamera(Camera):
             print('Invalid value! The parameter will not be changed.')
 
     def read(self):
-        """
-        Description in parent class.
-        """
         try:
             self.frame.waitFrameCapture(self.timeout_ms)
             self.frame.queueFrameCapture()
@@ -241,9 +213,6 @@ class AvtCamera(Camera):
         return frame
 
     def release(self):
-        """
-        Description in parent class.
-        """
         self.frame.waitFrameCapture(self.timeout_ms)
         self.cam.runFeatureCommand('AcquisitionStop')
         self.cam.endCapture()

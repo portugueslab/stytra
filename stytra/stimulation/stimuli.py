@@ -9,6 +9,7 @@ import qimage2ndarray
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtCore import QPoint, QRect, QPointF
 from stytra.stimulation.backgrounds import existing_file_background
+import datetime
 
 
 # TODO right now Stimulus is not parameterized via HasPyQtGraphParams
@@ -63,6 +64,8 @@ class Stimulus:
         self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = ''
         self._experiment = None
+        self.real_time_start = None
+        self.real_time_stop = None
 
     def get_state(self):
         """
@@ -80,13 +83,13 @@ class Stimulus:
         Function called by the ProtocolRunner every timestep until the Stimulus
         is over.
         """
-        pass
+        self.real_time_stop = datetime.datetime.now()
 
     def start(self):
         """
         Function called by the ProtocolRunner when a new stimulus is set.
         """
-        pass
+        self.real_time_start = datetime.datetime.now()
 
     def initialise_external(self, experiment):
         """ Make a reference to the Experiment class inside the Stimulus.
@@ -191,6 +194,7 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         self.duration = float(motion.t.iat[-1])
 
     def update(self):
+        super().update()
         for attr in ['x', 'y', 'theta']:
             try:
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t,
@@ -215,10 +219,9 @@ class PainterStimulusCombiner(PainterStimulus):
         [s.start() for s in self.stimuli]
 
     def update(self):
-        print('updating')
+        super().update()
         for s in self.stimuli:
             s._elapsed = self._elapsed
-            print('updating s')
             s.update()
 
     def get_state(self):
@@ -245,6 +248,7 @@ class MovingConstantVel(MovingStimulus):
         self._past_t = 0
 
     def update(self):
+        super().update()
         dt = (self._elapsed - self._past_t)
         self.x += self.x_vel*dt
         self.y += self.y_vel*dt
@@ -305,6 +309,7 @@ class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
         self.duration = float(lum_df.t.iat[-1])
 
     def update(self):
+        super().update()
         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
         print(lum)
         setattr(self, 'color', (lum, )*3)
@@ -480,6 +485,7 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
                 self.duration = self._video_seq.duration
 
     def update(self):
+        super().update()
         # if the video restarted, it means the last display time
         # is incorrect, it has to be reset
         if self._elapsed < self._last_frame_display_time:
@@ -527,6 +533,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self._past_t = 0
 
     def update(self):
+        super().update()
         dt = (self._elapsed - self._past_t)
         self.fish_velocity = self._experiment.fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
@@ -609,6 +616,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = 0
 
     def update(self):
+        super().update()
         dt = self._elapsed - self._past_t
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
         vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
@@ -671,6 +679,7 @@ class ShockStimulus(Stimulus):
         self.mex = str('shock' + amp_dac + pulse_dur_str)
 
     def start(self):
+        super().update()
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
             print(self.mex)

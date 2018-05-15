@@ -59,17 +59,14 @@ class CameraSource(VideoSource):
     Process for controlling a camera.
     Cameras currently implemented:
 
-    Module documentation ..
+    Module documentation here_:
 
-    _here:<https://www.ximea.com/support/wiki/apis/Python>
-
-    .
+    .. _here: <https://www.ximea.com/support/wiki/apis/Python>_
 
     ======== ===========================================
     Ximea    Add some info
     Avt      Add some info
     ======== ===========================================
-
     """
 
     camera_class_dict = dict(ximea=XimeaCamera,

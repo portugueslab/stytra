@@ -38,7 +38,7 @@ class ProtocolRunner(QObject):
     a list of Stimulus objects. The engine that run this sequence of Stimuli
     is the ProtocolRunner class.
 
-    The ProtocolRunner instance is not bound to a single Protocol object:
+    A ProtocolRunner instance is not bound to a single Protocol object:
      - new Protocols can be set via the self.set_new_protocol() function;
      - current Protocol can be updated (e.g., after changing parameters).
 
@@ -55,7 +55,7 @@ class ProtocolRunner(QObject):
     keeping track of time), ProtocolRunner has an internal QTimer whose timeout
     calls the timestep() method, which:
      - checks elapsed time from beginning of the last stimulus;
-     - if required, updates durrent stimulus state
+     - if required, updates current stimulus state
      - if elapsed time has passed stimulus duration, changes current
        stimulus.
 
@@ -147,11 +147,15 @@ class ProtocolRunner(QObject):
         :param protocol_name: string with the protocol name.
         """
         if protocol_name is not None:
-            ProtocolClass = self.prot_class_dict[protocol_name]
-            protocol = ProtocolClass()
-            self._set_new_protocol(protocol)
+            try:
+                ProtocolClass = self.prot_class_dict[protocol_name]
+                protocol = ProtocolClass()
+                self._set_new_protocol(protocol)
 
-            self.sig_protocol_updated.emit()
+                self.sig_protocol_updated.emit()
+            except KeyError:
+                print('protocol in the config file is not defined in the '
+                      'protocols file')
 
     def update_protocol(self):
         """
@@ -207,6 +211,7 @@ class ProtocolRunner(QObject):
         self.current_stimulus.started = datetime.datetime.now()
         self.sig_protocol_started.emit()
         self.running = True
+        self.current_stimulus.start()
 
     def timestep(self):
         """
@@ -215,10 +220,9 @@ class ProtocolRunner(QObject):
         At every timesteps, if protocol is running:
 
          - check elapsed time from beginning of the last stimulus;
-         - if required, update durrent stimulus state
+         - if required, update current stimulus state
          - if elapsed time has passed stimulus duration, change current
            stimulus.
-
         """
         if self.running:
             # Get total time from start in seconds:
@@ -242,12 +246,15 @@ class ProtocolRunner(QObject):
                     # Update the variable which keeps track when the last
                     # stimulus *should* have ended, in order to avoid
                     # drifting:
-
                     self.past_stimuli_elapsed += datetime.timedelta(
                         seconds=float(self.current_stimulus.duration))
                     self.i_current_stimulus += 1
                     self.current_stimulus = self.stimuli[self.i_current_stimulus]
+                    print('pre')
+                    print(self.current_stimulus.real_time_start)
                     self.current_stimulus.start()
+                    print('post')
+                    print(self.current_stimulus.real_time_start)
 
             self.current_stimulus.update()  # use stimulus update function
             self.sig_timestep.emit(self.i_current_stimulus)
@@ -280,9 +287,12 @@ class ProtocolRunner(QObject):
         """
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
+        print(self.t)
         new_dict = dict(current_stim_dict,
-                        t_start=self.t - self.current_stimulus._elapsed,
-                        t_stop=self.t)
+                        t_start=(current_stim_dict['real_time_start'] -
+                                 self.t_start).total_seconds(),
+                        t_stop=(current_stim_dict['real_time_stop'] -
+                                self.t_start).total_seconds())
 
         self.log.append(new_dict)
 
