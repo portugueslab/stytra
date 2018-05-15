@@ -23,7 +23,7 @@ class Stimulus:
 
     A Stimulus runs for a time defined by its duration. to do so, the
     ProtocolRunner compares at every timestep the duration of the stimulus
-    with the time elapsed from its start.
+    with the time elapsed from its beginning.
 
     Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
     By defining this method in subclasses, we can trigger events at
@@ -32,6 +32,12 @@ class Stimulus:
     At every successive time, until the end of the Stimulus, its update()
     method is called. By defining this method in sublcasses, we can trigger
     events throughout the length of the Stimulus time.
+
+    Be aware that code in the start() and update() functions is executed within
+    the Stimulus&main GUI process, therefore:
+     1. Its temporal precision is limited to # TODO do some check here
+     2. Slow functions would slow down the entire main process, especially if
+        called at every time step.
 
     Stimulus have parameters that are important to be logged in the final
     metadata and parameters that are not relevant. The get_state() method
@@ -185,12 +191,10 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         self.duration = float(motion.t.iat[-1])
 
     def update(self):
-        print('updating {}'.format(self.name))
         for attr in ['x', 'y', 'theta']:
             try:
                 setattr(self, attr, np.interp(self._elapsed, self.motion.t,
                                               self.motion[attr]))
-                print('updated {}'.format(self.name))
 
             except (AttributeError, KeyError):
                 pass
@@ -581,10 +585,8 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
         # radius of triangles (much larger than frame)
         rad = (w ** 2 + h ** 2) ** (1 / 2)
 
-        if self.arms_subset is None:
-            self.arms_subset = list(range(self.n_arms))
         # loop over angles and draw consecutive rectangles
-        for deg in np.array(angles)[self.arms_subset]:
+        for deg in np.array(angles):
             polyg_points = [QPoint(mid_x, mid_y),
                             QPoint(int(mid_x + rad * np.cos(deg)),
                                    int(mid_y + rad * np.sin(deg))),

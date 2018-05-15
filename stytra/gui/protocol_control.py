@@ -32,56 +32,46 @@ class ProtocolControlWidget(QWidget):
         super().__init__(*args)
         self.protocol_runner = protocol_runner
 
-        #self.experiment = experiment
-
         # Create parametertree for protocol parameter control
         self.protocol_params_tree = ParameterTree(showHeader=False)
 
         # Layout for selecting the protocol:
-        self.layout_prot_selection = QHBoxLayout()
+        self.lyt_prot_selection = QHBoxLayout()
 
         # Dropdown menu with the protocol classes found in the Experiment:
         self.combo_prot = QComboBox()
         self.combo_prot.addItems(
             list(self.protocol_runner.prot_class_dict.keys()))
-        if protocol_runner.protocol is not None:
-            self.combo_prot.setCurrentText(protocol_runner.protocol.name)
+
         self.combo_prot.currentIndexChanged.connect(self.set_protocol)
-        self.layout_prot_selection.addWidget(self.combo_prot)
+        self.lyt_prot_selection.addWidget(self.combo_prot)
 
         # Window with the protocol parameters:
         self.protocol_params_butt = QPushButton('Protocol parameters')
         self.protocol_params_butt.clicked.connect(self.show_stim_params_gui)
-        self.layout_prot_selection.addWidget(self.protocol_params_butt)
+        self.lyt_prot_selection.addWidget(self.protocol_params_butt)
 
         # Layout for protocol start and progression report:
-        self.layout_run = QHBoxLayout()
+        self.lyt_run = QHBoxLayout()
 
         # Button for startup:
         self.button_toggle_prot = QPushButton("▶")
-        if self.protocol_runner.protocol is None:
-            self.button_toggle_prot.setEnabled(False)
+
         self.button_toggle_prot.clicked.connect(self.toggle_protocol_running)
-        self.layout_run.addWidget(self.button_toggle_prot)
+        self.lyt_run.addWidget(self.button_toggle_prot)
 
         # Progress bar for monitoring the protocol:
         self.progress_bar = QProgressBar()
         self.progress_bar.setFormat('%p% %v/%m')
 
-        self.layout_run.addWidget(self.progress_bar)
+        self.lyt_run.addWidget(self.progress_bar)
 
         # Global layout:
-        self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.addLayout(self.layout_run)
-        self.layout.addLayout(self.layout_prot_selection)
-        self.setLayout(self.layout)
-
-        # # If last_protocol available, set as default:
-        # if self.experiment.last_protocol is not None:
-        #     self.combo_prot.setCurrentIndex(
-        #         list(self.experiment.prot_class_dict.keys()).index(
-        #             self.experiment.last_protocol))
+        self.lyt = QVBoxLayout()
+        self.lyt.setContentsMargins(0, 0, 0, 0)
+        self.lyt.addLayout(self.lyt_run)
+        self.lyt.addLayout(self.lyt_prot_selection)
+        self.setLayout(self.lyt)
 
         self.timer = None
 
@@ -95,6 +85,13 @@ class ProtocolControlWidget(QWidget):
 
         self.protocol_runner.sig_protocol_updated.connect(
             self.update_stim_duration)
+
+        # If a previous protocol was already set in the protocol runner
+        # change the GUI values accordingly:
+        if protocol_runner.protocol is not None:
+            self.combo_prot.setCurrentText(protocol_runner.protocol.name)
+        else:
+            self.set_protocol()
 
     def show_stim_params_gui(self):
         """

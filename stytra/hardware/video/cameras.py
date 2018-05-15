@@ -61,9 +61,8 @@ class Camera:
 
 class XimeaCamera(Camera):
     """
-    **Bases:** :class:Camera <Camera>
     Class for simple control of a Ximea camera. Uses ximea API.
-    Module documentation .. _here:
+    Module documentation here:
     https://www.ximea.com/support/wiki/apis/Python .
     """
     def __init__(self, downsampling=1, **kwargs):
@@ -140,9 +139,8 @@ class XimeaCamera(Camera):
 
 class AvtCamera(Camera):
     """
-    **Bases:** :class:Camera <Camera>
     Class for controlling an AVT camera. Uses the Vimba interface pymba.
-    Module documentation .. _here: https://github.com/morefigs/pymba .
+    Module documentation here: https://github.com/morefigs/pymba .
     """
     def __init__(self, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
