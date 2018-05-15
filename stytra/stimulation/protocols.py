@@ -256,7 +256,8 @@ class ContinuousOKRstim(Protocol):
                        'edge_1': 0.1,
                        'edge_2': 2,
                        'center_off': 0.1,
-                       'internal_reps': 1}
+                       'internal_reps': 1,
+                       'pause_between_reps': 0}
 
         for key in params_dict:
             self.set_new_param(key, params_dict[key])
@@ -264,7 +265,7 @@ class ContinuousOKRstim(Protocol):
     def get_stim_sequence(self):
         stimuli = []
 
-        stim_color = (255, 0, 0)
+        stim_color = (255, )*3
         p = self.params['inter_stim_pause']
         windmill_freq = 1 / (self.params['windmill_duration'] * 2)
 
@@ -311,12 +312,13 @@ class ContinuousOKRstim(Protocol):
             for j, i in enumerate(clip_rect):
                 clip_rect[j] = (i[1], i[0])
 
-        for i in self.params['internal_reps']:
+        for i in range(self.params['internal_reps']):
             stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
                                                     n_arms=self.params[
                                                             'windmill_arms'],
                                                     color=stim_color,
                                                     clip_rect=clip_rect))
+        stimuli.append(Pause(duration=self.params['pause_between_reps']))
 
         return stimuli
 
