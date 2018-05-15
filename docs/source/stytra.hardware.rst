@@ -1,21 +1,20 @@
-stytra.hardware package
-=======================
+stytra\.hardware package
+========================
+
+Subpackages
+-----------
+
+.. toctree::
+
+    stytra.hardware.video
 
 Submodules
 ----------
 
-stytra.hardware.serial module
------------------------------
+stytra\.hardware\.serial module
+-------------------------------
 
 .. automodule:: stytra.hardware.serial
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra.hardware.video module
-----------------------------
-
-.. automodule:: stytra.hardware.video
     :members:
     :undoc-members:
     :show-inheritance:

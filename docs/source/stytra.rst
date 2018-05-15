@@ -6,34 +6,35 @@ Subpackages
 
 .. toctree::
 
+    stytra.bouter
     stytra.calibration
+    stytra.data_log
     stytra.gui
     stytra.hardware
     stytra.stimulation
     stytra.tracking
-    stytra.triggering
 
 Submodules
 ----------
 
-stytra.collectors module
-------------------------
+stytra\.collectors module
+-------------------------
 
 .. automodule:: stytra.collectors
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra.dbconn module
---------------------
+stytra\.dbconn module
+---------------------
 
 .. automodule:: stytra.dbconn
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra.run\_experiment module
------------------------------
+stytra\.run\_experiment module
+------------------------------
 
 .. automodule:: stytra.run_experiment
     :members:
