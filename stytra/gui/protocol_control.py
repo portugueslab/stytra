@@ -100,11 +100,12 @@ class ProtocolControlWidget(QWidget):
         """
         Create and show window to update protocol parameters.
         """
-        self.protocol_params_tree.setParameters(
-            self.protocol_runner.protocol.params)
-        self.protocol_params_tree.show()
-        self.protocol_params_tree.setWindowTitle('Protocol parameters')
-        self.protocol_params_tree.resize(300, 600)
+        if self.protocol_runner.protocol.params is not None:
+            self.protocol_params_tree.setParameters(
+                self.protocol_runner.protocol.params)
+            self.protocol_params_tree.show()
+            self.protocol_params_tree.setWindowTitle('Protocol parameters')
+            self.protocol_params_tree.resize(300, 600)
 
     def toggle_protocol_running(self):
         """
@@ -114,10 +115,8 @@ class ProtocolControlWidget(QWidget):
         """
         # Start/stop the protocol:
         if not self.protocol_runner.running:
-            # self.experiment.start_protocol()
             self.sig_start_protocol.emit()
         else:
-            # self.experiment.end_protocol()
             self.sig_stop_protocol.emit()
             self.toggle_icon()
 

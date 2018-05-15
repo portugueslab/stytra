@@ -255,7 +255,8 @@ class ContinuousOKRstim(Protocol):
                        'field': 'F',
                        'edge_1': 0.1,
                        'edge_2': 2,
-                       'center_off': 0.1}
+                       'center_off': 0.1,
+                       'internal_reps': 1}
 
         for key in params_dict:
             self.set_new_param(key, params_dict[key])
@@ -272,8 +273,8 @@ class ContinuousOKRstim(Protocol):
                                   STEP)
 
         theta_vect_clw = np.cos(osc_time_vect * 2 * np.pi * windmill_freq) * \
-                        self.params['windmill_amplitude'] / 2 - \
-                        self.params['windmill_amplitude'] / 2
+            self.params['windmill_amplitude'] / 2 - \
+            self.params['windmill_amplitude'] / 2
 
         # Initial pause:
         t = [0, p / 2]
@@ -310,11 +311,12 @@ class ContinuousOKRstim(Protocol):
             for j, i in enumerate(clip_rect):
                 clip_rect[j] = (i[1], i[0])
 
-        stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
-                                                n_arms=self.params[
-                                                        'windmill_arms'],
-                                                color=stim_color,
-                                                clip_rect=clip_rect))
+        for i in self.params['internal_reps']:
+            stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
+                                                    n_arms=self.params[
+                                                            'windmill_arms'],
+                                                    color=stim_color,
+                                                    clip_rect=clip_rect))
 
         return stimuli
 
@@ -645,7 +647,6 @@ class Exp014Protocol(Protocol):
         x = [0]
         t = [0]
         theta = [0]
-
 
         for dt, vel, th in dt_vel_tuple:
             t.append(t[-1] + dt)
