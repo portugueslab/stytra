@@ -482,8 +482,8 @@ class Exp022ImagingProtocol(Protocol):
                                                grating_period=self.params[
                                                    'grating_cycle'],
                                                color=stim_color))
-        # windmill for OKR
 
+        # windmill for OKR
         STEP = 0.005
 
         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,

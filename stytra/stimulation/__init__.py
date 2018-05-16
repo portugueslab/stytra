@@ -14,6 +14,7 @@ from stytra.stimulation.protocols import Protocol
 import inspect
 from collections import OrderedDict
 
+
 def get_classes_from_module(input_module, parent_class):
     """ Find all the classes in a module that are children of a parent one.
 
