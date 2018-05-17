@@ -31,8 +31,7 @@ from stytra.stimulation.closed_loop import VigourMotionEstimator, \
 from stytra.stimulation.protocols import Protocol
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.tracking import QueueDataAccumulator
-from stytra.tracking.interfaces import ThresholdEyeTrackingMethod, \
-    CentroidTrackingMethod, MovementDetectionParameters
+from stytra.tracking.interfaces import *
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.tail import trace_tail_angular_sweep, trace_tail_centroid
 
@@ -52,7 +51,8 @@ def get_default_args(func):
 
 
 class Experiment(QObject):
-    """ General class that runs an experiment.
+    """
+    General class that runs an experiment.
     """
     def __init__(self, directory,
                  calibrator=None,
@@ -142,7 +142,8 @@ class Experiment(QObject):
         self.window_main.show()
 
     def initialize_metadata(self):
-        """ Restore parameters from saved config.h5 file.
+        """
+        Restore parameters from saved config.h5 file.
         """
         # When restoring here data_log to previous values, there may be
         # multiple (one per parameter), calls of functions connected to
@@ -173,7 +174,8 @@ class Experiment(QObject):
                 'The project has to be committed before starting!')
 
     def show_stimulus_screen(self, full_screen=True):
-        """ Open window to display the visual stimulus and make it full-screen
+        """
+        Open window to display the visual stimulus and make it full-screen
         if necessary.
         """
         self.window_display.show()
@@ -329,9 +331,15 @@ class CameraExperiment(Experiment):
         self.camera.kill_signal.set()
         self.camera.terminate()
 
+# TODO refactoring idea!:
+# the trackingMethod from the interfaces probably could be the way of
+# keeping together features of a tracking function (such as parameters,
+# output accumulator headers, GUI required.
+
 
 class TrackingExperiment(CameraExperiment):
-    """ Abstract class for an experiment which contains tracking,
+    """
+    Abstract class for an experiment which contains tracking,
     base for any experiment that tracks behaviour (being it eyes, tail,
     or anything else).
     The general purpose of the class is handle a frame dispatcher,
@@ -349,8 +357,11 @@ class TrackingExperiment(CameraExperiment):
           accumulator for saving or other purposes (e.g. VR control).
     """
 
-    def __init__(self, *args, tracking_method=None,
-                 header_list=None, data_name=None, **kwargs):
+    tracking_methods_list = dict(centroid=CentroidTrackingMethod,
+                                 angle_sweep=AnglesTrackingMethod,
+                                 eyes=ThresholdEyeTrackingMethod)
+
+    def __init__(self, *args, tracking_method_name=None, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -364,8 +375,10 @@ class TrackingExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.tracking_method = tracking_method
-        self.data_name = data_name
+        TrackingMethod = self.tracking_methods_list[tracking_method_name]
+        self.tracking_method = TrackingMethod()
+
+        self.data_name = self.tracking_method.data_log_name
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
                                                 finished_signal=
@@ -378,7 +391,7 @@ class TrackingExperiment(CameraExperiment):
         self.fish_metadata.params['embedded'] = True
 
         self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
-                                             header_list=header_list)
+                                             header_list=self.tracking_method.accumulator_headers)
 
         # Data accumulator is updated with GUI timer:
         self.gui_timer.timeout.connect(self.data_acc.update_list)
@@ -392,7 +405,8 @@ class TrackingExperiment(CameraExperiment):
         self.frame_dispatcher.start()
 
     def send_new_parameters(self):
-        """ Called upon gui timeout, put tracking parameters in the relative
+        """
+        Called upon gui timeout, put tracking parameters in the relative
         queue.
         """
         # TODO do we need this linked to GUI timeout? why not value change?
@@ -400,7 +414,8 @@ class TrackingExperiment(CameraExperiment):
              self.tracking_method.get_clean_values())
 
     def start_protocol(self):
-        """ Reset data accumulator when starting the protocol.
+        """
+        Reset data accumulator when starting the protocol.
         """
         # TODO camera queue should be emptied to avoid accumulation of frames!!
         # when waiting for the microscope!
@@ -408,7 +423,8 @@ class TrackingExperiment(CameraExperiment):
         self.data_acc.reset()
 
     def end_protocol(self, *args, **kwargs):
-        """ Save tail position and dynamic parameters and terminate.
+        """
+        Save tail position and dynamic parameters and terminate.
         """
         self.dc.add_static_data(self.data_acc.get_dataframe(),
                                 name=self.data_name)
@@ -421,7 +437,8 @@ class TrackingExperiment(CameraExperiment):
             pass
 
     def set_protocol(self, protocol):
-        """ Connect new protocol start to resetting of the data accumulator.
+        """
+        Connect new protocol start to resetting of the data accumulator.
         """
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc.reset)
@@ -440,36 +457,24 @@ class TrackingExperiment(CameraExperiment):
 
 
 class TailTrackingExperiment(TrackingExperiment):
-    """ An experiment which contains tail tracking,
+    """
+    An experiment which contains tail tracking,
     base for experiments that  employs closed loops.
     """
+
     def __init__(self, *args, **kwargs):
-
-        tracking_method = CentroidTrackingMethod()
-        header_list = ['tail_sum'] + ['theta_{:02}'.format(i)
-                                      for i in range(20)]
-                #self.tracking_method.params['n_segments'])]
-
-        super().__init__(*args, **kwargs,
-                         tracking_method=tracking_method,
-                         header_list=header_list,
-                         data_name='behaviour_tail_log')
+        super().__init__(*args, **kwargs)
 
         # This probably should happen before starting the camera process??
         self.tracking_method.params.param('n_segments').sigValueChanged.connect(
             self.change_segment_numb)
 
+    # TODO probably could go to the interface, but this would mean linking
+    # the data accumulator to the interface as well. Probably makes sense.
     def change_segment_numb(self):
-        print(self.tracking_method.params['n_segments'])
         new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
             self.tracking_method.params['n_segments'])]
         self.data_acc.reset(header_list=new_header)
-
-        # self.gui_timer.timeout.connect(
-        #     self.data_acc_tailpoints.update_list)
-        #
-        # self.window_main.stream_plot.add_stream(
-        #     self.data_acc_tailpoints, ['tail_sum'])
 
     def make_window(self):
         self.window_main = TailTrackingExperimentWindow(experiment=self)
@@ -478,18 +483,11 @@ class TailTrackingExperiment(TrackingExperiment):
 
 class EyeTrackingExperiment(TrackingExperiment):
     def __init__(self, *args, **kwargs):
-        """ An experiment which contains eye tracking.
+        """
+        An experiment which contains eye tracking.
         """
 
-        tracking_method = ThresholdEyeTrackingMethod()
-        header_list = []
-        [header_list.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
-                             'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
-                             'th_e{}'.format(i)]) for i in range(2)]
-
-        super().__init__(*args, tracking_method=tracking_method,
-                         header_list=header_list,
-                         data_name='behaviour_eyes_log',
+        super().__init__(*args,
                          **kwargs)
 
     def make_window(self):

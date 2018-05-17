@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 import cv2
 
-
+@jit(nopython=True)
 def reduce_to_pi(angle):
     return np.mod(angle + np.pi, 2*np.pi)-np.pi
 
@@ -30,7 +30,9 @@ def find_direction(start, image, seglen):
 
 @jit(nopython=True, cache=True)
 def angle(dx1, dy1, dx2, dy2):
-    """Calculate angle between two segments d1 and d2
+    """
+    Calculate angle between two segments d1 and d2
+
     :param dx1: x length for first segment
     :param dy1: y length for first segment
     :param dx2: -
@@ -48,7 +50,8 @@ def angle(dx1, dy1, dx2, dy2):
 
 
 def bp_filter_img(img, small_square=3, large_square=50):
-    """ Bandpass filter for images.
+    """
+    Bandpass filter for images.
     :param img: input image
     :param small_square: small square for low-pass smoothing
     :param large_square: big square for high pass smoothing (subtraction of background shades)
@@ -61,7 +64,8 @@ def bp_filter_img(img, small_square=3, large_square=50):
 
 @jit(nopython=True)
 def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
-    """ Find the endpoint of the next tail segment
+    """
+    Find the endpoint of the next tail segment
     by calculating the moments in a look-ahead area
 
     :param fc: image to find tail
@@ -123,7 +127,8 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
 def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
                         n_segments=12, window_size=7,
                         color_invert=False, filter_size=0, image_scale=0.5):
-    """ Finds the tail for an embedded fish, given the starting point and
+    """
+    Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
     :param im: image to process
@@ -183,14 +188,14 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
 
 
 @jit(nopython=True)
-def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
+def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y,
                         num_points, tail_length, color_invert):
     """
     Tail tracing based on min (or max) detection on arches. Wrapped by
-    tail_trace_ls.
+    trace_tail_angular_sweep.
     """
     # Define starting angle based on tail dimensions:
-    start_angle = np.arctan2(tail_len_x, tail_len_y)
+    start_angle = np.arctan2(disp_x, disp_y)
 
     # Initialise first angle arch, tail sum and angle list:
     pi2 = np.pi/2
@@ -245,47 +250,65 @@ def _tail_trace_core_ls(img, start_x, start_y, tail_len_x, tail_len_y,
     return angles
 
 
-def trace_tail_angular_sweep(img, start_x=0, start_y=0, tail_length_x=1,
-                             tail_length_y=1, n_segments=7, tail_length=None,
-                             filter_size=0, color_invert=False):
+# def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
+#                         n_segments=12, window_size=7,
+#                         color_invert=False, filter_size=0, image_scale=0.5)
+
+    # start_x = tail_start[1]  # TODO remove
+    # start_y = tail_start[0]
+    # tail_length_x = tail_length[1]
+    # tail_length_y = tail_length[0]
+
+def trace_tail_angular_sweep(im, tail_start=(0, 0), n_segments=7,
+                             tail_length=(1, 1), filter_size=0,
+                             color_invert=False, image_scale=1):
     """
     Tail tracing based on min (or max) detection on arches. Wraps
     _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
     smoothing, 300 us with smoothing.
     :param img: input image
-    :param start_x: tail starting point (x)
-    :param start_y: tail starting point (y)
-    :param tail_length_x: tail length x (if tail length is fixed, only
-                          orientation matters)
-    :param tail_length_y: tail length y
+    :param tail_start: tail starting point (x, y)
+    :param tail_length: tail length
     :param n_segments: number of segments
-    :param tail_length: total tail length; if unspecified, calculated from
-                        tail_len_x and y
-    :param filtering: True for smoothing the image
+    :param filter_size: Box for smoothing the image
     :param color_invert: True for inverting image colors
     :return:
     """
-    # If required smooth the image:
-    if filter_size>0:
-        img_filt = cv2.boxFilter(img, -1, (filter_size, filter_size))
-    else:
-        img_filt = img
 
-    # If tail length is not fixed, calculate from tail dimensions:
-    if not tail_length:
-        tail_length = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
+    start_x = tail_start[1]  # TODO remove
+    start_y = tail_start[0]
+    tail_length_x = tail_length[1]
+    tail_length_y = tail_length[0]
+
+    # Image preprocessing. Resize if required:
+    if image_scale != 1:
+        im = cv2.resize(im, None, fx=image_scale, fy=image_scale,
+                        interpolation=cv2.INTER_AREA)
+    # Filter if required:
+    if filter_size > 0:
+        im = cv2.boxFilter(im, -1, (filter_size, filter_size))
+
+    # Calculate tail length:
+    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+
+    # Initial displacements in x and y:
+    disp_x = tail_length_x * image_scale / n_segments
+    disp_y = tail_length_y * image_scale / n_segments
+
+    start_x *= image_scale
+    start_y *= image_scale
 
     # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(img_filt, start_x, start_y, tail_length_x, tail_length_y,
-                                     n_segments, tail_length, color_invert)
-
+    angle_list = _tail_trace_core_ls(im, start_x, start_y, disp_x, disp_y,
+                                     n_segments, length_tail, color_invert)
 
     return angle_list
 
 
 @jit(nopython=True, cache=True)
 def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
-    """ Finds a midline for a fish image, with the starting point and direction
+    """
+    Finds a midline for a fish image, with the starting point and direction
 
     :param im:
     :param xm:

@@ -74,7 +74,8 @@ if __name__ == '__main__':
     if args.tail_tracking or args.freely_swimming or args.eye_tracking:
         class_kwargs['camera_rotation'] = int(args.camera_rotation)
         class_kwargs['camera'] = args.camera
-
+        class_kwargs['tracking_method_name'] = args.tail_tracking_method
+    print(class_kwargs)
     if args.tail_tracking:
         base = TailTrackingExperiment
     #     if args.vr:
@@ -88,6 +89,7 @@ if __name__ == '__main__':
         base = MovementRecordingExperiment
     elif args.eye_tracking:
         base = EyeTrackingExperiment
+        class_kwargs['tracking_method_name'] = 'eyes'  # TODO temporary
 
     app_icon = QIcon()
     app_icon.addFile('icons/48.png', QSize(48, 48))

@@ -2,7 +2,8 @@ from stytra.data_log import HasPyQtGraphParams
 
 
 class FrameProcessingMethod(HasPyQtGraphParams):
-    """ The class for parametrisation of various tail and fish tracking methods
+    """
+    The class for parametrisation of various tail and fish tracking methods
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -15,7 +16,8 @@ class FrameProcessingMethod(HasPyQtGraphParams):
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
-        self.tracked_variables = []
+        self.accumulator_headers = None
+        self.data_log_name = None
 
 
 """ 
@@ -44,12 +46,18 @@ class TailTrackingMethod(FrameProcessingMethod):
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
 
+        self.accumulator_headers = ['tail_sum'] + ['theta_{:02}'.format(i)
+                                      for i in range(self.params['n_segments'])]
+        self.data_log_name = 'behaviour_tail_log'
+
 
 class CentroidTrackingMethod(TailTrackingMethod):
-    """ Center-of-mass method to find consecutive segments.
+    """
+    Center-of-mass method to find consecutive segments.
     """
     def __init__(self):
         super().__init__()
+        self.params.child('function').setValue('centroid')
         standard_params_dict = dict(window_size=dict(value=30,
                                                      suffix=' pxs',
                                                      type='float',
@@ -57,6 +65,15 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
+
+
+class AnglesTrackingMethod(TailTrackingMethod):
+    """
+    Angular sweep method to find consecutive segments.
+    """
+    def __init__(self):
+        super().__init__()
+        self.params.child('function').setValue('angle_sweep')
 
 
 """ 
@@ -83,9 +100,17 @@ class EyeTrackingMethod(FrameProcessingMethod):
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
 
+        headers = []
+        [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
+                         'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
+                         'th_e{}'.format(i)]) for i in range(2)]
+        self.accumulator_headers = headers
+        self.data_log_name = 'behaviour_eyes_log'
+
 
 class ThresholdEyeTrackingMethod(EyeTrackingMethod):
-    """ Simple threshold method for finding eyes.
+    """
+    Simple threshold method for finding eyes.
     """
     def __init__(self):
         super().__init__()
@@ -98,7 +123,8 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
 
 
 class MovementDetectionParameters(HasPyQtGraphParams):
-    """ The class for parametrisation of various tail and fish tracking methods
+    """
+    The class for parametrisation of various tail and fish tracking methods
     """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -106,10 +132,10 @@ class MovementDetectionParameters(HasPyQtGraphParams):
             self.params.removeChild(child)
 
         standard_params_dict = dict(fish_threshold=50,
-                                    motion_threshold_n_pix = 8,
+                                    motion_threshold_n_pix=8,
                                     frame_margin=10,
                                     n_previous_save=400,
                                     n_next_save=300,
-                                    show_thresholded = False)
+                                    show_thresholded=False)
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
