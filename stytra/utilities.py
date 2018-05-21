@@ -1,10 +1,10 @@
 from multiprocessing import Process
 from datetime import datetime
 
+
 class FrameProcessor(Process):
     """ A basic class for a process that deals with frames. It provides
-    framerate calculation and ?
-    # TODO do we realy need this class here?
+    framerate calculation.
     """
     def __init__(self, n_fps_frames=10, print_framerate=False):
         """ Initialize the class.
