@@ -4,7 +4,7 @@ try:
 except ImportError:
     pass
 
-from arrayqueues.processes import FrameProcessor
+from stytra.utilities import FrameProcessor
 from multiprocessing import Event
 
 

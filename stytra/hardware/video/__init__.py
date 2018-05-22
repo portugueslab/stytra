@@ -8,7 +8,7 @@ import glob
 
 from multiprocessing import Queue, Event
 from multiprocessing.queues import Empty, Full
-from arrayqueues.processes import FrameProcessor
+from stytra.utilities import FrameProcessor
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera

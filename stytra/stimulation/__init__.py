@@ -278,7 +278,7 @@ class ProtocolRunner(QObject):
             try:
                 self.timer.timeout.disconnect()
                 self.timer.stop()
-            except: # TODO generic except
+            except:  # TODO generic except
                 pass
 
     def update_log(self):
@@ -288,12 +288,14 @@ class ProtocolRunner(QObject):
         """
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
-        print(self.t)
-        new_dict = dict(current_stim_dict,
-                        t_start=(current_stim_dict['real_time_start'] -
-                                 self.t_start).total_seconds(),
-                        t_stop=(current_stim_dict['real_time_stop'] -
-                                self.t_start).total_seconds())
+        try:
+            new_dict = dict(current_stim_dict,
+                            t_start=(current_stim_dict['real_time_start'] -
+                                     self.t_start).total_seconds(),
+                            t_stop=(current_stim_dict['real_time_stop'] -
+                                    self.t_start).total_seconds())
+        except TypeError:  # if time is None stimulus was not run
+            new_dict = dict()
 
         self.log.append(new_dict)
 

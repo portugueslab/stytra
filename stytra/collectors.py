@@ -24,27 +24,37 @@ def strip_values(it):
 
 
 class Accumulator:
-    """ A general class for an object that accumulates what
+    """
+    A general class for accumulating streams of data that
     will be saved or plotted in real time
     """
     def __init__(self, fps_range=10):
+        """
+        :param fps_range:
+        """
         self.stored_data = []
         self.header_list = ['t']
         self.starting_time = None
         self.fps_range = fps_range
 
     def reset(self, header_list=None):
+        """
+        Reset accumulator and assign a new header list
+        :param header_list:
+        """
         if header_list is not None:
             self.header_list = ['t'] + header_list
         self.stored_data = []
         self.starting_time = None
+        print('reset')
 
     def check_start(self):
         if self.starting_time is None:
             self.starting_time = datetime.datetime.now()
 
     def get_dataframe(self):
-        """ Returns pandas DataFrame with data and headers
+        """
+        Returns pandas DataFrame with data and headers.
         """
         return pd.DataFrame(self.stored_data,
                             columns=self.header_list)
@@ -61,10 +71,17 @@ class Accumulator:
         last_n = min(n, len(self.stored_data))
         if len(self.stored_data) == 0:
             return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
-        data_list = self.stored_data[-max(last_n, 1):]
+        else:
+            data_list = self.stored_data[-max(last_n, 1):]
+            # print('data 0: {}'.format((data_list[0])))
+            # print('data -1: {}'.format((data_list[-1])))
 
-        obar = np.array(data_list)
-        return obar
+            # The length of the tuple in the accumulator may change. Here we
+            # make sure we take only the elements that have the same
+            # dimension as the last one.
+            lenghts = np.array([len(d)==len(data_list[-1]) for d in data_list])
+            obar = np.array(data_list[np.where(lenghts)[0][0]:])
+            return obar
 
     def get_last_t(self, t):
         n = int(self.get_fps()*t)
@@ -72,7 +89,8 @@ class Accumulator:
 
 
 def metadata_dataframe(metadata_dict, time_step=0.005):
-    """ Function for converting a data_log dictionary into a pandas DataFrame
+    """
+    Function for converting a data_log dictionary into a pandas DataFrame
     for saving.
     :param metadata_dict: data_log dictionary (containing stimulus log!)
     :param time_step: time step (used only if tracking is not present!)
@@ -105,8 +123,8 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
                      (final_df['t'] < stimulus['t_stop'] + delta_time),
                      'stimulus'] = str(stimulus['name'])
 
-    # Check for the 'start acquisition' which run for a very short time and can be
-    # missed:
+    # Check for the 'start acquisition' which run for a very short time and
+    # can be missed:
     if start_point:
         start_idx = np.argmin(abs(final_df['t'] - start_point['t_start']))
         final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
@@ -269,10 +287,11 @@ class DataCollector:
         return clean_data_dict
 
     def get_last_value(self, class_param_key):
-        """ Get the last saved value for a specific class_param_key.
+        """
+        Get the last saved value for a specific class_param_key.
         """
         if self.last_metadata is not None:
-            # This syntax is horrible but apparently necessary to scan through
+            # This syntax is ugly but apparently necessary to scan through
             # the dictionary saved by pyqtgraph.Parameter.saveState().
             return self.last_metadata['children'][
                 class_param_key]['children']['name']['value']
@@ -280,7 +299,8 @@ class DataCollector:
             return None
 
     def save_config_file(self):
-        """ Save the config.h5 file with the current state of the params
+        """
+        Save the config.h5 file with the current state of the params
         data_log.
         """
         dd.io.save(self.folder_path + 'config.h5',

@@ -7,13 +7,12 @@ import cv2
 import numpy as np
 from numba import jit
 
-from arrayqueues.processes import FrameProcessor
+from stytra.utilities import FrameProcessor
 from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 
 from stytra import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
 from stytra.tracking.eyes import trace_eyes
-
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,
@@ -48,12 +47,14 @@ class FrameDispatcher(FrameProcessor):
                                             eye_threshold=trace_eyes)
 
     def process_internal(self, frame):
-        """ Apply processing function to current frame with
-        self.processing parameters as additional inputs.
+        """
+        Apply processing function to current frame with
+        self.processing_parameters as additional inputs.
+        :param frame: frame to be processed;
+        :return: processed output
         """
         if self.processing_function is not None:
             try:
-                parameters = self.processing_parameters
                 output = self.processing_function(frame,
                                                   **self.processing_parameters)
                 return output
@@ -61,7 +62,8 @@ class FrameDispatcher(FrameProcessor):
                 raise ValueError('Unknown error while processing frame')
 
     def run(self):
-        """ Loop running the tracking function.
+        """
+        Loop where the tracking function runs.
         """
         while not self.finished_signal.is_set():
             try:
@@ -86,10 +88,8 @@ class FrameDispatcher(FrameProcessor):
                     a = (datetime.now(), self.process_internal(frame))
                     self.output_queue.put(a)
 
-                # calculate the frame rate:
-                self.update_framerate()
-                self.send_to_gui(frame)
-                # put the current frame into the GUI queue:
+                self.update_framerate()  # calculate the frame rate
+                self.send_to_gui(frame)  # put current frame into the GUI queue
 
             except Empty:  # if there is nothing in frame queue
                 break
@@ -169,17 +169,20 @@ class MovingFrameDispatcher(FrameDispatcher):
                     except Empty:
                         pass
 
-                # process frames as they come, threshold them to roughly find the fish (e.g. eyes)
+                # process frames as they come, threshold them to roughly
+                #  find the fish (e.g. eyes)
                 _, current_frame_thresh =  \
                     cv2.threshold(cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
                                   self.processing_parameters["fish_threshold"],
                                   255, cv2.THRESH_BINARY)
-                # compare the thresholded frame to the previous ones, if there are enough differences
+                # compare the thresholded frame to the previous ones,
+                # if there are enough differences
                 # because the fish moves, start recording to file
                 if i_frame >= n_previous_compare:
                     difsum = _compare_to_previous(current_frame_thresh, previous_ims)
 
-                    # put the difference in the diagnostic queue so that the threshold can be set correctly
+                    # put the difference in the diagnostic queue so that
+                    # the threshold can be set correctly
 
                     if np.all(difsum > self.processing_parameters["motion_threshold_n_pix"]):
                         record_counter = self.processing_parameters["n_next_save"]
