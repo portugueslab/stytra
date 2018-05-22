@@ -62,6 +62,8 @@ class Experiment(QObject):
                  scope_triggered=False,
                  shock_stimulus=False,
                  rec_stim_every=None,
+                 display_w = None,
+                 display_h = None,
                  notifier='slack'):
         """
         :param directory: data for saving options and data
@@ -245,7 +247,8 @@ class Experiment(QObject):
                 movie_dict = dict(movie=movie[0], movie_times=movie[1])
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 dd.io.save(self.directory + '\\' + timestamp +
-                           'stim_movie.h5', movie_dict)
+                           'stim_movie.h5', movie_dict, compression='blosc')
+                # movie files can be large, and blosc is orders of magnitude faster
 
         self.protocol_runner.reset()
 

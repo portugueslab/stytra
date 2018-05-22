@@ -20,6 +20,12 @@ if __name__ == '__main__':
                         action='store', default='angle_sweep')
     parser.add_argument('--camera',
                         action='store', default=None)
+    parser.add_argument('--display-w',
+                        type=int,
+                        action='store', default=0)
+    parser.add_argument('--display-h',
+                        type=int,
+                        action='store', default=0)
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--shock-stimulus',
@@ -39,7 +45,7 @@ if __name__ == '__main__':
                         default=None)
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
-    parser.add_argument('--rec_stim_every', action='store',
+    parser.add_argument('--rec-stim-every', action='store',
                         default=None)
     parser.add_argument('--asset-dir', action='store',
                         default='/Users/vilimstich/PhD/j_sync/underwater')
@@ -98,6 +104,11 @@ if __name__ == '__main__':
     app.setWindowIcon(app_icon)
 
     exp = base(**class_kwargs)
+
     exp.start_experiment()
     exp.show_stimulus_screen(full_screen=args.full_screen)
+    if args.display_w and args.display_h:
+        exp.window_display.params['size'] = (args.display_w, args.display_h)
+        exp.window_display.set_dims()
     app.exec_()
+
