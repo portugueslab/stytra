@@ -9,7 +9,7 @@ from copy import deepcopy
 from pyqtgraph.parametertree import Parameter
 from pyqtgraph.pgcollections import OrderedDict
 
-from stytra.dbconn import sanitize_item
+from stytra.utilities import prepare_json
 
 
 def strip_values(it):
@@ -272,9 +272,9 @@ class DataCollector:
 
         for key in value_dict.keys():
             category = key.split('_')[0]
-            value = sanitize_item(value_dict[key], paramstree=paramstree,
-                                  convert_datetime=convert_datetime,
-                                  eliminate_df=eliminate_df)
+            value = prepare_json(value_dict[key], paramstree=paramstree,
+                                 convert_datetime=convert_datetime,
+                                 eliminate_df=eliminate_df)
             if category in clean_data_dict.keys():
                 split_name = key.split('_')
                 if split_name[1] == 'metadata':

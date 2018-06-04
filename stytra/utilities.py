@@ -1,5 +1,10 @@
+import datetime
+import time
 from multiprocessing import Process
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 
 class FrameProcessor(Process):
@@ -42,3 +47,48 @@ class FrameProcessor(Process):
             self.previous_time_fps = self.current_time
         # Reset i after every n frames
         self.i_fps = (self.i_fps + 1) % self.n_fps_frames
+
+
+def prepare_json(it, **kwargs):
+    """ Used to create a dictionary which will be safe to put in MongoDB
+
+    :param it: the item which will be recursively sanitized
+    :return:
+    """
+    safe_types = (int, float, str)
+
+    for st in safe_types:
+        if isinstance(it, st):
+            return it
+    if isinstance(it, dict):
+        new_dict = dict()
+        for key, value in it.items():
+            new_dict[key] = prepare_json(value, **kwargs)
+        return new_dict
+    if isinstance(it, tuple):
+        tuple_out = tuple([prepare_json(el, **kwargs)
+                           for el in it])
+        if len(tuple_out) == 2 and kwargs.get('paramstree', False) and \
+                isinstance(tuple_out[1], dict):
+            if len(tuple_out[1]) == 0:
+                return tuple_out[0]
+            else:
+                return tuple_out[1]
+        else:
+            return tuple_out
+    if isinstance(it, list):
+        return [prepare_json(el, **kwargs) for el in it]
+    if isinstance(it, np.generic):
+        return np.asscalar(it)
+    if isinstance(it, datetime.datetime):
+        if kwargs.get("convert_datetime", False):
+            return it.isoformat()
+        else:
+            temptime = time.mktime(it.timetuple())
+            return datetime.datetime.utcfromtimestamp(temptime)
+    if isinstance(it, pd.DataFrame):
+        if kwargs.get("eliminate_df", False):
+            return 0
+        else:
+            return it.to_dict('list')
+    return 0

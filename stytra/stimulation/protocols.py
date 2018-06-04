@@ -1,8 +1,4 @@
-from stytra.stimulation.stimuli import *
-# , ClosedLoop1D_variable_motion,
-from stytra.stimulation.backgrounds import existing_file_background
-import pandas as pd
-import numpy as np
+
 from stytra.data_log import HasPyQtGraphParams
 from random import sample
 from stytra.stimulation.backgrounds import gratings

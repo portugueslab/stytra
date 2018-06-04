@@ -10,7 +10,7 @@ from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
 from stytra.hardware.video import CameraControlParameters
-from stytra.dbconn import sanitize_item
+from stytra.utilities import prepare_json
 
 
 class SimpleCameraViewWWidget(QWidget):

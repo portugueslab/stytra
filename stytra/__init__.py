@@ -16,10 +16,9 @@ from stytra.collectors import DataCollector
 from stytra.data_log import HasPyQtGraphParams
 from stytra.data_log.metadata import GeneralMetadata, FishMetadata
 
-from stytra.dbconn import put_experiment_in_db, Slacker
+from stytra.database import Database
 from stytra.hardware.video import CameraControlParameters, VideoWriter, \
     VideoFileSource, CameraSource
-
 
 from stytra.gui.container_windows import SimpleExperimentWindow, \
     CameraExperimentWindow, TailTrackingExperimentWindow, \
@@ -62,9 +61,10 @@ class Experiment(QObject):
                  scope_triggered=False,
                  shock_stimulus=False,
                  rec_stim_every=None,
+                 database = None,
+                 notifier=None,
                  display_w = None,
-                 display_h = None,
-                 notifier='slack'):
+                 display_h = None):
         """
         :param directory: data for saving options and data
         :param calibrator:
@@ -91,6 +91,12 @@ class Experiment(QObject):
             self.calibrator = calibrator
 
         self.window_main = None
+        if database is None:
+            self.database = Database()
+        else:
+            self.database = database
+
+        self.notifier = notifier
 
         self.metadata = GeneralMetadata()
         self.fish_metadata = FishMetadata()
@@ -120,9 +126,6 @@ class Experiment(QObject):
             self.zmq_context = zmq.Context()
             self.zmq_socket = self.zmq_context.socket(zmq.REP)
             self.zmq_socket.bind("tcp://*:5555")
-
-        if notifier == 'slack':
-            self.notifier = Slacker()
 
         if shock_stimulus:
             try:
@@ -235,8 +238,8 @@ class Experiment(QObject):
 
         if save:
             if not self.debug_mode:  # upload to database
-                db_idx = put_experiment_in_db(self.dc.get_clean_dict(paramstree=True,
-                                                                     eliminate_df=True))
+                db_idx = self.db.add_experiment(self.dc.get_clean_dict(paramstree=True,
+                                                                       eliminate_df=True))
                 self.dc.add_static_data(db_idx, 'general_db_index')
 
             self.dc.save()  # save data_log

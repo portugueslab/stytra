@@ -1,6 +1,5 @@
 from pyqtgraph.parametertree import Parameter
-from stytra.dbconn import sanitize_item
-
+from stytra.utilities import prepare_json
 
 from pyqtgraph.pgcollections import OrderedDict
 
@@ -83,4 +82,4 @@ class HasPyQtGraphParams(object):
                 self.params.addChild({'name': name, 'value': value})
 
     def get_clean_values(self):
-        return sanitize_item(self.params.getValues(), paramstree=True)
+        return prepare_json(self.params.getValues(), paramstree=True)
