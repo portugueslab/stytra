@@ -25,7 +25,7 @@ class CameraControlParameters(HasPyQtGraphParams):
                                           'tip': 'Camera amplification gain'})
 
         for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
+            self.add_one_param(key, value)
 
         self.exp = self.params.param('exposure')
         self.fps = self.params.param('framerate')

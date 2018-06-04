@@ -53,8 +53,18 @@ class HasPyQtGraphParams(object):
 
         self._params.addChild(self.params)
 
-    def set_new_param(self, name, value, get_var_type=True):
-        """ Easy set for new parameters.
+    def add_params(self, **kwargs):
+        """ Sets new parameters with keys and default values
+        or the full param specification
+        :param kwargs: new parameters to add
+        :return: None
+        """
+        for name, value in kwargs:
+            self.add_one_param(name, value)
+
+
+    def add_one_param(self, name, value, get_var_type=True):
+        """ Easy set for adding parameters.
         :param name: name of new parameter
         :param value: either a value entry or a dictionary of valid keys
                       for a parameter (e.g. type, visible, editable, etc.)

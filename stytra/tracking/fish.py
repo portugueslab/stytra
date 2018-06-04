@@ -155,7 +155,7 @@ class MidlineDetectionParams(HasPyQtGraphParams):
                 }
 
         for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
+            self.add_one_param(key, standard_params_dict[key])
 
 
 def find_fishes_midlines(frame, mask, params):

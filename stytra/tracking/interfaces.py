@@ -14,7 +14,7 @@ class FrameProcessingMethod(HasPyQtGraphParams):
                                     filter_size=0)
 
         for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
+            self.add_one_param(key, standard_params_dict[key])
 
         self.accumulator_headers = None
         self.data_log_name = None
@@ -44,7 +44,7 @@ class TailTrackingMethod(FrameProcessingMethod):
                                                  'visible': False})
 
         for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
+            self.add_one_param(key, value)
 
         self.accumulator_headers = ['tail_sum'] + ['theta_{:02}'.format(i)
                                       for i in range(self.params['n_segments'])]
@@ -64,7 +64,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
                                                      limits=(2, 100)))
 
         for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
+            self.add_one_param(key, value)
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
@@ -98,7 +98,7 @@ class EyeTrackingMethod(FrameProcessingMethod):
                                              'visible': False})
 
         for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
+            self.add_one_param(key, value)
 
         headers = []
         [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
@@ -119,7 +119,7 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
                                                    limits=(0, 255)))
 
         for key, value in standard_params_dict.items():
-            self.set_new_param(key, value)
+            self.add_one_param(key, value)
 
 
 class MovementDetectionParameters(HasPyQtGraphParams):
@@ -138,4 +138,4 @@ class MovementDetectionParameters(HasPyQtGraphParams):
                                     n_next_save=300,
                                     show_thresholded=False)
         for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
+            self.add_one_param(key, standard_params_dict[key])
