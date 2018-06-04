@@ -61,7 +61,6 @@ class HasPyQtGraphParams(object):
         for name, value in kwargs:
             self.add_one_param(name, value)
 
-
     def add_one_param(self, name, value, get_var_type=True):
         """ Easy set for adding parameters.
         :param name: name of new parameter

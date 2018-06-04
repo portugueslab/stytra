@@ -6,6 +6,7 @@ class GuiMetadata(HasPyQtGraphParams):
     """ General class for a group of metadata that have to be controlled via
     a GUI.
     """
+
     def __init__(self):
         super().__init__()
         self.protocol_params_tree = ParameterTree(showHeader=False)
@@ -17,7 +18,8 @@ class GuiMetadata(HasPyQtGraphParams):
         self.protocol_params_tree = ParameterTree(showHeader=False)
         self.protocol_params_tree.setParameters(self.params)
         self.protocol_params_tree.setWindowTitle('Metadata')
-        self.protocol_params_tree.resize(450, 600)
+        self.protocol_params_tree.resize(450,
+                                         600)  # TODO figure out this window
         return self.protocol_params_tree
 
     def get_state(self):
@@ -30,38 +32,36 @@ class GuiMetadata(HasPyQtGraphParams):
 class GeneralMetadata(GuiMetadata):
     def __init__(self):
         super().__init__()
-        params =[dict(name='session_id', type='int', value=0),
-                 dict(name='experimenter_name', type='list', value='',
-                      values=['']),
-                 dict(name='setup_name', type='list', value='',
-                      values=[''])]
-
         self.params.setName('general_metadata')
-        self.params.addChildren(params)
+        self.add_params(session_id=dict(type='int', value=0),
+                        experimenter_name=dict(type='list', value='',
+                                               values=['']),
+                        setup_name=dict(type='list', value='',
+                                        values=['']))
 
 
 class FishMetadata(GuiMetadata):
     def __init__(self):
         super().__init__()
-        params = [dict(name='id', type='int', value=0),
-                  dict(name='age', type='int', value=7, limits=(3, 21),
-                       tip='Fish age', suffix='dpf'),
-                  dict(name='genotype', type='list',
-                       values=[''],
-                       value=''),
-                  dict(name='dish_diameter', type='list', value='',
-                       values=['',
-                               '30',
-                               '60',
-                               '90',
-                               'lightsheet']),
-                  dict(name='comments', type='str', value=''),
-                  dict(name='embedded', type='bool', value=True),
-                  dict(name='treatment', type='list', value='',
-                       values=['']),
-                  dict(name='screened', type='list', value='not',
-                       values=['not',
-                               'dark',
-                               'bright'])]
+        self.add_params(id=dict(type='int', value=0),
+                        age=dict(type='int', value=7, limits=(3, 21),
+                                 tip='Fish age', suffix='dpf'),
+                        genotype=dict(type='list',
+                                      values=[''],
+                                      value=''),
+                        dish_diameter=dict(type='list', value='',
+                                           values=['',
+                                                   '30',
+                                                   '60',
+                                                   '90',
+                                                   'lightsheet']),
+                        comments=dict(type='str', value=''),
+                        embedded=dict(type='bool', value=True),
+                        treatment=dict(type='list', value='',
+                                       values=['']),
+                        screened=dict(type='list', value='not',
+                                      values=['not',
+                                              'dark',
+                                              'bright']))
+
         self.params.setName('fish_metadata')
-        self.params.addChildren(params)
