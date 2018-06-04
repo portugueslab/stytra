@@ -1,0 +1,20 @@
+Refactor purpose:
+
+We have 2 repositories:
+
+Stytra & Portugues Experiment Config
+
+In stytra
+    There is no protocol
+    General metadata is empty
+    There are no Slack notifiers
+    There is no database configuration
+    Are all stimuli that we use
+
+In Portugues Experiment Config
+    Are all protocols, each protocol a separate file
+    Python files specifying metadata
+    (fish lines, setup names etc are separate text files,
+    with 1 entry per line)
+
+
