@@ -1,5 +1,6 @@
 import argparse
-from stytra import CameraExperiment, Experiment, TailTrackingExperiment, MovementRecordingExperiment
+from stytra import CameraExperiment, Experiment, TailTrackingExperiment, \
+    MovementRecordingExperiment, EyeTrackingExperiment
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -9,10 +10,22 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--freely-swimming',
                         action='store_true')
+    parser.add_argument('--camera-rotation',
+                        default=0,
+                        type=int,
+                        action='store')
     parser.add_argument('--tail-tracking',
                         action='store_true')
     parser.add_argument('--tail-tracking-method',
                         action='store', default='angle_sweep')
+    parser.add_argument('--camera',
+                        action='store', default=None)
+    parser.add_argument('--display-w',
+                        type=int,
+                        action='store', default=0)
+    parser.add_argument('--display-h',
+                        type=int,
+                        action='store', default=0)
     parser.add_argument('--tail-invert',
                         action='store_true')
     parser.add_argument('--shock-stimulus',
@@ -20,6 +33,8 @@ if __name__ == '__main__':
     parser.add_argument('--vr',
                         action='store_true')
     parser.add_argument('--sim-vr',
+                        action='store_true')
+    parser.add_argument('--eye-tracking',
                         action='store_true')
     parser.add_argument('--debug',
                         action='store_true')
@@ -30,7 +45,7 @@ if __name__ == '__main__':
                         default=None)
     parser.add_argument('--directory', action='store',
                         default='D:/vilim/stytra')
-    parser.add_argument('--rec_stim_every', action='store',
+    parser.add_argument('--rec-stim-every', action='store',
                         default=None)
     parser.add_argument('--asset-dir', action='store',
                         default='/Users/vilimstich/PhD/j_sync/underwater')
@@ -49,7 +64,6 @@ if __name__ == '__main__':
     except TypeError:
         rec_stim_every = None
 
-
     class_kwargs = dict(app=app,
                         directory=args.directory,
                         debug_mode=args.debug,
@@ -59,14 +73,17 @@ if __name__ == '__main__':
                         shock_stimulus=args.shock_stimulus)
 
     base = Experiment
-
     if args.video_file:
         base = CameraExperiment
         class_kwargs['video_file'] = args.video_file
 
+    if args.tail_tracking or args.freely_swimming or args.eye_tracking:
+        class_kwargs['camera_rotation'] = int(args.camera_rotation)
+        class_kwargs['camera'] = args.camera
+        class_kwargs['tracking_method_name'] = args.tail_tracking_method
+    print(class_kwargs)
     if args.tail_tracking:
         base = TailTrackingExperiment
-        class_kwargs['video_file'] = args.video_file
     #     if args.vr:
     #         class_kwargs['motion_estimation'] = 'LSTM'
     #         class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
@@ -75,15 +92,11 @@ if __name__ == '__main__':
     #                                                             thresholds=(0.05, 0.05, 0.015))
 
     elif args.freely_swimming:
-         base = MovementRecordingExperiment
-    #
-    # if args.lightsheet:
-    #     bases.append(LightsheetExperiment)
+        base = MovementRecordingExperiment
+    elif args.eye_tracking:
+        base = EyeTrackingExperiment
+        class_kwargs['tracking_method_name'] = 'eyes'  # TODO temporary
 
-    # if len(bases) == 0:
-    #     bases.append(Experiment)
-
-    #ExpClass = type('exp_class', tuple(bases), dict())
     app_icon = QIcon()
     app_icon.addFile('icons/48.png', QSize(48, 48))
     app_icon.addFile('icons/128.png', QSize(128, 128))
@@ -91,7 +104,11 @@ if __name__ == '__main__':
     app.setWindowIcon(app_icon)
 
     exp = base(**class_kwargs)
-    exp.make_window()
-    exp.initialize_metadata()
+
+    exp.start_experiment()
     exp.show_stimulus_screen(full_screen=args.full_screen)
+    if args.display_w and args.display_h:
+        exp.window_display.params['size'] = (args.display_w, args.display_h)
+        exp.window_display.set_dims()
     app.exec_()
+

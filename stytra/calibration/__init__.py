@@ -4,7 +4,7 @@ import math
 import cv2
 import numpy as np
 from pyqtgraph.parametertree import Parameter, parameterTypes
-from stytra.collectors import HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):
@@ -22,15 +22,21 @@ class Calibrator(HasPyQtGraphParams):
                                  {'name': 'length_mm', 'value': None, 'type': 'float',
                                   'suffix': 'mm', 'siPrefix': True, 'limits': (1, 200),
                                   'visible': True},
-                                 {'name': 'length_px', 'value': None,  'visible': True}])
+                                 {'name': 'length_px', 'value': None,  'visible': True},
+                                 {'name': 'cam_to_proj', 'value': None, 'visible': False},
+                                 {'name': 'proj_to_cam', 'value': None, 'visible': False}])
         self.length_to_measure = 'pixels'
 
+        self.params['length_mm'] = 1
+        self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
 
     def toggle(self):
         self.enabled = ~self.enabled
 
-    def set_physical_scale(self, measured_distance):
-        self.params['mm_px'] = measured_distance
+    def set_physical_scale(self):
+        """ Calculate mm/px from calibrator length
+        """
+        self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
 
     def make_calibration_pattern(self, p, h, w):
         pass
@@ -56,10 +62,6 @@ class CrossCalibrator(Calibrator):
                 self.params['length_px'] = fixed_length
                 self.length_is_fixed = True
 
-
-        self.params['length_mm'] = 1
-        self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
-
     def make_calibration_pattern(self, p, h, w):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -74,18 +76,15 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2-l2)
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
-    def set_physical_scale(self):
-        """ Calculate mm/px from calibrator length
-        """
-        self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
-
 
 class CircleCalibrator(Calibrator):
     """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle
     """
     def __init__(self, *args, dh=80, r=3, **kwargs):
+        super().__init__(*args, **kwargs)
         self.dh = dh
         self.r = r
+        self.params['length_px'] = dh
         self.points = None
         self.points_cam = None
         self.proj_to_cam = None
@@ -109,9 +108,6 @@ class CircleCalibrator(Calibrator):
             p.setBrush(QBrush(QColor(255, 0, 0)))
             for centre in centres:
                 p.drawEllipse(QPoint(*centre), self.r, self.r)
-
-    def set_physical_scale(self, measured_distance):
-        self.params['mm_px'] = measured_distance/self.dh
 
     @staticmethod
     def _find_angles(kps):
@@ -150,6 +146,10 @@ class CircleCalibrator(Calibrator):
 
         return kps[np.argsort(CircleCalibrator._find_angles(kps)), :]
 
+    @staticmethod
+    def arr_to_tuple(arr):
+        return tuple(tuple(r for r in row) for row in arr)
+
     def find_transform_matrix(self, image):
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
@@ -157,5 +157,5 @@ class CircleCalibrator(Calibrator):
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
 
-        self.proj_to_cam = self.points_cam.T @ np.linalg.inv(x_proj)
-        self.cam_to_proj = points_proj.T @ np.linalg.inv(x_cam)
+        self.params["proj_to_cam"] = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
+        self.params["cam_to_proj"] = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))

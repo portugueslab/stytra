@@ -8,6 +8,7 @@ from stytra.tracking.diagnostics import draw_found_fish
 from stytra.collectors import Accumulator
 
 
+# TODO I think this should stay together with the dataaccumulator parent
 class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=None):
         """
@@ -30,7 +31,8 @@ class QueueDataAccumulator(QObject, Accumulator):
         self.header_list.extend(header_list)
 
     def update_list(self):
-        """Upon calling put all available data into a list.
+        """
+        Upon calling put all available data into a list.
         """
         while True:
             try:
@@ -45,10 +47,10 @@ class QueueDataAccumulator(QObject, Accumulator):
                 t_ms = (t - self.starting_time).total_seconds()
 
                 # append:
-                self.stored_data.append((t_ms, ) + data)
+                l = (t_ms, ) + tuple(data)
+                self.stored_data.append(l)
             except Empty:
                 break
-
 
 
 class FishTrackingProcess(Process):

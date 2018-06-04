@@ -1,41 +1,76 @@
 import numpy as np
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QTransform, QPolygon, QRegion
-import qimage2ndarray
-from PyQt5.QtGui import QPainter, QBrush, QPen, QColor
-from PyQt5.QtCore import QPoint, QRect, QRectF, QPointF
 import pims
-from stytra.stimulation.backgrounds import existing_file_background
-
-try:
-    from stytra.hardware.serial import PyboardConnection
-except ImportError:
-    print('Serial pyboard connection not installed')
 
 from itertools import product
 
-from bouter.angles import rot_mat
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QTransform, QPolygon, QRegion
+import qimage2ndarray
+from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtCore import QPoint, QRect, QPointF
+from stytra.stimulation.backgrounds import existing_file_background
+import datetime
+
+
+# TODO right now Stimulus is not parameterized via HasPyQtGraphParams
 
 class Stimulus:
-    """ General class for a stimulus."""
-    def __init__(self, duration=0.0, clip_rect=None):
-        """ Make a stimulus, with the basic properties common to all stimuli
+    """
+    General class for a Stimulus. In stytra, a Stimulus is something that
+    makes things happen at some point of an experiment.
+    The Stimulus class is just a building block: successions of Stimuli
+    are assembled in a meaningful order by Protocol objects, and are looped
+    over by the ProtocolRunner object.
+
+    A Stimulus runs for a time defined by its duration. to do so, the
+    ProtocolRunner compares at every timestep the duration of the stimulus
+    with the time elapsed from its beginning.
+
+    Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
+    By defining this method in subclasses, we can trigger events at
+    the beginning of the stimulus (e.g., activate a Pyboard).
+
+    At every successive time, until the end of the Stimulus, its update()
+    method is called. By defining this method in sublcasses, we can trigger
+    events throughout the length of the Stimulus time.
+
+    Be aware that code in the start() and update() functions is executed within
+    the Stimulus&main GUI process, therefore:
+     1. Its temporal precision is limited to # TODO do some check here
+     2. Slow functions would slow down the entire main process, especially if
+        called at every time step.
+
+    Stimulus have parameters that are important to be logged in the final
+    metadata and parameters that are not relevant. The get_state() method
+    used to generate the log saves all attributes not starting with _.
+
+
+    Different stimuli categories are implemented subclassing this class, e.g.:
+     - visual stimuli (children of PainterStimulus subclass);
+     ...
+
+    """
+    def __init__(self, duration=0.0):
+        """
+        Make a stimulus, with the basic properties common to all stimuli.
         Values not to be logged start with _
 
         :param duration: duration of the stimulus (s)
-        :param clip_rect: mask for clipping the stimulus, (x, y, w, h) tuple
         """
 
-        self._started = None
-        self._elapsed = 0.0
         self.duration = duration
+
+        self._started = None
+        self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = ''
         self._experiment = None
-        self.clip_rect = clip_rect
+        self.real_time_start = None
+        self.real_time_stop = None
 
     def get_state(self):
-        """ Returns a dictionary with stimulus features
-        ignores the properties which are private (start with _)
+        """
+        Returns a dictionary with stimulus features for logging.
+        Ignores the properties which are private (start with _)
         """
         state_dict = dict()
         for key, value in self.__dict__.items():
@@ -44,30 +79,40 @@ class Stimulus:
         return state_dict
 
     def update(self):
-        pass
+        """
+        Function called by the ProtocolRunner every timestep until the Stimulus
+        is over.
+        """
+        self.real_time_stop = datetime.datetime.now()
 
     def start(self):
-        pass
+        """
+        Function called by the ProtocolRunner when a new stimulus is set.
+        """
+        self.real_time_start = datetime.datetime.now()
 
     def initialise_external(self, experiment):
-        """ Functions that initiate each stimulus,
-        gets around problems with copying
+        """ Make a reference to the Experiment class inside the Stimulus.
+        This is required to access from inside the Stimulus class to the
+        Calibrator, the Pyboard, the asset directories with movies or the motor
+        estimator for virtual reality.
 
         :param experiment: the experiment object to which link the stimulus
         :return: None
         """
-        print('initialize')
         self._experiment = experiment
 
 
 class DynamicStimulus(Stimulus):
-    """ Stimuli where parameters change during stimulation, used
-    to record stimuli with constant movements
-
+    """
+    Stimuli where parameters change during stimulation on a frame-by-frame
+    base.
+    It implements the recording changing parameters.
     """
     def __init__(self, *args, dynamic_parameters=None, **kwargs):
         """
-        :param dynamic_parameters: A list of all parameters that are to be recorded
+        :param dynamic_parameters: A list of all parameters that are to be
+                                   recorded frame by frame;
         """
         super().__init__(*args, **kwargs)
         if dynamic_parameters is None:
@@ -83,10 +128,25 @@ class DynamicStimulus(Stimulus):
 
 
 class PainterStimulus(Stimulus):
-    """ Stimulus class where image is programmatically drawn on a canvas.
     """
+    Stimulus class to paint programmatically on a canvas.
+    For this subclass of Stimulus, their core function (paint()) is
+    not called by the ProtocolRunner, but directly from the
+    StimulusDisplayWindow. Since a StimulusDisplayWindow is directly linked to
+    a ProtocolRunner, at every time the paint() method that is called
+    is the one from the correct current stimulus.
+    """
+
+    def __init__(self, *args, clip_rect=None, **kwargs):
+        """
+        :param clip_rect: mask for clipping the stimulus ((x, y, w, h) tuple);
+        """
+        super().__init__(*args, **kwargs)
+        self.clip_rect = clip_rect
+
     def paint(self, p, w, h):
-        """ Paint function (redefined in children classes)
+        """
+        Paint function. Called by the StimulusDisplayWindow update method.
         :param p: QPainter object for drawing
         :param w: width of the display window
         :param h: height of the display window
@@ -94,14 +154,16 @@ class PainterStimulus(Stimulus):
         pass
 
     def clip(self, p, w, h):
-        """ Clip image before painting
+        """
+        Clip image before painting
         :param p: QPainter object used for painting
         :param w: image width
         :param h: image height
         """
         if self.clip_rect is not None:
             if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y)) for (x, y) in self.clip_rect]
+                points = [QPoint(int(w*x), int(h*y))
+                          for (x, y) in self.clip_rect]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
                 p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
@@ -109,7 +171,8 @@ class PainterStimulus(Stimulus):
 
 
 class BackgroundStimulus(Stimulus):
-    """ Stimulus consisting in a full field image that can be dragged around.
+    """
+    Stimulus consisting in a full field image that can be dragged around.
     """
     def __init__(self, *args, background=None, **kwargs):
         """
@@ -131,15 +194,90 @@ class MovingStimulus(DynamicStimulus, BackgroundStimulus):
         self.duration = float(motion.t.iat[-1])
 
     def update(self):
+        super().update()
         for attr in ['x', 'y', 'theta']:
             try:
-                setattr(self, attr, np.interp(self._elapsed, self.motion.t, self.motion[attr]))
+                setattr(self, attr, np.interp(self._elapsed, self.motion.t,
+                                              self.motion[attr]))
+
             except (AttributeError, KeyError):
                 pass
 
 
+class PainterStimulusCombiner(PainterStimulus):
+    """
+    Stimulus to combine multiple paint stimuli on the same canvas.
+    Their respective domains can be defined via their clipping boxes.
+    """
+
+    def __init__(self, stim_list):
+        self.stimuli = stim_list
+        self.duration = max([s.duration for s in stim_list])
+        self.name = '+'.join([s.name for s in stim_list])
+
+    def start(self):
+        [s.start() for s in self.stimuli]
+
+    def update(self):
+        super().update()
+        for s in self.stimuli:
+            s._elapsed = self._elapsed
+            s.update()
+
+    def get_state(self):
+        return {s.name: s.get_state() for s in self.stimuli}
+
+    def initialise_external(self, experiment):
+        [s.initialise_external(experiment) for s in self.stimuli]
+
+    def paint(self, p, w, h):
+        [s.paint(p, w, h) for s in self.stimuli]
+
+
+class MovingConstantVel(MovingStimulus):
+    def __init__(self, *args, x_vel=0, y_vel=0, **kwargs):
+        """
+        :param x_vel: x drift velocity (mm/s)
+        :param y_vel: x drift velocity (mm/s)
+        :param mm_px: mm per pixel
+        :param monitor_rate: monitor rate (in Hz)
+        """
+        super().__init__(*args, **kwargs)
+        self.x_vel = x_vel
+        self.y_vel = y_vel
+        self._past_t = 0
+
+    def update(self):
+        super().update()
+        dt = (self._elapsed - self._past_t)
+        self.x += self.x_vel*dt
+        self.y += self.y_vel*dt
+        self._past_t = self._elapsed
+
+
+class MovingDynamicVel(MovingStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._past_t = 0
+
+    def update(self):
+        dt = self._elapsed - self._past_t
+
+        for attr in ['x', 'y', 'theta']:
+            try:
+                setattr(self, attr,
+                        getattr(self, attr) +
+                        dt*np.interp(self._elapsed, self.motion.t, self.motion['vel_'+attr]))
+
+            except (AttributeError, KeyError):
+                pass
+
+        self._past_t = self._elapsed
+
+
 class FullFieldPainterStimulus(PainterStimulus):
-    """ Class for painting a full field flash of a specific color.
+    """
+    Class for painting a full field flash of a specific color.
     """
 
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
@@ -158,6 +296,10 @@ class FullFieldPainterStimulus(PainterStimulus):
 
 
 class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
+    """ Class for painting a full field flash of a specific color, where
+    luminance is dynamically changed. (Could be easily change to change color
+    as well).
+    """
     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
         super().__init__(*args, dynamic_parameters=['lum', ],
                          **kwargs)
@@ -167,6 +309,7 @@ class DynamicFullFieldStimulus(FullFieldPainterStimulus, DynamicStimulus):
         self.duration = float(lum_df.t.iat[-1])
 
     def update(self):
+        super().update()
         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
         print(lum)
         setattr(self, 'color', (lum, )*3)
@@ -180,9 +323,10 @@ class Pause(FullFieldPainterStimulus):
         self.name = 'pause'
 
 
+# TODO why not use MovingStimulus?
 class MovingSeamlessStimulus(PainterStimulus,
-                            DynamicStimulus,
-                            BackgroundStimulus):
+                             DynamicStimulus,
+                             BackgroundStimulus):
     """ Class for moving a stimulus image or pattern, thought for a VR setup.
     """
     def get_unit_dims(self, w, h):
@@ -241,11 +385,11 @@ class SeamlessImageStimulus(MovingSeamlessStimulus):
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        print(self._experiment.asset_dir)
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_folder + '/' + self.background))
+            existing_file_background(self._experiment.asset_dir + '/' +
+                                     self.background))
 
     def get_unit_dims(self, w, h):
         """ Update dimensions of the current background image.
@@ -302,26 +446,6 @@ class SparseNoiseStimulus(DynamicStimulus, PainterStimulus):
         pass
 
 
-class MovingConstantVel(MovingStimulus):
-    def __init__(self, *args, x_vel=0, y_vel=0, **kwargs):
-        """
-        :param x_vel: x drift velocity (mm/s)
-        :param y_vel: x drift velocity (mm/s)
-        :param mm_px: mm per pixel
-        :param monitor_rate: monitor rate (in Hz)
-        """
-        super().__init__(*args, **kwargs)
-        self.x_vel = x_vel
-        self.y_vel = y_vel
-        self._past_t = 0
-
-    def update(self):
-        dt = (self._elapsed - self._past_t)
-        self.x += self.x_vel*dt
-        self.y += self.y_vel*dt
-        self._past_t = self._elapsed
-
-
 class VideoStimulus(PainterStimulus, DynamicStimulus):
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -361,6 +485,7 @@ class VideoStimulus(PainterStimulus, DynamicStimulus):
                 self.duration = self._video_seq.duration
 
     def update(self):
+        super().update()
         # if the video restarted, it means the last display time
         # is incorrect, it has to be reset
         if self._elapsed < self._last_frame_display_time:
@@ -408,6 +533,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self._past_t = 0
 
     def update(self):
+        super().update()
         dt = (self._elapsed - self._past_t)
         self.fish_velocity = self._experiment.fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
@@ -438,7 +564,8 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
 
 class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
-    """ Class for drawing a rotating windmill.
+    """
+    Class for drawing a rotating windmill.
     """
 
     def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
@@ -464,7 +591,9 @@ class SeamlessWindmillStimulus(MovingSeamlessStimulus, MovingStimulus):
         size = np.pi / self.n_arms
         # radius of triangles (much larger than frame)
         rad = (w ** 2 + h ** 2) ** (1 / 2)
-        for deg in angles:  # loop over angles and draw consecutive rectangles
+
+        # loop over angles and draw consecutive rectangles
+        for deg in np.array(angles):
             polyg_points = [QPoint(mid_x, mid_y),
                             QPoint(int(mid_x + rad * np.cos(deg)),
                                    int(mid_y + rad * np.sin(deg))),
@@ -487,6 +616,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = 0
 
     def update(self):
+        super().update()
         dt = self._elapsed - self._past_t
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)
         vel_y = np.interp(self._elapsed, self.motion.t, self.motion.vel_y)
@@ -495,28 +625,11 @@ class VRMotionStimulus(SeamlessImageStimulus,
 
         fish_coordinates = self._experiment.position_estimator.get_displacements()
 
-        self.x = self._bg_x + fish_coordinates[1] # A right angle turn between the cooridnate systems
+        self.x = self._bg_x + fish_coordinates[1]  # A right angle turn between the cooridnate systems
         self.y = self._bg_y - fish_coordinates[0]
         # on the upper right
         self.theta = fish_coordinates[2]
         self._past_t = self._elapsed
-
-
-# class ClosedLoop1D_variable_motion(ClosedLoop1D, SeamlessGratingStimulus):
-#     def __init__(self, *args, motion, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.motion = motion
-#         self.duration = motion.t.iloc[-1]
-#
-#     def update(self):
-#         for attr in ['base_vel', 'gain', 'lag']:
-#             try:
-#                 setattr(self, attr, np.interp(self._elapsed,
-#                                               self.motion.t,
-#                                               self.motion[attr]))
-#             except (AttributeError, KeyError):
-#                 pass
-#         super().update()
 
 
 class RandomDotKinematogram(PainterStimulus):
@@ -534,7 +647,8 @@ class RandomDotKinematogram(PainterStimulus):
 
 
 class ShockStimulus(Stimulus):
-    def __init__(self, **kwargs):
+    def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
+                 pulse_dur_ms=2, pyboard=None, **kwargs):
         """
         Burst of electric shocks through pyboard (Anki's code)
         :param burst_freq: burst frequency (Hz)
@@ -543,15 +657,14 @@ class ShockStimulus(Stimulus):
         :param pulse_dur_ms: pulses duration (ms)
         :param pyboard: PyboardConnection object
         """
+        try:
+            from stytra.hardware.serial import PyboardConnection
+        except ImportError:
+            print('Serial pyboard connection not installed')
+
         super().__init__(**kwargs)
         self.name = 'shock'
-
-    def start(self):
-        burst_freq = 100
-        pulse_amp = 3.
-        pulse_n = 1
-        pulse_dur_ms = 5
-        pyboard = self._experiment.pyb
+        # assert isinstance(pyboard, PyboardConnection)
         self._pyb = pyboard
         self.burst_freq = burst_freq
         self.pulse_dur_ms = pulse_dur_ms
@@ -559,22 +672,15 @@ class ShockStimulus(Stimulus):
         self.pulse_amp_mA = pulse_amp
 
         # Pause between shocks in the burst in ms:
-        self.pause = 1000 / burst_freq - pulse_dur_ms
+        self.pause = 1000/burst_freq - pulse_dur_ms
 
-        amp_dac = str(int(255 * pulse_amp / 3.5))
+        amp_dac = str(int(255*pulse_amp/3.5))
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str('shock' + amp_dac + pulse_dur_str)
+
+    def start(self):
+        super().update()
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)
             print(self.mex)
-
         self.elapsed = 1
-
-
-if __name__ == '__main__':
-    pyb = PyboardConnection(com_port='COM3')
-    stim = ShockStimulus(pyboard=pyb, burst_freq=1, pulse_amp=3.5,
-                         pulse_n=10, pulse_dur_ms=5)
-    stim.start()
-    del pyb
-

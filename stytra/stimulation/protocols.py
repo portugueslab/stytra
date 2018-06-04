@@ -1,39 +1,59 @@
-from stytra.stimulation.stimuli import Pause, \
-    ShockStimulus, SeamlessGratingStimulus, VideoStimulus, \
-    SeamlessWindmillStimulus, VRMotionStimulus, FullFieldPainterStimulus, \
-    DynamicFullFieldStimulus
+from stytra.stimulation.stimuli import *
 # , ClosedLoop1D_variable_motion,
 from stytra.stimulation.backgrounds import existing_file_background
 import pandas as pd
 import numpy as np
-from stytra.collectors import Accumulator, HasPyQtGraphParams
+from stytra.data_log import HasPyQtGraphParams
 from random import shuffle, sample
 from stytra.stimulation.backgrounds import gratings
-import math
 from itertools import product
 
 from copy import deepcopy
 
 
 class Protocol(HasPyQtGraphParams):
+    """ The Protocol class is thought as an easily subclassable class that
+     generate a list of stimuli according to some parameterization.
+     It basically constitutes a way of keeping together:
+      - the parameters that describe the protocol
+      - the function to generate the list of stimuli.
+
+     The function get_stimulus_list is the core of the class: it is called
+     by the ProtocolRunner and it generates a list with the stimuli that
+     have to be used in the protocol. Everything else concerning e.g.
+     calibration, or asset directories that have to be passed to the
+     stimulus, is handled in the ProtocolRunner class to leave this class
+     as light as possible.
+     """
+
     name = ''
 
     def __init__(self):
+        """
+        Add standard parameters common to all kind of protocols.
+        """
         super().__init__(name='stimulus_protocol_params')
 
-        for child in self.params.children():
-            self.params.removeChild(child)
-
+        # Pre- and post- pause will be periods with a Pause stimulus before
+        # and after the entire sequence of n repetitions of the stimulus.
         standard_params_dict = {'name': self.name,
                                 'n_repeats': 1,
                                 'pre_pause': 0.,
                                 'post_pause': 0.}
 
+        for child in self.params.children():
+            self.params.removeChild(child)
+
         for key in standard_params_dict.keys():
             self.set_new_param(key, standard_params_dict[key])
 
     def get_stimulus_list(self):
-        """ Generate protocol from specified parameters
+        """
+        Generate protocol from specified parameters. Called by the
+        ProtocolRunner class where the Protocol instance is defined.
+        This function puts together the stimulus sequence defined by each
+        child class with the initial and final pause and repeats it the
+        specified number of times. It should not change in subclasses.
         """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
@@ -49,7 +69,8 @@ class Protocol(HasPyQtGraphParams):
         return stimuli
 
     def get_stim_sequence(self):
-        """ Get the stimulus list for each different protocol
+        """ To be specified in each child class to return the proper list of
+        stimuli.
         """
         return [Pause()]
 
@@ -57,7 +78,7 @@ class Protocol(HasPyQtGraphParams):
 class NoStimulation(Protocol):
     """ A void protocol.
     """
-    name = 'no_stimulation'
+    name = 'no stimulation'
 
     def __init__(self):
         super().__init__()
@@ -91,8 +112,8 @@ class FlashProtocol(Protocol):
         stimuli = []
 
         stimuli.append(Pause(duration=self.params['period_sec'] - \
-                                      self.params['flash_duration']))
-        stimuli.append(FullFieldPainterStimulus(duration=self.params['flash_duration'],
+                                      3))  # self.params['flash_duration']))
+        stimuli.append(FullFieldPainterStimulus(duration=5, # self.params['flash_duration'],
                                                 color=(255, 255, 255)))
 
         return stimuli
@@ -118,6 +139,280 @@ class ShockProtocol(Protocol):
         stimuli.append(ShockStimulus())
 
         return stimuli
+
+
+class OKRstim(Protocol):
+    name = "OKR protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'windmill_amplitude': np.pi/4,
+                       'windmill_duration': 2.,
+                       'windmill_arms': 12,
+                       'inter_stim_pause': 5.,
+                       'inter_rot_pause': 1.,
+                       'internal_reps': 20,
+                       'rotate': False}
+
+        for key in params_dict:
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        stim_color = (255, 0, 0)
+        p = self.params['inter_stim_pause']
+        p2 = self.params['inter_rot_pause']
+        windmill_freq = 1 / (self.params['windmill_duration'] * 2)
+
+        STEP = 0.005
+        osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+                                  STEP)
+
+        stimlist = ['FCLW', 'FCCW', 'FCLW', 'FCCW'] #, 'RCLW', 'RCCW', 'LCLW', 'LCCW'] #,  'FCW2'] #, 'FCCW2', 'RCW2', 'RCCW2', 'LCW2', 'LCCW2']
+        stimlistR = ['RCLW', 'RCCW']
+        stimlistL = ['LCLW', 'LCCW']
+        reps = self.params['internal_reps']
+        stimlist.extend(stimlist * (reps - 1))
+        # shuffle(stimlist)
+        stimlistR.extend(stimlistR * (reps - 1))
+        # shuffle(stimlistR)
+        stimlistL.extend(stimlistL * (reps - 1))
+        # shuffle(stimlistL)
+
+        lrlist = [stimlistR, stimlistL]
+        shuffle(lrlist)
+        for l in lrlist:
+            stimlist.extend(l)
+        print(stimlist)
+        # self.params['stim_seq'] = self.stimlist
+
+        for stim in stimlist:
+            theta_vect_clw = np.cos(
+                osc_time_vect * 2 * np.pi * windmill_freq) * \
+                            self.params['windmill_amplitude'] / 2 - \
+                            self.params['windmill_amplitude'] / 2
+
+            # Initial pause:
+            t = [0, p / 2]
+            theta = [0, 0]
+
+            # First half rotation:
+            t.extend(t[-1] + osc_time_vect)
+            theta.extend(theta_vect_clw)
+
+            # Second pause:
+            t.extend([t[-1] + p2])
+            theta.extend([theta[-1]])
+
+            # Rotation back:
+            t.extend(t[-1] + osc_time_vect)
+            theta.extend(theta[-1] - theta_vect_clw)
+
+            # Final pause:
+            t.extend([t[-1] + p / 2])
+            theta.extend([theta[-1]])
+
+            if 'CLW' in stim:
+                theta = -np.array(theta)
+
+            mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+
+            b = 0.1  # factor specifying endpoints of clip mask from center
+            # Set clip rectangle to full field or left/right hemi-field:
+            if stim[0] == 'F':
+                clip_rect = None
+            elif stim[0] == 'L':
+                clip_rect = [(0, b), (0.5, 0.5), (0, 1-b)]
+            elif stim[0] == 'R':
+                clip_rect = [(1, b), (0.5, 0.5), (1, 1-b)]
+
+            # If rotation is required, swap x and y coords of clip masks:
+            if self.params['rotate'] and clip_rect is not None:
+                for j, i in enumerate(clip_rect):
+                    clip_rect[j] = (i[1], i[0])
+
+            stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
+                                                    n_arms=self.params[
+                                                            'windmill_arms'],
+                                                    color=stim_color,
+                                                    clip_rect=clip_rect))
+
+        return stimuli
+
+
+class ContinuousOKRstim(Protocol):
+    name = "OKR continuous protocol"
+
+    def __init__(self):
+        super().__init__()
+
+        params_dict = {'windmill_amplitude': np.pi/4,
+                       'windmill_duration': 2.,
+                       'windmill_arms': 12,
+                       'inter_stim_pause': 0.,
+                       'rotate': False,
+                       'field': 'F',
+                       'edge_1': 0.,
+                       'edge_2': -1.,
+                       'center_off': 0.01,
+                       'internal_reps': 75,
+                       'pause_between_reps': 300}
+
+        for key in params_dict:
+            self.set_new_param(key, params_dict[key])
+
+    def get_stim_sequence(self):
+        stimuli = []
+
+        stim_color = (255, )*3
+        p = self.params['inter_stim_pause']
+        windmill_freq = 1 / (self.params['windmill_duration'] * 2)
+
+        STEP = 0.005
+        osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+                                  STEP)
+
+        theta_vect_clw = np.cos(osc_time_vect * 2 * np.pi * windmill_freq) * \
+            self.params['windmill_amplitude'] / 2 - \
+            self.params['windmill_amplitude'] / 2
+
+        # Initial pause:
+        t = [0, p / 2]
+        theta = [0, 0]
+
+        # First half rotation:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta_vect_clw)
+
+        # Rotation back:
+        t.extend(t[-1] + osc_time_vect)
+        theta.extend(theta[-1] - theta_vect_clw)
+
+        # Final pause:
+        t.extend([t[-1] + p / 2])
+        theta.extend([theta[-1]])
+
+        mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+
+        b_1 = self.params['edge_1']  # factor specifying endpoints of clip mask from center
+        b_2 = self.params['edge_2']
+        c = self.params['center_off']
+
+        # Set clip rectangle to full field or left/right hemi-field:
+        if self.params['field'] == 'F':
+            clip_rect = None
+        elif self.params['field'] == 'L':
+            clip_rect = [(0, b_1), (0.5 - c, 0.5), (0, 1-b_2)]
+        elif self.params['field'] == 'R':
+            clip_rect = [(1, b_1), (0.5 + c, 0.5), (1, 1-b_2)]
+
+        # If rotation is required, swap x and y coords of clip masks:
+        if self.params['rotate'] and clip_rect is not None:
+            for j, i in enumerate(clip_rect):
+                clip_rect[j] = (i[1], i[0])
+
+        for i in range(self.params['internal_reps']):
+            stimuli.append(SeamlessWindmillStimulus(motion=mov_dict,
+                                                    n_arms=self.params[
+                                                            'windmill_arms'],
+                                                    color=stim_color,
+                                                    clip_rect=clip_rect))
+        stimuli.append(Pause(duration=self.params['pause_between_reps']))
+
+        return stimuli
+
+
+# class ContinuousDoubleOKRstim(Protocol):
+#     name = "OKR continuous double protocol"
+#
+#     def __init__(self):
+#         super().__init__()
+#
+#         params_dict = {'windmill_amplitude': np.pi/4,
+#                        'windmill_duration': 2.,
+#                        'windmill_arms': 8,
+#                        'inter_stim_pause': 0.,
+#                        'rotate': False,
+#                        'field': 'L',
+#                        'edge_1': 10,
+#                        'edge_2': 10,
+#                        'center_off': 0.}
+#
+#         for key in params_dict:
+#             self.set_new_param(key, params_dict[key])
+#
+#     def get_stim_sequence(self):
+#         stimuli = []
+#
+#         stim_color = (255, 0, 0)
+#         p = self.params['inter_stim_pause']
+#         windmill_freq = 1 / (self.params['windmill_duration'] * 2)
+#
+#         STEP = 0.005
+#         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
+#                                   STEP)
+#
+#         theta_vect_clw = np.cos(osc_time_vect * 2 * np.pi * windmill_freq) * \
+#                         self.params['windmill_amplitude'] / 2 - \
+#                         self.params['windmill_amplitude'] / 2
+#
+#         # Initial pause:
+#         t = [0, p / 2]
+#         theta = [0, 0]
+#
+#         # First half rotation:
+#         t.extend(t[-1] + osc_time_vect)
+#         theta.extend(theta_vect_clw)
+#
+#         # Rotation back:
+#         t.extend(t[-1] + osc_time_vect)
+#         theta.extend(theta[-1] - theta_vect_clw)
+#
+#         # Final pause:
+#         t.extend([t[-1] + p / 2])
+#         theta.extend([theta[-1]])
+#
+#         mov_dict = pd.DataFrame(dict(t=t, theta=theta))
+#         mov_dict_still = pd.DataFrame(dict(t=[t[0], t[-1]],
+#                                            theta=theta[:1]*2))
+#
+#         # factor specifying endpoints of clip mask from center
+#         b_1 = self.params['edge_1']
+#         b_2 = self.params['edge_2']
+#         c = self.params['center_off']
+#
+#         # Set clip rectangle to full field or left/right hemi-field:
+#         clip_rect_l = [(0, b_1), (0.5 - c, 0.5), (0, 1-b_2)]
+#         clip_rect_r = [(1, b_1), (0.5 + c, 0.5), (1, 1-b_2)]
+#
+#         # If rotation is required, swap x and y coords of clip masks:
+#         if self.params['rotate']:
+#             for clip_rect in [clip_rect_l, clip_rect_r]:
+#                 for j, i in enumerate(clip_rect):
+#                     clip_rect[j] = (i[1], i[0])
+#
+#         if self.params['field'] == 'L':
+#             left_dict = mov_dict
+#             right_dict = mov_dict_still
+#         else:
+#             right_dict = mov_dict
+#             left_dict = mov_dict_still
+#
+#         windmill_l = SeamlessWindmillStimulus(motion=left_dict,
+#                                               n_arms=self.params[
+#                                                         'windmill_arms'],
+#                                               color=stim_color)
+#         windmill_r = SeamlessWindmillStimulus(motion=right_dict,
+#                                               n_arms=self.params[
+#                                                      'windmill_arms'],
+#                                               color=stim_color)
+#
+#         stimuli.append(PainterStimulusCombiner([windmill_r, windmill_l]))#,
+#                                               #  windmill_r]))
+#
+#         return stimuli
 
 
 class Exp022ImagingProtocol(Protocol):
@@ -187,8 +482,8 @@ class Exp022ImagingProtocol(Protocol):
                                                grating_period=self.params[
                                                    'grating_cycle'],
                                                color=stim_color))
-        # windmill for OKR
 
+        # windmill for OKR
         STEP = 0.005
 
         osc_time_vect = np.arange(0, self.params['windmill_duration'] + STEP,
@@ -356,18 +651,18 @@ class Exp014Protocol(Protocol):
         t = [0]
         theta = [0]
 
-
         for dt, vel, th in dt_vel_tuple:
             t.append(t[-1] + dt)
             x.append(x[-1] + dt * vel)
             theta.append(th)
 
-        stimuli.append(SeamlessGratingStimulus(motion=pd.DataFrame(dict(t=t,
-                                                                        x=x,
-                                                                        theta=theta)),
-                                               grating_period=self.params[
-                                                   'grating_period'],
-                                               color=stim_color))
+        stimuli.append(SeamlessGratingStimulus(
+            motion=pd.DataFrame(dict(t=t,
+                                     x=x,
+                                     theta=theta)),
+            grating_period=self.params[
+               'grating_period'],
+            color=stim_color))
 
         # ---------------
         # Final flashes:
@@ -578,6 +873,57 @@ class VisualCodingProtocol(Protocol):
         stimuli.append(Pause(duration=self.params['inter_segment_pause']))
 
         return stimuli
+
+
+class MovingBackgroundProtocol(Protocol):
+    name = 'moving backgound protocol'
+
+    def __init__(self):
+        super().__init__()
+
+        standard_params_dict = {'background_images': 'underwater_caustics.jpg;checkerboard.jpg;SeamlessRocks.jpg',
+                                'n_velocities': 200,
+                                'velocity_duration': 15,
+                                'initial_angle': 0,
+                                'delta_angle_mean': np.pi/6,
+                                'delta_angle_std': np.pi / 6,
+                                'velocity': 10,
+                                'velocity_mean': 7,
+                                'velocity_std': 2,
+                                'vr': False}
+
+        for key in standard_params_dict.keys():
+            self.set_new_param(key, standard_params_dict[key])
+
+    def get_stim_sequence(self):
+        full_t = 0
+        motion = []
+        dt = self.params['velocity_duration']
+        angle = self.params['initial_angle']
+        for i in range(self.params['n_velocities']):
+            angle += np.random.randn(1)[0]*self.params['delta_angle_std']
+
+            vel = np.maximum(np.random.randn(1)*self.params['velocity_std'] +
+                             self.params['velocity_mean'], 0)[0]
+            vy = np.sin(angle)*vel
+            vx = np.cos(angle)*vel
+
+            motion.append([full_t, vx, vy])
+            motion.append([full_t+dt, vx, vy])
+            full_t += dt
+
+        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
+
+        if self.params["vr"]:
+            cls = VRMotionStimulus
+        else:
+            cls = type('image_bg_stim', (SeamlessImageStimulus, MovingDynamicVel), dict())
+            print("We are doing a seamless image stimulus")
+        return [
+            cls(background=bgim, motion=motion,
+                duration=full_t)
+            for bgim in self.params['background_images'].split(';')
+        ]
 
 
 # class ShockProtocol(Protocol):
@@ -792,50 +1138,7 @@ class VisualCodingProtocol(Protocol):
 #
 #         super().__init__(*args, stimuli=stimuli, **kwargs)
 
-class VRProtocol(Protocol):
-    name = 'VR protocol'
 
-    def __init__(self):
-        super().__init__()
-
-        standard_params_dict = {'background_images': ('underwater_caustics.jpg;checkerboard.jpg;SeamlessRocks.jpg',),
-                                'n_velocities': 200,
-                                'velocity_duration': 15,
-                                'initial_angle': 0,
-                                'delta_angle_mean': np.pi/6,
-                                'delta_angle_std': np.pi / 6,
-                                'velocity': 10,
-                                'velocity_mean': 7,
-                                'velocity_std': 2,}
-
-        for key in standard_params_dict.keys():
-            self.set_new_param(key, standard_params_dict[key])
-
-    def get_stim_sequence(self):
-        full_t = 0
-        motion = []
-        dt = self.params['velocity_duration']
-        angle = self.params['initial_angle']
-        for i in range(self.params['n_velocities']):
-            angle += np.random.randn(1)[0]*self.params['delta_angle_std']
-
-            vel = np.maximum(np.random.randn(1)*self.params['velocity_std'] +
-                             self.params['velocity_mean'], 0)[0]
-            vy = np.sin(angle)*vel
-            vx = np.cos(angle)*vel
-
-            motion.append([full_t, vx, vy])
-            motion.append([full_t+dt, vx, vy])
-            full_t += dt
-
-
-        motion = pd.DataFrame(motion, columns=['t', 'vel_x', 'vel_y'])
-
-        return [
-            VRMotionStimulus(background=bgim, motion=motion,
-                             duration=full_t)
-            for bgim in self.params['background_images'].split(';')
-        ]
 
 
 class GratingsWindmillsProtocol(Protocol):
@@ -845,7 +1148,9 @@ class GratingsWindmillsProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        standard_params_dict = {'shuffled_reps': 8}
+        standard_params_dict = {'period_sec': 14.,
+                                'shuffled_reps': 8,
+                                'flash_duration': 7.}
 
         for key, value in standard_params_dict.items():
             self.set_new_param(key, value)
@@ -971,7 +1276,6 @@ class LuminanceRamp(Protocol):
                                                 color=(l0, )*3))
 
         return stimuli
-
 
 
 def many_directions_gratings(n_dirs, pause_len, gratings_len, gratings_vel,

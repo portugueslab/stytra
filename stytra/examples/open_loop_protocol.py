@@ -1,25 +1,22 @@
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
-
-from stytra.stimulation.stimuli import Pause, MovingConstantly
-from stytra.stimulation import ProtocolRunner
-from stytra.gui.stimulus_display import StimulusDisplayWindow
-from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.triggering import ZmqLightsheetTrigger
-from stytra.metadata import MetadataFish, MetadataCamera, MetadataGeneral
-from stytra import DataCollector, FrameDispatcher
-from stytra.metadata.metalist_gui import MetaListGui
-from stytra.stimulation.backgrounds import gratings
-from stytra.tracking.tail import trace_tail_centroid
-from stytra.gui.plots import StreamingPlotWidget
-from stytra.gui.camera_display import CameraTailSelection
-from stytra.hardware.video import XimeaCamera, VideoFileSource
-from stytra.tracking import QueueDataAccumulator
-
-
 import multiprocessing
 
 import qdarkstyle
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
+from stytra.data_log.metalist_gui import MetaListGui
+
+from stytra import DataCollector, FrameDispatcher
+from stytra.gui.camera_display import CameraTailSelection
+from stytra.gui.plots import StreamingPlotWidget
+from stytra.gui.protocol_control import ProtocolControlWidget
+from stytra.hardware.video import XimeaCamera
+from stytra.data_log import MetadataFish, MetadataCamera, MetadataGeneral
+from stytra.stimulation import ProtocolRunner
+from stytra.stimulation.backgrounds import gratings
+from stytra.stimulation.stimuli import Pause, MovingConstantly
+from stytra.stimulation.stimulus_display import StimulusDisplayWindow
+from stytra.tracking import QueueDataAccumulator
+from stytra.tracking.tail import trace_tail_centroid
 
 
 class Experiment(QMainWindow):
@@ -28,8 +25,8 @@ class Experiment(QMainWindow):
         self.app = app
         multiprocessing.set_start_method('spawn')
 
-        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/metadata/'
-        #self.experiment_folder = '/Users/luigipetrucco/Desktop/metadata/'
+        self.experiment_folder = 'C:/Users/lpetrucco/Desktop/data_log/'
+        #self.experiment_folder = '/Users/luigipetrucco/Desktop/data_log/'
 
         self.finished = False
         self.frame_queue = multiprocessing.Queue()
@@ -39,7 +36,7 @@ class Experiment(QMainWindow):
         self.tail_position_queue = multiprocessing.Queue()
         self.finished_sig = multiprocessing.Event()
 
-        # Take care of metadata:
+        # Take care of data_log:
         self.general_data = MetadataGeneral()
         self.fish_data = MetadataFish()
         self.imaging_data = MetadataLightsheet()
@@ -52,7 +49,7 @@ class Experiment(QMainWindow):
         self.data_collector = DataCollector(self.fish_data, self.imaging_data, self.general_data,
                                             self.camera_data, folder_path=self.experiment_folder,
                                             use_last_val=True)
-        self.data_collector.add_data_source('tracking', self.roi_dict)
+        self.data_collector.add_static_data('tracking', self.roi_dict)
 
         self.gui_refresh_timer = QTimer()
         self.gui_refresh_timer.setSingleShot(False)
@@ -130,12 +127,12 @@ class Experiment(QMainWindow):
 
         # Metadata window and data collector for saving experiment data:
 
-        self.data_collector.add_data_source('stimulus', 'log', self.protocol.log)
-        self.data_collector.add_data_source('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state,
+        self.data_collector.add_static_data('stimulus', 'log', self.protocol.log)
+        self.data_collector.add_static_data('stimulus', 'window_pos', self.win_control.widget_view.roi_box.state,
                                             'pos')
-        self.data_collector.add_data_source('stimulus', 'window_size',
+        self.data_collector.add_static_data('stimulus', 'window_size',
                                             self.win_control.widget_view.roi_box.state, 'size')
-        self.data_collector.add_data_source('camera', 'fish_pos', self.camera_viewer.roi_dict)
+        self.data_collector.add_static_data('camera', 'fish_pos', self.camera_viewer.roi_dict)
 
         self.win_control.button_metadata.clicked.connect(self.metalist_gui.show_gui)
         self.protocol.sig_protocol_finished.connect(self.data_collector.save)
@@ -174,9 +171,9 @@ class Experiment(QMainWindow):
 
         self.dataframe = self.data_acc_tailpoints.get_dataframe()
 
-        self.data_collector.add_data_source('behaviour', 'tail_tracking',
+        self.data_collector.add_static_data('behaviour', 'tail_tracking',
                                             self.dataframe)
-        self.data_collector.add_data_source('behaviour', 'tail_tracking_start',
+        self.data_collector.add_static_data('behaviour', 'tail_tracking_start',
                                             self.data_acc_tailpoints.starting_time)
 
         self.data_collector.save()

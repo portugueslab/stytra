@@ -3,9 +3,9 @@ import pandas as pd
 
 
 def df_from_metadata(metadata, timestep=0.2):
-    """ Create pandas dataframe from metadata of an experiment. The appropriate
+    """ Create pandas dataframe from data_log of an experiment. The appropriate
     function is used based on the name of the protocol.
-    :param metadata: metadata dictionary.
+    :param metadata: data_log dictionary.
     :param timestep: timestep for the dictionary
     """
 
@@ -13,7 +13,7 @@ def df_from_metadata(metadata, timestep=0.2):
 
     if 'tail_log' in metadata.keys():
         pass
-        # df = pd.DataFrame(metadata['behaviour']['tail_log'])[['t', 'tail_sum']]
+        # df = pd.DataFrame(data_log['behaviour']['tail_log'])[['t', 'tail_sum']]
         # df = df.set_index('t')
     else:
         df = pd.DataFrame(index=np.arange(timestep,

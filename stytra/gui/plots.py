@@ -8,9 +8,10 @@ import time
 import pandas as pd
 import colorspacious
 
-class StreamingPositionPlot(pg.GraphicsWindow):
-    """ Plot that displays the virtual position of the fish
 
+class StreamingPositionPlot(pg.GraphicsWindow):
+    """
+    Plot that displays the virtual position of the fish
     """
     def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
         super().__init__(*args, **kwargs)
@@ -42,6 +43,11 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
+    """
+    Window to plot live data that are accumulated by a DAtaAccumulator
+    object.
+    New plots can be added via the add_stream() method.
+    """
     def __init__(self, time_past=6, bounds_update=0.1,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -73,7 +79,8 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
     @staticmethod
     def get_colors(n_colors=1, lightness=50, saturation=50, shift=0):
-        """ Get colors on the LCh ring
+        """
+        Get colors on the LCh ring
 
         :param n_colors:
         :param lightness:
@@ -87,14 +94,18 @@ class MultiStreamPlot(pg.GraphicsWindow):
         ], 1), 'CIELCh', 'sRGB1'), 0, 1)*255
 
     def add_stream(self, accumulator, header_items):
-        """ Adds a data collector stream to the plot
-
+        """
+        Adds a data collector stream to the plot:
+        :param accumulator: instance of the DataAccumulator class
+        :param header_items: specify elements in the DataAccumulator to be plot
+               by their header name.
+        :return:
         """
         self.colors = self.get_colors(len(self.curves) + len(header_items))
         self.accumulators.append(accumulator)
         self.stream_names.append(header_items)
         self.header_indexes.append([accumulator.header_list.index(dv)
-                                for dv in header_items])
+                                    for dv in header_items])
         self.bounds.append(None)
         i_curve = len(self.curves)
         for header_item in header_items:
@@ -134,27 +145,36 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.plotContainter.setYRange(-0.1, len(self.curves)+0.1)
 
     def update(self):
-        """Function called by external timer to update the plot
+        """
+        Function called by external timer to update the plot
         """
         self.start = datetime.datetime.now()
 
         i_stream = 0
-        for i_acc, (acc, indexes) in enumerate(zip(self.accumulators, self.header_indexes)):
-            try:
+        for i_acc, (acc, indexes) in enumerate(zip(self.accumulators,
+                                                   self.header_indexes)):
 
-                # difference from data accumulator time and now in s...
+            # try:
+            # difference from data accumulator time and now in seconds:
+            try:
                 delta_t = (acc.starting_time -
                            self.start).total_seconds()
-
-                data_array = acc.get_last_t(self.time_past)
-
-                if len(data_array) > 0:
+            except (TypeError, IndexError):
+                delta_t = 0
+            data_array = acc.get_last_t(self.time_past)
+            if len(data_array) > 1:
+                try:
                     # ...to be added to the array of times in s in the data accumulator
                     fps = acc.get_fps()
 
                     time_array = delta_t + data_array[:, 0]
 
-                    new_bounds = np.percentile(data_array[:, indexes], (0.5, 99.5), 0).T
+                    # Exclude nans from calculation of percentile boundaries:
+                    b = ~(np.isnan(data_array[:, indexes])).any(1)
+                    non_nan_data = data_array[b, :]
+
+                    new_bounds = np.percentile(non_nan_data[:, indexes],
+                                               (0.5, 99.5), 0).T
                     if self.bounds[i_acc] is None:
                         self.bounds[i_acc] = new_bounds
                     else:
@@ -174,11 +194,13 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         self.curves[i_stream].setData(x=time_array,
                                                       y=i_stream+((data_array[:, i_var]-lb)/scale))
                         i_stream += 1
+                except IndexError:
+                    pass
 
-            except IndexError:
-                pass
-            except TypeError:
-                pass
+            # except IndexError:
+            #     pass
+            # except TypeError:
+            #     pass
 
 
 
