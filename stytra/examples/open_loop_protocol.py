@@ -3,7 +3,7 @@ import multiprocessing
 import qdarkstyle
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
-from stytra.data_log.metalist_gui import MetaListGui
+from stytra.data_log import MetaListGui
 
 from stytra import DataCollector, FrameDispatcher
 from stytra.gui.camera_display import CameraTailSelection

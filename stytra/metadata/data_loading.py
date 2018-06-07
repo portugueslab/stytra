@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+# TODO this has to go somewhere else
 
 def df_from_metadata(metadata, timestep=0.2):
     """ Create pandas dataframe from data_log of an experiment. The appropriate

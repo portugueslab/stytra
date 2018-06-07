@@ -1,9 +1,11 @@
-import numpy as np
 import cv2
+import numpy as np
 from numba import vectorize, uint8
+
+from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
 
-from stytra.data_log import HasPyQtGraphParams
+
 # from stytra.metadata import Metadata
 
 

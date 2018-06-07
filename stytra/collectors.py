@@ -224,7 +224,7 @@ class DataCollector:
                 # of the params of HasPyQtGraphParams instances may be called
                 # multiple times.
 
-    def add_params(self, params_tree):
+    def add_param_tree(self, params_tree):
         """ Add the params tree that will be used for reading and restoring
         the parameters from the previous session.
         It should be the HasPyQtGraph._params tree for it to
@@ -260,7 +260,7 @@ class DataCollector:
         :param convert_datetime: see sanitize_item docs;
         :return: dictionary with the sorted data.
         """
-        clean_data_dict = dict(fish={}, stimulus={}, imaging={},
+        clean_data_dict = dict(animal={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
                                tracking={}, unassigned={})
 
@@ -315,10 +315,9 @@ class DataCollector:
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        print(clean_dict)
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
-                    str(clean_dict['fish']['id'])
+                    str(clean_dict['animal']['id'])
         dirname = '/'.join([self.folder_path,
                    clean_dict['stimulus']['protocol_params']['name'],
                              fish_name,

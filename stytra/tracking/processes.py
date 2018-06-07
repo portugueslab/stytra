@@ -10,9 +10,10 @@ from numba import jit
 from stytra.utilities import FrameProcessor
 from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 
-from stytra import MovementDetectionParameters
+from stytra.tracking.interfaces import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
 from stytra.tracking.eyes import trace_eyes
+
 
 class FrameDispatcher(FrameProcessor):
     """ A class which handles taking frames from the camera and processing them,

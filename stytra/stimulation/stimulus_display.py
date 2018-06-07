@@ -1,11 +1,12 @@
+from datetime import datetime
+
+import numpy as np
+import qimage2ndarray
 from PyQt5.QtCore import QPoint, QRect
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QWidget
-from datetime import datetime
-from stytra.stimulation.stimuli import PainterStimulus
-from stytra.data_log import HasPyQtGraphParams
-import numpy as np
-import qimage2ndarray
+
+from stytra.utilities import HasPyQtGraphParams
 
 
 # TODO what do we gain from two different widgets defined?

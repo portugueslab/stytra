@@ -75,7 +75,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win.layout().addWidget(
             self.experiment.metadata.show_metadata_gui())
         self.metadata_win.layout().addWidget(
-            self.experiment.fish_metadata.show_metadata_gui())
+            self.experiment.animal_metadata.show_metadata_gui())
         self.metadata_win.show()
 
     def construct_ui(self):

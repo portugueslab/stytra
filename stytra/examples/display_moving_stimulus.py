@@ -9,12 +9,11 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, \
     QSplitter, QProgressBar
-from stytra.data_log.metalist_gui import MetaListGui
 
 import stytra.calibration as calibration
 import stytra.collectors
-import stytra.data_log as metadata
 from stytra import MovingFrameDispatcher
+from stytra.data_log import MetaListGui
 from stytra.gui import protocol_control, camera_display
 from stytra.hardware.video import XimeaCamera, VideoWriter
 from stytra.stimulation import ProtocolRunner, stimulus_display

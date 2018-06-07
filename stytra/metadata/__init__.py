@@ -1,4 +1,4 @@
-from stytra.data_log import HasPyQtGraphParams
+from stytra.utilities import HasPyQtGraphParams
 from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
@@ -40,28 +40,15 @@ class GeneralMetadata(GuiMetadata):
                                         values=['']))
 
 
-class FishMetadata(GuiMetadata):
+class AnimalMetadata(GuiMetadata):
     def __init__(self):
         super().__init__()
         self.add_params(id=dict(type='int', value=0),
                         age=dict(type='int', value=7, limits=(3, 21),
-                                 tip='Fish age', suffix='dpf'),
+                                 tip='Animal age', suffix='dpf'),
+                        comments=dict(type='str', value=''),
                         genotype=dict(type='list',
                                       values=[''],
-                                      value=''),
-                        dish_diameter=dict(type='list', value='',
-                                           values=['',
-                                                   '30',
-                                                   '60',
-                                                   '90',
-                                                   'lightsheet']),
-                        comments=dict(type='str', value=''),
-                        embedded=dict(type='bool', value=True),
-                        treatment=dict(type='list', value='',
-                                       values=['']),
-                        screened=dict(type='list', value='not',
-                                      values=['not',
-                                              'dark',
-                                              'bright']))
+                                      value=''))
 
-        self.params.setName('fish_metadata')
+        self.params.setName('animal_metadata')

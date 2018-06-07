@@ -1,12 +1,9 @@
 import datetime
 
-from builtins import print
-
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 
 from stytra.stimulation.stimuli import DynamicStimulus, Pause
 from stytra.collectors import Accumulator
-from stytra.stimulation.protocols import FlashProtocol
 
 from stytra.stimulation import protocols
 from stytra.stimulation.protocols import Protocol

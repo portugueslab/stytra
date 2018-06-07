@@ -1,10 +1,11 @@
-from PyQt5.QtCore import QRect, QPoint, pyqtSignal
-from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 import math
+
 import cv2
 import numpy as np
-from pyqtgraph.parametertree import Parameter, parameterTypes
-from stytra.data_log import HasPyQtGraphParams
+from PyQt5.QtCore import QRect, QPoint
+from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
+
+from stytra.utilities import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):

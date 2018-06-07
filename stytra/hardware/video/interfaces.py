@@ -1,4 +1,4 @@
-from stytra.data_log import HasPyQtGraphParams
+from stytra.utilities import HasPyQtGraphParams
 
 
 class CameraControlParameters(HasPyQtGraphParams):

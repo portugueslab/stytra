@@ -1,11 +1,7 @@
-
-from stytra.data_log import HasPyQtGraphParams
-from random import sample
-from stytra.stimulation.backgrounds import gratings
-from itertools import product
-
 from copy import deepcopy
 
+from stytra.utilities import HasPyQtGraphParams
+from stytra.stimulation.stimuli import Pause
 
 class Protocol(HasPyQtGraphParams):
     """ The Protocol class is thought as an easily subclassable class that
