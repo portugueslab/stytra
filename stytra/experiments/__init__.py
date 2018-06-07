@@ -72,15 +72,17 @@ class Experiment(QObject):
 
         self.notifier = notifier
 
+        # to the constructor we need to pass classes, not instances
+        # otherwise there are problems because the metadatas are QObjects
         if metadata_general is None:
             self.metadata = GeneralMetadata()
         else:
-            self.metadata = metadata_general
+            self.metadata = metadata_general()
 
         if metadata_animal is None:
             self.animal_metadata = AnimalMetadata()
         else:
-            self.animal_metadata = metadata_animal
+            self.animal_metadata = metadata_animal()
 
         self.dc = DataCollector(folder_path=self.directory)
         self.dc.add_param_tree(self.metadata._params)
