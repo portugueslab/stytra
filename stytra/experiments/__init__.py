@@ -10,8 +10,7 @@ from requests import ConnectionError
 
 from stytra.calibration import CrossCalibrator
 from stytra.collectors import DataCollector
-
-from stytra.stimulation import ProtocolRunner, protocols
+from stytra.stimulation import ProtocolRunner
 
 from stytra.utilities import Database
 from stytra.metadata import AnimalMetadata, GeneralMetadata
@@ -37,6 +36,7 @@ class Experiment(QObject):
                  rec_stim_every=None,
                  database=None,
                  notifier=None,
+                 protocols=None,
                  display_w=None,
                  display_h=None):
         """
@@ -52,6 +52,7 @@ class Experiment(QObject):
 
         self.app = app
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        self.protocols = protocols
 
         self.asset_dir = asset_directory
         self.debug_mode = debug_mode
@@ -103,8 +104,8 @@ class Experiment(QObject):
 
         self.scope_triggered = scope_triggered
         # This has to happen here or version will also be reset to last value:
-        if not self.debug_mode:
-            self.check_if_committed()
+        # if not self.debug_mode:
+        #     self.check_if_committed()
 
         if scope_triggered:
             self.zmq_context = zmq.Context()
@@ -140,27 +141,27 @@ class Experiment(QObject):
         # See comment in DataCollector.restore_from_saved()
         self.dc.restore_from_saved()
 
-    def check_if_committed(self):
-        """
-        Checks if the version of stytra used to run the experiment is committed,
-        so that for each experiment it is known what code was used to run it.
-        """
-
-        # Get program name and version and save to the data_log:
-        repo = git.Repo(search_parent_directories=True)
-        git_hash = repo.head.object.hexsha
-
-        self.dc.add_static_data(dict(git_hash=git_hash,
-                                     name=__file__),
-                                name='general_program_version')
-
-        compare = 'HEAD'
-        if len(repo.git.diff(compare,
-                             name_only=True)) > 0:
-            print('The following files contain uncommitted changes:')
-            print(repo.git.diff(compare, name_only=True))
-            raise PermissionError(
-                'The project has to be committed before starting!')
+    # def check_if_committed(self):
+    #     """
+    #     Checks if the version of stytra used to run the experiment is committed,
+    #     so that for each experiment it is known what code was used to run it.
+    #     """
+    #
+    #     # Get program name and version and save to the data_log:
+    #     repo = git.Repo(search_parent_directories=True)
+    #     git_hash = repo.head.object.hexsha
+    #
+    #     self.dc.add_static_data(dict(git_hash=git_hash,
+    #                                  name=__file__),
+    #                             name='general_program_version')
+    #
+    #     compare = 'HEAD'
+    #     if len(repo.git.diff(compare,
+    #                          name_only=True)) > 0:
+    #         print('The following files contain uncommitted changes:')
+    #         print(repo.git.diff(compare, name_only=True))
+    #         raise PermissionError(
+    #             'The project has to be committed before starting!')
 
     def show_stimulus_screen(self, full_screen=True):
         """
@@ -262,4 +263,3 @@ class Experiment(QObject):
             if self.protocol_runner.protocol is not None:
                 self.end_protocol(save=False)
         self.app.closeAllWindows()
-        print('done')

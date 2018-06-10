@@ -105,7 +105,12 @@ class ProtocolRunner(QObject):
         self.duration = None  # total duration of the protocol
         self.dynamic_log = None  # dynamic log for stimuli
 
-        self.prot_class_dict = get_classes_from_module(protocols, Protocol)
+
+        print(experiment.protocols)
+        for c in experiment.protocols:
+            print(c)
+        self.prot_class_dict = {c.name: c for c in experiment.protocols}
+            # get_classes_from_module(protocols, Protocol)
 
         self.set_new_protocol(protocol)
 

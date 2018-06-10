@@ -9,7 +9,7 @@ from PyQt5.QtGui import QIcon
 
 
 class Stytra:
-    def __init__(self, parser=None, protocols=(),
+    def __init__(self, parser=None, protocols = [],
                  metadata_animal=None, metadata_general=None):
         if parser is None:
             parser = argparse.ArgumentParser()
@@ -78,7 +78,8 @@ class Stytra:
                             rec_stim_every=rec_stim_every,
                             shock_stimulus=args.shock_stimulus,
                             metadata_animal=metadata_animal,
-                            metadata_general=metadata_general)
+                            metadata_general=metadata_general,
+                            protocols=protocols)
 
         base = Experiment
         if args.video_file:
@@ -92,12 +93,6 @@ class Stytra:
         print(class_kwargs)
         if args.tail_tracking:
             base = TailTrackingExperiment
-        # if args.vr:
-        #         class_kwargs['motion_estimation'] = 'LSTM'
-        #         class_kwargs['motion_estimation_parameters'] = dict(model='lstm_pause_good_300Hz.h5',
-        #                                                             model_px_per_mm=16.44,
-        #                                                             tail_thresholds=(0.02, 0.1),
-        #                                                             thresholds=(0.05, 0.05, 0.015))
 
         elif args.freely_swimming:
             base = MovementRecordingExperiment

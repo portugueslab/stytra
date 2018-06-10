@@ -105,8 +105,6 @@ def prepare_json(it, **kwargs):
             return it.to_dict('list')
     return 0
 
-
-
 def get_default_args(func):
     """
     Find default arguments of functions
