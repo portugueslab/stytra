@@ -42,8 +42,6 @@ class Stytra:
                             action='store_true')
         parser.add_argument('--eye-tracking',
                             action='store_true')
-        parser.add_argument('--debug',
-                            action='store_true')
         parser.add_argument('--scope-triggering',
                             action='store_true')
         parser.add_argument('--video-file',
@@ -72,11 +70,8 @@ class Stytra:
 
         class_kwargs = dict(app=app,
                             directory=args.directory,
-                            debug_mode=args.debug,
                             asset_directory=args.asset_dir,
-                            scope_triggered=args.scope_triggering,
                             rec_stim_every=rec_stim_every,
-                            shock_stimulus=args.shock_stimulus,
                             metadata_animal=metadata_animal,
                             metadata_general=metadata_general,
                             protocols=protocols)

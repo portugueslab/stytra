@@ -307,11 +307,13 @@ class DataCollector:
                    self.params_metadata.saveState())
 
     def save_json_log(self, timestamp=None):
-        """ Save the .json file with all the data from both static sources
+        """
+        Save the .json file with all the data from both static sources
         and the updated params.
         :param timestamp:
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
+        print(clean_dict)
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -330,7 +332,8 @@ class DataCollector:
                       outfile, sort_keys=True)
 
     def save(self, timestamp=None):
-        """ Save both the data_log.json log and the config.h5 file
+        """
+        Save both the data_log.json log and the config.h5 file
         """
 
         self.save_json_log(timestamp)

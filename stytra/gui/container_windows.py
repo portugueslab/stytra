@@ -49,7 +49,7 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.setWindowTitle('Stytra')
 
-        self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
+        # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
 
@@ -60,8 +60,8 @@ class SimpleExperimentWindow(QMainWindow):
             experiment.end_protocol)
         self.button_metadata = QPushButton('Edit metadata')
 
-        if experiment.scope_triggered:
-            self.chk_scope = QCheckBox('Wait for the scope')
+        # if experiment.scope_triggered:
+        #     self.chk_scope = QCheckBox('Wait for the scope')
         self.button_metadata.clicked.connect(
             self.show_metadata_gui)
 
@@ -81,11 +81,11 @@ class SimpleExperimentWindow(QMainWindow):
     def construct_ui(self):
         central_widget = QWidget()
         central_widget.setLayout(QVBoxLayout())
-        central_widget.layout().addWidget(self.label_debug)
+        # central_widget.layout().addWidget(self.label_debug)
         central_widget.layout().addWidget(self.widget_projection)
         central_widget.layout().addWidget(self.widget_control)
-        if self.experiment.scope_triggered:
-            central_widget.layout().addWidget(self.chk_scope)
+        # if self.experiment.scope_triggered:
+        #     central_widget.layout().addWidget(self.chk_scope)
         central_widget.layout().addWidget(self.button_metadata)
         return central_widget
 

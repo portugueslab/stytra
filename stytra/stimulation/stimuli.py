@@ -646,6 +646,18 @@ class RandomDotKinematogram(PainterStimulus):
         pass
 
 
+#######################
+# Reimplement somewhere:
+#######################
+
+# if shock_stimulus:
+#     try:
+#         from stytra.hardware.serial import PyboardConnection
+#     except ImportError:
+#         print('Serial pyboard connection not installed')
+#
+#     self.pyb = PyboardConnection(com_port='COM3')
+
 class ShockStimulus(Stimulus):
     def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
                  pulse_dur_ms=2, pyboard=None, **kwargs):

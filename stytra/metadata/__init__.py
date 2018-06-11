@@ -43,6 +43,7 @@ class GeneralMetadata(GuiMetadata):
 class AnimalMetadata(GuiMetadata):
     def __init__(self):
         super().__init__()
+        self.params.setName('animal_metadata')
         self.add_params(id=dict(type='int', value=0),
                         age=dict(type='int', value=7, limits=(3, 21),
                                  tip='Animal age', suffix='dpf'),
@@ -50,5 +51,3 @@ class AnimalMetadata(GuiMetadata):
                         genotype=dict(type='list',
                                       values=[''],
                                       value=''))
-
-        self.params.setName('animal_metadata')
