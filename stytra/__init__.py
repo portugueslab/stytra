@@ -2,6 +2,9 @@ import argparse
 from stytra.experiments import Experiment
 from stytra.experiments.tracking_experiments import CameraExperiment, \
     EyeTrackingExperiment, MovementRecordingExperiment, TailTrackingExperiment
+# imports for easy experiment building
+from stytra.metadata import AnimalMetadata, GeneralMetadata
+from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication

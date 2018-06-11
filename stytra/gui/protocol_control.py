@@ -129,12 +129,10 @@ class ProtocolControlWidget(QWidget):
 
     def update_stim_duration(self):
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))
+        self.progress_bar.setValue(0)
 
     def update_progress(self):
         self.progress_bar.setValue(int(self.protocol_runner.t))
-
-    def protocol_changed(self):
-        self.progress_bar.setValue(0)
 
     def set_protocol(self):
         """

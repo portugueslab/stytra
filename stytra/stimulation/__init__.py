@@ -105,14 +105,9 @@ class ProtocolRunner(QObject):
         self.duration = None  # total duration of the protocol
         self.dynamic_log = None  # dynamic log for stimuli
 
-
-        print(experiment.protocols)
-        for c in experiment.protocols:
-            print(c)
         self.prot_class_dict = {c.name: c for c in experiment.protocols}
-            # get_classes_from_module(protocols, Protocol)
-
         self.set_new_protocol(protocol)
+        self.sig_protocol_updated.emit()
 
         # Log will be a list of stimuli states:
         self.log = []
@@ -165,18 +160,19 @@ class ProtocolRunner(QObject):
         Update current Protocol (get a new stimulus list if protocol or
         parameters are changed).
         """
-        self.stimuli = self.protocol.get_stimulus_list()
+        if self.protocol is not None:
+            self.stimuli = self.protocol.get_stimulus_list()
 
-        self.current_stimulus = self.stimuli[0]
+            self.current_stimulus = self.stimuli[0]
 
-        # pass experiment to stimuli for calibrator and asset folders:
-        for stimulus in self.stimuli:
-            stimulus.initialise_external(self.experiment)
+            # pass experiment to stimuli for calibrator and asset folders:
+            for stimulus in self.stimuli:
+                stimulus.initialise_external(self.experiment)
 
-        self.dynamic_log = DynamicLog(self.stimuli)  # new stimulus log
-        self.duration = self.get_duration()  # set new duration
+            self.dynamic_log = DynamicLog(self.stimuli)  # new stimulus log
+            self.duration = self.get_duration()  # set new duration
 
-        self.sig_protocol_updated.emit()
+            self.sig_protocol_updated.emit()
 
     def reset(self):
         """

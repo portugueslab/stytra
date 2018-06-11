@@ -13,6 +13,11 @@ from stytra.utilities import prepare_json
 
 
 def strip_values(it):
+    """
+    Convert OrderedDict of OrderedDict in dict of dict.
+    :param it:
+    :return:
+    """
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
@@ -313,7 +318,6 @@ class DataCollector:
         :param timestamp:
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
-        print(clean_dict)
         if timestamp is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 

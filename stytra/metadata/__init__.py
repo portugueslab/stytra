@@ -3,7 +3,8 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class GuiMetadata(HasPyQtGraphParams):
-    """ General class for a group of metadata that have to be controlled via
+    """
+    General class for a group of metadata that have to be controlled via
     a GUI.
     """
 

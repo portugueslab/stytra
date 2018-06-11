@@ -77,6 +77,10 @@ class Experiment(QObject):
         self.protocol_runner = ProtocolRunner(experiment=self,
                                               protocol=self.last_protocol)
 
+        # assign signals from protocol_runner to be used externally:
+        self.sig_protocol_finished = self.protocol_runner.sig_protocol_finished
+        self.sig_protocol_started = self.protocol_runner.sig_protocol_started
+
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
