@@ -1,7 +1,8 @@
 from stytra import TailTrackingExperiment, LightsheetExperiment
-from stytra.stimulation.stimuli import ClosedLoop1D, GratingPainterStimulus
+from stytra.stimulation.visual import GratingPainterStimulus
+from stytra.stimulation.closed_loop import ClosedLoop1D
 from stytra.calibration import CrossCalibrator
-from stytra.stimulation.closed_loop import VigourMotionEstimator
+from stytra.stimulation.motion_estimators import VigourMotionEstimator
 from PyQt5.QtWidgets import QSplitter, QApplication, QVBoxLayout
 from PyQt5.QtCore import Qt
 from stytra.stimulation.protocols import ReafferenceProtocol

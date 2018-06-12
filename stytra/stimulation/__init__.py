@@ -1,30 +1,10 @@
 import datetime
+from copy import deepcopy
 
+import numpy as np
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
-
-from stytra.stimulation.stimuli import DynamicStimulus, Pause
 from stytra.collectors import Accumulator
-
-from stytra.stimulation import protocols
-from stytra.stimulation.protocols import Protocol
-
-import inspect
-from collections import OrderedDict
-
-
-def get_classes_from_module(input_module, parent_class):
-    """ Find all the classes in a module that are children of a parent one.
-
-    :param input_module: module object
-    :param parent_class: parent class object
-    :return: OrderedDict of subclasses found
-    """
-    classes = inspect.getmembers(input_module, inspect.isclass)
-    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
-                              if issubclass(c[1], parent_class)
-                              and not c[1] is parent_class})
-
-    return ls_classes
+from stytra.utilities import HasPyQtGraphParams
 
 
 class ProtocolRunner(QObject):
@@ -340,3 +320,197 @@ class DynamicLog(Accumulator):
         self.check_start()
         self.stored_data.append(data)
 
+
+class Protocol(HasPyQtGraphParams):
+    """ The Protocol class is thought as an easily subclassable class that
+     generate a list of stimuli according to some parameterization.
+     It basically constitutes a way of keeping together:
+      - the parameters that describe the protocol
+      - the function to generate the list of stimuli.
+
+     The function get_stimulus_list is the core of the class: it is called
+     by the ProtocolRunner and it generates a list with the stimuli that
+     have to be used in the protocol. Everything else concerning e.g.
+     calibration, or asset directories that have to be passed to the
+     stimulus, is handled in the ProtocolRunner class to leave this class
+     as light as possible.
+     """
+
+    name = ''
+
+    def __init__(self):
+        """
+        Add standard parameters common to all kind of protocols.
+        """
+        super().__init__(name='stimulus_protocol_params')
+
+        for child in self.params.children():
+            self.params.removeChild(child)
+
+        self.add_params(name=self.name,
+                        n_repeats=1,
+                        pre_pause=0.,
+                        post_pause=0.)
+
+
+    def get_stimulus_list(self):
+        """
+        Generate protocol from specified parameters. Called by the
+        ProtocolRunner class where the Protocol instance is defined.
+        This function puts together the stimulus sequence defined by each
+        child class with the initial and final pause and repeats it the
+        specified number of times. It should not change in subclasses.
+        """
+        main_stimuli = self.get_stim_sequence()
+        stimuli = []
+        if self.params['pre_pause'] > 0:
+            stimuli.append(Pause(duration=self.params['pre_pause']))
+
+        for i in range(max(self.params['n_repeats'], 1)):
+            stimuli.extend(deepcopy(main_stimuli))
+
+        if self.params['post_pause'] > 0:
+            stimuli.append(Pause(duration=self.params['post_pause']))
+
+        return stimuli
+
+    def get_stim_sequence(self):
+        """ To be specified in each child class to return the proper list of
+        stimuli.
+        """
+        return []
+
+
+class Stimulus:
+    """
+    General class for a Stimulus. In stytra, a Stimulus is something that
+    makes things happen at some point of an experiment.
+    The Stimulus class is just a building block: successions of Stimuli
+    are assembled in a meaningful order by Protocol objects.
+
+    A Stimulus runs for a time defined by its duration. to do so, the
+    ProtocolRunner compares at every time step the duration of the stimulus
+    with the time elapsed from its beginning.
+
+    Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
+    By defining this method in subclasses, we can trigger events at
+    the beginning of the stimulus (e.g., activate a Pyboard, send a TTL pulse
+     or similar).
+
+    At every successive time, until the end of the Stimulus, its update()
+    method is called. By defining this method in subclasses, we can trigger
+    events throughout the length of the Stimulus time.
+
+    Be aware that code in the start() and update() functions is executed within
+    the Stimulus&main GUI process, therefore:
+     1. Its temporal precision is limited to # TODO do some check here
+     2. Slow functions would slow down the entire main process, especially if
+        called at every time step.
+
+    Stimului have parameters that are important to be logged in the final
+    metadata and parameters that are not relevant. The get_state() method
+    used to generate the log saves all attributes not starting with _.
+
+
+    Different stimuli categories are implemented subclassing this class, e.g.:
+     - visual stimuli (children of PainterStimulus subclass);
+     ...
+
+    """
+    def __init__(self, duration=0.0):
+        """
+        Make a stimulus, with the basic properties common to all stimuli.
+        Values not to be logged start with _
+
+        :param duration: duration of the stimulus (s)
+        """
+
+        self.duration = duration
+
+        self._started = None
+        self._elapsed = 0.0  # time from the beginning of the stimulus
+        self.name = ''
+        self._experiment = None
+        self.real_time_start = None
+        self.real_time_stop = None
+
+    def get_state(self):
+        """
+        Returns a dictionary with stimulus features for logging.
+        Ignores the properties which are private (start with _)
+        """
+        state_dict = dict()
+        for key, value in self.__dict__.items():
+            if not callable(value) and key[0] != '_':
+                state_dict[key] = value
+        return state_dict
+
+    def update(self):
+        """
+        Function called by the ProtocolRunner every timestep until the Stimulus
+        is over.
+        """
+        self.real_time_stop = datetime.datetime.now()
+
+    def start(self):
+        """
+        Function called by the ProtocolRunner when a new stimulus is set.
+        """
+        self.real_time_start = datetime.datetime.now()
+
+    def initialise_external(self, experiment):
+        """ Make a reference to the Experiment class inside the Stimulus.
+        This is required to access from inside the Stimulus class to the
+        Calibrator, the Pyboard, the asset directories with movies or the motor
+        estimator for virtual reality.
+
+        :param experiment: the experiment object to which link the stimulus
+        :return: None
+        """
+        self._experiment = experiment
+
+
+class DynamicStimulus(Stimulus):
+    """
+    Stimuli where parameters change during stimulation on a frame-by-frame
+    base.
+    It implements the recording changing parameters.
+    """
+    def __init__(self, *args, dynamic_parameters=None, **kwargs):
+        """
+        :param dynamic_parameters: A list of all parameters that are to be
+                                   recorded frame by frame;
+        """
+        super().__init__(*args, **kwargs)
+        if dynamic_parameters is None:
+            self.dynamic_parameters = []
+        else:
+            self.dynamic_parameters = dynamic_parameters
+
+    def get_dynamic_state(self):
+        """ Return the state of constantly varying parameters.
+        """
+        return tuple(getattr(self, param, 0)
+                     for param in self.dynamic_parameters)
+
+
+class InterpolatedStimulus(Stimulus):
+    """ Stimulus that interpolates its internal parameters with a data frame
+
+
+    """
+    def __init__(self, *args, df_param, **kwargs):
+        """"""
+        super().__init__(*args, **kwargs)
+        self.df_param = df_param
+        self.duration = float(df_param.t.iat[-1])
+
+    def update(self):
+        for col in self.df_param.columns:
+            if col != "t":
+                try:
+                    setattr(self, col, np.interp(self._elapsed, self.df_param.t,
+                                                 self.df_param[col]))
+
+                except (AttributeError, KeyError):
+                    pass

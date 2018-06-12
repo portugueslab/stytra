@@ -195,3 +195,18 @@ class HasPyQtGraphParams(object):
 
     def get_clean_values(self):
         return prepare_json(self.params.getValues(), paramstree=True)
+
+
+def get_classes_from_module(input_module, parent_class):
+    """ Find all the classes in a module that are children of a parent one.
+
+    :param input_module: module object
+    :param parent_class: parent class object
+    :return: OrderedDict of subclasses found
+    """
+    classes = inspect.getmembers(input_module, inspect.isclass)
+    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
+                              if issubclass(c[1], parent_class)
+                              and not c[1] is parent_class})
+
+    return ls_classes

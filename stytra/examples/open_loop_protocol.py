@@ -13,7 +13,7 @@ from stytra.hardware.video import XimeaCamera
 from stytra.data_log import MetadataFish, MetadataCamera, MetadataGeneral
 from stytra.stimulation import ProtocolRunner
 from stytra.stimulation.backgrounds import gratings
-from stytra.stimulation.stimuli import Pause, MovingConstantly
+from stytra.stimulation.visual import Pause, MovingConstantly
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.tracking import QueueDataAccumulator
 from stytra.tracking.tail import trace_tail_centroid

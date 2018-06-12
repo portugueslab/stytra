@@ -18,7 +18,7 @@ from stytra.gui import protocol_control, camera_display
 from stytra.hardware.video import XimeaCamera, VideoWriter
 from stytra.stimulation import ProtocolRunner, stimulus_display
 from stytra.stimulation.backgrounds import existing_file_background
-from stytra.stimulation.stimuli import MovingSeamless
+from stytra.stimulation.visual import MovingSeamless
 
 
 def make_moving_protocol(n_vels=240*3, stim_duration=5,
