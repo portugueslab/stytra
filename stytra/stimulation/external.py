@@ -2,6 +2,7 @@ from stytra.stimulation import Stimulus
 
 
 class PybPulseStimulus(Stimulus):
+    """ """
     def __init__(self, burst_freq=100, pulse_amp=3., pulse_n=5,
                  pulse_dur_ms=2, com_port="COM3", **kwargs):
         """
@@ -34,6 +35,17 @@ class PybPulseStimulus(Stimulus):
         self.mex = str('shock' + amp_dac + pulse_dur_str)
 
     def initialise_external(self, experiment):
+        """
+
+        Parameters
+        ----------
+        experiment :
+            
+
+        Returns
+        -------
+
+        """
         try:
             from stytra.hardware.serial import PyboardConnection
         except ImportError:
@@ -42,6 +54,7 @@ class PybPulseStimulus(Stimulus):
         self._pyb = PyboardConnection(com_port=self._com_port)
 
     def start(self):
+        """ """
         super().update()
         for i in range(self.pulse_n):
             self._pyb.write(self.mex)

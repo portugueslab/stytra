@@ -17,9 +17,7 @@ from stytra.gui.container_windows import SimpleExperimentWindow
 
 
 class Experiment(QObject):
-    """
-    General class that runs an experiment.
-    """
+    """General class that runs an experiment."""
     def __init__(self, directory,
                  metadata_general=None,
                  metadata_animal=None,
@@ -88,24 +86,26 @@ class Experiment(QObject):
                                                     record_stim_every=rec_stim_every)
 
     def start_experiment(self):
-        """
-        Start the experiment creating GUI and initialising metadata.
+        """Start the experiment creating GUI and initialising metadata.
         :return:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         self.make_window()
         self.initialize_metadata()
 
     def make_window(self):
-        """
-        Make experiment GUI, defined in children depending on experiments.
-        """
+        """Make experiment GUI, defined in children depending on experiments."""
         self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
 
     def initialize_metadata(self):
-        """
-        Restore parameters from saved config.h5 file.
-        """
+        """Restore parameters from saved config.h5 file."""
         # When restoring here data_log to previous values, there may be
         # multiple (one per parameter), calls of functions connected to
         # a change in the params three state.
@@ -113,9 +113,17 @@ class Experiment(QObject):
         self.dc.restore_from_saved()
 
     def show_stimulus_screen(self, full_screen=True):
-        """
-        Open window to display the visual stimulus and make it full-screen
+        """Open window to display the visual stimulus and make it full-screen
         if necessary.
+
+        Parameters
+        ----------
+        full_screen :
+             (Default value = True)
+
+        Returns
+        -------
+
         """
         self.window_display.show()
         if full_screen:
@@ -126,15 +134,31 @@ class Experiment(QObject):
                 print('Second screen not available')
 
     def start_protocol(self):
-        """ Start the protocol from the ProtocolRunner. Before that, send a
+        """Start the protocol from the ProtocolRunner. Before that, send a
         a notification and if required communicate with the microscope to
         synchronize and read configuration.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         self.protocol_runner.start()
 
     def end_protocol(self, save=True):
-        """ Function called at Protocol end. Reset Protocol, save
+        """Function called at Protocol end. Reset Protocol, save
         data_log and put experiment data in pymongo database.
+
+        Parameters
+        ----------
+        save :
+             (Default value = True)
+
+        Returns
+        -------
+
         """
         self.protocol_runner.stop()
         self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
@@ -162,8 +186,18 @@ class Experiment(QObject):
         self.protocol_runner.reset()
 
     def wrap_up(self, *args, **kwargs):
-        """
-        Clean up things before closing gui. Called by close button.
+        """Clean up things before closing gui. Called by close button.
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()

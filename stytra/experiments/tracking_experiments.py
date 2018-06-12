@@ -18,11 +18,18 @@ from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 
 
 class CameraExperiment(Experiment):
-    """ General class for Experiment that need to handle a camera.
+    """General class for Experiment that need to handle a camera.
     It implements a view of frames from the camera in the control GUI, and the
     respective parameters.
     For debugging it can be used with a video read from file with the
     VideoFileSource class.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, *args, video_file=None,  camera=None,
                  camera_rotation=0, camera_queue_mb=100, **kwargs):
@@ -46,21 +53,37 @@ class CameraExperiment(Experiment):
         super().__init__(*args, **kwargs)
 
     def start_experiment(self):
+        """ """
         self.go_live()
         super().start_experiment()
 
     def make_window(self):
+        """ """
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
         self.go_live()
 
     def go_live(self):
+        """ """
         self.gui_timer.start(1000 // 60)
         # sys.excepthook = self.excepthook
         self.camera.start()
         print('started')
 
     def wrap_up(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         super().wrap_up(*args, **kwargs)
         self.camera.kill_signal.set()
         self.camera.terminate()
@@ -68,6 +91,21 @@ class CameraExperiment(Experiment):
         self.gui_timer.stop()
 
     def excepthook(self, exctype, value, tb):
+        """
+
+        Parameters
+        ----------
+        exctype :
+            
+        value :
+            
+        tb :
+            
+
+        Returns
+        -------
+
+        """
         traceback.print_tb(tb)
         print('{0}: {1}'.format(exctype, value))
         self.camera.kill_signal.set()
@@ -75,23 +113,29 @@ class CameraExperiment(Experiment):
 
 
 class TrackingExperiment(CameraExperiment):
-    """
-    Abstract class for an experiment which contains tracking,
+    """Abstract class for an experiment which contains tracking,
     base for any experiment that tracks behaviour (being it eyes, tail,
     or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
-
+    
     The frame dispatcher take two input queues:
         - frame queue from the camera;
         - parameters queue from parameter window.
-
+    
     and it puts data in three queues:
         - subset of frames are dispatched to the GUI, for displaying;
         - all the frames, together with the parameters, are dispatched
           to perform tracking;
         - the result of the tracking function, is dispatched to a data
           accumulator for saving or other purposes (e.g. VR control).
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     tracking_methods_list = dict(centroid=CentroidTrackingMethod,
@@ -142,26 +186,40 @@ class TrackingExperiment(CameraExperiment):
         self.frame_dispatcher.start()
 
     def send_new_parameters(self):
-        """
-        Called upon gui timeout, put tracking parameters in the relative
+        """Called upon gui timeout, put tracking parameters in the relative
         queue.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         # TODO do we need this linked to GUI timeout? why not value change?
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
 
     def start_protocol(self):
-        """
-        Reset data accumulator when starting the protocol.
-        """
+        """Reset data accumulator when starting the protocol."""
         # TODO camera queue should be emptied to avoid accumulation of frames!!
         # when waiting for the microscope!
         super().start_protocol()
         self.data_acc.reset()
 
     def end_protocol(self, *args, **kwargs):
-        """
-        Save tail position and dynamic parameters and terminate.
+        """Save tail position and dynamic parameters and terminate.
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         self.dc.add_static_data(self.data_acc.get_dataframe(),
                                 name=self.data_name)
@@ -174,18 +232,54 @@ class TrackingExperiment(CameraExperiment):
             pass
 
     def set_protocol(self, protocol):
-        """
-        Connect new protocol start to resetting of the data accumulator.
+        """Connect new protocol start to resetting of the data accumulator.
+
+        Parameters
+        ----------
+        protocol :
+            
+
+        Returns
+        -------
+
         """
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc.reset)
 
     def wrap_up(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
         print('Dispatcher process terminated')
 
     def excepthook(self, exctype, value, tb):
+        """
+
+        Parameters
+        ----------
+        exctype :
+            
+        value :
+            
+        tb :
+            
+
+        Returns
+        -------
+
+        """
         traceback.print_tb(tb)
         print('{0}: {1}'.format(exctype, value))
         self.finished_sig.set()
@@ -194,9 +288,15 @@ class TrackingExperiment(CameraExperiment):
 
 
 class TailTrackingExperiment(TrackingExperiment):
-    """
-    An experiment which contains tail tracking,
+    """An experiment which contains tail tracking,
     base for experiments that  employs closed loops.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, *args, **kwargs):
@@ -209,38 +309,38 @@ class TailTrackingExperiment(TrackingExperiment):
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
     def change_segment_numb(self):
+        """ """
         new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
             self.tracking_method.params['n_segments'])]
         self.data_acc.reset(header_list=new_header)
 
     def make_window(self):
+        """ """
         self.window_main = TailTrackingExperimentWindow(experiment=self)
         self.window_main.show()
 
 
 class EyeTrackingExperiment(TrackingExperiment):
     def __init__(self, *args, **kwargs):
-        """
-        An experiment which contains eye tracking.
-        """
+    """An experiment which contains eye tracking."""
 
         super().__init__(*args,
                          **kwargs)
 
     def make_window(self):
+        """ """
         self.window_main = EyeTrackingExperimentWindow(experiment=self)
         self.window_main.show()
 
 
 class VRExperiment(TailTrackingExperiment):
+    """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
 class MovementRecordingExperiment(CameraExperiment):
-    """ Experiment where the fish is recorded while it is moving
-
-    """
+    """Experiment where the fish is recorded while it is moving"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs)
 
@@ -269,28 +369,56 @@ class MovementRecordingExperiment(CameraExperiment):
             self.motion_acc.update_list)
 
     def make_window(self):
+        """ """
         self.window_main = TailTrackingExperimentWindow(experiment=self, tail_tracking=False)
         self.window_main.show()
         self.go_live()
 
     def go_live(self):
+        """ """
         super().go_live()
         self.frame_dispatcher.start()
         self.frame_recorder.start()
 
     def send_params(self):
+        """ """
         self.processing_params_queue.put(self.motion_detection_params.get_clean_values())
 
     def start_protocol(self):
+        """ """
         self.signal_start_rec.set()
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         super().wrap_up(*args, **kwargs)
         self.frame_recorder.terminate()
 
     def end_protocol(self, *args, **kwargs):
-        """ Save tail position and dynamic parameters and terminate.
+        """Save tail position and dynamic parameters and terminate.
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
         """
         self.finished_signal.set()
         self.frame_recorder.reset_signal.set()

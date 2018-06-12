@@ -20,6 +20,7 @@ from stytra.tracking.tail import trace_tail_centroid
 
 
 class Experiment(QMainWindow):
+    """ """
     def __init__(self, app):
         super().__init__()
         self.app = app
@@ -167,6 +168,7 @@ class Experiment(QMainWindow):
 
 
     def finishAndSave(self):
+        """ """
         self.gui_refresh_timer.stop()
 
         self.dataframe = self.data_acc_tailpoints.get_dataframe()
@@ -183,6 +185,7 @@ class Experiment(QMainWindow):
         self.app.quit()
 
     def finishProtocol(self):
+        """ """
 
         self.finished_sig.set()
         # self.camera.join(timeout=1)
@@ -199,6 +202,17 @@ class Experiment(QMainWindow):
         self.finished = True
 
     def closeEvent(self, QCloseEvent):
+        """
+
+        Parameters
+        ----------
+        QCloseEvent :
+            
+
+        Returns
+        -------
+
+        """
         if not self.finished:
             self.finishProtocol()
             self.app.closeAllWindows()

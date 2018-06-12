@@ -12,23 +12,29 @@ from stytra.utilities import HasPyQtGraphParams
 # TODO what do we gain from two different widgets defined?
 
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
-    """
-    Display window for a visual simulation protocol,
+    """Display window for a visual simulation protocol,
     with a display area that can be controlled and changed from a
     ProtocolControlWindow.
-
+    
     The display area (either a QWidget or a QOpenGLWidget, see below)
     is where the paint() method of  the current Stimulus will draw
     the current image. The paint() method is called in the paintEvent() of
     the QWidget.
-
+    
     Stimuli sequence and its timing is handled via a linked ProtocolRunner
     object.
-
+    
     Information about real dimensions of the display comes from a
     calibrator object.
-
+    
     If required, a movie of the displayed stimulus can be acquired and saved.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, protocol_runner, calibrator,
@@ -68,15 +74,22 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.params.sigTreeStateChanged.connect(self.set_dims)
 
     def set_dims(self):
+        """ """
         self.widget_display.setGeometry(*(self.params['pos']+self.params['size']))
 
 
 # TODO why here paintEvent draws the stimulus and display_stimulus update
 # stimulus-related stuff? Do we need this?
 class GLStimDisplay:
-    """
-    Widget for the actual display area contained inside the
+    """Widget for the actual display area contained inside the
     StimulusDisplayWindow.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, *args, protocol_runner, calibrator, record_stim_every):
@@ -110,10 +123,18 @@ class GLStimDisplay:
         self.movie_timestamps = []
 
     def paintEvent(self, QPaintEvent):
-        """
-        Generate the stimulus that will be displayed. A QPainter object is
+        """Generate the stimulus that will be displayed. A QPainter object is
         defined, which is then passed to the current stimulus paint function
         for drawing the stimulus.
+
+        Parameters
+        ----------
+        QPaintEvent :
+            
+
+        Returns
+        -------
+
         """
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
@@ -141,10 +162,16 @@ class GLStimDisplay:
         p.end()
 
     def display_stimulus(self):
-        """
-        Function called by the protocol_runner timestep timer that update
+        """Function called by the protocol_runner timestep timer that update
         the displayed image and, if required, grab a picture of the current
         widget state for recording the stimulus movie.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
 
         self.dims = (self.height(), self.width())  # Update dimensions
@@ -166,9 +193,15 @@ class GLStimDisplay:
                 self.k = 0
 
     def get_movie(self):
-        """
-        Finalize stimulus movie.
+        """Finalize stimulus movie.
         :return: a channel x time x N x M  array with stimulus movie
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         if self.record_stim_every is not None:
             movie_arr = np.array(self.movie)

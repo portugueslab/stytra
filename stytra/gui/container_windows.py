@@ -13,6 +13,7 @@ from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 
 
 class DebugLabel(QLabel):
+    """ """
     def __init__(self, *args, debug_on=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.setAlignment(Qt.AlignCenter)
@@ -21,6 +22,17 @@ class DebugLabel(QLabel):
         self.setMinimumHeight(36)
 
     def set_debug(self, debug_on=False):
+        """
+
+        Parameters
+        ----------
+        debug_on :
+             (Default value = False)
+
+        Returns
+        -------
+
+        """
         if debug_on:
             self.setText('Debug mode is on, data will not be saved!')
             self.setStyleSheet('background-color: #dc322f;color:#fff')
@@ -31,14 +43,22 @@ class DebugLabel(QLabel):
 
 
 class TrackingSettingsGui(QWidget):
+    """ """
     def __init__(self):
         self.combo_method = QComboBox()
         self.combo_method.set_editable(False)
 
 
 class SimpleExperimentWindow(QMainWindow):
-    """ Window for controlling a simple experiment including only a monitor
+    """Window for controlling a simple experiment including only a monitor
     the relative controls and the buttons for data_log and protocol control.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, experiment, **kwargs):
         """
@@ -70,6 +90,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win = None
 
     def show_metadata_gui(self):
+        """ """
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
         self.metadata_win.layout().addWidget(
@@ -79,6 +100,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win.show()
 
     def construct_ui(self):
+        """ """
         central_widget = QWidget()
         central_widget.setLayout(QVBoxLayout())
         # central_widget.layout().addWidget(self.label_debug)
@@ -90,16 +112,31 @@ class SimpleExperimentWindow(QMainWindow):
         return central_widget
 
     def closeEvent(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         self.experiment.wrap_up()
 
 
 class CameraExperimentWindow(SimpleExperimentWindow):
+    """ """
     def __init__(self, *args, **kwargs):
         self.camera_splitter = QSplitter(Qt.Horizontal)
         self.camera_display = CameraViewWidget(kwargs['experiment'])
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
+        """ """
         previous_widget = super().construct_ui()
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(previous_widget)
@@ -107,8 +144,15 @@ class CameraExperimentWindow(SimpleExperimentWindow):
 
 
 class TailTrackingExperimentWindow(SimpleExperimentWindow):
-    """ Window for controlling an experiment where the tail of an
+    """Window for controlling an experiment where the tail of an
     embedded fish is tracked.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, tail_tracking=True, *args, **kwargs):
         # TODO refactor movement detection
@@ -144,6 +188,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
+        """ """
         if self.tail_tracking:
             self.stream_plot.add_stream(self.experiment.data_acc,
                                         ['tail_sum'])
@@ -161,6 +206,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         return self.camera_splitter
 
     def open_tracking_params_tree(self):
+        """ """
         self.track_params_wnd = ParameterTree()
         if self.tail_tracking:
             self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
@@ -177,8 +223,15 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
 
 class EyeTrackingExperimentWindow(SimpleExperimentWindow):
-    """ Window for controlling an experiment where the tail and the eyes
+    """Window for controlling an experiment where the tail and the eyes
     of an embedded fish are tracked.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self,  *args, **kwargs):
         self.camera_display = CameraEyesSelection(experiment=
@@ -207,6 +260,7 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
+        """ """
         self.stream_plot.add_stream(self.experiment.data_acc,
                                     ['th_e0', 'th_e1'])
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
@@ -219,6 +273,7 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
         return self.camera_splitter
 
     def open_tracking_params_tree(self):
+        """ """
         self.track_params_wnd = ParameterTree()
         self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
                                             showTop=False)
@@ -228,7 +283,9 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
 
 
 class VRExperimentWindow(SimpleExperimentWindow):
+    """ """
     def reconfigure_ui(self):
+        """ """
         self.main_layout = QSplitter()
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
@@ -260,6 +317,8 @@ class VRExperimentWindow(SimpleExperimentWindow):
 
 
 class LightsheetGUI(SimpleExperimentWindow):
+    """ """
     def init_ui(self):
+        """ """
         self.chk_lightsheet = QCheckBox("Wait for lightsheet")
         self.chk_lightsheet.setChecked(False)

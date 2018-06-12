@@ -4,6 +4,7 @@ from stytra.stimulation.visual import BackgroundStimulus, SeamlessImageStimulus
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
+    """ """
     def __init__(self, *args, default_velocity=10, gain=1,
                  shunting=False,
                  base_gain=5,
@@ -31,6 +32,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self._past_t = 0
 
     def update(self):
+        """ """
         super().update()
         dt = (self._elapsed - self._past_t)
         self.fish_velocity = self._experiment.fish_motion_estimator.get_velocity()
@@ -63,6 +65,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
 class VRMotionStimulus(SeamlessImageStimulus,
                        DynamicStimulus):
+    """ """
 
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -74,6 +77,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = 0
 
     def update(self):
+        """ """
         super().update()
         dt = self._elapsed - self._past_t
         vel_x = np.interp(self._elapsed, self.motion.t, self.motion.vel_x)

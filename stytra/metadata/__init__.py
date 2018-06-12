@@ -3,9 +3,15 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class GuiMetadata(HasPyQtGraphParams):
-    """
-    General class for a group of metadata that have to be controlled via
+    """General class for a group of metadata that have to be controlled via
     a GUI.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self):
@@ -13,9 +19,11 @@ class GuiMetadata(HasPyQtGraphParams):
         self.protocol_params_tree = ParameterTree(showHeader=False)
 
     def get_param_dict(self):
+        """ """
         return self.params.getValues()
 
     def show_metadata_gui(self):
+        """ """
         self.protocol_params_tree = ParameterTree(showHeader=False)
         self.protocol_params_tree.setParameters(self.params)
         self.protocol_params_tree.setWindowTitle('Metadata')
@@ -24,13 +32,16 @@ class GuiMetadata(HasPyQtGraphParams):
         return self.protocol_params_tree
 
     def get_state(self):
+        """ """
         return self._params.saveState()
 
     def restore_state(self):
+        """ """
         pass
 
 
 class GeneralMetadata(GuiMetadata):
+    """ """
     def __init__(self):
         super().__init__()
         self.params.setName('general_metadata')
@@ -42,6 +53,7 @@ class GeneralMetadata(GuiMetadata):
 
 
 class AnimalMetadata(GuiMetadata):
+    """ """
     def __init__(self):
         super().__init__()
         self.params.setName('animal_metadata')

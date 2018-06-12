@@ -4,10 +4,19 @@ import pandas as pd
 # TODO this has to go somewhere else
 
 def df_from_metadata(metadata, timestep=0.2):
-    """ Create pandas dataframe from data_log of an experiment. The appropriate
+    """Create pandas dataframe from data_log of an experiment. The appropriate
     function is used based on the name of the protocol.
-    :param metadata: data_log dictionary.
-    :param timestep: timestep for the dictionary
+
+    Parameters
+    ----------
+    metadata :
+        data_log dictionary.
+    timestep :
+        timestep for the dictionary (Default value = 0.2)
+
+    Returns
+    -------
+
     """
 
     stim_list = metadata['log']
@@ -33,8 +42,19 @@ def df_from_metadata(metadata, timestep=0.2):
 
 
 def df_from_exp022_list(df, metadata):
-    """ Update stimulus dataframe based on stimulus list coming from an
+    """Update stimulus dataframe based on stimulus list coming from an
     Exp022 experiment.
+
+    Parameters
+    ----------
+    df :
+        
+    metadata :
+        
+
+    Returns
+    -------
+
     """
 
     p = metadata['protocol_params']['inter_stim_pause']
@@ -88,8 +108,19 @@ def df_from_exp022_list(df, metadata):
 
 
 def df_from_exp022_img_list(df, metadata):
-    """ Update stimulus dataframe based on stimulus list coming from an
+    """Update stimulus dataframe based on stimulus list coming from an
     Exp022 experiment.
+
+    Parameters
+    ----------
+    df :
+        
+    metadata :
+        
+
+    Returns
+    -------
+
     """
 
     p = metadata['protocol_params']['inter_stim_pause']

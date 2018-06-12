@@ -12,6 +12,7 @@ import multiprocessing
 
 
 class GcMultistimExperiment(LightsheetExperiment):
+    """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CrossCalibrator(fixed_length=50), **kwargs)
         multiprocessing.set_start_method('spawn')

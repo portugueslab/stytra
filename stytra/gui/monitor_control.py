@@ -12,8 +12,14 @@ from PyQt5.QtWidgets import QVBoxLayout
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
-    """ Widget that displays the whole projector screen and allows to
+    """Widget that displays the whole projector screen and allows to
     set the stimulus display window
+
+    Parameters
+    ----------
+
+    Returns
+    -------
 
     """
     def __init__(self, *args, display_size=(1280, 800), roi_params,  **kwargs):
@@ -49,10 +55,12 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.view_box.addItem(self.calibration_frame)
 
     def set_roi(self):
+        """ """
         self.roi_box.setPos(self.roi_params['pos'], finish=False)
         self.roi_box.setSize(self.roi_params['size'])
 
     def set_param_val(self):
+        """ """
         with self.roi_params.treeChangeBlocker():
             self.roi_params.param('size').setValue(tuple(
                 [int(p) for p in self.roi_box.size()]))
@@ -62,6 +70,23 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     def display_calibration_pattern(self, calibrator,
                                     camera_resolution=(480, 640),
                                     image=None):
+        """
+
+        Parameters
+        ----------
+        calibrator :
+            
+        camera_resolution :
+             (Default value = (480)
+        640) :
+            
+        image :
+             (Default value = None)
+
+        Returns
+        -------
+
+        """
         cw = camera_resolution[0]
         ch = camera_resolution[1]
         points_cam = np.array([[0, 0], [0, cw],
@@ -82,6 +107,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
 
 class ProjectorAndCalibrationWidget(QWidget):
+    """ """
     sig_calibrating = pyqtSignal()
 
     def __init__(self, experiment, **kwargs):
@@ -121,6 +147,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.setLayout(self.container_layout)
 
     def toggle_calibration(self):
+        """ """
         self.calibrator.toggle()
         if self.calibrator.enabled:
             self.button_show_calib.setText('Hide calibration')
@@ -130,6 +157,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.experiment.window_display.widget_display.update()
 
     def calibrate(self):
+        """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
         try:
             self.calibrator.find_transform_matrix(frame)

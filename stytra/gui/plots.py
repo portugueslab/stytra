@@ -10,9 +10,7 @@ import colorspacious
 
 
 class StreamingPositionPlot(pg.GraphicsWindow):
-    """
-    Plot that displays the virtual position of the fish
-    """
+    """Plot that displays the virtual position of the fish"""
     def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
         super().__init__(*args, **kwargs)
         assert isinstance(data_accumulator, Accumulator)
@@ -27,6 +25,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         self.ind_y = self.data_accumulator.header_list.index('y')
 
     def update(self):
+        """ """
         try:
             data_array = self.data_accumulator.get_last_n(self.n_points)
             velocity = np.r_[np.clip(np.diff(data_array[:, self.ind_x])**2 + \
@@ -43,10 +42,16 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class MultiStreamPlot(pg.GraphicsWindow):
-    """
-    Window to plot live data that are accumulated by a DAtaAccumulator
+    """Window to plot live data that are accumulated by a DAtaAccumulator
     object.
     New plots can be added via the add_stream() method.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, time_past=6, bounds_update=0.1,
                  *args, **kwargs):
@@ -79,12 +84,22 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
     @staticmethod
     def get_colors(n_colors=1, lightness=50, saturation=50, shift=0):
-        """
-        Get colors on the LCh ring
+        """Get colors on the LCh ring
 
-        :param n_colors:
-        :param lightness:
-        :return:
+        Parameters
+        ----------
+        n_colors :
+            param lightness: (Default value = 1)
+        lightness :
+             (Default value = 50)
+        saturation :
+             (Default value = 50)
+        shift :
+             (Default value = 0)
+
+        Returns
+        -------
+
         """
         hues = np.linspace(0, 360, n_colors + 1)[:-1] + shift
         return np.clip(colorspacious.cspace_convert(np.stack([
@@ -94,12 +109,19 @@ class MultiStreamPlot(pg.GraphicsWindow):
         ], 1), 'CIELCh', 'sRGB1'), 0, 1)*255
 
     def add_stream(self, accumulator, header_items):
-        """
-        Adds a data collector stream to the plot:
-        :param accumulator: instance of the DataAccumulator class
-        :param header_items: specify elements in the DataAccumulator to be plot
-               by their header name.
-        :return:
+        """Adds a data collector stream to the plot:
+
+        Parameters
+        ----------
+        accumulator :
+            instance of the DataAccumulator class
+        header_items :
+            specify elements in the DataAccumulator to be plot
+            by their header name.
+
+        Returns
+        -------
+
         """
         self.colors = self.get_colors(len(self.curves) + len(header_items))
         self.accumulators.append(accumulator)
@@ -145,9 +167,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.plotContainter.setYRange(-0.1, len(self.curves)+0.1)
 
     def update(self):
-        """
-        Function called by external timer to update the plot
-        """
+        """Function called by external timer to update the plot"""
         self.start = datetime.datetime.now()
 
         i_stream = 0

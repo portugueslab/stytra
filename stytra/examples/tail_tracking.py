@@ -5,6 +5,7 @@ from stytra import TailTrackingExperiment
 
 
 class TailTrackImplementation(TailTrackingExperiment):
+    """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.main_layout = QSplitter(Qt.Vertical)

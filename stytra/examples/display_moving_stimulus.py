@@ -23,6 +23,23 @@ from stytra.stimulation.visual import MovingSeamless
 
 def make_moving_protocol(n_vels=240*3, stim_duration=5,
                          vel_mean=30, vel_std=5):
+    """
+
+    Parameters
+    ----------
+    n_vels :
+         (Default value = 240*3)
+    stim_duration :
+         (Default value = 5)
+    vel_mean :
+         (Default value = 30)
+    vel_std :
+         (Default value = 5)
+
+    Returns
+    -------
+
+    """
     t_break = np.arange(n_vels + 1) * stim_duration
 
     angles = np.random.uniform(0, 2 * np.pi, n_vels)
@@ -42,6 +59,25 @@ def make_moving_protocol(n_vels=240*3, stim_duration=5,
 
 def make_moving_pausing_protocol(n_vels=240 * 3, stim_duration=5, pause_duration=5,
                                  vel_mean=30, vel_std=5):
+    """
+
+    Parameters
+    ----------
+    n_vels :
+         (Default value = 240 * 3)
+    stim_duration :
+         (Default value = 5)
+    pause_duration :
+         (Default value = 5)
+    vel_mean :
+         (Default value = 30)
+    vel_std :
+         (Default value = 5)
+
+    Returns
+    -------
+
+    """
     t_break = np.tile(np.arange(n_vels)*(stim_duration+pause_duration), (2, 1)).reshape((-1), order='F')
     t_break[1::2] += stim_duration
     t_break = np.concatenate([t_break, [t_break[-1]+pause_duration]])
@@ -65,6 +101,25 @@ def make_moving_pausing_protocol(n_vels=240 * 3, stim_duration=5, pause_duration
 
 def make_spinning_protocol(n_vels=100, stim_duration=10, pause_duration=5,
                                  vel_mean=0.5, vel_std=0.35):
+    """
+
+    Parameters
+    ----------
+    n_vels :
+         (Default value = 100)
+    stim_duration :
+         (Default value = 10)
+    pause_duration :
+         (Default value = 5)
+    vel_mean :
+         (Default value = 0.5)
+    vel_std :
+         (Default value = 0.35)
+
+    Returns
+    -------
+
+    """
     t_break = np.tile(np.arange(n_vels) * (stim_duration + pause_duration), (2, 1)).reshape((-1), order='F')
     t_break[1::2] += stim_duration
     t_break = np.concatenate([t_break, [t_break[-1] + pause_duration]])
@@ -83,6 +138,7 @@ def make_spinning_protocol(n_vels=100, stim_duration=10, pause_duration=5,
 
 
 class Experiment(QMainWindow):
+    """ """
     def __init__(self, app):
         super().__init__()
         self.app = app
@@ -200,14 +256,17 @@ class Experiment(QMainWindow):
     #     self.prog_bar.setValue(int(time_elapsed*100/self.protocol_duration))
 
     def config_cam_calib(self):
+        """ """
         pass
         # TODO change camera settings when calibrating
 
     def update_progress(self):
+        """ """
         finished = (datetime.datetime.now() - self.protocol.t_start).total_seconds()/self.protocol_duration
         self.win_control.progbar_protocol.setValue(int(finished*100))
 
     def calibrate(self):
+        """ """
         try:
             # we steal a frame from the GUI display queue to calibrate
             time, im = self.gui_frame_queue.get(timeout=1)
@@ -224,6 +283,17 @@ class Experiment(QMainWindow):
             pass
 
     def finishProtocol(self, isfinished):
+        """
+
+        Parameters
+        ----------
+        isfinished :
+            
+
+        Returns
+        -------
+
+        """
         self.finished_sig.set()
         self.camera.join(timeout=3)
         print('Camera joined')
@@ -250,6 +320,17 @@ class Experiment(QMainWindow):
 
 
     def closeEvent(self, QCloseEvent):
+        """
+
+        Parameters
+        ----------
+        QCloseEvent :
+            
+
+        Returns
+        -------
+
+        """
         if not self.finished:
             self.finishProtocol()
         self.app.closeAllWindows()

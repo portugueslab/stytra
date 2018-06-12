@@ -5,13 +5,27 @@ from datetime import datetime
 
 
 class PyboardTrigger(PyboardConnection):
+    """ """
 
     def switch_on(self):
+        """ """
         self.write('on')
 
     def switch_off(self):
+        """ """
         self.write('off')
 
     def set_pulse_freq(self, fn):
+        """
+
+        Parameters
+        ----------
+        fn :
+            
+
+        Returns
+        -------
+
+        """
         # self.write('set'+str(fn))
         self.write('set20')

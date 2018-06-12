@@ -2,10 +2,16 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class CameraControlParameters(HasPyQtGraphParams):
-    """
-    HasPyQtGraphParams class for controlling the camera params.
+    """HasPyQtGraphParams class for controlling the camera params.
     Ideally, methods to automatically set dynamic boundaries on frame rate and
     exposure time can be implemented. Currently not implemented.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self):
         super().__init__(name='tracking_camera_params')
@@ -34,9 +40,11 @@ class CameraControlParameters(HasPyQtGraphParams):
         self.fps.sigValueChanged.connect(self.change_exp)
 
     def change_fps(self):
+        """ """
         pass
         # self.fps.setValue(1000 / self.exp.value(),blockSignal=self.change_exp)
 
     def change_exp(self):
+        """ """
         pass
         # self.exp.setValue(1000 / self.fps.value(),blockSignal=self.change_fps)

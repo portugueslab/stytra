@@ -6,16 +6,25 @@ from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
 
 
-# from stytra.metadata import Metadata
-
-
 class ContourScorer:
+    """ """
     def __init__(self, target_area, target_ratio, ratio_weight=1):
         self.target_area = target_area
         self.target_ratio = target_ratio
         self.ratio_weight = ratio_weight
 
     def score(self, cont):
+        """
+
+        Parameters
+        ----------
+        cont :
+            
+
+        Returns
+        -------
+
+        """
         area = cv2.contourArea(cont)
         if area < 2:
             return 10000
@@ -32,6 +41,19 @@ class ContourScorer:
         return self.ratio_weight * err_ratio + err_area
 
     def best_n(self, contours, n=1):
+        """
+
+        Parameters
+        ----------
+        contours :
+            
+        n :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
         idxs = np.argsort([self.score(cont) for cont in contours])
         if n == 1:
             return contours[idxs[0]]
@@ -39,33 +61,83 @@ class ContourScorer:
             return [contours[idxs[i]] for i in range(n)]
 
     def above_threshold(self, contours, threshold):
+        """
+
+        Parameters
+        ----------
+        contours :
+            
+        threshold :
+            
+
+        Returns
+        -------
+
+        """
         print([self.score(cont) for cont in contours])
         good_conts = [cont for cont in contours if self.score(cont) < threshold]
         return good_conts
 
 
 class EyeMeasurement:
+    """ """
     def __init__(self):
         self.eyes = np.array([[0, 0], [0, 0]])
 
     def update(self, eyes):
+        """
+
+        Parameters
+        ----------
+        eyes :
+            
+
+        Returns
+        -------
+
+        """
         self.eyes = eyes
 
     def dx(self):
+        """ """
         return self.eyes[1][0]-self.eyes[0][0]
 
     def dy(self):
+        """ """
         return self.eyes[1][1]-self.eyes[0][1]
 
     def perpendicular(self):
+        """ """
         return np.arctan2(-self.dx(), self.dy())
 
     def centre(self):
+        """ """
         return np.mean(self.eyes, 0)
 
 
 def detect_eyes_tail(frame, frame_tail, start_x,
                      start_y, params, diag_image=None):
+    """
+
+    Parameters
+    ----------
+    frame :
+        
+    frame_tail :
+        
+    start_x :
+        
+    start_y :
+        
+    params :
+        
+    diag_image :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     # find the eyes
     ret, thresh_eyes = cv2.threshold(frame, params.eye_threshold, 255,
                                      cv2.THRESH_BINARY)
@@ -127,6 +199,19 @@ def detect_eyes_tail(frame, frame_tail, start_x,
 
 @vectorize([uint8(uint8, uint8)])
 def bgdif(x, y):
+    """
+
+    Parameters
+    ----------
+    x :
+        
+    y :
+        
+
+    Returns
+    -------
+
+    """
     if x > y:
         return x-y
     else:
@@ -134,6 +219,7 @@ def bgdif(x, y):
 
 
 class MidlineDetectionParams(HasPyQtGraphParams):
+    """ """
     def __init__(self):
         super().__init__(name='stimulus_protocol_params')
 
@@ -161,14 +247,24 @@ class MidlineDetectionParams(HasPyQtGraphParams):
 
 
 def find_fishes_midlines(frame, mask, params):
-    """ Finds the fishes in the frame using the mask
+    """Finds the fishes in the frame using the mask
     obtained by background subtraction
 
-    :param frame: video frame
-    :param mask: corresponding mask
+    Parameters
+    ----------
+    frame :
+        video frame
+    mask :
+        corresponding mask
         obtained with background subtraction
-    :param params:
-    :return: list of named tuples containing the fish measurements
+    params :
+        return: list of named tuples containing the fish measurements
+
+    Returns
+    -------
+    type
+        list of named tuples containing the fish measurements
+
     """
     _, contours, _ = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
                                       cv2.CHAIN_APPROX_NONE)
@@ -225,11 +321,18 @@ def find_fishes_midlines(frame, mask, params):
 
 
 def fish_start(mask, take_min=100):
-    """ Find the centre of head of the fish
+    """Find the centre of head of the fish
 
-    :param mask:
-    :param take_min:
-    :return:
+    Parameters
+    ----------
+    mask :
+        param take_min:
+    take_min :
+         (Default value = 100)
+
+    Returns
+    -------
+
     """
     # take the centre of mass of only the darkest parts, the eyes and the
     mom = cv2.moments(np.maximum(mask.astype(np.int16)-take_min,0)) # cv2.erode(mask,np.ones((7,7), dtype=np.uint8))

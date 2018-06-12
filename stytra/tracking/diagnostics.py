@@ -3,16 +3,37 @@ import cv2
 
 
 def a_to_tc(a):
-    """ Useful for drawing things with openCV,
+    """Useful for drawing things with openCV,
     converts arrays to tuples of integers
 
-    :param a:
-    :return:
+    Parameters
+    ----------
+    a :
+        return:
+
+    Returns
+    -------
+
     """
     return tuple(a.astype(np.int))
 
 
 def draw_fish_old(display, fish_data, params):
+    """
+
+    Parameters
+    ----------
+    display :
+        
+    fish_data :
+        
+    params :
+        
+
+    Returns
+    -------
+
+    """
     centre_eyes = np.array([fish_data['x'], fish_data['y']])
     fish_length = params['fish_length']
     dir_tail = fish_data['theta'] + np.pi
@@ -46,16 +67,35 @@ def draw_found_fish(background, measurements, params,
                     head_color=(100, 250, 200),
                     head_radius=3,
                     tail_color=(250, 100, 100)):
-    """ Overlays the detected posture of all the found fish
+    """Overlays the detected posture of all the found fish
     on a camera frame
 
-    :param background:
-    :param measurements:
-    :param params:
-    :param head_color:
-    :param head_radius:
-    :param tail_color:
-    :return:
+    Parameters
+    ----------
+    background :
+        param measurements:
+    params :
+        param head_color:
+    head_radius :
+        param tail_color: (Default value = 3)
+    measurements :
+        
+    head_color :
+         (Default value = (100)
+    250 :
+        
+    200) :
+        
+    tail_color :
+         (Default value = (250)
+    100 :
+        
+    100) :
+        
+
+    Returns
+    -------
+
     """
     if len(background.shape) == 2:
         background = background[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
@@ -80,6 +120,25 @@ def draw_found_fish(background, measurements, params,
 
 
 def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
+    """
+
+    Parameters
+    ----------
+    display :
+        
+    angles :
+        
+    x :
+        
+    y :
+        
+    tail_segment_length :
+        
+
+    Returns
+    -------
+
+    """
     if len(display.shape) == 2:
         display = display[:, :, None] * np.ones(3, dtype=np.uint8)[None, None, :]
 
@@ -102,17 +161,29 @@ def draw_fish_angles_embedd(display, angles, x, y, tail_segment_length):
 
 def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x,
                         tail_len_y, tail_length=None):
-    """
-    Function for drawing the fish tail with absolute angles from 0 to 2*pi (as tracked
+    """Function for drawing the fish tail with absolute angles from 0 to 2*pi (as tracked
     by the tail_trace_ls function)
-    :param display: input image to modify
-    :param angles: absolute angles (0 to 2*pi)
-    :param start_x:
-    :param start_y:
-    :param tail_len_x:
-    :param tail_len_y:
-    :param tail_length: can be fixed; if not specified, it is calculated from tail_len_x and y
-    :return:
+
+    Parameters
+    ----------
+    display :
+        input image to modify
+    angles :
+        absolute angles (0 to 2*pi)
+    start_x :
+        param start_y:
+    tail_len_x :
+        param tail_len_y:
+    tail_length :
+        can be fixed; if not specified, it is calculated from tail_len_x and y (Default value = None)
+    start_y :
+        
+    tail_len_y :
+        
+
+    Returns
+    -------
+
     """
     circle_size = 10
     circle_color = (100, 250, 200)
@@ -149,11 +220,22 @@ def draw_fish_angles_ls(display, angles, start_x, start_y, tail_len_x,
 
 
 def draw_ellipse(im, e, c=None):
-    """ Draws provided ellipses on image copy
-    :param im: the image
-    :param e: the ellipses from fit_ellipse
-    :param c: colors in uint8 tuples (RGBA)
-    :return: new image with ellipses
+    """Draws provided ellipses on image copy
+
+    Parameters
+    ----------
+    im :
+        the image
+    e :
+        the ellipses from fit_ellipse
+    c :
+        colors in uint8 tuples (RGBA) (Default value = None)
+
+    Returns
+    -------
+    type
+        new image with ellipses
+
     """
     imc = im.copy()
 

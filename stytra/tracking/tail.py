@@ -4,11 +4,37 @@ import cv2
 
 @jit(nopython=True)
 def reduce_to_pi(angle):
+    """
+
+    Parameters
+    ----------
+    angle :
+        
+
+    Returns
+    -------
+
+    """
     return np.mod(angle + np.pi, 2*np.pi)-np.pi
 
 
 @jit(nopython=True)
 def find_direction(start, image, seglen):
+    """
+
+    Parameters
+    ----------
+    start :
+        
+    image :
+        
+    seglen :
+        
+
+    Returns
+    -------
+
+    """
     n_angles = 20
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
@@ -30,14 +56,24 @@ def find_direction(start, image, seglen):
 
 @jit(nopython=True, cache=True)
 def angle(dx1, dy1, dx2, dy2):
-    """
-    Calculate angle between two segments d1 and d2
+    """Calculate angle between two segments d1 and d2
 
-    :param dx1: x length for first segment
-    :param dy1: y length for first segment
-    :param dx2: -
-    :param dy2: -
-    :return: angle between -pi and +pi
+    Parameters
+    ----------
+    dx1 :
+        x length for first segment
+    dy1 :
+        y length for first segment
+    dx2 :
+        param dy2: -
+    dy2 :
+        
+
+    Returns
+    -------
+    type
+        angle between -pi and +pi
+
     """
     alph1 = np.arctan2(dy1, dx1)
     alph2 = np.arctan2(dy2, dx2)
@@ -50,12 +86,22 @@ def angle(dx1, dy1, dx2, dy2):
 
 
 def bp_filter_img(img, small_square=3, large_square=50):
-    """
-    Bandpass filter for images.
-    :param img: input image
-    :param small_square: small square for low-pass smoothing
-    :param large_square: big square for high pass smoothing (subtraction of background shades)
-    :return: filtered image
+    """Bandpass filter for images.
+
+    Parameters
+    ----------
+    img :
+        input image
+    small_square :
+        small square for low-pass smoothing (Default value = 3)
+    large_square :
+        big square for high pass smoothing (subtraction of background shades) (Default value = 50)
+
+    Returns
+    -------
+    type
+        filtered image
+
     """
     img_filt_lower = cv2.boxFilter(img, -1, (large_square, large_square))
     img_filt_low = cv2.boxFilter(img, -1, (small_square, small_square))
@@ -64,18 +110,31 @@ def bp_filter_img(img, small_square=3, large_square=50):
 
 @jit(nopython=True)
 def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
-    """
-    Find the endpoint of the next tail segment
+    """Find the endpoint of the next tail segment
     by calculating the moments in a look-ahead area
 
-    :param fc: image to find tail
-    :param xm: starting point x
-    :param ym: starting point y
-    :param dx: initial displacement x
-    :param dy: initial displacement y
-    :param wind_size: size of the window to estimate next tail point
-    :param next_point_dist: distance to the next tail point
-    :return:
+    Parameters
+    ----------
+    fc :
+        image to find tail
+    xm :
+        starting point x
+    ym :
+        starting point y
+    dx :
+        initial displacement x
+    dy :
+        initial displacement y
+    wind_size :
+        size of the window to estimate next tail point
+    next_point_dist :
+        distance to the next tail point
+    halfwin :
+        
+
+    Returns
+    -------
+
     """
 
     # Generate square window for center of mass
@@ -127,19 +186,37 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
 def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
                         n_segments=12, window_size=7,
                         color_invert=False, filter_size=0, image_scale=0.5):
-    """
-    Finds the tail for an embedded fish, given the starting point and
+    """Finds the tail for an embedded fish, given the starting point and
     the direction of the tail. Alternative to the sequential circular arches.
 
-    :param im: image to process
-    :param tail_start: starting point (x, y)
-    :param tail_length: tail length (x, y)
-    :param n_segments: number of desired segments
-    :param window_size: window size in pixel for center-of-mass calculation
-    :param color_invert: True for inverting luminosity of the image
-    :param filter_size: Size of the box filter to low-pass filter the image
-    :param image_scale: the amount of downscaling of the image
-    :return: list of cumulative sum + list of angles
+    Parameters
+    ----------
+    im :
+        image to process
+    tail_start :
+        starting point (x, y) (Default value = (0)
+    tail_length :
+        tail length (x, y) (Default value = (1)
+    n_segments :
+        number of desired segments (Default value = 12)
+    window_size :
+        window size in pixel for center-of-mass calculation (Default value = 7)
+    color_invert :
+        True for inverting luminosity of the image (Default value = False)
+    filter_size :
+        Size of the box filter to low-pass filter the image (Default value = 0)
+    image_scale :
+        the amount of downscaling of the image (Default value = 0.5)
+    0) :
+        
+    1) :
+        
+
+    Returns
+    -------
+    type
+        list of cumulative sum + list of angles
+
     """
     start_x = tail_start[1]  # TODO remove
     start_y = tail_start[0]
@@ -190,9 +267,31 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
 @jit(nopython=True)
 def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y,
                         num_points, tail_length, color_invert):
-    """
-    Tail tracing based on min (or max) detection on arches. Wrapped by
+    """Tail tracing based on min (or max) detection on arches. Wrapped by
     trace_tail_angular_sweep.
+
+    Parameters
+    ----------
+    img :
+        
+    start_x :
+        
+    start_y :
+        
+    disp_x :
+        
+    disp_y :
+        
+    num_points :
+        
+    tail_length :
+        
+    color_invert :
+        
+
+    Returns
+    -------
+
     """
     # Define starting angle based on tail dimensions:
     start_angle = np.arctan2(disp_x, disp_y)
@@ -262,17 +361,36 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y,
 def trace_tail_angular_sweep(im, tail_start=(0, 0), n_segments=7,
                              tail_length=(1, 1), filter_size=0,
                              color_invert=False, image_scale=1):
-    """
-    Tail tracing based on min (or max) detection on arches. Wraps
+    """Tail tracing based on min (or max) detection on arches. Wraps
     _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
     smoothing, 300 us with smoothing.
-    :param img: input image
-    :param tail_start: tail starting point (x, y)
-    :param tail_length: tail length
-    :param n_segments: number of segments
-    :param filter_size: Box for smoothing the image
-    :param color_invert: True for inverting image colors
-    :return:
+
+    Parameters
+    ----------
+    img :
+        input image
+    tail_start :
+        tail starting point (x, y) (Default value = (0)
+    tail_length :
+        tail length (Default value = (1)
+    n_segments :
+        number of segments (Default value = 7)
+    filter_size :
+        Box for smoothing the image (Default value = 0)
+    color_invert :
+        True for inverting image colors (Default value = False)
+    im :
+        
+    0) :
+        
+    1) :
+        
+    image_scale :
+         (Default value = 1)
+
+    Returns
+    -------
+
     """
 
     start_x = tail_start[1]  # TODO remove
@@ -307,17 +425,28 @@ def trace_tail_angular_sweep(im, tail_start=(0, 0), n_segments=7,
 
 @jit(nopython=True, cache=True)
 def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
-    """
-    Finds a midline for a fish image, with the starting point and direction
+    """Finds a midline for a fish image, with the starting point and direction
 
-    :param im:
-    :param xm:
-    :param ym:
-    :param angle:
-    :param r:
-    :param m:
-    :param n_points_max:
-    :return:
+    Parameters
+    ----------
+    im :
+        param xm:
+    ym :
+        param angle:
+    r :
+        param m: (Default value = 9)
+    n_points_max :
+        return: (Default value = 20)
+    xm :
+        
+    angle :
+        
+    m :
+         (Default value = 3)
+
+    Returns
+    -------
+
     """
 
     dx = np.cos(angle) * m

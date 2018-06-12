@@ -17,11 +17,10 @@ from stytra.hardware.video.interfaces import CameraControlParameters
 
 
 class VideoSource(FrameProcessor):
-    """
-    Abstract class for a process that generates frames, being it a camera
+    """Abstract class for a process that generates frames, being it a camera
     or a file source. A maximum size of the memory used by the process can be
     set.
-
+    
     ===================== ===================================================
     **Input Queues:**
     self.control_queue    queue with control parameters for the source,
@@ -29,17 +28,23 @@ class VideoSource(FrameProcessor):
                           :class:CameraControlParameters
                           <.interfaces.CameraControlParameters> object
     ===================== ===================================================
-
+    
     ===================== ===================================================
     **Output Queues**
     self.frame_queue      TimestampedArrayQueue from the arrayqueues module
                           where the frames read from the camera are sent.
     ===================== ===================================================
-
+    
     ===================== ===================================================
     **Events**
     self.kill_signal      When set kill the process.
     ===================== ===================================================
+
+    Parameters
+    ----------
+
+    Returns
+    -------
 
     """
     def __init__(self, rotation=False, max_mbytes_queue=100):
@@ -55,18 +60,24 @@ class VideoSource(FrameProcessor):
 
 
 class CameraSource(VideoSource):
-    """
-    Process for controlling a camera.
+    """Process for controlling a camera.
     Cameras currently implemented:
-
+    
     Module documentation here_:
-
+    
     .. _here: <https://www.ximea.com/support/wiki/apis/Python>_
-
+    
     ======== ===========================================
     Ximea    Add some info
     Avt      Add some info
     ======== ===========================================
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     camera_class_dict = dict(ximea=XimeaCamera,
@@ -82,10 +93,7 @@ class CameraSource(VideoSource):
         self.cam = None
 
     def run(self):
-        """
-        This process constantly try to read frames from the camera and to get
-        parameters from the parameter queue to update the camera params.
-        """
+        """This process constantly try to read frames from the camera and to get"""
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
             self.cam = CameraClass(debug=True)
@@ -118,9 +126,15 @@ class CameraSource(VideoSource):
 
 
 class VideoFileSource(VideoSource):
-    """
-    A class to stream videos from a file to test parts of
+    """A class to stream videos from a file to test parts of
     stytra without a camera available.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, source_file=None,
                  loop=True, framerate=300,
@@ -130,6 +144,7 @@ class VideoFileSource(VideoSource):
         self.loop = loop
 
     def run(self):
+        """ """
         # If the file is a Ximea Camera sequence, frames in the  corresponding
         # folder are read.
         import cv2

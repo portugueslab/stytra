@@ -2,9 +2,7 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class FrameProcessingMethod(HasPyQtGraphParams):
-    """
-    The class for parametrisation of various tail and fish tracking methods
-    """
+    """The class for parametrisation of various tail and fish tracking methods"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         for child in self.params.children():
@@ -26,8 +24,7 @@ Tail tracking methods
 
 
 class TailTrackingMethod(FrameProcessingMethod):
-    """ General tail tracking method.
-    """
+    """General tail tracking method."""
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
@@ -52,9 +49,7 @@ class TailTrackingMethod(FrameProcessingMethod):
 
 
 class CentroidTrackingMethod(TailTrackingMethod):
-    """
-    Center-of-mass method to find consecutive segments.
-    """
+    """Center-of-mass method to find consecutive segments."""
     def __init__(self):
         super().__init__()
         self.params.child('function').setValue('centroid')
@@ -68,9 +63,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
-    """
-    Angular sweep method to find consecutive segments.
-    """
+    """Angular sweep method to find consecutive segments."""
     def __init__(self):
         super().__init__()
         self.params.child('function').setValue('angle_sweep')
@@ -82,8 +75,7 @@ Eyes tracking methods
 
 
 class EyeTrackingMethod(FrameProcessingMethod):
-    """ General eyes tracking method.
-    """
+    """General eyes tracking method."""
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
@@ -109,9 +101,7 @@ class EyeTrackingMethod(FrameProcessingMethod):
 
 
 class ThresholdEyeTrackingMethod(EyeTrackingMethod):
-    """
-    Simple threshold method for finding eyes.
-    """
+    """Simple threshold method for finding eyes."""
     def __init__(self):
         super().__init__()
         standard_params_dict = dict(threshold=dict(value=64,
@@ -123,9 +113,7 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
 
 
 class MovementDetectionParameters(HasPyQtGraphParams):
-    """
-    The class for parametrisation of various tail and fish tracking methods
-    """
+    """The class for parametrisation of various tail and fish tracking methods"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         for child in self.params.children():

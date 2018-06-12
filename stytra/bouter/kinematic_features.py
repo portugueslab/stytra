@@ -6,6 +6,19 @@ from scipy.signal import medfilt
 
 
 def normalise_bout(bout, median_len):
+    """
+
+    Parameters
+    ----------
+    bout :
+        
+    median_len :
+        
+
+    Returns
+    -------
+
+    """
     dir_init = angle_mean(bout.theta_00.iloc[0:10])
     coord = np.column_stack(
         [gaussian_filter1d(medfilt(bout[par], median_len), 1) for par in
@@ -17,12 +30,22 @@ def normalise_bout(bout, median_len):
 
 
 def bout_features(bout, columns, filter_len=3, n_first_tail=2):
-    """ For a bout returns the features
+    """For a bout returns the features
 
-    :param bout:
-    :param columns:
-    :param filter_len:
-    :return:
+    Parameters
+    ----------
+    bout :
+        param columns:
+    filter_len :
+        return: (Default value = 3)
+    columns :
+        
+    n_first_tail :
+         (Default value = 2)
+
+    Returns
+    -------
+
     """
     angles = pd.Series(angle_mean(bout[columns[:n_first_tail]].values+
                                   np.pi)).rolling(filter_len,
@@ -41,10 +64,18 @@ def bout_features(bout, columns, filter_len=3, n_first_tail=2):
 
 
 def coordinates_to_velocities(coords):
-    """ Coordinates to velocities
+    """Coordinates to velocities
 
-    :param coords: time x (x, y, theta) coordinates
-    :return: time x (vel_axial, vel_lateral, vel_angular)
+    Parameters
+    ----------
+    coords :
+        time x (x, y, theta) coordinates
+
+    Returns
+    -------
+    type
+        time x (vel_axial, vel_lateral, vel_angular)
+
     """
     vx = np.diff(coords[:, 0])
     vy = np.diff(coords[:, 1])
@@ -62,9 +93,20 @@ def coordinates_to_velocities(coords):
 def velocities_to_coordinates(velocities, cumulative_angle=False, start_angle=0):
     """
 
-    :param velocities: axial, lateral and angular velocities
-    :param cumulative_angle: of the angle is velocity or cumulative
-    :return: x, y and theta coordinates
+    Parameters
+    ----------
+    velocities :
+        axial, lateral and angular velocities
+    cumulative_angle :
+        of the angle is velocity or cumulative (Default value = False)
+    start_angle :
+         (Default value = 0)
+
+    Returns
+    -------
+    type
+        x, y and theta coordinates
+
     """
 
     theta = start_angle + (np.cumsum(velocities[:, 2]) if not cumulative_angle
@@ -79,12 +121,19 @@ def velocities_to_coordinates(velocities, cumulative_angle=False, start_angle=0)
 
 
 def feature_history(features, history_legnth):
-    """ For tensor of dimensions [n_bouts, n_timesteps, n_tail_features]
+    """For tensor of dimensions [n_bouts, n_timesteps, n_tail_features]
     make a tensor with a history of these parameters
 
-    :param features:
-    :param history_length:
-    :return:
+    Parameters
+    ----------
+    features :
+        param history_length:
+    history_legnth :
+        
+
+    Returns
+    -------
+
     """
     repeated_features = np.zeros(features.shape + (history_legnth,),
                                  dtype=features.dtype)

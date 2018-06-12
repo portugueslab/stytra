@@ -7,6 +7,21 @@ import deepdish.io as dio
 import cv2
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
+    """
+
+    Parameters
+    ----------
+    size :
+        
+    kernel_std_x :
+         (Default value = 1)
+    kernel_std_y :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     if kernel_std_y is None:
         kernel_std_y = kernel_std_x
     width_kernel_x = size[0]
@@ -29,6 +44,17 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 
 
 def existing_file_background(filepath):
+    """
+
+    Parameters
+    ----------
+    filepath :
+        
+
+    Returns
+    -------
+
+    """
     if filepath.endswith('.h5'):
         return dio.load(filepath)
     else:
@@ -36,13 +62,23 @@ def existing_file_background(filepath):
 
 
 def poisson_disk_background(size, distance, radius):
-    """ A background with randomly spaced dots using the poisson disk
+    """A background with randomly spaced dots using the poisson disk
      algorithm
 
-    :param size: image size
-    :param distance: approximate distance between the dots
-    :param radius: radius of the dots
-    :return: the generated background
+    Parameters
+    ----------
+    size :
+        image size
+    distance :
+        approximate distance between the dots
+    radius :
+        radius of the dots
+
+    Returns
+    -------
+    type
+        the generated background
+
     """
 
     imh = size[0]
@@ -78,14 +114,24 @@ def poisson_disk_background(size, distance, radius):
 
 def gratings(mm_px=1, spatial_period=10, orientation='horizontal',
              shape='square', ratio=0.5):
-    """
-    Function for generating grids (assume usage of cv2.BORDER_WRAP for display)
-    :param mm_px: millimiters per pixel
-    :param spatial_period: spatial period (cycles/mm)
-    :param orientation: 'horizontal' or 'vertical'
-    :param shape: 'square', 'sinusoidal'
-    :param ratio: ratio of white over dark
-    :return:
+    """Function for generating grids (assume usage of cv2.BORDER_WRAP for display)
+
+    Parameters
+    ----------
+    mm_px :
+        millimiters per pixel (Default value = 1)
+    spatial_period :
+        spatial period (cycles/mm) (Default value = 10)
+    orientation :
+        horizontal' or 'vertical' (Default value = 'horizontal')
+    shape :
+        square', 'sinusoidal' (Default value = 'square')
+    ratio :
+        ratio of white over dark (Default value = 0.5)
+
+    Returns
+    -------
+
     """
 
     grating_dim = round(spatial_period/(mm_px))  # calculate dimensions
@@ -109,15 +155,21 @@ def gratings(mm_px=1, spatial_period=10, orientation='horizontal',
 
 
 class Grid:
-    """
-    class for filling a rectangular prism of dimension >= 2
+    """class for filling a rectangular prism of dimension >= 2
     with poisson disc samples spaced at least r apart
     and k attempts per active sample
     override Grid.distance to change
     distance metric used and get different forms
     of 'discs'
-
+    
     Adapted from code by Herman Tulleken (herman@luma.co.za)
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, r, *size):
         self.r = r
@@ -136,10 +188,16 @@ class Grid:
         self.active = []
 
     def clear(self):
-        """
-        resets the grid
+        """resets the grid
         active points and
         sample points
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         self.samples = []
         self.active = []
@@ -148,10 +206,18 @@ class Grid:
             self.cells[item] = -1
 
     def generate(self, point):
-        """
-        generates new points
+        """generates new points
         in an annulus between
         self.r, 2*self.r
+
+        Parameters
+        ----------
+        point :
+            
+
+        Returns
+        -------
+
         """
 
         rad = random.triangular(self.r, 2*self.r, .3*(2*self.r - self.r))
@@ -170,8 +236,18 @@ class Grid:
 
 
     def poisson(self, seed, k=30):
-        """
-        generates a set of poisson disc samples
+        """generates a set of poisson disc samples
+
+        Parameters
+        ----------
+        seed :
+            
+        k :
+             (Default value = 30)
+
+        Returns
+        -------
+
         """
         self.clear()
 
@@ -195,11 +271,21 @@ class Grid:
         return self.samples
 
     def make_points(self, k, point):
-        """
-        uses generate to make up to
+        """uses generate to make up to
         k new points, stopping
         when it finds a good sample
         using self.check
+
+        Parameters
+        ----------
+        k :
+            
+        point :
+            
+
+        Returns
+        -------
+
         """
         n = k
 
@@ -213,11 +299,21 @@ class Grid:
         return False
 
     def check(self, point, new_point):
-        """
-        checks the neighbors of the point
+        """checks the neighbors of the point
         and the new_point
         against the new_point
         returns True if none are closer than r
+
+        Parameters
+        ----------
+        point :
+            
+        new_point :
+            
+
+        Returns
+        -------
+
         """
         for i in range(self.dim):
             if not (0 < new_point[i] < self.size[i] or
@@ -236,11 +332,23 @@ class Grid:
         return True
 
     def convert(self, point, rad, angs):
-        """
-        converts the random point
+        """converts the random point
         to rectangular coordinates
         from radial coordinates centered
         on the active point
+
+        Parameters
+        ----------
+        point :
+            
+        rad :
+            
+        angs :
+            
+
+        Returns
+        -------
+
         """
         new_point = [point[0] + rad*cos(angs[0]), point[1] + rad*sin(angs[0])]
         if len(angs) > 1:
@@ -248,39 +356,85 @@ class Grid:
         return new_point
 
     def cellify(self, point):
-        """
-        returns the cell in which the point falls
+        """returns the cell in which the point falls
+
+        Parameters
+        ----------
+        point :
+            
+
+        Returns
+        -------
+
         """
         return tuple(point[i]//self.cell_size for i in range(self.dim))
 
     def distance(self, tup1, tup2):
-        """
-        returns squared distance between two points
+        """returns squared distance between two points
+
+        Parameters
+        ----------
+        tup1 :
+            
+        tup2 :
+            
+
+        Returns
+        -------
+
         """
         return sum(min(abs(tup1[k] - tup2[k]),
                        self.size[k]-abs(tup1[k] - tup2[k]))**2
                    for k in range(self.dim))
 
     def cell_distance(self, tup1, tup2):
-        """
-        returns true if the L1 distance is less than 2
+        """returns true if the L1 distance is less than 2
         for the two tuples
+
+        Parameters
+        ----------
+        tup1 :
+            
+        tup2 :
+            
+
+        Returns
+        -------
+
         """
         return sum(min(abs(tup1[k] - tup2[k]),
                         self.widths[k] - abs(tup1[k] - tup2[k])-1) for k in range(self.dim)) <= 2
 
     def neighbors(self, cell):
-        """
-        finds all occupied cells within
+        """finds all occupied cells within
         a distance of the given point
+
+        Parameters
+        ----------
+        cell :
+            
+
+        Returns
+        -------
+
         """
         return (self.cells[tup] for tup in self.cells
                 if self.cells[tup] != -1 and
                 self.cell_distance(cell, tup))
 
     def update(self, point, index):
-        """
-        updates the grid with the new point
+        """updates the grid with the new point
+
+        Parameters
+        ----------
+        point :
+            
+        index :
+            
+
+        Returns
+        -------
+
         """
         self.cells[self.cellify(point)] = index
 

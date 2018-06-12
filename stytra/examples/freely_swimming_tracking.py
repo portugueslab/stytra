@@ -12,6 +12,19 @@ from stytra.tracking.fish import MidlineDetectionParams
 
 
 def proc(frame, mask):
+    """
+
+    Parameters
+    ----------
+    frame :
+        
+    mask :
+        
+
+    Returns
+    -------
+
+    """
     return [np.mean(frame), np.mean(mask)]
 
 if __name__ == '__main__':

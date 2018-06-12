@@ -13,10 +13,16 @@ from stytra.utilities import prepare_json
 
 
 def strip_values(it):
-    """
-    Convert OrderedDict of OrderedDict in dict of dict.
-    :param it:
-    :return:
+    """Convert OrderedDict of OrderedDict in dict of dict.
+
+    Parameters
+    ----------
+    it :
+        return:
+
+    Returns
+    -------
+
     """
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
@@ -29,9 +35,15 @@ def strip_values(it):
 
 
 class Accumulator:
-    """
-    A general class for accumulating streams of data that
+    """A general class for accumulating streams of data that
     will be saved or plotted in real time
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, fps_range=10):
         """
@@ -43,9 +55,16 @@ class Accumulator:
         self.fps_range = fps_range
 
     def reset(self, header_list=None):
-        """
-        Reset accumulator and assign a new header list
-        :param header_list:
+        """Reset accumulator and assign a new header list
+
+        Parameters
+        ----------
+        header_list :
+             (Default value = None)
+
+        Returns
+        -------
+
         """
         if header_list is not None:
             self.header_list = ['t'] + header_list
@@ -54,17 +73,17 @@ class Accumulator:
         print('reset')
 
     def check_start(self):
+        """ """
         if self.starting_time is None:
             self.starting_time = datetime.datetime.now()
 
     def get_dataframe(self):
-        """
-        Returns pandas DataFrame with data and headers.
-        """
+        """Returns pandas DataFrame with data and headers."""
         return pd.DataFrame(self.stored_data,
                             columns=self.header_list)
 
     def get_fps(self):
+        """ """
         try:
             last_t = self.stored_data[-1][0]
             t_minus_dif = self.stored_data[-self.fps_range][0]
@@ -73,6 +92,17 @@ class Accumulator:
             return 0.0
 
     def get_last_n(self, n):
+        """
+
+        Parameters
+        ----------
+        n :
+            
+
+        Returns
+        -------
+
+        """
         last_n = min(n, len(self.stored_data))
         if len(self.stored_data) == 0:
             return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
@@ -89,17 +119,37 @@ class Accumulator:
             return obar
 
     def get_last_t(self, t):
+        """
+
+        Parameters
+        ----------
+        t :
+            
+
+        Returns
+        -------
+
+        """
         n = int(self.get_fps()*t)
         return self.get_last_n(n)
 
 
 def metadata_dataframe(metadata_dict, time_step=0.005):
-    """
-    Function for converting a data_log dictionary into a pandas DataFrame
+    """Function for converting a data_log dictionary into a pandas DataFrame
     for saving.
-    :param metadata_dict: data_log dictionary (containing stimulus log!)
-    :param time_step: time step (used only if tracking is not present!)
-    :return: a pandas DataFrame with a 'stimulus' column for the stimulus
+
+    Parameters
+    ----------
+    metadata_dict :
+        data_log dictionary (containing stimulus log!)
+    time_step :
+        time step (used only if tracking is not present!) (Default value = 0.005)
+
+    Returns
+    -------
+    type
+        a pandas DataFrame with a 'stimulus' column for the stimulus
+
     """
 
     # Check if tail tracking is present, to use tracking dataframe as template.
@@ -138,7 +188,7 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 
 class DataCollector:
-    """ Class for saving all data and data_log produced during an experiment.
+    """Class for saving all data and data_log produced during an experiment.
     There are two kind of data that are collected:
      - Metadata/parameters: values that should restored from previous
                             sessions.
@@ -149,7 +199,7 @@ class DataCollector:
      - Static data:         (tail tracking, stimulus log...), that should not
                             be restored. Those have to be added one by one
                             via the add_data_source() method.
-
+    
     Inputs from both types of sources are eventually saved in the .json file
     containing all the information from the experiment.
     In this file data are divided into fixed categories:
@@ -165,11 +215,18 @@ class DataCollector:
     of conventions for dividing the entries among the categories.
     In the future this function may structure its output in other standard
     formats for scientific data (e.g., NWB).
-
+    
     In addition to the .json file, data_log and parameters from
     HasPyQtGraphParams objects are stored in a config.h5 file (located in the
     experiment directory) which is used for restoring the last configuration
     of the GUI and of the experiment parameters.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, *data_tuples_list, folder_path='./'):
@@ -204,7 +261,7 @@ class DataCollector:
             self.add_static_data(*data_element)
 
     def restore_from_saved(self):
-        """ If a config.h5 file is available, use the data there to
+        """If a config.h5 file is available, use the data there to
         restore the state of the HasPyQtGraph._params tree to last
         session values.
         Before, we make sure that the dictionary that we try to restore
@@ -212,6 +269,13 @@ class DataCollector:
         Without this control, changing any of the parameters in the code
         could result in bugs and headaches due to the change of the values
         from a config.h5 file from the previous program version.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         if self.last_metadata is not None:
             # Make clean dictionaries without the values:
@@ -230,10 +294,19 @@ class DataCollector:
                 # multiple times.
 
     def add_param_tree(self, params_tree):
-        """ Add the params tree that will be used for reading and restoring
+        """Add the params tree that will be used for reading and restoring
         the parameters from the previous session.
         It should be the HasPyQtGraph._params tree for it to
         contain all the params branches in all the different experiment objects.
+
+        Parameters
+        ----------
+        params_tree :
+            
+
+        Returns
+        -------
+
         """
         if isinstance(params_tree, Parameter):
             self.params_metadata = params_tree;
@@ -243,27 +316,47 @@ class DataCollector:
             print('Invalid params source passed!')
 
     def add_static_data(self, entry, name='unspecified_entry'):
-        """ Add new data to the dictionary.
-        :param entry: data that will be stored;
-        :param name: name in the dictionary. It should start with "category_",
-                     where "category" should be one of the possible keys
-                     of the dictionary produced in get_clean_dict().
+        """Add new data to the dictionary.
+
+        Parameters
+        ----------
+        entry :
+            data that will be stored;
+        name :
+            name in the dictionary. It should start with "category_",
+            where "category" should be one of the possible keys
+            of the dictionary produced in get_clean_dict(). (Default value = 'unspecified_entry')
+
+        Returns
+        -------
+
         """
         self.log_data_dict[name] = entry
 
     def get_clean_dict(self, paramstree=True, eliminate_df=False,
                        convert_datetime=False):
-        """ Collect data from all sources and put them together in
+        """Collect data from all sources and put them together in
         the final hierarchical dictionary that will be saved in the .json file.
         The first level in the dictionary is fixed and defined by the keys
         of the clean_data_dict that will be returned. data from all sources
         are divided in these categories according to the key preceding the
         underscore in their name (e.g., value of general_db_idx will be put in
         ['general']['db_idx']).
-        :param paramstree: see sanitize_item docs;
-        :param eliminate_df: see sanitize_item docs;
-        :param convert_datetime: see sanitize_item docs;
-        :return: dictionary with the sorted data.
+
+        Parameters
+        ----------
+        paramstree :
+            see sanitize_item docs; (Default value = True)
+        eliminate_df :
+            see sanitize_item docs; (Default value = False)
+        convert_datetime :
+            see sanitize_item docs; (Default value = False)
+
+        Returns
+        -------
+        type
+            dictionary with the sorted data.
+
         """
         clean_data_dict = dict(animal={}, stimulus={}, imaging={},
                                behaviour={}, general={}, camera={},
@@ -292,8 +385,16 @@ class DataCollector:
         return clean_data_dict
 
     def get_last_value(self, class_param_key):
-        """
-        Get the last saved value for a specific class_param_key.
+        """Get the last saved value for a specific class_param_key.
+
+        Parameters
+        ----------
+        class_param_key :
+            
+
+        Returns
+        -------
+
         """
         if self.last_metadata is not None:
             # This syntax is ugly but apparently necessary to scan through
@@ -304,18 +405,31 @@ class DataCollector:
             return None
 
     def save_config_file(self):
-        """
-        Save the config.h5 file with the current state of the params
+        """Save the config.h5 file with the current state of the params
         data_log.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         dd.io.save(self.folder_path + 'config.h5',
                    self.params_metadata.saveState())
 
     def save_json_log(self, timestamp=None):
-        """
-        Save the .json file with all the data from both static sources
+        """Save the .json file with all the data from both static sources
         and the updated params.
-        :param timestamp:
+
+        Parameters
+        ----------
+        timestamp :
+             (Default value = None)
+
+        Returns
+        -------
+
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
         if timestamp is None:
@@ -336,8 +450,16 @@ class DataCollector:
                       outfile, sort_keys=True)
 
     def save(self, timestamp=None):
-        """
-        Save both the data_log.json log and the config.h5 file
+        """Save both the data_log.json log and the config.h5 file
+
+        Parameters
+        ----------
+        timestamp :
+             (Default value = None)
+
+        Returns
+        -------
+
         """
 
         self.save_json_log(timestamp)

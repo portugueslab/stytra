@@ -11,13 +11,21 @@ from stytra.collectors import Accumulator
 # TODO I think this should stay together with the dataaccumulator parent
 class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=None):
-        """
-        General class for accumulating (for saving or dispatching) data
+    """General class for accumulating (for saving or dispatching) data
         out of a multiprocessing queue. Require triggering with some timer.
         This timer has to be set externally!!!
-        :param data_queue: queue from witch to retrieve data (Queue object)
-        :param header_list: headers for the data to stored (strings list)
-        """
+
+    Parameters
+    ----------
+    data_queue :
+        queue from witch to retrieve data (Queue object)
+    header_list :
+        headers for the data to stored (strings list)
+
+    Returns
+    -------
+
+    """
         super().__init__()
 
         # Store externally the starting time make us free to keep
@@ -31,9 +39,7 @@ class QueueDataAccumulator(QObject, Accumulator):
         self.header_list.extend(header_list)
 
     def update_list(self):
-        """
-        Upon calling put all available data into a list.
-        """
+        """Upon calling put all available data into a list."""
         while True:
             try:
                 # Get data from queue:
@@ -54,6 +60,7 @@ class QueueDataAccumulator(QObject, Accumulator):
 
 
 class FishTrackingProcess(Process):
+    """ """
     def __init__(self, image_queue, fish_queue, stop_event,
                  processing_parameters, diagnostic_queue=None):
         super().__init__()
@@ -68,6 +75,7 @@ class FishTrackingProcess(Process):
         self.processing_parameters = processing_parameters
 
     def run(self):
+        """ """
         cv2.bgsegm.createBackgroundSubtractorMOG()
         bg_sub = cv2.bgsegm.createBackgroundSubtractorMOG(history=500,
                                                           nmixtures=3,

@@ -10,8 +10,7 @@ from multiprocessing import Event
 
 # TODO documentation
 class VideoWriter(FrameProcessor):
-    """
-    """
+    """ """
     def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):
         super().__init__()
         self.folder = folder
@@ -21,6 +20,7 @@ class VideoWriter(FrameProcessor):
         self.reset_signal = Event()
 
     def run(self):
+        """ """
         while True:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             out_container = av.open(self.folder+timestamp+".mp4", mode='w')

@@ -16,8 +16,15 @@ from stytra.tracking.eyes import trace_eyes
 
 
 class FrameDispatcher(FrameProcessor):
-    """ A class which handles taking frames from the camera and processing them,
+    """A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, in_frame_queue, finished_signal=None,
@@ -48,11 +55,19 @@ class FrameDispatcher(FrameProcessor):
                                             eye_threshold=trace_eyes)
 
     def process_internal(self, frame):
-        """
-        Apply processing function to current frame with
+        """Apply processing function to current frame with
         self.processing_parameters as additional inputs.
-        :param frame: frame to be processed;
-        :return: processed output
+
+        Parameters
+        ----------
+        frame :
+            frame to be processed;
+
+        Returns
+        -------
+        type
+            processed output
+
         """
         if self.processing_function is not None:
             try:
@@ -63,9 +78,7 @@ class FrameDispatcher(FrameProcessor):
                 raise ValueError('Unknown error while processing frame')
 
     def run(self):
-        """
-        Loop where the tracking function runs.
-        """
+        """Loop where the tracking function runs."""
         while not self.finished_signal.is_set():
             try:
                 time, frame = self.frame_queue.get()
@@ -97,6 +110,17 @@ class FrameDispatcher(FrameProcessor):
         return
 
     def send_to_gui(self, frame):
+        """
+
+        Parameters
+        ----------
+        frame :
+            
+
+        Returns
+        -------
+
+        """
         if self.current_framerate:
             every_x = max(int(self.current_framerate / self.gui_framerate), 1)
         else:
@@ -108,6 +132,21 @@ class FrameDispatcher(FrameProcessor):
 
 @jit(nopython=True)
 def update_bg(bg, current, alpha):
+    """
+
+    Parameters
+    ----------
+    bg :
+        
+    current :
+        
+    alpha :
+        
+
+    Returns
+    -------
+
+    """
     am = 1 - alpha
     dif = np.empty_like(current)
     for i in range(current.shape[0]):
@@ -122,6 +161,19 @@ def update_bg(bg, current, alpha):
 
 @jit(nopython=True)
 def _compare_to_previous(current, previous):
+    """
+
+    Parameters
+    ----------
+    current :
+        
+    previous :
+        
+
+    Returns
+    -------
+
+    """
     n_dif = np.zeros(previous.shape[0], dtype=np.uint32)
     for k in range(previous.shape[0]):
         for i in range(current.shape[0]):
@@ -131,6 +183,7 @@ def _compare_to_previous(current, previous):
 
 
 class MovingFrameDispatcher(FrameDispatcher):
+    """ """
     def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
         super().__init__(*args, **kwargs)
         self.output_queue = ArrayQueue(max_mbytes=output_queue_mb)
@@ -143,6 +196,7 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.mem_use = 0
 
     def run(self):
+        """ """
         t, frame_0 = self.frame_queue.get(timeout=10)
         n_previous_compare = 3
 

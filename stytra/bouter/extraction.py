@@ -5,6 +5,25 @@ import matplotlib.pyplot as plt
 
 def find_bouts_timeseries(time, tail_sum, vigour_duration=0.050,
                           vigour_threshold=0.3, diagnostic_axis=None):
+    """
+
+    Parameters
+    ----------
+    time :
+        
+    tail_sum :
+        
+    vigour_duration :
+         (Default value = 0.050)
+    vigour_threshold :
+         (Default value = 0.3)
+    diagnostic_axis :
+         (Default value = None)
+
+    Returns
+    -------
+
+    """
     dt = np.mean(np.diff(time[:10]))
     n_vigour_std = int(round(vigour_duration / dt))
     vigour = pd.Series(tail_sum).rolling(n_vigour_std).std()

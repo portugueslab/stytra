@@ -12,16 +12,35 @@ from pyqtgraph.parametertree import Parameter
 
 
 class Database:
+    """ """
     def __init__(self):
         pass
 
     def add_experiment(self, exp):
+        """
+
+        Parameters
+        ----------
+        exp :
+            
+
+        Returns
+        -------
+
+        """
         pass
 
 
 class FrameProcessor(Process):
-    """ A basic class for a process that deals with frames. It provides
+    """A basic class for a process that deals with frames. It provides
     framerate calculation.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, n_fps_frames=10, print_framerate=False):
         """ Initialize the class.
@@ -42,8 +61,7 @@ class FrameProcessor(Process):
         self.starting_time = datetime.now()
 
     def update_framerate(self):
-        """ Calculate the framerate every n_fps_frames frames.
-        """
+        """Calculate the framerate every n_fps_frames frames."""
         # If number of frames for updating is reached:
         if self.i_fps == self.n_fps_frames - 1:
             self.current_time = datetime.now()
@@ -62,10 +80,18 @@ class FrameProcessor(Process):
 
 
 def prepare_json(it, **kwargs):
-    """ Used to create a dictionary which will be safe to put in MongoDB
+    """Used to create a dictionary which will be safe to put in MongoDB
 
-    :param it: the item which will be recursively sanitized
-    :return:
+    Parameters
+    ----------
+    it :
+        the item which will be recursively sanitized
+    **kwargs :
+        
+
+    Returns
+    -------
+
     """
     safe_types = (int, float, str)
 
@@ -106,8 +132,16 @@ def prepare_json(it, **kwargs):
     return 0
 
 def get_default_args(func):
-    """
-    Find default arguments of functions
+    """Find default arguments of functions
+
+    Parameters
+    ----------
+    func :
+        
+
+    Returns
+    -------
+
     """
     signature = inspect.signature(func)
     return {
@@ -118,6 +152,17 @@ def get_default_args(func):
 
 
 def strip_values(it):
+    """
+
+    Parameters
+    ----------
+    it :
+        
+
+    Returns
+    -------
+
+    """
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
@@ -129,13 +174,18 @@ def strip_values(it):
 
 
 class HasPyQtGraphParams(object):
-    """
-    This class is used to have a number of objects (experiment interfaces and
+    """This class is used to have a number of objects (experiment interfaces and
     protocols) sharing a global pyqtgraph Parameter object that will be used
     for saving data_log and restoring the app to the last used state.
     _params is a class attribute and is shared among all subclasses; each
     subclass will have an alias, params, providing access to its private
-    parameters.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     _params = Parameter.create(name='global_params', type='group')
 
@@ -166,21 +216,41 @@ class HasPyQtGraphParams(object):
         self._params.addChild(self.params)
 
     def add_params(self, **kwargs):
-        """ Sets new parameters with keys and default values
+        """Sets new parameters with keys and default values
         or the full param specification
-        :param kwargs: new parameters to add
-        :return: None
+
+        Parameters
+        ----------
+        kwargs :
+            new parameters to add
+        **kwargs :
+            
+
+        Returns
+        -------
+        type
+            None
+
         """
         for name, value in kwargs.items():
             self.add_one_param(name, value)
 
     def add_one_param(self, name, value, get_var_type=True):
-        """ Easy set for adding parameters.
-        :param name: name of new parameter
-        :param value: either a value entry or a dictionary of valid keys
-                      for a parameter (e.g. type, visible, editable, etc.)
-        :param get_var_type: if True, value type will be set as parameter type
-        :return:
+        """Easy set for adding parameters.
+
+        Parameters
+        ----------
+        name :
+            name of new parameter
+        value :
+            either a value entry or a dictionary of valid keys
+            for a parameter (e.g. type, visible, editable, etc.)
+        get_var_type :
+            if True, value type will be set as parameter type (Default value = True)
+
+        Returns
+        -------
+
         """
         if isinstance(value, dict):  # Allows passing dictionaries:
             entry_dict = {'name': name}  # add name
@@ -194,15 +264,25 @@ class HasPyQtGraphParams(object):
                 self.params.addChild({'name': name, 'value': value})
 
     def get_clean_values(self):
+        """ """
         return prepare_json(self.params.getValues(), paramstree=True)
 
 
 def get_classes_from_module(input_module, parent_class):
-    """ Find all the classes in a module that are children of a parent one.
+    """Find all the classes in a module that are children of a parent one.
 
-    :param input_module: module object
-    :param parent_class: parent class object
-    :return: OrderedDict of subclasses found
+    Parameters
+    ----------
+    input_module :
+        module object
+    parent_class :
+        parent class object
+
+    Returns
+    -------
+    type
+        OrderedDict of subclasses found
+
     """
     classes = inspect.getmembers(input_module, inspect.isclass)
     ls_classes = OrderedDict({c[1].name: c[1] for c in classes

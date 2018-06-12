@@ -14,20 +14,32 @@ from stytra.utilities import prepare_json
 
 
 class SimpleCameraViewWWidget(QWidget):
-    """
-    Core of a widget to stream images from a camera or a video source.
+    """Core of a widget to stream images from a camera or a video source.
     It does not require a :class:Experiment <stytra.Experiment> to run.
-
+    
     # TODO implement this
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
 
 class CameraViewWidget(QWidget):
-    """
-    A widget to show images from a frame source and display the camera controls.
-
+    """A widget to show images from a frame source and display the camera controls.
+    
     ***It does not implement a frame dispatcher by itself so it may lag behind
     the camera at high frame rates!***
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, experiment=None, camera=None):
         """
@@ -103,21 +115,34 @@ class CameraViewWidget(QWidget):
 
     def update_controls(self, value):
         """
-        :param value: Parameter object that have changed
-        :return:
+
+        Parameters
+        ----------
+        value :
+            Parameter object that have changed
+
+        Returns
+        -------
+
         """
         # Put in the queue tuple with name and new value of the parameter:
         self.control_queue.put((value.name(), value.value()))
 
     def update_image(self):
-        """
-        Update displayed frame while emptying frame source queue. This is done
+        """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
-
+        
         # TODO fix this somehow?
-
+        
         **Important!** if the input queue is too fast this will produce an
         infinite loop and block the interface!
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
 
         first = True
@@ -145,17 +170,13 @@ class CameraViewWidget(QWidget):
             self.image_item.setImage(self.current_image)
 
     def save_image(self):
-        """
-        Save a frame to the current directory.
-        """
+        """Save a frame to the current directory."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         imsave(self.experiment.directory + '/' + timestamp + '_img.png',
                self.image_item.image)
 
     def show_params_gui(self):
-        """
-        Parameters window for the protocol parameters.
-        """
+        """ """
         self.camera_params_tree.setParameters(self.control_params.params)
         self.camera_params_tree.show()
         self.camera_params_tree.setWindowTitle('Camera parameters')
@@ -163,14 +184,19 @@ class CameraViewWidget(QWidget):
 
 
 class CameraSelection(CameraViewWidget):
-    """
-    Generic class to overlay on video an ROI that can be
+    """Generic class to overlay on video an ROI that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).
-
+    
     The changes of parameters read through the ROI position are handled
     via the track_params class, so they must have a corresponding entry in the
     definition of the FrameProcessingMethod of the tracking function of choice.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
 
     """
 
@@ -191,9 +217,15 @@ class CameraSelection(CameraViewWidget):
         self.track_params.sigTreeStateChanged.connect(self.set_pos_from_tree)
 
     def initialise_roi(self):
-        """
-        ROI is initialised separately, so it can first be defined in the
+        """ROI is initialised separately, so it can first be defined in the
         child __init__.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         try:
             # Add ROI to image and connect it to the function for updating
@@ -204,24 +236,34 @@ class CameraSelection(CameraViewWidget):
             print('No ROI defined in CameraSelection child')
 
     def set_pos_from_tree(self):
-        """
-        Called when ROI position values are changed in the ParameterTree.
+        """Called when ROI position values are changed in the ParameterTree.
         Change the position of the displayed ROI:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         pass
 
     def set_pos_from_roi(self):
-        """
-        Called when ROI position values are changed in the displayed ROI.
+        """Called when ROI position values are changed in the displayed ROI.
         Change the position in the ParameterTree values.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         pass
 
 
 class CameraTailSelection(CameraSelection):
-    """
-    Widget for select tail pts and monitoring tracking in embedded fish.
-    """
+    """Widget for select tail pts and monitoring tracking in embedded fish."""
     def __init__(self, **kwargs):
         """
         :param experiment:  experiment in which it is used.
@@ -246,9 +288,7 @@ class CameraTailSelection(CameraSelection):
         self.display_area.addItem(self.tail_curve)
 
     def set_pos_from_tree(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         p1, p2 = self.roi.getHandles()
         p1.setPos(QPointF(*self.track_params['tail_start']))
         p2.setPos(QPointF(self.track_params['tail_start'][0] +
@@ -257,9 +297,7 @@ class CameraTailSelection(CameraSelection):
                           self.track_params['tail_length'][1]))
 
     def set_pos_from_roi(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         p1, p2 = self.roi.getHandles()
         with self.track_params.treeChangeBlocker():
             self.track_params.param('tail_start').setValue((
@@ -268,9 +306,7 @@ class CameraTailSelection(CameraSelection):
                 p2.x() - p1.x(), p2.y() - p1.y()))
 
     def update_image(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         super().update_image()
 
         # Check for data to be displayed:
@@ -298,9 +334,7 @@ class CameraTailSelection(CameraSelection):
 
 
 class CameraEyesSelection(CameraSelection):
-    """
-    Widget for select tail pts and monitoring tracking in embedded fish.
-    """
+    """Widget for select tail pts and monitoring tracking in embedded fish."""
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
@@ -333,16 +367,12 @@ class CameraEyesSelection(CameraSelection):
         self.layout_control.addWidget(self.lbl_threshold_view)
 
     def set_pos_from_tree(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         self.roi.setPos(self.track_params['wnd_pos'], finish=False)
         self.roi.setSize(self.track_params['wnd_dim'])
 
     def set_pos_from_roi(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         # Set values in the ParameterTree:
         with self.track_params.treeChangeBlocker():
             self.track_params.param('wnd_dim').setValue(tuple(
@@ -351,9 +381,7 @@ class CameraEyesSelection(CameraSelection):
                 [int(p) for p in self.roi.pos()]))
 
     def update_image(self):
-        """
-        Go to parent for definition.
-        """
+        """Go to parent for definition."""
         super().update_image()
         im = self.current_image
 
@@ -416,12 +444,24 @@ class CameraEyesSelection(CameraSelection):
 
 
 class CameraViewCalib(CameraViewWidget):
+    """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.points_calib = pg.ScatterPlotItem()
         self.display_area.addItem(self.points_calib)
 
     def show_calibration(self, calibrator):
+        """
+
+        Parameters
+        ----------
+        calibrator :
+            
+
+        Returns
+        -------
+
+        """
         if calibrator.proj_to_cam is not None:
             camera_points = np.pad(calibrator.points, ((0, 0), (0, 1)),
                                    mode='constant', constant_values=1) @ calibrator.proj_to_cam.T

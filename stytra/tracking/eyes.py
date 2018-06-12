@@ -4,11 +4,20 @@ import cv2
 
 
 def _pad(im, padding=0, val=0):
-    """ Lazy function for padding image
-    :param im:
-    :param padding:
-    :param val:
-    :return:
+    """Lazy function for padding image
+
+    Parameters
+    ----------
+    im :
+
+    val :
+        return: (Default value = 0)
+    padding :
+         (Default value = 0)
+
+    Returns
+    -------
+
     """
     padded = np.lib.pad(im,
                         ((padding, padding), (padding, padding)),
@@ -18,21 +27,42 @@ def _pad(im, padding=0, val=0):
 
 
 def _local_thresholding(im, padding=2, block_size=17, offset=70):
-    """ Local thresholding
-    :param im: The camera frame with the eyes
-    :param padding: padding of the camera frame
-    :param block_size:
-    :param offset:
-    :return: thresholded image
+    """Local thresholding
+
+    Parameters
+    ----------
+    im :
+        The camera frame with the eyes
+    padding :
+        padding of the camera frame (Default value = 2)
+    block_size :
+        param offset: (Default value = 17)
+    offset :
+         (Default value = 70)
+
+    Returns
+    -------
+    type
+        thresholded image
+
     """
     padded = _pad(im, padding, im.min())
     return padded > threshold_local(padded, block_size=block_size, offset=offset)
 
 
 def _fit_ellipse(thresholded_image):
-    """ Finds contours and fits an ellipse to thresholded image
-    :param thresholded_image: Binary image containing two eyes
-    :return: When eyes were found, the two ellipses, otherwise False
+    """Finds contours and fits an ellipse to thresholded image
+
+    Parameters
+    ----------
+    thresholded_image :
+        Binary image containing two eyes
+
+    Returns
+    -------
+    type
+        When eyes were found, the two ellipses, otherwise False
+
     """
     _, contours, hierarchy = cv2.findContours(thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -63,11 +93,31 @@ def _fit_ellipse(thresholded_image):
 def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
                color_invert):
     """
-    :param im: image (numpy array);
-    :param win_pos: position of the window on the eyes (x, y);
-    :param win_dim: dimension of the window on the eyes (w, h);
-    :param threshold: threshold for ellipse fitting (int).
-    :return:
+
+    Parameters
+    ----------
+    im :
+        image (numpy array);
+    win_pos :
+        position of the window on the eyes (x, y);
+    win_dim :
+        dimension of the window on the eyes (w, h);
+    threshold :
+        threshold for ellipse fitting (int).
+    wnd_pos :
+        
+    wnd_dim :
+        
+    image_scale :
+        
+    filter_size :
+        
+    color_invert :
+        
+
+    Returns
+    -------
+
     """
     PAD = 0
 

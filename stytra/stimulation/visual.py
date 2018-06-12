@@ -15,13 +15,19 @@ from stytra.stimulation.backgrounds import existing_file_background
 
 
 class VisualStimulus(Stimulus):
-    """
-    Stimulus class to paint programmatically on a canvas.
+    """Stimulus class to paint programmatically on a canvas.
     For this subclass of Stimulus, their core function (paint()) is
     not called by the ProtocolRunner, but directly from the
     StimulusDisplayWindow. Since a StimulusDisplayWindow is directly linked to
     a ProtocolRunner, at every time the paint() method that is called
     is the one from the correct current stimulus.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, *args, clip_rect=None, **kwargs):
@@ -32,20 +38,38 @@ class VisualStimulus(Stimulus):
         self.clip_rect = clip_rect
 
     def paint(self, p, w, h):
-        """
-        Paint function. Called by the StimulusDisplayWindow update method.
-        :param p: QPainter object for drawing
-        :param w: width of the display window
-        :param h: height of the display window
+        """Paint function. Called by the StimulusDisplayWindow update method.
+
+        Parameters
+        ----------
+        p :
+            QPainter object for drawing
+        w :
+            width of the display window
+        h :
+            height of the display window
+
+        Returns
+        -------
+
         """
         pass
 
     def clip(self, p, w, h):
-        """
-        Clip image before painting
-        :param p: QPainter object used for painting
-        :param w: image width
-        :param h: image height
+        """Clip image before painting
+
+        Parameters
+        ----------
+        p :
+            QPainter object used for painting
+        w :
+            image width
+        h :
+            image height
+
+        Returns
+        -------
+
         """
         if self.clip_rect is not None:
             if isinstance(self.clip_rect[0], tuple):
@@ -58,9 +82,15 @@ class VisualStimulus(Stimulus):
 
 
 class VisualStimulusCombiner(VisualStimulus):
-    """
-    Stimulus to combine multiple paint stimuli on the same canvas.
+    """Stimulus to combine multiple paint stimuli on the same canvas.
     Their respective domains can be defined via their clipping boxes.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
 
     def __init__(self, stim_list):
@@ -69,28 +99,55 @@ class VisualStimulusCombiner(VisualStimulus):
         self.name = '+'.join([s.name for s in stim_list])
 
     def start(self):
+        """ """
         [s.start() for s in self.stimuli]
 
     def update(self):
+        """ """
         super().update()
         for s in self.stimuli:
             s._elapsed = self._elapsed
             s.update()
 
     def get_state(self):
+        """ """
         return {s.name: s.get_state() for s in self.stimuli}
 
     def initialise_external(self, experiment):
+        """
+
+        Parameters
+        ----------
+        experiment :
+            
+
+        Returns
+        -------
+
+        """
         [s.initialise_external(experiment) for s in self.stimuli]
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         [s.paint(p, w, h) for s in self.stimuli]
 
 
 class FullFieldVisualStimulus(VisualStimulus):
-    """
-    Class for painting a full field flash of a specific color.
-    """
+    """Class for painting a full field flash of a specific color."""
 
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
         """
@@ -101,6 +158,21 @@ class FullFieldVisualStimulus(VisualStimulus):
         self.name = 'flash'
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))  # Use chosen color
         self.clip(p, w, h)
@@ -108,9 +180,16 @@ class FullFieldVisualStimulus(VisualStimulus):
 
 
 class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
-    """ Paints a full field flash of a specific color, where
+    """Paints a full field flash of a specific color, where
     luminance is dynamically changed. (Could be easily change to change color
     as well).
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
     """
     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
         super().__init__(*args, dynamic_parameters=['lum', ],
@@ -121,6 +200,7 @@ class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
         self.duration = float(lum_df.t.iat[-1])
 
     def update(self):
+        """ """
         super().update()
         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
         print(lum)
@@ -128,18 +208,14 @@ class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
 
 
 class Pause(FullFieldVisualStimulus):
-    """ Class for painting full field black stimuli
-    """
+    """Class for painting full field black stimuli"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
         self.name = 'pause'
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
-    """
-    Displays videos using PIMS, at aspecified framerate
-
-    """
+    """Displays videos using PIMS, at aspecified framerate"""
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -157,6 +233,19 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
         self.duration = duration
 
     def initialise_external(self, *args, **kwargs):
+        """
+
+        Parameters
+        ----------
+        *args :
+            
+        **kwargs :
+            
+
+        Returns
+        -------
+
+        """
         super().initialise_external(*args, **kwargs)
         self._video_seq = pims.Video(self._experiment.asset_dir +
                                      '/' + self.video_path)
@@ -178,6 +267,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
                 self.duration = self._video_seq.duration
 
     def update(self):
+        """ """
         super().update()
         # if the video restarted, it means the last display time
         # is incorrect, it has to be reset
@@ -191,6 +281,21 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
                 self._last_frame_display_time = self._elapsed
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
         p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1] // 2,
@@ -199,9 +304,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
 
 class BackgroundStimulus(VisualStimulus, DynamicStimulus):
-    """
-    Stimulus with a defined position and orientation to the fish
-    """
+    """Stimulus with a defined position and orientation to the fish"""
     def __init__(self, *args, **kwargs):
         """
         :param background: background image
@@ -214,15 +317,56 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
                          **kwargs)
 
     def get_unit_dims(self, w, h):
+        """
+
+        Parameters
+        ----------
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         return w, h
 
     def get_rot_transform(self, w, h):
+        """
+
+        Parameters
+        ----------
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         xc = -w / 2
         yc = -h / 2
         return QTransform().translate(-xc, -yc).rotate(
             self.theta*180/np.pi).translate(xc, yc)
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         if self._experiment.calibrator is not None:
             mm_px = self._experiment.calibrator.params['mm_px']
         else:
@@ -257,6 +401,23 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
             self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
 
     def draw_block(self, p, point, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        point :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         pass
 
 
@@ -278,6 +439,7 @@ class MovingConstantVel(BackgroundStimulus):
         self._past_t = 0
 
     def update(self):
+        """ """
         super().update()
         dt = (self._elapsed - self._past_t)
         self.x += self.vel_x * dt
@@ -287,13 +449,23 @@ class MovingConstantVel(BackgroundStimulus):
 
 
 class SeamlessImageStimulus(BackgroundStimulus):
-    """ Class for moving an image.
-    """
+    """Class for moving an image."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._qbackground = None
 
     def initialise_external(self, experiment):
+        """
+
+        Parameters
+        ----------
+        experiment :
+            
+
+        Returns
+        -------
+
+        """
         super().initialise_external(experiment)
 
         # Get background image from folder:
@@ -302,18 +474,45 @@ class SeamlessImageStimulus(BackgroundStimulus):
                                      self.background))
 
     def get_unit_dims(self, w, h):
-        """ Update dimensions of the current background image.
+        """Update dimensions of the current background image.
+
+        Parameters
+        ----------
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
         """
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 
     def draw_block(self, p, point, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        point :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         p.drawImage(point, self._qbackground)
 
 
 class SeamlessGratingStimulus(BackgroundStimulus):
-    """ Class for moving a grating pattern.
-    """
+    """Class for moving a grating pattern."""
     def __init__(self, *args, grating_angle=0, grating_period=10,
                  color=(255, 255, 255), **kwargs):
         """
@@ -329,11 +528,37 @@ class SeamlessGratingStimulus(BackgroundStimulus):
 
     def get_unit_dims(self, w, h):
         """
+
+        Parameters
+        ----------
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
         """
         return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
-        """ Draws one bar of the grating, the rest are repeated by tiling
+        """Draws one bar of the grating, the rest are repeated by tiling
+
+        Parameters
+        ----------
+        p :
+            
+        point :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
         """
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
@@ -344,9 +569,7 @@ class SeamlessGratingStimulus(BackgroundStimulus):
 
 
 class SeamlessWindmillStimulus(BackgroundStimulus):
-    """
-    Class for drawing a rotating windmill.
-    """
+    """Class for drawing a rotating windmill."""
 
     def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
         super().__init__(*args, **kwargs)
@@ -355,6 +578,23 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
         self.name = 'windmill'
 
     def draw_block(self, p, point, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        point :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         # Painting settings:
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
@@ -386,6 +626,7 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
 # Stimuli which need to be implemented
 
 class RandomDotKinematogram(VisualStimulus):
+    """ """
     def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
         super().__init__(*args, **kwargs)
         self.dot_density = dot_density
@@ -395,11 +636,27 @@ class RandomDotKinematogram(VisualStimulus):
         self.dots = None
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         # TODO implement dot painting and update
         pass
 
 
 class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
+    """ """
     def __init__(self, *args, spot_radius=5, average_distance=20,
                  n_spots=10, **kwargs):
         super().__init__()
@@ -409,10 +666,26 @@ class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
         self.spot_positions = np.array((n_spots, 2))
 
     def paint(self, p, w, h):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        w :
+            
+        h :
+            
+
+        Returns
+        -------
+
+        """
         pass
 
 
 class LoomingStimulus(VisualStimulus, DynamicStimulus):
+    """ """
     def __init__(self, loom_coordinates,
                  background_color=(0, 0, 0),
                  loom_color=(255, 255, 255)):
@@ -421,4 +694,5 @@ class LoomingStimulus(VisualStimulus, DynamicStimulus):
         self.loom_color = loom_color
 
     def update(self):
+        """ """
         pass

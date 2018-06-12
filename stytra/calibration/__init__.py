@@ -9,10 +9,12 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class CalibrationException(Exception):
+    """ """
     pass
 
 
 class Calibrator(HasPyQtGraphParams):
+    """ """
     def __init__(self, mm_px=1):
         super().__init__()
         self.enabled = False
@@ -32,18 +34,34 @@ class Calibrator(HasPyQtGraphParams):
         self.params.child('length_mm').sigValueChanged.connect(self.set_physical_scale)
 
     def toggle(self):
+        """ """
         self.enabled = ~self.enabled
 
     def set_physical_scale(self):
-        """ Calculate mm/px from calibrator length
-        """
+        """Calculate mm/px from calibrator length"""
         self.params['mm_px'] = self.params['length_mm']/self.params['length_px']
 
     def make_calibration_pattern(self, p, h, w):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        h :
+            
+        w :
+            
+
+        Returns
+        -------
+
+        """
         pass
 
 
 class CrossCalibrator(Calibrator):
+    """ """
     def __init__(self, *args, fixed_length=60, calibration_length='outside',
                  **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,6 +82,21 @@ class CrossCalibrator(Calibrator):
                 self.length_is_fixed = True
 
     def make_calibration_pattern(self, p, h, w):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        h :
+            
+        w :
+            
+
+        Returns
+        -------
+
+        """
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
@@ -79,8 +112,7 @@ class CrossCalibrator(Calibrator):
 
 
 class CircleCalibrator(Calibrator):
-    """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle
-    """
+    """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle"""
     def __init__(self, *args, dh=80, r=3, **kwargs):
         super().__init__(*args, **kwargs)
         self.dh = dh
@@ -93,6 +125,23 @@ class CircleCalibrator(Calibrator):
         self.length_to_measure = 'the largest distance between the points'
 
     def make_calibration_pattern(self, p, h, w, draw=True):
+        """
+
+        Parameters
+        ----------
+        p :
+            
+        h :
+            
+        w :
+            
+        draw :
+             (Default value = True)
+
+        Returns
+        -------
+
+        """
         assert isinstance(p, QPainter)
 
         d2h = self.dh//2
@@ -112,6 +161,17 @@ class CircleCalibrator(Calibrator):
 
     @staticmethod
     def _find_angles(kps):
+        """
+
+        Parameters
+        ----------
+        kps :
+            
+
+        Returns
+        -------
+
+        """
         angles = np.empty(3)
         for i, pt in enumerate(kps):
             pt_prev = kps[(i - 1) % 3]
@@ -125,11 +185,21 @@ class CircleCalibrator(Calibrator):
 
     @staticmethod
     def _find_triangle(image, blob_params=None):
-        """ Finds the three dots for calibration in the image
+        """Finds the three dots for calibration in the image
         (of a 30 60 90 degree triangle)
 
-        :param image:
-        :return: the three triangle points
+        Parameters
+        ----------
+        image :
+            return: the three triangle points
+        blob_params :
+             (Default value = None)
+
+        Returns
+        -------
+        type
+            the three triangle points
+
         """
         if blob_params is None:
             blobdet = cv2.SimpleBlobDetector_create()
@@ -149,9 +219,31 @@ class CircleCalibrator(Calibrator):
 
     @staticmethod
     def arr_to_tuple(arr):
+        """
+
+        Parameters
+        ----------
+        arr :
+            
+
+        Returns
+        -------
+
+        """
         return tuple(tuple(r for r in row) for row in arr)
 
     def find_transform_matrix(self, image):
+        """
+
+        Parameters
+        ----------
+        image :
+            
+
+        Returns
+        -------
+
+        """
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
 

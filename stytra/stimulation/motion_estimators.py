@@ -9,6 +9,7 @@ from stytra.collectors import Accumulator
 
 
 class EstimatorLog(Accumulator):
+    """ """
     def __init__(self, headers):
         super().__init__()
         self.header_list = ('t', ) + tuple(headers)
@@ -16,11 +17,23 @@ class EstimatorLog(Accumulator):
 
 
     def update_list(self, data):
+        """
+
+        Parameters
+        ----------
+        data :
+            
+
+        Returns
+        -------
+
+        """
         #delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
         self.stored_data.append(data)
 
 
 class VigourMotionEstimator:
+    """ """
     def __init__(self, data_acc, vigour_window=0.050):
         assert(isinstance(data_acc, QueueDataAccumulator))
         self.data_acc = data_acc
@@ -28,6 +41,17 @@ class VigourMotionEstimator:
         self.last_dt = 1/500.
 
     def get_velocity(self, lag=0):
+        """
+
+        Parameters
+        ----------
+        lag :
+             (Default value = 0)
+
+        Returns
+        -------
+
+        """
         # TODO implement lag here
         vigour_n_samples = max(int(round(self.vigour_window/self.last_dt)), 2)
         past_tail_motion = self.data_acc.get_last_n(vigour_n_samples)
@@ -38,6 +62,7 @@ class VigourMotionEstimator:
 
 
 class LSTMLocationEstimator:
+    """ """
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
                  gains=[1, 1, 1], lstm_sample_rate=300,
                  logging=True, model_px_per_mm=1,
@@ -73,17 +98,25 @@ class LSTMLocationEstimator:
             self.log = None
 
     def reset(self):
+        """ """
         self.processed_index = 0
         self.current_angle = 0
         self.current_coordinates = np.zeros(2)
         self.tail_init = None
 
     def get_displacements(self):
-        """ Calculates the position and rotation displacement using the LSTM
+        """Calculates the position and rotation displacement using the LSTM
         model taking into account how much time has
         passed since the last estimation
-
+        
         :return:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         if self.log.starting_time is None:
             self.log.starting_time = self.data_acc.starting_time
@@ -136,6 +169,7 @@ class LSTMLocationEstimator:
 
 
 class SimulatedLocationEstimator:
+    """ """
     def __init__(self, bouts):
         self.bouts = bouts
         self.start_t = None
@@ -144,6 +178,7 @@ class SimulatedLocationEstimator:
         self.current_coordinates = np.zeros(2)
 
     def get_displacements(self):
+        """ """
         if self.start_t is None:
             self.start_t = datetime.datetime.now()
 
@@ -160,6 +195,7 @@ class SimulatedLocationEstimator:
         return np.r_[self.current_coordinates, self.past_theta]
 
     def reset(self):
+        """ """
         self.current_coordinates = np.zeros(2)
         self.start_t = None
         self.i_bout = 0
