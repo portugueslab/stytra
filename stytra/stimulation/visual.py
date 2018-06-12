@@ -184,6 +184,8 @@ class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
     luminance is dynamically changed. (Could be easily change to change color
     as well).
 
+    ..deprecate in favour of using InterpolatedStimulus
+
     Parameters
     ----------
 
@@ -684,15 +686,24 @@ class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
         pass
 
 
-class LoomingStimulus(VisualStimulus, DynamicStimulus):
-    """ """
-    def __init__(self, loom_coordinates,
+class CircleStimulus(VisualStimulus, DynamicStimulus):
+    """ A circle stimulus, which in combination with interpolation
+    can be used to make looming stimuli"""
+    def __init__(self, origin=(0.5, 0.5), radius=0,
                  background_color=(0, 0, 0),
-                 loom_color=(255, 255, 255)):
-        self.radius = 0
+                 circle_color=(255, 255, 255)):
+        super().__init__(dynamic_parameters=["radius"])
+        self.origin = origin
+        self.radius = radius
         self.background_color = background_color
-        self.loom_color = loom_color
+        self.circle_color = circle_color
 
-    def update(self):
-        """ """
-        pass
+    def paint(self, p, w, h):
+        super().paint(p, w, h)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.background_color)))  # Use chosen color
+        self.clip(p, w, h)
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        p.setBrush(QBrush(QColor(*self.circle_color)))
+        p.drawEllipse(QPointF(w*self.origin[1], h*self.origin[0]), self.radius, self.radius)

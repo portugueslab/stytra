@@ -322,8 +322,8 @@ class TailTrackingExperiment(TrackingExperiment):
 
 class EyeTrackingExperiment(TrackingExperiment):
     def __init__(self, *args, **kwargs):
-    """An experiment which contains eye tracking."""
-
+        """An experiment which contains eye tracking.
+         """
         super().__init__(*args,
                          **kwargs)
 

@@ -11,21 +11,21 @@ from stytra.collectors import Accumulator
 # TODO I think this should stay together with the dataaccumulator parent
 class QueueDataAccumulator(QObject, Accumulator):
     def __init__(self, data_queue, header_list=None):
-    """General class for accumulating (for saving or dispatching) data
-        out of a multiprocessing queue. Require triggering with some timer.
-        This timer has to be set externally!!!
+        """General class for accumulating (for saving or dispatching) data
+            out of a multiprocessing queue. Require triggering with some timer.
+            This timer has to be set externally!!!
 
-    Parameters
-    ----------
-    data_queue :
-        queue from witch to retrieve data (Queue object)
-    header_list :
-        headers for the data to stored (strings list)
+        Parameters
+        ----------
+        data_queue :
+            queue from witch to retrieve data (Queue object)
+        header_list :
+            headers for the data to stored (strings list)
 
-    Returns
-    -------
+        Returns
+        -------
 
-    """
+        """
         super().__init__()
 
         # Store externally the starting time make us free to keep
