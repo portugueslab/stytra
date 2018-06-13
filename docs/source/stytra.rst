@@ -8,9 +8,11 @@ Subpackages
 
     stytra.bouter
     stytra.calibration
-    stytra.data_log
+    stytra.core
+    stytra.experiments
     stytra.gui
     stytra.hardware
+    stytra.metadata
     stytra.stimulation
     stytra.tracking
 
@@ -25,18 +27,10 @@ stytra\.collectors module
     :undoc-members:
     :show-inheritance:
 
-stytra\.dbconn module
----------------------
+stytra\.utilities module
+------------------------
 
-.. automodule:: stytra.dbconn
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra\.run\_experiment module
-------------------------------
-
-.. automodule:: stytra.run_experiment
+.. automodule:: stytra.utilities
     :members:
     :undoc-members:
     :show-inheritance:

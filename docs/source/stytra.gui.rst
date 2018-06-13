@@ -20,6 +20,14 @@ stytra\.gui\.container\_windows module
     :undoc-members:
     :show-inheritance:
 
+stytra\.gui\.json\_reader module
+--------------------------------
+
+.. automodule:: stytra.gui.json_reader
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra\.gui\.monitor\_control module
 ------------------------------------
 

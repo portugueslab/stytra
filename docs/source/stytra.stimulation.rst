@@ -20,18 +20,26 @@ stytra\.stimulation\.closed\_loop module
     :undoc-members:
     :show-inheritance:
 
-stytra\.stimulation\.protocols module
--------------------------------------
+stytra\.stimulation\.external module
+------------------------------------
 
-.. automodule:: stytra.stimulation.protocols
+.. automodule:: stytra.stimulation.external
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra\.stimulation\.stimuli module
------------------------------------
+stytra\.stimulation\.motion\_estimators module
+----------------------------------------------
 
-.. automodule:: stytra.stimulation.stimuli
+.. automodule:: stytra.stimulation.motion_estimators
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra\.stimulation\.protocols module
+-------------------------------------
+
+.. automodule:: stytra.stimulation.protocols
     :members:
     :undoc-members:
     :show-inheritance:
@@ -48,6 +56,14 @@ stytra\.stimulation\.triggers module
 ------------------------------------
 
 .. automodule:: stytra.stimulation.triggers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra\.stimulation\.visual module
+----------------------------------
+
+.. automodule:: stytra.stimulation.visual
     :members:
     :undoc-members:
     :show-inheritance:
