@@ -32,7 +32,7 @@ class TailTrackingMethod(FrameProcessingMethod):
                                                          'angle_sweep'],
                                               'value': 'centroid',
                                               'type': 'list',
-                                              'readonly': True},
+                                              'readonly': False},
                                     n_segments=20,
                                     color_invert=True,
                                     tail_start={'value': (440, 225),
@@ -43,8 +43,9 @@ class TailTrackingMethod(FrameProcessingMethod):
         for key, value in standard_params_dict.items():
             self.add_one_param(key, value)
 
-        self.accumulator_headers = ['tail_sum'] + ['theta_{:02}'.format(i)
-                                      for i in range(self.params['n_segments'])]
+        self.accumulator_headers = ['tail_sum'] + \
+                                   ['theta_{:02}'.format(i)
+                                    for i in range(self.params['n_segments'])]
         self.data_log_name = 'behaviour_tail_log'
 
 
@@ -113,7 +114,9 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
 
 
 class MovementDetectionParameters(HasPyQtGraphParams):
-    """The class for parametrisation of various tail and fish tracking methods"""
+    """
+    The class for parametrisation of various tail and fish tracking methods
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         for child in self.params.children():

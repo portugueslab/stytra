@@ -1,7 +1,6 @@
 import argparse
 from stytra.experiments import Experiment
-from stytra.experiments.tracking_experiments import CameraExperiment, \
-    EyeTrackingExperiment, MovementRecordingExperiment, TailTrackingExperiment
+from stytra.experiments.tracking_experiments import *
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
@@ -13,7 +12,9 @@ from PyQt5.QtGui import QIcon
 
 class Stytra:
     """ """
-    def __init__(self, parser=None, protocols = [],
+    def __init__(self, parser=None, protocols=[],
+                 directory='',
+                 tracking_config=None, camera=None,
                  metadata_animal=None, metadata_general=None):
         if parser is None:
             parser = argparse.ArgumentParser()
@@ -73,7 +74,7 @@ class Stytra:
             rec_stim_every = None
 
         class_kwargs = dict(app=app,
-                            directory=args.directory,
+                            directory=directory,
                             asset_directory=args.asset_dir,
                             rec_stim_every=rec_stim_every,
                             metadata_animal=metadata_animal,
@@ -81,23 +82,39 @@ class Stytra:
                             protocols=protocols)
 
         base = Experiment
-        if args.video_file:
-            base = CameraExperiment
-            class_kwargs['video_file'] = args.video_file
+        # if args.video_file:
+        if tracking_config is not None:
+            if tracking_config['tracking_method_name'] is None:
+                base = CameraExperiment
+            else:
+                if tracking_config['tracking_method_name'] == 'eye_threshold':
+                    base = EyeTrackingExperiment
+                if tracking_config['tracking_method_name'] in ['angle_sweep',
+                                                               'centroid']:
+                    base = TailTrackingExperiment
+                class_kwargs['tracking_method_name'] = \
+                    tracking_config['tracking_method_name']
 
-        if args.tail_tracking or args.freely_swimming or args.eye_tracking:
-            class_kwargs['camera_rotation'] = int(args.camera_rotation)
-            class_kwargs['camera'] = args.camera
-            class_kwargs['tracking_method_name'] = args.tail_tracking_method
-        print(class_kwargs)
-        if args.tail_tracking:
-            base = TailTrackingExperiment
+            if tracking_config['camera'] is None:
+                class_kwargs['video_file'] = tracking_config['video_file']
+            else:
+                class_kwargs['camera'] = tracking_config['camera']
+            if tracking_config['camera_rotation'] is not None:
+                class_kwargs['camera_rotation'] = tracking_config['camera_rotation']
 
-        elif args.freely_swimming:
-            base = MovementRecordingExperiment
-        elif args.eye_tracking:
-            base = EyeTrackingExperiment
-            class_kwargs['tracking_method_name'] = 'eyes'  # TODO temporary
+        # if args.tail_tracking or args.freely_swimming or args.eye_tracking:
+        #     class_kwargs['camera_rotation'] = int(args.camera_rotation)
+        #     class_kwargs['camera'] = args.camera
+        #     class_kwargs['tracking_method_name'] = args.tail_tracking_method
+        # print(class_kwargs)
+        # if args.tail_tracking:
+        #     base = TailTrackingExperiment
+
+        # elif args.freely_swimming:
+        #     base = MovementRecordingExperiment
+        # elif args.eye_tracking:
+        #     base = EyeTrackingExperiment
+        #     class_kwargs['tracking_method_name'] = 'eyes'  # TODO temporary
 
         app_icon = QIcon()
         app_icon.addFile('icons/48.png', QSize(48, 48))

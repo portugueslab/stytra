@@ -61,7 +61,7 @@ class CameraExperiment(Experiment):
         """ """
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
-        self.go_live()
+        # self.go_live()
 
     def go_live(self):
         """ """
@@ -140,7 +140,7 @@ class TrackingExperiment(CameraExperiment):
 
     tracking_methods_list = dict(centroid=CentroidTrackingMethod,
                                  angle_sweep=AnglesTrackingMethod,
-                                 eyes=ThresholdEyeTrackingMethod)
+                                 eye_threshold=ThresholdEyeTrackingMethod)
 
     def __init__(self, *args, tracking_method_name=None, **kwargs):
         """
@@ -168,8 +168,6 @@ class TrackingExperiment(CameraExperiment):
                                                 self.processing_params_queue,
                                                 gui_framerate=20,
                                                 print_framerate=False)
-
-        self.fish_metadata.params['embedded'] = True
 
         self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
                                              header_list=self.tracking_method.accumulator_headers)
