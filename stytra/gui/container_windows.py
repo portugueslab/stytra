@@ -281,7 +281,6 @@ class EyeTrackingExperimentWindow(SimpleExperimentWindow):
         self.track_params_wnd.show()
 
 
-
 class VRExperimentWindow(SimpleExperimentWindow):
     """ """
     def reconfigure_ui(self):

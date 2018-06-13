@@ -158,10 +158,6 @@ class CameraViewWidget(QWidget):
                     # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)
 
-                if self.camera_rotation >= 1:
-                    self.current_image = np.rot90(self.current_image,
-                                                  k=self.camera_rotation)
-
             except Empty:
                 break
 
@@ -334,7 +330,9 @@ class CameraTailSelection(CameraSelection):
 
 
 class CameraEyesSelection(CameraSelection):
-    """Widget for select tail pts and monitoring tracking in embedded fish."""
+    """
+    Widget for select tail pts and monitoring tracking in embedded fish.
+    """
     def __init__(self, **kwargs):
 
         super().__init__(**kwargs)
