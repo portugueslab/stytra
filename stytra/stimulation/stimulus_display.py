@@ -72,6 +72,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
         self.setStyleSheet('background-color:black;')
         self.params.sigTreeStateChanged.connect(self.set_dims)
+        self.set_dims()
 
     def set_dims(self):
         """ """
@@ -136,6 +137,7 @@ class GLStimDisplay:
         -------
 
         """
+        self.dims = (self.height(), self.width())  # Update dimensions
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
