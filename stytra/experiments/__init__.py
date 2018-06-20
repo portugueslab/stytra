@@ -1,5 +1,6 @@
 import datetime
 import os
+import traceback
 
 import deepdish as dd
 import qdarkstyle
@@ -39,9 +40,6 @@ class Experiment(QObject):
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.protocols = protocols
         self.trigger = trigger
-
-        if trigger is not None:
-            self.trigger.start()
 
         self.asset_dir = asset_directory
         self.directory = directory
@@ -101,6 +99,8 @@ class Experiment(QObject):
         """
         self.make_window()
         self.initialize_metadata()
+        if self.trigger is not None:
+            self.trigger.start()
 
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments."""
@@ -207,6 +207,29 @@ class Experiment(QObject):
             if self.protocol_runner.protocol is not None:
                 self.end_protocol(save=False)
         if self.trigger is not None:
-            self.trigger.terminate_event.set()
+            self.trigger.kill_event.set()
+            print('terminating')
+            # self.trigger.join()
             self.trigger.terminate()
         self.app.closeAllWindows()
+
+    def excepthook(self, exctype, value, tb):
+        """
+
+        Parameters
+        ----------
+        exctype :
+
+        value :
+
+        tb :
+
+
+        Returns
+        -------
+
+        """
+        traceback.print_tb(tb)
+        print('{0}: {1}'.format(exctype, value))
+        self.trigger.kill_event.set()
+        self.trigger.terminate()

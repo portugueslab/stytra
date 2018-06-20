@@ -204,8 +204,10 @@ class ProtocolRunner(QObject):
             self._start()
         else:
             while True:
-                if self.experiment.trigger.start_event.is_set():
+                if self.experiment.trigger.start_event.is_set() and \
+                   not self.running:
                     self._start()
+                    break
                 else:
                     self.experiment.app.processEvents()
 

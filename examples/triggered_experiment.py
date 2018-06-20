@@ -19,7 +19,10 @@ class FlashProtocol(Protocol):
 
 if __name__ == "__main__":
     trigger = Crappy2PTrigger(r'C:\Users\lpetrucco\Desktop\dummydir')
-
+    # trigger.start()
     st = Stytra(protocols=[FlashProtocol],
                 trigger=trigger,
                 directory=r'C:\Users\lpetrucco\Desktop\metadata')
+    # trigger.terminate_event.set()
+    # print('terminating')
+    # trigger.join()

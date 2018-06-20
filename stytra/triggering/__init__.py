@@ -1,4 +1,4 @@
-from multiprocessing import Process, Event
+from multiprocessing import Process, Event, Value
 from pathlib import Path
 import datetime
 import time
@@ -11,13 +11,17 @@ class Trigger(Process):
 
         self.start_event = Event()
         self.t = datetime.datetime.now()
-        self.terminate_event = Event()
+        self.kill_event = Event()
+        self.running_flag = Value("i", 1)
 
     def check_trigger(self):
         return False
 
     def run(self):
-        while not self.terminate_event.is_set():
+        while True:
+            self.kill_event.wait(0.0001)
+            if self.kill_event.is_set():
+                break
             if self.check_trigger():
                 self.start_event.set()
                 self.t = datetime.datetime.now()
@@ -41,17 +45,6 @@ class Crappy2PTrigger(Trigger):
             return True
         else:
             return False
-
-
-class SigReceiver(Process):
-    def __init__(self, set_event):
-        super().__init__()
-        self.set_event = set_event
-
-    def run(self):
-        while True:
-            if self.set_event.is_set():
-                print('triggered')
 
 
 if __name__=='__main__':

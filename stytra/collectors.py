@@ -70,7 +70,6 @@ class Accumulator:
             self.header_list = ['t'] + header_list
         self.stored_data = []
         self.starting_time = None
-        print('reset')
 
     def check_start(self):
         """ """
