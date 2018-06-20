@@ -8,7 +8,8 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class ProtocolRunner(QObject):
-    """Class for managing and running stimulation Protocols. It is thought to be
+    """
+    Class for managing and running stimulation Protocols. It is thought to be
     integrated with the stytra.gui.protocol_control.ProtocolControlWidget GUI.
     
     In stytra Protocols are parameterized objects required just for generating
@@ -199,7 +200,19 @@ class ProtocolRunner(QObject):
             self.current_stimulus = None
 
     def start(self):
-        """Start the protocol by starting the timers."""
+        if self.experiment.trigger is None:
+            self._start()
+        else:
+            while True:
+                if self.experiment.trigger.start_event.is_set():
+                    self._start()
+                else:
+                    self.experiment.app.processEvents()
+
+    def _start(self):
+        """
+        Start the protocol by starting the timers.
+        """
         self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
@@ -256,11 +269,7 @@ class ProtocolRunner(QObject):
                         seconds=float(self.current_stimulus.duration))
                     self.i_current_stimulus += 1
                     self.current_stimulus = self.stimuli[self.i_current_stimulus]
-                    print('pre')
-                    print(self.current_stimulus.real_time_start)
                     self.current_stimulus.start()
-                    print('post')
-                    print(self.current_stimulus.real_time_start)
 
             self.current_stimulus.update()  # use stimulus update function
             self.sig_timestep.emit(self.i_current_stimulus)

@@ -4,6 +4,7 @@ from stytra.experiments.tracking_experiments import *
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
+from stytra.triggering import Crappy2PTrigger
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -14,7 +15,7 @@ class Stytra:
     """ """
     def __init__(self, parser=None, protocols=[],
                  directory='',
-                 tracking_config=None, camera=None,
+                 tracking_config=None, trigger=None,
                  metadata_animal=None, metadata_general=None):
         if parser is None:
             parser = argparse.ArgumentParser()
@@ -79,7 +80,8 @@ class Stytra:
                             rec_stim_every=rec_stim_every,
                             metadata_animal=metadata_animal,
                             metadata_general=metadata_general,
-                            protocols=protocols)
+                            protocols=protocols,
+                            trigger=trigger)
 
         base = Experiment
         # if args.video_file:

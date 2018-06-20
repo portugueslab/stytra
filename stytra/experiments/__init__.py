@@ -26,8 +26,7 @@ class Experiment(QObject):
                  asset_directory='',
                  rec_stim_every=None,
                  protocols=None,
-                 display_w=None,
-                 display_h=None):
+                 trigger=None):
         """
         :param directory: data for saving options and data
         :param calibrator:
@@ -39,6 +38,10 @@ class Experiment(QObject):
         self.app = app
         self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.protocols = protocols
+        self.trigger = trigger
+
+        if trigger is not None:
+            self.trigger.start()
 
         self.asset_dir = asset_directory
         self.directory = directory
@@ -203,4 +206,7 @@ class Experiment(QObject):
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
                 self.end_protocol(save=False)
+        if self.trigger is not None:
+            self.trigger.terminate_event.set()
+            self.trigger.terminate()
         self.app.closeAllWindows()

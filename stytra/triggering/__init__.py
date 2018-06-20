@@ -11,12 +11,13 @@ class Trigger(Process):
 
         self.start_event = Event()
         self.t = datetime.datetime.now()
+        self.terminate_event = Event()
 
     def check_trigger(self):
         return False
 
     def run(self):
-        while True:
+        while not self.terminate_event.is_set():
             if self.check_trigger():
                 self.start_event.set()
                 self.t = datetime.datetime.now()
@@ -25,7 +26,6 @@ class Trigger(Process):
                     # Keep the signal on for at least 0.1 s
                     time.sleep(0.1)
                     self.start_event.clear()
-                    print((datetime.datetime.now() - self.t).microseconds)
 
 
 class Crappy2PTrigger(Trigger):
