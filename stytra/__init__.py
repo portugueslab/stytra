@@ -74,7 +74,7 @@ class Stytra:
             rec_stim_every = None
 
         class_kwargs = dict(app=app,
-                            directory=args.directory,
+                            directory=directory,
                             asset_directory=args.asset_dir,
                             rec_stim_every=rec_stim_every,
                             metadata_animal=metadata_animal,

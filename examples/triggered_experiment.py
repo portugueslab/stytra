@@ -1,6 +1,6 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
-from stytra.triggering import Crappy2PTrigger
+from stytra.triggering import ZmqTrigger, Crappy2PTrigger
 
 class FlashProtocol(Protocol):
     name = 'flash protocol'
@@ -18,11 +18,12 @@ class FlashProtocol(Protocol):
         return stimuli
 
 if __name__ == "__main__":
-    trigger = Crappy2PTrigger(r'C:\Users\lpetrucco\Desktop\dummydir')
+    # trigger = Crappy2PTrigger(r'C:\Users\lpetrucco\Desktop\dummydir')
     # trigger.start()
+    trigger = ZmqTrigger(port='5555')
     st = Stytra(protocols=[FlashProtocol],
                 trigger=trigger,
-                directory=r'C:\Users\lpetrucco\Desktop\metadata')
+                directory=r'C:\Users\portugueslab\Desktop\metadata')
     # trigger.terminate_event.set()
     # print('terminating')
     # trigger.join()

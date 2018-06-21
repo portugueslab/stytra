@@ -1,6 +1,7 @@
 import datetime
 import os
 import traceback
+from queue import Empty
 
 import deepdish as dd
 import qdarkstyle
@@ -52,6 +53,7 @@ class Experiment(QObject):
             self.calibrator = calibrator
 
         self.window_main = None
+        self.scope_config = None
 
         # to the constructor we need to pass classes, not instances
         # otherwise there are problems because the metadatas are QObjects
@@ -148,7 +150,24 @@ class Experiment(QObject):
         -------
 
         """
-        self.protocol_runner.start()
+        if self.trigger is not None and self.window_main.chk_scope.isChecked():
+            while True:
+                if self.trigger.start_event.is_set() and \
+                   not self.protocol_runner.running:
+                    self.protocol_runner.start()
+                    try:
+                        self.scope_config = self.trigger.queue_scope_params.get()
+                        self.dc.add_static_data(self.scope_config,
+                                                'imaging_microscope_config')
+                    except Empty:
+                        print('No scope configuration received')
+                    break
+                else:
+                    a = datetime.datetime.now()
+                    self.app.processEvents()
+                    print((a - datetime.datetime.now()).microseconds)
+        else:
+            self.protocol_runner.start()
 
     def end_protocol(self, save=True):
         """Function called at Protocol end. Reset Protocol, save
@@ -208,7 +227,6 @@ class Experiment(QObject):
                 self.end_protocol(save=False)
         if self.trigger is not None:
             self.trigger.kill_event.set()
-            print('terminating')
             # self.trigger.join()
             self.trigger.terminate()
         self.app.closeAllWindows()

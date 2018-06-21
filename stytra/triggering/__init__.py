@@ -1,4 +1,4 @@
-from multiprocessing import Process, Event, Value
+from multiprocessing import Process, Event, Queue
 from pathlib import Path
 import datetime
 import time
@@ -13,7 +13,7 @@ class Trigger(Process):
         self.start_event = Event()
         self.t = datetime.datetime.now()
         self.kill_event = Event()
-        self.running_flag = Value("i", 1)
+        self.queue_scope_params = Queue()
 
     def check_trigger(self):
         return False
@@ -23,27 +23,17 @@ class Trigger(Process):
             self.kill_event.wait(0.0001)
             if self.kill_event.is_set():
                 break
+
+            if self.start_event.is_set():
+                # Keep the signal on for at least 0.1 s
+                time.sleep(0.1)
+                self.start_event.clear()
+
             if self.check_trigger():
                 self.start_event.set()
                 self.t = datetime.datetime.now()
-            else:
-                if self.start_event.is_set():
-                    # Keep the signal on for at least 0.1 s
-                    time.sleep(0.1)
-                    self.start_event.clear()
 
 
-# class ZmqTrigger(Process):
-#
-#     def __init__(self, port='5555'):
-#         self.zmq_context = zmq.Context()
-#         self.zmq_socket = self.zmq_context.socket(zmq.REP)
-#         self.zmq_socket.bind("tcp://*:{}".format(port))
-#         super().__init__()
-#
-#     def check_trigger(self):
-#         self.lightsheet_config = self.zmq_socket.recv_json()
-#         print(self.lightsheet_config)
 
 class ZmqTrigger(Trigger):
     def __init__(self, port):
@@ -52,7 +42,8 @@ class ZmqTrigger(Trigger):
 
     def check_trigger(self):
         self.lightsheet_config = self.zmq_socket.recv_json()
-        self.zmq_socket.send_json(5)
+        self.queue_scope_params.put(self.lightsheet_config)
+        self.zmq_socket.send_json('received')
 
         return True
 

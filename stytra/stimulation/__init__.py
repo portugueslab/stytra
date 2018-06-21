@@ -200,18 +200,6 @@ class ProtocolRunner(QObject):
             self.current_stimulus = None
 
     def start(self):
-        if self.experiment.trigger is None:
-            self._start()
-        else:
-            while True:
-                if self.experiment.trigger.start_event.is_set() and \
-                   not self.running:
-                    self._start()
-                    break
-                else:
-                    self.experiment.app.processEvents()
-
-    def _start(self):
         """
         Start the protocol by starting the timers.
         """
