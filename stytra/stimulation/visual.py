@@ -337,7 +337,6 @@ class MovingConstantVel(BackgroundStimulus):
         self._past_t = 0
 
     def update(self):
-        """ """
         super().update()
         dt = (self._elapsed - self._past_t)
         self.x += self.vel_x * dt
@@ -346,23 +345,17 @@ class MovingConstantVel(BackgroundStimulus):
 
 
 class SeamlessImageStimulus(BackgroundStimulus):
-    """Class for moving an image."""
-    def __init__(self, *args, **kwargs):
+    """ Displays an image which should tile seamlessly, (the top of the
+    image should match with the bottom and the left with the right, so
+    there are no discontinuities). An even checkerboard works, but with
+    some image editing any texture can be adjusted to be seamless. """
+
+    def __init__(self, *args, background, **kwargs):
         super().__init__(*args, **kwargs)
+        self.background = background
         self._qbackground = None
 
     def initialise_external(self, experiment):
-        """
-
-        Parameters
-        ----------
-        experiment :
-            
-
-        Returns
-        -------
-
-        """
         super().initialise_external(experiment)
 
         # Get background image from folder:
@@ -371,19 +364,6 @@ class SeamlessImageStimulus(BackgroundStimulus):
                                      self.background))
 
     def get_unit_dims(self, w, h):
-        """Update dimensions of the current background image.
-
-        Parameters
-        ----------
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 

@@ -632,20 +632,17 @@ class InterpolatedStimulus(Stimulus):
 
         for col in self.df_param.columns:
             if col != "t":
-                try:
-                    # for defined velocities, integrates the parameter
-                    if col.startstwith("vel_"):
-                        setattr(self, col[4:],
-                                getattr(self, col[4:]) +
-                                dt * np.interp(self._elapsed, self.df_param.t,
-                                                         self.df_param[col]))
-                    # otherwise it is set by interpolating the column of the dataframe
-                    else:
-                        setattr(self, col, np.interp(self._elapsed, self.df_param.t,
-                                                 self.df_param[col]))
+                # for defined velocities, integrates the parameter
+                if col.startswith("vel_"):
+                    setattr(self, col[4:],
+                            getattr(self, col[4:]) +
+                            dt * np.interp(self._elapsed, self.df_param.t,
+                                                     self.df_param[col]))
+                # otherwise it is set by interpolating the column of the dataframe
+                else:
+                    setattr(self, col, np.interp(self._elapsed, self.df_param.t,
+                                             self.df_param[col]))
 
-                except (AttributeError, KeyError):
-                    pass
 
         # the time of refresh is saved to calculate the differences
         self._past_t = self._elapsed

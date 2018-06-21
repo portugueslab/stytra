@@ -65,7 +65,6 @@ class Stytra:
 
         args = parser.parse_args()
 
-        bases = [Experiment]
 
         app = QApplication([])
 
@@ -75,7 +74,7 @@ class Stytra:
             rec_stim_every = None
 
         class_kwargs = dict(app=app,
-                            directory=directory,
+                            directory=args.directory,
                             asset_directory=args.asset_dir,
                             rec_stim_every=rec_stim_every,
                             metadata_animal=metadata_animal,
