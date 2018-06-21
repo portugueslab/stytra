@@ -152,7 +152,7 @@ class Pause(FullFieldVisualStimulus):
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
-    """Displays videos using PIMS, at aspecified framerate"""
+    """Displays videos using PIMS, at a specified framerate"""
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -170,19 +170,6 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
         self.duration = duration
 
     def initialise_external(self, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
-
-        """
         super().initialise_external(*args, **kwargs)
         self._video_seq = pims.Video(self._experiment.asset_dir +
                                      '/' + self.video_path)
@@ -254,35 +241,9 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
                          **kwargs)
 
     def get_unit_dims(self, w, h):
-        """
-
-        Parameters
-        ----------
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         return w, h
 
     def get_rot_transform(self, w, h):
-        """
-
-        Parameters
-        ----------
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         xc = -w / 2
         yc = -h / 2
         return QTransform().translate(-xc, -yc).rotate(
@@ -376,7 +337,6 @@ class MovingConstantVel(BackgroundStimulus):
         self._past_t = 0
 
     def update(self):
-        """ """
         super().update()
         dt = (self._elapsed - self._past_t)
         self.x += self.vel_x * dt
@@ -384,25 +344,18 @@ class MovingConstantVel(BackgroundStimulus):
         self._past_t = self._elapsed
 
 
-
 class SeamlessImageStimulus(BackgroundStimulus):
-    """Class for moving an image."""
-    def __init__(self, *args, **kwargs):
+    """ Displays an image which should tile seamlessly, (the top of the
+    image should match with the bottom and the left with the right, so
+    there are no discontinuities). An even checkerboard works, but with
+    some image editing any texture can be adjusted to be seamless. """
+
+    def __init__(self, *args, background, **kwargs):
         super().__init__(*args, **kwargs)
+        self.background = background
         self._qbackground = None
 
     def initialise_external(self, experiment):
-        """
-
-        Parameters
-        ----------
-        experiment :
-            
-
-        Returns
-        -------
-
-        """
         super().initialise_external(experiment)
 
         # Get background image from folder:
@@ -411,19 +364,6 @@ class SeamlessImageStimulus(BackgroundStimulus):
                                      self.background))
 
     def get_unit_dims(self, w, h):
-        """Update dimensions of the current background image.
-
-        Parameters
-        ----------
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         w, h = self._qbackground.width(),  self._qbackground.height()
         return w, h
 

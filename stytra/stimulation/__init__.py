@@ -599,20 +599,52 @@ class DynamicStimulus(Stimulus):
 
 
 class InterpolatedStimulus(Stimulus):
-    """Stimulus that interpolates its internal parameters with a data frame"""
+    """Stimulus that interpolates its internal parameters with a data frame
+
+    Parameters
+    ----------
+
+        df_param : DataFrame
+            A Pandas DataFrame containing the values to be interpolated
+            it has to contain a column named t for the defined time points,
+            and additional columns for each parameter of the stimulus that is
+            to be changed.
+            A constant velocity of the parameter change can be specified,
+            in that case the column name has to be prefixed with vel_
+
+            Example:
+            t | x
+            -------
+            0 | 1.0
+            4 | 7.8
+
+    """
     def __init__(self, *args, df_param, **kwargs):
         """"""
         super().__init__(*args, **kwargs)
         self.df_param = df_param
         self.duration = float(df_param.t.iat[-1])
+        self._past_t = 0
 
     def update(self):
         """ """
+        # to use parameters defined as velocities, we need the time difference before
+        # previous display
+        dt = (self._elapsed - self._past_t)
+
         for col in self.df_param.columns:
             if col != "t":
-                try:
+                # for defined velocities, integrates the parameter
+                if col.startswith("vel_"):
+                    setattr(self, col[4:],
+                            getattr(self, col[4:]) +
+                            dt * np.interp(self._elapsed, self.df_param.t,
+                                                     self.df_param[col]))
+                # otherwise it is set by interpolating the column of the dataframe
+                else:
                     setattr(self, col, np.interp(self._elapsed, self.df_param.t,
-                                                 self.df_param[col]))
+                                             self.df_param[col]))
 
-                except (AttributeError, KeyError):
-                    pass
+
+        # the time of refresh is saved to calculate the differences
+        self._past_t = self._elapsed
