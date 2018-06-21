@@ -141,11 +141,14 @@ class XimeaCamera(Camera):
         -------
 
         """
-        if param == 'exposure':
-            self.cam.set_exposure(int(val * 1000))
+        try:
+            if param == 'exposure':
+                self.cam.set_exposure(int(val * 1000))
 
-        if param == 'framerate':
-            self.cam.set_framerate(val)
+            if param == 'framerate':
+                self.cam.set_framerate(val)
+        except xiapi.Xi_error:
+            print("Invalid camera parameters")
 
     def read(self):
         """ """

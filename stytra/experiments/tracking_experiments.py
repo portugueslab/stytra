@@ -38,7 +38,7 @@ class CameraExperiment(Experiment):
         file for the test input
         :param kwargs:
         """
-        if camera_config["video_file"] is None:
+        if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(camera_config["type"],
                                        rotation=camera_config["rotation"],
                                        max_mbytes_queue=camera_queue_mb)
