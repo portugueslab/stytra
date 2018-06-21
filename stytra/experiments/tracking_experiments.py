@@ -31,18 +31,20 @@ class CameraExperiment(Experiment):
     -------
 
     """
-    def __init__(self, *args, video_file=None,  camera_config,
+    def __init__(self, *args, camera_config,
                  camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video file
         file for the test input
         :param kwargs:
         """
-        if video_file is None:
-            self.camera = CameraSource(camera_config["type"], rotation=camera_config["rotation"],
+        if camera_config["video_file"] is None:
+            self.camera = CameraSource(camera_config["type"],
+                                       rotation=camera_config["rotation"],
                                        max_mbytes_queue=camera_queue_mb)
         else:
-            self.camera = VideoFileSource(video_file, rotation=camera_config["rotation"],
+            self.camera = VideoFileSource(camera_config["video_file"],
+                                          rotation=camera_config["rotation"],
                                           max_mbytes_queue=camera_queue_mb)
 
         self.camera_control_params = CameraControlParameters()

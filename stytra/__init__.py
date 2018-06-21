@@ -1,6 +1,7 @@
 import argparse
 from stytra.experiments import Experiment
-from stytra.experiments.tracking_experiments import CameraExperiment, EmbeddedExperiment, SwimmingRecordingExperiment
+from stytra.experiments.tracking_experiments import CameraExperiment,\
+    EmbeddedExperiment, SwimmingRecordingExperiment
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
