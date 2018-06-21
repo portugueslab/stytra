@@ -144,7 +144,7 @@ class EmbeddedExperiment(CameraExperiment):
                                  angle_sweep=AnglesTrackingMethod,
                                  eye_threshold=ThresholdEyeTrackingMethod)
 
-    def __init__(self, *args, tracking_method_name=None, **kwargs):
+    def __init__(self, *args, tracking_config, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -158,7 +158,8 @@ class EmbeddedExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        TrackingMethod = self.tracking_methods_list[tracking_method_name]
+        method_name = tracking_config["tracking_method"]
+        TrackingMethod = self.tracking_methods_list[method_name]
         self.tracking_method = TrackingMethod()
 
         self.data_name = self.tracking_method.data_log_name
@@ -184,6 +185,29 @@ class EmbeddedExperiment(CameraExperiment):
 
         # start frame dispatcher process:
         self.frame_dispatcher.start()
+
+        # This probably should happen before starting the camera process??
+        if isinstance(self.tracking_method, CentroidTrackingMethod) or \
+                isinstance(self.tracking_method, AnglesTrackingMethod):
+            self.tracking_method.params.param('n_segments').sigValueChanged.connect(
+                self.change_segment_numb)
+
+    # TODO probably could go to the interface, but this would mean linking
+    # the data accumulator to the interface as well. Probably makes sense.
+    def change_segment_numb(self):
+        """ """
+        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
+            self.tracking_method.params['n_segments'])]
+        self.data_acc.reset(header_list=new_header)
+
+    def make_window(self):
+        """ """
+        if isinstance(self.tracking_method, CentroidTrackingMethod) or \
+                isinstance(self.tracking_method, AnglesTrackingMethod):
+            self.window_main = TailTrackingExperimentWindow(experiment=self)
+        elif isinstance(self.tracking_method, EyeTrackingMethod):
+            self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        self.window_main.show()
 
     def send_new_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative
@@ -287,53 +311,7 @@ class EmbeddedExperiment(CameraExperiment):
         self.frame_dispatcher.terminate()
 
 
-class TailTrackingExperiment(EmbeddedExperiment):
-    """An experiment which contains tail tracking,
-    base for experiments that  employs closed loops.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # This probably should happen before starting the camera process??
-        self.tracking_method.params.param('n_segments').sigValueChanged.connect(
-            self.change_segment_numb)
-
-    # TODO probably could go to the interface, but this would mean linking
-    # the data accumulator to the interface as well. Probably makes sense.
-    def change_segment_numb(self):
-        """ """
-        new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
-            self.tracking_method.params['n_segments'])]
-        self.data_acc.reset(header_list=new_header)
-
-    def make_window(self):
-        """ """
-        self.window_main = TailTrackingExperimentWindow(experiment=self)
-        self.window_main.show()
-
-
-class EyeTrackingExperiment(EmbeddedExperiment):
-    def __init__(self, *args, **kwargs):
-        """An experiment which contains eye tracking.
-         """
-        super().__init__(*args,
-                         **kwargs)
-
-    def make_window(self):
-        """ """
-        self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        self.window_main.show()
-
-
-class VRExperiment(TailTrackingExperiment):
+class VRExperiment(EmbeddedExperiment):
     """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
