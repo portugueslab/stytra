@@ -165,7 +165,6 @@ class Experiment(QObject):
                 else:
                     a = datetime.datetime.now()
                     self.app.processEvents()
-                    print((a - datetime.datetime.now()).microseconds)
         else:
             self.protocol_runner.start()
 
