@@ -31,18 +31,18 @@ class CameraExperiment(Experiment):
     -------
 
     """
-    def __init__(self, *args, video_file=None,  camera=None,
-                 camera_rotation=0, camera_queue_mb=100, **kwargs):
+    def __init__(self, *args, video_file=None,  camera_config,
+                 camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video file
         file for the test input
         :param kwargs:
         """
         if video_file is None:
-            self.camera = CameraSource(camera, rotation=camera_rotation,
+            self.camera = CameraSource(camera_config["type"], rotation=camera_config["rotation"],
                                        max_mbytes_queue=camera_queue_mb)
         else:
-            self.camera = VideoFileSource(video_file, rotation=camera_rotation,
+            self.camera = VideoFileSource(video_file, rotation=camera_config["rotation"],
                                           max_mbytes_queue=camera_queue_mb)
 
         self.camera_control_params = CameraControlParameters()
@@ -61,7 +61,6 @@ class CameraExperiment(Experiment):
         """ """
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.show()
-        # self.go_live()
 
     def go_live(self):
         """ """
@@ -112,7 +111,8 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
-class TrackingExperiment(CameraExperiment):
+# TODO put both tail and eye tracking experiments together in this
+class EmbeddedExperiment(CameraExperiment):
     """Abstract class for an experiment which contains tracking,
     base for any experiment that tracks behaviour (being it eyes, tail,
     or anything else).
@@ -285,7 +285,7 @@ class TrackingExperiment(CameraExperiment):
         self.frame_dispatcher.terminate()
 
 
-class TailTrackingExperiment(TrackingExperiment):
+class TailTrackingExperiment(EmbeddedExperiment):
     """An experiment which contains tail tracking,
     base for experiments that  employs closed loops.
 
@@ -318,7 +318,7 @@ class TailTrackingExperiment(TrackingExperiment):
         self.window_main.show()
 
 
-class EyeTrackingExperiment(TrackingExperiment):
+class EyeTrackingExperiment(EmbeddedExperiment):
     def __init__(self, *args, **kwargs):
         """An experiment which contains eye tracking.
          """
@@ -337,7 +337,7 @@ class VRExperiment(TailTrackingExperiment):
         super().__init__(*args, **kwargs)
 
 
-class MovementRecordingExperiment(CameraExperiment):
+class SwimmingRecordingExperiment(CameraExperiment):
     """Experiment where the fish is recorded while it is moving"""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs)

@@ -44,20 +44,12 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 
 
 def existing_file_background(filepath):
-    """
-
-    Parameters
-    ----------
-    filepath :
-        
-
-    Returns
-    -------
-
+    """ Returns a numpy array from an image stored at filepath
     """
     if filepath.endswith('.h5'):
         return dio.load(filepath)
     else:
+        # If using OpenCV, we have to get RGB, not BGR
         return cv2.imread(filepath)[:, :, [2, 1, 0]]
 
 

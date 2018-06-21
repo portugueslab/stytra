@@ -320,6 +320,10 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
 
 
 class MovingConstantVel(BackgroundStimulus):
+    """
+    .. deprecated
+        in favor of the InterpolatedStimulus
+    """
     def __init__(self, *args, vel_x=0, vel_y=0, **kwargs):
         """
 

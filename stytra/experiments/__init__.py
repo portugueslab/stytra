@@ -25,6 +25,7 @@ class Experiment(QObject):
                  app=None,
                  asset_directory='',
                  rec_stim_every=None,
+                 display_config=None,
                  protocols=None,
                  trigger=None):
         """
@@ -84,9 +85,18 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
+        if display_config is None:
+            self.display_config = dict(full_screen=False)
+        else:
+            self.display_config = display_config
+
         self.window_display = StimulusDisplayWindow(self.protocol_runner,
                                                     self.calibrator,
                                                     record_stim_every=rec_stim_every)
+
+        if self.display_config.get("window_size", None) is not None:
+            self.window_display.params['size'] = self.display_config["window_size"]
+            self.window_display.set_dims()
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -101,6 +111,7 @@ class Experiment(QObject):
         """
         self.make_window()
         self.initialize_metadata()
+        self.show_stimulus_screen(self.display_config["full_screen"])
 
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments."""
