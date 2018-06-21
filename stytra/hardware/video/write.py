@@ -6,7 +6,7 @@ except ImportError:
 
 from stytra.utilities import FrameProcessor
 from multiprocessing import Event
-
+from queue import Empty
 
 # TODO documentation
 class VideoWriter(FrameProcessor):

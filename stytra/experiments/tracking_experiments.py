@@ -339,7 +339,7 @@ class VRExperiment(TailTrackingExperiment):
 
 class SwimmingRecordingExperiment(CameraExperiment):
     """Experiment where the fish is recorded while it is moving"""
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tracking_config, **kwargs):
         super().__init__(*args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs)
 
         self.processing_params_queue = Queue()
@@ -370,7 +370,6 @@ class SwimmingRecordingExperiment(CameraExperiment):
         """ """
         self.window_main = TailTrackingExperimentWindow(experiment=self, tail_tracking=False)
         self.window_main.show()
-        self.go_live()
 
     def go_live(self):
         """ """
