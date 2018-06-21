@@ -84,7 +84,7 @@ class CameraExperiment(Experiment):
 
         """
         super().wrap_up(*args, **kwargs)
-        self.camera.kill_signal.set()
+        self.camera.kill_event.set()
         self.camera.terminate()
         print('Camera process terminated')
         self.gui_timer.stop()
@@ -107,7 +107,7 @@ class CameraExperiment(Experiment):
         """
         traceback.print_tb(tb)
         print('{0}: {1}'.format(exctype, value))
-        self.camera.kill_signal.set()
+        self.camera.kill_event.set()
         self.camera.terminate()
 
 
@@ -163,7 +163,7 @@ class EmbeddedExperiment(CameraExperiment):
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
                                                 self.camera.frame_queue,
                                                 finished_signal=
-                                                self.camera.kill_signal,
+                                                self.camera.kill_event,
                                                 processing_parameter_queue=
                                                 self.processing_params_queue,
                                                 gui_framerate=20,
@@ -347,7 +347,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         self.finished_signal = Event()
 
         self.frame_dispatcher = MovingFrameDispatcher(self.camera.frame_queue,
-                                                      finished_signal=self.camera.kill_signal,
+                                                      finished_signal=self.camera.kill_event,
                                                       signal_start_rec=self.signal_start_rec,
                                                       processing_parameter_queue=self.processing_params_queue,
                                                       gui_framerate=30)

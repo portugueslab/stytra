@@ -56,7 +56,7 @@ class VideoSource(FrameProcessor):
         self.rotation = rotation
         self.control_queue = Queue()
         self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
-        self.kill_signal = Event()
+        self.kill_event = Event()
 
 
 class CameraSource(VideoSource):
@@ -102,8 +102,8 @@ class CameraSource(VideoSource):
         self.cam.open_camera()
         while True:
             # Kill if signal is set:
-            self.kill_signal.wait(0.0001)
-            if self.kill_signal.is_set():
+            self.kill_event.wait(0.0001)
+            if self.kill_event.is_set():
                 break
 
             # Try to get new parameters from the control queue:
@@ -157,7 +157,7 @@ class VideoFileSource(VideoSource):
             cap = cv2.VideoCapture(self.source_file)
         ret = True
 
-        while ret and not self.kill_signal.is_set():
+        while ret and not self.kill_event.is_set():
             if self.source_file.split('.')[-1] == 'xiseq':
                 frame = cv2.imread(frames_fn[k])
                 k += 1
@@ -183,4 +183,4 @@ class VideoFileSource(VideoSource):
 if __name__=='__main__':
     process = CameraSource('ximea')
     process.start()
-    process.kill_signal.set()
+    process.kill_event.set()

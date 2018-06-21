@@ -1,5 +1,7 @@
 import datetime
 import os
+import traceback
+from queue import Empty
 
 import deepdish as dd
 import qdarkstyle
@@ -41,9 +43,6 @@ class Experiment(QObject):
         self.protocols = protocols
         self.trigger = trigger
 
-        if trigger is not None:
-            self.trigger.start()
-
         self.asset_dir = asset_directory
         self.directory = directory
         if not os.path.isdir(self.directory):
@@ -55,6 +54,7 @@ class Experiment(QObject):
             self.calibrator = calibrator
 
         self.window_main = None
+        self.scope_config = None
 
         # to the constructor we need to pass classes, not instances
         # otherwise there are problems because the metadatas are QObjects
@@ -112,6 +112,8 @@ class Experiment(QObject):
         self.make_window()
         self.initialize_metadata()
         self.show_stimulus_screen(self.display_config["full_screen"])
+        if self.trigger is not None:
+            self.trigger.start()
 
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments."""
@@ -159,7 +161,23 @@ class Experiment(QObject):
         -------
 
         """
-        self.protocol_runner.start()
+        if self.trigger is not None and self.window_main.chk_scope.isChecked():
+            while True:
+                if self.trigger.start_event.is_set() and \
+                   not self.protocol_runner.running:
+                    self.protocol_runner.start()
+                    try:
+                        self.scope_config = self.trigger.queue_scope_params.get()
+                        self.dc.add_static_data(self.scope_config,
+                                                'imaging_microscope_config')
+                    except Empty:
+                        print('No scope configuration received')
+                    break
+                else:
+                    a = datetime.datetime.now()
+                    self.app.processEvents()
+        else:
+            self.protocol_runner.start()
 
     def end_protocol(self, save=True):
         """Function called at Protocol end. Reset Protocol, save
@@ -218,6 +236,28 @@ class Experiment(QObject):
             if self.protocol_runner.protocol is not None:
                 self.end_protocol(save=False)
         if self.trigger is not None:
-            self.trigger.terminate_event.set()
+            self.trigger.kill_event.set()
+            # self.trigger.join()
             self.trigger.terminate()
         self.app.closeAllWindows()
+
+    def excepthook(self, exctype, value, tb):
+        """
+
+        Parameters
+        ----------
+        exctype :
+
+        value :
+
+        tb :
+
+
+        Returns
+        -------
+
+        """
+        traceback.print_tb(tb)
+        print('{0}: {1}'.format(exctype, value))
+        self.trigger.kill_event.set()
+        self.trigger.terminate()

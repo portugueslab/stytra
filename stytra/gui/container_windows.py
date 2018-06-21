@@ -80,8 +80,8 @@ class SimpleExperimentWindow(QMainWindow):
             experiment.end_protocol)
         self.button_metadata = QPushButton('Edit metadata')
 
-        # if experiment.scope_triggered:
-        #     self.chk_scope = QCheckBox('Wait for the scope')
+        if experiment.trigger is not None:
+            self.chk_scope = QCheckBox('Wait for trigger signal')
         self.button_metadata.clicked.connect(
             self.show_metadata_gui)
 
@@ -106,8 +106,8 @@ class SimpleExperimentWindow(QMainWindow):
         # central_widget.layout().addWidget(self.label_debug)
         central_widget.layout().addWidget(self.widget_projection)
         central_widget.layout().addWidget(self.widget_control)
-        # if self.experiment.scope_triggered:
-        #     central_widget.layout().addWidget(self.chk_scope)
+        if self.experiment.trigger is not None:
+            central_widget.layout().addWidget(self.chk_scope)
         central_widget.layout().addWidget(self.button_metadata)
         return central_widget
 
