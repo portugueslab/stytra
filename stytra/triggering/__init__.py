@@ -49,6 +49,5 @@ class Crappy2PTrigger(Trigger):
 
 if __name__=='__main__':
     trigger = Crappy2PTrigger(pathname=r'C:\Users\lpetrucco\Desktop\dummydir')
-    dest = SigReceiver(trigger.start_event)
     trigger.start()
     dest.start()
