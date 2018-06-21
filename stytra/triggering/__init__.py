@@ -2,6 +2,7 @@ from multiprocessing import Process, Event, Value
 from pathlib import Path
 import datetime
 import time
+import zmq
 
 
 class Trigger(Process):
@@ -32,6 +33,38 @@ class Trigger(Process):
                     self.start_event.clear()
 
 
+# class ZmqTrigger(Process):
+#
+#     def __init__(self, port='5555'):
+#         self.zmq_context = zmq.Context()
+#         self.zmq_socket = self.zmq_context.socket(zmq.REP)
+#         self.zmq_socket.bind("tcp://*:{}".format(port))
+#         super().__init__()
+#
+#     def check_trigger(self):
+#         self.lightsheet_config = self.zmq_socket.recv_json()
+#         print(self.lightsheet_config)
+
+class ZmqTrigger(Trigger):
+    def __init__(self, port):
+        self.port = port
+        super().__init__()
+
+    def check_trigger(self):
+        self.lightsheet_config = self.zmq_socket.recv_json()
+        self.zmq_socket.send_json(5)
+
+        return True
+
+    def run(self):
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.REP)
+        self.zmq_socket.bind("tcp://*:{}".format(self.port))
+        self.zmq_socket.setsockopt(zmq.RCVTIMEO, -1)
+
+        super().run()
+
+
 class Crappy2PTrigger(Trigger):
     def __init__(self, pathname):
         self.path = Path(pathname)
@@ -48,6 +81,6 @@ class Crappy2PTrigger(Trigger):
 
 
 if __name__=='__main__':
-    trigger = Crappy2PTrigger(pathname=r'C:\Users\lpetrucco\Desktop\dummydir')
+    port = '5555'
+    trigger = ZmqTrigger(port)
     trigger.start()
-    dest.start()
