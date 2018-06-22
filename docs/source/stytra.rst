@@ -8,27 +8,27 @@ Subpackages
 
     stytra.bouter
     stytra.calibration
-    stytra.core
     stytra.experiments
     stytra.gui
     stytra.hardware
     stytra.metadata
     stytra.stimulation
     stytra.tracking
+    stytra.triggering
 
 Submodules
 ----------
 
-stytra\.collectors module
--------------------------
+stytra.collectors module
+------------------------
 
 .. automodule:: stytra.collectors
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra\.utilities module
-------------------------
+stytra.utilities module
+-----------------------
 
 .. automodule:: stytra.utilities
     :members:

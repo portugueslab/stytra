@@ -1,11 +1,11 @@
-stytra\.metadata package
-========================
+stytra.metadata package
+=======================
 
 Submodules
 ----------
 
-stytra\.metadata\.data\_loading module
---------------------------------------
+stytra.metadata.data\_loading module
+------------------------------------
 
 .. automodule:: stytra.metadata.data_loading
     :members:

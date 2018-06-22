@@ -1,5 +1,5 @@
-stytra\.calibration package
-===========================
+stytra.calibration package
+==========================
 
 Module contents
 ---------------

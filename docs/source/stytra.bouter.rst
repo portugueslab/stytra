@@ -1,35 +1,35 @@
-stytra\.bouter package
-======================
+stytra.bouter package
+=====================
 
 Submodules
 ----------
 
-stytra\.bouter\.angles module
------------------------------
+stytra.bouter.angles module
+---------------------------
 
 .. automodule:: stytra.bouter.angles
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra\.bouter\.bgutils module
-------------------------------
+stytra.bouter.bgutils module
+----------------------------
 
 .. automodule:: stytra.bouter.bgutils
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra\.bouter\.extraction module
----------------------------------
+stytra.bouter.extraction module
+-------------------------------
 
 .. automodule:: stytra.bouter.extraction
     :members:
     :undoc-members:
     :show-inheritance:
 
-stytra\.bouter\.kinematic\_features module
-------------------------------------------
+stytra.bouter.kinematic\_features module
+----------------------------------------
 
 .. automodule:: stytra.bouter.kinematic_features
     :members:

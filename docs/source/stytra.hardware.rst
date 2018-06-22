@@ -1,5 +1,5 @@
-stytra\.hardware package
-========================
+stytra.hardware package
+=======================
 
 Subpackages
 -----------
@@ -11,8 +11,8 @@ Subpackages
 Submodules
 ----------
 
-stytra\.hardware\.serial module
--------------------------------
+stytra.hardware.serial module
+-----------------------------
 
 .. automodule:: stytra.hardware.serial
     :members:

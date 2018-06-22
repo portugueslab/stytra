@@ -93,21 +93,6 @@ class FullFieldVisualStimulus(VisualStimulus):
         self.name = 'flash'
 
     def paint(self, p, w, h):
-        """
-
-        Parameters
-        ----------
-        p :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))  # Use chosen color
         self.clip(p, w, h)
@@ -191,7 +176,6 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
                 self.duration = self._video_seq.duration
 
     def update(self):
-        """ """
         super().update()
         # if the video restarted, it means the last display time
         # is incorrect, it has to be reset
@@ -205,21 +189,6 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
                 self._last_frame_display_time = self._elapsed
 
     def paint(self, p, w, h):
-        """
-
-        Parameters
-        ----------
-        p :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
         p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1] // 2,
@@ -250,21 +219,6 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
             self.theta*180/np.pi).translate(xc, yc)
 
     def paint(self, p, w, h):
-        """
-
-        Parameters
-        ----------
-        p :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         if self._experiment.calibrator is not None:
             mm_px = self._experiment.calibrator.params['mm_px']
         else:
@@ -299,7 +253,8 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
             self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
 
     def draw_block(self, p, point, w, h):
-        """
+        """ Has to be defined in each child of the class, defines what
+        is to be painted per tile of the repeating stimulus
 
         Parameters
         ----------
@@ -372,28 +327,11 @@ class SeamlessImageStimulus(BackgroundStimulus):
         return w, h
 
     def draw_block(self, p, point, w, h):
-        """
-
-        Parameters
-        ----------
-        p :
-            
-        point :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         p.drawImage(point, self._qbackground)
 
 
 class SeamlessGratingStimulus(BackgroundStimulus):
-    """Class for moving a grating pattern."""
+    """Displays a grating pattern with physical dimensions."""
     def __init__(self, *args, grating_angle=0, grating_period=10,
                  color=(255, 255, 255), **kwargs):
         """
@@ -408,38 +346,10 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         self.name = 'moving_gratings'
 
     def get_unit_dims(self, w, h):
-        """
-
-        Parameters
-        ----------
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
         """Draws one bar of the grating, the rest are repeated by tiling
-
-        Parameters
-        ----------
-        p :
-            
-        point :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
         """
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
@@ -450,7 +360,8 @@ class SeamlessGratingStimulus(BackgroundStimulus):
 
 
 class SeamlessWindmillStimulus(BackgroundStimulus):
-    """Class for drawing a rotating windmill."""
+    """Class for drawing a rotating windmill (radial wedges in alternating colors).
+    """
 
     def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
         super().__init__(*args, **kwargs)
@@ -459,23 +370,6 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
         self.name = 'windmill'
 
     def draw_block(self, p, point, w, h):
-        """
-
-        Parameters
-        ----------
-        p :
-            
-        point :
-            
-        w :
-            
-        h :
-            
-
-        Returns
-        -------
-
-        """
         # Painting settings:
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
@@ -502,6 +396,51 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
                                    int(mid_y + rad * np.sin(deg + size)))]
             polygon = QPolygon(polyg_points)
             p.drawPolygon(polygon)
+
+
+class CircleStimulus(VisualStimulus, DynamicStimulus):
+    """ A filled circle stimulus, which in combination with interpolation
+    can be used to make looming stimuli
+
+    Parameters
+    ---------
+        origin : tuple(float, float)
+            positions of the circle centre
+
+        radius : float
+            circle radius
+
+        backgroud_color : tuple(int, int, int)
+            RGB color of the background
+
+        circle_color : tuple(int, int, int)
+            RGB color of the circle
+
+
+    """
+    def __init__(self, origin=(0.5, 0.5), radius=0,
+                 background_color=(0, 0, 0),
+                 circle_color=(255, 255, 255)):
+        super().__init__(dynamic_parameters=["radius"])
+        self.origin = origin
+        self.radius = radius
+        self.background_color = background_color
+        self.circle_color = circle_color
+
+    def paint(self, p, w, h):
+        super().paint(p, w, h)
+
+        # draw the background
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.background_color)))
+        self.clip(p, w, h)
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        # draw the circle
+        p.setBrush(QBrush(QColor(*self.circle_color)))
+        p.drawEllipse(QPointF(w*self.origin[1], h*self.origin[0]),
+                      self.radius, self.radius)
+
 
 
 # Stimuli which need to be implemented
@@ -564,25 +503,3 @@ class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
         """
         pass
 
-
-class CircleStimulus(VisualStimulus, DynamicStimulus):
-    """ A circle stimulus, which in combination with interpolation
-    can be used to make looming stimuli"""
-    def __init__(self, origin=(0.5, 0.5), radius=0,
-                 background_color=(0, 0, 0),
-                 circle_color=(255, 255, 255)):
-        super().__init__(dynamic_parameters=["radius"])
-        self.origin = origin
-        self.radius = radius
-        self.background_color = background_color
-        self.circle_color = circle_color
-
-    def paint(self, p, w, h):
-        super().paint(p, w, h)
-        p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(*self.background_color)))  # Use chosen color
-        self.clip(p, w, h)
-        p.drawRect(QRect(-1, -1, w + 2, h + 2))
-
-        p.setBrush(QBrush(QColor(*self.circle_color)))
-        p.drawEllipse(QPointF(w*self.origin[1], h*self.origin[0]), self.radius, self.radius)

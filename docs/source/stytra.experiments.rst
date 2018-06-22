@@ -1,11 +1,11 @@
-stytra\.experiments package
-===========================
+stytra.experiments package
+==========================
 
 Submodules
 ----------
 
-stytra\.experiments\.tracking\_experiments module
--------------------------------------------------
+stytra.experiments.tracking\_experiments module
+-----------------------------------------------
 
 .. automodule:: stytra.experiments.tracking_experiments
     :members:
