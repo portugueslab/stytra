@@ -114,7 +114,7 @@ class CameraExperiment(Experiment):
 
 
 # TODO put both tail and eye tracking experiments together in this
-class EmbeddedExperiment(CameraExperiment):
+class TrackingExperiment(CameraExperiment):
     """Abstract class for an experiment which contains tracking,
     base for any experiment that tracks behaviour (being it eyes, tail,
     or anything else).
@@ -315,7 +315,7 @@ class EmbeddedExperiment(CameraExperiment):
         self.frame_dispatcher.terminate()
 
 
-class VRExperiment(EmbeddedExperiment):
+class VRExperiment(TrackingExperiment):
     """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

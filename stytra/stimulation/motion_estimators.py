@@ -61,6 +61,17 @@ class VigourMotionEstimator:
         return np.std(past_tail_motion[:, 1])
 
 
+class PositionEstimator:
+    def __init__(self, data_acc, calibrator):
+        self.data_acc = data_acc
+        self.calibrator = calibrator
+
+    def get_position(self):
+        past_position = self.data_acc.get_last_n(1)
+        y, x = self.calibrator.cam_to_proj @ np.pad(past_position[-1, 1:3], (0, 1),
+                                                    constant_values=1, mode='constant')
+        return y, x
+
 class LSTMLocationEstimator:
     """ """
     def __init__(self, data_acc, LSTM_file, PCA_weights=None,
@@ -166,6 +177,8 @@ class LSTMLocationEstimator:
         self.processed_index = current_index
 
         return np.r_[self.current_coordinates/self.px_per_mm, self.current_angle]
+
+
 
 
 class SimulatedLocationEstimator:
