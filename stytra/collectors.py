@@ -84,8 +84,6 @@ class Accumulator:
 
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers."""
-        print(self.get_last_n().shape)
-        print(len(self.header_list))
         return pd.DataFrame(self.get_last_n(),
                             columns=self.header_list)
 

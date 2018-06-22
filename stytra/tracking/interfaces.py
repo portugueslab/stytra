@@ -28,17 +28,19 @@ class TailTrackingMethod(FrameProcessingMethod):
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
-        standard_params_dict = dict(function={'values': ['centroid',
-                                                         'angle_sweep'],
-                                              'value': 'centroid',
-                                              'type': 'list',
-                                              'readonly': False},
-                                    n_segments=20,
+        standard_params_dict = dict(function=dict(values=['centroid',
+                                                          'angle_sweep'],
+                                                  value='centroid',
+                                                  type='list',
+                                                  readonly=False),
+                                    n_segments=dict(value=10,
+                                                    type='int',
+                                                    limits=(1, 50)),
                                     color_invert=True,
-                                    tail_start={'value': (440, 225),
-                                                'visible': False},
-                                    tail_length={'value': (-250, 30),
-                                                 'visible': False})
+                                    tail_start=dict(value=(440, 225),
+                                                    visible=False),
+                                    tail_length=dict(value=(-250, 30),
+                                                     visible=False))
 
         for key, value in standard_params_dict.items():
             self.add_one_param(key, value)

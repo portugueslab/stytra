@@ -69,7 +69,6 @@ class CameraExperiment(Experiment):
         self.gui_timer.start(1000 // 60)
         # sys.excepthook = self.excepthook
         self.camera.start()
-        print('started')
 
     def wrap_up(self, *args, **kwargs):
         """
@@ -199,17 +198,9 @@ class EmbeddedExperiment(CameraExperiment):
         segments (and therefore the points to be saved) is changed.
         """
 
-        try:
-            print('prev data_acc')
-            print(self.data_acc.get_last_n().shape)
-        except IndexError:
-            pass
         new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
             self.tracking_method.params['n_segments'])]
         self.data_acc.reset(header_list=new_header)
-        print('new data_acc')
-        print(len(self.data_acc.stored_data))
-        print(len(self.data_acc.header_list))
 
     def make_window(self):
         """ """
