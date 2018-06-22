@@ -13,6 +13,7 @@ from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 from stytra.tracking.interfaces import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
 from stytra.tracking.eyes import trace_eyes
+from stytra.tracking.fish import find_fish_simple
 
 
 class FrameDispatcher(FrameProcessor):
@@ -52,7 +53,8 @@ class FrameDispatcher(FrameProcessor):
         # TODO this hardcoded dictionary may produce headaches
         self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
                                             centroid=trace_tail_centroid,
-                                            eye_threshold=trace_eyes)
+                                            eye_threshold=trace_eyes,
+                                            fish=find_fish_simple)
 
     def process_internal(self, frame):
         """Apply processing function to current frame with
@@ -70,18 +72,17 @@ class FrameDispatcher(FrameProcessor):
 
         """
         if self.processing_function is not None:
-            try:
-                output = self.processing_function(frame,
-                                                  **self.processing_parameters)
-                return output
-            except:
-                raise ValueError('Unknown error while processing frame')
+
+            output = self.processing_function(frame,
+                                              **self.processing_parameters)
+            return output
+
 
     def run(self):
         """Loop where the tracking function runs."""
         while not self.finished_signal.is_set():
 
-            # Acquire the processing parameters from their queue:
+            # Gets the processing parameters from their queue
             if self.processing_parameter_queue is not None:
                 try:
                     # Read all parameters from the queue:
@@ -95,7 +96,7 @@ class FrameDispatcher(FrameProcessor):
                 except Empty:
                     pass
 
-            # Acquire frame from its queue:
+            # Gets frame from its queue:
             try:
                 time, frame = self.frame_queue.get(timeout=0.001)
 
@@ -112,17 +113,7 @@ class FrameDispatcher(FrameProcessor):
         return
 
     def send_to_gui(self, frame):
-        """
-
-        Parameters
-        ----------
-        frame :
-            
-
-        Returns
-        -------
-
-        """
+        """ Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.current_framerate:
             every_x = max(int(self.current_framerate / self.gui_framerate), 1)
         else:
@@ -188,7 +179,7 @@ class MovingFrameDispatcher(FrameDispatcher):
     """ """
     def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
         super().__init__(*args, **kwargs)
-        self.output_queue = ArrayQueue(max_mbytes=output_queue_mb)
+        self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
         self.diagnostic_queue = Queue()
 
@@ -196,6 +187,8 @@ class MovingFrameDispatcher(FrameDispatcher):
 
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
+
+        self.diagnostic_params = ["n_pixels_difference", "recording_state", "n_images_in_buffer"]
 
     def run(self):
         """ """
@@ -217,17 +210,19 @@ class MovingFrameDispatcher(FrameDispatcher):
         i_recorded = 0
 
         while not self.finished_signal.is_set():
-            try:
-                current_time, current_frame = self.frame_queue.get()
-                if self.processing_parameter_queue is not None:
-                    try:
-                        self.processing_parameters = \
-                            self.processing_parameter_queue.get(timeout=0.0001)
-                    except Empty:
-                        pass
 
+            # Gets the processing parameters from their queue
+            if self.processing_parameter_queue is not None:
+                try:
+                    self.processing_parameters = \
+                        self.processing_parameter_queue.get(timeout=0.00001)
+                except Empty:
+                    pass
+
+            try:
+                current_time, current_frame = self.frame_queue.get(timeout=0.001)
                 # process frames as they come, threshold them to roughly
-                #  find the fish (e.g. eyes)
+                # find the fish (e.g. eyes)
                 _, current_frame_thresh =  \
                     cv2.threshold(cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
                                   self.processing_parameters["fish_threshold"],
@@ -250,9 +245,9 @@ class MovingFrameDispatcher(FrameDispatcher):
                                 while image_buffer:
                                     time, im = image_buffer.popleft()
                                     self.framestart_queue.put(time)
-                                    self.output_queue.put(im)
+                                    self.save_queue.put(im)
                                     i_recorded += 1
-                            self.output_queue.put(current_frame)
+                            self.save_queue.put(current_frame)
                             self.framestart_queue.put(current_time)
                             i_recorded += 1
                         recording_state = True
@@ -272,13 +267,12 @@ class MovingFrameDispatcher(FrameDispatcher):
 
                 previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
 
-                # calculate the framerate
+                # calculate the framerate and send frame to gui
                 self.update_framerate()
-
                 if self.processing_parameters["show_thresholded"]:
                     self.send_to_gui(current_frame_thresh)
                 else:
                     self.send_to_gui(current_frame)
 
             except Empty:
-                break
+                pass
