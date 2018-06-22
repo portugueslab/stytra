@@ -218,7 +218,7 @@ def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
         list of cumulative sum + list of angles
 
     """
-    start_x = tail_start[1]  # TODO remove
+    start_x = tail_start[1]
     start_y = tail_start[0]
     tail_length_x = tail_length[1]
     tail_length_y = tail_length[0]
@@ -348,15 +348,6 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y,
     angles[0] = tail_sum
     return angles
 
-
-# def trace_tail_centroid(im, tail_start=(0, 0), tail_length=(1, 1),
-#                         n_segments=12, window_size=7,
-#                         color_invert=False, filter_size=0, image_scale=0.5)
-
-    # start_x = tail_start[1]  # TODO remove
-    # start_y = tail_start[0]
-    # tail_length_x = tail_length[1]
-    # tail_length_y = tail_length[0]
 
 def trace_tail_angular_sweep(im, tail_start=(0, 0), n_segments=7,
                              tail_length=(1, 1), filter_size=0,

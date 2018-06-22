@@ -47,7 +47,13 @@ class Accumulator:
     """
     def __init__(self, fps_range=10):
         """
-        :param fps_range:
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
         """
         self.stored_data = []
         self.header_list = ['t']
@@ -78,7 +84,9 @@ class Accumulator:
 
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers."""
-        return pd.DataFrame(self.stored_data,
+        print(self.get_last_n().shape)
+        print(len(self.header_list))
+        return pd.DataFrame(self.get_last_n(),
                             columns=self.header_list)
 
     def get_fps(self):
@@ -90,7 +98,7 @@ class Accumulator:
         except (IndexError, ValueError):
             return 0.0
 
-    def get_last_n(self, n):
+    def get_last_n(self, n=None):
         """
 
         Parameters
@@ -102,13 +110,15 @@ class Accumulator:
         -------
 
         """
-        last_n = min(n, len(self.stored_data))
+        if n is not None:
+            last_n = min(n, len(self.stored_data))
+        else:
+            last_n = len(self.stored_data)
+
         if len(self.stored_data) == 0:
             return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
         else:
             data_list = self.stored_data[-max(last_n, 1):]
-            # print('data 0: {}'.format((data_list[0])))
-            # print('data -1: {}'.format((data_list[-1])))
 
             # The length of the tuple in the accumulator may change. Here we
             # make sure we take only the elements that have the same

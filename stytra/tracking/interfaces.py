@@ -113,6 +113,11 @@ class ThresholdEyeTrackingMethod(EyeTrackingMethod):
             self.add_one_param(key, value)
 
 
+class TailEyesTrackingMethod(CentroidTrackingMethod,
+                             ThresholdEyeTrackingMethod):
+    pass
+
+
 class MovementDetectionParameters(HasPyQtGraphParams):
     """
     The class for parametrisation of various tail and fish tracking methods
@@ -130,3 +135,4 @@ class MovementDetectionParameters(HasPyQtGraphParams):
                                     show_thresholded=False)
         for key in standard_params_dict.keys():
             self.add_one_param(key, standard_params_dict[key])
+
