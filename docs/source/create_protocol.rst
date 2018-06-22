@@ -27,7 +27,7 @@ Example::
             return stimuli
 
 
-Parameterize the protocol
+Parameterise the protocol
 -------------------------
 
 Stytra uses the `Parameter`_ class from pyqtgraph to handle parameterization of its

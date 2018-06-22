@@ -5,7 +5,6 @@ from stytra.experiments.tracking_experiments import CameraExperiment,\
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
-from stytra.triggering import Crappy2PTrigger
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
