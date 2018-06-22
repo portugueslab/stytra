@@ -167,14 +167,14 @@ class Experiment(QObject):
                    not self.protocol_runner.running:
                     self.protocol_runner.start()
                     try:
-                        self.scope_config = self.trigger.queue_scope_params.get()
+                        self.scope_config = \
+                            self.trigger.queue_trigger_params.get(timeout=0.001)
                         self.dc.add_static_data(self.scope_config,
                                                 'imaging_microscope_config')
                     except Empty:
                         print('No scope configuration received')
                     break
                 else:
-                    a = datetime.datetime.now()
                     self.app.processEvents()
         else:
             self.protocol_runner.start()
