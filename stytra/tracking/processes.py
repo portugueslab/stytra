@@ -80,22 +80,24 @@ class FrameDispatcher(FrameProcessor):
     def run(self):
         """Loop where the tracking function runs."""
         while not self.finished_signal.is_set():
+
+            # Acquire the processing parameters from their queue:
+            if self.processing_parameter_queue is not None:
+                try:
+                    # Read all parameters from the queue:
+                    self.processing_parameters = \
+                        self.processing_parameter_queue.get(timeout=0.0001)
+
+                    self.processing_function = \
+                        self.dict_tracking_functions[
+                            self.processing_parameters.pop('function')]
+
+                except Empty:
+                    pass
+
+            # Acquire frame from its queue:
             try:
-                time, frame = self.frame_queue.get()
-
-                # acquire the processing parameters from a separate queue:
-                if self.processing_parameter_queue is not None:
-                    try:
-                        # Read all parameters from the queue:
-                        self.processing_parameters = \
-                            self.processing_parameter_queue.get(timeout=0.0001)
-
-                        self.processing_function = \
-                            self.dict_tracking_functions[
-                                self.processing_parameters.pop('function')]
-
-                    except Empty:
-                        pass
+                time, frame = self.frame_queue.get(timeout=0.001)
 
                 # If a processing function is specified, apply it:
                 if self.processing_function is not None:
@@ -106,7 +108,7 @@ class FrameDispatcher(FrameProcessor):
                 self.send_to_gui(frame)  # put current frame into the GUI queue
 
             except Empty:  # if there is nothing in frame queue
-                break
+                pass
         return
 
     def send_to_gui(self, frame):

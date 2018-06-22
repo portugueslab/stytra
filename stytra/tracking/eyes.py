@@ -133,7 +133,6 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
         print("I don't find eyes here...")
         e = (np.nan,)*10
     else:
-        # TODO I am sure there is a smarter way here...
         e = e[0][0] + e[0][1] + (e[0][2],) + \
             e[1][0] + e[1][1] + (e[1][2],)
 

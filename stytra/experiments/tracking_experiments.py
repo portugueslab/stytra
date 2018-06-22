@@ -195,10 +195,21 @@ class EmbeddedExperiment(CameraExperiment):
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
     def change_segment_numb(self):
-        """ """
+        """ Take care of resetting the data accumulator if the number of
+        segments (and therefore the points to be saved) is changed.
+        """
+
+        try:
+            print('prev data_acc')
+            print(self.data_acc.get_last_n().shape)
+        except IndexError:
+            pass
         new_header = ['tail_sum'] + ['theta_{:02}'.format(i) for i in range(
             self.tracking_method.params['n_segments'])]
         self.data_acc.reset(header_list=new_header)
+        print('new data_acc')
+        print(len(self.data_acc.stored_data))
+        print(len(self.data_acc.header_list))
 
     def make_window(self):
         """ """
@@ -220,7 +231,6 @@ class EmbeddedExperiment(CameraExperiment):
         -------
 
         """
-        # TODO do we need this linked to GUI timeout? why not value change?
         self.processing_params_queue.put(
              self.tracking_method.get_clean_values())
 
