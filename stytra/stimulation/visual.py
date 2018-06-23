@@ -421,8 +421,9 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
     def __init__(self, origin=(0.5, 0.5), radius=0,
                  background_color=(0, 0, 0),
                  circle_color=(255, 255, 255)):
-        super().__init__(dynamic_parameters=["radius"])
-        self.origin = origin
+        super().__init__(dynamic_parameters=["x", "y", "radius"])
+        self.x = origin[0]
+        self.y = origin[1]
         self.radius = radius
         self.background_color = background_color
         self.circle_color = circle_color
@@ -438,7 +439,7 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
         # draw the circle
         p.setBrush(QBrush(QColor(*self.circle_color)))
-        p.drawEllipse(QPointF(w*self.origin[1], h*self.origin[0]),
+        p.drawEllipse(QPointF(self.x, self.y),
                       self.radius, self.radius)
 
 

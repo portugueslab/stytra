@@ -79,9 +79,6 @@ class CameraViewWidget(QWidget):
             self.frame_queue = self.experiment.frame_dispatcher.gui_queue
         else:
             self.frame_queue = self.camera.frame_queue
-        # Queue of control parameters for the camera
-        # Queue of frames coming from the camera:
-        self.frame_queue = self.camera.frame_queue
 
         # Queue of control parameters for the camera:
         self.control_queue = self.camera.control_queue
@@ -152,7 +149,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     time, self.current_image = self.frame_queue.get(
-                        timeout=0.001)
+                        timeout=0.0001)
                     first = False
                 else:
                     # Else, get to free the queue:

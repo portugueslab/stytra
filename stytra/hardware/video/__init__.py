@@ -83,20 +83,21 @@ class CameraSource(VideoSource):
     camera_class_dict = dict(ximea=XimeaCamera,
                              avt=AvtCamera)
 
-    def __init__(self, camera_type, *args, **kwargs):
+    def __init__(self, camera_type, *args, downsampling=1, **kwargs):
         """
         :param camera_type: string indicating camera type ('ximea' or 'avt')
         """
         super().__init__(*args, **kwargs)
 
         self.camera_type = camera_type
+        self.downsampling = downsampling
         self.cam = None
 
     def run(self):
         """This process constantly try to read frames from the camera and to get"""
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
-            self.cam = CameraClass(debug=True)
+            self.cam = CameraClass(debug=True, downsampling=self.downsampling)
         except KeyError:
             print('{} is not a valid camera type!'.format(self.camera_type))
         self.cam.open_camera()

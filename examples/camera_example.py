@@ -21,6 +21,7 @@ class FlashProtocol(Protocol):
                          'flash_duration'], color=(255, 255, 255))]
         return stimuli
 
+
 if __name__ == "__main__":
     file = r'J:\_Shared\lightsheet_testing\eye_tracking\eyes_better.xiseq'
     camera_config = dict(video_file=file,

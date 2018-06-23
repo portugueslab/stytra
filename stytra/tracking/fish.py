@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from numba import vectorize, uint8
+from numba import vectorize, uint8, jit
 
 from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
@@ -343,6 +343,27 @@ def fish_start(mask, take_min=100):
     angle = np.arctan2(mask.shape[0]/2 - y0, mask.shape[1]/2 - x0)
     return y0, x0, angle
 
+
+@jit(nopython=True)
+def centroid_bin(im):
+    """ Binary centroid function """
+    si = 0
+    sj = 0
+    sw = 0
+    for i in range(im.shape[0]):
+        for j in range(im.shape[1]):
+            if im[i, j]:
+                si += i
+                sj += j
+                sw += 1
+    if sw > 0:
+        return si/sw, sj/sw
+
+    return (-1.0, -1.0)
+
+
+def find_fish_simple(im, threshold, image_scale, filter_size):
+    return centroid_bin(im<threshold) + (0, )
 
 
 if __name__ == '__main__':
