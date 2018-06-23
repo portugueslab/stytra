@@ -1,9 +1,6 @@
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
-
-import pandas as pd
-import numpy as np
+from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 
 
 class FlashProtocol(Protocol):

@@ -1,4 +1,4 @@
-from stytra.stimulation import Stimulus
+from stytra.stimulation.stimuli import Stimulus
 
 
 class PybPulseStimulus(Stimulus):

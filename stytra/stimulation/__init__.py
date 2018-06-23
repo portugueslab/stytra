@@ -5,6 +5,7 @@ import numpy as np
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from stytra.collectors import Accumulator
 from stytra.utilities import HasPyQtGraphParams
+from stytra.stimulation.stimuli import Pause, DynamicStimulus
 
 
 class ProtocolRunner(QObject):
@@ -17,8 +18,9 @@ class ProtocolRunner(QObject):
     a list of Stimulus objects. The engine that run this sequence of Stimuli
     is the ProtocolRunner class.
     A ProtocolRunner instance is not bound to a single Protocol object:
-     - new Protocols can be set via the self.set_new_protocol() function;
-     - current Protocol can be updated (e.g., after changing parameters).
+
+        - new Protocols can be set via the self.set_new_protocol() function;
+        - current Protocol can be updated (e.g., after changing parameters).
 
 
     New Protocols are set by their name (a way for restoring state
@@ -30,10 +32,12 @@ class ProtocolRunner(QObject):
     For running the Protocol (i.e., going through the list of Stimulus objects
     keeping track of time), ProtocolRunner has an internal QTimer whose timeout
     calls the timestep() method, which:
-     - checks elapsed time from beginning of the last stimulus;
-     - if required, updates current stimulus state
-     - if elapsed time has passed stimulus duration, changes current
-       stimulus.
+
+        - checks elapsed time from beginning of the last stimulus;
+        - if required, updates current stimulus state
+        - if elapsed time has passed stimulus duration, changes current
+          stimulus.
+
 
     Parameters
     ----------
@@ -151,7 +155,7 @@ class ProtocolRunner(QObject):
         exist.
         """
         if self.protocol is not None:
-            self.stimuli = self.protocol.get_stimulus_list()
+            self.stimuli = self.protocol._get_stimulus_list()
 
             self.current_stimulus = self.stimuli[0]
 
@@ -186,8 +190,7 @@ class ProtocolRunner(QObject):
             self.current_stimulus = None
 
     def start(self):
-        """
-        Start the protocol by starting the timers.
+        """Start the protocol by starting the timers.
         """
         self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
@@ -207,10 +210,11 @@ class ProtocolRunner(QObject):
         ProtocolRunner class. It is called by every timer timeout.
         At every timesteps, if protocol is running:
         
-         - check elapsed time from beginning of the last stimulus;
-         - if required, update current stimulus state
-         - if elapsed time has passed stimulus duration, change current
-           stimulus.
+            - check elapsed time from beginning of the last stimulus;
+            - if required, update current stimulus state
+            - if elapsed time has passed stimulus duration, change current
+            stimulus.
+
 
         """
         if self.running:
@@ -290,13 +294,11 @@ class ProtocolRunner(QObject):
     def get_duration(self):
         """Get total duration of the protocol in sec, calculated from stimuli
         durations.
-        :return: protocol length in seconds
-
-        Parameters
-        ----------
 
         Returns
         -------
+        float :
+            protocol length in seconds.
 
         """
         total_duration = 0
@@ -316,7 +318,15 @@ class ProtocolRunner(QObject):
 
 # TODO maybe this should be defined elsewhere
 class DynamicLog(Accumulator):
-    """ """
+    """Accumulator to save feature of a stimulus, e.g. velocity of gratings
+    in a closed-loop experiment.
+
+    Parameters
+    ----------
+    stimuli : list
+        list of the stimuli to be logged
+
+    """
     def __init__(self, stimuli):
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
@@ -342,20 +352,38 @@ class DynamicLog(Accumulator):
 
 
 class Protocol(HasPyQtGraphParams):
-    """ Describe a sequence of Stimuli and their parameters.
+    """Describe a sequence of Stimuli and their parameters.
 
     The Protocol class is thought as an easily subclassable class that
-     generate a list of stimuli according to some parameterization.
-     It basically constitutes a way of keeping together:
-      - the parameters that describe the protocol
-      - the function to generate the list of stimuli.
-    
-     The function get_stimulus_list is the core of the class: it is called
-     by the ProtocolRunner and it generates a list with the stimuli that
-     have to be used in the protocol. Everything else concerning e.g.
-     calibration, or asset directories that have to be passed to the
-     stimulus, is handled in the ProtocolRunner class to leave this class
-     as light as possible.
+    generate a list of stimuli according to some parameterization.
+    It basically constitutes a way of keeping together:
+
+        - the parameters that describe the protocol;
+        - the function to generate the list of stimuli.
+
+
+    The method :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`
+    is the core of the class: it is called
+    by the ProtocolRunner and it generates a list with the stimuli that
+    have to be presented in the protocol.
+    When defining new protocols we will subclass this class and redefine
+    :meth:`Protocol.get_stim_sequence()
+    <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`.
+
+    By default, all protocols have an initial and final pause and a parameter
+    n_repetitions that specifies the number of times the sequence from
+    :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`
+    has to be repeated.
+
+
+
+    Note
+    ----
+    Everything concerning
+    calibration, or asset directories that have to be passed to the
+    stimulus is handled in the ProtocolRunner class to leave this class
+    as light as possible.
+
 
     Parameters
     ----------
@@ -382,8 +410,7 @@ class Protocol(HasPyQtGraphParams):
                         pre_pause=0.,
                         post_pause=0.)
 
-
-    def get_stimulus_list(self):
+    def _get_stimulus_list(self):
         """Generate protocol from specified parameters. Called by the
         ProtocolRunner class where the Protocol instance is defined.
         This function puts together the stimulus sequence defined by each
@@ -395,6 +422,8 @@ class Protocol(HasPyQtGraphParams):
 
         Returns
         -------
+        list :
+            list of stimuli
 
         """
         main_stimuli = self.get_stim_sequence()
@@ -422,197 +451,3 @@ class Protocol(HasPyQtGraphParams):
 
         """
         return []
-
-
-class Stimulus:
-    """General class for a Stimulus. In stytra, a Stimulus is something that
-    makes things happen at some point of an experiment.
-    The Stimulus class is just a building block: successions of Stimuli
-    are assembled in a meaningful order by Protocol objects.
-    
-    A Stimulus runs for a time defined by its duration. to do so, the
-    ProtocolRunner compares at every time step the duration of the stimulus
-    with the time elapsed from its beginning.
-    
-    Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
-    By defining this method in subclasses, we can trigger events at
-    the beginning of the stimulus (e.g., activate a Pyboard, send a TTL pulse
-    or similar).
-    
-    At every successive time, until the end of the Stimulus, its update()
-    method is called. By defining this method in subclasses, we can trigger
-    events throughout the length of the Stimulus time.
-    
-    Be aware that code in the start() and update() functions is executed within
-    the Stimulus&main GUI process, therefore:
-     1. Its temporal precision is limited to  ? # TODO do some check here
-     2. Slow functions would slow down the entire main process, especially if
-        called at every time step.
-    
-    Stimuli have parameters that are important to be logged in the final
-    metadata and parameters that are not relevant. The get_state() method
-    used to generate the log saves all attributes not starting with _.
-    
-    
-    Different stimuli categories are implemented subclassing this class, e.g.:
-
-     - visual stimuli (children of PainterStimulus subclass);
-     - ...
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-    def __init__(self, duration=0.0):
-        """
-        Make a stimulus, with the basic properties common to all stimuli.
-        Values not to be logged start with _
-
-        :param duration: duration of the stimulus (s)
-        """
-
-        self.duration = duration
-
-        self._started = None
-        self._elapsed = 0.0  # time from the beginning of the stimulus
-        self.name = ''
-        self._experiment = None
-        self.real_time_start = None
-        self.real_time_stop = None
-
-    def get_state(self):
-        """Returns a dictionary with stimulus features for logging.
-        Ignores the properties which are private (start with _)
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
-        state_dict = dict()
-        for key, value in self.__dict__.items():
-            if not callable(value) and key[0] != '_':
-                state_dict[key] = value
-        return state_dict
-
-    def update(self):
-        """Function called by the ProtocolRunner every timestep until the Stimulus
-        is over.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
-        self.real_time_stop = datetime.datetime.now()
-
-    def start(self):
-        """Function called by the ProtocolRunner when a new stimulus is set."""
-        self.real_time_start = datetime.datetime.now()
-
-    def initialise_external(self, experiment):
-        """Make a reference to the Experiment class inside the Stimulus.
-        This is required to access from inside the Stimulus class to the
-        Calibrator, the Pyboard, the asset directories with movies or the motor
-        estimator for virtual reality.
-
-        Parameters
-        ----------
-        experiment :
-            the experiment object to which link the stimulus
-
-        Returns
-        -------
-        type
-            None
-
-        """
-        self._experiment = experiment
-
-
-class DynamicStimulus(Stimulus):
-    """Stimuli where parameters change during stimulation on a frame-by-frame
-    base.
-    It implements the recording changing parameters.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-    def __init__(self, *args, dynamic_parameters=None, **kwargs):
-        """
-        :param dynamic_parameters: A list of all parameters that are to be
-                                   recorded frame by frame;
-        """
-        super().__init__(*args, **kwargs)
-        if dynamic_parameters is None:
-            self.dynamic_parameters = []
-        else:
-            self.dynamic_parameters = dynamic_parameters
-
-    def get_dynamic_state(self):
-        """ """
-        return tuple(getattr(self, param, 0)
-                     for param in self.dynamic_parameters)
-
-
-class InterpolatedStimulus(Stimulus):
-    """Stimulus that interpolates its internal parameters with a data frame
-
-    Parameters
-    ----------
-
-        df_param : DataFrame
-            A Pandas DataFrame containing the values to be interpolated
-            it has to contain a column named t for the defined time points,
-            and additional columns for each parameter of the stimulus that is
-            to be changed.
-            A constant velocity of the parameter change can be specified,
-            in that case the column name has to be prefixed with vel_
-
-            Example:
-            t | x
-            -------
-            0 | 1.0
-            4 | 7.8
-
-    """
-    def __init__(self, *args, df_param, **kwargs):
-        """"""
-        super().__init__(*args, **kwargs)
-        self.df_param = df_param
-        self.duration = float(df_param.t.iat[-1])
-        self._past_t = 0
-
-    def update(self):
-        """ """
-        # to use parameters defined as velocities, we need the time difference before
-        # previous display
-        dt = (self._elapsed - self._past_t)
-
-        for col in self.df_param.columns:
-            if col != "t":
-                # for defined velocities, integrates the parameter
-                if col.startswith("vel_"):
-                    setattr(self, col[4:],
-                            getattr(self, col[4:]) +
-                            dt * np.interp(self._elapsed, self.df_param.t,
-                                                     self.df_param[col]))
-                # otherwise it is set by interpolating the column of the dataframe
-                else:
-                    setattr(self, col, np.interp(self._elapsed, self.df_param.t,
-                                             self.df_param[col]))
-
-
-        # the time of refresh is saved to calculate the differences
-        self._past_t = self._elapsed

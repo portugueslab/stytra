@@ -196,28 +196,33 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 class DataCollector:
     """Class for saving all data and data_log produced during an experiment.
+
     There are two kind of data that are collected:
-     - Metadata/parameters: values that should restored from previous
-                            sessions.
-                            These values don't have to be explicitely added.
-                            they are automatically read from all the objects
-                            in the stytra Experiment process which are
-                            instances of HasPyQtGraphParams.
-     - Static data:         (tail tracking, stimulus log...), that should not
-                            be restored. Those have to be added one by one
-                            via the add_data_source() method.
-    
+
+        - Metadata/parameters: values that should restored from previous
+          sessions. These values don't have to be explicitely added.
+          they are automatically read from all the objects
+          in the stytra Experiment process which are
+          instances of HasPyQtGraphParams.
+        - Static data: (tail tracking, stimulus log...), that should not
+          be restored. Those have to be added one by one
+          via the add_data_source() method.
+
+
     Inputs from both types of sources are eventually saved in the .json file
     containing all the information from the experiment.
     In this file data are divided into fixed categories:
-     - general:    info about the experiment (date, setup, session...)
-     - fish:       info about the fish (line, age, etc.)
-     - stimulus:   info about the stimulation (stimuli log, screen
-                   dimensions, etc.)
-     - imaging:    info about the connected microscope, if present
-     - behaviour:  info about fish behaviour (tail log...)
-     - camera:     parameters of the camera for behaviour, if one is present
-     - tracking:   parameters for tracking
+
+        - general: info about the experiment (date, setup, session...)
+        - animal: info about the animal (line, age, etc.)
+        - stimulus: info about the stimulation (stimuli log, screen
+          dimensions, etc.)
+        - imaging: info about the connected microscope, if present
+        - behaviour: info about fish behaviour (tail log...)
+        - camera: parameters of the camera for behaviour, if one is present
+        - tracking: parameters for tracking
+
+
     See documentation of the clean_data_dict() method for a description
     of conventions for dividing the entries among the categories.
     In the future this function may structure its output in other standard
@@ -230,6 +235,10 @@ class DataCollector:
 
     Parameters
     ----------
+    data_tuples_list : tuple
+        (optional) tuple of data to be added
+    folder_path : str
+        destination where the final json file will be sabed
 
     Returns
     -------
@@ -237,12 +246,7 @@ class DataCollector:
     """
 
     def __init__(self, *data_tuples_list, folder_path='./'):
-        """ It accepts static data in a HasPyQtGraph class, which will be
-        restored to the last values, or dynamic data like tail tracking or
-        stimulus log that will not be restored.
-        :param data_tuples_list: tuple of data to be added
-        :param folder_path: destination for the final .json file
-        """
+        """ """
 
         # Check validity of directory:
         if os.path.isdir(folder_path):
@@ -329,10 +333,12 @@ class DataCollector:
         ----------
         entry :
             data that will be stored;
-        name :
-            name in the dictionary. It should start with "category_",
+        name : str
+            name in the dictionary. It should take the form
+            "category_name",
             where "category" should be one of the possible keys
-            of the dictionary produced in get_clean_dict(). (Default value = 'unspecified_entry')
+            of the dictionary produced in get_clean_dict() (animal, stimulus, *etc.*).
+            (Default value = 'unspecified_entry')
 
         Returns
         -------
@@ -354,14 +360,14 @@ class DataCollector:
         ----------
         paramstree :
             see sanitize_item docs; (Default value = True)
-        eliminate_df :
+        eliminate_df : bool
             see sanitize_item docs; (Default value = False)
-        convert_datetime :
+        convert_datetime : bool
             see sanitize_item docs; (Default value = False)
 
         Returns
         -------
-        type
+        dict :
             dictionary with the sorted data.
 
         """
@@ -396,11 +402,14 @@ class DataCollector:
 
         Parameters
         ----------
-        class_param_key :
+        class_param_key : str
+            name of the parameter whose value is required.
             
 
         Returns
         -------
+        - :
+            value of the parameter in the config.h5 file.
 
         """
         if self.last_metadata is not None:

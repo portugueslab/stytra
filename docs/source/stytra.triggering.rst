@@ -1,7 +1,6 @@
 stytra.triggering package
 =========================
 
-
 Module contents
 ---------------
 

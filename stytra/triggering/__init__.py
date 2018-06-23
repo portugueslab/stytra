@@ -35,7 +35,7 @@ class Trigger(Process):
         can be set to kill the Trigger process;
 
 
-    **Queues**
+    **Output Queues**
 
     queue_trigger_params:
         can be used to send to the Experiment data about

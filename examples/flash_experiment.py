@@ -1,5 +1,5 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
+from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 
 class FlashProtocol(Protocol):
     name = 'flash protocol'

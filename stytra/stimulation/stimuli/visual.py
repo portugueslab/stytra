@@ -7,8 +7,9 @@ from PyQt5.QtCore import QPoint, QRect, QPointF
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
-from stytra.stimulation import Stimulus, DynamicStimulus
-from stytra.stimulation.backgrounds import existing_file_background
+
+from stytra.stimulation.stimuli import Stimulus, DynamicStimulus
+from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
 # TODO right now Stimulus is not parameterized via HasPyQtGraphParams

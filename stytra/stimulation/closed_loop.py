@@ -1,6 +1,7 @@
 import numpy as np
-from stytra.stimulation import DynamicStimulus
-from stytra.stimulation.visual import BackgroundStimulus, SeamlessImageStimulus, CircleStimulus
+
+from stytra.stimulation.stimuli import DynamicStimulus, BackgroundStimulus, \
+    SeamlessImageStimulus, CircleStimulus
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
@@ -94,7 +95,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._past_t = self._elapsed
 
 
-class ObjectTrackingSitmulus(DynamicStimulus, CircleStimulus):
+class ObjectTrackingSitmulus(CircleStimulus):
     def update(self):
         self.x, self.y = self._experiment.position_estimator.get_position()
         super().update()
