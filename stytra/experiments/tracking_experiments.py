@@ -12,7 +12,7 @@ from stytra.hardware.video import CameraControlParameters, VideoWriter, \
     VideoFileSource, CameraSource
 # imports for tracking
 
-from stytra.tracking import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.interfaces import *
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 

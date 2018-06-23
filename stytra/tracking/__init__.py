@@ -1,63 +1,9 @@
-from PyQt5.QtCore import QObject
 from multiprocessing import Process
 from queue import Empty
 from stytra.tracking.fish import find_fishes_midlines
 import cv2
 from datetime import datetime
 from stytra.tracking.diagnostics import draw_found_fish
-from stytra.collectors import Accumulator
-
-
-# TODO I think this should stay together with the dataaccumulator parent
-class QueueDataAccumulator(QObject, Accumulator):
-    def __init__(self, data_queue, header_list=None):
-        """General class for accumulating (for saving or dispatching) data
-            out of a multiprocessing queue. Require triggering with some timer.
-            This timer has to be set externally!!!
-
-        Parameters
-        ----------
-        data_queue :
-            queue from witch to retrieve data (Queue object)
-        header_list :
-            headers for the data to stored (strings list)
-
-        Returns
-        -------
-
-        """
-        super().__init__()
-
-        # Store externally the starting time make us free to keep
-        # only time differences in milliseconds in the list (faster)
-        self.starting_time = None
-
-        self.data_queue = data_queue
-        self.stored_data = []
-
-        # First data column will always be time:
-        self.header_list.extend(header_list)
-
-    def update_list(self):
-        """Upon calling put all available data into a list."""
-        while True:
-            try:
-                # Get data from queue:
-                t, data = self.data_queue.get(timeout=0.00001)
-
-                # If we are at the starting time:
-                if len(self.stored_data) == 0:
-                    self.starting_time = t
-
-                # Time in ms (for having np and not datetime objects)
-                t_ms = (t - self.starting_time).total_seconds()
-
-                # append:
-                l = (t_ms, ) + tuple(data)
-                self.stored_data.append(l)
-            except Empty:
-                break
-
 
 class FishTrackingProcess(Process):
     """ """

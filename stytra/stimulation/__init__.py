@@ -1,11 +1,10 @@
 import datetime
 from copy import deepcopy
 
-import numpy as np
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
-from stytra.collectors import Accumulator
 from stytra.utilities import HasPyQtGraphParams
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
+from stytra.collectors.accumulators import DynamicLog
 
 
 class ProtocolRunner(QObject):
@@ -208,7 +207,7 @@ class ProtocolRunner(QObject):
     def timestep(self):
         """Update displayed stimulus. This function is the core of the
         ProtocolRunner class. It is called by every timer timeout.
-        At every timesteps, if protocol is running:
+        At every timestep, if protocol is running:
         
             - check elapsed time from beginning of the last stimulus;
             - if required, update current stimulus state
@@ -314,41 +313,6 @@ class ProtocolRunner(QObject):
             string += '-' + stim.name
 
         print(string)
-
-
-# TODO maybe this should be defined elsewhere
-class DynamicLog(Accumulator):
-    """Accumulator to save feature of a stimulus, e.g. velocity of gratings
-    in a closed-loop experiment.
-
-    Parameters
-    ----------
-    stimuli : list
-        list of the stimuli to be logged
-
-    """
-    def __init__(self, stimuli):
-        super().__init__()
-        # it is assumed the first dynamic stimulus has all the fields
-        for stimulus in stimuli:
-            if isinstance(stimulus, DynamicStimulus):
-                self.header_list = ['t'] + stimulus.dynamic_parameters
-        self.stored_data = []
-
-    def update_list(self, data):
-        """
-
-        Parameters
-        ----------
-        data :
-            
-
-        Returns
-        -------
-
-        """
-        self.check_start()
-        self.stored_data.append(data)
 
 
 class Protocol(HasPyQtGraphParams):

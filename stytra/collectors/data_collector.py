@@ -34,113 +34,6 @@ def strip_values(it):
         return it
 
 
-class Accumulator:
-    """A general class for accumulating streams of data that
-    will be saved or plotted in real time
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-    def __init__(self, fps_range=10):
-        """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
-        self.stored_data = []
-        self.header_list = ['t']
-        self.starting_time = None
-        self.fps_range = fps_range
-
-    def reset(self, header_list=None):
-        """Reset accumulator and assign a new header list
-
-        Parameters
-        ----------
-        header_list :
-             (Default value = None)
-
-        Returns
-        -------
-
-        """
-        if header_list is not None:
-            self.header_list = ['t'] + header_list
-        self.stored_data = []
-        self.starting_time = None
-
-    def check_start(self):
-        """ """
-        if self.starting_time is None:
-            self.starting_time = datetime.datetime.now()
-
-    def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers."""
-        return pd.DataFrame(self.get_last_n(),
-                            columns=self.header_list)
-
-    def get_fps(self):
-        """ """
-        try:
-            last_t = self.stored_data[-1][0]
-            t_minus_dif = self.stored_data[-self.fps_range][0]
-            return self.fps_range/(last_t-t_minus_dif)
-        except (IndexError, ValueError):
-            return 0.0
-
-    def get_last_n(self, n=None):
-        """
-
-        Parameters
-        ----------
-        n :
-            
-
-        Returns
-        -------
-
-        """
-        if n is not None:
-            last_n = min(n, len(self.stored_data))
-        else:
-            last_n = len(self.stored_data)
-
-        if len(self.stored_data) == 0:
-            return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
-        else:
-            data_list = self.stored_data[-max(last_n, 1):]
-
-            # The length of the tuple in the accumulator may change. Here we
-            # make sure we take only the elements that have the same
-            # dimension as the last one.
-            lenghts = np.array([len(d)==len(data_list[-1]) for d in data_list])
-            obar = np.array(data_list[np.where(lenghts)[0][0]:])
-            return obar
-
-    def get_last_t(self, t):
-        """
-
-        Parameters
-        ----------
-        t :
-            
-
-        Returns
-        -------
-
-        """
-        n = int(self.get_fps()*t)
-        return self.get_last_n(n)
-
-
 def metadata_dataframe(metadata_dict, time_step=0.005):
     """Function for converting a data_log dictionary into a pandas DataFrame
     for saving.
@@ -227,7 +120,7 @@ class DataCollector:
     of conventions for dividing the entries among the categories.
     In the future this function may structure its output in other standard
     formats for scientific data (e.g., NWB).
-    
+
     In addition to the .json file, data_log and parameters from
     HasPyQtGraphParams objects are stored in a config.h5 file (located in the
     experiment directory) which is used for restoring the last configuration
@@ -313,7 +206,7 @@ class DataCollector:
         Parameters
         ----------
         params_tree :
-            
+
 
         Returns
         -------
@@ -321,7 +214,7 @@ class DataCollector:
         """
         if isinstance(params_tree, Parameter):
             self.params_metadata = params_tree;
-            #self.restore_from_saved()  # restoring is called by experiment
+            # self.restore_from_saved()  # restoring is called by experiment
             # at a different time!
         else:
             print('Invalid params source passed!')
@@ -404,7 +297,7 @@ class DataCollector:
         ----------
         class_param_key : str
             name of the parameter whose value is required.
-            
+
 
         Returns
         -------
@@ -455,13 +348,13 @@ class DataCollector:
         fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
                     str(clean_dict['animal']['id'])
         dirname = '/'.join([self.folder_path,
-                   clean_dict['stimulus']['protocol_params']['name'],
-                             fish_name,
-                             str(clean_dict['general']['session_id'])])
+                            clean_dict['stimulus']['protocol_params']['name'],
+                            fish_name,
+                            str(clean_dict['general']['session_id'])])
         # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
-        with open(dirname+'/'+timestamp+'_metadata.json', 'w') as outfile:
+        with open(dirname + '/' + timestamp + '_metadata.json', 'w') as outfile:
             json.dump(clean_dict,
                       outfile, sort_keys=True)
 
