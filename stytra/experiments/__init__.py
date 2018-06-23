@@ -138,7 +138,6 @@ class Experiment(QObject):
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
-        :return:
 
         Parameters
         ----------
@@ -223,8 +222,8 @@ class Experiment(QObject):
             self.protocol_runner.start()
 
     def end_protocol(self, save=True):
-        """Function called at Protocol end. Reset Protocol, save
-        data_log and put experiment data in pymongo database.
+        """Function called at Protocol end. Reset Protocol and save
+        data_log.
 
         Parameters
         ----------

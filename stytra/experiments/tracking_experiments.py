@@ -115,17 +115,20 @@ class CameraExperiment(Experiment):
 
 # TODO put both tail and eye tracking experiments together in this
 class TrackingExperiment(CameraExperiment):
-    """Abstract class for an experiment which contains tracking,
-    base for any experiment that tracks behaviour (being it eyes, tail,
-    or anything else).
+    """Abstract class for an experiment which contains tracking.
+
+    This class is the base for any experiment that tracks behaviour (being it
+    eyes, tail, or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
     
     The frame dispatcher take two input queues:
+
         - frame queue from the camera;
         - parameters queue from parameter window.
     
     and it puts data in three queues:
+
         - subset of frames are dispatched to the GUI, for displaying;
         - all the frames, together with the parameters, are dispatched
           to perform tracking;

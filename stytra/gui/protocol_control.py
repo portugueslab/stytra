@@ -6,34 +6,31 @@ from pyqtgraph.parametertree import ParameterTree
 
 
 class ProtocolControlWidget(QWidget):
-    """GUI for controlling a ProtocolRunner. It implements:
-     - selection of the Protocol to be run;
-     - window for controlling Protocol parameters;
-     - toggle button for starting/stopping the Protocol;
-     - progress bar to display progression of the Protocol.
-    
-    ==================== ==================================================
-    **Signals**
-    sig_start_protocol   Emitted via the toggle button click, meant to
-                         start the protocol
-    sig_stop_protocol    Emitted via the toggle button click, meant to
-                         abort the protocol
-    ==================== ==================================================
+    """GUI for controlling a ProtocolRunner.
 
-    Parameters
+    This class implements:
+
+        - selection box of the Protocol to be run;
+        - window for controlling Protocol parameters;
+        - toggle button for starting/stopping the Protocol;
+        - progress bar to display progression of the Protocol.
+
+     Parameters
     ----------
+    protocol_runner: :class:`ProtocolRunner <stytra.stimulation.ProtocolRunner>` object
+        ProtocolRunner that is controlled by the GUI.
 
-    Returns
-    -------
-
+    **Signals**
     """
     sig_start_protocol = pyqtSignal()
+    """ Emitted via the toggle button click, meant to
+                         start the protocol """
     sig_stop_protocol = pyqtSignal()
+    """ Emitted via the toggle button click, meant to
+                         abort the protocol"""
 
     def __init__(self, protocol_runner=None, *args):
-        """
-        :param experiment: Experiment object
-        """
+        """ """
         super().__init__(*args)
         self.protocol_runner = protocol_runner
 
@@ -99,7 +96,8 @@ class ProtocolControlWidget(QWidget):
             self.set_protocol()
 
     def show_stim_params_gui(self):
-        """Create and show window to update protocol parameters."""
+        """Create and show window to update protocol parameters.
+        """
         if self.protocol_runner.protocol.params is not None:
             self.protocol_params_tree.setParameters(
                 self.protocol_runner.protocol.params)
@@ -127,7 +125,8 @@ class ProtocolControlWidget(QWidget):
             self.toggle_icon()
 
     def toggle_icon(self):
-        """Change the play/stop icon of the GUI."""
+        """Change the play/stop icon of the GUI.
+        """
         if self.button_toggle_prot.text() == "■":
             self.button_toggle_prot.setText("▶")
             self.progress_bar.setValue(0)
@@ -144,7 +143,8 @@ class ProtocolControlWidget(QWidget):
         self.progress_bar.setValue(int(self.protocol_runner.t))
 
     def set_protocol(self):
-        """Use value in the dropdown menu to change the protocol."""
+        """Use value in the dropdown menu to change the protocol.
+        """
         protocol_name = self.combo_prot.currentText()
         self.protocol_runner.set_new_protocol(protocol_name)
         self.button_toggle_prot.setEnabled(True)

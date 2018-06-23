@@ -1,5 +1,5 @@
 import numpy as np
-from stytra.tracking import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator
 # from keras.models import load_model
 from stytra.bouter.angles import rot_mat
 from stytra.bouter.kinematic_features import velocities_to_coordinates
