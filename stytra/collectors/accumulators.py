@@ -124,7 +124,7 @@ class Accumulator:
         Parameters
         ----------
         t : float
-            Time window in seconds from wich data should be returned
+            Time window in seconds from which data should be returned
 
 
         Returns
