@@ -1,4 +1,5 @@
-Parameterisation
-================
+Parameters in stytra
+====================
 
-In stytra
+(In progress..)
+

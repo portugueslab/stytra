@@ -1,4 +1,4 @@
-from stytra.stimulation.visual import MovingSeamless
+# from stytra.stimulation.visual import MovingSeamless
 from stytra.bouter.angles import transform_affine
 import numpy as np
 import cv2

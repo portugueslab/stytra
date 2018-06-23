@@ -8,24 +8,22 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class ProtocolRunner(QObject):
-    """
-    Class for managing and running stimulation Protocols. It is thought to be
+    """Class for managing and running stimulation Protocols.
+
+    It is thought to be
     integrated with the stytra.gui.protocol_control.ProtocolControlWidget GUI.
     
     In stytra Protocols are parameterized objects required just for generating
     a list of Stimulus objects. The engine that run this sequence of Stimuli
     is the ProtocolRunner class.
-    
     A ProtocolRunner instance is not bound to a single Protocol object:
      - new Protocols can be set via the self.set_new_protocol() function;
      - current Protocol can be updated (e.g., after changing parameters).
-    
-    The list of the available protocols is generated automatically by looking
-    at the Protocol subclasses defined in the stytra.stimulation.protocols
-    module. New Protocols are set by their name (a way for restoring state
+
+
+    New Protocols are set by their name (a way for restoring state
     from the config.h5 file), but can also be set by passing a Protocol() class
     to the internal _set_new_protocol() method.
-    
     Every time a Protocol is set or updated, the ProtocolRunner uses its
     get_stimulus_sequence() method to generate a new list of stimuli.
     
@@ -36,41 +34,38 @@ class ProtocolRunner(QObject):
      - if required, updates current stimulus state
      - if elapsed time has passed stimulus duration, changes current
        stimulus.
-    
-    ====================== ====================================================
-    **Signals**
-    sig_timestep           Emitted at every timestep, with the index of the
-                           current stimulus.
-    sig_stim_change        Emitted every change of stimulation, with the index
-                           of the new stimulus.
-    sig_protocol_started   Emitted when the protocol sequence starts.
-    sig_protocol_finished  Emitted when the protocol sequence ends.
-    sig_protocol_updated   Emitted when protocol is changed/updated
-    ====================== ====================================================
 
     Parameters
     ----------
+    experiment : :obj:`stytra.experiment.Experiment`
+        the Experiment object where directory, calibrator *et similia*
+        will be found.
+    dt : float
+         (optional) timestep for protocol updating.
+    log_print : Bool
+        (optional) if True, print stimulus log.
+    protocol : str
+        (optional) name of protocol to be set at the beginning.
 
-    Returns
-    -------
 
+    **Signals**
     """
 
     sig_timestep = pyqtSignal(int)
+    """Emitted at every timestep with the index of the current stimulus."""
     sig_stim_change = pyqtSignal(int)
+    """Emitted every change of stimulation, with the index of the new
+    stimulus."""
     sig_protocol_started = pyqtSignal()
+    """Emitted when the protocol sequence starts."""
     sig_protocol_finished = pyqtSignal()
+    """Emitted when the protocol sequence ends."""
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
+    """Emitted when protocol is changed/updated"""
 
     def __init__(self, experiment=None, dt=1/60,
                  log_print=True, protocol=None):
-        """
-        :param dt: timestep for protocol updating;
-        :param log_print: if True, print stimulus log;
-        :param experiment: the Experiment class where directory,
-                           calibrator et similia will be found;
-        :param protocol:  protocol set instantiating the ProtocolRunner.
-        """
+        """ """
         super().__init__()
 
         self.experiment = experiment
@@ -106,11 +101,8 @@ class ProtocolRunner(QObject):
 
         Parameters
         ----------
-        protocol :
-            Protocol object
-
-        Returns
-        -------
+        protocol : :obj:`stytra.experiment.Protocol`
+            Protocol to be set.
 
         """
         # If there was a protocol before, block params signal to avoid duplicate
@@ -138,11 +130,9 @@ class ProtocolRunner(QObject):
 
         Parameters
         ----------
-        protocol_name :
+        protocol_name : str
             string with the protocol name.
 
-        Returns
-        -------
 
         """
         if protocol_name is not None:
@@ -157,7 +147,9 @@ class ProtocolRunner(QObject):
                       'protocols file')
 
     def update_protocol(self):
-        """Update current Protocol (get a new stimulus list if protocol or"""
+        """Update current Protocol (get a new stimulus list if protocol
+        exist.
+        """
         if self.protocol is not None:
             self.stimuli = self.protocol.get_stimulus_list()
 
@@ -175,12 +167,6 @@ class ProtocolRunner(QObject):
     def reset(self):
         """Make the protocol ready to start again. Reset all ProtocolRunner
         and stimuli timers and elapsed times.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
 
         """
         self.t_start = None
@@ -226,12 +212,6 @@ class ProtocolRunner(QObject):
          - if elapsed time has passed stimulus duration, change current
            stimulus.
 
-        Parameters
-        ----------
-
-        Returns
-        -------
-
         """
         if self.running:
             # Get total time from start in seconds:
@@ -270,7 +250,8 @@ class ProtocolRunner(QObject):
                 self.update_dynamic_log()  # update dynamic log for stimulus
 
     def stop(self):
-        """Stop the stimulation sequence. Update log and stop timer."""
+        """Stop the stimulation sequence. Update log and stop timer.
+        """
         if not self.completed:  # if protocol was interrupted, update log anyway
             self.update_log()
 
@@ -286,12 +267,6 @@ class ProtocolRunner(QObject):
     def update_log(self):
         """Append the log appending info from the last stimulus. Add to the
         stimulus info from Stimulus.get_state() start and stop times.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
 
         """
         # Update with the data of the current stimulus:
@@ -330,7 +305,8 @@ class ProtocolRunner(QObject):
         return total_duration
 
     def print(self):
-        """Print protocol sequence."""
+        """Print protocol sequence.
+        """
         string = ''
         for stim in self.stimuli:
             string += '-' + stim.name
@@ -366,7 +342,9 @@ class DynamicLog(Accumulator):
 
 
 class Protocol(HasPyQtGraphParams):
-    """The Protocol class is thought as an easily subclassable class that
+    """ Describe a sequence of Stimuli and their parameters.
+
+    The Protocol class is thought as an easily subclassable class that
      generate a list of stimuli according to some parameterization.
      It basically constitutes a way of keeping together:
       - the parameters that describe the protocol
@@ -388,6 +366,7 @@ class Protocol(HasPyQtGraphParams):
     """
 
     name = ''
+    """Name of the protocol."""
 
     def __init__(self):
         """
@@ -458,7 +437,7 @@ class Stimulus:
     Whenever the ProtocolRunner sets a new stimulus it calls its start() method.
     By defining this method in subclasses, we can trigger events at
     the beginning of the stimulus (e.g., activate a Pyboard, send a TTL pulse
-     or similar).
+    or similar).
     
     At every successive time, until the end of the Stimulus, its update()
     method is called. By defining this method in subclasses, we can trigger
@@ -466,18 +445,19 @@ class Stimulus:
     
     Be aware that code in the start() and update() functions is executed within
     the Stimulus&main GUI process, therefore:
-     1. Its temporal precision is limited to # TODO do some check here
+     1. Its temporal precision is limited to  ? # TODO do some check here
      2. Slow functions would slow down the entire main process, especially if
         called at every time step.
     
-    Stimului have parameters that are important to be logged in the final
+    Stimuli have parameters that are important to be logged in the final
     metadata and parameters that are not relevant. The get_state() method
     used to generate the log saves all attributes not starting with _.
     
     
     Different stimuli categories are implemented subclassing this class, e.g.:
+
      - visual stimuli (children of PainterStimulus subclass);
-     ...
+     - ...
 
     Parameters
     ----------
