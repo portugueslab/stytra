@@ -29,5 +29,4 @@ if __name__ == "__main__":
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(protocols=[FlashProtocol], camera_config=camera_config,
-               tracking_config=tracking_config,
-               data_dir=r'C:\Users\lpetrucco\data\stytra')
+               tracking_config=tracking_config)

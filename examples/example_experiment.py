@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 
 from stytra import Stytra
-from stytra.stimulation import Protocol, InterpolatedStimulus
-from stytra.stimulation.stimuli.visual import CircleStimulus
+from stytra.stimulation import Protocol
+from stytra.stimulation.stimuli import InterpolatedStimulus, CircleStimulus
 
 
 # Let's define a simple protocol consisting of looms at random locations,
