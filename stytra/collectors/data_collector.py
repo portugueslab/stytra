@@ -327,7 +327,7 @@ class DataCollector:
         dd.io.save(self.folder_path + 'config.h5',
                    self.params_metadata.saveState())
 
-    def save_json_log(self, timestamp=None):
+    def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources
         and the updated params.
 
@@ -341,20 +341,8 @@ class DataCollector:
 
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
-        if timestamp is None:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
-                    str(clean_dict['animal']['id'])
-        dirname = '/'.join([self.folder_path,
-                            clean_dict['stimulus']['protocol_params']['name'],
-                            fish_name,
-                            str(clean_dict['general']['session_id'])])
-        # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        with open(dirname + '/' + timestamp + '_metadata.json', 'w') as outfile:
+        with open(output_path, 'w') as outfile:
             json.dump(clean_dict,
                       outfile, sort_keys=True)
 

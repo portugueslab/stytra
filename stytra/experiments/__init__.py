@@ -135,6 +135,15 @@ class Experiment(QObject):
             self.window_display.params['size'] = self.display_config["window_size"]
             self.window_display.set_dims()
 
+    def folder_name(self):
+        # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
+        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
+                    str(clean_dict['animal']['id'])
+        dirname = '/'.join([self.folder_path,
+                            clean_dict['stimulus']['protocol_params']['name'],
+                            fish_name,
+                            str(clean_dict['general']['session_id'])])
+
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
 
@@ -241,10 +250,10 @@ class Experiment(QObject):
             self.dc.add_static_data(self.protocol_runner.t_end,
                                     name='general_t_protocol_end')
 
-        # TODO saving of dynamic_log should be conditional
-        # self.dc.add_data_source(self.protocol_runner.dynamic_log.get_dataframe(),
-        #                         name='stimulus_dynamic_log')
-        # clean_dict = self.dc.get_clean_dict(paramstree=True)
+        if self.protocol_runner.dynamic_log is not None:
+            self.protocol_runner.dynamic_log.save(
+                self.output_folder / "dynamic_log", self.output_format)
+        # TODO do the folder specificaion
 
         if save and self.dc is not None:
             self.dc.save()  # save data_log

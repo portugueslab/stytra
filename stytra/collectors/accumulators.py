@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 from queue import Empty
 import pandas as pd
+import json
 
 
 class Accumulator:
@@ -138,6 +139,33 @@ class Accumulator:
         """
         n = int(self.get_fps() * t)
         return self.get_last_n(n)
+
+    def save(self, path, format="csv"):
+        """ Saves the content of the accumulator in a tabular format.
+        Choose CSV for widest compatibility, HDF if using Python only,
+        or feather for efficient storage compatible with Python and Julia
+        data frames
+
+        Parameters
+        ----------
+        path : str
+            output path, without extension name
+        format : str
+            output format, csv, feather, hdf5, json
+
+        """
+        outpath = path+"."+format
+        if format == "csv":
+            self.get_dataframe().to_csv(outpath,
+                                        sep=";")
+        elif format == "feather":
+            self.get_dataframe().to_feather(outpath)
+        elif format == "hdf5":
+            self.get_dataframe().to_hdf(outpath, "/data")
+        elif format == "json":
+            json.dump(self.get_dataframe().to_dict(), open(outpath, "w"))
+        else:
+            raise(NotImplementedError(format+" is not an implemented log foramt"))
 
 
 class QueueDataAccumulator(QObject, Accumulator):
