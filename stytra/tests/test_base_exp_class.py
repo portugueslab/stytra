@@ -66,7 +66,6 @@ class TestExperimentClass(unittest.TestCase):
             with open(path, 'r') as f:
                 data.append(json.load(f))
 
-
         np.testing.assert_equal(data[0]['stimulus']['protocol_params']['name'],
                                 'test_protocol_0')
 
