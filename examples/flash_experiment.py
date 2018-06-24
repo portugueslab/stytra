@@ -17,5 +17,5 @@ class FlashProtocol(Protocol):
         return stimuli
 
 if __name__ == "__main__":
-    st = Stytra(protocols=[FlashProtocol],
-                directory=r'C:\Users\lpetrucco\Desktop\metadata')
+    st = Stytra(protocols=[FlashProtocol])
+    st.base.close()

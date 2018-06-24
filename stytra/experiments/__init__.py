@@ -25,7 +25,7 @@ class Experiment(QObject):
     ----------
     app : QApplication()
         Application to run the Experiment QObject.
-    protocols : list of :class:`Protocol <stytra.stimulation.Protocol>` objects
+    protocols : list of :class:`Protocol <stytra.stimulation.Protocol>` classes
         list of protocols that can be run in this experiment session.
     directory : str
         (optional) Directory where metadata will be saved. If None, nothing
@@ -71,7 +71,6 @@ class Experiment(QObject):
         super().__init__()
 
         self.app = app
-        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.protocols = protocols
         self.trigger = trigger
 
@@ -146,6 +145,7 @@ class Experiment(QObject):
         -------
 
         """
+        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.make_window()
         self.initialize_metadata()
         self.show_stimulus_screen(self.display_config["full_screen"])
