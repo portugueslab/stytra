@@ -138,7 +138,7 @@ class DataCollector:
 
     """
 
-    def __init__(self, *data_tuples_list, folder_path='./'):
+    def __init__(self, *data_tuples_list, folder_path='C:/'):
         """ """
 
         # Check validity of directory:
@@ -346,18 +346,19 @@ class DataCollector:
             json.dump(clean_dict,
                       outfile, sort_keys=True)
 
-    def save(self, timestamp=None):
+    def save(self, output_path=""):
         """Save both the data_log.json log and the config.h5 file
 
         Parameters
         ----------
-        timestamp :
-             (Default value = None)
+        output_path :
+             (Default value = "")
+             Path where to save the metadata
 
         Returns
         -------
 
         """
 
-        self.save_json_log(timestamp)
+        self.save_json_log(output_path)
         self.save_config_file()

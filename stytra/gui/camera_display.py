@@ -386,7 +386,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 if len(self.experiment.data_acc.stored_data) > 1:
                     e = retrieved_data[-10:]
-                    print(len(e))
                     for i, o in enumerate([0, 5]):
                         if e[0] == e[0]:
                             for ell, col in zip(self.curves_eyes, [(5, 40, 230),

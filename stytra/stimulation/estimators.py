@@ -65,12 +65,19 @@ class PositionEstimator:
     def __init__(self, data_acc, calibrator):
         self.data_acc = data_acc
         self.calibrator = calibrator
+        self.log = EstimatorLog(["x", "y", "theta"])
 
     def get_position(self):
         past_position = self.data_acc.get_last_n(1)
-        y, x = self.calibrator.cam_to_proj @ np.pad(past_position[-1, 1:3], (0, 1),
-                                                    constant_values=1, mode='constant')
-        return y, x
+        if self.calibrator.params["cam_to_proj"] is not None:
+            projmat = np.array(self.calibrator.params["cam_to_proj"])
+            y, x = projmat @ np.array([past_position[-1, 2], past_position[-1, 1], 1.0])
+            self.log.update_list((past_position[-1, 0], x, y, 0))
+            return y, x, 0
+
+        self.log.update_list((past_position[-1, 0], -1, -1, 0))
+        return -1, -1, 0
+
 
 class LSTMLocationEstimator:
     """ """
@@ -177,8 +184,6 @@ class LSTMLocationEstimator:
         self.processed_index = current_index
 
         return np.r_[self.current_coordinates/self.px_per_mm, self.current_angle]
-
-
 
 
 class SimulatedLocationEstimator:

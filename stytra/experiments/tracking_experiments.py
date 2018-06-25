@@ -16,6 +16,9 @@ from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.interfaces import *
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 
+from stytra.stimulation.estimators import PositionEstimator, VigourMotionEstimator, LSTMLocationEstimator
+
+import sys
 
 class CameraExperiment(Experiment):
     """General class for Experiment that need to handle a camera.
@@ -68,7 +71,7 @@ class CameraExperiment(Experiment):
     def go_live(self):
         """ """
         self.gui_timer.start(1000 // 60)
-        # sys.excepthook = self.excepthook
+        sys.excepthook = self.excepthook
         self.camera.start()
 
     def wrap_up(self, *args, **kwargs):
@@ -136,6 +139,10 @@ class TrackingExperiment(CameraExperiment):
 
     Parameters
     ----------
+        tracking_config: dict
+            containing fields:  tracking_method
+                                estimator: can be vigor or lstm for embedded fish, position
+                                    for freely-swimming
 
     Returns
     -------
@@ -160,9 +167,12 @@ class TrackingExperiment(CameraExperiment):
 
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, calibrator=CircleCalibrator()
+                                            if tracking_config["tracking_method"]=="fish"
+                                            else None, **kwargs)
 
         method_name = tracking_config["tracking_method"]
+
         self.tracking_method = self.tracking_methods_list[method_name]()
 
         self.data_name = self.tracking_method.data_log_name
@@ -175,6 +185,7 @@ class TrackingExperiment(CameraExperiment):
                                                 gui_framerate=20)
 
         self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
+                                             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
                                              header_list=self.tracking_method.accumulator_headers)
 
         # Data accumulator is updated with GUI timer:
@@ -194,6 +205,18 @@ class TrackingExperiment(CameraExperiment):
             self.tracking_method.params.param('n_segments').sigValueChanged.connect(
                 self.change_segment_numb)
 
+        est_type = tracking_config.get("estimator", None)
+        if est_type == "position":
+            self.estimator = PositionEstimator(self.data_acc, self.calibrator)
+        elif est_type == "vigor":
+            self.estimator = VigourMotionEstimator(self.data_acc)
+        elif est_type == "lstm":
+            self.estimator = LSTMLocationEstimator(self.data_acc,
+                                                   self.asset_dir+"/swim_lstm.h5")
+        else:
+            self.estimator = None
+
+
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
     def change_segment_numb(self):
@@ -206,20 +229,6 @@ class TrackingExperiment(CameraExperiment):
         self.data_acc.reset(header_list=new_header)
 
     def make_window(self):
-        """ """
-        # if isinstance(self.tracking_method, TailTrackingMethod):
-        #     self.window_main = TrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, CentroidTrackingMethod) or \
-        #         isinstance(self.tracking_method, AnglesTrackingMethod) or \
-        #         isinstance(self.tracking_method, FishTrackingMethod):
-        #     self.window_main = TrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, EyeTrackingMethod):
-        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, EyeTrackingMethod):
-        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        # else:
-        #     self.window_main = TrackingExperimentWindow(experiment=self, tracking=False)
-        # self.window_main.show()
         tail = False
         eyes = False
         if isinstance(self.tracking_method, TailTrackingMethod):
@@ -230,6 +239,13 @@ class TrackingExperiment(CameraExperiment):
         self.window_main = TrackingExperimentWindow(experiment=self,
                                                     tail=tail,
                                                     eyes=eyes)
+
+        # add streams
+        self.window_main.stream_plot.add_stream(self.data_acc)
+
+        if self.estimator is not None:
+            self.window_main.stream_plot.add_stream(self.estimator.log)
+
         self.window_main.show()
 
     def send_new_parameters(self):
@@ -267,13 +283,14 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        self.dc.add_static_data(self.data_acc.get_dataframe(),
+        if self.dc is not None:
+            self.dc.add_static_data(self.data_acc.get_dataframe(),
                                 name=self.data_name)
 
         super().end_protocol(*args, **kwargs)
         try:
-            self.position_estimator.reset()
-            self.position_estimator.log.reset()
+            self.estimator.reset()
+            self.estimator.log.reset()
         except AttributeError:
             pass
 

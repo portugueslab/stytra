@@ -47,7 +47,7 @@ class TestExperimentClass(unittest.TestCase):
         app = QApplication([])
         exp = Experiment(app=app,
                          protocols=[TestProtocol0, TestProtocol1],
-                         directory=self.test_dir)
+                         dir_save=self.test_dir)
         exp.start_experiment()
         exp.window_main.widget_control.combo_prot.setCurrentText(
             'test_protocol_0')
