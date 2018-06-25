@@ -86,16 +86,17 @@ class VRMotionStimulus(SeamlessImageStimulus,
         self._bg_x += vel_x * dt
         self._bg_y += vel_y * dt
 
-        fish_coordinates = self._experiment.position_estimator.get_displacements()
+        fish_coordinates = self._experiment.estimator.get_displacements()
 
         self.x = self._bg_x + fish_coordinates[1]  # A right angle turn between the cooridnate systems
         self.y = self._bg_y - fish_coordinates[0]
+
         # on the upper right
         self.theta = fish_coordinates[2]
         self._past_t = self._elapsed
 
 
-class ObjectTrackingSitmulus(CircleStimulus):
+class TrackingStimulus(CircleStimulus):
     def update(self):
-        self.x, self.y = self._experiment.position_estimator.get_position()
+        self.x, self.y, _ = self._experiment.estimator.get_position()
         super().update()

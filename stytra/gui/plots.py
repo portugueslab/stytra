@@ -108,7 +108,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
             hues
         ], 1), 'CIELCh', 'sRGB1'), 0, 1)*255
 
-    def add_stream(self, accumulator, header_items):
+    def add_stream(self, accumulator, header_items=None):
         """Adds a data collector stream to the plot:
 
         Parameters
@@ -123,6 +123,8 @@ class MultiStreamPlot(pg.GraphicsWindow):
         -------
 
         """
+        if header_items is None:
+            header_items = accumulator.header_list[1:]  # first column is always t
         self.colors = self.get_colors(len(self.curves) + len(header_items))
         self.accumulators.append(accumulator)
         self.stream_names.append(header_items)

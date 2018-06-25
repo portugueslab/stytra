@@ -447,10 +447,10 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
 
     """
-    def __init__(self, origin=(0.5, 0.5), radius=0,
+    def __init__(self, *args, origin=(0.5, 0.5), radius=10,
                  background_color=(0, 0, 0),
-                 circle_color=(255, 255, 255)):
-        super().__init__(dynamic_parameters=["x", "y", "radius"])
+                 circle_color=(255, 255, 255), **kwargs):
+        super().__init__(*args, dynamic_parameters=["x", "y", "radius"], **kwargs)
         self.x = origin[0]
         self.y = origin[1]
         self.radius = radius

@@ -197,17 +197,6 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         """ """
-        header_list = []
-        if self.tail:
-            header_list.append('tail_sum')
-        if self.eyes:
-            header_list.extend(['th_e0', 'th_e1'])
-
-        if len(header_list) == 0:
-            header_list = self.experiment.data_acc.header_list[1:]
-        self.stream_plot.add_stream(self.experiment.data_acc,
-                                    header_list)
-
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
         self.monitoring_layout.addWidget(previous_widget)
@@ -220,15 +209,9 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        if self.tail or self.eyes:
-            self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
+        self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
                                             showTop=False)
-            self.track_params_wnd.setWindowTitle('Tracking data')
-        else:
-            self.track_params_wnd.setParameters(self.experiment.motion_detection_params.params,
-                                                showTop=False)
-
-            self.track_params_wnd.setWindowTitle('Tracking data')
+        self.track_params_wnd.setWindowTitle('Tracking data')
 
         self.track_params_wnd.show()
 
@@ -314,7 +297,7 @@ class VRExperimentWindow(SimpleExperimentWindow):
         self.stream_plot.add_stream(self.experiment.data_acc_tailpoints,
                                     ['tail_sum', 'theta_01'])
 
-        self.stream_plot.add_stream(self.experiment.position_estimator.log,
+        self.stream_plot.add_stream(self.experiment.estimator.log,
                                     ['v_ax',
                                          'v_lat',
                                          'v_ang',

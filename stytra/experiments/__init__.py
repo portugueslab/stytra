@@ -64,6 +64,7 @@ class Experiment(QObject):
                  metadata_animal=None,
                  calibrator=None,
                  asset_directory='',
+                 log_format="csv",
                  rec_stim_every=None,
                  display_config=None,
                  trigger=None):
@@ -75,10 +76,8 @@ class Experiment(QObject):
         self.trigger = trigger
 
         self.asset_dir = asset_directory
-        self.directory = directory
-        if self.directory is not None:
-            if not os.path.isdir(self.directory):
-                os.makedirs(self.directory)
+        self.base_dir = directory
+        self.log_format = log_format
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -96,15 +95,14 @@ class Experiment(QObject):
             self.metadata = metadata_general()
 
         if metadata_animal is None:
-            self.animal_metadata = AnimalMetadata()
+            self.metadata_animal = AnimalMetadata()
         else:
-            self.animal_metadata = metadata_animal()
+            self.metadata_animal = metadata_animal()
 
         # We will collect data only of a directory for saving is specified:
-        if self.directory is not None:
-            self.dc = DataCollector(folder_path=self.directory)
+        if self.base_dir is not None:
+            self.dc = DataCollector(folder_path=self.base_dir)
             self.dc.add_param_tree(self.metadata._params)
-
             # Use the DataCollector object to find the last used protocol, to
             # restore it
             self.last_protocol = \
@@ -135,14 +133,21 @@ class Experiment(QObject):
             self.window_display.params['size'] = self.display_config["window_size"]
             self.window_display.set_dims()
 
-    def folder_name(self):
+        self.current_instance = self.get_new_name()
+        self.i_run = 0
+
+        self.folder_name = self.base_dir+"/"+self.current_instance
+
+        if self.folder_name is not None:
+            if not os.path.isdir(self.folder_name):
+                os.makedirs(self.folder_name)
+
+    def get_new_name(self):
+        return datetime.datetime.now().strftime("%y%m%d")+'_f' + str(self.metadata_animal.params["id"])
+
+    def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
-                    str(clean_dict['animal']['id'])
-        dirname = '/'.join([self.folder_path,
-                            clean_dict['stimulus']['protocol_params']['name'],
-                            fish_name,
-                            str(clean_dict['general']['session_id'])])
+        return self.folder_name+"/{:03d}_".format(self.i_run)
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -243,6 +248,7 @@ class Experiment(QObject):
         -------
 
         """
+
         self.protocol_runner.stop()
         if self.dc is not None:
             self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
@@ -252,22 +258,22 @@ class Experiment(QObject):
 
         if self.protocol_runner.dynamic_log is not None:
             self.protocol_runner.dynamic_log.save(
-                self.output_folder / "dynamic_log", self.output_format)
+                self.filename_base() + "dynamic_log", self.log_format)
         # TODO do the folder specificaion
 
         if save and self.dc is not None:
-            self.dc.save()  # save data_log
+            self.dc.save(self.filename_base()+"metadata.json")  # save data_log
             # Save stimulus movie in .h5 file if required:
             movie = self.window_display.widget_display.get_movie()
             if movie is not None:
                 movie_dict = dict(movie=movie[0], movie_times=movie[1])
-                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                dd.io.save(self.directory + '\\' + timestamp +
+                dd.io.save(self.filename_base() +
                            'stim_movie.h5', movie_dict, compression='blosc')
                 # movie files can be large, and blosc is orders of magnitude
                 # faster
 
         self.protocol_runner.reset()
+        self.i_run += 1
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.

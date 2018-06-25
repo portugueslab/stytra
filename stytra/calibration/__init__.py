@@ -120,8 +120,6 @@ class CircleCalibrator(Calibrator):
         self.params['length_px'] = dh
         self.points = None
         self.points_cam = None
-        self.proj_to_cam = None
-        self.cam_to_proj = None
         self.length_to_measure = 'the largest distance between the points'
 
     def make_calibration_pattern(self, p, h, w, draw=True):

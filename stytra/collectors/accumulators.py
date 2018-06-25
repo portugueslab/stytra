@@ -81,7 +81,7 @@ class Accumulator:
             last_t = self.stored_data[-1][0]
             t_minus_dif = self.stored_data[-self.fps_calc_points][0]
             return self.fps_calc_points / (last_t - t_minus_dif)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, ZeroDivisionError, OverflowError):
             return 0.0
 
     def get_last_n(self, n=None):
@@ -137,8 +137,11 @@ class Accumulator:
 
 
         """
-        n = int(self.get_fps() * t)
-        return self.get_last_n(n)
+        try:
+            n = int(self.get_fps() * t)
+            return self.get_last_n(n)
+        except OverflowError:
+            return self.get_last_n(1)
 
     def save(self, path, format="csv"):
         """ Saves the content of the accumulator in a tabular format.
