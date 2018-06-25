@@ -25,7 +25,7 @@ if __name__ == "__main__":
                          rotation=1)
 
     tracking_config = dict(embedded=True,
-                           tracking_method="angle_sweep")
+                           tracking_method="eye_threshold")
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(protocols=[FlashProtocol], camera_config=camera_config,

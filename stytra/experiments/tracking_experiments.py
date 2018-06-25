@@ -6,7 +6,7 @@ from multiprocessing import Queue, Event
 from stytra.calibration import CircleCalibrator
 
 from stytra.experiments import Experiment
-from stytra.gui.container_windows import CameraExperimentWindow, TailTrackingExperimentWindow, \
+from stytra.gui.container_windows import CameraExperimentWindow, TrackingExperimentWindow, \
     EyeTrackingExperimentWindow
 from stytra.hardware.video import CameraControlParameters, VideoWriter, \
     VideoFileSource, CameraSource
@@ -113,7 +113,6 @@ class CameraExperiment(Experiment):
         self.camera.terminate()
 
 
-# TODO put both tail and eye tracking experiments together in this
 class TrackingExperiment(CameraExperiment):
     """Abstract class for an experiment which contains tracking.
 
@@ -146,6 +145,7 @@ class TrackingExperiment(CameraExperiment):
     tracking_methods_list = dict(centroid=CentroidTrackingMethod,
                                  angle_sweep=AnglesTrackingMethod,
                                  eye_threshold=ThresholdEyeTrackingMethod,
+                                 eyes_tail=TailEyesTrackingMethod,
                                  fish=FishTrackingMethod)
 
     def __init__(self, *args, tracking_config, **kwargs):
@@ -207,14 +207,29 @@ class TrackingExperiment(CameraExperiment):
 
     def make_window(self):
         """ """
-        if isinstance(self.tracking_method, CentroidTrackingMethod) or \
-                isinstance(self.tracking_method, AnglesTrackingMethod) or \
-                isinstance(self.tracking_method, FishTrackingMethod):
-            self.window_main = TailTrackingExperimentWindow(experiment=self)
-        elif isinstance(self.tracking_method, EyeTrackingMethod):
-            self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        else:
-            self.window_main = TailTrackingExperimentWindow(experiment=self, tracking=False)
+        # if isinstance(self.tracking_method, TailTrackingMethod):
+        #     self.window_main = TrackingExperimentWindow(experiment=self)
+        # elif isinstance(self.tracking_method, CentroidTrackingMethod) or \
+        #         isinstance(self.tracking_method, AnglesTrackingMethod) or \
+        #         isinstance(self.tracking_method, FishTrackingMethod):
+        #     self.window_main = TrackingExperimentWindow(experiment=self)
+        # elif isinstance(self.tracking_method, EyeTrackingMethod):
+        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        # elif isinstance(self.tracking_method, EyeTrackingMethod):
+        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        # else:
+        #     self.window_main = TrackingExperimentWindow(experiment=self, tracking=False)
+        # self.window_main.show()
+        tail = False
+        eyes = False
+        if isinstance(self.tracking_method, TailTrackingMethod):
+            tail = True
+        if isinstance(self.tracking_method, EyeTrackingMethod):
+            eyes = True
+
+        self.window_main = TrackingExperimentWindow(experiment=self,
+                                                    tail=tail,
+                                                    eyes=eyes)
         self.window_main.show()
 
     def send_new_parameters(self):
@@ -353,7 +368,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
     def make_window(self):
         """ """
-        self.window_main = TailTrackingExperimentWindow(experiment=self, tail_tracking=False)
+        self.window_main = TrackingExperimentWindow(experiment=self, tail_tracking=False)
         self.window_main.show()
 
     def go_live(self):

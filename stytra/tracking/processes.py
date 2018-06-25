@@ -14,6 +14,7 @@ from stytra.tracking.interfaces import MovementDetectionParameters
 from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
 from stytra.tracking.eyes import trace_eyes
 from stytra.tracking.fish import find_fish_simple
+from stytra.tracking.eyes_tail import trace_tail_eyes
 
 
 class FrameDispatcher(FrameProcessor):
@@ -54,6 +55,7 @@ class FrameDispatcher(FrameProcessor):
         self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
                                             centroid=trace_tail_centroid,
                                             eye_threshold=trace_eyes,
+                                            tail_eyes=trace_tail_eyes,
                                             fish=find_fish_simple)
 
     def process_internal(self, frame):

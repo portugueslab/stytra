@@ -21,11 +21,12 @@ class FlashProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    tracking_config = dict(camera='ximea',
-                           video_file=None,
+    tracking_config = dict(camera=None,
+                           video_file=r'J:\_Shared\lightsheet_testing'
+                                      r'\eye_tracking\eyes_good_2.xiseq',
                            camera_rotation=1,
-                           tracking_method_name='centroid')
+                           tracking_method_name='angle_sweep')
 
     # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(protocols=[LoomingProtocol], tracking_config=tracking_config,
+    s = Stytra(protocols=[FlashProtocol], tracking_config=tracking_config,
                directory=r'C:\Users\portugueslab\data\stytra')
