@@ -8,6 +8,7 @@ Subpackages
 
     stytra.bouter
     stytra.calibration
+    stytra.collectors
     stytra.experiments
     stytra.gui
     stytra.hardware
@@ -18,14 +19,6 @@ Subpackages
 
 Submodules
 ----------
-
-stytra.collectors module
-------------------------
-
-.. automodule:: stytra.collectors
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 stytra.utilities module
 -----------------------

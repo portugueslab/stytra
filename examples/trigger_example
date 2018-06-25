@@ -2,10 +2,12 @@
 # number of files in a directory changes for triggering a simple protocol
 # showing a Flash.
 
-from stytra import Stytra, Protocol
-from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
-from stytra.triggering import Trigger
 from pathlib import Path
+
+from stytra import Stytra, Protocol
+from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
+from stytra.triggering import Trigger
+
 
 # The simplest way to implement a new trigger is inheriting from the Trigger
 # class and reimplement the check_trigger method with the desired condition. In
@@ -53,5 +55,4 @@ if __name__ == "__main__":
     # Call stytra assigning the triggering. Note that stytra will wait for
     # the trigger only if the "wait for trigger" checkbox is ticked!
     st = Stytra(protocols=[FlashProtocol],
-                trigger=trigger,
-                data_dir='.')
+                trigger=trigger)

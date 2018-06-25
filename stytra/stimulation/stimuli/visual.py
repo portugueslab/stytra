@@ -7,8 +7,9 @@ from PyQt5.QtCore import QPoint, QRect, QPointF
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
-from stytra.stimulation import Stimulus, DynamicStimulus
-from stytra.stimulation.backgrounds import existing_file_background
+
+from stytra.stimulation.stimuli import Stimulus, DynamicStimulus
+from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
 # TODO right now Stimulus is not parameterized via HasPyQtGraphParams
@@ -82,12 +83,16 @@ class VisualStimulus(Stimulus):
 
 
 class FullFieldVisualStimulus(VisualStimulus):
-    """Class for painting a full field flash of a specific color."""
+    """Class for painting a full field flash of a specific color.
+
+    Parameters
+    ----------
+    color : (int, int, int) tuple
+         color of the full field flash (int tuple)
+    """
 
     def __init__(self, *args, color=(255, 0, 0), **kwargs):
-        """
-        :param color: color of the full field flash (int tuple)
-        """
+        """ """
         super().__init__(*args, **kwargs)
         self.color = color
         self.name = 'flash'
@@ -130,14 +135,18 @@ class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
 
 
 class Pause(FullFieldVisualStimulus):
-    """Class for painting full field black stimuli"""
+    """Class for painting full field black stimuli.
+
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
         self.name = 'pause'
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
-    """Displays videos using PIMS, at a specified framerate"""
+    """Displays videos using PIMS, at a specified framerate.
+    """
+
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -197,7 +206,9 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
 
 class BackgroundStimulus(VisualStimulus, DynamicStimulus):
-    """Stimulus with a defined position and orientation to the fish"""
+    """Stimulus with a defined position and orientation to the fish.
+    """
+
     def __init__(self, *args, **kwargs):
         """
         :param background: background image
@@ -304,10 +315,13 @@ class MovingConstantVel(BackgroundStimulus):
 
 
 class SeamlessImageStimulus(BackgroundStimulus):
-    """ Displays an image which should tile seamlessly, (the top of the
-    image should match with the bottom and the left with the right, so
-    there are no discontinuities). An even checkerboard works, but with
-    some image editing any texture can be adjusted to be seamless. """
+    """ Displays an image which should tile seamlessly.
+
+    The top of the image should match with the bottom and the left
+    with the right, so there are no discontinuities). An even checkerboard
+    works, but with
+    some image editing any texture can be adjusted to be seamless.
+    """
 
     def __init__(self, *args, background, **kwargs):
         super().__init__(*args, **kwargs)
@@ -331,14 +345,21 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
 
 class SeamlessGratingStimulus(BackgroundStimulus):
-    """Displays a grating pattern with physical dimensions."""
+    """Displays a grating pattern with physical dimensions.
+
+    Parameters
+    ----------
+    grating_angle : float
+        fixed angle for the stripes
+    grating_period : float
+        spatial period of the gratings
+    grating_color : (int, int, int) tuple
+        color for the non-black stripes (int tuple)
+    """
+
     def __init__(self, *args, grating_angle=0, grating_period=10,
                  color=(255, 255, 255), **kwargs):
-        """
-        :param grating_angle: fixed angle for the stripes
-        :param grating_period: spatial period of the gratings (unit?)
-        :param grating_color: color for the non-black stripes (int tuple)
-        """
+        """ """
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
@@ -349,7 +370,7 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
 
     def draw_block(self, p, point, w, h):
-        """Draws one bar of the grating, the rest are repeated by tiling
+        """Draws one bar of the grating, the rest are repeated by tiling.
         """
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
@@ -361,6 +382,14 @@ class SeamlessGratingStimulus(BackgroundStimulus):
 
 class SeamlessWindmillStimulus(BackgroundStimulus):
     """Class for drawing a rotating windmill (radial wedges in alternating colors).
+
+    Parameters
+    ----------
+    n_arms : int
+        number of colored arms of the windmill
+    color : (int, int, int) tuple
+        color for the non-black stripes (int tuple)
+
     """
 
     def __init__(self, *args, color=(255, 255, 255), n_arms=8, **kwargs):
@@ -404,17 +433,17 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
     Parameters
     ---------
-        origin : tuple(float, float)
-            positions of the circle centre
+    origin : tuple(float, float)
+        positions of the circle centre
 
-        radius : float
-            circle radius
+    radius : float
+        circle radius
 
-        backgroud_color : tuple(int, int, int)
-            RGB color of the background
+    backgroud_color : tuple(int, int, int)
+        RGB color of the background
 
-        circle_color : tuple(int, int, int)
-            RGB color of the circle
+    circle_color : tuple(int, int, int)
+        RGB color of the circle
 
 
     """

@@ -1,5 +1,10 @@
+"""
+This module contains Trigger objects that can be used to trigger the
+beginning of a stytra protocol from an external event, such as a message
+received via ZMQ from a microscope.
+"""
+
 from multiprocessing import Process, Event, Queue
-from pathlib import Path
 import datetime
 import time
 import zmq
@@ -7,27 +12,33 @@ import zmq
 
 class Trigger(Process):
     """ Stytra uses
-    :class:`Trigger <stytra.triggering.Trigger.__init__()>`. objects  to control
+    :class:`Trigger <stytra.triggering.Trigger.__init__()>` objects  to control
     the beginning of a stimulation protocol via an external event.
     In the most obvious case, the signal is sent by
-    an acquisition device such as a miscroscope to synchronize data acquisition
+    an acquisition device such as a microscope to synchronize data acquisition
     and stimulation.
     The trigger has a check_trigger function that is constantly called in a while
-    loop in the run(). When check_trigger() returns True, the  start_event is
+    loop in the run(). When :meth:`Trigger <stytra.triggering.Trigger.check_trigger(
+    )>` returns True, the  start_event is
     set. The Experiment class, if it has a trigger assigned, will wait until the
     start_event to be set before starting. The control in check_trigger() is
     defined in subclasses to reflect the condition that we want to control the
     beginning of the protocol.
 
-    Events
-    ------
-        start_event: event that is set when check_trigger() returns True. It
-        is used by stytra to control the beginning of the protocol;
-        **kill_event**: can be set to kill the Trigger process;
+    **Events**
 
-    Queues
-    ------
-        queue_trigger_params: can be used to send to the Experiment data about
+    start_event:
+        event that is set when check_trigger() returns True. It
+        is used by stytra to control the beginning of the protocol;
+
+    kill_event:
+        can be set to kill the Trigger process;
+
+
+    **Output Queues**
+
+    queue_trigger_params:
+        can be used to send to the Experiment data about
         the triggering event or device. For example, if triggering happens from
         a microscope via a ZMQ message, setting of the microscope can be sent in
         that message to be saved together with experiment metadata.
@@ -49,6 +60,7 @@ class Trigger(Process):
 
         Returns
         -------
+        bool
             True if triggering condition is satisfied (e.g., message received);
             False otherwise.
 
@@ -57,8 +69,8 @@ class Trigger(Process):
 
     def run(self):
         """ In this process, we constantly invoke the check_trigger class to control
-        if start_event has to be set. Once it has been set, we wait an arbitrary
-        time (0.1 s now) and then we clear it to be set again.
+        if start_event has to be set. Once it has been set, we wait an
+        arbitrary time (0.1 s now) and then we clear it to be set again.
         """
 
         TIME_START_EVENT_ON = 0.1
@@ -78,7 +90,7 @@ class Trigger(Process):
 
 
 class ZmqTrigger(Trigger):
-    """ This trigger uses the `ZMQ <http://www.python.org/>`_ library to receive
+    """ This trigger uses the `ZMQ <http://zeromq.org/>`_ library to receive
     a json file from an external source such as a microscope. The port on which
     the communication is happening is taken as input. The source of the trigger
     must be configured with the IP and the port of the computer running the
@@ -89,7 +101,8 @@ class ZmqTrigger(Trigger):
 
         Parameters
         ----------
-            port: string specifying the port (e.g. '5555')
+            port: string
+            specifies the port on which communication will happen (e.g. '5555')
 
         """
         self.port = port

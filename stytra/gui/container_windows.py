@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout,\
 
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraTailSelection, CameraViewWidget,\
-    CameraEyesSelection
+from stytra.gui.camera_display import CameraViewWidget, \
+    CameraEmbeddedTrackingSelection
 
 from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
 from pyqtgraph.parametertree import ParameterTree
@@ -55,15 +55,15 @@ class SimpleExperimentWindow(QMainWindow):
 
     Parameters
     ----------
+    experiment : `Experiment <stytra.experiments.Experiment>` object
+        experiment for which the window is built.
 
     Returns
     -------
 
     """
     def __init__(self, experiment, **kwargs):
-        """
-        :param experiment: Experiment class with data_log
-        """
+        """ """
         super().__init__(**kwargs)
         self.experiment = experiment
 
@@ -143,7 +143,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         return self.camera_splitter
 
 
-class TailTrackingExperimentWindow(SimpleExperimentWindow):
+class TrackingExperimentWindow(SimpleExperimentWindow):
     """Window for controlling an experiment where the tail of an
     embedded fish is tracked.
 
@@ -154,13 +154,17 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     -------
 
     """
-    def __init__(self, tracking=True, tail=False, *args, **kwargs):
+    def __init__(self, tracking=True, tail=False, eyes=False, *args, **kwargs):
         # TODO refactor movement detection
         self.tracking = tracking
+        self.tail = tail
+        self.eyes = eyes
 
-        if tail:
-            self.camera_display = CameraTailSelection(experiment=
-                                                      kwargs['experiment'])
+        if tail or eyes:
+            self.camera_display = CameraEmbeddedTrackingSelection(
+                experiment=kwargs['experiment'],
+                tail=tail,
+                eyes=eyes)
         else:
             self.camera_display = CameraViewWidget(experiment=
                                                    kwargs['experiment'])
@@ -171,7 +175,11 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot()
+        if eyes:
+            time_past = 30
+        else:
+            time_past = 5
+        self.stream_plot = MultiStreamPlot(time_past=time_past)
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
@@ -189,8 +197,16 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         """ """
+        header_list = []
+        if self.tail:
+            header_list.append('tail_sum')
+        if self.eyes:
+            header_list.extend(['th_e0', 'th_e1'])
+
+        if len(header_list) == 0:
+            header_list = self.experiment.data_acc.header_list[1:]
         self.stream_plot.add_stream(self.experiment.data_acc,
-                                    self.experiment.data_acc.header_list[1:])
+                                    header_list)
 
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
@@ -204,10 +220,9 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        if self.tracking:
+        if self.tail or self.eyes:
             self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
                                             showTop=False)
-
             self.track_params_wnd.setWindowTitle('Tracking data')
         else:
             self.track_params_wnd.setParameters(self.experiment.motion_detection_params.params,

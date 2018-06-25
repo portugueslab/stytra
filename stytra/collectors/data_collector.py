@@ -34,113 +34,6 @@ def strip_values(it):
         return it
 
 
-class Accumulator:
-    """A general class for accumulating streams of data that
-    will be saved or plotted in real time
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-    def __init__(self, fps_range=10):
-        """
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
-        self.stored_data = []
-        self.header_list = ['t']
-        self.starting_time = None
-        self.fps_range = fps_range
-
-    def reset(self, header_list=None):
-        """Reset accumulator and assign a new header list
-
-        Parameters
-        ----------
-        header_list :
-             (Default value = None)
-
-        Returns
-        -------
-
-        """
-        if header_list is not None:
-            self.header_list = ['t'] + header_list
-        self.stored_data = []
-        self.starting_time = None
-
-    def check_start(self):
-        """ """
-        if self.starting_time is None:
-            self.starting_time = datetime.datetime.now()
-
-    def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers."""
-        return pd.DataFrame(self.get_last_n(),
-                            columns=self.header_list)
-
-    def get_fps(self):
-        """ """
-        try:
-            last_t = self.stored_data[-1][0]
-            t_minus_dif = self.stored_data[-self.fps_range][0]
-            return self.fps_range/(last_t-t_minus_dif)
-        except (IndexError, ValueError):
-            return 0.0
-
-    def get_last_n(self, n=None):
-        """
-
-        Parameters
-        ----------
-        n :
-            
-
-        Returns
-        -------
-
-        """
-        if n is not None:
-            last_n = min(n, len(self.stored_data))
-        else:
-            last_n = len(self.stored_data)
-
-        if len(self.stored_data) == 0:
-            return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
-        else:
-            data_list = self.stored_data[-max(last_n, 1):]
-
-            # The length of the tuple in the accumulator may change. Here we
-            # make sure we take only the elements that have the same
-            # dimension as the last one.
-            lenghts = np.array([len(d)==len(data_list[-1]) for d in data_list])
-            obar = np.array(data_list[np.where(lenghts)[0][0]:])
-            return obar
-
-    def get_last_t(self, t):
-        """
-
-        Parameters
-        ----------
-        t :
-            
-
-        Returns
-        -------
-
-        """
-        n = int(self.get_fps()*t)
-        return self.get_last_n(n)
-
-
 def metadata_dataframe(metadata_dict, time_step=0.005):
     """Function for converting a data_log dictionary into a pandas DataFrame
     for saving.
@@ -196,33 +89,38 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
 class DataCollector:
     """Class for saving all data and data_log produced during an experiment.
+
     There are two kind of data that are collected:
-     - Metadata/parameters: values that should restored from previous
-                            sessions.
-                            These values don't have to be explicitely added.
-                            they are automatically read from all the objects
-                            in the stytra Experiment process which are
-                            instances of HasPyQtGraphParams.
-     - Static data:         (tail tracking, stimulus log...), that should not
-                            be restored. Those have to be added one by one
-                            via the add_data_source() method.
-    
+
+        - Metadata/parameters: values that should restored from previous
+          sessions. These values don't have to be explicitely added.
+          they are automatically read from all the objects
+          in the stytra Experiment process which are
+          instances of HasPyQtGraphParams.
+        - Static data: (tail tracking, stimulus log...), that should not
+          be restored. Those have to be added one by one
+          via the add_data_source() method.
+
+
     Inputs from both types of sources are eventually saved in the .json file
     containing all the information from the experiment.
     In this file data are divided into fixed categories:
-     - general:    info about the experiment (date, setup, session...)
-     - fish:       info about the fish (line, age, etc.)
-     - stimulus:   info about the stimulation (stimuli log, screen
-                   dimensions, etc.)
-     - imaging:    info about the connected microscope, if present
-     - behaviour:  info about fish behaviour (tail log...)
-     - camera:     parameters of the camera for behaviour, if one is present
-     - tracking:   parameters for tracking
+
+        - general: info about the experiment (date, setup, session...)
+        - animal: info about the animal (line, age, etc.)
+        - stimulus: info about the stimulation (stimuli log, screen
+          dimensions, etc.)
+        - imaging: info about the connected microscope, if present
+        - behaviour: info about fish behaviour (tail log...)
+        - camera: parameters of the camera for behaviour, if one is present
+        - tracking: parameters for tracking
+
+
     See documentation of the clean_data_dict() method for a description
     of conventions for dividing the entries among the categories.
     In the future this function may structure its output in other standard
     formats for scientific data (e.g., NWB).
-    
+
     In addition to the .json file, data_log and parameters from
     HasPyQtGraphParams objects are stored in a config.h5 file (located in the
     experiment directory) which is used for restoring the last configuration
@@ -230,6 +128,10 @@ class DataCollector:
 
     Parameters
     ----------
+    data_tuples_list : tuple
+        (optional) tuple of data to be added
+    folder_path : str
+        destination where the final json file will be sabed
 
     Returns
     -------
@@ -237,12 +139,7 @@ class DataCollector:
     """
 
     def __init__(self, *data_tuples_list, folder_path='./'):
-        """ It accepts static data in a HasPyQtGraph class, which will be
-        restored to the last values, or dynamic data like tail tracking or
-        stimulus log that will not be restored.
-        :param data_tuples_list: tuple of data to be added
-        :param folder_path: destination for the final .json file
-        """
+        """ """
 
         # Check validity of directory:
         if os.path.isdir(folder_path):
@@ -309,7 +206,7 @@ class DataCollector:
         Parameters
         ----------
         params_tree :
-            
+
 
         Returns
         -------
@@ -317,7 +214,7 @@ class DataCollector:
         """
         if isinstance(params_tree, Parameter):
             self.params_metadata = params_tree;
-            #self.restore_from_saved()  # restoring is called by experiment
+            # self.restore_from_saved()  # restoring is called by experiment
             # at a different time!
         else:
             print('Invalid params source passed!')
@@ -329,10 +226,12 @@ class DataCollector:
         ----------
         entry :
             data that will be stored;
-        name :
-            name in the dictionary. It should start with "category_",
+        name : str
+            name in the dictionary. It should take the form
+            "category_name",
             where "category" should be one of the possible keys
-            of the dictionary produced in get_clean_dict(). (Default value = 'unspecified_entry')
+            of the dictionary produced in get_clean_dict() (animal, stimulus, *etc.*).
+            (Default value = 'unspecified_entry')
 
         Returns
         -------
@@ -354,14 +253,14 @@ class DataCollector:
         ----------
         paramstree :
             see sanitize_item docs; (Default value = True)
-        eliminate_df :
+        eliminate_df : bool
             see sanitize_item docs; (Default value = False)
-        convert_datetime :
+        convert_datetime : bool
             see sanitize_item docs; (Default value = False)
 
         Returns
         -------
-        type
+        dict :
             dictionary with the sorted data.
 
         """
@@ -396,11 +295,14 @@ class DataCollector:
 
         Parameters
         ----------
-        class_param_key :
-            
+        class_param_key : str
+            name of the parameter whose value is required.
+
 
         Returns
         -------
+        - :
+            value of the parameter in the config.h5 file.
 
         """
         if self.last_metadata is not None:
@@ -425,7 +327,7 @@ class DataCollector:
         dd.io.save(self.folder_path + 'config.h5',
                    self.params_metadata.saveState())
 
-    def save_json_log(self, timestamp=None):
+    def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources
         and the updated params.
 
@@ -439,20 +341,8 @@ class DataCollector:
 
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
-        if timestamp is None:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-        # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        fish_name = datetime.datetime.now().strftime("%y%m%d") + '_f' + \
-                    str(clean_dict['animal']['id'])
-        dirname = '/'.join([self.folder_path,
-                   clean_dict['stimulus']['protocol_params']['name'],
-                             fish_name,
-                             str(clean_dict['general']['session_id'])])
-        # dd.io.save(filename, self.get_clean_dict(convert_datetime=True))
-        if not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        with open(dirname+'/'+timestamp+'_metadata.json', 'w') as outfile:
+        with open(output_path, 'w') as outfile:
             json.dump(clean_dict,
                       outfile, sort_keys=True)
 

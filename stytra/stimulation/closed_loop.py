@@ -1,6 +1,7 @@
 import numpy as np
-from stytra.stimulation import DynamicStimulus
-from stytra.stimulation.visual import BackgroundStimulus, SeamlessImageStimulus, CircleStimulus
+
+from stytra.stimulation.stimuli import DynamicStimulus, BackgroundStimulus, \
+    SeamlessImageStimulus, CircleStimulus
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):

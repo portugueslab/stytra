@@ -3,7 +3,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class GuiMetadata(HasPyQtGraphParams):
-    """General class for a group of metadata that have to be controlled via
+    """General class for a group of metadata that can be controlled via
     a GUI.
 
     Parameters
@@ -19,11 +19,25 @@ class GuiMetadata(HasPyQtGraphParams):
         self.protocol_params_tree = ParameterTree(showHeader=False)
 
     def get_param_dict(self):
-        """ """
+        """ Return values of the parameters.
+
+        Returns
+        -------
+            OrderedDict with the params values
+
+        """
         return self.params.getValues()
 
     def show_metadata_gui(self):
-        """ """
+        """ Create and return a ParameterTree window (documented
+        `here <http://www.pyqtgraph.org/documentation/parametertree/index.html/>`_
+        )
+
+        Returns
+        -------
+            ParameterTree object to control the metadata
+
+        """
         self.protocol_params_tree = ParameterTree(showHeader=False)
         self.protocol_params_tree.setParameters(self.params)
         self.protocol_params_tree.setWindowTitle('Metadata')
@@ -31,17 +45,10 @@ class GuiMetadata(HasPyQtGraphParams):
                                          600)  # TODO figure out this window
         return self.protocol_params_tree
 
-    def get_state(self):
-        """ """
-        return self._params.saveState()
-
-    def restore_state(self):
-        """ """
-        pass
-
 
 class GeneralMetadata(GuiMetadata):
-    """ """
+    """General metadata for the experiment.
+    """
     def __init__(self):
         super().__init__()
         self.params.setName('general_metadata')
@@ -53,7 +60,8 @@ class GeneralMetadata(GuiMetadata):
 
 
 class AnimalMetadata(GuiMetadata):
-    """ """
+    """Metadata about the animal.
+     """
     def __init__(self):
         super().__init__()
         self.params.setName('animal_metadata')

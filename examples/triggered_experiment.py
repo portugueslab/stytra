@@ -1,6 +1,7 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
-from stytra.triggering import ZmqTrigger, Crappy2PTrigger
+from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
+from stytra.triggering import ZmqTrigger
+
 
 class FlashProtocol(Protocol):
     name = 'flash protocol'
