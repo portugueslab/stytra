@@ -124,7 +124,10 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
         """
         if header_items is None:
-            header_items = accumulator.header_list[1:]  # first column is always t
+            if accumulator.monitored_headers is not None:
+                header_items = accumulator.monitored_headers
+            else:
+                header_items = accumulator.header_list[1:]  # first column is always t
         self.colors = self.get_colors(len(self.curves) + len(header_items))
         self.accumulators.append(accumulator)
         self.stream_names.append(header_items)

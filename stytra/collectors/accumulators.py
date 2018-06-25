@@ -40,10 +40,11 @@ class Accumulator:
 
     """
 
-    def __init__(self, fps_calc_points=10):
+    def __init__(self, fps_calc_points=10, monitored_headers=None):
         """ """
         self.stored_data = []
         self.header_list = ['t']
+        self.monitored_headers = monitored_headers  # headers which are included in the stream plot
         self.starting_time = None
         self.fps_calc_points = fps_calc_points
 
@@ -114,9 +115,13 @@ class Accumulator:
             # The length of the tuple in the accumulator may change. Here we
             # make sure we take only the elements that have the same
             # dimension as the last one.
-            lenghts = np.array(
-                [len(d) == len(data_list[-1]) for d in data_list])
-            obar = np.array(data_list[np.where(lenghts)[0][0]:])
+            n_take = 1
+            for d in data_list[-2:0:-1]:
+                if len(d) == len(data_list[-1]):
+                    n_take += 1
+                else:
+                    break
+            obar = np.array(data_list[-n_take:])
             return obar
 
     def get_last_t(self, t):
@@ -193,9 +198,9 @@ class QueueDataAccumulator(QObject, Accumulator):
 
     """
 
-    def __init__(self, data_queue, header_list=None):
+    def __init__(self, data_queue, header_list=None, **kwargs):
         """ """
-        super().__init__()
+        super().__init__(**kwargs)
 
         # Store externally the starting time make us free to keep
         # only time differences in milliseconds in the list (faster)

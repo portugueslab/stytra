@@ -59,7 +59,7 @@ class Experiment(QObject):
     def __init__(self,
                  app=None,
                  protocols=None,
-                 directory=None,
+                 dir_save=None,
                  metadata_general=None,
                  metadata_animal=None,
                  calibrator=None,
@@ -76,7 +76,7 @@ class Experiment(QObject):
         self.trigger = trigger
 
         self.asset_dir = asset_directory
-        self.base_dir = directory
+        self.base_dir = dir_save
         self.log_format = log_format
 
         if calibrator is None:
@@ -135,12 +135,12 @@ class Experiment(QObject):
 
         self.current_instance = self.get_new_name()
         self.i_run = 0
-
-        self.folder_name = self.base_dir+"/"+self.current_instance
-
-        if self.folder_name is not None:
+        if self.base_dir is not None:
+            self.folder_name = self.base_dir+"/"+self.current_instance
             if not os.path.isdir(self.folder_name):
                 os.makedirs(self.folder_name)
+        else:
+            self.folder_name = None
 
     def get_new_name(self):
         return datetime.datetime.now().strftime("%y%m%d")+'_f' + str(self.metadata_animal.params["id"])
@@ -250,27 +250,24 @@ class Experiment(QObject):
         """
 
         self.protocol_runner.stop()
-        if self.dc is not None:
-            self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
-            self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
-            self.dc.add_static_data(self.protocol_runner.t_end,
-                                    name='general_t_protocol_end')
+        if self.base_dir is not None:
+            if self.dc is not None:
+                self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
+                self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
+                self.dc.add_static_data(self.protocol_runner.t_end,
+                                        name='general_t_protocol_end')
+                self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 
-        if self.protocol_runner.dynamic_log is not None:
-            self.protocol_runner.dynamic_log.save(
-                self.filename_base() + "dynamic_log", self.log_format)
-        # TODO do the folder specificaion
+                # save the movie if it is generated
+                movie = self.window_display.widget_display.get_movie()
+                if movie is not None:
+                    movie_dict = dict(movie=movie[0], movie_times=movie[1])
+                    dd.io.save(self.filename_base() +
+                               'stim_movie.h5', movie_dict, compression='blosc')
 
-        if save and self.dc is not None:
-            self.dc.save(self.filename_base()+"metadata.json")  # save data_log
-            # Save stimulus movie in .h5 file if required:
-            movie = self.window_display.widget_display.get_movie()
-            if movie is not None:
-                movie_dict = dict(movie=movie[0], movie_times=movie[1])
-                dd.io.save(self.filename_base() +
-                           'stim_movie.h5', movie_dict, compression='blosc')
-                # movie files can be large, and blosc is orders of magnitude
-                # faster
+            if self.protocol_runner.dynamic_log is not None:
+                self.protocol_runner.dynamic_log.save(
+                    self.filename_base() + "dynamic_log", self.log_format)
 
         self.protocol_runner.reset()
         self.i_run += 1

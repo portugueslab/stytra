@@ -95,7 +95,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
         self.params.child('function').setValue('angle_sweep')
 
 
-
 class FishTrackingMethod(FrameProcessingMethod):
     def __init__(self):
         super().__init__(name='tracking_fish_params')
@@ -125,6 +124,7 @@ class EyeTrackingMethod(EmbeddedTrackingMethod):
         [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
                          'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
                          'th_e{}'.format(i)]) for i in range(2)]
+        self.monitored_headers = ["th_e0", "th_e1"]
         self.accumulator_headers = headers
         self.data_log_name = 'behaviour_eyes_log'
 
@@ -165,7 +165,7 @@ class TailEyesTrackingMethod(TailTrackingMethod,
         [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
                          'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
                          'th_e{}'.format(i)]) for i in range(2)]
-
+        self.monitored_headers = ["tail_sum", "th_e1", "th_e2"]
         self.accumulator_headers = headers
         self.data_log_name = 'behaviour_tail_eyes_log'
 

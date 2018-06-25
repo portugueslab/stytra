@@ -21,13 +21,13 @@ class Stytra:
                  display_config=None,
                  tracking_config=None, trigger=None,
                  asset_dir=None,
-                 data_dir=None,
+                 dir_save=None,
                  record_stim_every=None):
 
         app = QApplication([])
 
         class_kwargs = dict(app=app,
-                            directory=data_dir,
+                            dir_save=dir_save,
                             asset_directory=asset_dir,
                             rec_stim_every=record_stim_every,
                             metadata_animal=metadata_animal,

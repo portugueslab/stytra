@@ -138,7 +138,7 @@ class DataCollector:
 
     """
 
-    def __init__(self, *data_tuples_list, folder_path='./'):
+    def __init__(self, *data_tuples_list, folder_path='C:/'):
         """ """
 
         # Check validity of directory:

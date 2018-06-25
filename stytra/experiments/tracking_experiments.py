@@ -185,6 +185,7 @@ class TrackingExperiment(CameraExperiment):
                                                 gui_framerate=20)
 
         self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
+                                             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
                                              header_list=self.tracking_method.accumulator_headers)
 
         # Data accumulator is updated with GUI timer:
@@ -204,11 +205,12 @@ class TrackingExperiment(CameraExperiment):
             self.tracking_method.params.param('n_segments').sigValueChanged.connect(
                 self.change_segment_numb)
 
-        if tracking_config["estimator"] == "position":
+        est_type = tracking_config.get("estimator", None)
+        if est_type == "position":
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
-        elif tracking_config["estimator"] == "vigor":
+        elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.data_acc)
-        elif tracking_config["estimator"] == "lstm":
+        elif est_type == "lstm":
             self.estimator = LSTMLocationEstimator(self.data_acc,
                                                    self.asset_dir+"/swim_lstm.h5")
         else:
@@ -227,20 +229,6 @@ class TrackingExperiment(CameraExperiment):
         self.data_acc.reset(header_list=new_header)
 
     def make_window(self):
-        """ """
-        # if isinstance(self.tracking_method, TailTrackingMethod):
-        #     self.window_main = TrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, CentroidTrackingMethod) or \
-        #         isinstance(self.tracking_method, AnglesTrackingMethod) or \
-        #         isinstance(self.tracking_method, FishTrackingMethod):
-        #     self.window_main = TrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, EyeTrackingMethod):
-        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        # elif isinstance(self.tracking_method, EyeTrackingMethod):
-        #     self.window_main = EyeTrackingExperimentWindow(experiment=self)
-        # else:
-        #     self.window_main = TrackingExperimentWindow(experiment=self, tracking=False)
-        # self.window_main.show()
         tail = False
         eyes = False
         if isinstance(self.tracking_method, TailTrackingMethod):
@@ -295,7 +283,8 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        self.dc.add_static_data(self.data_acc.get_dataframe(),
+        if self.dc is not None:
+            self.dc.add_static_data(self.data_acc.get_dataframe(),
                                 name=self.data_name)
 
         super().end_protocol(*args, **kwargs)
