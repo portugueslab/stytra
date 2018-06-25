@@ -154,11 +154,11 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     -------
 
     """
-    def __init__(self, tail_tracking=True, *args, **kwargs):
+    def __init__(self, tracking=True, tail=False, *args, **kwargs):
         # TODO refactor movement detection
-        self.tail_tracking = tail_tracking
+        self.tracking = tracking
 
-        if tail_tracking:
+        if tail:
             self.camera_display = CameraTailSelection(experiment=
                                                       kwargs['experiment'])
         else:
@@ -177,7 +177,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
         # Tracking params button:
         self.button_tracking_params = QPushButton('Tracking params'
-                                                  if tail_tracking else
+                                                  if tracking else
                                                   'Movement detection params')
         self.button_tracking_params.clicked.connect(
             self.open_tracking_params_tree)
@@ -189,12 +189,8 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         """ """
-        if self.tail_tracking:
-            self.stream_plot.add_stream(self.experiment.data_acc,
-                                        ['tail_sum'])
-        else:
-            self.stream_plot.add_stream(self.experiment.motion_acc,
-                                        self.experiment.motion_acc.header_list[1:])
+        self.stream_plot.add_stream(self.experiment.data_acc,
+                                    self.experiment.data_acc.header_list[1:])
 
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
@@ -208,7 +204,7 @@ class TailTrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        if self.tail_tracking:
+        if self.tracking:
             self.track_params_wnd.setParameters(self.experiment.tracking_method.params,
                                             showTop=False)
 

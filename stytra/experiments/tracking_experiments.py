@@ -12,7 +12,7 @@ from stytra.hardware.video import CameraControlParameters, VideoWriter, \
     VideoFileSource, CameraSource
 # imports for tracking
 
-from stytra.tracking import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.interfaces import *
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 
@@ -41,6 +41,7 @@ class CameraExperiment(Experiment):
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(camera_config["type"],
                                        rotation=camera_config["rotation"],
+                                       downsampling=camera_config["downsampling"],
                                        max_mbytes_queue=camera_queue_mb)
         else:
             self.camera = VideoFileSource(camera_config["video_file"],
@@ -113,18 +114,21 @@ class CameraExperiment(Experiment):
 
 
 # TODO put both tail and eye tracking experiments together in this
-class EmbeddedExperiment(CameraExperiment):
-    """Abstract class for an experiment which contains tracking,
-    base for any experiment that tracks behaviour (being it eyes, tail,
-    or anything else).
+class TrackingExperiment(CameraExperiment):
+    """Abstract class for an experiment which contains tracking.
+
+    This class is the base for any experiment that tracks behaviour (being it
+    eyes, tail, or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
     
     The frame dispatcher take two input queues:
+
         - frame queue from the camera;
         - parameters queue from parameter window.
     
     and it puts data in three queues:
+
         - subset of frames are dispatched to the GUI, for displaying;
         - all the frames, together with the parameters, are dispatched
           to perform tracking;
@@ -141,7 +145,8 @@ class EmbeddedExperiment(CameraExperiment):
 
     tracking_methods_list = dict(centroid=CentroidTrackingMethod,
                                  angle_sweep=AnglesTrackingMethod,
-                                 eye_threshold=ThresholdEyeTrackingMethod)
+                                 eye_threshold=ThresholdEyeTrackingMethod,
+                                 fish=FishTrackingMethod)
 
     def __init__(self, *args, tracking_config, **kwargs):
         """
@@ -158,8 +163,7 @@ class EmbeddedExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
 
         method_name = tracking_config["tracking_method"]
-        TrackingMethod = self.tracking_methods_list[method_name]
-        self.tracking_method = TrackingMethod()
+        self.tracking_method = self.tracking_methods_list[method_name]()
 
         self.data_name = self.tracking_method.data_log_name
         self.frame_dispatcher = FrameDispatcher(in_frame_queue=
@@ -168,8 +172,7 @@ class EmbeddedExperiment(CameraExperiment):
                                                 self.camera.kill_event,
                                                 processing_parameter_queue=
                                                 self.processing_params_queue,
-                                                gui_framerate=20,
-                                                print_framerate=False)
+                                                gui_framerate=20)
 
         self.data_acc = QueueDataAccumulator(self.frame_dispatcher.output_queue,
                                              header_list=self.tracking_method.accumulator_headers)
@@ -205,10 +208,13 @@ class EmbeddedExperiment(CameraExperiment):
     def make_window(self):
         """ """
         if isinstance(self.tracking_method, CentroidTrackingMethod) or \
-                isinstance(self.tracking_method, AnglesTrackingMethod):
+                isinstance(self.tracking_method, AnglesTrackingMethod) or \
+                isinstance(self.tracking_method, FishTrackingMethod):
             self.window_main = TailTrackingExperimentWindow(experiment=self)
         elif isinstance(self.tracking_method, EyeTrackingMethod):
             self.window_main = EyeTrackingExperimentWindow(experiment=self)
+        else:
+            self.window_main = TailTrackingExperimentWindow(experiment=self, tracking=False)
         self.window_main.show()
 
     def send_new_parameters(self):
@@ -312,7 +318,7 @@ class EmbeddedExperiment(CameraExperiment):
         self.frame_dispatcher.terminate()
 
 
-class VRExperiment(EmbeddedExperiment):
+class VRExperiment(TrackingExperiment):
     """ """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -327,20 +333,18 @@ class SwimmingRecordingExperiment(CameraExperiment):
         self.signal_start_rec = Event()
         self.finished_signal = Event()
 
-        self.frame_dispatcher = MovingFrameDispatcher(self.camera.frame_queue,
+        self.frame_dispatcher = MovingFrameDispatcher(in_frame_queue=self.camera.frame_queue,
                                                       finished_signal=self.camera.kill_event,
                                                       signal_start_rec=self.signal_start_rec,
                                                       processing_parameter_queue=self.processing_params_queue,
-                                                      gui_framerate=30)
+                                                      gui_framerate=20)
 
         self.frame_recorder = VideoWriter(self.directory+"/video/",
-                                          self.frame_dispatcher.output_queue,
+                                          self.frame_dispatcher.save_queue,
                                           self.finished_signal)  # TODO proper filename
 
         self.motion_acc = QueueDataAccumulator(self.frame_dispatcher.diagnostic_queue,
-                                               header_list=["n_pixels_difference",
-                                                            "recording_state",
-                                                            "n_images_in_buffer"])
+                                               header_list=self.frame_dispatcher.diagnostic_params)
 
         self.motion_detection_params = MovementDetectionParameters()
         self.gui_timer.timeout.connect(self.send_params)
@@ -382,6 +386,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
         """
         super().wrap_up(*args, **kwargs)
+        self.frame_dispatcher.terminate()
         self.frame_recorder.terminate()
 
     def end_protocol(self, *args, **kwargs):

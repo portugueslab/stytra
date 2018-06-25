@@ -49,6 +49,7 @@ class CameraViewWidget(QWidget):
 
         super().__init__()
 
+
         self.experiment = experiment
         if experiment is not None:
             self.camera = experiment.camera
@@ -79,9 +80,6 @@ class CameraViewWidget(QWidget):
             self.frame_queue = self.experiment.frame_dispatcher.gui_queue
         else:
             self.frame_queue = self.camera.frame_queue
-        # Queue of control parameters for the camera
-        # Queue of frames coming from the camera:
-        self.frame_queue = self.camera.frame_queue
 
         # Queue of control parameters for the camera:
         self.control_queue = self.camera.control_queue
@@ -152,7 +150,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     time, self.current_image = self.frame_queue.get(
-                        timeout=0.001)
+                        timeout=0.0001)
                     first = False
                 else:
                     # Else, get to free the queue:
@@ -233,7 +231,7 @@ class CameraSelection(CameraViewWidget):
 
     def set_pos_from_tree(self):
         """Called when ROI position values are changed in the ParameterTree.
-        Change the position of the displayed ROI:
+        Change the position of the displayed ROI.
 
         Parameters
         ----------
@@ -259,12 +257,10 @@ class CameraSelection(CameraViewWidget):
 
 
 class CameraTailSelection(CameraSelection):
-    """Widget for select tail pts and monitoring tracking in embedded fish."""
+    """Widget for select tail pts and monitoring tracking in embedded fish.
+    """
     def __init__(self, **kwargs):
-        """
-        :param experiment:  experiment in which it is used.
-
-        """
+        """ """
 
         super().__init__(**kwargs)
 
@@ -330,8 +326,7 @@ class CameraTailSelection(CameraSelection):
 
 
 class CameraEyesSelection(CameraSelection):
-    """
-    Widget for select tail pts and monitoring tracking in embedded fish.
+    """Widget for select tail pts and monitoring tracking in embedded fish.
     """
     def __init__(self, **kwargs):
 

@@ -1,64 +1,22 @@
-from stytra import Stytra
-from stytra.stimulation import Protocol, InterpolatedStimulus, DynamicStimulus
-from stytra.stimulation.visual import CircleStimulus
-
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-# Let's define a simple protocol consisting of looms at random locations,
-# of random durations and maximal sizes
+from stytra import Stytra
+from stytra.stimulation import Protocol
 
-# First, we inherit from the Protocol class
-class LoomingProtocol(Protocol):
-
-    # We specify the name for the dropdown in the GUI
-    name = "Looming"
+class FlashProtocol(Protocol):
+    name = 'flash protocol'
 
     def __init__(self):
         super().__init__()
+        self.add_params(period_sec=5.,
+                        flash_duration=2.)
 
-        # It is nice for a protocol to be parametrized, so
-        # we name the parameters we might want to change,
-        # along with specifying the the default values.
-        # This automatically creates a GUI to change them
-        # (more elaborate ways of adding parameters are supported,
-        # see the documentation of HasPyQtGraphParams)
-        # TODO figure out how to integrate this with Sphinx
-        self.add_params(n_looms=10,
-                        max_loom_size=40, max_loom_duration=5)
-
-    # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):
-        stimuli = []
-
-        # A looming stimulus is an expanding circle. Stimuli which contain
-        # some kind of parameter change inherit from InterpolatedStimulus
-        # which allows for specifying the values of parameters of the
-        # stimulus at certain time points, with the intermediate
-        # values interpolated
-
-        # Use the 3-argument version of the Python type function to
-        # make a temporary class combining two classes
-
-        LoomingStimulus = type("LoomingStimulus",
-                               (InterpolatedStimulus, CircleStimulus), {})
-
-        for i in range(self.params["n_looms"]):
-            # The radius is only specified at the beginning and at the
-            # end of expansion. More elaborate functional relationships
-            # than linear can be implemented by specifying a more
-            # detailed interpolation table
-
-            radius_df = pd.DataFrame(
-                dict(t=[0, np.random.rand()*self.params["max_loom_duration"]],
-                     radius=[0, np.random.rand()*self.params["max_loom_size"]]))
-
-            # We construct looming stimuli with the radius change specification
-            # and a random point of origin within the projection area
-            # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df,
-                                           origin=(np.random.rand(), np.random.rand())))
-
+        stimuli = [Pause(duration=self.params['period_sec'] -
+                                  self.params['flash_duration']),
+                   FullFieldVisualStimulus(duration=self.params[
+                         'flash_duration'], color=(255, 255, 255))]
         return stimuli
 
 

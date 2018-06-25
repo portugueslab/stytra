@@ -1,5 +1,5 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.visual import Pause, FullFieldVisualStimulus
+from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 
 class FlashProtocol(Protocol):
     name = 'flash protocol'
@@ -17,5 +17,5 @@ class FlashProtocol(Protocol):
         return stimuli
 
 if __name__ == "__main__":
-    st = Stytra(protocols=[FlashProtocol],
-                directory=r'C:\Users\lpetrucco\Desktop\metadata')
+    st = Stytra(protocols=[FlashProtocol])
+    st.base.close()

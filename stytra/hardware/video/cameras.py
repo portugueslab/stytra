@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+"""
+This module implement classes that can be used in stytra to control cameras.
+"""
 import numpy as np
 
 try:
@@ -12,29 +16,41 @@ except ImportError:
 
 
 class Camera:
-    """Abstract class for controlling a camera. Subclasses implement
-    minimal control over the following cameras:
+    """Abstract class for controlling a camera.
+
+    Subclasses implement minimal
+    control over the following cameras:
      - Ximea (uses ximea python API `xiAPI <https://www.ximea.com/support/wiki/apis/Python>`_;
      - AVT   (uses `pymba <https://github.com/morefigs/pymba>`_,
        a python wrapper for AVT Vimba package).
-    
-    Simple usage example::
+
+    Examples
+    --------
+    Simple usage of a camera class::
+
         cam = AvtCamera()
         cam.open_camera()  # initialize the camera
         cam.set('exposure', 10)  # set exposure time in ms
         frame = cam.read()  # read frame
         cam.release()  # close the camera
 
-    Parameters
-    ----------
 
-    Returns
-    -------
+    Attributes
+    ----------
+    cam :
+        camera object (class depends on camera type).
+
+    debug : bool
+        if true, state of the camera is printed.
+
 
     """
     def __init__(self, debug=False):
         """
-        :param debug: if True, info about the camera state will be printed.
+        Parameters
+        ----------
+        debug : str
+            if True, info about the camera state will be printed.
         """
         self.cam = None
         self.debug = debug
@@ -43,55 +59,49 @@ class Camera:
         """Initialise the camera."""
 
     def set(self, param, val):
-        """Set exposure time or framerate to the camera.
+        """Set exposure time or the framerate to the camera.
 
         Parameters
         ----------
-        param :
+        param : str
             parameter key ('exposure', 'framerate'));
         val :
             value to be set (exposure time in ms, or framerate in Hz);
-
-        Returns
-        -------
 
         """
         pass
 
     def read(self):
         """Grab frame from the camera and returns it as an NxM numpy array.
-        :return: np.array with the grabbed frame, or None if an error occurred.
-
-        Parameters
-        ----------
 
         Returns
         -------
+        np.array
+                the grabbed frame, or None if an error occurred.
 
         """
         return None
 
     def release(self):
-        """Close the camera."""
+        """Close the camera.
+        """
         pass
 
 
 class XimeaCamera(Camera):
-    """Class for simple control of a Ximea camera. Uses ximea API.
-    Module documentation `here
-    <https://www.ximea.com/support/wiki/apis/Python>`_
-    .
+    """Class for simple control of a Ximea camera.
 
-    Parameters
-    ----------
-
-    Returns
-    -------
+    Uses ximea API. Module documentation `here
+    <https://www.ximea.com/support/wiki/apis/Python>`_.
 
     """
     def __init__(self, downsampling=1, **kwargs):
         """
-        :param downsampling:
+
+        Parameters
+        ----------
+        downsampling : int
+            downsampling factor for the camera
         """
         super().__init__(**kwargs)
         self.downsampling = downsampling
@@ -169,9 +179,10 @@ class XimeaCamera(Camera):
 
 
 class AvtCamera(Camera):
-    """Class for controlling an AVT camera. Uses the Vimba interface pymba.
-    
-    Module documentation `here <https://github.com/morefigs/pymba>`_.
+    """Class for controlling an AVT camera.
+
+    Uses the Vimba interface pymba
+    (module documentation `here <https://github.com/morefigs/pymba>`_).
 
     Parameters
     ----------
@@ -281,10 +292,3 @@ class AvtCamera(Camera):
         self.cam.endCapture()
         self.cam.revokeAllFrames()
         self.vimba.shutdown()
-
-if __name__=='__main__':
-    cam = AvtCamera()
-    cam.open_camera()
-    cam.set('framerate', 220)  # set exposure time in ms
-    frame = cam.read()  # read frame
-    cam.release()

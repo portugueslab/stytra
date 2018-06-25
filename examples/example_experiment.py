@@ -1,9 +1,10 @@
-from stytra import Stytra
-from stytra.stimulation import Protocol, InterpolatedStimulus, DynamicStimulus
-from stytra.stimulation.visual import CircleStimulus
-
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from stytra import Stytra
+from stytra.stimulation import Protocol
+from stytra.stimulation.stimuli import InterpolatedStimulus, CircleStimulus
+
 
 # Let's define a simple protocol consisting of looms at random locations,
 # of random durations and maximal sizes
@@ -57,9 +58,10 @@ class LoomingProtocol(Protocol):
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
             stimuli.append(LoomingStimulus(df_param=radius_df,
-                                           origin=(np.random.rand(), np.random.rand())))
+                                           origin=(30, 30)))
 
         return stimuli
+
 
 if __name__ == "__main__":
     # We make a new instance of Stytra with this protocol as the only option

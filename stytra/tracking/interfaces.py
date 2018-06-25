@@ -77,23 +77,30 @@ Eyes tracking methods
 """
 
 
+class FishTrackingMethod(FrameProcessingMethod):
+    def __init__(self):
+        super().__init__(name='tracking_fish_params')
+        self.add_params(function='fish',
+            threshold=dict(type='int', limits=(0, 255)))
+
+        self.accumulator_headers = ["x", "y", "theta"]
+        self.data_log_name = ""
+
+
 class EyeTrackingMethod(FrameProcessingMethod):
     """General eyes tracking method."""
     def __init__(self):
         super().__init__(name='tracking_tail_params')
         # TODO maybe getting default values here:
-        standard_params_dict = dict(function={'values': ['eye_threshold'],
+        self.add_params(function={'values': ['eye_threshold'],
                                               'value': 'eye_threshold',
                                               'type': 'list',
                                               'readonly': True},
-                                    color_invert=True,
-                                    wnd_pos={'value': (140, 200),
+                        color_invert=True,
+                        wnd_pos={'value': (140, 200),
                                              'visible': False},
                                     wnd_dim={'value': (110, 60),
                                              'visible': False})
-
-        for key, value in standard_params_dict.items():
-            self.add_one_param(key, value)
 
         headers = []
         [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
@@ -106,7 +113,7 @@ class EyeTrackingMethod(FrameProcessingMethod):
 class ThresholdEyeTrackingMethod(EyeTrackingMethod):
     """Simple threshold method for finding eyes."""
     def __init__(self):
-        super().__init__()
+        super().__init__(name='tracking_fish_params')
         standard_params_dict = dict(threshold=dict(value=64,
                                                    type='int',
                                                    limits=(0, 255)))

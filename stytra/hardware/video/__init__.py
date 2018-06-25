@@ -21,37 +21,40 @@ class VideoSource(FrameProcessor):
     or a file source. A maximum size of the memory used by the process can be
     set.
     
-    ===================== ===================================================
     **Input Queues:**
-    self.control_queue    queue with control parameters for the source,
-                          e.g. from a
-                          :class:CameraControlParameters
-                          <.interfaces.CameraControlParameters> object
-    ===================== ===================================================
-    
-    ===================== ===================================================
+
+    self.control_queue :
+        queue with control parameters for the source, e.g. from a
+        :class:`CameraControlParameters <.interfaces.CameraControlParameters>`
+        object.
+
+
     **Output Queues**
-    self.frame_queue      TimestampedArrayQueue from the arrayqueues module
-                          where the frames read from the camera are sent.
-    ===================== ===================================================
-    
-    ===================== ===================================================
+
+    self.frame_queue :
+        TimestampedArrayQueue from the arrayqueues module
+        where the frames read from the camera are sent.
+
+
     **Events**
-    self.kill_signal      When set kill the process.
-    ===================== ===================================================
+
+    self.kill_signal :
+        When set kill the process.
+
 
     Parameters
     ----------
+    rotation : int
+        n of times image should be rotated of 90 degrees
+    max_mbytes_queue : int
+        maximum size of camera queue (Mbytes)
 
     Returns
     -------
 
     """
     def __init__(self, rotation=False, max_mbytes_queue=100):
-        """
-        :param rotation: if true, rotate image by 90 degrees;
-        :param max_mbytes_queue:
-        """
+        """ """
         super().__init__()
         self.rotation = rotation
         self.control_queue = Queue()
@@ -61,11 +64,8 @@ class VideoSource(FrameProcessor):
 
 class CameraSource(VideoSource):
     """Process for controlling a camera.
+
     Cameras currently implemented:
-    
-    Module documentation here_:
-    
-    .. _here: <https://www.ximea.com/support/wiki/apis/Python>_
     
     ======== ===========================================
     Ximea    Add some info
@@ -74,6 +74,10 @@ class CameraSource(VideoSource):
 
     Parameters
     ----------
+    camera_type : str
+        specifies type of the camera (currently supported: 'ximea', 'avt')
+    downsampling : int
+        specifies downsampling factor for the camera.
 
     Returns
     -------
@@ -82,21 +86,29 @@ class CameraSource(VideoSource):
 
     camera_class_dict = dict(ximea=XimeaCamera,
                              avt=AvtCamera)
+    """ dictionary listing classes used to instantiate camera object."""
 
-    def __init__(self, camera_type, *args, **kwargs):
-        """
-        :param camera_type: string indicating camera type ('ximea' or 'avt')
-        """
+    def __init__(self, camera_type, *args, downsampling=1, **kwargs):
+        """ """
         super().__init__(*args, **kwargs)
 
         self.camera_type = camera_type
+        self.downsampling = downsampling
         self.cam = None
 
     def run(self):
-        """This process constantly try to read frames from the camera and to get"""
+        """
+        After initializing the camera, the process constantly does the
+        following:
+
+            - read control parameters from the control_queue and set them;
+            - read frames from the camera and put them in the frame_queue.
+
+
+        """
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
-            self.cam = CameraClass(debug=True)
+            self.cam = CameraClass(debug=True, downsampling=self.downsampling)
         except KeyError:
             print('{} is not a valid camera type!'.format(self.camera_type))
         self.cam.open_camera()

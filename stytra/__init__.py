@@ -1,11 +1,10 @@
 import argparse
 from stytra.experiments import Experiment
 from stytra.experiments.tracking_experiments import CameraExperiment,\
-    EmbeddedExperiment, SwimmingRecordingExperiment
+    TrackingExperiment, SwimmingRecordingExperiment
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
-from stytra.triggering import Crappy2PTrigger
 
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
@@ -45,7 +44,7 @@ class Stytra:
             if tracking_config is not None:
                 class_kwargs["tracking_config"] = tracking_config
                 if tracking_config["embedded"]:
-                    base = EmbeddedExperiment
+                    base = TrackingExperiment
                 else:
                     base = SwimmingRecordingExperiment
                 # TODO add swimming closed-loop experiments
