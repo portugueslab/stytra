@@ -14,6 +14,11 @@ Simple usage examples can be found in the examples folder.
 
 Quick installation guide
 ------------------------
+Stytra was developed and tested using Python 3.6 installed as part of the
+`Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Make
+sure you have the latest version of Anaconda installed before proceeding with
+the installation.
+Other Python versions have not been tested.
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
