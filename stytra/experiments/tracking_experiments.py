@@ -57,8 +57,8 @@ class CameraExperiment(Experiment):
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(
                 camera_config["type"],
-                rotation=camera_config["rotation"],
-                downsampling=camera_config["downsampling"],
+                rotation=camera_config.get("rotation", 0),
+                downsampling=camera_config.get("downsampling", 1),
                 max_mbytes_queue=camera_queue_mb,
             )
         else:

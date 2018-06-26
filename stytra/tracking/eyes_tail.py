@@ -98,7 +98,6 @@ def trace_tail_eyes(
     # try:
     e = _fit_ellipse(thresholded)
     if e is False:
-        print("I don't find eyes here...")
         e = (np.nan,) * 10
     else:
         e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)

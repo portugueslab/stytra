@@ -281,7 +281,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                         + self.track_params["tail_length"][1],
                     ),
                 ),
-                pen=dict(color=(230, 40, 5), width=3),
+                pen=dict(color=(40, 5, 200), width=3),
             )
 
             # Prepare curve for plotting tracked tail position:
@@ -300,7 +300,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.roi_eyes = pg.ROI(
                 pos=self.track_params["wnd_pos"],
                 size=self.track_params["wnd_dim"],
-                pen=dict(color=(230, 40, 5), width=3),
+                pen=dict(color=(5, 40, 200), width=3),
             )
 
             self.roi_eyes.addScaleHandle([0, 0], [1, 1])
@@ -408,6 +408,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                     im = (im < self.track_params["threshold"]).astype(np.uint8)
 
                 if len(self.experiment.data_acc.stored_data) > 1:
+                    self.roi_eyes.setPen(dict(color=(5, 40, 200),
+                                              width=3))
                     e = retrieved_data[-10:]
                     for i, o in enumerate([0, 5]):
                         if e[0] == e[0]:
@@ -460,6 +462,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             # No eyes detected:
                             for ell in self.curves_eyes:
                                 ell.setPen(None)
+                            self.roi_eyes.setPen(dict(color=(230, 40, 5),
+                                                      width=3))
 
                 self.image_item.setImage(im)
 
