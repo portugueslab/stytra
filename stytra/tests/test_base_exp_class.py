@@ -49,6 +49,9 @@ class TestExperimentClass(unittest.TestCase):
                          protocols=[TestProtocol0, TestProtocol1],
                          dir_save=self.test_dir)
         exp.start_experiment()
+
+        exp.metadata_animal.show_metadata_gui()
+        exp.metadata.show_metadata_gui()
         exp.window_main.widget_control.combo_prot.setCurrentText(
             'test_protocol_0')
         exp.start_protocol()
