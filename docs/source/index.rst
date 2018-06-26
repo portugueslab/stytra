@@ -51,7 +51,6 @@ Modules
     :maxdepth: 2
     :caption: Contents:
 
-    index
     install_guide
     stimulation_intro
     create_protocol
