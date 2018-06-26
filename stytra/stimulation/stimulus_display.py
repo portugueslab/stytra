@@ -11,6 +11,7 @@ from stytra.utilities import HasPyQtGraphParams
 
 # TODO what do we gain from two different widgets defined?
 
+
 class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
     """Display window for a visual simulation protocol,
     with a display area that can be controlled and changed from a
@@ -37,8 +38,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
     """
 
-    def __init__(self, protocol_runner, calibrator,
-                 record_stim_every=10, **kwargs):
+    def __init__(self, protocol_runner, calibrator, record_stim_every=10, **kwargs):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.
@@ -46,8 +46,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         :param record_stim_every: either None or the number of events every
         which a displayed frame is acquired and stored.
         """
-        super().__init__(name='stimulus_display_params', **kwargs)
-        self.setWindowTitle('Stytra stimulus display')
+        super().__init__(name="stimulus_display_params", **kwargs)
+        self.setWindowTitle("Stytra stimulus display")
 
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
@@ -58,25 +58,30 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         else:
             QWidgetClass = QOpenGLWidget
 
-        StimDisplay = type('StimDisplay', (GLStimDisplay, QWidgetClass), {})
-        self.widget_display = StimDisplay(self, calibrator=calibrator,
-                                                protocol_runner=protocol_runner,
-                                                record_stim_every=record_stim_every)
+        StimDisplay = type("StimDisplay", (GLStimDisplay, QWidgetClass), {})
+        self.widget_display = StimDisplay(
+            self,
+            calibrator=calibrator,
+            protocol_runner=protocol_runner,
+            record_stim_every=record_stim_every,
+        )
         self.widget_display.setMaximumSize(2000, 2000)
 
         # self.params.setName()
-        self.params.addChildren([{'name': 'pos', 'value': (0, 0),
-                                  'visible': False},
-                                 {'name': 'size', 'value': (400, 400),
-                                  'visible': False}])
+        self.params.addChildren(
+            [
+                {"name": "pos", "value": (0, 0), "visible": False},
+                {"name": "size", "value": (400, 400), "visible": False},
+            ]
+        )
 
-        self.setStyleSheet('background-color:black;')
+        self.setStyleSheet("background-color:black;")
         self.params.sigTreeStateChanged.connect(self.set_dims)
         self.set_dims()
 
     def set_dims(self):
         """ """
-        self.widget_display.setGeometry(*(self.params['pos']+self.params['size']))
+        self.widget_display.setGeometry(*(self.params["pos"] + self.params["size"]))
 
 
 # TODO why here paintEvent draws the stimulus and display_stimulus update
@@ -159,8 +164,6 @@ class GLStimDisplay:
             if self.calibrator.enabled and not self.protocol_runner.running:
                 self.calibrator.make_calibration_pattern(p, h, w)
 
-
-
         p.end()
 
     def display_stimulus(self):
@@ -188,9 +191,10 @@ class GLStimDisplay:
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()
                 arr = qimage2ndarray.recarray_view(img)  # Convert to np array
-                self.movie.append(np.array([arr[k] for k in ['r', 'g', 'b']]))
+                self.movie.append(np.array([arr[k] for k in ["r", "g", "b"]]))
                 self.movie_timestamps.append(
-                    (datetime.now() - self.starting_time).total_seconds())
+                    (datetime.now() - self.starting_time).total_seconds()
+                )
 
                 self.k = 0
 
@@ -216,4 +220,3 @@ class GLStimDisplay:
 
         else:
             return None
-

@@ -43,8 +43,10 @@ class Accumulator:
     def __init__(self, fps_calc_points=10, monitored_headers=None):
         """ """
         self.stored_data = []
-        self.header_list = ['t']
-        self.monitored_headers = monitored_headers  # headers which are included in the stream plot
+        self.header_list = ["t"]
+        self.monitored_headers = (
+            monitored_headers
+        )  # headers which are included in the stream plot
         self.starting_time = None
         self.fps_calc_points = fps_calc_points
 
@@ -61,7 +63,7 @@ class Accumulator:
 
         """
         if header_list is not None:
-            self.header_list = ['t'] + header_list
+            self.header_list = ["t"] + header_list
         self.stored_data = []
         self.starting_time = None
 
@@ -73,8 +75,7 @@ class Accumulator:
     def get_dataframe(self):
         """Returns pandas DataFrame with data and headers.
         """
-        return pd.DataFrame(self.get_last_n(),
-                            columns=self.header_list)
+        return pd.DataFrame(self.get_last_n(), columns=self.header_list)
 
     def get_fps(self):
         """ """
@@ -107,10 +108,9 @@ class Accumulator:
             last_n = len(self.stored_data)
 
         if len(self.stored_data) == 0:
-            return np.zeros(len(self.header_list)).reshape(1, len(
-                self.header_list))
+            return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
         else:
-            data_list = self.stored_data[-max(last_n, 1):]
+            data_list = self.stored_data[-max(last_n, 1) :]
 
             # The length of the tuple in the accumulator may change. Here we
             # make sure we take only the elements that have the same
@@ -162,10 +162,9 @@ class Accumulator:
             output format, csv, feather, hdf5, json
 
         """
-        outpath = path+"."+format
+        outpath = path + "." + format
         if format == "csv":
-            self.get_dataframe().to_csv(outpath,
-                                        sep=";")
+            self.get_dataframe().to_csv(outpath, sep=";")
         elif format == "feather":
             self.get_dataframe().to_feather(outpath)
         elif format == "hdf5":
@@ -173,7 +172,7 @@ class Accumulator:
         elif format == "json":
             json.dump(self.get_dataframe().to_dict(), open(outpath, "w"))
         else:
-            raise(NotImplementedError(format+" is not an implemented log foramt"))
+            raise (NotImplementedError(format + " is not an implemented log foramt"))
 
 
 class QueueDataAccumulator(QObject, Accumulator):
@@ -228,7 +227,7 @@ class QueueDataAccumulator(QObject, Accumulator):
                 t_ms = (t - self.starting_time).total_seconds()
 
                 # append:
-                l = (t_ms, ) + tuple(data)
+                l = (t_ms,) + tuple(data)
                 self.stored_data.append(l)
             except Empty:
                 break
@@ -252,7 +251,7 @@ class DynamicLog(Accumulator):
         # it is assumed the first dynamic stimulus has all the fields
         for stimulus in stimuli:
             try:
-                self.header_list = ['t'] + stimulus.dynamic_parameters
+                self.header_list = ["t"] + stimulus.dynamic_parameters
             except AttributeError:
                 pass
         self.stored_data = []

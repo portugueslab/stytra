@@ -15,13 +15,13 @@ def reduce_to_pi(ar):
 
     """
     try:
-        ar[ar > np.pi] -= np.pi*2
-        ar[ar < -np.pi] += np.pi*2
+        ar[ar > np.pi] -= np.pi * 2
+        ar[ar < -np.pi] += np.pi * 2
     except TypeError:
         if ar > np.pi:
-            ar -= np.pi*2
-        elif ar <-np.pi:
-            ar += np.pi*2
+            ar -= np.pi * 2
+        elif ar < -np.pi:
+            ar += np.pi * 2
         else:
             pass
     return ar
@@ -41,11 +41,10 @@ def angle_mean(angles, axis=1):
     -------
 
     """
-    return np.arctan2(np.sum(np.sin(angles), axis),
-                      np.sum(np.cos(angles), axis))
+    return np.arctan2(np.sum(np.sin(angles), axis), np.sum(np.cos(angles), axis))
 
 
-def angle_dif(a,b):
+def angle_dif(a, b):
     """
 
     Parameters
@@ -61,9 +60,9 @@ def angle_dif(a,b):
         
 
     """
-    return np.minimum(np.minimum(np.abs(a-b),
-                                 np.abs(a-b+2*np.pi)),
-                      np.abs(a-b-2*np.pi))
+    return np.minimum(
+        np.minimum(np.abs(a - b), np.abs(a - b + 2 * np.pi)), np.abs(a - b - 2 * np.pi)
+    )
 
 
 def cossin(theta):
@@ -97,9 +96,12 @@ def transform_affine(points, tm):
     -------
 
     """
-    padded = np.pad(points,
-                    tuple((0,0) for i in range(len(points.shape)-1))+((0,1),),
-                    mode='constant', constant_values=1.0)
+    padded = np.pad(
+        points,
+        tuple((0, 0) for i in range(len(points.shape) - 1)) + ((0, 1),),
+        mode="constant",
+        constant_values=1.0,
+    )
     return padded @ tm.T
 
 
@@ -117,8 +119,7 @@ def rot_mat(theta):
         rotation matrix
 
     """
-    return np.array([[np.cos(theta), -np.sin(theta)],
-                    [np.sin(theta), np.cos(theta)]])
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
 @jit(nopython=True)
@@ -136,14 +137,14 @@ def smooth_tail_angles(tail_angles):
 
     """
 
-    tau = 2*np.pi
+    tau = 2 * np.pi
 
     for i in range(1, tail_angles.shape[0]):
         previous = tail_angles[i - 1]
         dist = np.abs(previous - tail_angles[i])
-        if np.abs(previous-(tail_angles[i] + tau)) < dist:
+        if np.abs(previous - (tail_angles[i] + tau)) < dist:
             tail_angles[i] += tau
-        elif np.abs(previous-(tail_angles[i] - tau)) < dist:
+        elif np.abs(previous - (tail_angles[i] - tau)) < dist:
             tail_angles[i] -= tau
 
     return tail_angles

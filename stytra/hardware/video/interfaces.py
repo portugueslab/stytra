@@ -13,28 +13,37 @@ class CameraControlParameters(HasPyQtGraphParams):
     -------
 
     """
+
     def __init__(self):
-        super().__init__(name='tracking_camera_params')
-        standard_params_dict = dict(exposure={'value': 1.,
-                                              'type': 'float',
-                                              'limits': (0.1, 50),
-                                              'suffix': ' ms',
-                                              'tip': 'Exposure (ms)'},
-                                    framerate={'value': 150.,
-                                               'type': 'float',
-                                               'limits': (10, 700),
-                                               'suffix': ' Hz',
-                                               'tip': 'Framerate (Hz)'},
-                                    gain={'value': 1.,
-                                          'type': 'float',
-                                          'limits': (0.1, 3),
-                                          'tip': 'Camera amplification gain'})
+        super().__init__(name="tracking_camera_params")
+        standard_params_dict = dict(
+            exposure={
+                "value": 1.,
+                "type": "float",
+                "limits": (0.1, 50),
+                "suffix": " ms",
+                "tip": "Exposure (ms)",
+            },
+            framerate={
+                "value": 150.,
+                "type": "float",
+                "limits": (10, 700),
+                "suffix": " Hz",
+                "tip": "Framerate (Hz)",
+            },
+            gain={
+                "value": 1.,
+                "type": "float",
+                "limits": (0.1, 3),
+                "tip": "Camera amplification gain",
+            },
+        )
 
         for key, value in standard_params_dict.items():
             self.add_one_param(key, value)
 
-        self.exp = self.params.param('exposure')
-        self.fps = self.params.param('framerate')
+        self.exp = self.params.param("exposure")
+        self.fps = self.params.param("framerate")
 
         self.exp.sigValueChanged.connect(self.change_fps)
         self.fps.sigValueChanged.connect(self.change_exp)

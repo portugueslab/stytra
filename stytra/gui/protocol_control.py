@@ -1,6 +1,12 @@
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import QVBoxLayout, QPushButton, QHBoxLayout,\
-    QWidget, QComboBox, QProgressBar
+from PyQt5.QtWidgets import (
+    QVBoxLayout,
+    QPushButton,
+    QHBoxLayout,
+    QWidget,
+    QComboBox,
+    QProgressBar,
+)
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -42,14 +48,13 @@ class ProtocolControlWidget(QWidget):
 
         # Dropdown menu with the protocol classes found in the Experiment:
         self.combo_prot = QComboBox()
-        self.combo_prot.addItems(
-            list(self.protocol_runner.prot_class_dict.keys()))
+        self.combo_prot.addItems(list(self.protocol_runner.prot_class_dict.keys()))
 
         self.combo_prot.currentIndexChanged.connect(self.set_protocol)
         self.lyt_prot_selection.addWidget(self.combo_prot)
 
         # Window with the protocol parameters:
-        self.protocol_params_butt = QPushButton('Protocol parameters')
+        self.protocol_params_butt = QPushButton("Protocol parameters")
         self.protocol_params_butt.clicked.connect(self.show_stim_params_gui)
         self.lyt_prot_selection.addWidget(self.protocol_params_butt)
 
@@ -64,7 +69,7 @@ class ProtocolControlWidget(QWidget):
 
         # Progress bar for monitoring the protocol:
         self.progress_bar = QProgressBar()
-        self.progress_bar.setFormat('%p% %v/%m')
+        self.progress_bar.setFormat("%p% %v/%m")
 
         self.lyt_run.addWidget(self.progress_bar)
 
@@ -78,15 +83,13 @@ class ProtocolControlWidget(QWidget):
         self.timer = None
 
         # Connect events and signals from the ProtocolRunner to update the GUI:
-        self.protocol_runner.sig_protocol_updated.connect(
-            self.update_stim_duration)
+        self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
 
-        self.protocol_runner.sig_protocol_updated.connect(
-            self.update_stim_duration)
+        self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
 
         # If a previous protocol was already set in the protocol runner
         # change the GUI values accordingly:
@@ -100,9 +103,10 @@ class ProtocolControlWidget(QWidget):
         """
         if self.protocol_runner.protocol.params is not None:
             self.protocol_params_tree.setParameters(
-                self.protocol_runner.protocol.params)
+                self.protocol_runner.protocol.params
+            )
             self.protocol_params_tree.show()
-            self.protocol_params_tree.setWindowTitle('Protocol parameters')
+            self.protocol_params_tree.setWindowTitle("Protocol parameters")
             self.protocol_params_tree.resize(300, 600)
 
     def toggle_protocol_running(self):

@@ -74,12 +74,15 @@ class VisualStimulus(Stimulus):
         """
         if self.clip_rect is not None:
             if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w*x), int(h*y))
-                          for (x, y) in self.clip_rect]
+                points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_rect]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
-                p.setClipRect(self.clip_rect[0] * w, self.clip_rect[1] * h,
-                              self.clip_rect[2] * w, self.clip_rect[3] * h)
+                p.setClipRect(
+                    self.clip_rect[0] * w,
+                    self.clip_rect[1] * h,
+                    self.clip_rect[2] * w,
+                    self.clip_rect[3] * h,
+                )
 
 
 class FullFieldVisualStimulus(VisualStimulus):
@@ -95,7 +98,7 @@ class FullFieldVisualStimulus(VisualStimulus):
         """ """
         super().__init__(*args, **kwargs)
         self.color = color
-        self.name = 'flash'
+        self.name = "flash"
 
     def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
@@ -118,29 +121,30 @@ class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
     -------
 
     """
+
     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
-        super().__init__(*args, dynamic_parameters=['lum', ],
-                         **kwargs)
+        super().__init__(*args, dynamic_parameters=["lum"], **kwargs)
         self.color = color_0
         self.lum_df = lum_df
-        self.name = 'moving seamless'
+        self.name = "moving seamless"
         self.duration = float(lum_df.t.iat[-1])
 
     def update(self):
         """ """
         super().update()
-        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df['lum'])
+        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df["lum"])
         print(lum)
-        setattr(self, 'color', (lum, )*3)
+        setattr(self, "color", (lum,) * 3)
 
 
 class Pause(FullFieldVisualStimulus):
     """Class for painting full field black stimuli.
 
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
-        self.name = 'pause'
+        self.name = "pause"
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
@@ -150,9 +154,9 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.name = 'video'
+        self.name = "video"
 
-        self.dynamic_parameters.append('i_frame')
+        self.dynamic_parameters.append("i_frame")
         self.i_frame = 0
         self.video_path = video_path
 
@@ -165,17 +169,16 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        self._video_seq = pims.Video(self._experiment.asset_dir +
-                                     '/' + self.video_path)
+        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
         try:
             metadata = self._video_seq.get_metadata()
 
             if self.framerate is None:
-                self.framerate = metadata['fps']
+                self.framerate = metadata["fps"]
             if self.duration is None:
-                self.duration = metadata['duration']
+                self.duration = metadata["duration"]
 
         except AttributeError:
             if self.framerate is None:
@@ -190,8 +193,8 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
         # is incorrect, it has to be reset
         if self._elapsed < self._last_frame_display_time:
             self._last_frame_display_time = 0
-        if self._elapsed >= self._last_frame_display_time+1/self.framerate:
-            self.i_frame = int(round(self._elapsed*self.framerate))
+        if self._elapsed >= self._last_frame_display_time + 1 / self.framerate:
+            self.i_frame = int(round(self._elapsed * self.framerate))
             next_frame = self._video_seq.get_frame(self.i_frame)
             if next_frame is not None:
                 self._current_frame = next_frame
@@ -200,9 +203,13 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
     def paint(self, p, w, h):
         display_centre = (w / 2, h / 2)
         img = qimage2ndarray.array2qimage(self._current_frame)
-        p.drawImage(QPoint(display_centre[0] - self._current_frame.shape[1] // 2,
-                           display_centre[1] - self._current_frame.shape[0] // 2),
-                    img)
+        p.drawImage(
+            QPoint(
+                display_centre[0] - self._current_frame.shape[1] // 2,
+                display_centre[1] - self._current_frame.shape[0] // 2,
+            ),
+            img,
+        )
 
 
 class BackgroundStimulus(VisualStimulus, DynamicStimulus):
@@ -216,9 +223,7 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
         self.x = 0
         self.y = 0
         self.theta = 0
-        super().__init__(*args,
-                         dynamic_parameters=["x", "y", "theta"],
-                         **kwargs)
+        super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
     def get_unit_dims(self, w, h):
         return w, h
@@ -226,12 +231,16 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
     def get_rot_transform(self, w, h):
         xc = -w / 2
         yc = -h / 2
-        return QTransform().translate(-xc, -yc).rotate(
-            self.theta*180/np.pi).translate(xc, yc)
+        return (
+            QTransform()
+            .translate(-xc, -yc)
+            .rotate(self.theta * 180 / np.pi)
+            .translate(xc, yc)
+        )
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.params['mm_px']
+            mm_px = self._experiment.calibrator.params["mm_px"]
         else:
             mm_px = 1
 
@@ -242,15 +251,13 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
         self.clip(p, w, h)
 
         # find the centres of the display and image
-        display_centre = (w/2, h/2)
+        display_centre = (w / 2, h / 2)
         imw, imh = self.get_unit_dims(w, h)
 
         image_centre = (imw / 2, imh / 2)
 
-        cx = self.x/mm_px - np.floor(
-             self.x/mm_px / imw) * imw
-        cy = self.y/mm_px - np.floor(
-            (self.y/mm_px) / imh) * imh
+        cx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw
+        cy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
         dx = display_centre[0] - image_centre[0] + cx
         dy = display_centre[1] - image_centre[1] - cy
@@ -258,10 +265,10 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.get_rot_transform(w, h))
 
-        nw = int(np.ceil(w/(imw*2)))
-        nh = int(np.ceil(h/(imh*2)))
-        for idx, idy in product(range(-nw-1, nw+1), range(-nh-1, nh+1)):
-            self.draw_block(p, QPointF(idx*imw+dx, idy*imh+dy), w, h)
+        nw = int(np.ceil(w / (imw * 2)))
+        nh = int(np.ceil(h / (imh * 2)))
+        for idx, idy in product(range(-nw - 1, nw + 1), range(-nh - 1, nh + 1)):
+            self.draw_block(p, QPointF(idx * imw + dx, idy * imh + dy), w, h)
 
     def draw_block(self, p, point, w, h):
         """ Has to be defined in each child of the class, defines what
@@ -290,6 +297,7 @@ class MovingConstantVel(BackgroundStimulus):
     .. deprecated
         in favor of the InterpolatedStimulus
     """
+
     def __init__(self, *args, vel_x=0, vel_y=0, **kwargs):
         """
 
@@ -308,7 +316,7 @@ class MovingConstantVel(BackgroundStimulus):
 
     def update(self):
         super().update()
-        dt = (self._elapsed - self._past_t)
+        dt = self._elapsed - self._past_t
         self.x += self.vel_x * dt
         self.y += self.vel_y * dt
         self._past_t = self._elapsed
@@ -333,11 +341,11 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_dir + '/' +
-                                     self.background))
+            existing_file_background(self._experiment.asset_dir + "/" + self.background)
+        )
 
     def get_unit_dims(self, w, h):
-        w, h = self._qbackground.width(),  self._qbackground.height()
+        w, h = self._qbackground.width(), self._qbackground.height()
         return w, h
 
     def draw_block(self, p, point, w, h):
@@ -357,17 +365,20 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         color for the non-black stripes (int tuple)
     """
 
-    def __init__(self, *args, grating_angle=0, grating_period=10,
-                 color=(255, 255, 255), **kwargs):
+    def __init__(
+        self, *args, grating_angle=0, grating_period=10, color=(255, 255, 255), **kwargs
+    ):
         """ """
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.color = color
-        self.name = 'moving_gratings'
+        self.name = "moving_gratings"
 
     def get_unit_dims(self, w, h):
-        return self.grating_period / max(self._experiment.calibrator.params['mm_px'], 0.0001), max(w, h)
+        return self.grating_period / max(
+            self._experiment.calibrator.params["mm_px"], 0.0001
+        ), max(w, h)
 
     def draw_block(self, p, point, w, h):
         """Draws one bar of the grating, the rest are repeated by tiling.
@@ -375,9 +386,15 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(point.x(), point.y(),
-                   int(self.grating_period / (2 * max(self._experiment.calibrator.params['mm_px'], 0.0001))),
-                   w)
+        p.drawRect(
+            point.x(),
+            point.y(),
+            int(
+                self.grating_period
+                / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001))
+            ),
+            w,
+        )
 
 
 class SeamlessWindmillStimulus(BackgroundStimulus):
@@ -396,7 +413,7 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
         super().__init__(*args, **kwargs)
         self.color = color
         self.n_arms = n_arms
-        self.name = 'windmill'
+        self.name = "windmill"
 
     def draw_block(self, p, point, w, h):
         # Painting settings:
@@ -410,7 +427,7 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
 
         # calculate angles for each triangle:
         angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
-        angles += np.pi/2 + np.pi/(2 * self.n_arms)
+        angles += np.pi / 2 + np.pi / (2 * self.n_arms)
         # angular width of the white arms, by default equal to dark ones
         size = np.pi / self.n_arms
         # radius of triangles (much larger than frame)
@@ -418,11 +435,14 @@ class SeamlessWindmillStimulus(BackgroundStimulus):
 
         # loop over angles and draw consecutive triangles
         for deg in np.array(angles):
-            polyg_points = [QPoint(mid_x, mid_y),
-                            QPoint(int(mid_x + rad * np.cos(deg)),
-                                   int(mid_y + rad * np.sin(deg))),
-                            QPoint(int(mid_x + rad * np.cos(deg + size)),
-                                   int(mid_y + rad * np.sin(deg + size)))]
+            polyg_points = [
+                QPoint(mid_x, mid_y),
+                QPoint(int(mid_x + rad * np.cos(deg)), int(mid_y + rad * np.sin(deg))),
+                QPoint(
+                    int(mid_x + rad * np.cos(deg + size)),
+                    int(mid_y + rad * np.sin(deg + size)),
+                ),
+            ]
             polygon = QPolygon(polyg_points)
             p.drawPolygon(polygon)
 
@@ -447,9 +467,16 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
 
     """
-    def __init__(self, *args, origin=(0.5, 0.5), radius=10,
-                 background_color=(0, 0, 0),
-                 circle_color=(255, 255, 255), **kwargs):
+
+    def __init__(
+        self,
+        *args,
+        origin=(0.5, 0.5),
+        radius=10,
+        background_color=(0, 0, 0),
+        circle_color=(255, 255, 255),
+        **kwargs
+    ):
         super().__init__(*args, dynamic_parameters=["x", "y", "radius"], **kwargs)
         self.x = origin[0]
         self.y = origin[1]
@@ -468,15 +495,15 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
         # draw the circle
         p.setBrush(QBrush(QColor(*self.circle_color)))
-        p.drawEllipse(QPointF(self.x, self.y),
-                      self.radius, self.radius)
-
+        p.drawEllipse(QPointF(self.x, self.y), self.radius, self.radius)
 
 
 # Stimuli which need to be implemented
 
+
 class RandomDotKinematogram(VisualStimulus):
     """ """
+
     def __init__(self, *args, dot_density, coherence, velocity, direction, **kwargs):
         super().__init__(*args, **kwargs)
         self.dot_density = dot_density
@@ -507,10 +534,10 @@ class RandomDotKinematogram(VisualStimulus):
 
 class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
     """ """
-    def __init__(self, *args, spot_radius=5, average_distance=20,
-                 n_spots=10, **kwargs):
+
+    def __init__(self, *args, spot_radius=5, average_distance=20, n_spots=10, **kwargs):
         super().__init__()
-        self.dynamic_parameters = ['spot_positions']
+        self.dynamic_parameters = ["spot_positions"]
         self.spot_radius = spot_radius
         self.average_distance = 20
         self.spot_positions = np.array((n_spots, 2))
@@ -532,4 +559,3 @@ class SparseNoiseStimulus(DynamicStimulus, VisualStimulus):
 
         """
         pass
-

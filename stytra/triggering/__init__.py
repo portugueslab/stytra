@@ -46,6 +46,7 @@ class Trigger(Process):
 
 
     """
+
     def __init__(self):
         super().__init__()
 
@@ -96,6 +97,7 @@ class ZmqTrigger(Trigger):
     must be configured with the IP and the port of the computer running the
     stytra session.
     """
+
     def __init__(self, port):
         """
 
@@ -115,7 +117,7 @@ class ZmqTrigger(Trigger):
         """
         self.lightsheet_config = self.zmq_socket.recv_json()
         self.queue_trigger_params.put(self.lightsheet_config)
-        self.zmq_socket.send_json('received')
+        self.zmq_socket.send_json("received")
 
         return True
 
@@ -128,7 +130,7 @@ class ZmqTrigger(Trigger):
         super().run()
 
 
-if __name__=='__main__':
-    port = '5555'
+if __name__ == "__main__":
+    port = "5555"
     trigger = ZmqTrigger(port)
     trigger.start()

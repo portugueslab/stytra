@@ -57,6 +57,7 @@ class Stimulus:
     -------
 
     """
+
     def __init__(self, duration=0.0):
         """ """
 
@@ -64,7 +65,7 @@ class Stimulus:
 
         self._started = None
         self._elapsed = 0.0  # time from the beginning of the stimulus
-        self.name = ''
+        self.name = ""
         self._experiment = None
         self.real_time_start = None
         self.real_time_stop = None
@@ -84,7 +85,7 @@ class Stimulus:
         """
         state_dict = dict()
         for key, value in self.__dict__.items():
-            if not callable(value) and key[0] != '_':
+            if not callable(value) and key[0] != "_":
                 state_dict[key] = value
         return state_dict
 
@@ -138,6 +139,7 @@ class DynamicStimulus(Stimulus):
     -------
 
     """
+
     def __init__(self, *args, dynamic_parameters=None, **kwargs):
         """
         :param dynamic_parameters: A list of all parameters that are to be
@@ -151,8 +153,7 @@ class DynamicStimulus(Stimulus):
 
     def get_dynamic_state(self):
         """ """
-        return tuple(getattr(self, param, 0)
-                     for param in self.dynamic_parameters)
+        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
 
 
 class InterpolatedStimulus(Stimulus):
@@ -175,6 +176,7 @@ class InterpolatedStimulus(Stimulus):
         4 | 7.8
 
     """
+
     def __init__(self, *args, df_param, **kwargs):
         """"""
         super().__init__(*args, **kwargs)
@@ -186,21 +188,27 @@ class InterpolatedStimulus(Stimulus):
         """ """
         # to use parameters defined as velocities, we need the time
         # difference before previous display
-        dt = (self._elapsed - self._past_t)
+        dt = self._elapsed - self._past_t
 
         for col in self.df_param.columns:
             if col != "t":
                 # for defined velocities, integrates the parameter
                 if col.startswith("vel_"):
-                    setattr(self, col[4:],
-                            getattr(self, col[4:]) +
-                            dt * np.interp(self._elapsed, self.df_param.t,
-                                           self.df_param[col]))
+                    setattr(
+                        self,
+                        col[4:],
+                        getattr(self, col[4:])
+                        + dt
+                        * np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
+                    )
                 # otherwise it is set by interpolating the column of the
                 # dataframe
                 else:
-                    setattr(self, col, np.interp(self._elapsed, self.df_param.t,
-                                                 self.df_param[col]))
+                    setattr(
+                        self,
+                        col,
+                        np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
+                    )
 
         # the time of refresh is saved to calculate the differences
         self._past_t = self._elapsed

@@ -53,6 +53,7 @@ class VideoSource(FrameProcessor):
     -------
 
     """
+
     def __init__(self, rotation=False, max_mbytes_queue=100):
         """ """
         super().__init__()
@@ -84,8 +85,7 @@ class CameraSource(VideoSource):
 
     """
 
-    camera_class_dict = dict(ximea=XimeaCamera,
-                             avt=AvtCamera)
+    camera_class_dict = dict(ximea=XimeaCamera, avt=AvtCamera)
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(self, camera_type, *args, downsampling=1, **kwargs):
@@ -110,7 +110,7 @@ class CameraSource(VideoSource):
             CameraClass = self.camera_class_dict[self.camera_type]
             self.cam = CameraClass(debug=True, downsampling=self.downsampling)
         except KeyError:
-            print('{} is not a valid camera type!'.format(self.camera_type))
+            print("{} is not a valid camera type!".format(self.camera_type))
         self.cam.open_camera()
         while True:
             # Kill if signal is set:
@@ -148,9 +148,8 @@ class VideoFileSource(VideoSource):
     -------
 
     """
-    def __init__(self, source_file=None,
-                 loop=True, framerate=300,
-                 **kwargs):
+
+    def __init__(self, source_file=None, loop=True, framerate=300, **kwargs):
         super().__init__(**kwargs)
         self.source_file = source_file
         self.loop = loop
@@ -160,9 +159,10 @@ class VideoFileSource(VideoSource):
         # If the file is a Ximea Camera sequence, frames in the  corresponding
         # folder are read.
         import cv2
-        im_sequence_flag = self.source_file.split('.')[-1] == 'xiseq'
+
+        im_sequence_flag = self.source_file.split(".")[-1] == "xiseq"
         if im_sequence_flag:
-            frames_fn = glob.glob('{}_files/*'.format(self.source_file.split('.')[-2]))
+            frames_fn = glob.glob("{}_files/*".format(self.source_file.split(".")[-2]))
             frames_fn.sort()
             k = 0
         else:
@@ -170,7 +170,7 @@ class VideoFileSource(VideoSource):
         ret = True
 
         while ret and not self.kill_event.is_set():
-            if self.source_file.split('.')[-1] == 'xiseq':
+            if self.source_file.split(".")[-1] == "xiseq":
                 frame = cv2.imread(frames_fn[k])
                 k += 1
                 if k == len(frames_fn) - 2:
@@ -192,7 +192,8 @@ class VideoFileSource(VideoSource):
             self.update_framerate()
         return
 
-if __name__=='__main__':
-    process = CameraSource('ximea')
+
+if __name__ == "__main__":
+    process = CameraSource("ximea")
     process.start()
     process.kill_event.set()

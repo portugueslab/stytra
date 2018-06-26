@@ -60,18 +60,21 @@ class Experiment(QObject):
 
 
     """
-    def __init__(self,
-                 app=None,
-                 protocols=None,
-                 dir_save=None,
-                 metadata_general=None,
-                 metadata_animal=None,
-                 calibrator=None,
-                 asset_directory='',
-                 log_format="csv",
-                 rec_stim_every=None,
-                 display_config=None,
-                 trigger=None):
+
+    def __init__(
+        self,
+        app=None,
+        protocols=None,
+        dir_save=None,
+        metadata_general=None,
+        metadata_animal=None,
+        calibrator=None,
+        asset_directory="",
+        log_format="csv",
+        rec_stim_every=None,
+        display_config=None,
+        trigger=None,
+    ):
         """ """
         super().__init__()
 
@@ -92,7 +95,7 @@ class Experiment(QObject):
         self.scope_config = None
 
         self.logger = logging.getLogger()
-        self.logger.setLevel('INFO')
+        self.logger.setLevel("INFO")
 
         # to the constructor we need to pass classes, not instances
         # otherwise there are problems because the metadatas are QObjects
@@ -112,14 +115,14 @@ class Experiment(QObject):
             self.dc.add_param_tree(self.metadata._params)
             # Use the DataCollector object to find the last used protocol, to
             # restore it
-            self.last_protocol = \
-                self.dc.get_last_value('stimulus_protocol_params')
+            self.last_protocol = self.dc.get_last_value("stimulus_protocol_params")
         else:
             self.dc = None
             self.last_protocol = None
 
-        self.protocol_runner = ProtocolRunner(experiment=self,
-                                              protocol=self.last_protocol)
+        self.protocol_runner = ProtocolRunner(
+            experiment=self, protocol=self.last_protocol
+        )
 
         # assign signals from protocol_runner to be used externally:
         self.sig_protocol_finished = self.protocol_runner.sig_protocol_finished
@@ -132,29 +135,33 @@ class Experiment(QObject):
         else:
             self.display_config = display_config
 
-        self.window_display = StimulusDisplayWindow(self.protocol_runner,
-                                                    self.calibrator,
-                                                    record_stim_every=rec_stim_every)
+        self.window_display = StimulusDisplayWindow(
+            self.protocol_runner, self.calibrator, record_stim_every=rec_stim_every
+        )
 
         if self.display_config.get("window_size", None) is not None:
-            self.window_display.params['size'] = self.display_config["window_size"]
+            self.window_display.params["size"] = self.display_config["window_size"]
             self.window_display.set_dims()
 
         self.current_instance = self.get_new_name()
         self.i_run = 0
         if self.base_dir is not None:
-            self.folder_name = self.base_dir+"/"+self.current_instance
+            self.folder_name = self.base_dir + "/" + self.current_instance
             if not os.path.isdir(self.folder_name):
                 os.makedirs(self.folder_name)
         else:
             self.folder_name = None
 
     def get_new_name(self):
-        return datetime.datetime.now().strftime("%y%m%d")+'_f' + str(self.metadata_animal.params["id"])
+        return (
+            datetime.datetime.now().strftime("%y%m%d")
+            + "_f"
+            + str(self.metadata_animal.params["id"])
+        )
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return self.folder_name+"/{:03d}_".format(self.i_run)
+        return self.folder_name + "/{:03d}_".format(self.i_run)
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -209,7 +216,7 @@ class Experiment(QObject):
                 self.window_display.windowHandle().setScreen(self.app.screens()[1])
                 self.window_display.showFullScreen()
             except IndexError:
-                print('Second screen not available')
+                print("Second screen not available")
 
     def start_protocol(self):
         """Start the protocol from the ProtocolRunner. Before that, send a
@@ -224,20 +231,24 @@ class Experiment(QObject):
 
         """
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
-            self.logger.info('Waiting for trigger signal...')
+            self.logger.info("Waiting for trigger signal...")
             while True:
-                if self.trigger.start_event.is_set() and \
-                   not self.protocol_runner.running:
+                if (
+                    self.trigger.start_event.is_set()
+                    and not self.protocol_runner.running
+                ):
                     self.protocol_runner.start()
                     try:
-                        self.scope_config = \
-                            self.trigger.queue_trigger_params.get(timeout=0.001)
+                        self.scope_config = self.trigger.queue_trigger_params.get(
+                            timeout=0.001
+                        )
 
                         if self.dc is not None:
-                            self.dc.add_static_data(self.scope_config,
-                                                'imaging_microscope_config')
+                            self.dc.add_static_data(
+                                self.scope_config, "imaging_microscope_config"
+                            )
                     except Empty:
-                        print('No scope configuration received')
+                        print("No scope configuration received")
                     break
                 else:
                     self.app.processEvents()
@@ -261,22 +272,29 @@ class Experiment(QObject):
         self.protocol_runner.stop()
         if self.base_dir is not None:
             if self.dc is not None:
-                self.dc.add_static_data(self.protocol_runner.log, name='stimulus_log')
-                self.dc.add_static_data(self.protocol_runner.t_start, name='general_t_protocol_start')
-                self.dc.add_static_data(self.protocol_runner.t_end,
-                                        name='general_t_protocol_end')
+                self.dc.add_static_data(self.protocol_runner.log, name="stimulus_log")
+                self.dc.add_static_data(
+                    self.protocol_runner.t_start, name="general_t_protocol_start"
+                )
+                self.dc.add_static_data(
+                    self.protocol_runner.t_end, name="general_t_protocol_end"
+                )
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 
                 # save the movie if it is generated
                 movie = self.window_display.widget_display.get_movie()
                 if movie is not None:
                     movie_dict = dict(movie=movie[0], movie_times=movie[1])
-                    dd.io.save(self.filename_base() +
-                               'stim_movie.h5', movie_dict, compression='blosc')
+                    dd.io.save(
+                        self.filename_base() + "stim_movie.h5",
+                        movie_dict,
+                        compression="blosc",
+                    )
 
             if self.protocol_runner.dynamic_log is not None:
                 self.protocol_runner.dynamic_log.save(
-                    self.filename_base() + "dynamic_log", self.log_format)
+                    self.filename_base() + "dynamic_log", self.log_format
+                )
 
         self.protocol_runner.reset()
         self.i_run += 1
@@ -322,6 +340,6 @@ class Experiment(QObject):
 
         """
         traceback.print_tb(tb)
-        print('{0}: {1}'.format(exctype, value))
+        print("{0}: {1}".format(exctype, value))
         self.trigger.kill_event.set()
         self.trigger.terminate()

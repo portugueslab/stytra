@@ -1,7 +1,9 @@
 import serial as com
 
+
 class SerialConnection:
     """ """
+
     def __init__(self, com_port=None, baudrate=None):
         self.conn = com.Serial(port=com_port)
         print(self.conn)
@@ -48,5 +50,6 @@ class SerialConnection:
 
 class PyboardConnection(SerialConnection):
     """ """
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

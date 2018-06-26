@@ -29,9 +29,14 @@ class FrameDispatcher(FrameProcessor):
 
     """
 
-    def __init__(self, in_frame_queue, finished_signal=None,
-                 processing_parameter_queue=None,
-                 gui_framerate=30, **kwargs):
+    def __init__(
+        self,
+        in_frame_queue,
+        finished_signal=None,
+        processing_parameter_queue=None,
+        gui_framerate=30,
+        **kwargs
+    ):
         """
         :param in_frame_queue: queue dispatching frames from camera
         :param finished_signal: signal for the end of the acquisition
@@ -52,11 +57,13 @@ class FrameDispatcher(FrameProcessor):
         self.processing_parameter_queue = processing_parameter_queue
 
         # TODO this hardcoded dictionary may produce headaches
-        self.dict_tracking_functions = dict(angle_sweep=trace_tail_angular_sweep,
-                                            centroid=trace_tail_centroid,
-                                            eye_threshold=trace_eyes,
-                                            tail_eyes=trace_tail_eyes,
-                                            fish=find_fish_simple)
+        self.dict_tracking_functions = dict(
+            angle_sweep=trace_tail_angular_sweep,
+            centroid=trace_tail_centroid,
+            eye_threshold=trace_eyes,
+            tail_eyes=trace_tail_eyes,
+            fish=find_fish_simple,
+        )
 
     def process_internal(self, frame):
         """Apply processing function to current frame with
@@ -75,10 +82,8 @@ class FrameDispatcher(FrameProcessor):
         """
         if self.processing_function is not None:
 
-            output = self.processing_function(frame,
-                                              **self.processing_parameters)
+            output = self.processing_function(frame, **self.processing_parameters)
             return output
-
 
     def run(self):
         """Loop where the tracking function runs."""
@@ -88,12 +93,13 @@ class FrameDispatcher(FrameProcessor):
             if self.processing_parameter_queue is not None:
                 try:
                     # Read all parameters from the queue:
-                    self.processing_parameters = \
-                        self.processing_parameter_queue.get(timeout=0.0001)
+                    self.processing_parameters = self.processing_parameter_queue.get(
+                        timeout=0.0001
+                    )
 
-                    self.processing_function = \
-                        self.dict_tracking_functions[
-                            self.processing_parameters.pop('function')]
+                    self.processing_function = self.dict_tracking_functions[
+                        self.processing_parameters.pop("function")
+                    ]
 
                 except Empty:
                     pass
@@ -173,12 +179,13 @@ def _compare_to_previous(current, previous):
     for k in range(previous.shape[0]):
         for i in range(current.shape[0]):
             for j in range(current.shape[1]):
-                n_dif[k] += np.bitwise_xor(current[i, j],  previous[k, i, j])//255
+                n_dif[k] += np.bitwise_xor(current[i, j], previous[k, i, j]) // 255
     return n_dif
 
 
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
+
     def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
@@ -190,18 +197,25 @@ class MovingFrameDispatcher(FrameDispatcher):
         self.signal_start_rec = signal_start_rec
         self.mem_use = 0
 
-        self.diagnostic_params = ["n_pixels_difference", "recording_state", "n_images_in_buffer"]
+        self.diagnostic_params = [
+            "n_pixels_difference",
+            "recording_state",
+            "n_images_in_buffer",
+        ]
 
     def run(self):
         """ """
         t, frame_0 = self.frame_queue.get(timeout=10)
         n_previous_compare = 3
 
-        image_crop = slice(self.processing_parameters["frame_margin"],
-                           -self.processing_parameters["frame_margin"])
+        image_crop = slice(
+            self.processing_parameters["frame_margin"],
+            -self.processing_parameters["frame_margin"],
+        )
 
-        previous_ims = np.zeros((n_previous_compare, ) + frame_0[image_crop].shape,
-                                dtype=np.uint8)
+        previous_ims = np.zeros(
+            (n_previous_compare,) + frame_0[image_crop].shape, dtype=np.uint8
+        )
 
         image_buffer = deque()
         record_counter = 0
@@ -216,8 +230,9 @@ class MovingFrameDispatcher(FrameDispatcher):
             # Gets the processing parameters from their queue
             if self.processing_parameter_queue is not None:
                 try:
-                    self.processing_parameters = \
-                        self.processing_parameter_queue.get(timeout=0.00001)
+                    self.processing_parameters = self.processing_parameter_queue.get(
+                        timeout=0.00001
+                    )
                 except Empty:
                     pass
 
@@ -225,10 +240,12 @@ class MovingFrameDispatcher(FrameDispatcher):
                 current_time, current_frame = self.frame_queue.get(timeout=0.001)
                 # process frames as they come, threshold them to roughly
                 # find the fish (e.g. eyes)
-                _, current_frame_thresh =  \
-                    cv2.threshold(cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
-                                  self.processing_parameters["fish_threshold"],
-                                  255, cv2.THRESH_BINARY)
+                _, current_frame_thresh = cv2.threshold(
+                    cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
+                    self.processing_parameters["fish_threshold"],
+                    255,
+                    cv2.THRESH_BINARY,
+                )
                 # compare the thresholded frame to the previous ones,
                 # if there are enough differences
                 # because the fish moves, start recording to file
@@ -238,7 +255,9 @@ class MovingFrameDispatcher(FrameDispatcher):
                     # put the difference in the diagnostic queue so that
                     # the threshold can be set correctly
 
-                    if np.all(difsum > self.processing_parameters["motion_threshold_n_pix"]):
+                    if np.all(
+                        difsum > self.processing_parameters["motion_threshold_n_pix"]
+                    ):
                         record_counter = self.processing_parameters["n_next_save"]
 
                     if record_counter > 0:
@@ -257,13 +276,22 @@ class MovingFrameDispatcher(FrameDispatcher):
                     else:
                         recording_state = False
                         image_buffer.append((current_time, current_frame))
-                        if len(image_buffer) > self.processing_parameters["n_previous_save"]:
+                        if (
+                            len(image_buffer)
+                            > self.processing_parameters["n_previous_save"]
+                        ):
                             image_buffer.popleft()
 
-                    self.diagnostic_queue.put((current_time, (
-                                               difsum[i_frame % n_previous_compare],
-                                               recording_state,
-                                               len(image_buffer))))
+                    self.diagnostic_queue.put(
+                        (
+                            current_time,
+                            (
+                                difsum[i_frame % n_previous_compare],
+                                recording_state,
+                                len(image_buffer),
+                            ),
+                        )
+                    )
 
                 i_frame += 1
 

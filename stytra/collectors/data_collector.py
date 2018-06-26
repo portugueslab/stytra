@@ -27,7 +27,7 @@ def strip_values(it):
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
-            if not key == 'value':
+            if not key == "value":
                 new_dict[key] = strip_values(value)
         return new_dict
     else:
@@ -54,35 +54,37 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
 
     # Check if tail tracking is present, to use tracking dataframe as template.
     # If there is no tracking, generate a dataframe with time steps specified:
-    if 'tail' in metadata_dict['behaviour'].keys():
-        final_df = metadata_dict['behaviour']['tail'].copy()
+    if "tail" in metadata_dict["behaviour"].keys():
+        final_df = metadata_dict["behaviour"]["tail"].copy()
     else:
-        t = metadata_dict['stimulus']['log'][-1]['t_stop']
+        t = metadata_dict["stimulus"]["log"][-1]["t_stop"]
         timearr = np.arange(0, t, time_step)
-        final_df = pd.DataFrame(timearr, columns=['t'])
+        final_df = pd.DataFrame(timearr, columns=["t"])
 
     # Control for delays between tracking and stimulus starting points:
     delta_time = 0
-    if 'tail_tracking_start' in metadata_dict['behaviour'].keys():
-        stim_start = metadata_dict['stimulus']['log'][0]['started']
-        track_start = metadata_dict['behaviour']['tail_tracking_start']
+    if "tail_tracking_start" in metadata_dict["behaviour"].keys():
+        stim_start = metadata_dict["stimulus"]["log"][0]["started"]
+        track_start = metadata_dict["behaviour"]["tail_tracking_start"]
         delta_time = (stim_start - track_start).total_seconds()
 
     # Assign in a loop a stimulus to each time point
     start_point = None
-    for stimulus in metadata_dict['stimulus']['log']:
-        if stimulus['name'] == 'start_acquisition':
+    for stimulus in metadata_dict["stimulus"]["log"]:
+        if stimulus["name"] == "start_acquisition":
             start_point = stimulus
 
-        final_df.loc[(final_df['t'] > stimulus['t_start'] + delta_time) &
-                     (final_df['t'] < stimulus['t_stop'] + delta_time),
-                     'stimulus'] = str(stimulus['name'])
+        final_df.loc[
+            (final_df["t"] > stimulus["t_start"] + delta_time)
+            & (final_df["t"] < stimulus["t_stop"] + delta_time),
+            "stimulus",
+        ] = str(stimulus["name"])
 
     # Check for the 'start acquisition' which run for a very short time and
     # can be missed:
     if start_point:
-        start_idx = np.argmin(abs(final_df['t'] - start_point['t_start']))
-        final_df.loc[start_idx, 'stimulus'] = 'start_acquisition'
+        start_idx = np.argmin(abs(final_df["t"] - start_point["t_start"]))
+        final_df.loc[start_idx, "stimulus"] = "start_acquisition"
 
     return final_df
 
@@ -138,25 +140,25 @@ class DataCollector:
 
     """
 
-    def __init__(self, *data_tuples_list, folder_path='C:/'):
+    def __init__(self, *data_tuples_list, folder_path="C:/"):
         """ """
 
         # Check validity of directory:
         if os.path.isdir(folder_path):
-            if not folder_path.endswith('/'):
-                folder_path += '/'
+            if not folder_path.endswith("/"):
+                folder_path += "/"
             self.folder_path = folder_path
         else:
-            raise ValueError('The specified directory does not exist!')
+            raise ValueError("The specified directory does not exist!")
 
         # Try to find previously saved data_log:
         self.last_metadata = None
-        list_metadata = sorted([fn for fn in os.listdir(folder_path) if
-                                fn.endswith('config.h5')])
+        list_metadata = sorted(
+            [fn for fn in os.listdir(folder_path) if fn.endswith("config.h5")]
+        )
 
         if len(list_metadata) > 0:
-            self.last_metadata = \
-                dd.io.load(folder_path + list_metadata[-1])
+            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
 
         self.log_data_dict = dict()
         self.params_metadata = None
@@ -188,8 +190,7 @@ class DataCollector:
 
             # Restore only if equal:
             if current_dict == prev_dict:
-                self.params_metadata.restoreState(self.last_metadata,
-                                                  blockSignals=True)
+                self.params_metadata.restoreState(self.last_metadata, blockSignals=True)
                 # Here using the restoreState of the _params for some reason
                 #  does not block signals coming from restoring the values
                 # of its params children.
@@ -213,13 +214,13 @@ class DataCollector:
 
         """
         if isinstance(params_tree, Parameter):
-            self.params_metadata = params_tree;
+            self.params_metadata = params_tree
             # self.restore_from_saved()  # restoring is called by experiment
             # at a different time!
         else:
-            print('Invalid params source passed!')
+            print("Invalid params source passed!")
 
-    def add_static_data(self, entry, name='unspecified_entry'):
+    def add_static_data(self, entry, name="unspecified_entry"):
         """Add new data to the dictionary.
 
         Parameters
@@ -239,8 +240,9 @@ class DataCollector:
         """
         self.log_data_dict[name] = entry
 
-    def get_clean_dict(self, paramstree=True, eliminate_df=False,
-                       convert_datetime=False):
+    def get_clean_dict(
+        self, paramstree=True, eliminate_df=False, convert_datetime=False
+    ):
         """Collect data from all sources and put them together in
         the final hierarchical dictionary that will be saved in the .json file.
         The first level in the dictionary is fixed and defined by the keys
@@ -264,9 +266,16 @@ class DataCollector:
             dictionary with the sorted data.
 
         """
-        clean_data_dict = dict(animal={}, stimulus={}, imaging={},
-                               behaviour={}, general={}, camera={},
-                               tracking={}, unassigned={})
+        clean_data_dict = dict(
+            animal={},
+            stimulus={},
+            imaging={},
+            behaviour={},
+            general={},
+            camera={},
+            tracking={},
+            unassigned={},
+        )
 
         # Params data_log:
         value_dict = deepcopy(self.params_metadata.getValues())
@@ -275,18 +284,21 @@ class DataCollector:
         value_dict.update(deepcopy(self.log_data_dict))
 
         for key in value_dict.keys():
-            category = key.split('_')[0]
-            value = prepare_json(value_dict[key], paramstree=paramstree,
-                                 convert_datetime=convert_datetime,
-                                 eliminate_df=eliminate_df)
+            category = key.split("_")[0]
+            value = prepare_json(
+                value_dict[key],
+                paramstree=paramstree,
+                convert_datetime=convert_datetime,
+                eliminate_df=eliminate_df,
+            )
             if category in clean_data_dict.keys():
-                split_name = key.split('_')
-                if split_name[1] == 'metadata':
+                split_name = key.split("_")
+                if split_name[1] == "metadata":
                     clean_data_dict[category] = value
                 else:
-                    clean_data_dict[category]['_'.join(split_name[1:])] = value
+                    clean_data_dict[category]["_".join(split_name[1:])] = value
             else:
-                clean_data_dict['unassigned'][key] = value
+                clean_data_dict["unassigned"][key] = value
 
         return clean_data_dict
 
@@ -308,8 +320,9 @@ class DataCollector:
         if self.last_metadata is not None:
             # This syntax is ugly but apparently necessary to scan through
             # the dictionary saved by pyqtgraph.Parameter.saveState().
-            return self.last_metadata['children'][
-                class_param_key]['children']['name']['value']
+            return self.last_metadata["children"][class_param_key]["children"]["name"][
+                "value"
+            ]
         else:
             return None
 
@@ -324,8 +337,7 @@ class DataCollector:
         -------
 
         """
-        dd.io.save(self.folder_path + 'config.h5',
-                   self.params_metadata.saveState())
+        dd.io.save(self.folder_path + "config.h5", self.params_metadata.saveState())
 
     def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources
@@ -342,9 +354,8 @@ class DataCollector:
         """
         clean_dict = self.get_clean_dict(convert_datetime=True)
 
-        with open(output_path, 'w') as outfile:
-            json.dump(clean_dict,
-                      outfile, sort_keys=True)
+        with open(output_path, "w") as outfile:
+            json.dump(clean_dict, outfile, sort_keys=True)
 
     def save(self, output_path=""):
         """Save both the data_log.json log and the config.h5 file
