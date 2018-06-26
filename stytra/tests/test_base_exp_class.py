@@ -59,10 +59,12 @@ class TestExperimentClass(unittest.TestCase):
         exp.start_protocol()
         exp.end_protocol(save=True)
 
+        # exp.
+
         configfile = dd.io.load(glob.glob(self.test_dir + '/config.h5')[0])
 
         data = []
-        for path in (sorted(glob.glob(self.test_dir + '/*/*/*/*.json'))):
+        for path in (sorted(glob.glob(self.test_dir + '/*/*.json'))):
             with open(path, 'r') as f:
                 data.append(json.load(f))
 
