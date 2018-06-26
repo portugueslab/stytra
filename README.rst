@@ -10,7 +10,8 @@ Stytra
 A modular package to control stimulation and track behaviour in zebrafish experiments.
 ---------------
 
-.. image:: stytra/icons/512.png?raw=true
+.. image:: stytra/icons/256.png?raw=true
+    :scale: 50%
     :alt: Logo
 
 *screenshot goes here*
