@@ -1,15 +1,29 @@
+import logging
+import datetime
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout,\
-    QPushButton, QComboBox
+    QPushButton, QComboBox, QPlainTextEdit, QMainWindow, QCheckBox, \
+    QVBoxLayout, QSplitter
+from pyqtgraph.parametertree import ParameterTree
 
+from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
 from stytra.gui.camera_display import CameraViewWidget, \
     CameraEmbeddedTrackingSelection
 
-from PyQt5.QtWidgets import QMainWindow, QCheckBox, QVBoxLayout, QSplitter
-from pyqtgraph.parametertree import ParameterTree
-from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
+
+class QPlainTextEditLogger(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.widget = QPlainTextEdit()
+        self.widget.setReadOnly(True)
+
+    def emit(self, record):
+        msg = '{} {}'.format(datetime.datetime.now().strftime("[%H:%M:%S]"),
+                             self.format(record))
+        self.widget.appendPlainText(msg)
 
 
 class DebugLabel(QLabel):
@@ -85,6 +99,8 @@ class SimpleExperimentWindow(QMainWindow):
         self.button_metadata.clicked.connect(
             self.show_metadata_gui)
 
+        self.logger = QPlainTextEditLogger()
+
         self.setCentralWidget(self.construct_ui())
 
         self.metadata_win = None
@@ -102,14 +118,22 @@ class SimpleExperimentWindow(QMainWindow):
     def construct_ui(self):
         """ """
         central_widget = QWidget()
-        central_widget.setLayout(QVBoxLayout())
+        protocol_layout = QVBoxLayout()
         # central_widget.layout().addWidget(self.label_debug)
-        central_widget.layout().addWidget(self.widget_projection)
-        central_widget.layout().addWidget(self.widget_control)
+        protocol_layout.addWidget(self.widget_projection)
+        protocol_layout.addWidget(self.widget_control)
         if self.experiment.trigger is not None:
-            central_widget.layout().addWidget(self.chk_scope)
-        central_widget.layout().addWidget(self.button_metadata)
+            protocol_layout.addWidget(self.chk_scope)
+        protocol_layout.addWidget(self.button_metadata)
+
+        central_layout = QHBoxLayout()
+        central_layout.addLayout(protocol_layout)
+        central_layout.addWidget(self.logger.widget)
+        central_widget.setLayout(central_layout)
         return central_widget
+
+    def write_log(self, msg):
+        self.log_widget.textCursor().appendPlainText(msg)
 
     def closeEvent(self, *args, **kwargs):
         """

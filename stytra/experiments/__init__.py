@@ -2,20 +2,24 @@ import datetime
 import os
 import traceback
 from queue import Empty
-
 import deepdish as dd
 import qdarkstyle
+import logging
+
 from PyQt5.QtCore import QObject
 
 from stytra.calibration import CrossCalibrator
 from stytra.collectors import DataCollector
 from stytra.stimulation import ProtocolRunner
-
 from stytra.metadata import AnimalMetadata, GeneralMetadata
-
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
-
 from stytra.gui.container_windows import SimpleExperimentWindow
+
+
+# class QPlainTextEditLogger(logging.Handler):
+#     def emit(self, record):
+#         msg = self.format(record)
+#         self.widget.textCursor().appendPlainText(msg)
 
 
 class Experiment(QObject):
@@ -86,6 +90,9 @@ class Experiment(QObject):
 
         self.window_main = None
         self.scope_config = None
+
+        self.logger = logging.getLogger()
+        self.logger.setLevel('INFO')
 
         # to the constructor we need to pass classes, not instances
         # otherwise there are problems because the metadatas are QObjects
@@ -170,6 +177,7 @@ class Experiment(QObject):
         """Make experiment GUI, defined in children depending on experiments.
         """
         self.window_main = SimpleExperimentWindow(self)
+        self.logger.addHandler(self.window_main.logger)
         self.window_main.show()
 
     def initialize_metadata(self):
@@ -216,6 +224,7 @@ class Experiment(QObject):
 
         """
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
+            self.logger.info('Waiting for trigger signal...')
             while True:
                 if self.trigger.start_event.is_set() and \
                    not self.protocol_runner.running:

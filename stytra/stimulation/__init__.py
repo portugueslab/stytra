@@ -191,6 +191,8 @@ class ProtocolRunner(QObject):
     def start(self):
         """Start the protocol by starting the timers.
         """
+        self.experiment.logger.info('{} protocol started...'.format(
+            self.protocol.name))
         self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
@@ -257,6 +259,11 @@ class ProtocolRunner(QObject):
         """
         if not self.completed:  # if protocol was interrupted, update log anyway
             self.update_log()
+            self.experiment.logger.info('{} protocol interrupted.'.format(
+                self.protocol.name))
+        else:
+            self.experiment.logger.info('{} protocol finished.'.format(
+                self.protocol.name))
 
         if self.running:
             self.running = False
