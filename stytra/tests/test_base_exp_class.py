@@ -59,7 +59,7 @@ class TestExperimentClass(unittest.TestCase):
         exp.start_protocol()
         exp.end_protocol(save=True)
 
-        # exp.
+        exp.wrap_up()
 
         configfile = dd.io.load(glob.glob(self.test_dir + '/config.h5')[0])
 
