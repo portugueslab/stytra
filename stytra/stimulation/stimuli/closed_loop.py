@@ -18,7 +18,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         default_velocity=10,
         gain=1,
         shunting=False,
-        base_gain=5,
+        base_gain=30,
         swimming_threshold=0.2,
         **kwargs
     ):
@@ -26,7 +26,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self.name = "closed loop 1D"
         self.fish_velocity = 0
         self.dynamic_parameters.append("vel")
-        self.dynamic_parameters.append("y")
+        self.dynamic_parameters.append("x")
         self.dynamic_parameters.append("fish_velocity")
         self.base_vel = default_velocity
         self.fish_velocity = 0
@@ -38,45 +38,64 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self.shunting = shunting
         self.shunted = False
 
+        self.bout_start = None
+        self.bout_stop = None
+
         self._past_x = self.x
         self._past_y = self.y
         self._past_theta = self.theta
         self._past_t = 0
 
     def update(self):
-        """ """
+        """
+        Here we use fish velocity to change velocity of gratings.
+        """
         super().update()
-        dt = self._elapsed - self._past_t
-        self.fish_velocity = self._experiment.estimator.get_velocity()
+        dt = (self._elapsed - self._past_t)
+
+        self.fish_velocity = \
+            self._experiment.estimator.get_velocity()
+        # print('fish_velocity: {}'.format(self.fish_velocity))
         if self.base_vel == 0:
             self.shunted = False
             self.fish_swimming = False
 
-        if (
-            self.shunting
-            and self.fish_swimming
-            and self.fish_velocity < self.swimming_threshold
-        ):
+        if self.shunting and self.fish_swimming and self.fish_velocity < self.swimming_threshold:
             self.shunted = True
 
+        # If estimated velocity greater than threshold we are in a bout
         if self.fish_velocity > self.swimming_threshold:
+            print('fish_swimming!')
+            self.going = 1
             self.fish_swimming = True
+            if self.bout_start is None:
+                self.bout_start = self._elapsed
+            self.bout_stop = None
+        else:
+            self.going = 0
+            self.bout_start = None
+            if self.bout_start is None:
+                self.bout_start = self._elapsed
 
-        self.vel = int(not self.shunted) * (
-            self.base_vel
-            - self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming)
-        )
+            self.fish_swimming = False
 
-        if self.vel is None or self.vel > 15:
-            print("I am resetting vel to 0 because it is strange.")
+        self.vel = int(not self.shunted) * (self.base_vel -
+                   self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming))
+        # print('{} - {}'.format(int(not self.shunted), self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming)))
+        # print('velocity: {}'.format(self.vel))
+        if self.vel is None or self.vel > 50:
+            print('I am resetting vel to 0 because it is strange.')
             self.vel = 0
 
-        self.y += dt * self.vel
+        prev_x = self.x
+        self.x += dt * self.vel
+        # print('Prev. x: {}; vel: {}; new_x: {}'.format(prev_x, self.vel,
+        #                                                self.x))
         # TODO implement lag
         self._past_t = self._elapsed
-        for attr in ["x", "y", "theta"]:
+        for attr in ['x', 'y', 'theta']:
             try:
-                setattr(self, "past_" + attr, getattr(self, attr))
+                setattr(self, 'past_'+attr, getattr(self, attr))
             except (AttributeError, KeyError):
                 pass
 

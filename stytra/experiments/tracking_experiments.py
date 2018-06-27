@@ -206,6 +206,8 @@ class TrackingExperiment(CameraExperiment):
             gui_framerate=20,
         )
 
+        self.dynamic_log = self.protocol_runner.dynamic_log
+
         self.data_acc = QueueDataAccumulator(
             self.frame_dispatcher.output_queue,
             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
@@ -273,6 +275,8 @@ class TrackingExperiment(CameraExperiment):
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
 
+        self.window_main.stream_plot.add_stream(self.dynamic_log)
+
         self.window_main.show()
 
     def send_new_parameters(self):
@@ -332,6 +336,7 @@ class TrackingExperiment(CameraExperiment):
         """
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.data_acc.reset)
+        self.dynamic_log = self.protocol_runner.dynamic_log
 
     def wrap_up(self, *args, **kwargs):
         """
