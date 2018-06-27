@@ -43,8 +43,8 @@ class CameraExperiment(Experiment):
         """
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(camera_config["type"],
-                                       rotation=camera_config["rotation"],
-                                       downsampling=camera_config["downsampling"],
+                                       rotation=camera_config.get("rotation", 0),
+                                       downsampling=camera_config.get("downsampling", 1),
                                        max_mbytes_queue=camera_queue_mb)
         else:
             self.camera = VideoFileSource(camera_config["video_file"],
@@ -152,7 +152,7 @@ class TrackingExperiment(CameraExperiment):
     tracking_methods_list = dict(centroid=CentroidTrackingMethod,
                                  angle_sweep=AnglesTrackingMethod,
                                  eye_threshold=ThresholdEyeTrackingMethod,
-                                 eyes_tail=TailEyesTrackingMethod,
+                                 tail_eyes=TailEyesTrackingMethod,
                                  fish=FishTrackingMethod)
 
     def __init__(self, *args, tracking_config, **kwargs):

@@ -22,7 +22,7 @@ Other Python versions have not been tested.
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
-functions. If you don't have it install, open the Anaconda prompt and type::
+functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv -c conda-forge
 
@@ -32,7 +32,6 @@ Once you have that, download stytra in a directory and install it via pip by::
 
 
 .. note::
-    PyQt5 is not listed as an explicit requirement because it should
-    come with
-    the Anaconda package. If you are not using Anaconda, make sure you have it
-    installed and updated before installing stytra.
+    PyQt5 is not installed automatically as a dependency because it is not recognized if
+    already installed by Anaconda. If you are not using Anaconda, make sure you have it
+    installed and updated before installing stytra, with "pip install pyqt5"

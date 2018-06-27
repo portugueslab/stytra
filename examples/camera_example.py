@@ -21,11 +21,11 @@ class FlashProtocol(Protocol):
 
 if __name__ == "__main__":
     file = r'J:\_Shared\lightsheet_testing\eye_tracking\eyes_better.xiseq'
-    camera_config = dict(video_file=file,
-                         rotation=1)
+    camera_config = dict(type='ximea',
+                         rotation=0)
 
     tracking_config = dict(embedded=True,
-                           tracking_method="eye_threshold")
+                           tracking_method="tail_eyes")
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(protocols=[FlashProtocol], camera_config=camera_config,

@@ -165,7 +165,7 @@ class TailEyesTrackingMethod(TailTrackingMethod,
         [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
                          'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
                          'th_e{}'.format(i)]) for i in range(2)]
-        self.monitored_headers = ["tail_sum", "th_e1", "th_e2"]
+        self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
         self.accumulator_headers = headers
         self.data_log_name = 'behaviour_tail_eyes_log'
 

@@ -166,7 +166,7 @@ class CameraViewWidget(QWidget):
     def save_image(self):
         """Save a frame to the current directory."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        imsave(self.experiment.directory + '/' + timestamp + '_img.png',
+        imsave(self.experiment.filename_base() + '/' + timestamp + '_img.png',
                self.image_item.image)
 
     def show_params_gui(self):
