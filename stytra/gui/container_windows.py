@@ -109,6 +109,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.button_metadata.clicked.connect(self.show_metadata_gui)
 
         self.logger = QPlainTextEditLogger()
+        self.experiment.logger.addHandler(self.logger)
 
         self.setCentralWidget(self.construct_ui())
 
