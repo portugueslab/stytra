@@ -31,7 +31,9 @@ class VigourMotionEstimator:
         """
         # TODO implement lag here
         vigour_n_samples = max(int(round(self.vigour_window / self.last_dt)), 2)
-        past_tail_motion = self.data_acc.get_last_n(vigour_n_samples)
+        n_samples_lag = max(int(round(lag / self.last_dt)), 0)
+        past_tail_motion = self.data_acc.get_last_n(vigour_n_samples + n_samples_lag)[
+                0:vigour_n_samples]
         new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
@@ -39,6 +41,15 @@ class VigourMotionEstimator:
         self.log.update_list((past_tail_motion[0, 0], vigor))
         # print(self.log.get_last_t(4))
         return vigor
+
+    # n_samples_lag = max(int(round(lag / self.last_dt)), 0)
+    # past_tail_motion = self.data_acc.get_last_n(vigour_n_samples + n_samples_lag)[
+    #     0:vigour_n_samples]
+    # new_dt = (past_tail_motion[-1, 0] - past_tail_motion[
+    #     0, 0]) / vigour_n_samples
+    # if new_dt > 0:
+    #     self.last_dt = new_dt
+    # return np.std(past_tail_motion[:, 1])
 
 
 class PositionEstimator:
