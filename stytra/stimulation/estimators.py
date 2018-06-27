@@ -1,36 +1,10 @@
 import numpy as np
-from stytra.collectors import QueueDataAccumulator
+import datetime
 
-# from keras.models import load_model
 from stytra.bouter.angles import rot_mat
 from stytra.bouter.kinematic_features import velocities_to_coordinates
 from stytra.bouter.angles import smooth_tail_angles_series, reduce_to_pi
-import datetime
-from stytra.collectors import Accumulator
-
-
-class EstimatorLog(Accumulator):
-    """ """
-
-    def __init__(self, headers):
-        super().__init__()
-        self.header_list = ("t",) + tuple(headers)
-        self.stored_data = []
-
-    def update_list(self, data):
-        """
-
-        Parameters
-        ----------
-        data :
-            
-
-        Returns
-        -------
-
-        """
-        # delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
-        self.stored_data.append(data)
+from stytra.collectors import EstimatorLog, QueueDataAccumulator
 
 
 class VigourMotionEstimator:
@@ -41,6 +15,7 @@ class VigourMotionEstimator:
         self.data_acc = data_acc
         self.vigour_window = vigour_window
         self.last_dt = 1 / 500.
+        self.log = EstimatorLog(["vigour"])
 
     def get_velocity(self, lag=0):
         """
@@ -60,7 +35,11 @@ class VigourMotionEstimator:
         new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
-        return np.std(past_tail_motion[:, 1])
+        vigor = np.std(np.array(past_tail_motion[:, 1]))
+        self.log.update_list((past_tail_motion[0, 0], vigor))
+        print(past_tail_motion[0,0])
+        # print(self.log.get_last_t(4))
+        return vigor
 
 
 class PositionEstimator:

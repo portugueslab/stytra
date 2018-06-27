@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
 
-from stytra.stimulation.stimuli import Stimulus, DynamicStimulus
+from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
@@ -352,7 +352,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(BackgroundStimulus):
+class SeamlessGratingStimulus(BackgroundStimulus, InterpolatedStimulus):
     """Displays a grating pattern with physical dimensions.
 
     Parameters

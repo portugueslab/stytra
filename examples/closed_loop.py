@@ -1,22 +1,37 @@
+import numpy as np
+import pandas as pd
+
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
+from stytra.stimulation.stimuli import ClosedLoop1DGratings, SeamlessGratingStimulus
 
 
-class FlashProtocol(Protocol):
-    name = "flash protocol"
+class ClosedLoop1D(Protocol):
+    name = "closed_loop1D_gratings"
 
     def __init__(self):
         super().__init__()
-        self.add_params(period_sec=5., flash_duration=2.)
+
+        self.add_params(inter_stim_pause=20.,
+                        grating_vel=10.,
+                        grating_duration=10.,
+                        grating_cycle=10)
 
     def get_stim_sequence(self):
-        stimuli = [
-            Pause(duration=self.params["period_sec"] - self.params["flash_duration"]),
-            FullFieldVisualStimulus(
-                duration=self.params["flash_duration"], color=(255, 255, 255)
-            ),
-        ]
+        stimuli = []
+        # # gratings
+        p = 2  # self.params['inter_stim_pause']/2
+        v = 20  # self.params['grating_vel']
+        d = 10  # self.params['grating_duration']
+
+        df = pd.DataFrame(dict(t=[0, p, p, p+d, p+d, 2*p + d],
+                               vel_x=[0, 0, -v, -v, 0, 0]))
+
+        stimuli.append(ClosedLoop1DGratings(df_param=df,
+                                            grating_angle=np.pi/2,
+                                            grating_period=self.params[
+                                                   'grating_cycle'],
+                                            color=(255, )*3))
         return stimuli
 
 
@@ -31,13 +46,17 @@ if __name__ == "__main__":
     # Reading from a Ximea camera:
     camera_config = dict(type="ximea")
 
-    tracking_config = dict(embedded=True, tracking_method="eyes_tail",
-                           estimator='vigor')
+    tracking_config = dict(embedded=True, tracking_method="angle_sweep",
+                           estimator="vigor")
+
+    display_config = dict(full_screen=True)
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(
-        protocols=[FlashProtocol],
+        protocols=[ClosedLoop1D],
         camera_config=camera_config,
         tracking_config=tracking_config,
-        dir_save=r'D:\vilim\stytra\\'
+        display_config=display_config,
+        dir_save=r'D:\vilim\stytra\\',
+
     )

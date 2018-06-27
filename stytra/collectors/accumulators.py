@@ -110,17 +110,18 @@ class Accumulator:
         if len(self.stored_data) == 0:
             return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
         else:
-            data_list = self.stored_data[-max(last_n, 1) :]
+            data_list = self.stored_data[-max(last_n, 1):]
 
             # The length of the tuple in the accumulator may change. Here we
             # make sure we take only the elements that have the same
             # dimension as the last one.
             n_take = 1
-            for d in data_list[-2:0:-1]:
-                if len(d) == len(data_list[-1]):
-                    n_take += 1
-                else:
-                    break
+            if len(data_list) > 2:
+                for d in data_list[-2:0:-1]:
+                    if len(d) == len(data_list[-1]):
+                        n_take += 1
+                    else:
+                        break
             obar = np.array(data_list[-n_take:])
             return obar
 
@@ -268,5 +269,30 @@ class DynamicLog(Accumulator):
         -------
 
         """
+        self.check_start()
+        self.stored_data.append(data)
+
+
+class EstimatorLog(Accumulator):
+    """ """
+
+    def __init__(self, headers):
+        super().__init__()
+        self.header_list = ("t",) + tuple(headers)
+        self.stored_data = []
+
+    def update_list(self, data):
+        """
+
+        Parameters
+        ----------
+        data :
+
+
+        Returns
+        -------
+
+        """
+        # delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
         self.check_start()
         self.stored_data.append(data)

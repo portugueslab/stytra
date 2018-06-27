@@ -314,7 +314,6 @@ class TrackingExperiment(CameraExperiment):
 
         super().end_protocol(*args, **kwargs)
         try:
-            self.estimator.reset()
             self.estimator.log.reset()
         except AttributeError:
             pass

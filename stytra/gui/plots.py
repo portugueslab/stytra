@@ -250,7 +250,6 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         self.valueLabels[i_stream][4].setText(
                             "{:7.3f}".format(data_array[-1, i_var])
                         )
-
                         self.curves[i_stream].setData(
                             x=time_array,
                             y=i_stream + ((data_array[:, i_var] - lb) / scale),
