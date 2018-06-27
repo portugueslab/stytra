@@ -352,7 +352,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(BackgroundStimulus, InterpolatedStimulus):
+class SeamlessGratingStimulus(BackgroundStimulus):
     """Displays a grating pattern with physical dimensions.
 
     Parameters
@@ -397,7 +397,11 @@ class SeamlessGratingStimulus(BackgroundStimulus, InterpolatedStimulus):
         )
 
 
-class SeamlessWindmillStimulus(BackgroundStimulus):
+class InterpolatedGratingStimulus(SeamlessGratingStimulus, InterpolatedStimulus):
+    pass
+
+
+class WindmillStimulus(BackgroundStimulus):
     """Class for drawing a rotating windmill (radial wedges in alternating colors).
 
     Parameters

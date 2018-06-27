@@ -21,13 +21,13 @@ class ClosedLoop1D(Protocol):
         stimuli = []
         # # gratings
         p = 2  # self.params['inter_stim_pause']/2
-        v = 20  # self.params['grating_vel']
+        v = 10  # self.params['grating_vel']
         d = 10  # self.params['grating_duration']
 
         df = pd.DataFrame(dict(t=[0, p, p, p+d, p+d, 2*p + d],
-                               vel_x=[0, 0, -v, -v, 0, 0]))
+                               vel=[0, 0, -v, -v, 0, 0]))
 
-        stimuli.append(ClosedLoop1DGratings(df_param=df,
+        stimuli.append(ClosedLoop1DGratings(df,
                                             grating_angle=np.pi/2,
                                             grating_period=self.params[
                                                    'grating_cycle'],

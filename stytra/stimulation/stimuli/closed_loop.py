@@ -5,7 +5,7 @@ from stytra.stimulation.stimuli import (
     BackgroundStimulus,
     SeamlessImageStimulus,
     CircleStimulus,
-    SeamlessGratingStimulus,
+    SeamlessGratingStimulus
 )
 
 
@@ -18,7 +18,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         default_velocity=10,
         gain=1,
         shunting=False,
-        base_gain=30,
+        base_gain=-30,
         swimming_threshold=0.2,
         **kwargs
     ):
@@ -26,7 +26,6 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         self.name = "closed loop 1D"
         self.fish_velocity = 0
         self.dynamic_parameters.append("vel")
-        self.dynamic_parameters.append("x")
         self.dynamic_parameters.append("fish_velocity")
         self.base_vel = default_velocity
         self.fish_velocity = 0
@@ -53,8 +52,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
         super().update()
         dt = (self._elapsed - self._past_t)
 
-        self.fish_velocity = \
-            self._experiment.estimator.get_velocity()
+        self.fish_velocity = self._experiment.estimator.get_velocity()
         # print('fish_velocity: {}'.format(self.fish_velocity))
         if self.base_vel == 0:
             self.shunted = False
@@ -101,7 +99,45 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
 
 class ClosedLoop1DGratings(ClosedLoop1D, SeamlessGratingStimulus):
-    pass
+    def __init__(
+        self,
+        df_base_vel,
+        *args,
+        **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.duration = float(df_base_vel.t.iat[-1])
+        self.df_base_vel = df_base_vel
+
+    def update(self):
+    #     """ """
+    #     # to use parameters defined as velocities, we need the time
+    #     # difference before previous display
+        self.base_vel = np.interp(self._elapsed, self.df_base_vel.t, self.df_base_vel.vel)
+        super().update()
+
+        # for col in self.df_param.columns:
+        #     if col != "t":
+        #         # for defined velocities, integrates the parameter
+        #         if col.startswith("vel_"):
+        #             setattr(
+        #                 self,
+        #                 col[4:],
+        #                 getattr(self, col[4:])
+        #                 + dt
+        #                 * np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
+        #             )
+        #         # otherwise it is set by interpolating the column of the
+        #         # dataframe
+        #         else:
+        #             setattr(
+        #                 self,
+        #                 col,
+        #                 np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
+        #             )
+        #
+        # # the time of refresh is saved to calculate the differences
+        # self._past_t = self._elapsed
 
 #
 # class ClosedLoop1DGratings(SeamlessGratingStimulus):

@@ -272,6 +272,20 @@ class DynamicLog(Accumulator):
         self.check_start()
         self.stored_data.append(data)
 
+    def update_stimuli(self, stimuli):
+        # it is assumed the first dynamic stimulus has all the fields
+        # for stimulus in stimuli:
+        #     if isinstance(stimulus, DynamicStimulus):
+        #         self.header_list = ['t'] + stimulus.dynamic_parameters
+        #         print(self.header_list)
+        # self.stored_data = []
+        for stimulus in stimuli:
+            try:
+                self.header_list = ["t"] + stimulus.dynamic_parameters
+            except AttributeError:
+                pass
+        self.stored_data = []
+
 
 class EstimatorLog(Accumulator):
     """ """
