@@ -39,6 +39,10 @@ functions. If you don't have it install, open the Anaconda prompt and type::
 Once you have that, download stytra in a directory and install it via pip by::
 
     pip install path_to_stytra/stytra
+    
+To test the installation, you can try to run an example experiment from the prompt with::
+    
+    python -m stytra.demos.looming_experiment
 
 
 .. note::
