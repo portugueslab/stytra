@@ -1,3 +1,7 @@
+"""
+    Author: Ot Prat
+"""
+
 import sys
 import io
 import json
@@ -16,7 +20,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 class DragDropLabel(QLabel):
     """ """
-    acceptedFormat = 'json'
+    acceptedFormat = "json"
     droppedFile = pyqtSignal(str)
 
     def __init__(self, parent):
@@ -54,7 +58,7 @@ class DragDropLabel(QLabel):
         """
         for url in event.mimeData().urls():
             self.filename = url.toLocalFile()
-            if list(self.filename.split('.'))[-1] == self.acceptedFormat:
+            if list(self.filename.split("."))[-1] == self.acceptedFormat:
                 self.droppedFile.emit(self.filename)
             else:
                 pass
@@ -65,7 +69,7 @@ class JsonReader(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.title = 'Json metadata reader'
+        self.title = "Json metadata reader"
         self.left = 10
         self.top = 10
         self.width = 500
@@ -81,7 +85,9 @@ class JsonReader(QWidget):
         self.getbtn.clicked.connect(self.get_file)
 
         self.draglbl = DragDropLabel(self)
-        self.draglbl.setText("... or drop .{} file here".format(DragDropLabel.acceptedFormat.upper()))
+        self.draglbl.setText(
+            "... or drop .{} file here".format(DragDropLabel.acceptedFormat.upper())
+        )
         self.draglbl.setAlignment(QtCore.Qt.AlignCenter)
         self.draglbl.droppedFile.connect(self.open_file)
 
@@ -143,16 +149,30 @@ class JsonReader(QWidget):
         self.parameters = self.create_parameters(self.fix_types(metadata))
 
         # Add parameters for Save buttons and Image options
-        self.parameters.append({'name': 'Metadata Image Options', 'type': 'group', 'children': [
-            {'name': 'Append Image', 'type': 'action'},
-            {'name': 'View Image', 'type': 'action'}]})
+        self.parameters.append(
+            {
+                "name": "Metadata Image Options",
+                "type": "group",
+                "children": [
+                    {"name": "Append Image", "type": "action"},
+                    {"name": "View Image", "type": "action"},
+                ],
+            }
+        )
 
-        self.parameters.append({'name': 'Save/Reset metadata', 'type': 'group', 'children': [
-            {'name': 'Save changes', 'type': 'action'},
-            {'name': 'Reset changes', 'type': 'action'}]})
+        self.parameters.append(
+            {
+                "name": "Save/Reset metadata",
+                "type": "group",
+                "children": [
+                    {"name": "Save changes", "type": "action"},
+                    {"name": "Reset changes", "type": "action"},
+                ],
+            }
+        )
 
         # Create tree of Parameter objects
-        self.p = Parameter.create(name='params', type='group', children=self.parameters)
+        self.p = Parameter.create(name="params", type="group", children=self.parameters)
 
         # Check if Image parameters already exist. If they don't, add them and update Parameter object
         self.children_list = []
@@ -160,26 +180,38 @@ class JsonReader(QWidget):
             self.children_list.append(str(child).split("'")[1])
 
         if "Metadata Image" in self.children_list:
-            self.p.param('Metadata Image').hide()
+            self.p.param("Metadata Image").hide()
         else:
-            self.parameters.append({'name': 'Metadata Image', 'type': 'str', 'visible': False})
-            self.p = Parameter.create(name='params', type='group', children=self.parameters)
+            self.parameters.append(
+                {"name": "Metadata Image", "type": "str", "visible": False}
+            )
+            self.p = Parameter.create(
+                name="params", type="group", children=self.parameters
+            )
 
         # Save original state
         self.original_state = self.p.saveState()
 
         # Connect Save/Reset buttons to respective functions
-        self.p.param('Save/Reset metadata', 'Save changes').sigActivated.connect(self.save_treevals)
-        self.p.param('Save/Reset metadata', 'Reset changes').sigActivated.connect(self.reset)
+        self.p.param("Save/Reset metadata", "Save changes").sigActivated.connect(
+            self.save_treevals
+        )
+        self.p.param("Save/Reset metadata", "Reset changes").sigActivated.connect(
+            self.reset
+        )
 
         # Connect Image buttons to respective functions
-        self.p.param('Metadata Image Options', 'Append Image').sigActivated.connect(self.append_img)
-        self.p.param('Metadata Image Options', 'View Image').sigActivated.connect(self.display_img)
+        self.p.param("Metadata Image Options", "Append Image").sigActivated.connect(
+            self.append_img
+        )
+        self.p.param("Metadata Image Options", "View Image").sigActivated.connect(
+            self.display_img
+        )
 
         # Create ParameterTree widget
         self.tree = ParameterTree()
         self.tree.setParameters(self.p, showTop=False)
-        self.tree.setWindowTitle('pyqtgraph example: Parameter Tree')
+        self.tree.setWindowTitle("pyqtgraph example: Parameter Tree")
 
         # Display tree widget
         self.layout.addWidget(self.tree, 2, 0)
@@ -197,9 +229,9 @@ class JsonReader(QWidget):
             with open(self.imagefile, "rb") as f:
                 self.img = f.read()
             self.encoded_img = base64.b64encode(self.img)
-            self.encoded_img = self.encoded_img.decode('utf8')
-            self.p.param('Metadata Image').setValue(self.encoded_img)
-            self.p.param('Metadata Image').setDefault(self.encoded_img)
+            self.encoded_img = self.encoded_img.decode("utf8")
+            self.p.param("Metadata Image").setValue(self.encoded_img)
+            self.p.param("Metadata Image").setDefault(self.encoded_img)
 
     def display_img(self):
         """Show image appended to the metadata file"""
@@ -210,8 +242,8 @@ class JsonReader(QWidget):
         except AttributeError:
             pass
 
-        if not self.p.param('Metadata Image').defaultValue():
-            self.imglbl = QLabel('No image associated to this metadata')
+        if not self.p.param("Metadata Image").defaultValue():
+            self.imglbl = QLabel("No image associated to this metadata")
             self.layout.addWidget(self.imglbl, 2, 1)
 
             try:
@@ -222,11 +254,11 @@ class JsonReader(QWidget):
                 pass
 
         else:
-            self.figstring = self.p.param('Metadata Image').defaultValue()
-            self.figbytes = self.figstring.encode('utf8')
+            self.figstring = self.p.param("Metadata Image").defaultValue()
+            self.figbytes = self.figstring.encode("utf8")
             self.figbytes = base64.b64decode(self.figbytes)
 
-            self.viewbtn = QPushButton('Zoom image')
+            self.viewbtn = QPushButton("Zoom image")
             self.viewbtn.clicked.connect(self.image_viewer)
 
             self.image = QtGui.QPixmap()
@@ -249,7 +281,7 @@ class JsonReader(QWidget):
         self.imv.setImage(self.fignp)
 
         self.win.setCentralWidget(self.imv)
-        self.win.setWindowTitle('Metadata Image')
+        self.win.setWindowTitle("Metadata Image")
         self.win.show()
 
     def save_treevals(self):
@@ -259,13 +291,17 @@ class JsonReader(QWidget):
         self.metadata_dict_mod = self.get_mod_dict(self.treevals_dict)
 
         # Nasty way to make new dict (with modified metadata) with same structure as the original one
-        self.metadata_dict_mod.pop('Save/Reset metadata')
-        self.metadata_dict_mod.pop('Metadata Image Options')
-        self.metadata_dict_mod['stimulus']['log'] = self.metadata_dict['stimulus']['log']
-        self.metadata_dict_mod['stimulus']['display_params']['pos'] = \
-            json.loads(self.metadata_dict_mod['stimulus']['display_params']['pos'])
-        self.metadata_dict_mod['stimulus']['display_params']['size'] = \
-            json.loads(self.metadata_dict_mod['stimulus']['display_params']['size'])
+        self.metadata_dict_mod.pop("Save/Reset metadata")
+        self.metadata_dict_mod.pop("Metadata Image Options")
+        self.metadata_dict_mod["stimulus"]["log"] = self.metadata_dict["stimulus"][
+            "log"
+        ]
+        self.metadata_dict_mod["stimulus"]["display_params"]["pos"] = json.loads(
+            self.metadata_dict_mod["stimulus"]["display_params"]["pos"]
+        )
+        self.metadata_dict_mod["stimulus"]["display_params"]["size"] = json.loads(
+            self.metadata_dict_mod["stimulus"]["display_params"]["size"]
+        )
 
         self.show_warning()
 
@@ -285,8 +321,10 @@ class JsonReader(QWidget):
             self.msg.setIcon(QMessageBox.Warning)
             self.setWindowTitle("Saving Warning")
             self.msg.setText("Some parameters have changed")
-            self.msg.setInformativeText("Do you want to overwrite the original .json metadata file?")
-            self.msg.addButton('Create new file', QMessageBox.AcceptRole)
+            self.msg.setInformativeText(
+                "Do you want to overwrite the original .json metadata file?"
+            )
+            self.msg.addButton("Create new file", QMessageBox.AcceptRole)
             self.msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
             self.ret = self.msg.exec_()
@@ -302,7 +340,7 @@ class JsonReader(QWidget):
             self.msg2.setIcon(QMessageBox.Information)
             self.setWindowTitle("Saving Warning")
             self.msg2.setText("No changes have been made.")
-            self.msg2.addButton('OK', QMessageBox.AcceptRole)
+            self.msg2.addButton("OK", QMessageBox.AcceptRole)
 
             self.ret = self.msg2.exec_()
 
@@ -319,7 +357,7 @@ class JsonReader(QWidget):
 
         """
         # Overwritte original metadata file
-        with open(self.filename, 'w') as file:
+        with open(self.filename, "w") as file:
             json.dump(metadata_dict_mod, file)
 
     def create_metadata_file(self, metadata_dict_mod):
@@ -335,8 +373,8 @@ class JsonReader(QWidget):
 
         """
         # Overwritte original metadata file
-        self.name, self.ext = self.filename.split('.')
-        with open('{}_modified.{}'.format(self.name, self.ext), 'w') as file:
+        self.name, self.ext = self.filename.split(".")
+        with open("{}_modified.{}".format(self.name, self.ext), "w") as file:
             json.dump(metadata_dict_mod, file)
 
     def reset(self):
@@ -380,15 +418,25 @@ class JsonReader(QWidget):
         """
         parameters = []
         for key, value in datadict.items():
-            if key == 'log':
+            if key == "log":
                 pass
             else:
                 if isinstance(value, dict):
                     parameters.append(
-                        {'name': '{}'.format(key), 'type': 'group', 'children': self.create_parameters(value)})
+                        {
+                            "name": "{}".format(key),
+                            "type": "group",
+                            "children": self.create_parameters(value),
+                        }
+                    )
                 else:
                     parameters.append(
-                        {'name': '{}'.format(key), 'type': '{}'.format(type(value).__name__), 'value': value})
+                        {
+                            "name": "{}".format(key),
+                            "type": "{}".format(type(value).__name__),
+                            "value": value,
+                        }
+                    )
         return parameters
 
     def get_mod_dict(self, treevals_dict):
@@ -430,18 +478,18 @@ class JsonReader(QWidget):
         for param, change, data in changes:
             path = self.p.childPath(param)
             if path is not None:
-                childName = '.'.join(path)
+                childName = ".".join(path)
             else:
                 childName = param.name()
-            print('  parameter: %s' % childName)
-            print('  change:    %s' % change)
-            print('  data:      %s' % str(data))
-            print('  ----------')
+            print("  parameter: %s" % childName)
+            print("  change:    %s" % change)
+            print("  data:      %s" % str(data))
+            print("  ----------")
 
-            if change == 'activated':
+            if change == "activated":
                 pass
             else:
-                 self.has_changed = True
+                self.has_changed = True
 
     def close_tree(self):
         """ """
@@ -453,7 +501,7 @@ class JsonReader(QWidget):
             pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = JsonReader()
     sys.exit(app.exec_())

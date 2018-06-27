@@ -1,22 +1,32 @@
 import numpy as np
 
-from stytra.stimulation.stimuli import DynamicStimulus, BackgroundStimulus, \
-    SeamlessImageStimulus, CircleStimulus
+from stytra.stimulation.stimuli import (
+    DynamicStimulus,
+    BackgroundStimulus,
+    SeamlessImageStimulus,
+    CircleStimulus,
+)
 
 
 class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     """ """
-    def __init__(self, *args, default_velocity=10, gain=1,
-                 shunting=False,
-                 base_gain=5,
-                 swimming_threshold=0.2,
-                 **kwargs):
+
+    def __init__(
+        self,
+        *args,
+        default_velocity=10,
+        gain=1,
+        shunting=False,
+        base_gain=5,
+        swimming_threshold=0.2,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
-        self.name = 'closed loop 1D'
+        self.name = "closed loop 1D"
         self.fish_velocity = 0
-        self.dynamic_parameters.append('vel')
-        self.dynamic_parameters.append('y')
-        self.dynamic_parameters.append('fish_velocity')
+        self.dynamic_parameters.append("vel")
+        self.dynamic_parameters.append("y")
+        self.dynamic_parameters.append("fish_velocity")
         self.base_vel = default_velocity
         self.fish_velocity = 0
         self.vel = 0
@@ -35,43 +45,48 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
     def update(self):
         """ """
         super().update()
-        dt = (self._elapsed - self._past_t)
+        dt = self._elapsed - self._past_t
         self.fish_velocity = self._experiment.fish_motion_estimator.get_velocity()
         if self.base_vel == 0:
             self.shunted = False
             self.fish_swimming = False
 
-        if self.shunting and self.fish_swimming and self.fish_velocity < self.swimming_threshold:
+        if (
+            self.shunting
+            and self.fish_swimming
+            and self.fish_velocity < self.swimming_threshold
+        ):
             self.shunted = True
 
         if self.fish_velocity > self.swimming_threshold:
             self.fish_swimming = True
 
-        self.vel = int(not self.shunted) * (self.base_vel - \
-                   self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming))
+        self.vel = int(not self.shunted) * (
+            self.base_vel
+            - self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming)
+        )
 
         if self.vel is None or self.vel > 15:
-            print('I am resetting vel to 0 because it is strange.')
+            print("I am resetting vel to 0 because it is strange.")
             self.vel = 0
 
         self.y += dt * self.vel
         # TODO implement lag
         self._past_t = self._elapsed
-        for attr in ['x', 'y', 'theta']:
+        for attr in ["x", "y", "theta"]:
             try:
-                setattr(self, 'past_'+attr, getattr(self, attr))
+                setattr(self, "past_" + attr, getattr(self, attr))
             except (AttributeError, KeyError):
                 pass
 
 
-class VRMotionStimulus(SeamlessImageStimulus,
-                       DynamicStimulus):
+class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
     """ """
 
     def __init__(self, *args, motion=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.motion = motion
-        self.dynamic_parameters = ['x', 'y', 'theta', 'dv']
+        self.dynamic_parameters = ["x", "y", "theta", "dv"]
         self._bg_x = 0
         self._bg_y = 0
         self.dv = 0
@@ -88,7 +103,9 @@ class VRMotionStimulus(SeamlessImageStimulus,
 
         fish_coordinates = self._experiment.estimator.get_displacements()
 
-        self.x = self._bg_x + fish_coordinates[1]  # A right angle turn between the cooridnate systems
+        self.x = (
+            self._bg_x + fish_coordinates[1]
+        )  # A right angle turn between the cooridnate systems
         self.y = self._bg_y - fish_coordinates[0]
 
         # on the upper right
@@ -97,6 +114,7 @@ class VRMotionStimulus(SeamlessImageStimulus,
 
 
 class TrackingStimulus(CircleStimulus):
+
     def update(self):
         self.x, self.y, _ = self._experiment.estimator.get_position()
         super().update()

@@ -1,4 +1,5 @@
 import datetime
+
 try:
     import av
 except ImportError:
@@ -11,6 +12,7 @@ from queue import Empty
 # TODO documentation
 class VideoWriter(FrameProcessor):
     """ """
+
     def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):
         super().__init__()
         self.folder = folder
@@ -23,8 +25,8 @@ class VideoWriter(FrameProcessor):
         """ """
         while True:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            out_container = av.open(self.folder+timestamp+".mp4", mode='w')
-            print("Recorder running, saving to ", self.folder+timestamp+".mp4")
+            out_container = av.open(self.folder + timestamp + ".mp4", mode="w")
+            print("Recorder running, saving to ", self.folder + timestamp + ".mp4")
             out_stream = None
             video_frame = None
             while True:
@@ -34,11 +36,13 @@ class VideoWriter(FrameProcessor):
                 try:
                     if out_stream is None:
                         current_frame = self.input_queue.get(timeout=1)
-                        out_stream = out_container.add_stream('mpeg4', rate=50)
+                        out_stream = out_container.add_stream("mpeg4", rate=50)
                         out_stream.width, out_stream.height = current_frame.shape[::-1]
-                        out_stream.pix_fmt = 'yuv420p'
-                        out_stream.bit_rate = self.kbit_rate*1000
-                        video_frame = av.VideoFrame(current_frame.shape[1], current_frame.shape[0], "gray")
+                        out_stream.pix_fmt = "yuv420p"
+                        out_stream.bit_rate = self.kbit_rate * 1000
+                        video_frame = av.VideoFrame(
+                            current_frame.shape[1], current_frame.shape[0], "gray"
+                        )
                         video_frame.planes[0].update(current_frame)
                     else:
                         video_frame.planes[0].update(self.input_queue.get(timeout=1))

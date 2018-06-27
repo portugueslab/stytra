@@ -45,6 +45,7 @@ class Camera:
 
 
     """
+
     def __init__(self, debug=False):
         """
         Parameters
@@ -95,6 +96,7 @@ class XimeaCamera(Camera):
     <https://www.ximea.com/support/wiki/apis/Python>`_.
 
     """
+
     def __init__(self, downsampling=1, **kwargs):
         """
 
@@ -110,7 +112,7 @@ class XimeaCamera(Camera):
         try:
             self.cam = xiapi.Camera()
         except NameError:
-            print('The xiapi package must be installed to use a Ximea camera!')
+            print("The xiapi package must be installed to use a Ximea camera!")
 
     def open_camera(self):
         """ """
@@ -120,22 +122,21 @@ class XimeaCamera(Camera):
         self.cam.start_acquisition()
 
         if self.debug:
-            print('Detected camera {}.'.format(self.cam.get_device_name()))
+            print("Detected camera {}.".format(self.cam.get_device_name()))
 
         # If camera supports hardware downsampling (MQ013MG-ON does,
         # MQ003MG-CM does not):
-        if self.cam.get_device_name() == b'MQ013MG-ON':
-            self.cam.set_sensor_feature_selector(
-                'XI_SENSOR_FEATURE_ZEROROT_ENABLE')
+        if self.cam.get_device_name() == b"MQ013MG-ON":
+            self.cam.set_sensor_feature_selector("XI_SENSOR_FEATURE_ZEROROT_ENABLE")
             self.cam.set_sensor_feature_value(1)
 
             if self.downsampling > 1:
                 self.cam.set_downsampling_type("XI_SKIPPING")
                 self.cam.set_downsampling(
-                    "XI_DWN_{}x{}".format(self.downsampling,
-                                          self.downsampling))
+                    "XI_DWN_{}x{}".format(self.downsampling, self.downsampling)
+                )
 
-        self.cam.set_acq_timing_mode('XI_ACQ_TIMING_MODE_FRAME_RATE')
+        self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
 
     def set(self, param, val):
         """
@@ -152,10 +153,10 @@ class XimeaCamera(Camera):
 
         """
         try:
-            if param == 'exposure':
+            if param == "exposure":
                 self.cam.set_exposure(int(val * 1000))
 
-            if param == 'framerate':
+            if param == "framerate":
                 self.cam.set_framerate(val)
         except xiapi.Xi_error:
             print("Invalid camera parameters")
@@ -168,7 +169,7 @@ class XimeaCamera(Camera):
         except xiapi.Xi_error:
             frame = None
             if self.debug:
-                print('Unable to acquire frame')
+                print("Unable to acquire frame")
 
         return frame
 
@@ -191,6 +192,7 @@ class AvtCamera(Camera):
     -------
 
     """
+
     def __init__(self, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
@@ -200,7 +202,7 @@ class AvtCamera(Camera):
         try:
             self.vimba = Vimba()
         except NameError:
-            print('The pymba package must be installed to use an AVT camera!')
+            print("The pymba package must be installed to use an AVT camera!")
 
         self.frame = None
 
@@ -213,10 +215,13 @@ class AvtCamera(Camera):
         camera_ids = self.vimba.getCameraIds()
         if self.debug:
             if len(camera_ids) > 1:
-                print('Multiple cameras detected: {}. {} wiil be used.'.format(
-                    camera_ids, camera_ids[0]))
+                print(
+                    "Multiple cameras detected: {}. {} wiil be used.".format(
+                        camera_ids, camera_ids[0]
+                    )
+                )
             else:
-                print('Detected camera {}.'.format(camera_ids[0]))
+                print("Detected camera {}.".format(camera_ids[0]))
         self.cam = self.vimba.getCamera(camera_ids[0])
 
         # Start camera:
@@ -226,7 +231,7 @@ class AvtCamera(Camera):
 
         self.cam.startCapture()
         self.frame.queueFrameCapture()
-        self.cam.runFeatureCommand('AcquisitionStart')
+        self.cam.runFeatureCommand("AcquisitionStart")
 
     def set(self, param, val):
         """
@@ -243,17 +248,17 @@ class AvtCamera(Camera):
 
         """
         try:
-            if param == 'exposure':
+            if param == "exposure":
                 # camera wants exposure in us:
                 self.cam.ExposureTime = int(val * 1000)
 
-            if param == 'framerate':
+            if param == "framerate":
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
                 # TODO Handle this in a cleaner way
                 if val < 210:  # empirically found maximum frame rate
                     self.frame.waitFrameCapture(self.timeout_ms)
-                    self.cam.runFeatureCommand('AcquisitionStop')
+                    self.cam.runFeatureCommand("AcquisitionStop")
                     self.cam.endCapture()
                     self.cam.revokeAllFrames()
 
@@ -261,9 +266,9 @@ class AvtCamera(Camera):
 
                     self.cam.startCapture()
                     self.frame.queueFrameCapture()
-                    self.cam.runFeatureCommand('AcquisitionStart')
+                    self.cam.runFeatureCommand("AcquisitionStart")
         except VimbaException:
-            print('Invalid value! The parameter will not be changed.')
+            print("Invalid value! The parameter will not be changed.")
 
     def read(self):
         """ """
@@ -273,22 +278,23 @@ class AvtCamera(Camera):
 
             raw_data = self.frame.getBufferByteData()
 
-            frame = np.ndarray(buffer=raw_data,
-                               dtype=np.uint8,
-                               shape=(self.frame.height,
-                                      self.frame.width))
+            frame = np.ndarray(
+                buffer=raw_data,
+                dtype=np.uint8,
+                shape=(self.frame.height, self.frame.width),
+            )
 
         except VimbaException:
             frame = None
             if self.debug:
-                print('Unable to acquire frame')
+                print("Unable to acquire frame")
 
         return frame
 
     def release(self):
         """ """
         self.frame.waitFrameCapture(self.timeout_ms)
-        self.cam.runFeatureCommand('AcquisitionStop')
+        self.cam.runFeatureCommand("AcquisitionStop")
         self.cam.endCapture()
         self.cam.revokeAllFrames()
         self.vimba.shutdown()

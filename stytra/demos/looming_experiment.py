@@ -25,8 +25,7 @@ class LoomingProtocol(Protocol):
         # (more elaborate ways of adding parameters are supported,
         # see the documentation of HasPyQtGraphParams)
         # TODO figure out how to integrate this with Sphinx
-        self.add_params(n_looms=10,
-                        max_loom_size=40, max_loom_duration=5)
+        self.add_params(n_looms=10, max_loom_size=40, max_loom_duration=5)
 
     # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):
@@ -41,8 +40,9 @@ class LoomingProtocol(Protocol):
         # Use the 3-argument version of the Python type function to
         # make a temporary class combining two classes
 
-        LoomingStimulus = type("LoomingStimulus",
-                               (InterpolatedStimulus, CircleStimulus), {})
+        LoomingStimulus = type(
+            "LoomingStimulus", (InterpolatedStimulus, CircleStimulus), {}
+        )
 
         for i in range(self.params["n_looms"]):
             # The radius is only specified at the beginning and at the
@@ -51,14 +51,16 @@ class LoomingProtocol(Protocol):
             # detailed interpolation table
 
             radius_df = pd.DataFrame(
-                dict(t=[0, np.random.rand()*self.params["max_loom_duration"]],
-                     radius=[0, np.random.rand()*self.params["max_loom_size"]]))
+                dict(
+                    t=[0, np.random.rand() * self.params["max_loom_duration"]],
+                    radius=[0, np.random.rand() * self.params["max_loom_size"]],
+                )
+            )
 
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df,
-                                           origin=(30, 30)))
+            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(30, 30)))
 
         return stimuli
 

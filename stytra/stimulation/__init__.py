@@ -66,8 +66,7 @@ class ProtocolRunner(QObject):
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
     """Emitted when protocol is changed/updated"""
 
-    def __init__(self, experiment=None, dt=1/60,
-                 log_print=True, protocol=None):
+    def __init__(self, experiment=None, dt=1 / 60, log_print=True, protocol=None):
         """ """
         super().__init__()
 
@@ -121,8 +120,7 @@ class ProtocolRunner(QObject):
             self.update_protocol()
 
             # Connect changes to protocol parameters to update function:
-            self.protocol.params.sigTreeStateChanged.connect(
-                self.update_protocol)
+            self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
 
             # Why were we resetting here?
             self.reset()
@@ -146,8 +144,10 @@ class ProtocolRunner(QObject):
 
                 self.sig_protocol_updated.emit()
             except KeyError:
-                print('protocol in the config file is not defined in the '
-                      'protocols file')
+                print(
+                    "protocol in the config file is not defined in the "
+                    "protocols file"
+                )
 
     def update_protocol(self):
         """Update current Protocol (get a new stimulus list if protocol
@@ -191,6 +191,7 @@ class ProtocolRunner(QObject):
     def start(self):
         """Start the protocol by starting the timers.
         """
+        self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
         self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
@@ -221,8 +222,9 @@ class ProtocolRunner(QObject):
             self.t = (datetime.datetime.now() - self.t_start).total_seconds()
 
             # Calculate elapsed time for current stimulus:
-            self.current_stimulus._elapsed = (datetime.datetime.now() -
-                                              self.past_stimuli_elapsed).total_seconds()
+            self.current_stimulus._elapsed = (
+                datetime.datetime.now() - self.past_stimuli_elapsed
+            ).total_seconds()
 
             # If stimulus time is over:
             if self.current_stimulus._elapsed > self.current_stimulus.duration:
@@ -239,7 +241,8 @@ class ProtocolRunner(QObject):
                     # stimulus *should* have ended, in order to avoid
                     # drifting:
                     self.past_stimuli_elapsed += datetime.timedelta(
-                        seconds=float(self.current_stimulus.duration))
+                        seconds=float(self.current_stimulus.duration)
+                    )
                     self.i_current_stimulus += 1
                     self.current_stimulus = self.stimuli[self.i_current_stimulus]
                     self.current_stimulus.start()
@@ -257,6 +260,13 @@ class ProtocolRunner(QObject):
         """
         if not self.completed:  # if protocol was interrupted, update log anyway
             self.update_log()
+            self.experiment.logger.info(
+                "{} protocol interrupted.".format(self.protocol.name)
+            )
+        else:
+            self.experiment.logger.info(
+                "{} protocol finished.".format(self.protocol.name)
+            )
 
         if self.running:
             self.running = False
@@ -275,11 +285,15 @@ class ProtocolRunner(QObject):
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
         try:
-            new_dict = dict(current_stim_dict,
-                            t_start=(current_stim_dict['real_time_start'] -
-                                     self.t_start).total_seconds(),
-                            t_stop=(current_stim_dict['real_time_stop'] -
-                                    self.t_start).total_seconds())
+            new_dict = dict(
+                current_stim_dict,
+                t_start=(
+                    current_stim_dict["real_time_start"] - self.t_start
+                ).total_seconds(),
+                t_stop=(
+                    current_stim_dict["real_time_stop"] - self.t_start
+                ).total_seconds(),
+            )
         except TypeError:  # if time is None stimulus was not run
             new_dict = dict()
 
@@ -287,8 +301,9 @@ class ProtocolRunner(QObject):
 
     def update_dynamic_log(self):
         """Update a dynamic log. Called only if one is present."""
-        self.dynamic_log.update_list((self.t, ) +
-                self.current_stimulus.get_dynamic_state())
+        self.dynamic_log.update_list(
+            (self.t,) + self.current_stimulus.get_dynamic_state()
+        )
 
     def get_duration(self):
         """Get total duration of the protocol in sec, calculated from stimuli
@@ -308,9 +323,9 @@ class ProtocolRunner(QObject):
     def print(self):
         """Print protocol sequence.
         """
-        string = ''
+        string = ""
         for stim in self.stimuli:
-            string += '-' + stim.name
+            string += "-" + stim.name
 
         print(string)
 
@@ -357,22 +372,19 @@ class Protocol(HasPyQtGraphParams):
 
     """
 
-    name = ''
+    name = ""
     """Name of the protocol."""
 
     def __init__(self):
         """
         Add standard parameters common to all kind of protocols.
         """
-        super().__init__(name='stimulus_protocol_params')
+        super().__init__(name="stimulus_protocol_params")
 
         for child in self.params.children():
             self.params.removeChild(child)
 
-        self.add_params(name=self.name,
-                        n_repeats=1,
-                        pre_pause=0.,
-                        post_pause=0.)
+        self.add_params(name=self.name, n_repeats=1, pre_pause=0., post_pause=0.)
 
     def _get_stimulus_list(self):
         """Generate protocol from specified parameters. Called by the
@@ -392,14 +404,14 @@ class Protocol(HasPyQtGraphParams):
         """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
-        if self.params['pre_pause'] > 0:
-            stimuli.append(Pause(duration=self.params['pre_pause']))
+        if self.params["pre_pause"] > 0:
+            stimuli.append(Pause(duration=self.params["pre_pause"]))
 
-        for i in range(max(self.params['n_repeats'], 1)):
+        for i in range(max(self.params["n_repeats"], 1)):
             stimuli.extend(deepcopy(main_stimuli))
 
-        if self.params['post_pause'] > 0:
-            stimuli.append(Pause(duration=self.params['post_pause']))
+        if self.params["post_pause"] > 0:
+            stimuli.append(Pause(duration=self.params["post_pause"]))
 
         return stimuli
 

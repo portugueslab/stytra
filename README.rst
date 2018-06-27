@@ -1,8 +1,18 @@
 ======
 Stytra
 ======
+
+.. image:: https://readthedocs.org/projects/stytra/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://stytra.readthedocs.io/en/latest/?badge=latest
+
 A modular package to control stimulation and track behaviour in zebrafish experiments.
 ---------------
+
+.. image:: stytra/icons/256.png?raw=true
+    :scale: 50%
+    :alt: Logo
 
 *screenshot goes here*
 
@@ -29,9 +39,14 @@ functions. If you don't have it installed, open the Anaconda prompt and type::
 Once you have that, download stytra in a directory and install it via pip by::
 
     pip install path_to_stytra/stytra
+    
+To test the installation, you can try to run an example experiment from the prompt with::
+    
+    python -m stytra.demos.looming_experiment
 
 
 .. note::
-    PyQt5 is not installed automatically as a dependency because it is not recognized if
-    already installed by Anaconda. If you are not using Anaconda, make sure you have it
-    installed and updated before installing stytra, with "pip install pyqt5"
+    PyQt5 is not listed as an explicit requirement because it should
+    come with
+    the Anaconda package. If you are not using Anaconda, make sure you have it
+    installed and updated before installing stytra.

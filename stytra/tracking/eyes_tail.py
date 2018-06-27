@@ -9,10 +9,18 @@ from stytra.tracking.tail import _tail_trace_core_ls
 # two parts
 
 
-def trace_tail_eyes(im, wnd_pos=(0, 0), wnd_dim=(10, 10), threshold=65,
-                    tail_start=(0, 0), n_segments=7,
-                    tail_length=(1, 1), filter_size=0,
-                    color_invert=False, image_scale=1):
+def trace_tail_eyes(
+    im,
+    wnd_pos=(0, 0),
+    wnd_dim=(10, 10),
+    threshold=65,
+    tail_start=(0, 0),
+    n_segments=7,
+    tail_length=(1, 1),
+    filter_size=0,
+    color_invert=False,
+    image_scale=1,
+):
     """Tail tracing based on min (or max) detection on arches. Wraps
     _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
     smoothing, 300 us with smoothing.
@@ -52,14 +60,19 @@ def trace_tail_eyes(im, wnd_pos=(0, 0), wnd_dim=(10, 10), threshold=65,
 
     # Image preprocessing. Resize if required:
     if image_scale != 1:
-        im = cv2.resize(im, None, fx=image_scale, fy=image_scale,
-                        interpolation=cv2.INTER_AREA)
+        im = cv2.resize(
+            im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
+        )
 
     PAD = 0
 
-    cropped = _pad(im[wnd_pos[0]:wnd_pos[0] + wnd_dim[0],
-                   wnd_pos[1]:wnd_pos[1] + wnd_dim[1]].copy(),
-                   padding=PAD, val=255)
+    cropped = _pad(
+        im[
+            wnd_pos[0] : wnd_pos[0] + wnd_dim[0], wnd_pos[1] : wnd_pos[1] + wnd_dim[1]
+        ].copy(),
+        padding=PAD,
+        val=255,
+    )
 
     # Filter if required:
     if filter_size > 0:
@@ -76,18 +89,17 @@ def trace_tail_eyes(im, wnd_pos=(0, 0), wnd_dim=(10, 10), threshold=65,
     start_y *= image_scale
 
     # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(im, start_x, start_y, disp_x, disp_y,
-                                     n_segments, length_tail, color_invert)
+    angle_list = _tail_trace_core_ls(
+        im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, color_invert
+    )
 
     thresholded = (cropped < threshold).astype(np.uint8)
 
     # try:
     e = _fit_ellipse(thresholded)
     if e is False:
-        print("I don't find eyes here...")
         e = (np.nan,) * 10
     else:
-        e = e[0][0] + e[0][1] + (e[0][2],) + \
-            e[1][0] + e[1][1] + (e[1][2],)
+        e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
 
     return np.concatenate([angle_list, np.array(e)])

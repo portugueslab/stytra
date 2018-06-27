@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 import deepdish.io as dio
 import cv2
 
+
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     """
 
@@ -27,11 +28,11 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     width_kernel_x = size[0]
     width_kernel_y = size[1]
     kernel_gaussian_x = np.exp(
-        - (np.arange(
-            width_kernel_x) - width_kernel_x / 2) ** 2 / kernel_std_x ** 2)
+        -(np.arange(width_kernel_x) - width_kernel_x / 2) ** 2 / kernel_std_x ** 2
+    )
     kernel_gaussian_y = np.exp(
-        - (np.arange(
-            width_kernel_y) - width_kernel_y / 2) ** 2 / kernel_std_y ** 2)
+        -(np.arange(width_kernel_y) - width_kernel_y / 2) ** 2 / kernel_std_y ** 2
+    )
 
     kernel_2D = kernel_gaussian_x[None, :] * kernel_gaussian_y[:, None]
 
@@ -46,7 +47,7 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 def existing_file_background(filepath):
     """ Returns a numpy array from an image stored at filepath
     """
-    if filepath.endswith('.h5'):
+    if filepath.endswith(".h5"):
         return dio.load(filepath)
     else:
         # If using OpenCV, we have to get RGB, not BGR
@@ -84,7 +85,7 @@ def poisson_disk_background(size, distance, radius):
     # then put them on a 2x size image, so that a seamless background can
     # be created:
 
-    im = Image.new('L', (imh * 2, imw * 2))
+    im = Image.new("L", (imh * 2, imw * 2))
 
     dr = ImageDraw.Draw(im)
 
@@ -96,16 +97,17 @@ def poisson_disk_background(size, distance, radius):
                 points = points0 + np.array([imh * i, imw * j])
             else:
                 points = np.concatenate(
-                    [points, points0 + np.array([imh * i, imw * j])])
+                    [points, points0 + np.array([imh * i, imw * j])]
+                )
     for point in points:
-        dr.ellipse([tuple(point - radius),
-                    tuple(point + radius)], fill=255)
+        dr.ellipse([tuple(point - radius), tuple(point + radius)], fill=255)
 
-    return np.array(im)[imh // 2:3 * imh // 2, imw // 2:3 * imw // 2]
+    return np.array(im)[imh // 2 : 3 * imh // 2, imw // 2 : 3 * imw // 2]
 
 
-def gratings(mm_px=1, spatial_period=10, orientation='horizontal',
-             shape='square', ratio=0.5):
+def gratings(
+    mm_px=1, spatial_period=10, orientation="horizontal", shape="square", ratio=0.5
+):
     """Function for generating grids (assume usage of cv2.BORDER_WRAP for display)
 
     Parameters
@@ -126,21 +128,21 @@ def gratings(mm_px=1, spatial_period=10, orientation='horizontal',
 
     """
 
-    grating_dim = round(spatial_period/(mm_px))  # calculate dimensions
+    grating_dim = round(spatial_period / (mm_px))  # calculate dimensions
 
     # With cv2.BORDER_WRAP 1 line will be enough:
     template_array = np.zeros((grating_dim, 1), dtype=np.uint8)
 
     # Set pixels values according to the selected shape:
-    if shape == 'square':  # square wave
-        template_array[:round(ratio*grating_dim), :] = 255
+    if shape == "square":  # square wave
+        template_array[: round(ratio * grating_dim), :] = 255
 
-    elif shape == 'sinusoidal':  # sinusoidal wave
+    elif shape == "sinusoidal":  # sinusoidal wave
         v = (np.sin(np.linspace(0, 2 * np.pi, grating_dim)) + 1) * 255 / 2
-        template_array[:, 0] = v.astype('uint8')
+        template_array[:, 0] = v.astype("uint8")
 
     # Transpose for having vertical gratings:
-    if orientation == 'vertical':
+    if orientation == "vertical":
         template_array = template_array.T
 
     return template_array
@@ -163,19 +165,20 @@ class Grid:
     -------
 
     """
+
     def __init__(self, r, *size):
         self.r = r
 
         self.size = size
         self.dim = len(size)
 
-        self.cell_size = r/(sqrt(self.dim))
+        self.cell_size = r / (sqrt(self.dim))
 
-        self.widths = [int(size[k]/self.cell_size) + 1 for k in range(self.dim)]
+        self.widths = [int(size[k] / self.cell_size) + 1 for k in range(self.dim)]
 
         nums = product(*(range(self.widths[k]) for k in range(self.dim)))
 
-        self.cells = {num:-1 for num in nums}
+        self.cells = {num: -1 for num in nums}
         self.samples = []
         self.active = []
 
@@ -212,20 +215,19 @@ class Grid:
 
         """
 
-        rad = random.triangular(self.r, 2*self.r, .3*(2*self.r - self.r))
-             # was random.uniform(self.r, 2*self.r) but I think
-             # this may be closer to the correct distribution
-             # but easier to build
+        rad = random.triangular(self.r, 2 * self.r, .3 * (2 * self.r - self.r))
+        # was random.uniform(self.r, 2*self.r) but I think
+        # this may be closer to the correct distribution
+        # but easier to build
 
-        angs = [random.uniform(0, 2*pi)]
+        angs = [random.uniform(0, 2 * pi)]
 
         if self.dim > 2:
-            angs.extend(random.uniform(-pi/2, pi/2) for _ in range(self.dim-2))
+            angs.extend(random.uniform(-pi / 2, pi / 2) for _ in range(self.dim - 2))
 
-        angs[0] = 2*angs[0]
+        angs[0] = 2 * angs[0]
 
         return self.convert(point, rad, angs)
-
 
     def poisson(self, seed, k=30):
         """generates a set of poisson disc samples
@@ -255,8 +257,8 @@ class Grid:
 
             if new_point:
                 self.samples.append(tuple(new_point))
-                self.active.append(len(self.samples)-1)
-                self.update(new_point, len(self.samples)-1)
+                self.active.append(len(self.samples) - 1)
+                self.update(new_point, len(self.samples) - 1)
             else:
                 self.active.remove(idx)
 
@@ -308,18 +310,16 @@ class Grid:
 
         """
         for i in range(self.dim):
-            if not (0 < new_point[i] < self.size[i] or
-               self.cellify(new_point) == -1):
+            if not (0 < new_point[i] < self.size[i] or self.cellify(new_point) == -1):
                 return False
 
         for item in self.neighbors(self.cellify(point)):
-            if self.distance(self.samples[item], new_point) < self.r**2:
+            if self.distance(self.samples[item], new_point) < self.r ** 2:
                 return False
 
         for item in self.neighbors(self.cellify(new_point)):
-            if self.distance(self.samples[item], new_point) < self.r**2:
+            if self.distance(self.samples[item], new_point) < self.r ** 2:
                 return False
-
 
         return True
 
@@ -342,9 +342,11 @@ class Grid:
         -------
 
         """
-        new_point = [point[0] + rad*cos(angs[0]), point[1] + rad*sin(angs[0])]
+        new_point = [point[0] + rad * cos(angs[0]), point[1] + rad * sin(angs[0])]
         if len(angs) > 1:
-            new_point.extend(point[i+1] + rad*sin(angs[i]) for i in range(1,len(angs)))
+            new_point.extend(
+                point[i + 1] + rad * sin(angs[i]) for i in range(1, len(angs))
+            )
         return new_point
 
     def cellify(self, point):
@@ -359,7 +361,7 @@ class Grid:
         -------
 
         """
-        return tuple(point[i]//self.cell_size for i in range(self.dim))
+        return tuple(point[i] // self.cell_size for i in range(self.dim))
 
     def distance(self, tup1, tup2):
         """returns squared distance between two points
@@ -375,9 +377,10 @@ class Grid:
         -------
 
         """
-        return sum(min(abs(tup1[k] - tup2[k]),
-                       self.size[k]-abs(tup1[k] - tup2[k]))**2
-                   for k in range(self.dim))
+        return sum(
+            min(abs(tup1[k] - tup2[k]), self.size[k] - abs(tup1[k] - tup2[k])) ** 2
+            for k in range(self.dim)
+        )
 
     def cell_distance(self, tup1, tup2):
         """returns true if the L1 distance is less than 2
@@ -394,8 +397,13 @@ class Grid:
         -------
 
         """
-        return sum(min(abs(tup1[k] - tup2[k]),
-                        self.widths[k] - abs(tup1[k] - tup2[k])-1) for k in range(self.dim)) <= 2
+        return (
+            sum(
+                min(abs(tup1[k] - tup2[k]), self.widths[k] - abs(tup1[k] - tup2[k]) - 1)
+                for k in range(self.dim)
+            )
+            <= 2
+        )
 
     def neighbors(self, cell):
         """finds all occupied cells within
@@ -410,9 +418,11 @@ class Grid:
         -------
 
         """
-        return (self.cells[tup] for tup in self.cells
-                if self.cells[tup] != -1 and
-                self.cell_distance(cell, tup))
+        return (
+            self.cells[tup]
+            for tup in self.cells
+            if self.cells[tup] != -1 and self.cell_distance(cell, tup)
+        )
 
     def update(self, point, index):
         """updates the grid with the new point
@@ -434,6 +444,6 @@ class Grid:
         return self.cells.__str__()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     bg = 255 - poisson_disk_background((640, 640), 12, 2)
-    dio.save('poisson_dense.h5', bg)
+    dio.save("poisson_dense.h5", bg)

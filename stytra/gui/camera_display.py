@@ -4,8 +4,14 @@ from queue import Empty
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import QRectF, QPointF, QTimer
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QHBoxLayout, \
-    QCheckBox, QLabel
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QHBoxLayout,
+    QCheckBox,
+    QLabel,
+)
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
@@ -41,6 +47,7 @@ class CameraViewWidget(QWidget):
     -------
 
     """
+
     def __init__(self, experiment=None, camera=None):
         """
         :param experiment: experiment to which this belongs
@@ -48,7 +55,6 @@ class CameraViewWidget(QWidget):
         """
 
         super().__init__()
-
 
         self.experiment = experiment
         if experiment is not None:
@@ -66,8 +72,9 @@ class CameraViewWidget(QWidget):
 
         # Display area for showing the camera image:
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
-        self.display_area.setRange(QRectF(0, 0, 640, 640), update=True,
-                                   disableAutoRange=True)
+        self.display_area.setRange(
+            QRectF(0, 0, 640, 640), update=True, disableAutoRange=True
+        )
         # Image to which the frame will be set, initially black:
         self.image_item = pg.ImageItem()
         self.image_item.setImage(np.zeros((640, 480), dtype=np.uint8))
@@ -76,7 +83,7 @@ class CameraViewWidget(QWidget):
         self.camera_display_widget.addItem(self.display_area)
 
         # Queue of frames coming from the camera
-        if hasattr(experiment, 'frame_dispatcher'):
+        if hasattr(experiment, "frame_dispatcher"):
             self.frame_queue = self.experiment.frame_dispatcher.gui_queue
         else:
             self.frame_queue = self.camera.frame_queue
@@ -98,11 +105,11 @@ class CameraViewWidget(QWidget):
 
         self.layout_control = QHBoxLayout()
         if self.control_queue is not None:
-            self.params_button = QPushButton('Camera params')
+            self.params_button = QPushButton("Camera params")
             self.params_button.clicked.connect(self.show_params_gui)
             self.layout_control.addWidget(self.params_button)
 
-        self.captureButton = QPushButton('Capture frame')
+        self.captureButton = QPushButton("Capture frame")
         self.captureButton.clicked.connect(self.save_image)
         self.layout_control.addWidget(self.captureButton)
 
@@ -149,8 +156,7 @@ class CameraViewWidget(QWidget):
                 # In this way, the frame displayed is actually the most
                 # recent one added to the queue, as a queue is FILO:
                 if first:
-                    time, self.current_image = self.frame_queue.get(
-                        timeout=0.0001)
+                    time, self.current_image = self.frame_queue.get(timeout=0.0001)
                     first = False
                 else:
                     # Else, get to free the queue:
@@ -173,7 +179,7 @@ class CameraViewWidget(QWidget):
         """ """
         self.camera_params_tree.setParameters(self.control_params.params)
         self.camera_params_tree.show()
-        self.camera_params_tree.setWindowTitle('Camera parameters')
+        self.camera_params_tree.setWindowTitle("Camera parameters")
         self.camera_params_tree.resize(450, 600)
 
 
@@ -226,7 +232,6 @@ class CameraSelection(CameraViewWidget):
         self.display_area.addItem(roi)
         roi.sigRegionChangeFinished.connect(self.set_pos_from_roi)
 
-
     def set_pos_from_tree(self):
         """Called when ROI position values are changed in the ParameterTree.
         Change the position of the displayed ROI.
@@ -255,6 +260,7 @@ class CameraSelection(CameraViewWidget):
 
 
 class CameraEmbeddedTrackingSelection(CameraSelection):
+
     def __init__(self, tail=False, eyes=False, **kwargs):
         """ """
         self.eyes = eyes
@@ -263,17 +269,21 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Draw ROI for tail selection:
         if tail:
-            self.roi_tail = pg.LineSegmentROI((self.track_params['tail_start'],
-                                      (self.track_params['tail_start'][0] +
-                                       self.track_params['tail_length'][0],
-                                       self.track_params['tail_start'][1] +
-                                       self.track_params['tail_length'][1])),
-                                     pen=dict(color=(230, 40, 5),
-                                              width=3))
+            self.roi_tail = pg.LineSegmentROI(
+                (
+                    self.track_params["tail_start"],
+                    (
+                        self.track_params["tail_start"][0]
+                        + self.track_params["tail_length"][0],
+                        self.track_params["tail_start"][1]
+                        + self.track_params["tail_length"][1],
+                    ),
+                ),
+                pen=dict(color=(40, 5, 200), width=3),
+            )
 
             # Prepare curve for plotting tracked tail position:
-            self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
-                                                        width=3))
+            self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
             self.display_area.addItem(self.curve_tail)
 
             self.initialise_roi(self.roi_tail)
@@ -285,25 +295,28 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         self.pre_th = [0, 0]
         if eyes:
-            self.roi_eyes = pg.ROI(pos=self.track_params['wnd_pos'],
-                          size=self.track_params['wnd_dim'],
-                          pen=dict(color=(230, 40, 5),
-                                   width=3))
+            self.roi_eyes = pg.ROI(
+                pos=self.track_params["wnd_pos"],
+                size=self.track_params["wnd_dim"],
+                pen=dict(color=(5, 40, 200), width=3),
+            )
 
             self.roi_eyes.addScaleHandle([0, 0], [1, 1])
             self.roi_eyes.addScaleHandle([1, 1], [0, 0])
 
-            self.curves_eyes = [pg.EllipseROI(pos=(0, 0), size=(10, 10),
-                                              movable=False,
-                                              pen=dict(color=k, width=3))
-                                for k in [(5, 40, 230), (40, 230, 5)]]
+            self.curves_eyes = [
+                pg.EllipseROI(
+                    pos=(0, 0), size=(10, 10), movable=False, pen=dict(color=k, width=3)
+                )
+                for k in [(5, 40, 230), (40, 230, 5)]
+            ]
 
             for c in self.curves_eyes:
                 self.display_area.addItem(c)
                 [c.removeHandle(h) for h in c.getHandles()]
 
             self.tgl_threshold_view = QCheckBox()
-            self.lbl_threshold_view = QLabel('View thresholded image')
+            self.lbl_threshold_view = QLabel("View thresholded image")
             self.layout_control.addWidget(self.tgl_threshold_view)
             self.layout_control.addWidget(self.lbl_threshold_view)
 
@@ -316,30 +329,36 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         """Go to parent for definition."""
         if self.tail:
             p1, p2 = self.roi_tail.getHandles()
-            p1.setPos(QPointF(*self.track_params['tail_start']))
-            p2.setPos(QPointF(self.track_params['tail_start'][0] +
-                              self.track_params['tail_length'][0],
-                              self.track_params['tail_start'][1] +
-                              self.track_params['tail_length'][1]))
+            p1.setPos(QPointF(*self.track_params["tail_start"]))
+            p2.setPos(
+                QPointF(
+                    self.track_params["tail_start"][0]
+                    + self.track_params["tail_length"][0],
+                    self.track_params["tail_start"][1]
+                    + self.track_params["tail_length"][1],
+                )
+            )
         if self.eyes:
-            self.roi_eyes.setPos(self.track_params['wnd_pos'], finish=False)
-            self.roi_eyes.setSize(self.track_params['wnd_dim'])
+            self.roi_eyes.setPos(self.track_params["wnd_pos"], finish=False)
+            self.roi_eyes.setSize(self.track_params["wnd_dim"])
 
     def set_pos_from_roi(self):
         """Go to parent for definition."""
         if self.tail:
             p1, p2 = self.roi_tail.getHandles()
             with self.track_params.treeChangeBlocker():
-                self.track_params.param('tail_start').setValue((
-                    p1.x(), p1.y()))
-                self.track_params.param('tail_length').setValue((
-                    p2.x() - p1.x(), p2.y() - p1.y()))
+                self.track_params.param("tail_start").setValue((p1.x(), p1.y()))
+                self.track_params.param("tail_length").setValue(
+                    (p2.x() - p1.x(), p2.y() - p1.y())
+                )
         if self.eyes:
             with self.track_params.treeChangeBlocker():
-                self.track_params.param('wnd_dim').setValue(tuple(
-                    [int(p) for p in self.roi_eyes.size()]))
-                self.track_params.param('wnd_pos').setValue(tuple(
-                    [int(p) for p in self.roi_eyes.pos()]))
+                self.track_params.param("wnd_dim").setValue(
+                    tuple([int(p) for p in self.roi_eyes.size()])
+                )
+                self.track_params.param("wnd_pos").setValue(
+                    tuple([int(p) for p in self.roi_eyes.pos()])
+                )
 
     def update_image(self):
         """Go to parent for definition."""
@@ -354,15 +373,15 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 # Retrieve tail angles from tail (if there are eyes, last 5*2
                 # points describe the ellipses):
                 if self.eyes:
-                    angles = retrieved_data[1:-int(self.eyes)*10]
+                    angles = retrieved_data[1 : -int(self.eyes) * 10]
                 else:
                     angles = retrieved_data[1:]
 
                 # Get tail position and length from the parameters:
-                start_x = self.track_params['tail_start'][1]
-                start_y = self.track_params['tail_start'][0]
-                tail_len_x = self.track_params['tail_length'][1]
-                tail_len_y = self.track_params['tail_length'][0]
+                start_x = self.track_params["tail_start"][1]
+                start_y = self.track_params["tail_start"][0]
+                tail_len_x = self.track_params["tail_length"][1]
+                tail_len_y = self.track_params["tail_length"][0]
                 tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
                 # Get segment length:
@@ -371,8 +390,10 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 # Calculate tail points from angles and position:
                 for angle in angles:
-                    points.append(points[-1] + tail_segment_length * np.array(
-                        [np.sin(angle), np.cos(angle)]))
+                    points.append(
+                        points[-1]
+                        + tail_segment_length * np.array([np.sin(angle), np.cos(angle)])
+                    )
                 points = np.array(points)
                 self.curve_tail.setData(x=points[:, 1], y=points[:, 0])
 
@@ -382,17 +403,20 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 # In this widget a toggle button allows the user to see the
                 # thresholded image used by the ellipse fitting function:
                 if self.tgl_threshold_view.isChecked():
-                    im = (im < self.track_params['threshold']).astype(np.uint8)
+                    im = (im < self.track_params["threshold"]).astype(np.uint8)
 
                 if len(self.experiment.data_acc.stored_data) > 1:
+                    self.roi_eyes.setPen(dict(color=(5, 40, 200),
+                                              width=3))
                     e = retrieved_data[-10:]
                     for i, o in enumerate([0, 5]):
                         if e[0] == e[0]:
-                            for ell, col in zip(self.curves_eyes, [(5, 40, 230),
-                                                                   (40, 230, 5)]):
+                            for ell, col in zip(
+                                self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
+                            ):
                                 ell.setPen(col, width=3)
 
-                            pos = self.track_params['wnd_pos']
+                            pos = self.track_params["wnd_pos"]
 
                             # This long annoying part take care of the calculation
                             # of rotation and translation for the ROI starting from
@@ -400,7 +424,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             # Some geometry is required because pyqtgraph rotation
                             # happens around lower corner and not
                             # around center.
-                            th = - e[o + 4]  # eye angle from tracked ellipse
+                            th = -e[o + 4]  # eye angle from tracked ellipse
                             c_x = int(e[o + 2] / 2)  # ellipse center x and y
                             c_y = int(e[o + 3] / 2)
 
@@ -416,17 +440,18 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                                 # Coords of the center after rotation around left lower
                                 # corner, to be corrected when setting position:
-                                center_after = (np.sin(c_th + th_conv) * c_r,
-                                                np.cos(c_th + th_conv) * c_r)
+                                center_after = (
+                                    np.sin(c_th + th_conv) * c_r,
+                                    np.cos(c_th + th_conv) * c_r,
+                                )
 
                                 # Calculate pos for eye ROIs. This require correction
                                 # for the box position, for the ellipse dimensions and
                                 # for the rotation around corner instead of center.
                                 self.curves_eyes[i].setPos(
-                                    e[o + 1] + pos[0] - c_x + (
-                                    c_x - center_after[1]),
-                                    e[o + 0] + pos[1] - c_y + (
-                                    c_y - center_after[0]))
+                                    e[o + 1] + pos[0] - c_x + (c_x - center_after[1]),
+                                    e[o + 0] + pos[1] - c_y + (c_y - center_after[0]),
+                                )
                                 self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
 
                                 self.pre_th[i] = th
@@ -435,13 +460,15 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             # No eyes detected:
                             for ell in self.curves_eyes:
                                 ell.setPen(None)
+                            self.roi_eyes.setPen(dict(color=(230, 40, 5),
+                                                      width=3))
 
                 self.image_item.setImage(im)
 
 
-
 class CameraViewCalib(CameraViewWidget):
     """ """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.points_calib = pg.ScatterPlotItem()
@@ -460,14 +487,19 @@ class CameraViewCalib(CameraViewWidget):
 
         """
         if calibrator.proj_to_cam is not None:
-            camera_points = np.pad(calibrator.points, ((0, 0), (0, 1)),
-                                   mode='constant', constant_values=1) @ calibrator.proj_to_cam.T
+            camera_points = (
+                np.pad(
+                    calibrator.points,
+                    ((0, 0), (0, 1)),
+                    mode="constant",
+                    constant_values=1,
+                )
+                @ calibrator.proj_to_cam.T
+            )
 
             points_dicts = []
             for point in camera_points:
                 xn, yn = point[::-1]
-                points_dicts.append(dict(x=xn, y=yn, size=8,
-                                         brush=(210, 10, 10)))
+                points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)
-

@@ -1,3 +1,7 @@
+"""
+    Author: Andreas Kist
+"""
+
 import numpy as np
 from skimage.filters import threshold_local, threshold_otsu
 import cv2
@@ -19,10 +23,12 @@ def _pad(im, padding=0, val=0):
     -------
 
     """
-    padded = np.lib.pad(im,
-                        ((padding, padding), (padding, padding)),
-                        mode='constant',
-                        constant_values=((val, val), (val, val)))
+    padded = np.lib.pad(
+        im,
+        ((padding, padding), (padding, padding)),
+        mode="constant",
+        constant_values=((val, val), (val, val)),
+    )
     return padded
 
 
@@ -64,7 +70,9 @@ def _fit_ellipse(thresholded_image):
         When eyes were found, the two ellipses, otherwise False
 
     """
-    _, contours, hierarchy = cv2.findContours(thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(
+        thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+    )
 
     if len(contours) >= 2:
 
@@ -90,8 +98,7 @@ def _fit_ellipse(thresholded_image):
 
 # TODO: function for scaling/filtering/invert should be unique for both
 # tail and eye tracking
-def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
-               color_invert):
+def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size, color_invert):
     """
 
     Parameters
@@ -121,19 +128,21 @@ def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size,
     """
     PAD = 0
 
-    cropped = _pad(im[wnd_pos[0]:wnd_pos[0] + wnd_dim[0],
-                   wnd_pos[1]:wnd_pos[1] + wnd_dim[1]].copy(),
-                   padding=PAD, val=255)
+    cropped = _pad(
+        im[
+            wnd_pos[0] : wnd_pos[0] + wnd_dim[0], wnd_pos[1] : wnd_pos[1] + wnd_dim[1]
+        ].copy(),
+        padding=PAD,
+        val=255,
+    )
 
     thresholded = (cropped < threshold).astype(np.uint8)
 
     # try:
     e = _fit_ellipse(thresholded)
     if e is False:
-        print("I don't find eyes here...")
-        e = (np.nan,)*10
+        e = (np.nan,) * 10
     else:
-        e = e[0][0] + e[0][1] + (e[0][2],) + \
-            e[1][0] + e[1][1] + (e[1][2],)
+        e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
 
     return np.array(e)

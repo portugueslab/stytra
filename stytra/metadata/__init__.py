@@ -40,35 +40,37 @@ class GuiMetadata(HasPyQtGraphParams):
         """
         self.protocol_params_tree = ParameterTree(showHeader=False)
         self.protocol_params_tree.setParameters(self.params)
-        self.protocol_params_tree.setWindowTitle('Metadata')
-        self.protocol_params_tree.resize(450,
-                                         600)  # TODO figure out this window
+        self.protocol_params_tree.setWindowTitle("Metadata")
+        self.protocol_params_tree.resize(450, 600)  # TODO figure out this window
         return self.protocol_params_tree
 
 
 class GeneralMetadata(GuiMetadata):
     """General metadata for the experiment.
     """
+
     def __init__(self):
         super().__init__()
-        self.params.setName('general_metadata')
-        self.add_params(session_id=dict(type='int', value=0),
-                        experimenter_name=dict(type='list', value='',
-                                               values=['']),
-                        setup_name=dict(type='list', value='',
-                                        values=['']))
+        self.params.setName("general_metadata")
+        self.add_params(
+            session_id=dict(type="int", value=0),
+            experimenter_name=dict(type="list", value="", values=[""]),
+            setup_name=dict(type="list", value="", values=[""]),
+        )
 
 
 class AnimalMetadata(GuiMetadata):
     """Metadata about the animal.
      """
+
     def __init__(self):
         super().__init__()
-        self.params.setName('animal_metadata')
-        self.add_params(id=dict(type='int', value=0),
-                        age=dict(type='int', value=7, limits=(3, 21),
-                                 tip='Animal age', suffix='dpf'),
-                        comments=dict(type='str', value=''),
-                        genotype=dict(type='list',
-                                      values=[''],
-                                      value=''))
+        self.params.setName("animal_metadata")
+        self.add_params(
+            id=dict(type="int", value=0),
+            age=dict(
+                type="int", value=7, limits=(3, 21), tip="Animal age", suffix="dpf"
+            ),
+            comments=dict(type="str", value=""),
+            genotype=dict(type="list", values=[""], value=""),
+        )

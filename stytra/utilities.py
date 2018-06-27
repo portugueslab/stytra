@@ -13,6 +13,7 @@ from pyqtgraph.parametertree import Parameter
 
 class Database:
     """ """
+
     def __init__(self):
         pass
 
@@ -42,6 +43,7 @@ class FrameProcessor(Process):
     -------
 
     """
+
     def __init__(self, n_fps_frames=10, print_framerate=False):
         """ Initialize the class.
         :param n_fps_frames: number of frames after which framerate is updated.
@@ -67,12 +69,14 @@ class FrameProcessor(Process):
             self.current_time = datetime.now()
             if self.previous_time_fps is not None:
                 try:
-                    self.current_framerate = self.n_fps_frames / (
-                        self.current_time - self.previous_time_fps).total_seconds()
+                    self.current_framerate = (
+                        self.n_fps_frames
+                        / (self.current_time - self.previous_time_fps).total_seconds()
+                    )
                 except ZeroDivisionError:
                     self.current_framerate = 0
                 if self.print_framerate:
-                    print('FPS: ' + str(self.current_framerate))
+                    print("FPS: " + str(self.current_framerate))
 
             self.previous_time_fps = self.current_time
         # Reset i after every n frames
@@ -104,10 +108,12 @@ def prepare_json(it, **kwargs):
             new_dict[key] = prepare_json(value, **kwargs)
         return new_dict
     if isinstance(it, tuple):
-        tuple_out = tuple([prepare_json(el, **kwargs)
-                           for el in it])
-        if len(tuple_out) == 2 and kwargs.get('paramstree', False) and \
-                isinstance(tuple_out[1], dict):
+        tuple_out = tuple([prepare_json(el, **kwargs) for el in it])
+        if (
+            len(tuple_out) == 2
+            and kwargs.get("paramstree", False)
+            and isinstance(tuple_out[1], dict)
+        ):
             if len(tuple_out[1]) == 0:
                 return tuple_out[0]
             else:
@@ -128,8 +134,9 @@ def prepare_json(it, **kwargs):
         if kwargs.get("eliminate_df", False):
             return 0
         else:
-            return it.to_dict('list')
+            return it.to_dict("list")
     return 0
+
 
 def get_default_args(func):
     """Find default arguments of functions
@@ -166,7 +173,7 @@ def strip_values(it):
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
         for key, value in it.items():
-            if not key == 'value':
+            if not key == "value":
                 new_dict[key] = strip_values(value)
         return new_dict
     else:
@@ -187,7 +194,7 @@ class HasPyQtGraphParams(object):
     -------
 
     """
-    _params = Parameter.create(name='global_params', type='group')
+    _params = Parameter.create(name="global_params", type="group")
 
     def __init__(self, name=None):
         """ Create the params of the instance and add it to the global _params
@@ -200,8 +207,7 @@ class HasPyQtGraphParams(object):
         if name is None:
             name = self.__class__.__name__
 
-        self.params = Parameter.create(name=name,
-                                       type='group')
+        self.params = Parameter.create(name=name, type="group")
 
         existing_children = self._params.children()
 
@@ -253,15 +259,16 @@ class HasPyQtGraphParams(object):
 
         """
         if isinstance(value, dict):  # Allows passing dictionaries:
-            entry_dict = {'name': name}  # add name
+            entry_dict = {"name": name}  # add name
             entry_dict.update(value)
             self.params.addChild(entry_dict)
         else:
             if get_var_type:  # if specification of type is required, infer it
-                self.params.addChild({'name': name, 'value': value,
-                                      'type': type(value).__name__})
+                self.params.addChild(
+                    {"name": name, "value": value, "type": type(value).__name__}
+                )
             else:
-                self.params.addChild({'name': name, 'value': value})
+                self.params.addChild({"name": name, "value": value})
 
     def get_clean_values(self):
         """ """
@@ -285,8 +292,12 @@ def get_classes_from_module(input_module, parent_class):
 
     """
     classes = inspect.getmembers(input_module, inspect.isclass)
-    ls_classes = OrderedDict({c[1].name: c[1] for c in classes
-                              if issubclass(c[1], parent_class)
-                              and not c[1] is parent_class})
+    ls_classes = OrderedDict(
+        {
+            c[1].name: c[1]
+            for c in classes
+            if issubclass(c[1], parent_class) and not c[1] is parent_class
+        }
+    )
 
     return ls_classes
