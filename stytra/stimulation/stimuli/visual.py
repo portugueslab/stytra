@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
 
-from stytra.stimulation.stimuli import Stimulus, DynamicStimulus
+from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
@@ -397,7 +397,11 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         )
 
 
-class SeamlessWindmillStimulus(BackgroundStimulus):
+class InterpolatedGratingStimulus(SeamlessGratingStimulus, InterpolatedStimulus):
+    pass
+
+
+class WindmillStimulus(BackgroundStimulus):
     """Class for drawing a rotating windmill (radial wedges in alternating colors).
 
     Parameters

@@ -250,7 +250,6 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         self.valueLabels[i_stream][4].setText(
                             "{:7.3f}".format(data_array[-1, i_var])
                         )
-
                         self.curves[i_stream].setData(
                             x=time_array,
                             y=i_stream + ((data_array[:, i_var] - lb) / scale),
@@ -258,6 +257,22 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         i_stream += 1
                 except IndexError:
                     pass
+
+            else:
+                try:
+                    for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
+                        scale = ub - lb
+                        if scale < 0.00001:
+                            scale = 1
+                        self.valueLabels[i_stream][0].setText("")
+                        self.valueLabels[i_stream][1].setText("")
+                        self.valueLabels[i_stream][2].setText("")
+                        self.valueLabels[i_stream][4].setText("")
+                        self.curves[i_stream].setData(x=[], y=[])
+                        i_stream += 1
+                except TypeError:
+                    pass
+
 
             # except IndexError:
             #     pass

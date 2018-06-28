@@ -14,12 +14,6 @@ A modular package to control stimulation and track behaviour in zebrafish experi
     :scale: 50%
     :alt: Logo
 
-.. image:: /stytra.icons.512.png
-    :width: 200px
-    :align: center
-    :height: 100px
-    :alt: alternate text
-
 Stytra is divided into independent modules which can be assembled
 depending on the experimental requirements.
 
@@ -36,13 +30,17 @@ Other Python versions have not been tested.
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
-functions. If you don't have it install, open the Anaconda prompt and type::
+functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv -c conda-forge
 
 Once you have that, download stytra in a directory and install it via pip by::
 
     pip install path_to_stytra/stytra
+    
+To test the installation, you can try to run an example experiment from the prompt with::
+    
+    python -m stytra.demos.looming_experiment
 
 
 .. note::

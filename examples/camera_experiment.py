@@ -29,13 +29,14 @@ if __name__ == "__main__":
     camera_config = dict(video_file=file, rotation=1)
 
     # Reading from a Ximea camera:
-    # camera_config = dict(type="ximea")
+    camera_config = dict(type="ximea")
 
-    tracking_config = dict(embedded=True, tracking_method="eye_threshold")
+    tracking_config = dict(embedded=True, tracking_method="eyes_tail")
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(
         protocols=[FlashProtocol],
         camera_config=camera_config,
         tracking_config=tracking_config,
+        dir_save=r'D:\vilim\stytra\\'
     )

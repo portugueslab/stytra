@@ -273,6 +273,9 @@ class TrackingExperiment(CameraExperiment):
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
 
+            # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
+            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
+
         self.window_main.show()
 
     def send_new_parameters(self):
@@ -314,7 +317,6 @@ class TrackingExperiment(CameraExperiment):
 
         super().end_protocol(*args, **kwargs)
         try:
-            self.estimator.reset()
             self.estimator.log.reset()
         except AttributeError:
             pass

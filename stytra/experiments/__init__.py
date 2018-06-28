@@ -16,12 +16,6 @@ from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.gui.container_windows import SimpleExperimentWindow
 
 
-# class QPlainTextEditLogger(logging.Handler):
-#     def emit(self, record):
-#         msg = self.format(record)
-#         self.widget.textCursor().appendPlainText(msg)
-
-
 class Experiment(QObject):
     """General class that runs an experiment.
 
@@ -184,7 +178,6 @@ class Experiment(QObject):
         """Make experiment GUI, defined in children depending on experiments.
         """
         self.window_main = SimpleExperimentWindow(self)
-        self.logger.addHandler(self.window_main.logger)
         self.window_main.show()
 
     def initialize_metadata(self):

@@ -109,6 +109,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.button_metadata.clicked.connect(self.show_metadata_gui)
 
         self.logger = QPlainTextEditLogger()
+        self.experiment.logger.addHandler(self.logger)
 
         self.setCentralWidget(self.construct_ui())
 
@@ -210,10 +211,10 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        if eyes:
-            time_past = 30
-        else:
-            time_past = 5
+        # if eyes:
+        time_past = 30
+        # else:
+        #     time_past = 5
         self.stream_plot = MultiStreamPlot(time_past=time_past)
 
         self.monitoring_layout.addWidget(self.stream_plot)

@@ -162,7 +162,11 @@ class ProtocolRunner(QObject):
             for stimulus in self.stimuli:
                 stimulus.initialise_external(self.experiment)
 
-            self.dynamic_log = DynamicLog(self.stimuli)  # new stimulus log
+            if self.dynamic_log is None:
+                self.dynamic_log = DynamicLog(self.stimuli)
+            else:
+                self.dynamic_log.update_stimuli(self.stimuli)  # new stimulus log
+
             self.duration = self.get_duration()  # set new duration
 
             self.sig_protocol_updated.emit()

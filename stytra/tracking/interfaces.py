@@ -72,6 +72,7 @@ class TailTrackingMethod(EmbeddedTrackingMethod):
         self.accumulator_headers = ["tail_sum"] + [
             "theta_{:02}".format(i) for i in range(self.params["n_segments"])
         ]
+        self.monitored_headers = ["tail_sum"]
         self.data_log_name = "behaviour_tail_log"
 
 
@@ -169,22 +170,14 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
         for key, value in standard_params_dict.items():
             self.add_one_param(key, value)
 
-        headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
-        ]
-        [
-            headers.extend(
-                [
-                    "pos_x_e{}".format(i),
-                    "pos_y_e{}".format(i),
-                    "dim_x_e{}".format(i),
-                    "dim_y_e{}".format(i),
-                    "th_e{}".format(i),
-                ]
-            )
-            for i in range(2)
-        ]
-        self.monitored_headers = ["tail_sum", "th_e1", "th_e2"]
+        headers = ['tail_sum'] + \
+                   ['theta_{:02}'.format(i)
+                    for i in
+                    range(self.params['n_segments'])]
+        [headers.extend(['pos_x_e{}'.format(i), 'pos_y_e{}'.format(i),
+                         'dim_x_e{}'.format(i), 'dim_y_e{}'.format(i),
+                         'th_e{}'.format(i)]) for i in range(2)]
+        self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_tail_eyes_log"
 

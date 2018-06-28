@@ -193,7 +193,7 @@ class AvtCamera(Camera):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, downsampling=None, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
 
