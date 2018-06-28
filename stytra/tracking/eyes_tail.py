@@ -3,7 +3,7 @@ import numpy as np
 from numba import vectorize, uint8, jit
 
 from stytra.tracking.eyes import _pad, _fit_ellipse
-from stytra.tracking.tail import _tail_trace_core_ls
+from stytra.tracking.tail import _tail_trace_angular_sweep
 
 # TODO it would be better to avoid this function and sequentially apply its
 # two parts
@@ -22,13 +22,19 @@ def trace_tail_eyes(
     image_scale=1,
 ):
     """Tail tracing based on min (or max) detection on arches. Wraps
-    _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
+    _tail_trace_angular_sweep. Speed testing: 20 us for a 514x640 image without
     smoothing, 300 us with smoothing.
 
     Parameters
     ----------
     img :
         input image
+    wnd_pos : tuple
+        position of window for the eyes
+    wnd_dim : tuple
+        shape of window for the eyes
+    threshold :
+        threshold for finding the eyes
     tail_start :
         tail starting point (x, y) (Default value = (0)
     tail_length :
@@ -89,7 +95,7 @@ def trace_tail_eyes(
     start_y *= image_scale
 
     # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(
+    angle_list = _tail_trace_angular_sweep(
         im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, color_invert
     )
 

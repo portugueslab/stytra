@@ -281,8 +281,12 @@ def trace_tail_centroid(
     return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[:]
 
 
+"""
+    Author: Andreas Kist
+"""
+
 @jit(nopython=True)
-def _tail_trace_core_ls(
+def _tail_trace_angular_sweep(
     img, start_x, start_y, disp_x, disp_y, num_points, tail_length, color_invert
 ):
     """Tail tracing based on min (or max) detection on arches. Wrapped by
@@ -379,28 +383,23 @@ def trace_tail_angular_sweep(
     image_scale=1,
 ):
     """Tail tracing based on min (or max) detection on arches. Wraps
-    _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
+    _tail_trace_angular_sweep. Speed testing: 20 us for a 514x640 image without
     smoothing, 300 us with smoothing.
 
     Parameters
     ----------
-    img :
+    im : np.array()
         input image
-    tail_start :
-        tail starting point (x, y) (Default value = (0)
-    tail_length :
-        tail length (Default value = (1)
+    tail_start : tuple
+        tail starting point (x, y) (Default value = (0, 0)
+    tail_length : tuple
+        tail length in both dimensions (Default: (1, 1))
     n_segments :
         number of segments (Default value = 7)
     filter_size :
         Box for smoothing the image (Default value = 0)
     color_invert :
         True for inverting image colors (Default value = False)
-    im :
-        
-    0) :
-        
-    1) :
         
     image_scale :
          (Default value = 1)
@@ -435,7 +434,7 @@ def trace_tail_angular_sweep(
     start_y *= image_scale
 
     # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(
+    angle_list = _tail_trace_angular_sweep(
         im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, color_invert
     )
 

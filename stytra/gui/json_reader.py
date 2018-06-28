@@ -19,7 +19,8 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class DragDropLabel(QLabel):
-    """ """
+    """ Empty label on which you can drag a file to open it.
+    """
     acceptedFormat = "json"
     droppedFile = pyqtSignal(str)
 
@@ -70,8 +71,8 @@ class JsonReader(QWidget):
     def __init__(self):
         super().__init__()
         self.title = "Json metadata reader"
-        self.left = 10
-        self.top = 10
+        self.left = 100
+        self.top = 100
         self.width = 500
         self.height = 500
         self.initUI()
@@ -174,20 +175,11 @@ class JsonReader(QWidget):
         # Create tree of Parameter objects
         self.p = Parameter.create(name="params", type="group", children=self.parameters)
 
-        # Check if Image parameters already exist. If they don't, add them and update Parameter object
+        # Check if Image parameters already exist. If they don't,
+        # add them and update Parameter object
         self.children_list = []
         for child in self.p.children():
             self.children_list.append(str(child).split("'")[1])
-
-        if "Metadata Image" in self.children_list:
-            self.p.param("Metadata Image").hide()
-        else:
-            self.parameters.append(
-                {"name": "Metadata Image", "type": "str", "visible": False}
-            )
-            self.p = Parameter.create(
-                name="params", type="group", children=self.parameters
-            )
 
         # Save original state
         self.original_state = self.p.saveState()
@@ -198,14 +190,6 @@ class JsonReader(QWidget):
         )
         self.p.param("Save/Reset metadata", "Reset changes").sigActivated.connect(
             self.reset
-        )
-
-        # Connect Image buttons to respective functions
-        self.p.param("Metadata Image Options", "Append Image").sigActivated.connect(
-            self.append_img
-        )
-        self.p.param("Metadata Image Options", "View Image").sigActivated.connect(
-            self.display_img
         )
 
         # Create ParameterTree widget
