@@ -8,15 +8,18 @@ import glob
 
 from multiprocessing import Queue, Event
 from multiprocessing.queues import Empty, Full
-from stytra.utilities import FrameProcessor
+from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
+import deepdish as dd
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera
 from stytra.hardware.video.write import VideoWriter
 from stytra.hardware.video.interfaces import CameraControlParameters
 
+import time
 
-class VideoSource(FrameProcessor):
+
+class VideoSource(FrameProcess):
     """Abstract class for a process that generates frames, being it a camera
     or a file source. A maximum size of the memory used by the process can be
     set.
@@ -139,10 +142,14 @@ class CameraSource(VideoSource):
 
 class VideoFileSource(VideoSource):
     """A class to stream videos from a file to test parts of
-    stytra without a camera available.
+    stytra without a camera available, or do offline analysis
 
     Parameters
     ----------
+        source_file
+            path of the video file
+        loop : bool
+            continue video from the beginning if the end is reached
 
     Returns
     -------
@@ -155,42 +162,65 @@ class VideoFileSource(VideoSource):
         self.loop = loop
 
     def run(self):
-        """ """
-        # If the file is a Ximea Camera sequence, frames in the  corresponding
-        # folder are read.
-        import cv2
 
-        im_sequence_flag = self.source_file.split(".")[-1] == "xiseq"
-        if im_sequence_flag:
-            frames_fn = glob.glob("{}_files/*".format(self.source_file.split(".")[-2]))
-            frames_fn.sort()
-            k = 0
-        else:
-            cap = cv2.VideoCapture(self.source_file)
-        ret = True
+        if self.source_file.endswith("h5"):
+            framedata = dd.io.load(self.source_file)
+            frames = framedata["video"]
+            delta_t = 1 / framedata.get("framerate", 30.0)
+            i_frame = 0
+            prt = None
+            while not self.kill_event.is_set():
+                # we adjust the framerate
+                if prt is not None:
+                    extrat = delta_t - (time.process_time() - prt)
+                    if extrat > 0:
+                        time.sleep(extrat)
 
-        while ret and not self.kill_event.is_set():
-            if self.source_file.split(".")[-1] == "xiseq":
-                frame = cv2.imread(frames_fn[k])
-                k += 1
-                if k == len(frames_fn) - 2:
-                    ret = False
-            else:
-                ret, frame = cap.read()
-
-            if ret:
-                self.frame_queue.put(frame[:, :, 0])
-            else:
-                if self.loop:
-                    if im_sequence_flag:
-                        k = 0
+                self.frame_queue.put(frames[i_frame, :, :])
+                i_frame += 1
+                if i_frame == frames.shape[0]:
+                    if self.loop:
+                        i_frame = 0
                     else:
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    ret = True
+                        break
+                self.update_framerate()
+                prt = time.process_time()
+        else:
+            import cv2
+
+            im_sequence_flag = self.source_file.split(".")[-1] == "xiseq"
+            if im_sequence_flag:
+                frames_fn = glob.glob(
+                    "{}_files/*".format(self.source_file.split(".")[-2])
+                )
+                frames_fn.sort()
+                k = 0
+            else:
+                cap = cv2.VideoCapture(self.source_file)
+            ret = True
+
+            while ret and not self.kill_event.is_set():
+                if self.source_file.split(".")[-1] == "xiseq":
+                    frame = cv2.imread(frames_fn[k])
+                    k += 1
+                    if k == len(frames_fn) - 2:
+                        ret = False
                 else:
-                    break
-            self.update_framerate()
-        return
+                    ret, frame = cap.read()
+
+                if ret:
+                    self.frame_queue.put(frame[:, :, 0])
+                else:
+                    if self.loop:
+                        if im_sequence_flag:
+                            k = 0
+                        else:
+                            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret = True
+                    else:
+                        break
+                self.update_framerate()
+            return
 
 
 if __name__ == "__main__":

@@ -25,18 +25,20 @@ if __name__ == "__main__":
     # Reading from a file:
     # This will work only with a file!
     # TODO provide downloadable example file
-    file = r"J:\_Shared\lightsheet_testing\eye_tracking\eyes_better.xiseq"
+    file = r"J:\_Shared\stytra\fish_tail.h5"
     camera_config = dict(video_file=file, rotation=1)
 
     # Reading from a Ximea camera:
-    camera_config = dict(type="ximea")
+    # camera_config = dict(type="ximea")
 
-    tracking_config = dict(embedded=True, tracking_method="eyes_tail")
+    tracking_config = dict(
+        embedded=True, tracking_method="angle_sweep", preprocessing_method="prefilter"
+    )
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(
         protocols=[FlashProtocol],
         camera_config=camera_config,
         tracking_config=tracking_config,
-        dir_save=r'D:\vilim\stytra\\'
+        dir_save=r"D:\vilim\stytra\\",
     )

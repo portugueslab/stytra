@@ -7,7 +7,7 @@ setup(
     version="0.1",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
-    license='MIT',
+    license="MIT",
     packages=find_packages(),
     install_requires=[
         "pyqtgraph>=0.10.0",

@@ -56,8 +56,9 @@ if __name__ == "__main__":
     save_dir = r'D:\vilim\stytra\\'
     camera_config = dict(type="ximea")
 
-    tracking_config = dict(embedded=True, tracking_method="angle_sweep",
-                           estimator="vigor")
+    tracking_config = dict(
+        embedded=True, tracking_method="angle_sweep", estimator="vigor"
+    )
 
     display_config = dict(full_screen=True)
 

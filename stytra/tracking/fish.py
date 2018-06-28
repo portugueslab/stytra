@@ -4,6 +4,17 @@ from numba import vectorize, uint8, jit
 
 from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
+from stytra.tracking import ParametrizedImageproc
+
+
+class FishTrackingMethod(ParametrizedImageproc):
+
+    def __init__(self):
+        super().__init__(name="tracking_fish_params")
+        self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
+
+        self.accumulator_headers = ["x", "y", "theta"]
+        self.data_log_name = ""
 
 
 class ContourScorer:
