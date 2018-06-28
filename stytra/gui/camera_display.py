@@ -230,7 +230,7 @@ class CameraSelection(CameraViewWidget):
         # Add ROI to image and connect it to the function for updating
         # the relative params:
         self.display_area.addItem(roi)
-        roi.sigRegionChangeFinished.connect(self.set_pos_from_roi)
+        roi.sigRegionChanged.connect(self.set_pos_from_roi)
 
     def set_pos_from_tree(self):
         """Called when ROI position values are changed in the ParameterTree.
@@ -269,7 +269,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Draw ROI for tail selection:
         if tail:
-            self.roi_tail = pg.LineSegmentROI(
+            self.roi_tail = pg.PolyLineROI(
                 (
                     self.track_params["tail_start"],
                     (

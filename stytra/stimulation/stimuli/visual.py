@@ -217,9 +217,7 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
     """
 
     def __init__(self, *args, **kwargs):
-        """
-        :param background: background image
-        """
+        """ """
         self.x = 0
         self.y = 0
         self.theta = 0
@@ -358,9 +356,9 @@ class SeamlessGratingStimulus(BackgroundStimulus):
     Parameters
     ----------
     grating_angle : float
-        fixed angle for the stripes
+        fixed angle for the stripes (in radiants)
     grating_period : float
-        spatial period of the gratings
+        spatial period of the gratings (in mm)
     grating_color : (int, int, int) tuple
         color for the non-black stripes (int tuple)
     """
@@ -458,10 +456,10 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
     Parameters
     ---------
     origin : tuple(float, float)
-        positions of the circle centre
+        positions of the circle centre (in mm)
 
     radius : float
-        circle radius
+        circle radius (in mm)
 
     backgroud_color : tuple(int, int, int)
         RGB color of the background

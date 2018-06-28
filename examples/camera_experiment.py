@@ -28,8 +28,8 @@ if __name__ == "__main__":
     file = r"J:\_Shared\lightsheet_testing\eye_tracking\eyes_better.xiseq"
     camera_config = dict(video_file=file, rotation=1)
 
-    # Reading from a Ximea camera:
-    camera_config = dict(type="ximea")
+    # # Reading from a Ximea camera:
+    # camera_config = dict(type="ximea")
 
     tracking_config = dict(embedded=True, tracking_method="eyes_tail")
 
