@@ -84,6 +84,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 class ClosedLoop1DGratings(ClosedLoop1D, SeamlessGratingStimulus):
     pass
 
+
 #
 # class ClosedLoop1DGratings(SeamlessGratingStimulus):
 #     """

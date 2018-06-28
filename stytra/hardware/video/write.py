@@ -5,12 +5,12 @@ try:
 except ImportError:
     pass
 
-from stytra.utilities import FrameProcessor
+from stytra.utilities import FrameProcess
 from multiprocessing import Event
 from queue import Empty
 
 # TODO documentation
-class VideoWriter(FrameProcessor):
+class VideoWriter(FrameProcess):
     """ """
 
     def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):

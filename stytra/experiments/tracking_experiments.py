@@ -21,8 +21,14 @@ from stytra.hardware.video import (
 # imports for tracking
 
 from stytra.collectors import QueueDataAccumulator
-from stytra.tracking.interfaces import *
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
+from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
+from stytra.tracking.tail import (
+    CentroidTrackingMethod,
+    AnglesTrackingMethod,
+    TailTrackingMethod,
+)
+from stytra.tracking.eyes import EyeTrackingMethod
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -166,14 +172,6 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    tracking_methods_list = dict(
-        centroid=CentroidTrackingMethod,
-        angle_sweep=AnglesTrackingMethod,
-        eye_threshold=ThresholdEyeTrackingMethod,
-        eyes_tail=TailEyesTrackingMethod,
-        fish=FishTrackingMethod,
-    )
-
     def __init__(self, *args, tracking_config, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
@@ -195,13 +193,17 @@ class TrackingExperiment(CameraExperiment):
         )
 
         method_name = tracking_config["tracking_method"]
+        preproc_method_name = tracking_config["preprocessing_method"]
 
-        self.tracking_method = self.tracking_methods_list[method_name]()
+        self.preprocessing_method = get_preprocessing_method(preproc_method_name)()
+        self.tracking_method = get_tracking_method(method_name)()
 
         self.data_name = self.tracking_method.data_log_name
         self.frame_dispatcher = FrameDispatcher(
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
+            preprocessing_class=preproc_method_name,
+            processing_class=method_name,
             processing_parameter_queue=self.processing_params_queue,
             gui_framerate=20,
         )
@@ -223,9 +225,7 @@ class TrackingExperiment(CameraExperiment):
         self.frame_dispatcher.start()
 
         # This probably should happen before starting the camera process??
-        if isinstance(self.tracking_method, CentroidTrackingMethod) or isinstance(
-            self.tracking_method, AnglesTrackingMethod
-        ):
+        if isinstance(self.tracking_method, TailTrackingMethod):
             self.tracking_method.params.param("n_segments").sigValueChanged.connect(
                 self.change_segment_numb
             )
@@ -256,12 +256,8 @@ class TrackingExperiment(CameraExperiment):
         self.data_acc.reset(header_list=new_header)
 
     def make_window(self):
-        tail = False
-        eyes = False
-        if isinstance(self.tracking_method, TailTrackingMethod):
-            tail = True
-        if isinstance(self.tracking_method, EyeTrackingMethod):
-            eyes = True
+        tail = isinstance(self.tracking_method, TailTrackingMethod)
+        eyes = isinstance(self.tracking_method, EyeTrackingMethod)
 
         self.window_main = TrackingExperimentWindow(
             experiment=self, tail=tail, eyes=eyes
@@ -286,7 +282,12 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        self.processing_params_queue.put(self.tracking_method.get_clean_values())
+        self.processing_params_queue.put(
+            {
+                **self.tracking_method.get_clean_values(),
+                **self.preprocessing_method.get_clean_values(),
+            }
+        )
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
@@ -309,12 +310,11 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        if self.dc is not None:
-            self.dc.add_static_data(self.data_acc.get_dataframe(), name=self.data_name)
-
         super().end_protocol(*args, **kwargs)
+        self.data_acc.save(self.filename_base() + "tracking", self.log_format)
         try:
             self.estimator.log.reset()
+            self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
         except AttributeError:
             pass
 

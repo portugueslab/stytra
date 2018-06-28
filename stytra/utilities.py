@@ -32,7 +32,7 @@ class Database:
         pass
 
 
-class FrameProcessor(Process):
+class FrameProcess(Process):
     """A basic class for a process that deals with frames. It provides
     framerate calculation.
 
@@ -180,7 +180,7 @@ def strip_values(it):
         return it
 
 
-class HasPyQtGraphParams(object):
+class HasPyQtGraphParams:
     """This class is used to have a number of objects (experiment interfaces and
     protocols) sharing a global pyqtgraph Parameter object that will be used
     for saving data_log and restoring the app to the last used state.
@@ -269,6 +269,15 @@ class HasPyQtGraphParams(object):
                 )
             else:
                 self.params.addChild({"name": name, "value": value})
+
+    def update_params(self, **kwargs):
+        """ Updates the parameters from a kwargs
+
+        :param kwargs:
+        :return:
+        """
+        for key, value in kwargs:
+            self.params[key] = value
 
     def get_clean_values(self):
         """ """

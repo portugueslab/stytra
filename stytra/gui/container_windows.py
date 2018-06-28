@@ -14,8 +14,10 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QSplitter,
 )
+
 from pyqtgraph.parametertree import ParameterTree
 
+from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
@@ -132,7 +134,12 @@ class SimpleExperimentWindow(QMainWindow):
         central_widget = QWidget()
         protocol_layout = QVBoxLayout()
         # central_widget.layout().addWidget(self.label_debug)
-        protocol_layout.addWidget(self.widget_projection)
+        protocol_layout.addWidget(
+            CollapsibleWidget(self.widget_projection, "Projector setup")
+        )
+        protocol_layout.addWidget(
+            CollapsibleWidget(self.logger.widget, "Log", expanded=False)
+        )
         protocol_layout.addWidget(self.widget_control)
         if self.experiment.trigger is not None:
             protocol_layout.addWidget(self.chk_scope)
@@ -140,7 +147,6 @@ class SimpleExperimentWindow(QMainWindow):
 
         central_layout = QHBoxLayout()
         central_layout.addLayout(protocol_layout)
-        central_layout.addWidget(self.logger.widget)
         central_widget.setLayout(central_layout)
         return central_widget
 
@@ -244,10 +250,9 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        self.track_params_wnd.setParameters(
-            self.experiment.tracking_method.params, showTop=False
-        )
-        self.track_params_wnd.setWindowTitle("Tracking data")
+        self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
+        self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
+        self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
 

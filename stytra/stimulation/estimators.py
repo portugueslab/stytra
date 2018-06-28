@@ -37,8 +37,6 @@ class VigourMotionEstimator:
             self.last_dt = new_dt
         vigor = np.std(np.array(past_tail_motion[:, 1]))
         self.log.update_list((past_tail_motion[0, 0], vigor))
-        print(past_tail_motion[0,0])
-        # print(self.log.get_last_t(4))
         return vigor
 
 

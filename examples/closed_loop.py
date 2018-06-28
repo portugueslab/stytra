@@ -12,10 +12,12 @@ class ClosedLoop1D(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.add_params(inter_stim_pause=20.,
-                        grating_vel=10.,
-                        grating_duration=10.,
-                        grating_cycle=10)
+        self.add_params(
+            inter_stim_pause=20.,
+            grating_vel=10.,
+            grating_duration=10.,
+            grating_cycle=10,
+        )
 
     def get_stim_sequence(self):
         stimuli = []
@@ -24,14 +26,18 @@ class ClosedLoop1D(Protocol):
         v = 20  # self.params['grating_vel']
         d = 10  # self.params['grating_duration']
 
-        df = pd.DataFrame(dict(t=[0, p, p, p+d, p+d, 2*p + d],
-                               vel_x=[0, 0, -v, -v, 0, 0]))
+        df = pd.DataFrame(
+            dict(t=[0, p, p, p + d, p + d, 2 * p + d], vel_x=[0, 0, -v, -v, 0, 0])
+        )
 
-        stimuli.append(ClosedLoop1DGratings(df_param=df,
-                                            grating_angle=np.pi/2,
-                                            grating_period=self.params[
-                                                   'grating_cycle'],
-                                            color=(255, )*3))
+        stimuli.append(
+            ClosedLoop1DGratings(
+                df_param=df,
+                grating_angle=np.pi / 2,
+                grating_period=self.params["grating_cycle"],
+                color=(255,) * 3,
+            )
+        )
         return stimuli
 
 
@@ -46,8 +52,9 @@ if __name__ == "__main__":
     # Reading from a Ximea camera:
     camera_config = dict(type="ximea")
 
-    tracking_config = dict(embedded=True, tracking_method="angle_sweep",
-                           estimator="vigor")
+    tracking_config = dict(
+        embedded=True, tracking_method="angle_sweep", estimator="vigor"
+    )
 
     display_config = dict(full_screen=True)
 
@@ -57,6 +64,5 @@ if __name__ == "__main__":
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,
-        dir_save=r'D:\vilim\stytra\\',
-
+        dir_save=r"D:\vilim\stytra\\",
     )

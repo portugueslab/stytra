@@ -2,11 +2,37 @@ import cv2
 import numpy as np
 from numba import vectorize, uint8, jit
 
-from stytra.tracking.eyes import _pad, _fit_ellipse
-from stytra.tracking.tail import _tail_trace_core_ls
+
+from stytra.tracking.eyes import EyeTrackingMethod
+from stytra.tracking.tail import TailTrackingMethod
 
 # TODO it would be better to avoid this function and sequentially apply its
 # two parts
+
+
+class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
+    name = "tracking_eyes_tail_params"
+
+    def __init__(self):
+        super().__init__()
+        headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        ]
+        [
+            headers.extend(
+                [
+                    "pos_x_e{}".format(i),
+                    "pos_y_e{}".format(i),
+                    "dim_x_e{}".format(i),
+                    "dim_y_e{}".format(i),
+                    "th_e{}".format(i),
+                ]
+            )
+            for i in range(2)
+        ]
+        self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
+        self.accumulator_headers = headers
+        self.data_log_name = "behaviour_tail_eyes_log"
 
 
 def trace_tail_eyes(

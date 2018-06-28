@@ -110,7 +110,7 @@ class Accumulator:
         if len(self.stored_data) == 0:
             return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
         else:
-            data_list = self.stored_data[-max(last_n, 1):]
+            data_list = self.stored_data[-max(last_n, 1) :]
 
             # The length of the tuple in the accumulator may change. Here we
             # make sure we take only the elements that have the same

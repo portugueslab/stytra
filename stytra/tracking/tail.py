@@ -1,6 +1,186 @@
 import numpy as np
 from numba import jit
 import cv2
+from stytra.tracking import ParametrizedImageproc
+
+
+class TailTrackingMethod(ParametrizedImageproc):
+    """General tail tracking method."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # TODO maybe getting default values here:
+        self.add_params(
+            n_segments=dict(value=10, type="int", limits=(2, 50)),
+            tail_start=dict(value=(440, 225), visible=False),
+            tail_length=dict(value=(-250, 30), visible=False),
+        )
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        ]
+        self.monitored_headers = ["tail_sum"]
+        self.data_log_name = "behaviour_tail_log"
+
+
+class CentroidTrackingMethod(TailTrackingMethod):
+    """Center-of-mass method to find consecutive segments."""
+
+    name = "tracking_tail_params"
+
+    def __init__(self):
+        super().__init__()
+        self.add_params(
+            window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
+        )
+
+    @classmethod
+    def detect(
+        cls,
+        im,
+        tail_start=(0, 0),
+        tail_length=(1, 1),
+        n_segments=12,
+        window_size=7,
+        image_scale=1,
+        **extraparams
+    ):
+        """Finds the tail for an embedded fish, given the starting point and
+        the direction of the tail. Alternative to the sequential circular arches.
+
+        Parameters
+        ----------
+        im :
+            image to process
+        tail_start :
+            starting point (x, y) (Default value = (0)
+        tail_length :
+            tail length (x, y) (Default value = (1)
+        n_segments :
+            number of desired segments (Default value = 12)
+        window_size :
+            window size in pixel for center-of-mass calculation (Default value = 7)
+        color_invert :
+            True for inverting luminosity of the image (Default value = False)
+        filter_size :
+            Size of the box filter to low-pass filter the image (Default value = 0)
+        image_scale :
+            the amount of downscaling of the image (Default value = 0.5)
+        0) :
+
+        1) :
+
+
+        Returns
+        -------
+        type
+            list of cumulative sum + list of angles
+
+        """
+        start_y, start_x = tail_start
+        tail_length_y, tail_length_x = tail_length
+
+        n_segments += 1
+
+        # Calculate tail length:
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+
+        # Segment length from tail length and n of segments:
+        seg_length = length_tail / n_segments
+
+        # Initial displacements in x and y:
+        disp_x = tail_length_x * image_scale / n_segments
+        disp_y = tail_length_y * image_scale / n_segments
+
+        angles = []
+        start_x *= image_scale
+        start_y *= image_scale
+
+        halfwin = window_size / 2
+        for i in range(1, n_segments):
+            # Use next segment function for find next point
+            # with center-of-mass displacement:
+            start_x, start_y, disp_x, disp_y, acc = _next_segment(
+                im, start_x, start_y, disp_x, disp_y, halfwin, seg_length
+            )
+
+            abs_angle = np.arctan2(disp_x, disp_y)
+            angles.append(abs_angle)
+
+        return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
+            :
+        ]
+
+
+class AnglesTrackingMethod(TailTrackingMethod):
+    """Angular sweep method to find consecutive segments."""
+    name = "tracking_tail_params"
+
+    def __init__(self):
+        super().__init__()
+        self.add_params(dark_tail=False)
+
+    @classmethod
+    def detect(
+        cls,
+        im,
+        tail_start=(0, 0),
+        n_segments=7,
+        tail_length=(1, 1),
+        dark_tail=False,
+        image_scale=1,
+        **extraparams
+    ):
+        """Tail tracing based on min (or max) detection on arches. Wraps
+        _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
+        smoothing, 300 us with smoothing.
+
+        Parameters
+        ----------
+        img :
+            input image
+        tail_start :
+            tail starting point (x, y) (Default value = (0)
+        tail_length :
+            tail length (Default value = (1)
+        n_segments :
+            number of segments (Default value = 7)
+        filter_size :
+            Box for smoothing the image (Default value = 0)
+        dark_tail :
+            True for inverting image colors (Default value = False)
+        im :
+
+        0) :
+
+        1) :
+
+        image_scale :
+             (Default value = 1)
+
+        Returns
+        -------
+
+        """
+
+        start_y, start_x = tail_start
+        tail_length_y, tail_length_x = tail_length
+
+        # Calculate tail length:
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+
+        # Initial displacements in x and y:
+        disp_x = tail_length_x * image_scale / n_segments
+        disp_y = tail_length_y * image_scale / n_segments
+
+        start_x *= image_scale
+        start_y *= image_scale
+
+        # Use jitted function for the actual calculation:
+        angle_list = _tail_trace_core_ls(
+            im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
+        )
+
+        return angle_list
 
 
 @jit(nopython=True)
@@ -192,95 +372,6 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     return xm + dx, ym + dy, dx, dy, acc
 
 
-def trace_tail_centroid(
-    im,
-    tail_start=(0, 0),
-    tail_length=(1, 1),
-    n_segments=12,
-    window_size=7,
-    color_invert=False,
-    filter_size=0,
-    image_scale=0.5,
-):
-    """Finds the tail for an embedded fish, given the starting point and
-    the direction of the tail. Alternative to the sequential circular arches.
-
-    Parameters
-    ----------
-    im :
-        image to process
-    tail_start :
-        starting point (x, y) (Default value = (0)
-    tail_length :
-        tail length (x, y) (Default value = (1)
-    n_segments :
-        number of desired segments (Default value = 12)
-    window_size :
-        window size in pixel for center-of-mass calculation (Default value = 7)
-    color_invert :
-        True for inverting luminosity of the image (Default value = False)
-    filter_size :
-        Size of the box filter to low-pass filter the image (Default value = 0)
-    image_scale :
-        the amount of downscaling of the image (Default value = 0.5)
-    0) :
-        
-    1) :
-        
-
-    Returns
-    -------
-    type
-        list of cumulative sum + list of angles
-
-    """
-    start_x = tail_start[1]
-    start_y = tail_start[0]
-    tail_length_x = tail_length[1]
-    tail_length_y = tail_length[0]
-
-    n_segments += 1
-
-    # Image preprocessing. Resize if required:
-    if image_scale != 1:
-        im = cv2.resize(
-            im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
-        )
-    # Filter if required:
-    if filter_size > 0:
-        im = cv2.boxFilter(im, -1, (filter_size, filter_size))
-    # Invert if required:
-    if color_invert:
-        im = 255 - im
-
-    # Calculate tail length:
-    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
-
-    # Segment length from tail length and n of segments:
-    seg_length = length_tail / n_segments
-
-    # Initial displacements in x and y:
-    disp_x = tail_length_x * image_scale / n_segments
-    disp_y = tail_length_y * image_scale / n_segments
-
-    angles = []
-    start_x *= image_scale
-    start_y *= image_scale
-
-    halfwin = window_size / 2
-    for i in range(1, n_segments):
-        # Use next segment function for find next point
-        # with center-of-mass displacement:
-        start_x, start_y, disp_x, disp_y, acc = _next_segment(
-            im, start_x, start_y, disp_x, disp_y, halfwin, seg_length
-        )
-
-        abs_angle = np.arctan2(disp_x, disp_y)
-        angles.append(abs_angle)
-
-    return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[:]
-
-
 @jit(nopython=True)
 def _tail_trace_core_ls(
     img, start_x, start_y, disp_x, disp_y, num_points, tail_length, color_invert
@@ -367,79 +458,6 @@ def _tail_trace_core_ls(
 
     angles[0] = tail_sum
     return angles
-
-
-def trace_tail_angular_sweep(
-    im,
-    tail_start=(0, 0),
-    n_segments=7,
-    tail_length=(1, 1),
-    filter_size=0,
-    color_invert=False,
-    image_scale=1,
-):
-    """Tail tracing based on min (or max) detection on arches. Wraps
-    _tail_trace_core_ls. Speed testing: 20 us for a 514x640 image without
-    smoothing, 300 us with smoothing.
-
-    Parameters
-    ----------
-    img :
-        input image
-    tail_start :
-        tail starting point (x, y) (Default value = (0)
-    tail_length :
-        tail length (Default value = (1)
-    n_segments :
-        number of segments (Default value = 7)
-    filter_size :
-        Box for smoothing the image (Default value = 0)
-    color_invert :
-        True for inverting image colors (Default value = False)
-    im :
-        
-    0) :
-        
-    1) :
-        
-    image_scale :
-         (Default value = 1)
-
-    Returns
-    -------
-
-    """
-
-    start_x = tail_start[1]  # TODO remove
-    start_y = tail_start[0]
-    tail_length_x = tail_length[1]
-    tail_length_y = tail_length[0]
-
-    # Image preprocessing. Resize if required:
-    if image_scale != 1:
-        im = cv2.resize(
-            im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
-        )
-    # Filter if required:
-    if filter_size > 0:
-        im = cv2.boxFilter(im, -1, (filter_size, filter_size))
-
-    # Calculate tail length:
-    length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
-
-    # Initial displacements in x and y:
-    disp_x = tail_length_x * image_scale / n_segments
-    disp_y = tail_length_y * image_scale / n_segments
-
-    start_x *= image_scale
-    start_y *= image_scale
-
-    # Use jitted function for the actual calculation:
-    angle_list = _tail_trace_core_ls(
-        im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, color_invert
-    )
-
-    return angle_list
 
 
 @jit(nopython=True, cache=True)

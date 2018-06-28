@@ -5,6 +5,36 @@
 import numpy as np
 from skimage.filters import threshold_local, threshold_otsu
 import cv2
+from stytra.tracking import ParametrizedImageproc
+
+
+class EyeTrackingMethod(ParametrizedImageproc):
+    """General eyes tracking method."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # TODO maybe getting default values here:
+        self.add_params(
+            wnd_pos={"value": (140, 200), "visible": False},
+            wnd_dim={"value": (110, 60), "visible": False},
+            threshold=dict(value=64, type="int", limits=(0, 255)),
+        )
+
+        headers = []
+        for i in range(2):
+            headers.extend(
+                [
+                    "pos_x_e{}".format(i),
+                    "pos_y_e{}".format(i),
+                    "dim_x_e{}".format(i),
+                    "dim_y_e{}".format(i),
+                    "th_e{}".format(i),
+                ]
+            )
+
+        self.monitored_headers = ["th_e0", "th_e1"]
+        self.accumulator_headers = headers
+        self.data_log_name = "behaviour_eyes_log"
 
 
 def _pad(im, padding=0, val=0):
