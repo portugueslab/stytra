@@ -29,10 +29,12 @@ class ClosedLoop1D(Protocol):
         t = []
         vel = []
         gain = []
-        # Gain 0
+        gain_values = [0, 0.5, 1, 1.5]
+        np.random.shuffle(gain_values)
+
         t.extend(t_base)
         vel.extend(vel_base)
-        gain.extend([0, ]*len(t_base))
+        gain.extend([0, 0, gain_values[0], gain_values[0], 0, 0])
 
         # Low, medium, high gain:
         for g in [0.5, 1, 1.5]:
