@@ -5,8 +5,6 @@ from numba import vectorize, uint8, jit
 
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.tail import TailTrackingMethod
-from stytra.tracking.eyes import _pad, _fit_ellipse
-from stytra.tracking.tail import _tail_trace_angular_sweep
 
 # TODO it would be better to avoid this function and sequentially apply its
 # two parts
@@ -35,6 +33,7 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
         self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_tail_eyes_log"
+        
 
 
 def trace_tail_eyes(

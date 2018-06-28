@@ -240,6 +240,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         """ """
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
+        previous_widget.layout().setContentsMargins(0,0,0,0)
         self.monitoring_layout.addWidget(previous_widget)
         self.monitoring_layout.setStretch(1, 1)
         self.monitoring_layout.setStretch(0, 1)
