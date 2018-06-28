@@ -3,7 +3,7 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import ClosedLoop1DGratings
+from stytra.stimulation.stimuli import ClosedLoop1DGratings, InterpolatedGratingStimulus
 
 
 class ClosedLoop1D(Protocol):
@@ -24,23 +24,17 @@ class ClosedLoop1D(Protocol):
         v = self.params['grating_vel']
         d = self.params['grating_duration']
 
-        t_base = [0, p, p, p + d, p + d, 2 * p + d]
-        vel_base = [0, 0, -v, -v, 0, 0]
         t = []
         vel = []
         gain = []
-        gain_values = [0, 0.5, 1, 1.5]
-        np.random.shuffle(gain_values)
-        # Gain 0
-        t.extend(t_base)
-        vel.extend(vel_base)
-        gain.extend([0, 0, gain_values[0], gain_values[0], 0, 0])
-
-        # Low, medium, high gain:
-        for g in gain_values[1:]:
-            t.extend(t[-1] + np.array(t_base))
-            vel.extend(vel_base)
-            gain.extend([0, 0, g, g, 0, 0])
+        t.extend([0, p, p, p + d, p + d, 2 * p + d])
+        vel.extend([0, 0, -v, -v, 0, 0])
+        gain.extend([0, 0, 0, 0, 0, 0])
+        for i in [0.2, 1, 5]:
+            t.extend(t[-1] + np.array([0, p, p, p + d, p + d, 2 * p + d]))
+            vel.extend([0, 0, -v, -v, 0, 0])
+            gain.extend([0, 0, i, i, 0, 0])
+            
 
         df = pd.DataFrame(dict(t=t, vel=vel, gain=gain))
 
@@ -50,10 +44,47 @@ class ClosedLoop1D(Protocol):
                                                    'grating_cycle'],
                                             color=(255, )*3))
         return stimuli
+#
+# class Gratings(Protocol):
+#     name = "closed_loop1D_gratings"
+#
+#     def __init__(self):
+#         super().__init__()
+#
+#         self.add_params(inter_stim_pause=4.,
+#                         grating_vel=10.,
+#                         grating_duration=10.,
+#                         grating_cycle=10)
+#
+#     def get_stim_sequence(self):
+#         stimuli = []
+#         # # gratings
+#         p = self.params['inter_stim_pause']/2
+#         v = self.params['grating_vel']
+#         d = self.params['grating_duration']
+#
+#         df = pd.DataFrame(dict(t=[0, p, p, p+d, p+d, 2*p + d],
+#                                vel_x=[0, 0, -v, -v, 0, 0]))
+#
+#         stimuli.append(InterpolatedGratingStimulus(df_param=df,
+#                                             grating_angle=np.pi/2,
+#                                             grating_period=self.params[
+#                                                    'grating_cycle'],
+#                                             color=(255, )*3))
+#         return stimuli
+#
+
 
 
 if __name__ == "__main__":
-    save_dir = r'D:\vilim\stytra\\'
+
+    # Reading from a file:
+    # This will work only with a file!
+    # TODO provide downloadable example file
+    file = r"J:\_Shared\lightsheet_testing\eye_tracking\eyes_better.xiseq"
+    camera_config = dict(video_file=file, rotation=1)
+
+    # Reading from a Ximea camera:
     camera_config = dict(type="ximea")
 
     tracking_config = dict(embedded=True, tracking_method="angle_sweep",
@@ -67,5 +98,6 @@ if __name__ == "__main__":
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,
-        dir_save=save_dir,
+        dir_save=r'D:\vilim\stytra\\',
+
     )
