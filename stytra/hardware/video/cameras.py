@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+    Author: Andreas Kist
+"""
+"""
 This module implement classes that can be used in stytra to control cameras.
 """
 import numpy as np
