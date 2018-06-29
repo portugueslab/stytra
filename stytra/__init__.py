@@ -18,7 +18,39 @@ from PyQt5.QtGui import QIcon
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
-    parameters"""
+    parameters
+
+    Parameters
+    ==========
+        protocols : list(Protocol)
+            the protocols to be made available from the dropdown
+
+        display_config : dict
+            full_screen
+            window_size
+
+        camera_config : dict
+            file
+                or
+            type
+            rotation
+            downsampling
+
+
+        tracking_config : dict
+            preprocessing_method: str
+                one of "prefilter" or "bgrem"
+            tracking_method: str
+                one of "tail", "eyes", "fish"
+            estimator: str
+
+
+        recording_config : bool
+            whether to record motion in freely-swimming experiments
+
+
+
+    """
 
     def __init__(
         self,
@@ -28,6 +60,7 @@ class Stytra:
         camera_config=None,
         display_config=None,
         tracking_config=None,
+        recording_config=None,
         trigger=None,
         asset_dir=None,
         dir_save=None,
@@ -55,10 +88,9 @@ class Stytra:
             class_kwargs["camera_config"] = camera_config
             if tracking_config is not None:
                 class_kwargs["tracking_config"] = tracking_config
-                if tracking_config["embedded"]:
-                    base = TrackingExperiment
-                else:
-                    base = SwimmingRecordingExperiment
+                base = TrackingExperiment
+            if recording_config is not None:
+                base = SwimmingRecordingExperiment
                 # TODO add swimming closed-loop experiments
 
         app_icon = QIcon()

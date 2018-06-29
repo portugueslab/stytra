@@ -30,7 +30,8 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter, bgrem=BackgorundSubtractor)
+    prepmethods = dict(prefilter=Prefilter,
+                       bgrem=BackgorundSubtractor)
     return prepmethods.get(name, None)
 
 
