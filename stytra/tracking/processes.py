@@ -15,7 +15,7 @@ from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 
-from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor
+from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
 
 
 def get_tracking_method(name):
@@ -31,7 +31,8 @@ def get_tracking_method(name):
 
 def get_preprocessing_method(name):
     prepmethods = dict(prefilter=Prefilter,
-                       bgrem=BackgorundSubtractor)
+                       bgsub=BackgorundSubtractor,
+                       bgsubcv=CV2BgSub)
     return prepmethods.get(name, None)
 
 
@@ -93,16 +94,7 @@ class FrameDispatcher(FrameProcess):
             processed output
 
         """
-        if self.processing_obj is not None:
-            if self.preprocessing_obj is not None:
-                processed, self.preprocessing_state = self.preprocessing_obj(
-                    frame, self.preprocessing_state, **self.processing_parameters
-                )
-            else:
-                processed = frame
-            output = self.processing_obj(processed, **self.processing_parameters)
 
-            return output
 
     def run(self):
         """Loop where the tracking function runs."""
@@ -124,12 +116,26 @@ class FrameDispatcher(FrameProcess):
                 time, frame = self.frame_queue.get(timeout=0.001)
 
                 # If a processing function is specified, apply it:
-                if self.processing_obj is not None:
-                    a = (datetime.now(), self.process_internal(frame))
-                    self.output_queue.put(a)
 
-                self.update_framerate()  # calculate the frame rate
-                self.send_to_gui(frame)  # put current frame into the GUI queue
+                if self.preprocessing_obj is not None:
+                    processed, self.preprocessing_state = self.preprocessing_obj(
+                        frame, self.preprocessing_state, **self.processing_parameters
+                    )
+                else:
+                    processed = frame
+
+                if self.processing_obj is not None:
+                    output = self.processing_obj(processed, **self.processing_parameters)
+                    self.output_queue.put((datetime.now(), output))
+
+                # calculate the frame rate
+                self.update_framerate()
+
+                # put current frame into the GUI queue
+                if self.processing_parameters["display_processed"]:
+                    self.send_to_gui(processed)
+                else:
+                    self.send_to_gui(frame)
 
             except Empty:  # if there is nothing in frame queue
                 pass

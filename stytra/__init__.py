@@ -14,6 +14,7 @@ from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
+import pkg_resources
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
@@ -94,9 +95,9 @@ class Stytra:
                 # TODO add swimming closed-loop experiments
 
         app_icon = QIcon()
-        app_icon.addFile("icons/48.png", QSize(48, 48))
-        app_icon.addFile("icons/128.png", QSize(128, 128))
-        app_icon.addFile("icons/256.png", QSize(256, 256))
+        for size in [32, 64, 128, 256]:
+            app_icon.addFile(pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
+                             QSize(size, size))
         app.setWindowIcon(app_icon)
 
         exp = base(**class_kwargs)
