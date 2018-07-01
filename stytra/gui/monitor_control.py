@@ -37,7 +37,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
-        self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
+        self.roi_box.sigRegionChanged.connect(self.set_param_val)
         self.roi_params.sigTreeStateChanged.connect(self.set_roi)
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(
