@@ -3,7 +3,6 @@ import os
 import traceback
 from queue import Empty
 import deepdish as dd
-import qdarkstyle
 import logging
 
 from PyQt5.QtCore import QObject
@@ -169,7 +168,6 @@ class Experiment(QObject):
         -------
 
         """
-        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.make_window()
         self.initialize_metadata()
         self.show_stimulus_screen(self.display_config["full_screen"])

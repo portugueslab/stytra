@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
 import pkg_resources
-
+import qdarkstyle
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
@@ -33,7 +33,7 @@ class Stytra:
                 optional specification of the size of the stimulus display area
 
         camera_config : dict
-            file
+            video_file
                 or
             type: str
                 "ximea" or "avt" cameras are currently supported
@@ -96,6 +96,7 @@ class Stytra:
     ):
 
         app = QApplication([])
+        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         class_kwargs = dict(
             app=app,

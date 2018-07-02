@@ -70,7 +70,7 @@ class CameraExperiment(Experiment):
         else:
             self.camera = VideoFileSource(
                 camera_config["video_file"],
-                rotation=camera_config["rotation"],
+                rotation=camera_config.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
 
@@ -190,7 +190,7 @@ class TrackingExperiment(CameraExperiment):
         )
 
         method_name = tracking_config["tracking_method"]
-        preproc_method_name = tracking_config["preprocessing_method"]
+        preproc_method_name = tracking_config.get("preprocessing_method", "prefilter")
 
         self.preprocessing_method = get_preprocessing_method(preproc_method_name)()
         self.tracking_method = get_tracking_method(method_name)()

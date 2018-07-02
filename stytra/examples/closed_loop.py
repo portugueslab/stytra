@@ -54,7 +54,7 @@ class ClosedLoop1D(Protocol):
 
 if __name__ == "__main__":
     save_dir = r'D:\vilim\stytra\\'
-    camera_config = dict(type="ximea")
+    camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail.h5")
 
     tracking_config = dict(
         embedded=True, tracking_method="angle_sweep", estimator="vigor"
