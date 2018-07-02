@@ -73,7 +73,6 @@ class BgSubState:
 
 
 class BackgorundSubtractor(ParametrizedImageproc):
-
     def __init__(self):
         super().__init__()
         self.add_params(n_mean=100)
@@ -83,4 +82,4 @@ class BackgorundSubtractor(ParametrizedImageproc):
         if state is None:
             state = BgSubState(im, n_mean)
         state.update(im)
-        return state.subtract(im)
+        return state.subtract(im), state
