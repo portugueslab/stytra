@@ -38,7 +38,7 @@ class Calibrator(HasPyQtGraphParams):
                 {"name": "proj_to_cam", "value": None, "visible": False},
             ]
         )
-        self.length_to_measure = "pixels"
+        self.length_to_measure = "do not use the base class as a calibrator"
 
         self.params["length_mm"] = 1
         self.params.child("length_mm").sigValueChanged.connect(self.set_physical_scale)
@@ -50,6 +50,10 @@ class Calibrator(HasPyQtGraphParams):
     def set_physical_scale(self):
         """Calculate mm/px from calibrator length"""
         self.params["mm_px"] = self.params["length_mm"] / self.params["length_px"]
+
+    def set_pixel_scale(self, w, h):
+        """"Set pixel size, need to be called by the projector widget on resizes"""
+        self.params["length_px"] = w
 
     def make_calibration_pattern(self, p, h, w):
         """
@@ -82,11 +86,11 @@ class CrossCalibrator(Calibrator):
         if calibration_length == "outside":
             self.outside = True
 
-            self.length_to_measure = "height of the rectangle"
+            self.length_to_measure = "height of the rectangle (mm)"
 
         else:
             self.outside = False
-            self.length_to_measure = "a line of the cross"
+            self.length_to_measure = "a line of the cross"  #TODO: world this better, unclear
             if fixed_length is not None:
                 self.params["length_px"] = fixed_length
                 self.length_is_fixed = True
@@ -110,15 +114,18 @@ class CrossCalibrator(Calibrator):
         p.setPen(QPen(QColor(255, 0, 0)))
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
+        l2 = self.params["length_px"] / 2
+        p.drawLine(w // 2 - l2, h // 2, w // 2 + l2, h // 2)
+        p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2 - l2)
+        p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
+
+    def set_pixel_scale(self, w, h):
+        """"Set pixel size, need to be called by the projector widget on resizes"""
         if not self.length_is_fixed:
             if self.outside:
                 self.params["length_px"] = h
             else:
                 self.params["length_px"] = max(h / 2, w / 2)
-        l2 = self.params["length_px"] / 2
-        p.drawLine(w // 2 - l2, h // 2, w // 2 + l2, h // 2)
-        p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2 - l2)
-        p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
 
 class CircleCalibrator(Calibrator):

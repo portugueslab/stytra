@@ -148,7 +148,8 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
-        self.label_calibrate = QLabel("size of calib. pattern in mm")
+        self.label_calibrate = QLabel(self.calibrator.length_to_measure)
+        self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
         self.calibrator_len_spin = ParameterSpinBox(
