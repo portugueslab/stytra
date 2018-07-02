@@ -1,4 +1,3 @@
-import argparse
 from stytra.experiments import Experiment
 from stytra.experiments.tracking_experiments import (
     CameraExperiment,
@@ -17,6 +16,7 @@ from PyQt5.QtGui import QIcon
 
 import pkg_resources
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -28,15 +28,22 @@ class Stytra:
             the protocols to be made available from the dropdown
 
         display_config : dict
-            full_screen
-            window_size
+            full_screen : bool
+            window_size : tuple(int, int)
+                optional specification of the size of the stimulus display area
 
         camera_config : dict
             file
                 or
-            type
-            rotation
-            downsampling
+            type: str
+                "ximea" or "avt" cameras are currently supported
+
+            rotation: int
+                how many times to rotate the camera image by 90 degrees to get the
+                right orientation, matching the projcetor
+
+            downsampling: int
+                how many times to downsample the image (for ximea cameras)
 
 
         tracking_config : dict
@@ -45,15 +52,37 @@ class Stytra:
             tracking_method: str
                 one of "tail", "eyes", "fish"
             estimator: str
-
+                for closed-loop experiments: either "vigor" or "lstm" for embedded experiments
+                    or "fish" for freely-swimming ones
 
         recording_config : bool
-            whether to record motion in freely-swimming experiments
+            for video-recording experiments
 
         embedded : bool
-            if not embedded, use circle calibrator
+            if not embedded, use circle calibrator to match the camera and projector
 
+        dir_assets : str
+            the location of assets used for stimulation (pictures, videos, models
+            for closed loop etc.)
 
+        dir_save : str
+            directory where the experiment data will be saved
+
+        metadata_animal : class
+            subclass of AnimalMetadata adding information from a specific lab
+            (species, genetic lines, pharmacological treatments etc.)
+
+        metdata_general : class
+            subclass of GeneralMetadata, containing lab-specific information
+            (setup names, experimenter names...)
+
+        record_stim_every: int
+            if non-0 recodrds the displayed stimuli into an array which is
+            saved alongside the other data.
+
+        trigger : object
+            a trigger object, synchronising stimulus presentation
+            to imaging acquisition
 
     """
 
@@ -68,7 +97,7 @@ class Stytra:
         recording_config=None,
             embedded=True,
         trigger=None,
-        asset_dir=None,
+        dir_assets=None,
         dir_save=None,
         record_stim_every=None,
     ):
@@ -78,7 +107,7 @@ class Stytra:
         class_kwargs = dict(
             app=app,
             dir_save=dir_save,
-            asset_directory=asset_dir,
+            asset_directory=dir_assets,
             rec_stim_every=record_stim_every,
             metadata_animal=metadata_animal,
             metadata_general=metadata_general,
