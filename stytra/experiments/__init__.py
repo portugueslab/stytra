@@ -64,7 +64,7 @@ class Experiment(QObject):
         metadata_general=None,
         metadata_animal=None,
         calibrator=None,
-        asset_directory="",
+        dir_assets="",
         log_format="csv",
         rec_stim_every=None,
         display_config=None,
@@ -77,7 +77,7 @@ class Experiment(QObject):
         self.protocols = protocols
         self.trigger = trigger
 
-        self.asset_dir = asset_directory
+        self.asset_dir = dir_assets
         self.base_dir = dir_save
         self.log_format = log_format
 

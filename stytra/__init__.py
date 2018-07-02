@@ -88,34 +88,20 @@ class Stytra:
 
     def __init__(
         self,
-        protocols=[],
-        metadata_animal=None,
-        metadata_general=None,
         camera_config=None,
-        display_config=None,
         tracking_config=None,
         recording_config=None,
-            embedded=True,
-        trigger=None,
-        dir_assets=None,
-        dir_save=None,
-        record_stim_every=None,
+        embedded=True,
+        **kwargs,
     ):
 
         app = QApplication([])
 
         class_kwargs = dict(
             app=app,
-            dir_save=dir_save,
-            asset_directory=dir_assets,
-            rec_stim_every=record_stim_every,
-            metadata_animal=metadata_animal,
-            metadata_general=metadata_general,
-            display_config=display_config,
-            protocols=protocols,
-            trigger=trigger,
             calibrator=(CircleCalibrator() if not embedded else None),
         )
+        class_kwargs.update(kwargs)
 
         base = Experiment
 
