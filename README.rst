@@ -10,7 +10,7 @@ Stytra
 A modular package to control stimulation and track behaviour in zebrafish experiments.
 ---------------
 
-.. image:: stytra/icons/256.png?raw=true
+.. image:: stytra/icons/256.svg?raw=true
     :scale: 50%
     :alt: Logo
 
@@ -40,7 +40,7 @@ Once you have that, download stytra in a directory and install it via pip by::
     
 To test the installation, you can try to run an example experiment from the prompt with::
     
-    python -m stytra.demos.looming_experiment
+    python -m stytra.examples.looming_experiment
 
 
 .. note::
