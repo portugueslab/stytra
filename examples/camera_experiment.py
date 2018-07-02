@@ -32,7 +32,8 @@ if __name__ == "__main__":
     # camera_config = dict(type="ximea")
 
     tracking_config = dict(
-        embedded=True, tracking_method="angle_sweep", preprocessing_method="prefilter"
+        embedded=True, tracking_method="angle_sweep",
+        preprocessing_method="prefilter"
     )
 
     # We make a new instance of Stytra with this protocol as the only option

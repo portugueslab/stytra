@@ -22,7 +22,6 @@ class FishTrackingMethod(ParametrizedImageproc):
         return cent[0]/image_scale, cent[1]/image_scale, 0.0
 
 
-
 class ContourScorer:
     """ """
 

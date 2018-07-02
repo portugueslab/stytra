@@ -36,6 +36,59 @@ class EyeTrackingMethod(ParametrizedImageproc):
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_eyes_log"
 
+    @classmethod
+    def detect(cls, im, wnd_pos, wnd_dim, threshold, image_scale, \
+                filter_size,
+                   color_invert, **kwargs):
+        """
+
+        Parameters
+        ----------
+        im :
+            image (numpy array);
+        win_pos :
+            position of the window on the eyes (x, y);
+        win_dim :
+            dimension of the window on the eyes (w, h);
+        threshold :
+            threshold for ellipse fitting (int).
+        wnd_pos :
+
+        wnd_dim :
+
+        image_scale :
+
+        filter_size :
+
+        color_invert :
+
+
+        Returns
+        -------
+
+        """
+        PAD = 0
+
+        cropped = _pad(
+            im[
+            wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
+            wnd_pos[1]: wnd_pos[1] + wnd_dim[1]
+            ].copy(),
+            padding=PAD,
+            val=255,
+        )
+
+        thresholded = (cropped < threshold).astype(np.uint8)
+
+        # try:
+        e = _fit_ellipse(thresholded)
+        if e is False:
+            e = (np.nan,) * 10
+        else:
+            e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
+
+        return np.array(e)
+
 
 def _pad(im, padding=0, val=0):
     """Lazy function for padding image
@@ -128,51 +181,3 @@ def _fit_ellipse(thresholded_image):
 
 # TODO: function for scaling/filtering/invert should be unique for both
 # tail and eye tracking
-def trace_eyes(im, wnd_pos, wnd_dim, threshold, image_scale, filter_size, color_invert):
-    """
-
-    Parameters
-    ----------
-    im :
-        image (numpy array);
-    win_pos :
-        position of the window on the eyes (x, y);
-    win_dim :
-        dimension of the window on the eyes (w, h);
-    threshold :
-        threshold for ellipse fitting (int).
-    wnd_pos :
-        
-    wnd_dim :
-        
-    image_scale :
-        
-    filter_size :
-        
-    color_invert :
-        
-
-    Returns
-    -------
-
-    """
-    PAD = 0
-
-    cropped = _pad(
-        im[
-            wnd_pos[0] : wnd_pos[0] + wnd_dim[0], wnd_pos[1] : wnd_pos[1] + wnd_dim[1]
-        ].copy(),
-        padding=PAD,
-        val=255,
-    )
-
-    thresholded = (cropped < threshold).astype(np.uint8)
-
-    # try:
-    e = _fit_ellipse(thresholded)
-    if e is False:
-        e = (np.nan,) * 10
-    else:
-        e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
-
-    return np.array(e)
