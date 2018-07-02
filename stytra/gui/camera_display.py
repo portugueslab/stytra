@@ -172,8 +172,10 @@ class CameraViewWidget(QWidget):
     def save_image(self):
         """Save a frame to the current directory."""
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        imsave(self.experiment.filename_base() + '/' + timestamp + '_img.png',
-               self.image_item.image)
+        imsave(
+            self.experiment.filename_base() + timestamp + "_img.png",
+            self.image_item.image,
+        )
 
     def show_params_gui(self):
         """ """
@@ -406,8 +408,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                     im = (im < self.track_params["threshold"]).astype(np.uint8)
 
                 if len(self.experiment.data_acc.stored_data) > 1:
-                    self.roi_eyes.setPen(dict(color=(5, 40, 200),
-                                              width=3))
+                    self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
                     e = retrieved_data[-10:]
                     for i, o in enumerate([0, 5]):
                         if e[0] == e[0]:
@@ -460,8 +461,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             # No eyes detected:
                             for ell in self.curves_eyes:
                                 ell.setPen(None)
-                            self.roi_eyes.setPen(dict(color=(230, 40, 5),
-                                                      width=3))
+                            self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
                 self.image_item.setImage(im)
 

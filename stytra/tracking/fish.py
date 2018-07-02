@@ -4,6 +4,23 @@ from numba import vectorize, uint8, jit
 
 from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
+from stytra.tracking import ParametrizedImageproc
+
+
+class FishTrackingMethod(ParametrizedImageproc):
+    name = "tracking_fish_params"
+    def __init__(self):
+        super().__init__()
+        self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
+
+        self.accumulator_headers = ["x", "y", "theta"]
+        self.data_log_name = ""
+
+    @classmethod
+    def detect(cls, im, threshold=128, image_scale=1, **extra_args):
+        cent = centroid_bin(im < threshold)
+        return cent[0]/image_scale, cent[1]/image_scale, 0.0
+
 
 
 class ContourScorer:
@@ -388,16 +405,3 @@ def centroid_bin(im):
         return si / sw, sj / sw
 
     return (-1.0, -1.0)
-
-
-def find_fish_simple(im, threshold, image_scale, filter_size):
-    return centroid_bin(im < threshold) + (0,)
-
-
-if __name__ == "__main__":
-    test = np.zeros((100, 100), dtype=np.uint8)
-    test[10:20, 10:20] = 255
-    ms, contours, orn = cv2.findContours(
-        test.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
-    )
-    print(len(contours))

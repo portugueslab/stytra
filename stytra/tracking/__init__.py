@@ -1,9 +1,18 @@
 from multiprocessing import Process
 from queue import Empty
-from stytra.tracking.fish import find_fishes_midlines
 import cv2
 from datetime import datetime
 from stytra.tracking.diagnostics import draw_found_fish
+from stytra.utilities import HasPyQtGraphParams
+
+
+class ParametrizedImageproc(HasPyQtGraphParams):
+
+    def __init__(self):
+        super().__init__()
+
+    def process(self, im, **kwargs):
+        return im
 
 
 class FishTrackingProcess(Process):

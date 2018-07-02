@@ -273,7 +273,6 @@ class MultiStreamPlot(pg.GraphicsWindow):
                 except TypeError:
                     pass
 
-
             # except IndexError:
             #     pass
             # except TypeError:

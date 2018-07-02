@@ -7,17 +7,36 @@ import cv2
 import numpy as np
 from numba import jit
 
-from stytra.utilities import FrameProcessor
+from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
 
-from stytra.tracking.interfaces import MovementDetectionParameters
-from stytra.tracking.tail import trace_tail_centroid, trace_tail_angular_sweep
-from stytra.tracking.eyes import trace_eyes
-from stytra.tracking.fish import find_fish_simple
-from stytra.tracking.eyes_tail import trace_tail_eyes
+from stytra.tracking.tail import CentroidTrackingMethod, AnglesTrackingMethod
+from stytra.tracking.eyes import EyeTrackingMethod
+from stytra.tracking.fish import FishTrackingMethod
+from stytra.tracking.eyes_tail import TailEyesTrackingMethod
+
+from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
+from stytra.tracking.movement import MovementDetectionParameters
+
+def get_tracking_method(name):
+    tracking_methods_list = dict(
+        centroid=CentroidTrackingMethod,
+        angle_sweep=AnglesTrackingMethod,
+        eye_threshold=EyeTrackingMethod,
+        eyes_tail=TailEyesTrackingMethod,
+        fish=FishTrackingMethod,
+    )
+    return tracking_methods_list.get(name, None)
 
 
-class FrameDispatcher(FrameProcessor):
+def get_preprocessing_method(name):
+    prepmethods = dict(prefilter=Prefilter,
+                       bgsub=BackgorundSubtractor,
+                       bgsubcv=CV2BgSub)
+    return prepmethods.get(name, None)
+
+
+class FrameDispatcher(FrameProcess):
     """A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
 
@@ -33,6 +52,8 @@ class FrameDispatcher(FrameProcessor):
         self,
         in_frame_queue,
         finished_signal=None,
+        processing_class=None,
+        preprocessing_class=None,
         processing_parameter_queue=None,
         gui_framerate=30,
         **kwargs
@@ -48,22 +69,15 @@ class FrameDispatcher(FrameProcessor):
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
         self.output_queue = Queue()  # queue for processing output (e.g., pos)
-        self.processing_parameters = None
+        self.processing_parameters = dict()
 
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        self.processing_function = None
+        self.preprocessing_obj = get_preprocessing_method(preprocessing_class).process
+        self.preprocessing_state = None
+        self.processing_obj = get_tracking_method(processing_class).detect
         self.processing_parameter_queue = processing_parameter_queue
-
-        # TODO this hardcoded dictionary may produce headaches
-        self.dict_tracking_functions = dict(
-            angle_sweep=trace_tail_angular_sweep,
-            centroid=trace_tail_centroid,
-            eye_threshold=trace_eyes,
-            tail_eyes=trace_tail_eyes,
-            fish=find_fish_simple,
-        )
 
     def process_internal(self, frame):
         """Apply processing function to current frame with
@@ -80,10 +94,7 @@ class FrameDispatcher(FrameProcessor):
             processed output
 
         """
-        if self.processing_function is not None:
 
-            output = self.processing_function(frame, **self.processing_parameters)
-            return output
 
     def run(self):
         """Loop where the tracking function runs."""
@@ -93,13 +104,9 @@ class FrameDispatcher(FrameProcessor):
             if self.processing_parameter_queue is not None:
                 try:
                     # Read all parameters from the queue:
-                    self.processing_parameters = self.processing_parameter_queue.get(
-                        timeout=0.0001
+                    self.processing_parameters.update(
+                        **self.processing_parameter_queue.get(timeout=0.0001)
                     )
-
-                    self.processing_function = self.dict_tracking_functions[
-                        self.processing_parameters.pop("function")
-                    ]
 
                 except Empty:
                     pass
@@ -109,12 +116,26 @@ class FrameDispatcher(FrameProcessor):
                 time, frame = self.frame_queue.get(timeout=0.001)
 
                 # If a processing function is specified, apply it:
-                if self.processing_function is not None:
-                    a = (datetime.now(), self.process_internal(frame))
-                    self.output_queue.put(a)
 
-                self.update_framerate()  # calculate the frame rate
-                self.send_to_gui(frame)  # put current frame into the GUI queue
+                if self.preprocessing_obj is not None:
+                    processed, self.preprocessing_state = self.preprocessing_obj(
+                        frame, self.preprocessing_state, **self.processing_parameters
+                    )
+                else:
+                    processed = frame
+
+                if self.processing_obj is not None:
+                    output = self.processing_obj(processed, **self.processing_parameters)
+                    self.output_queue.put((datetime.now(), output))
+
+                # calculate the frame rate
+                self.update_framerate()
+
+                # put current frame into the GUI queue
+                if self.processing_parameters["display_processed"]:
+                    self.send_to_gui(processed)
+                else:
+                    self.send_to_gui(frame)
 
             except Empty:  # if there is nothing in frame queue
                 pass
