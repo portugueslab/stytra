@@ -1,3 +1,6 @@
+from stytra.utilities import HasPyQtGraphParams
+
+
 class MovementDetectionParameters(HasPyQtGraphParams):
     """
     The class for parametrisation of various tail and fish tracking methods

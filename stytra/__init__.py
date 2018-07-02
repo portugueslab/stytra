@@ -5,6 +5,7 @@ from stytra.experiments.tracking_experiments import (
     TrackingExperiment,
     SwimmingRecordingExperiment,
 )
+from stytra.calibration import CircleCalibrator
 
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
@@ -49,6 +50,9 @@ class Stytra:
         recording_config : bool
             whether to record motion in freely-swimming experiments
 
+        embedded : bool
+            if not embedded, use circle calibrator
+
 
 
     """
@@ -62,6 +66,7 @@ class Stytra:
         display_config=None,
         tracking_config=None,
         recording_config=None,
+            embedded=True,
         trigger=None,
         asset_dir=None,
         dir_save=None,
@@ -80,6 +85,7 @@ class Stytra:
             display_config=display_config,
             protocols=protocols,
             trigger=trigger,
+            calibrator=(CircleCalibrator() if not embedded else None),
         )
 
         base = Experiment
@@ -92,7 +98,6 @@ class Stytra:
                 base = TrackingExperiment
             if recording_config is not None:
                 base = SwimmingRecordingExperiment
-                # TODO add swimming closed-loop experiments
 
         app_icon = QIcon()
         for size in [32, 64, 128, 256]:
