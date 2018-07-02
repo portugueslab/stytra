@@ -62,7 +62,6 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
         # If estimated velocity greater than threshold we are in a bout
         if self.fish_velocity > self.swimming_threshold:
-            print('fish_swimming!')
             self.going = 1
             self.fish_swimming = True
             if self.bout_start is None:

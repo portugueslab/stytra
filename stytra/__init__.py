@@ -5,6 +5,7 @@ from stytra.experiments.tracking_experiments import (
     TrackingExperiment,
     SwimmingRecordingExperiment,
 )
+from stytra.calibration import CircleCalibrator
 
 # imports for easy experiment building
 from stytra.metadata import AnimalMetadata, GeneralMetadata
@@ -14,11 +15,47 @@ from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
+import pkg_resources
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
-    parameters"""
+    parameters
+
+    Parameters
+    ==========
+        protocols : list(Protocol)
+            the protocols to be made available from the dropdown
+
+        display_config : dict
+            full_screen
+            window_size
+
+        camera_config : dict
+            file
+                or
+            type
+            rotation
+            downsampling
+
+
+        tracking_config : dict
+            preprocessing_method: str
+                one of "prefilter" or "bgrem"
+            tracking_method: str
+                one of "tail", "eyes", "fish"
+            estimator: str
+
+
+        recording_config : bool
+            whether to record motion in freely-swimming experiments
+
+        embedded : bool
+            if not embedded, use circle calibrator
+
+
+
+    """
 
     def __init__(
         self,
@@ -28,6 +65,8 @@ class Stytra:
         camera_config=None,
         display_config=None,
         tracking_config=None,
+        recording_config=None,
+            embedded=True,
         trigger=None,
         asset_dir=None,
         dir_save=None,
@@ -46,6 +85,7 @@ class Stytra:
             display_config=display_config,
             protocols=protocols,
             trigger=trigger,
+            calibrator=(CircleCalibrator() if not embedded else None),
         )
 
         base = Experiment
@@ -55,16 +95,14 @@ class Stytra:
             class_kwargs["camera_config"] = camera_config
             if tracking_config is not None:
                 class_kwargs["tracking_config"] = tracking_config
-                if tracking_config["embedded"]:
-                    base = TrackingExperiment
-                else:
-                    base = SwimmingRecordingExperiment
-                # TODO add swimming closed-loop experiments
+                base = TrackingExperiment
+            if recording_config is not None:
+                base = SwimmingRecordingExperiment
 
         app_icon = QIcon()
-        app_icon.addFile("icons/48.png", QSize(48, 48))
-        app_icon.addFile("icons/128.png", QSize(128, 128))
-        app_icon.addFile("icons/256.png", QSize(256, 256))
+        for size in [32, 64, 128, 256]:
+            app_icon.addFile(pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
+                             QSize(size, size))
         app.setWindowIcon(app_icon)
 
         exp = base(**class_kwargs)

@@ -82,6 +82,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
     def set_dims(self):
         """ """
         self.widget_display.setGeometry(*(self.params["pos"] + self.params["size"]))
+        self.widget_display.calibrator.set_pixel_scale(*self.params["size"])
+        self.widget_display.calibrator.set_physical_scale()
 
 
 # TODO why here paintEvent draws the stimulus and display_stimulus update

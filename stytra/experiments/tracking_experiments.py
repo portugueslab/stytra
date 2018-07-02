@@ -186,9 +186,6 @@ class TrackingExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(
             *args,
-            calibrator=CircleCalibrator()
-            if tracking_config["tracking_method"] == "fish"
-            else None,
             **kwargs
         )
 

@@ -37,7 +37,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
-        self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
+        self.roi_box.sigRegionChanged.connect(self.set_param_val)
         self.roi_params.sigTreeStateChanged.connect(self.set_roi)
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(
@@ -148,7 +148,8 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
-        self.label_calibrate = QLabel("size of calib. pattern in mm")
+        self.label_calibrate = QLabel(self.calibrator.length_to_measure)
+        self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
         self.calibrator_len_spin = ParameterSpinBox(

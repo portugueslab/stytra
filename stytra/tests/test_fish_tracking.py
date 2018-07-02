@@ -3,7 +3,7 @@ import unittest
 from stytra.tracking.fish import find_fish_simple
 import numpy as np
 
-#
+
 class TestCentroidTracking(unittest.TestCase):
 
     def test_centroid_tracking(self):

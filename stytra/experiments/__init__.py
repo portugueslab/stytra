@@ -7,6 +7,7 @@ import qdarkstyle
 import logging
 
 from PyQt5.QtCore import QObject
+from PyQt5.QtWidgets import QMessageBox
 
 from stytra.calibration import CrossCalibrator
 from stytra.collectors import DataCollector
@@ -87,6 +88,7 @@ class Experiment(QObject):
 
         self.window_main = None
         self.scope_config = None
+        self.abort = False
 
         self.logger = logging.getLogger()
         self.logger.setLevel("INFO")
@@ -223,13 +225,20 @@ class Experiment(QObject):
         -------
 
         """
+        self.abort = False
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
             self.logger.info("Waiting for trigger signal...")
-            while True:
+            msg = QMessageBox()
+            msg.setText("Waiting for trigger event...")
+            msg.setStandardButtons(QMessageBox.Abort)
+            msg.buttonClicked.connect(self.abort_start)
+            msg.show()
+            while True and not self.abort:
                 if (
                     self.trigger.start_event.is_set()
                     and not self.protocol_runner.running
                 ):
+                    msg.close()
                     self.protocol_runner.start()
                     try:
                         self.scope_config = self.trigger.queue_trigger_params.get(
@@ -241,12 +250,16 @@ class Experiment(QObject):
                                 self.scope_config, "imaging_microscope_config"
                             )
                     except Empty:
-                        print("No scope configuration received")
+                        self.logger.info("No trigger configuration received")
                     break
                 else:
                     self.app.processEvents()
         else:
             self.protocol_runner.start()
+
+    def abort_start(self):
+        self.logger.info("Aborted")
+        self.abort = True
 
     def end_protocol(self, save=True):
         """Function called at Protocol end. Reset Protocol and save

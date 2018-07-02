@@ -259,7 +259,7 @@ class AvtCamera(Camera):
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
                 # TODO Handle this in a cleaner way
-                if val < 210:  # empirically found maximum frame rate
+                if val < 210:  # empirically found maximum frame rate to be set
                     self.frame.waitFrameCapture(self.timeout_ms)
                     self.cam.runFeatureCommand("AcquisitionStop")
                     self.cam.endCapture()
