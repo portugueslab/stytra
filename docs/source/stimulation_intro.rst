@@ -17,3 +17,8 @@ The :class:`~stytra.stimulation.ProtocolRunner`  class is used to
 keep track of time and set the Stimuli in the Protocol sequence with the proper pace.
 
 
+.. autoclass::`~stytra.stimulation.ProtocolRunner`
+
+
+
+
