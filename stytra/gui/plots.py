@@ -5,8 +5,6 @@ import pyqtgraph as pg
 import numpy as np
 import datetime
 from stytra.collectors import Accumulator
-import time
-import pandas as pd
 import colorspacious
 
 
