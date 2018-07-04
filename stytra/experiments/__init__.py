@@ -44,6 +44,7 @@ class Experiment(QObject):
     display_config: dict
         (optional) Dictionary with specifications for the display. Possible
         key values are "full_screen" and "window_size".
+        gl_display : bool (False)
     rec_stim_every : int
         (optional) Set to record a movie of the displayed visual stimulus. It
         specifies every how many frames one will be saved (set to 1 to
@@ -126,12 +127,13 @@ class Experiment(QObject):
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
         if display_config is None:
-            self.display_config = dict(full_screen=False)
+            self.display_config = dict(full_screen=False, gl=False)
         else:
             self.display_config = display_config
 
         self.window_display = StimulusDisplayWindow(
-            self.protocol_runner, self.calibrator, record_stim_every=rec_stim_every
+            self.protocol_runner, self.calibrator, gl=self.display_config.get("gl", False),
+            record_stim_every=rec_stim_every
         )
 
         if self.display_config.get("window_size", None) is not None:

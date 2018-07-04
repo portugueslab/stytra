@@ -38,7 +38,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
     """
 
-    def __init__(self, protocol_runner, calibrator, record_stim_every=10, **kwargs):
+    def __init__(self, protocol_runner, calibrator, record_stim_every=10, gl=False, **kwargs):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.
@@ -53,7 +53,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
 
-        if record_stim_every is not None:
+        if record_stim_every is not None or not gl:
             QWidgetClass = QWidget
         else:
             QWidgetClass = QOpenGLWidget

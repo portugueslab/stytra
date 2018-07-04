@@ -33,6 +33,12 @@ install:
   - echo ${PYTHON}
   - conda install pyqt --yes;
   - conda install opencv -c conda-forge --yes;
+
+  - which python
+  - python --version
+  - pwd
+  - ls
+
   - pip install pytest-xdist # multi-thread py.test
   - pip install pytest-cov # add coverage stats
   - pip install coveralls
