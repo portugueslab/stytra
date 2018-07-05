@@ -40,7 +40,7 @@ class Calibrator(HasPyQtGraphParams):
         )
         self.length_to_measure = "do not use the base class as a calibrator"
 
-        self.params["length_mm"] = 1
+        self.params["length_mm"] = 30
         self.params.child("length_mm").sigValueChanged.connect(self.set_physical_scale)
 
     def toggle(self):

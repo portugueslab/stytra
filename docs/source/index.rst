@@ -57,6 +57,7 @@ Modules
     triggering_intro
     image_processing
     parameters_stytra
+    hardware_list
 
 
 
