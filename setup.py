@@ -24,6 +24,8 @@ setup(
         "pymongo",
         "colorspacious",
         "arrayqueues",
+        "pillow",
+        "scikit-image"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

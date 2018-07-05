@@ -1,11 +1,10 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSplitter
+from PyQt5.QtGui import QPalette
+from PyQt5.QtWidgets import QDoubleSpinBox, QLabel, QPushButton, QHBoxLayout,\
+    QSpacerItem, QWidget, QVBoxLayout, QSizePolicy
 import pyqtgraph as pg
 import numpy as np
 import datetime
 from stytra.collectors import Accumulator
-import time
-import pandas as pd
 import colorspacious
 
 
@@ -57,7 +56,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
             pass
 
 
-class MultiStreamPlot(pg.GraphicsWindow):
+class MultiStreamPlot(QWidget):
     """Window to plot live data that are accumulated by a DAtaAccumulator
     object.
     New plots can be added via the add_stream() method.
@@ -75,14 +74,37 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
         self.time_past = time_past
 
-        self.value_label = pg.LabelItem(justify="right")
-        self.addItem(self.value_label)
+        self.setLayout(QVBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
 
-        self.plotContainter = pg.PlotItem()
-        self.addItem(self.plotContainter)
-        self.plotContainter.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
+        self.control_layout = QHBoxLayout()
+        self.control_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.btn_freeze = QPushButton()
+        self.btn_freeze.setMinimumSize(80, 16)
+        self.btn_freeze.clicked.connect(self.toggle_freeze)
+        self.control_layout.addWidget(self.btn_freeze)
+
+        self.lbl_zoom = QLabel("Plot past ")
+        self.spn_zoom = QDoubleSpinBox()
+        self.spn_zoom.setValue(time_past)
+        self.spn_zoom.setSuffix("s")
+        self.spn_zoom.setMinimum(0.1)
+        self.spn_zoom.setMaximum(30)
+        self.spn_zoom.valueChanged.connect(self.update_zoom)
+
+        self.control_layout.addItem(
+            QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum))
+        self.control_layout.addWidget(self.lbl_zoom)
+        self.control_layout.addWidget(self.spn_zoom)
+
+        self.layout().addLayout(self.control_layout)
+
+        self.plotContainter = pg.PlotWidget()
         self.plotContainter.showAxis("left", False)
-        self.plotContainter.vb.setMouseEnabled(x=True, y=False)
+        self.plotContainter.plotItem.hideButtons()
+
+        self.layout().addWidget(self.plotContainter)
 
         self.accumulators = []
         self.stream_names = []
@@ -97,6 +119,16 @@ class MultiStreamPlot(pg.GraphicsWindow):
         self.bounds_update = bounds_update
 
         self.colors = []
+
+        self.frozen = True
+
+        # trick to set color on update
+        self.color_set = False
+
+        self.toggle_freeze()
+        self.update_zoom(time_past)
+
+
 
     @staticmethod
     def get_colors(n_colors=1, lightness=50, saturation=50, shift=0):
@@ -138,6 +170,7 @@ class MultiStreamPlot(pg.GraphicsWindow):
             * 255
         )
 
+
     def add_stream(self, accumulator, header_items=None):
         """Adds a data collector stream to the plot:
 
@@ -172,16 +205,16 @@ class MultiStreamPlot(pg.GraphicsWindow):
             self.curves.append(c)
 
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
-            curve_label.setPos(-self.time_past * 0.9, i_curve)
+            curve_label.setPos(-self.time_past*0.9, i_curve)
+
+            fps_label = pg.TextItem("", anchor=(0, 0))
+            fps_label.setPos(-self.time_past*0.9, i_curve + 1)
 
             max_label = pg.TextItem("", anchor=(0, 0))
             max_label.setPos(0, i_curve + 1)
 
             min_label = pg.TextItem("", anchor=(0, 1))
             min_label.setPos(0, i_curve)
-
-            fps_label = pg.TextItem("", anchor=(0, 0))
-            fps_label.setPos(-self.time_past * 0.9, i_curve + 1)
 
             value_label = pg.TextItem("", anchor=(0, 0.5))
             value_label.setPos(0, i_curve + 0.5)
@@ -205,6 +238,14 @@ class MultiStreamPlot(pg.GraphicsWindow):
 
     def update(self):
         """Function called by external timer to update the plot"""
+        if not self.color_set:
+            self.plotContainter.setBackground(
+                self.palette().color(QPalette.Button))
+            self.color_set = True
+
+        if self.frozen:
+            return None
+
         self.start = datetime.datetime.now()
 
         i_stream = 0
@@ -244,9 +285,9 @@ class MultiStreamPlot(pg.GraphicsWindow):
                         scale = ub - lb
                         if scale < 0.00001:
                             scale = 1
-                        self.valueLabels[i_stream][0].setText("{:7.3f}".format(lb))
-                        self.valueLabels[i_stream][1].setText("{:7.3f}".format(ub))
-                        self.valueLabels[i_stream][2].setText("{:7.2f} FPS".format(fps))
+                        self.valueLabels[i_stream][0].setText("{:07.3f}".format(lb))
+                        self.valueLabels[i_stream][1].setText("{:07.3f}".format(ub))
+                        self.valueLabels[i_stream][2].setText("{:06.2f} FPS".format(fps))
                         self.valueLabels[i_stream][4].setText(
                             "{:7.3f}".format(data_array[-1, i_var])
                         )
@@ -273,7 +314,27 @@ class MultiStreamPlot(pg.GraphicsWindow):
                 except TypeError:
                     pass
 
-            # except IndexError:
-            #     pass
-            # except TypeError:
-            #     pass
+    def toggle_freeze(self):
+        self.frozen = not self.frozen
+        if self.frozen:
+            self.btn_freeze.setText("Live plot")
+            self.plotContainter.plotItem.vb.setMouseEnabled(x=True, y=True)
+        else:
+            self.btn_freeze.setText("Freeze plot")
+            self.plotContainter.plotItem.vb.setMouseEnabled(x=False, y=False)
+            self.plotContainter.setXRange(-self.time_past * 0.9,
+                                          self.time_past * 0.05)
+            self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
+
+    def update_zoom(self, time_past=1):
+        self.time_past = time_past
+        self.plotContainter.setXRange(-self.time_past * 0.9,
+                                      self.time_past * 0.05)
+        self.plotContainter.plotItem.vb.setRange(xRange=(-self.time_past * 0.9,
+                                      self.time_past * 0.05))
+        # shift the labels
+        for i_curve, (min_label, max_label, fps_label, curve_label, value_label)\
+                in enumerate(self.valueLabels):
+            curve_label.setPos(-self.time_past*0.9, i_curve)
+            fps_label.setPos(-self.time_past*0.9, i_curve + 1)
+

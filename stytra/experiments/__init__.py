@@ -3,7 +3,6 @@ import os
 import traceback
 from queue import Empty
 import deepdish as dd
-import qdarkstyle
 import logging
 
 from PyQt5.QtCore import QObject
@@ -45,6 +44,7 @@ class Experiment(QObject):
     display_config: dict
         (optional) Dictionary with specifications for the display. Possible
         key values are "full_screen" and "window_size".
+        gl_display : bool (False)
     rec_stim_every : int
         (optional) Set to record a movie of the displayed visual stimulus. It
         specifies every how many frames one will be saved (set to 1 to
@@ -64,7 +64,7 @@ class Experiment(QObject):
         metadata_general=None,
         metadata_animal=None,
         calibrator=None,
-        asset_directory="",
+        dir_assets="",
         log_format="csv",
         rec_stim_every=None,
         display_config=None,
@@ -77,7 +77,7 @@ class Experiment(QObject):
         self.protocols = protocols
         self.trigger = trigger
 
-        self.asset_dir = asset_directory
+        self.asset_dir = dir_assets
         self.base_dir = dir_save
         self.log_format = log_format
 
@@ -127,12 +127,13 @@ class Experiment(QObject):
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
         if display_config is None:
-            self.display_config = dict(full_screen=False)
+            self.display_config = dict(full_screen=False, gl=False)
         else:
             self.display_config = display_config
 
         self.window_display = StimulusDisplayWindow(
-            self.protocol_runner, self.calibrator, record_stim_every=rec_stim_every
+            self.protocol_runner, self.calibrator, gl=self.display_config.get("gl", False),
+            record_stim_every=rec_stim_every
         )
 
         if self.display_config.get("window_size", None) is not None:
@@ -169,7 +170,6 @@ class Experiment(QObject):
         -------
 
         """
-        self.app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
         self.make_window()
         self.initialize_metadata()
         self.show_stimulus_screen(self.display_config["full_screen"])
