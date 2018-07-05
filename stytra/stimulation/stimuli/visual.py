@@ -107,34 +107,34 @@ class FullFieldVisualStimulus(VisualStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
-class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
-    """Paints a full field flash of a specific color, where
-    luminance is dynamically changed. (Could be easily change to change color
-    as well).
-
-    ..deprecate in favour of using InterpolatedStimulus
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-
-    def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
-        super().__init__(*args, dynamic_parameters=["lum"], **kwargs)
-        self.color = color_0
-        self.lum_df = lum_df
-        self.name = "moving seamless"
-        self.duration = float(lum_df.t.iat[-1])
-
-    def update(self):
-        """ """
-        super().update()
-        lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df["lum"])
-        print(lum)
-        setattr(self, "color", (lum,) * 3)
+# class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
+#     """Paints a full field flash of a specific color, where
+#     luminance is dynamically changed. (Could be easily change to change color
+#     as well).
+#
+#     ..deprecate in favour of using InterpolatedStimulus
+#
+#     Parameters
+#     ----------
+#
+#     Returns
+#     -------
+#
+#     """
+#
+#     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
+#         super().__init__(*args, dynamic_parameters=["lum"], **kwargs)
+#         self.color = color_0
+#         self.lum_df = lum_df
+#         self.name = "moving seamless"
+#         self.duration = float(lum_df.t.iat[-1])
+#
+#     def update(self):
+#         """ """
+#         super().update()
+#         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df["lum"])
+#         print(lum)
+#         setattr(self, "color", (lum,) * 3)
 
 
 class Pause(FullFieldVisualStimulus):
@@ -350,8 +350,10 @@ class SeamlessImageStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(BackgroundStimulus):
-    """Displays a grating pattern with physical dimensions.
+class GratingStimulus(BackgroundStimulus):
+    """ Displays a grating pattern with physical dimensions alternating two
+    colors. Can be square or sinusoidal.
+    For having moving grating stimulus, use subclass MovingGratingStimulus
 
     Parameters
     ----------
@@ -359,43 +361,73 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         fixed angle for the stripes (in radiants)
     grating_period : float
         spatial period of the gratings (in mm)
-    grating_color : (int, int, int) tuple
-        color for the non-black stripes (int tuple)
+    grating_col_1 : (int, int, int) tuple
+        first color (default=(255, 255, 255))
+    grating_col_2 : (int, int, int) tuple
+        first color (default=(0, 0, 0))
     """
 
-    def __init__(
-        self, *args, grating_angle=0, grating_period=10, color=(255, 255, 255), **kwargs
-    ):
-        """ """
+    def __init__(self, *args,
+                 grating_angle=0, grating_period=10,
+                 grating_type='square',
+                 grating_col_1=(255,)*3, grating_col_2=(0, )*3,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
-        self.color = color
-        self.name = "moving_gratings"
+        self.grating_type = grating_type
+        self.color_1 = grating_col_1
+        self.color_2 = grating_col_2
+        self._pattern = None
+
+    def create_pattern(self):
+        l = int(self.grating_period
+                / (2 * max(self._experiment.calibrator.params["mm_px"],
+                           0.0001)))
+        if self.grating_type == 'square':
+            self._pattern = np.ones((1, l, 3), np.uint8) * self.color_1
+            self._pattern[:, int(l / 2):, :] = self.color_2
+        elif self.grating_type == 'sine':
+            # Define sinusoidally varying weights for the two colors and then
+            #  sum them in the pattern
+            # Col 1:
+            weights_1 = (np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
+            w_mat_1 = np.concatenate([weights_1[np.newaxis, :, np.newaxis], ] * 3,
+                                   2)
+            col_1 = (np.ones((1, l, 3), np.uint8)* self.color_1) * w_mat_1
+            # Col 2
+            weights_2 = (- np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
+            w_mat_2 = np.concatenate(
+                [weights_2[np.newaxis, :, np.newaxis], ] * 3,
+                2)
+            col_2 = (np.ones((1, l, 3), np.uint8) * self.color_2) * w_mat_2
+
+            self._pattern = col_1 + col_2
+
+    def initialise_external(self, experiment):
+        super().initialise_external(experiment)
+        self.create_pattern()
+        # Get background image from folder:
+        self._qbackground = qimage2ndarray.array2qimage(self._pattern)
 
     def get_unit_dims(self, w, h):
-        return self.grating_period / max(
-            self._experiment.calibrator.params["mm_px"], 0.0001
-        ), max(w, h)
+        w, h = self._qbackground.width(), self._qbackground.height()
+        return w, h
+    #
+    # def get_unit_dims(self, w, h):
+    #     w_calc, h_calc =  self.grating_period / max(
+    #         self._experiment.calibrator.params["mm_px"], 0.0001), max(w, h)
+    #     return w_calc, self._qbackground.height()
 
     def draw_block(self, p, point, w, h):
-        """Draws one bar of the grating, the rest are repeated by tiling.
-        """
-        p.setPen(Qt.NoPen)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(
-            point.x(),
-            point.y(),
-            int(
-                self.grating_period
-                / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001))
-            ),
-            w,
-        )
+        # self.create_pattern()
+        # Get background image from folder:
+        # self._qbackground = qimage2ndarray.array2qimage(self._pattern)
+        p.drawImage(point, self._qbackground)
 
 
-class InterpolatedGratingStimulus(SeamlessGratingStimulus, InterpolatedStimulus):
+class MovingGratingStimulus(GratingStimulus,
+                            InterpolatedStimulus):
     pass
 
 

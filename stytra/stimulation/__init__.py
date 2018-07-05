@@ -195,6 +195,12 @@ class ProtocolRunner(QObject):
     def start(self):
         """Start the protocol by starting the timers.
         """
+        # Updating protocol before starting has been added to include changes
+        #  to the calibrator that are considered only in initializing the
+        # stimulus and not while it is running (e.g., gratings). Consider
+        # removing if it slows down significantly the starting event.
+        self.update_protocol()
+
         self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
         self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun

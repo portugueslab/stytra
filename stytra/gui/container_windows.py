@@ -349,12 +349,3 @@ class VRExperimentWindow(SimpleExperimentWindow):
         self.main_layout.addWidget(self.monitoring_widget)
         self.main_layout.addWidget(self.controls_widget)
         self.setCentralWidget(self.main_layout)
-
-
-class LightsheetGUI(SimpleExperimentWindow):
-    """ """
-
-    def init_ui(self):
-        """ """
-        self.chk_lightsheet = QCheckBox("Wait for lightsheet")
-        self.chk_lightsheet.setChecked(False)
