@@ -38,7 +38,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
     """
 
-    def __init__(self, protocol_runner, calibrator, record_stim_every=10, gl=False, **kwargs):
+    def __init__(self, protocol_runner, calibrator, record_stim_every=10,
+                 gl=False, **kwargs):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.

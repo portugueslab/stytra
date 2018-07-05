@@ -17,22 +17,19 @@ env:
 
 before_install:
   # We need to create a (fake) display on Travis, let's use a funny resolution
-  - wget http://repo.continuum.io/miniconda/Miniconda3-4.5.4-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b -p /home/travis/mc
+  - wget https://repo.anaconda.com/archive/Anaconda3-5.2.0-Linux-x86_64.sh -O anaconda.sh
+  - chmod +x anaconda.sh
+  - ./anaconda.sh -b -p /home/travis/mc
   - export PATH=/home/travis/mc/bin:$PATH
 
 install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
-  - conda create -n test_env python=${PYTHON} --yes
-  - source activate test_env
-  - conda install numpy scipy pyopengl pytest flake8 six coverage --yes
+  - conda install coverage --yes
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
-  - conda install pyqt --yes;
-  - conda install opencv -c conda-forge --yes;
+  - conda install opencv --yes;
 
   - which python
   - python --version
