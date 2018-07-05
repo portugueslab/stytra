@@ -5,7 +5,7 @@ from stytra.stimulation.stimuli import (
     BackgroundStimulus,
     SeamlessImageStimulus,
     CircleStimulus,
-    SeamlessGratingStimulus
+    MovingGratingStimulus
 )
 
 
@@ -96,7 +96,7 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
                 pass
 
 
-class ClosedLoop1DGratings(ClosedLoop1D, SeamlessGratingStimulus):
+class ClosedLoop1DGratings(ClosedLoop1D, MovingGratingStimulus):
     def __init__(
         self,
         df_base_vel,

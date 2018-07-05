@@ -350,8 +350,10 @@ class SeamlessImageStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class SeamlessGratingStimulus(BackgroundStimulus):
-    """Displays a grating pattern with physical dimensions.
+class GratingStimulus(BackgroundStimulus):
+    """ Displays a grating pattern with physical dimensions alternating two
+    colors. Can be square or sinusoidal.
+    For having moving grating stimulus, use subclass MovingGratingStimulus
 
     Parameters
     ----------
@@ -359,72 +361,48 @@ class SeamlessGratingStimulus(BackgroundStimulus):
         fixed angle for the stripes (in radiants)
     grating_period : float
         spatial period of the gratings (in mm)
-    grating_color : (int, int, int) tuple
-        color for the non-black stripes (int tuple)
-    """
-
-    def __init__(
-        self, *args, grating_angle=0, grating_period=10, color=(255, 255, 255), **kwargs
-    ):
-        """ """
-        super().__init__(*args, **kwargs)
-        self.theta = grating_angle
-        self.grating_period = grating_period
-        self.color = color
-        self.name = "moving_gratings"
-
-    def get_unit_dims(self, w, h):
-        return self.grating_period / max(
-            self._experiment.calibrator.params["mm_px"], 0.0001
-        ), max(w, h)
-
-    def draw_block(self, p, point, w, h):
-        """Draws one bar of the grating, the rest are repeated by tiling.
-        """
-        p.setPen(Qt.NoPen)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(
-            point.x(),
-            point.y(),
-            int(
-                self.grating_period
-                / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001))
-            ),
-            w,
-        )
-
-
-class GratingStimulus(BackgroundStimulus):
-    """ Displays an image which should tile seamlessly.
-
-    The top of the image should match with the bottom and the left
-    with the right, so there are no discontinuities). An even checkerboard
-    works, but with
-    some image editing any texture can be adjusted to be seamless.
+    grating_col_1 : (int, int, int) tuple
+        first color (default=(255, 255, 255))
+    grating_col_2 : (int, int, int) tuple
+        first color (default=(0, 0, 0))
     """
 
     def __init__(self, *args,
                  grating_angle=0, grating_period=10,
                  grating_type='square',
-                 color_1=(255,)*3, color_2=(0, )*3,
+                 grating_col_1=(255,)*3, grating_col_2=(0, )*3,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.grating_type = grating_type
-        self.color_1 = color_1
-        self.color_2 = color_2
+        self.color_1 = grating_col_1
+        self.color_2 = grating_col_2
         self._pattern = None
 
     def create_pattern(self):
         l = int(self.grating_period
-            / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001)))
+                / (2 * max(self._experiment.calibrator.params["mm_px"],
+                           0.0001)))
         if self.grating_type == 'square':
             self._pattern = np.ones((1, l, 3), np.uint8) * self.color_1
             self._pattern[:, int(l / 2):, :] = self.color_2
         elif self.grating_type == 'sine':
-            pass
+            # Define sinusoidally varying weights for the two colors and then
+            #  sum them in the pattern
+            # Col 1:
+            weights_1 = (np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
+            w_mat_1 = np.concatenate([weights_1[np.newaxis, :, np.newaxis], ] * 3,
+                                   2)
+            col_1 = (np.ones((1, l, 3), np.uint8)* self.color_1) * w_mat_1
+            # Col 2
+            weights_2 = (- np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
+            w_mat_2 = np.concatenate(
+                [weights_2[np.newaxis, :, np.newaxis], ] * 3,
+                2)
+            col_2 = (np.ones((1, l, 3), np.uint8) * self.color_2) * w_mat_2
+
+            self._pattern = col_1 + col_2
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
@@ -448,8 +426,8 @@ class GratingStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class InterpolatedGratingStimulus(GratingStimulus,
-                                  InterpolatedStimulus):
+class MovingGratingStimulus(GratingStimulus,
+                            InterpolatedStimulus):
     pass
 
 

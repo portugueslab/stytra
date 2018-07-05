@@ -3,7 +3,7 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import InterpolatedGratingStimulus, SeamlessImageStimulus
+from stytra.stimulation.stimuli import MovingGratingStimulus, SeamlessImageStimulus
 
 
 class GratingsProtocol(Protocol):
@@ -34,17 +34,13 @@ class GratingsProtocol(Protocol):
 
         df = pd.DataFrame(dict(t=t, vel_x=vel))
 
-        # stimuli.append(SeamlessImageStimulus(duration=10,
-        #                                      background='CosII_f1_okr_plot.png'))
-
         stimuli.append(
-            InterpolatedGratingStimulus(df_param=df,
+            MovingGratingStimulus(df_param=df,
                                         grating_angle=0,
                                         grating_period=self.params[
                                               'grating_cycle'],
-                                        color_1=(255, 34, 1),
-                                        color_2=(1, 240, 50),
-                                        grating_type='square'))
+                                        grating_col_2=(0, 0, 255),
+                                        grating_type='sine'))
         return stimuli
 
 
