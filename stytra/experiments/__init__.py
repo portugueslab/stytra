@@ -2,6 +2,7 @@ import datetime
 import os
 import traceback
 from queue import Empty
+import numpy as np
 import deepdish as dd
 import logging
 
@@ -15,6 +16,10 @@ from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.gui.container_windows import SimpleExperimentWindow
 
+try:
+    import av
+except ImportError:
+    pass
 
 class Experiment(QObject):
     """General class that runs an experiment.
@@ -55,7 +60,6 @@ class Experiment(QObject):
 
 
     """
-
     def __init__(
         self,
         app=None,
@@ -66,6 +70,7 @@ class Experiment(QObject):
         calibrator=None,
         dir_assets="",
         log_format="csv",
+        stim_movie_format="h5",
         rec_stim_every=None,
         display_config=None,
         trigger=None,
@@ -80,6 +85,7 @@ class Experiment(QObject):
         self.asset_dir = dir_assets
         self.base_dir = dir_save
         self.log_format = log_format
+        self.stim_movie_format = stim_movie_format
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -142,12 +148,6 @@ class Experiment(QObject):
 
         self.current_instance = self.get_new_name()
         self.i_run = 0
-        if self.base_dir is not None:
-            self.folder_name = self.base_dir + "/" + self.current_instance
-            if not os.path.isdir(self.folder_name):
-                os.makedirs(self.folder_name)
-        else:
-            self.folder_name = None
 
     def get_new_name(self):
         return (
@@ -155,6 +155,13 @@ class Experiment(QObject):
             + "_f"
             + str(self.metadata_animal.params["id"])
         )
+
+    @property
+    def folder_name(self):
+        foldername = os.path.join(self.base_dir, self.get_new_name())
+        if not os.path.isdir(foldername):
+            os.makedirs(foldername)
+        return foldername
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
@@ -288,14 +295,31 @@ class Experiment(QObject):
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 
                 # save the movie if it is generated
-                movie = self.window_display.widget_display.get_movie()
+                movie, movie_times = self.window_display.widget_display.get_movie()
                 if movie is not None:
-                    movie_dict = dict(movie=movie[0], movie_times=movie[1])
-                    dd.io.save(
-                        self.filename_base() + "stim_movie.h5",
-                        movie_dict,
-                        compression="blosc",
-                    )
+                    if self.stim_movie_format == "h5":
+                        movie_dict = dict(movie=np.stack(movie, 0),
+                                          movie_times=movie_times)
+                        dd.io.save(
+                            self.filename_base() + "stim_movie.h5",
+                            movie_dict,
+                            compression="blosc",
+                        )
+                    elif self.stim_movie_format == "mp4":
+                        container = av.open(self.filename_base()+"stim_movie.mp4", mode="w")
+                        stream = container.add_stream("mpeg4", rate=30)
+                        stream.height, stream.width = movie[0].shape[:2]
+                        print(movie[0].shape[:2])
+                        stream.pix_fmt = "yuv420p"
+                        for frame in movie:
+
+                            vidframe = av.VideoFrame.from_ndarray(np.ascontiguousarray(frame.astype(np.uint8)),
+                                                                  'rgb24')
+                            packet = stream.encode(vidframe)
+                            container.mux(packet)
+                        container.close()
+                    else:
+                        raise Exception("Tried to write the stimulus video into an unsupported format")
 
             if self.protocol_runner.dynamic_log is not None:
                 self.protocol_runner.dynamic_log.save(

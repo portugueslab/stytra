@@ -26,6 +26,7 @@ install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
   - conda install coverage --yes
+  - conda install av --yes
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}

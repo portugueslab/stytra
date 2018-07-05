@@ -117,9 +117,10 @@ class GLStimDisplay:
         self.dims = None
 
         # storing of displayed frames
-        self.stored_frames = None
         self.k = 0
-        if record_stim_every is not None:
+        if record_stim_every is None:
+            self.stored_frames = None
+        else:
             self.stored_frames = []
 
         # Connect protocol_runner timer to stimulus updating function:
@@ -145,7 +146,6 @@ class GLStimDisplay:
         -------
 
         """
-        self.dims = (self.height(), self.width())  # Update dimensions
         p = QPainter(self)
         p.setBrush(QBrush(QColor(0, 0, 0)))
         w = self.width()
@@ -172,19 +172,8 @@ class GLStimDisplay:
     def display_stimulus(self):
         """Function called by the protocol_runner timestep timer that update
         the displayed image and, if required, grab a picture of the current
-        widget state for recording the stimulus movie.
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-
-        """
-
-        self.dims = (self.height(), self.width())  # Update dimensions
-        self.update()  # update image
-
+        widget state for recording the stimulus movie. """
+        self.update()
         # Grab frame if recording is enabled.
         if self.record_stim_every is not None:
             self.k += 1
@@ -193,8 +182,8 @@ class GLStimDisplay:
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()
-                arr = qimage2ndarray.recarray_view(img)  # Convert to np array
-                self.movie.append(np.array([arr[k] for k in ["r", "g", "b"]]))
+                arr = qimage2ndarray.rgb_view(img)  # Convert to np array
+                self.movie.append(arr.copy())
                 self.movie_timestamps.append(
                     (datetime.now() - self.starting_time).total_seconds()
                 )
@@ -213,13 +202,10 @@ class GLStimDisplay:
 
         """
         if self.record_stim_every is not None:
-            movie_arr = np.array(self.movie)
-            movie_arr = movie_arr.swapaxes(1, 3)
+            movie_arr = self.movie
 
             movie_timestamps = np.array(self.movie_timestamps)
-            self.movie = []
-            self.movie_timestamps = []
             return movie_arr, movie_timestamps
 
         else:
-            return None
+            return None, None
