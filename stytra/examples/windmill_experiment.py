@@ -3,9 +3,7 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import MovingWindmillStimulus, Pause
-from PyQt5.QtGui import QRegion
-from PyQt5.QtCore import QRect
+from stytra.stimulation.stimuli import MovingWindmillStimulus, MovingGratingStimulus
 
 
 class GratingsProtocol(Protocol):
@@ -17,7 +15,7 @@ class GratingsProtocol(Protocol):
         self.add_params(inter_stim_pause=2.,
                         theta_vel=(np.pi*2)/5,
                         rotation_duration=5.,
-                        wave_shape=['square', 'sinusoidal'],
+                        wave_shape=dict(values= ['square', 'sinusoidal']),
                         n_arms=10
                         )
 
@@ -36,13 +34,17 @@ class GratingsProtocol(Protocol):
         t.extend(t_base)
         vel.extend(vel_base)
 
-        df = pd.DataFrame(dict(t=t, vel_theta=vel, n_arms=self.params[
-            'n_arms']))
-
+        df = pd.DataFrame(dict(t=t, vel_theta=vel))
         stimuli.append(
-            MovingWindmillStimulus(df_param=df,
-                                   wave_shape=self.params['wave_shape']))
-        stimuli.append(Pause(duration=3))
+            MovingWindmillStimulus(df_param=df))
+
+        df = pd.DataFrame(dict(t=t, vel_x=vel))
+        stimuli.append(
+            MovingGratingStimulus(df_param=df,
+                                  grating_angle=0,
+                                  grating_period=10,
+                                  grating_col_2=(0, 0, 255),
+                                  wave_shape='sinusoidal'))
         return stimuli
 
 

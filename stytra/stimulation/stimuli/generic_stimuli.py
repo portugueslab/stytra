@@ -153,7 +153,10 @@ class DynamicStimulus(Stimulus):
 
     def get_dynamic_state(self):
         """ """
-        return tuple(getattr(self, param, 0) for param in self.dynamic_parameters)
+        state_dict = {self.name + '_' + param:
+                          getattr(self, param, 0) for param in
+                      self.dynamic_parameters}
+        return state_dict
 
 
 class InterpolatedStimulus(Stimulus):

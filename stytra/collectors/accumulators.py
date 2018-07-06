@@ -250,14 +250,9 @@ class DynamicLog(Accumulator):
 
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
-        for stimulus in stimuli:
-            try:
-                self.header_list = ["t"] + stimulus.dynamic_parameters
-            except AttributeError:
-                pass
-        self.stored_data = []
+        self.update_stimuli(stimuli)
 
-    def update_list(self, data):
+    def update_list(self, time, data):
         """
 
         Parameters
@@ -269,8 +264,11 @@ class DynamicLog(Accumulator):
         -------
 
         """
+        data_list = [time, ] + [np.nan, ]*(len(self.header_list)-1)
+        for k in data.keys():
+            data_list[self.header_list.index(k)] = data[k]
         self.check_start()
-        self.stored_data.append(data)
+        self.stored_data.append(tuple(data_list))
 
     def update_stimuli(self, stimuli):
         # it is assumed the first dynamic stimulus has all the fields
@@ -279,11 +277,15 @@ class DynamicLog(Accumulator):
         #         self.header_list = ['t'] + stimulus.dynamic_parameters
         #         print(self.header_list)
         # self.stored_data = []
+        dynamic_params = []
         for stimulus in stimuli:
             try:
-                self.header_list = ["t"] + stimulus.dynamic_parameters
+                dynamic_params.extend([stimulus.name + '_' + p for p in
+                                       stimulus.dynamic_parameters])
             except AttributeError:
                 pass
+        self.header_list = ["t",] + dynamic_params
+        print(self.header_list)
         self.stored_data = []
 
 
