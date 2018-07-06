@@ -121,9 +121,9 @@ class Stytra:
                              QSize(size, size))
         app.setWindowIcon(app_icon)
 
-        exp = base(**class_kwargs)
+        self.exp = base(**class_kwargs)
 
-        exp.start_experiment()
+        self.exp.start_experiment()
 
         app.exec_()
 
