@@ -107,39 +107,16 @@ class FullFieldVisualStimulus(VisualStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
-# class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
-#     """Paints a full field flash of a specific color, where
-#     luminance is dynamically changed. (Could be easily change to change color
-#     as well).
-#
-#     ..deprecate in favour of using InterpolatedStimulus
-#
-#     Parameters
-#     ----------
-#
-#     Returns
-#     -------
-#
-#     """
-#
-#     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
-#         super().__init__(*args, dynamic_parameters=["lum"], **kwargs)
-#         self.color = color_0
-#         self.lum_df = lum_df
-#         self.name = "moving seamless"
-#         self.duration = float(lum_df.t.iat[-1])
-#
-#     def update(self):
-#         """ """
-#         super().update()
-#         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df["lum"])
-#         print(lum)
-#         setattr(self, "color", (lum,) * 3)
+class DynamicFullFieldStimulus(FullFieldVisualStimulus, InterpolatedStimulus):
+    """Paints a full field flash of a specific color, where
+    luminance is dynamically changed. (Could be easily change to change color
+    as well).
+    """
+    pass
 
 
 class Pause(FullFieldVisualStimulus):
     """Class for painting full field black stimuli.
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -421,74 +398,25 @@ class GratingStimulus(BackgroundStimulus):
 
 class MovingGratingStimulus(GratingStimulus,
                             InterpolatedStimulus):
-    pass
-#
-#
-# def z_func_windmill(x, y, arms):
-#     """ Function for sinusoidal windmill of arbitrary number of arms
-#     simmetrical with respect to perpendicular axes (for even n)
-#     """
-#     if np.mod(arms, 2) == 0:
-#         return np.sin(np.arctan(
-#             (x / y)) * arms + np.pi / 2)  # *(y>=0).astype(int) + \
-#         # np.sin(np.arctan(-(x/y))*arms)*(y<0).astype(int)
-#     else:
-#         return np.cos(np.arctan((x / y)) * arms) * (y < 0).astype(int) + \
-#                np.cos(np.arctan((x / y)) * arms + np.pi) * (
-#                    y >= 0).astype(int)
-#
 
-# class WindmillStimulus(BackgroundStimulus):
-#     """Class for drawing a rotating windmill (radial wedges in alternating colors).
-#
-#     Parameters
-#     ----------
-#     n_arms : int
-#         number of colored arms of the windmill
-#     color : (int, int, int) tuple
-#         color for the non-black stripes (int tuple)
-#
-#     """
-#
-#     def __init__(self, *args, color_1=(255, )*3, wave_shape='sinusoidal',
-#                  color_2=(0,) * 3, n_arms=8, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.color_1 = color_1
-#         self.color_2 = color_2
-#         self.n_arms = n_arms
-#         self.wave_shape = wave_shape
-#         self.name = "windmill"
-#         self._pattern = None
-#         self._qbackground = None
-#
-#     def create_pattern(self, side_len=500):
-#         side_len = side_len*2
-#         # Create weights for a windmill to be multiplied by colors:
-#         x = (np.arange(side_len) - side_len / 2) / side_len
-#         X, Y = np.meshgrid(x, x)  # grid of points
-#         W = z_func_windmill(X, Y, self.n_arms)  # evaluation of the function
-#         W = ((W + 1) / 2)[:, :, np.newaxis]  # normalize and add color axis
-#         if self.wave_shape == 'square':
-#             W = (W > 0.5).astype(np.uint8)  # binarize for square gratings
-#
-#         # Multiply by color:
-#         self._pattern = W * self.color_1 + (1 - W) * self.color_2
-#         self._qbackground = qimage2ndarray.array2qimage(self._pattern)
-#
-#     def initialise_external(self, experiment):
-#         super().initialise_external(experiment)
-#         self.create_pattern()
-#
-#     def draw_block(self, p, point, w, h):
-#         if self._qbackground.height() < h*1.5 or self._qbackground.width()\
-#                 < w * 1.5:
-#             print(np.max([h, w]))
-#             self.create_pattern(1.5 * np.max([h, w]))
-#
-#         point.setX((w - self._qbackground.width()) / 2)
-#         point.setY((h - self._qbackground.height()) / 2)
-#         p.setRenderHint(QPainter.Antialiasing)
-#         p.drawImage(point, self._qbackground)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters = ['theta']
+
+
+
+def z_func_windmill(x, y, arms):
+    """ Function for sinusoidal windmill of arbitrary number of arms
+    simmetrical with respect to perpendicular axes (for even n)
+    """
+    if np.mod(arms, 2) == 0:
+        return np.sin(np.arctan(
+            (x / y)) * arms + np.pi / 2)  # *(y>=0).astype(int) + \
+        # np.sin(np.arctan(-(x/y))*arms)*(y<0).astype(int)
+    else:
+        return np.cos(np.arctan((x / y)) * arms) * (y < 0).astype(int) + \
+               np.cos(np.arctan((x / y)) * arms + np.pi) * (
+                   y >= 0).astype(int)
 
 
 class WindmillStimulus(BackgroundStimulus):
@@ -503,54 +431,109 @@ class WindmillStimulus(BackgroundStimulus):
 
     """
 
-    def __init__(self, *args, color=(255, )*3, n_arms=8,
-                 **kwargs):
+    def __init__(self, *args, color_1=(255, )*3, wave_shape='sinusoidal',
+                 color_2=(0,) * 3, n_arms=8, **kwargs):
         super().__init__(*args, **kwargs)
-        self.color = color
+        self.color_1 = color_1
+        self.color_2 = color_2
         self.n_arms = n_arms
+        self.wave_shape = wave_shape
         self.name = "windmill"
+        self._pattern = None
+        self._qbackground = None
+
+    def create_pattern(self, side_len=500):
+        side_len = side_len*2
+        # Create weights for a windmill to be multiplied by colors:
+        x = (np.arange(side_len) - side_len / 2) / side_len
+        X, Y = np.meshgrid(x, x)  # grid of points
+        W = z_func_windmill(X, Y, self.n_arms)  # evaluation of the function
+        W = ((W + 1) / 2)[:, :, np.newaxis]  # normalize and add color axis
+        if self.wave_shape == 'square':
+            W = (W > 0.5).astype(np.uint8)  # binarize for square gratings
+
+        # Multiply by color:
+        self._pattern = W * self.color_1 + (1 - W) * self.color_2
+        self._qbackground = qimage2ndarray.array2qimage(self._pattern)
+
+    def initialise_external(self, experiment):
+        super().initialise_external(experiment)
+        self.create_pattern()
 
     def draw_block(self, p, point, w, h):
-        # Painting settings:
-        p.setPen(Qt.NoPen)
-        p.setRenderHint(QPainter.Antialiasing)
+        if self._qbackground.height() < h*1.5 or self._qbackground.width()\
+                < w * 1.5:
+            print(np.max([h, w]))
+            self.create_pattern(1.5 * np.max([h, w]))
 
-        # Here for changing black with another color (to be debugged)
-        # p.setBrush(QBrush(QColor(*self.color_2)))
-        # # p.drawRect(QRect(-1, -1, (w + 2)*1.5, (h + 2)*1.5))
-
-        p.setBrush(QBrush(QColor(*self.color)))
-
-        # To draw a windmill, a set of consecutive triangles will be painted:
-        mid_x = int(w / 2)  # calculate image center
-        mid_y = int(h / 2)
-
-        # calculate angles for each triangle:
-        angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
-        angles += np.pi / 2 + np.pi / (2 * self.n_arms)
-        # angular width of the white arms, by default equal to dark ones
-        size = np.pi / self.n_arms
-        # radius of triangles (much larger than frame)
-        rad = (w ** 2 + h ** 2) ** 1/2
-
-        # loop over angles and draw consecutive triangles
-        for deg in np.array(angles):
-            polyg_points = [
-                QPoint(mid_x, mid_y),
-                QPoint(int(mid_x + rad * np.cos(deg)),
-                       int(mid_y + rad * np.sin(deg))),
-                QPoint(
-                    int(mid_x + rad * np.cos(deg + size)),
-                    int(mid_y + rad * np.sin(deg + size)),
-                ),
-            ]
-            polygon = QPolygon(polyg_points)
-            p.drawPolygon(polygon)
+        point.setX((w - self._qbackground.width()) / 2)
+        point.setY((h - self._qbackground.height()) / 2)
+        p.setRenderHint(QPainter.HighQualityAntialiasing)
+        p.drawImage(point, self._qbackground)
+#
+#
+# class WindmillStimulus(BackgroundStimulus):
+#     """Class for drawing a rotating windmill (radial wedges in alternating colors).
+#
+#     Parameters
+#     ----------
+#     n_arms : int
+#         number of colored arms of the windmill
+#     color : (int, int, int) tuple
+#         color for the non-black stripes (int tuple)
+#
+#     """
+#
+#     def __init__(self, *args, color=(255, )*3, n_arms=8,
+#                  **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.color = color
+#         self.n_arms = n_arms
+#         self.name = "windmill"
+#
+#     def draw_block(self, p, point, w, h):
+#         # Painting settings:
+#         p.setPen(Qt.NoPen)
+#         p.setRenderHint(QPainter.Antialiasing)
+#
+#         # Here for changing black with another color (to be debugged)
+#         # p.setBrush(QBrush(QColor(*self.color_2)))
+#         # # p.drawRect(QRect(-1, -1, (w + 2)*1.5, (h + 2)*1.5))
+#
+#         p.setBrush(QBrush(QColor(*self.color)))
+#
+#         # To draw a windmill, a set of consecutive triangles will be painted:
+#         mid_x = int(w / 2)  # calculate image center
+#         mid_y = int(h / 2)
+#
+#         # calculate angles for each triangle:
+#         angles = np.arange(0, np.pi * 2, (np.pi * 2) / self.n_arms)
+#         angles += np.pi / 2 + np.pi / (2 * self.n_arms)
+#         # angular width of the white arms, by default equal to dark ones
+#         size = np.pi / self.n_arms
+#         # radius of triangles (much larger than frame)
+#         rad = (w ** 2 + h ** 2) ** 1/2
+#
+#         # loop over angles and draw consecutive triangles
+#         for deg in np.array(angles):
+#             polyg_points = [
+#                 QPoint(mid_x, mid_y),
+#                 QPoint(int(mid_x + rad * np.cos(deg)),
+#                        int(mid_y + rad * np.sin(deg))),
+#                 QPoint(
+#                     int(mid_x + rad * np.cos(deg + size)),
+#                     int(mid_y + rad * np.sin(deg + size)),
+#                 ),
+#             ]
+#             polygon = QPolygon(polyg_points)
+#             p.drawPolygon(polygon)
 
 
 class MovingWindmillStimulus(WindmillStimulus,
                              InterpolatedStimulus):
-    pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters = ['theta']
 
 
 class CircleStimulus(VisualStimulus, DynamicStimulus):

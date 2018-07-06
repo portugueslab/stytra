@@ -92,7 +92,7 @@ class Stytra:
         tracking_config=None,
         recording_config=None,
         embedded=True,
-        **kwargs,
+        **kwargs
     ):
 
         app = QApplication([])

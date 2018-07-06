@@ -6,7 +6,7 @@ import numpy as np
 import deepdish as dd
 import logging
 
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, QTimer
 from PyQt5.QtWidgets import QMessageBox
 
 from stytra.calibration import CrossCalibrator
@@ -14,7 +14,7 @@ from stytra.collectors import DataCollector
 from stytra.stimulation import ProtocolRunner
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
-from stytra.gui.container_windows import SimpleExperimentWindow
+from stytra.gui.container_windows import SimpleExperimentWindow, DynamicStimExperimentWindow
 
 try:
     import av
@@ -68,6 +68,7 @@ class Experiment(QObject):
         metadata_general=None,
         metadata_animal=None,
         calibrator=None,
+        stim_plot=False,
         dir_assets="",
         log_format="csv",
         stim_movie_format="h5",
@@ -86,6 +87,7 @@ class Experiment(QObject):
         self.base_dir = dir_save
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
+        self.stim_plot = stim_plot
 
         if calibrator is None:
             self.calibrator = CrossCalibrator()
@@ -149,6 +151,9 @@ class Experiment(QObject):
         self.current_instance = self.get_new_name()
         self.i_run = 0
 
+        self.gui_timer = QTimer()
+        self.gui_timer.setSingleShot(False)
+
     def get_new_name(self):
         return (
             datetime.datetime.now().strftime("%y%m%d")
@@ -186,7 +191,13 @@ class Experiment(QObject):
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
         """
-        self.window_main = SimpleExperimentWindow(self)
+        if self.stim_plot:
+            self.window_main = DynamicStimExperimentWindow(self)
+            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
+            self.gui_timer.start(1000 // 60)
+            self.gui_timer.start(1000 // 60)
+        else:
+            self.window_main = SimpleExperimentWindow(self)
         self.window_main.show()
 
     def initialize_metadata(self):

@@ -2,13 +2,12 @@ Hardware description
 ====================
 
 Below we provide a description of the setups in use in the lab together with a
-full list of components that cam be
+full list of components that can be
 used to assemble them.
 
 Two configurations are described: the first one is for detailed kinematic
 tracking of eyes and tail in a fish with head restrained in agarose, the
-second for tracking freely swimming fish in an open arena.
-
+second for tracking freely swimming fish in a petri dish.
 
 Head-restrained fish setup
 --------------------------
@@ -38,7 +37,7 @@ LED box for illuminating homogeneously a large area.
 
 List of components
 ------------------
-Below you can find a list of all components required for building the two
+Below we provide a list of all components required for building the two
 setups. Indicative prices in euros (Jul 2018) and links to
 supplier pages are provided as well.
 
