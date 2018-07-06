@@ -4,6 +4,8 @@ import pandas as pd
 from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import MovingWindmillStimulus
+from PyQt5.QtGui import QRegion
+from PyQt5.QtCore import QRect
 
 
 class GratingsProtocol(Protocol):

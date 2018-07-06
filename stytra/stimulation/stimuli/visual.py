@@ -31,12 +31,12 @@ class VisualStimulus(Stimulus):
 
     """
 
-    def __init__(self, *args, clip_rect=None, **kwargs):
+    def __init__(self, *args, clip_mask=None, **kwargs):
         """
-        :param clip_rect: mask for clipping the stimulus ((x, y, w, h) tuple);
+        :param clip_mask: mask for clipping the stimulus ((x, y, w, h) tuple);
         """
         super().__init__(*args, **kwargs)
-        self.clip_rect = clip_rect
+        self.clip_mask = clip_mask
 
     def paint(self, p, w, h):
         """Paint function. Called by the StimulusDisplayWindow update method.
@@ -72,16 +72,16 @@ class VisualStimulus(Stimulus):
         -------
 
         """
-        if self.clip_rect is not None:
-            if isinstance(self.clip_rect[0], tuple):
-                points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_rect]
+        if self.clip_mask is not None:
+            if isinstance(self.clip_mask[0], tuple):
+                points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_mask]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
                 p.setClipRect(
-                    self.clip_rect[0] * w,
-                    self.clip_rect[1] * h,
-                    self.clip_rect[2] * w,
-                    self.clip_rect[3] * h,
+                    self.clip_mask[0] * w,
+                    self.clip_mask[1] * h,
+                    self.clip_mask[2] * w,
+                    self.clip_mask[3] * h,
                 )
 
 
