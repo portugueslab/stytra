@@ -170,6 +170,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.experiment.wrap_up()
 
 
+
 class CameraExperimentWindow(SimpleExperimentWindow):
     """ """
 
@@ -184,6 +185,42 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(previous_widget)
         return self.camera_splitter
+
+
+class DynamicStimExperimentWindow(SimpleExperimentWindow):
+    """Window for plotting a dynamically varying stimulus.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        self.monitoring_widget = QWidget()
+        self.monitoring_layout = QVBoxLayout()
+        self.monitoring_widget.setLayout(self.monitoring_layout)
+
+        # Stream plot:
+        time_past = 30
+        self.stream_plot = MultiStreamPlot(time_past=time_past)
+        self.monitoring_layout.addWidget(self.stream_plot)
+
+        super().__init__(*args, **kwargs)
+
+    def construct_ui(self):
+        """ """
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
+        previous_widget = super().construct_ui()
+        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
+        self.monitoring_layout.addWidget(previous_widget)
+        self.monitoring_layout.setStretch(1, 1)
+        self.monitoring_layout.setStretch(0, 1)
+        return self.monitoring_widget
+
 
 
 class TrackingExperimentWindow(SimpleExperimentWindow):
@@ -255,64 +292,6 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
-        self.track_params_wnd.show()
-
-
-class EyeTrackingExperimentWindow(SimpleExperimentWindow):
-    """Window for controlling an experiment where the tail and the eyes
-    of an embedded fish are tracked.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
-
-    def __init__(self, *args, **kwargs):
-        self.camera_display = CameraEyesSelection(experiment=kwargs["experiment"])
-
-        self.camera_splitter = QSplitter(Qt.Horizontal)
-        self.monitoring_widget = QWidget()
-        self.monitoring_layout = QVBoxLayout()
-        self.monitoring_widget.setLayout(self.monitoring_layout)
-
-        # Stream plot:
-        self.stream_plot = MultiStreamPlot(time_past=30)
-
-        self.monitoring_layout.addWidget(self.stream_plot)
-
-        # Tracking params button:
-        self.button_tracking_params = QPushButton("Tracking params")
-        self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
-        self.monitoring_layout.addWidget(self.button_tracking_params)
-
-        self.track_params_wnd = None
-        # self.tracking_layout.addWidget(self.camera_display)
-        # self.tracking_layout.addWidget(self.button_tracking_params)
-
-        super().__init__(*args, **kwargs)
-
-    def construct_ui(self):
-        """ """
-        self.stream_plot.add_stream(self.experiment.data_acc, ["th_e0", "th_e1"])
-        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
-        previous_widget = super().construct_ui()
-        self.monitoring_layout.addWidget(previous_widget)
-        self.monitoring_layout.setStretch(1, 1)
-        self.monitoring_layout.setStretch(0, 1)
-        self.camera_splitter.addWidget(self.camera_display)
-        self.camera_splitter.addWidget(self.monitoring_widget)
-        return self.camera_splitter
-
-    def open_tracking_params_tree(self):
-        """ """
-        self.track_params_wnd = ParameterTree()
-        self.track_params_wnd.setParameters(
-            self.experiment.tracking_method.params, showTop=False
-        )
-        self.track_params_wnd.setWindowTitle("Tracking data")
         self.track_params_wnd.show()
 
 

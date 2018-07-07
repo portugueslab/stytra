@@ -3,7 +3,7 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import MovingGratingStimulus, SeamlessImageStimulus
+from stytra.stimulation.stimuli import MovingGratingStimulus
 
 
 class GratingsProtocol(Protocol):

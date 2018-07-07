@@ -203,7 +203,6 @@ class MultiStreamPlot(QWidget):
             c = pg.PlotCurveItem(x=np.array([0]), y=np.array([i_curve]))
             self.plotContainter.addItem(c)
             self.curves.append(c)
-
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past*0.9, i_curve)
 
@@ -267,13 +266,20 @@ class MultiStreamPlot(QWidget):
 
                     time_array = delta_t + data_array[:, 0]
 
-                    # Exclude nans from calculation of percentile boundaries:
-                    b = ~(np.isnan(data_array[:, indexes])).any(1)
-                    non_nan_data = data_array[b, :]
-
-                    new_bounds = np.percentile(
-                        non_nan_data[:, indexes], (0.5, 99.5), 0
-                    ).T
+                    # loop to handle nan values in a single column
+                    new_bounds = []
+                    for i in indexes:
+                        # Exclude nans from calculation of percentile boundaries:
+                        d = data_array[:, i]
+                        b = ~np.isnan(d)
+                        if np.sum(b) > 0:
+                            non_nan_data = data_array[b, i]
+                            new_bounds.append(np.percentile(
+                                non_nan_data, (0.5, 99.5), 0).T)
+                        else:
+                            new_bounds.append([0, 0])
+                    new_bounds = np.array(new_bounds)
+                    
                     if self.bounds[i_acc] is None:
                         self.bounds[i_acc] = new_bounds
                     else:
@@ -281,6 +287,7 @@ class MultiStreamPlot(QWidget):
                             self.bounds_update * new_bounds
                             + (1 - self.bounds_update) * self.bounds[i_acc]
                         )
+
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
                         if scale < 0.00001:
