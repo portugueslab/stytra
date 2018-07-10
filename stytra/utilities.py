@@ -91,7 +91,11 @@ def prepare_json(it, **kwargs):
     it :
         the item which will be recursively sanitized
     **kwargs :
-        
+        paramstree: bool
+        convert_datetime: bool
+            if datetiems are to be converted to strings for JSON serialization
+        eliminate_df: bool
+            remove dataframes from the dictionary
 
     Returns
     -------

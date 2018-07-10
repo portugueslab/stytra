@@ -16,7 +16,7 @@ from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
 class VisualStimulus(Stimulus):
-    """Stimulus class to paint programmatically on a canvas.
+    """ Stimulus class to paint programmatically on a canvas.
     For this subclass of Stimulus, their core function (paint()) is
     not called by the ProtocolRunner, but directly from the
     StimulusDisplayWindow. Since a StimulusDisplayWindow is directly linked to
@@ -86,7 +86,7 @@ class VisualStimulus(Stimulus):
 
 
 class FullFieldVisualStimulus(VisualStimulus):
-    """Class for painting a full field flash of a specific color.
+    """ Class for painting a full field flash of a specific color.
 
     Parameters
     ----------
@@ -107,38 +107,32 @@ class FullFieldVisualStimulus(VisualStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
-# class DynamicFullFieldStimulus(FullFieldVisualStimulus, DynamicStimulus):
-#     """Paints a full field flash of a specific color, where
-#     luminance is dynamically changed. (Could be easily change to change color
-#     as well).
-#
-#     ..deprecate in favour of using InterpolatedStimulus
-#
-#     Parameters
-#     ----------
-#
-#     Returns
-#     -------
-#
-#     """
-#
-#     def __init__(self, *args, lum_df=None, color_0=(0, 0, 0), **kwargs):
-#         super().__init__(*args, dynamic_parameters=["lum"], **kwargs)
-#         self.color = color_0
-#         self.lum_df = lum_df
-#         self.name = "moving seamless"
-#         self.duration = float(lum_df.t.iat[-1])
-#
-#     def update(self):
-#         """ """
-#         super().update()
-#         lum = np.interp(self._elapsed, self.lum_df.t, self.lum_df["lum"])
-#         print(lum)
-#         setattr(self, "color", (lum,) * 3)
+class DynamicLuminanceStimulus(FullFieldVisualStimulus,
+                               InterpolatedStimulus,
+                               DynamicStimulus):
+    """ A luminance stimulus that has dynamically specified luminance.
+
+    Parameters
+    ----------
+
+    luminance:
+
+
+
+    """
+    def __init__(self, *args, color=(255, 0, 0), luminance=0.0, **kwargs):
+        self.luminance = luminance
+        super().__init__(*args, dynamic_parameters=['luminance'], **kwargs)
+        self.original_color = np.array(color)
+        self.color = color
+
+    def update(self):
+        super().update()
+        self.color = tuple(self.luminance*self.original_color)
 
 
 class Pause(FullFieldVisualStimulus):
-    """Class for painting full field black stimuli.
+    """ Class for painting full field black stimuli.
 
     """
 
@@ -148,7 +142,7 @@ class Pause(FullFieldVisualStimulus):
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
-    """Displays videos using PIMS, at a specified framerate.
+    """ Displays videos using PIMS, at a specified framerate.
     """
 
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
@@ -385,24 +379,16 @@ class GratingStimulus(BackgroundStimulus):
                 / (2 * max(self._experiment.calibrator.params["mm_px"],
                            0.0001)))
         if self.grating_type == 'square':
-            self._pattern = np.ones((1, l, 3), np.uint8) * self.color_1
-            self._pattern[:, int(l / 2):, :] = self.color_2
+            self._pattern = np.ones((l, 3), np.uint8) * self.color_1
+            self._pattern[int(l / 2):, :] = self.color_2
         elif self.grating_type == 'sine':
             # Define sinusoidally varying weights for the two colors and then
             #  sum them in the pattern
-            # Col 1:
-            weights_1 = (np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
-            w_mat_1 = np.concatenate([weights_1[np.newaxis, :, np.newaxis], ] * 3,
-                                   2)
-            col_1 = (np.ones((1, l, 3), np.uint8)* self.color_1) * w_mat_1
-            # Col 2
-            weights_2 = (- np.sin(2 * np.pi * np.arange(l) / l) + 1) / 2
-            w_mat_2 = np.concatenate(
-                [weights_2[np.newaxis, :, np.newaxis], ] * 3,
-                2)
-            col_2 = (np.ones((1, l, 3), np.uint8) * self.color_2) * w_mat_2
+            w = (np.sin(2 * np.pi * np.linspace(0, 1, l)) + 1) / 2
 
-            self._pattern = col_1 + col_2
+            self._pattern = (w[:, None] * np.array(self.color_1)[None, :] +
+                             (1 - w[:None]) * np.array(self.color_2)[None, :]
+                             ).astype(np.uint8)
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)

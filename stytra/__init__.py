@@ -92,6 +92,7 @@ class Stytra:
         tracking_config=None,
         recording_config=None,
         embedded=True,
+        exec=True,
         **kwargs,
     ):
 
@@ -124,8 +125,8 @@ class Stytra:
         self.exp = base(**class_kwargs)
 
         self.exp.start_experiment()
-
-        app.exec_()
+        if exec:
+            app.exec_()
 
 
 if __name__ == "__main__":

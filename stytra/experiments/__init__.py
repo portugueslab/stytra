@@ -233,6 +233,7 @@ class Experiment(QObject):
 
         """
         self.abort = False
+        self.window_display.widget_display.reset()
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
             self.logger.info("Waiting for trigger signal...")
             msg = QMessageBox()
