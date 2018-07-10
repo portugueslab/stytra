@@ -9,7 +9,6 @@ from stytra.experiments import Experiment
 from stytra.gui.container_windows import (
     CameraExperimentWindow,
     TrackingExperimentWindow,
-    EyeTrackingExperimentWindow,
 )
 from stytra.hardware.video import (
     CameraControlParameters,
@@ -24,8 +23,6 @@ from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
 from stytra.tracking.tail import (
-    CentroidTrackingMethod,
-    AnglesTrackingMethod,
     TailTrackingMethod,
 )
 from stytra.tracking.eyes import EyeTrackingMethod
@@ -75,9 +72,6 @@ class CameraExperiment(Experiment):
             )
 
         self.camera_control_params = CameraControlParameters()
-
-        self.gui_timer = QTimer()
-        self.gui_timer.setSingleShot(False)
 
         super().__init__(*args, **kwargs)
 
