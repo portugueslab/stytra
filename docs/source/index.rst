@@ -7,9 +7,7 @@ Welcome to Stytra's documentation!
 ==================================
 
 Stytra is a package to build and run behavioural experiments
-.. raw:: html
 
-    <video loop src="_static/stim_movie_full_field.mp4"></video>
 
 Modules
 -------

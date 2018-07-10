@@ -28,9 +28,9 @@ class FullFieldProtocol(Protocol):
 
         ))
         return [
-            DynamicLuminanceStimulus(df_param=lum, clip_rect=(0.0, 0.0,
+            DynamicLuminanceStimulus(df_param=lum, clip_mask=(0.0, 0.0,
                                                               0.5, 0.5)),
-            DynamicLuminanceStimulus(df_param=lum, clip_rect=(0.5, 0.5,
+            DynamicLuminanceStimulus(df_param=lum, clip_mask=(0.5, 0.5,
                                                               0.5, 0.5)),
         ]
 
@@ -58,8 +58,7 @@ class GratingProtocol(Protocol):
                     dict(theta=np.pi/4))
         return [
             Stim(df_param=pd.DataFrame(dict(t=[0, 2],
-                                            vel_x=[10, 10],
-                                            vel_y=[0, 5])))
+                                            vel_y=[10, 10])))
         ]
 
 
@@ -72,7 +71,7 @@ class SeamlessImageProtocol(Protocol):
             Stim(background="caustics.png",
                  df_param=pd.DataFrame(dict(t=[0, 2],
                                vel_x=[10, 10],
-                               vel_y=[0, 5])))
+                               vel_y=[5, 5])))
         ]
 
 

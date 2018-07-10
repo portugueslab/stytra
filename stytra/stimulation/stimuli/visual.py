@@ -112,10 +112,12 @@ class DynamicLuminanceStimulus(FullFieldVisualStimulus,
                                DynamicStimulus):
     """ A luminance stimulus that has dynamically specified luminance.
 
+
     Parameters
     ----------
 
-    luminance:
+    luminance: float
+        a multiplier (0-1) from black to full luminance
 
 
 
