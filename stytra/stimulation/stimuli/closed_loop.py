@@ -5,11 +5,12 @@ from stytra.stimulation.stimuli import (
     BackgroundStimulus,
     SeamlessImageStimulus,
     CircleStimulus,
-    MovingGratingStimulus
+    MovingGratingStimulus,
+    InterpolatedStimulus
 )
 
 
-class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
+class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     """ """
 
     def __init__(
@@ -77,14 +78,12 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 
         self.vel = int(not self.shunted) * (self.base_vel -
                    self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming))
-        # print('{} - {}'.format(int(not self.shunted), self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming)))
-        # print('velocity: {}'.format(self.vel))
         if self.vel is None or self.vel > 50:
             print('I am resetting vel to 0 because it is strange.')
             self.vel = 0
 
         prev_x = self.x
-        self.x += dt * self.vel
+        self.y += dt * self.vel
         # print('Prev. x: {}; vel: {}; new_x: {}'.format(prev_x, self.vel,
         #                                                self.x))
         # TODO implement lag
@@ -99,13 +98,13 @@ class ClosedLoop1D(BackgroundStimulus, DynamicStimulus):
 class ClosedLoop1DGratings(ClosedLoop1D, MovingGratingStimulus):
     def __init__(
         self,
-        df_base_vel,
         *args,
+        df_param,
         **kwargs
     ):
-        super().__init__(*args, **kwargs)
-        self.duration = float(df_base_vel.t.iat[-1])
-        self.df_base_vel = df_base_vel
+        super().__init__(*args, df_param=df_param, **kwargs)
+        self.duration = float(df_param.t.iat[-1])
+        self.df_base_vel = df_param
 
     def update(self):
         """ """

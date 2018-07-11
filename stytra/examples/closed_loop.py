@@ -44,17 +44,17 @@ class ClosedLoop1D(Protocol):
 
         df = pd.DataFrame(dict(t=t, vel=vel, gain=gain))
 
-        stimuli.append(ClosedLoop1DGratings(df,
+        stimuli.append(ClosedLoop1DGratings(df_param=df,
                                             grating_angle=np.pi/2,
                                             grating_period=self.params[
                                                    'grating_cycle'],
-                                            color=(255, )*3))
+                                            grating_col_1=(255, )*3))
         return stimuli
 
 
 if __name__ == "__main__":
-    save_dir = r'D:\vilim\stytra\\'
-    camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
+    save_dir = r'/Users/vilimstich/PhD/Experimental/'
+    camera_config = dict(video_file="/Users/vilimstich/PhD/Experimental/fish_tail.h5")
 
     tracking_config = dict(
         embedded=True, tracking_method="angle_sweep", estimator="vigor"

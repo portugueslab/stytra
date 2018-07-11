@@ -132,7 +132,7 @@ class FrameDispatcher(FrameProcess):
                 self.update_framerate()
 
                 # put current frame into the GUI queue
-                if self.processing_parameters["display_processed"]:
+                if self.processing_parameters.get("display_processed", False):
                     self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)

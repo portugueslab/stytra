@@ -413,7 +413,7 @@ class MovingGratingStimulus(GratingStimulus,
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ['x']
+        self.dynamic_parameters = ['y']
 
 
 def z_func_windmill(x, y, arms):
