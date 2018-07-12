@@ -3,10 +3,10 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import ClosedLoop1DGratings
+from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
 
 
-class ClosedLoop1D(Protocol):
+class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
 
     def __init__(self):
@@ -42,7 +42,10 @@ class ClosedLoop1D(Protocol):
             vel.extend(vel_base)
             gain.extend([0, 0, g, g, 0, 0])
 
-        df = pd.DataFrame(dict(t=t, vel=vel, gain=gain))
+        df = pd.DataFrame(dict(t=t, base_vel=vel, gain=gain))
+
+        ClosedLoop1DGratings = type("Stim",
+                                    (ClosedLoop1D, GratingStimulus), {})
 
         stimuli.append(ClosedLoop1DGratings(df_param=df,
                                             grating_angle=np.pi/2,
@@ -64,7 +67,7 @@ if __name__ == "__main__":
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(
-        protocols=[ClosedLoop1D],
+        protocols=[ClosedLoop1DProt],
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,

@@ -381,6 +381,7 @@ class GratingStimulus(BackgroundStimulus):
         l = int(self.grating_period
                 / (2 * max(self._experiment.calibrator.params["mm_px"],
                            0.0001)))
+
         if self.wave_shape == 'square':
             self._pattern = np.ones((l, 3), np.uint8) * self.color_1
             self._pattern[int(l / 2):, :] = self.color_2
@@ -397,7 +398,7 @@ class GratingStimulus(BackgroundStimulus):
         super().initialise_external(experiment)
         self.create_pattern()
         # Get background image from folder:
-        self._qbackground = qimage2ndarray.array2qimage(self._pattern)
+        self._qbackground = qimage2ndarray.array2qimage(self._pattern[None, :, :])
 
     def get_unit_dims(self, w, h):
         w, h = self._qbackground.width(), self._qbackground.height()

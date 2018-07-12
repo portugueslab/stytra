@@ -215,3 +215,4 @@ class InterpolatedStimulus(Stimulus):
 
         # the time of refresh is saved to calculate the differences
         self._past_t = self._elapsed
+        return dt

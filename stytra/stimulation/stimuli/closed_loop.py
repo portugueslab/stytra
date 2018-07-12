@@ -26,7 +26,7 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         super().__init__(*args, **kwargs)
         self.name = "closed loop 1D"
         self.fish_velocity = 0
-        self.dynamic_parameters = ["vel", "fish_velocity", "gain"]
+        self.dynamic_parameters = ["x", "vel", "fish_velocity", "gain"]
         self.base_vel = default_velocity
         self.fish_velocity = 0
         self.vel = 0
@@ -40,20 +40,16 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.bout_start = None
         self.bout_stop = None
 
-        self._past_x = self.x
-        self._past_y = self.y
-        self._past_theta = self.theta
         self._past_t = 0
 
     def update(self):
         """
         Here we use fish velocity to change velocity of gratings.
         """
-        super().update()
-        dt = (self._elapsed - self._past_t)
+        dt = super().update()
 
         self.fish_velocity = self._experiment.estimator.get_velocity(lag=0)
-        # print('fish_velocity: {}'.format(self.fish_velocity))
+
         if self.base_vel == 0:
             self.shunted = False
             self.fish_swimming = False
@@ -61,15 +57,15 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         if self.shunting and self.fish_swimming and self.fish_velocity < self.swimming_threshold:
             self.shunted = True
 
-        # If estimated velocity greater than threshold we are in a bout
+        # If estimated velocity greater than threshold
+        # the fish is performing a bout
         if self.fish_velocity > self.swimming_threshold:
-            self.going = 1
             self.fish_swimming = True
+
             if self.bout_start is None:
                 self.bout_start = self._elapsed
             self.bout_stop = None
         else:
-            self.going = 0
             self.bout_start = None
             if self.bout_start is None:
                 self.bout_start = self._elapsed
@@ -78,41 +74,11 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
 
         self.vel = int(not self.shunted) * (self.base_vel -
                    self.fish_velocity * self.gain * self.base_gain * int(self.fish_swimming))
+
         if self.vel is None or self.vel > 50:
-            print('I am resetting vel to 0 because it is strange.')
             self.vel = 0
 
-        prev_x = self.x
-        self.y += dt * self.vel
-        # print('Prev. x: {}; vel: {}; new_x: {}'.format(prev_x, self.vel,
-        #                                                self.x))
-        # TODO implement lag
-        self._past_t = self._elapsed
-        for attr in ['x', 'y', 'theta']:
-            try:
-                setattr(self, 'past_'+attr, getattr(self, attr))
-            except (AttributeError, KeyError):
-                pass
-
-
-class ClosedLoop1DGratings(ClosedLoop1D, MovingGratingStimulus):
-    def __init__(
-        self,
-        *args,
-        df_param,
-        **kwargs
-    ):
-        super().__init__(*args, df_param=df_param, **kwargs)
-        self.duration = float(df_param.t.iat[-1])
-        self.df_base_vel = df_param
-
-    def update(self):
-        """ """
-        # to use parameters defined as velocities, we need the time
-        # difference before previous display
-        self.base_vel = np.interp(self._elapsed, self.df_base_vel.t, self.df_base_vel.vel)
-        self.gain = np.interp(self._elapsed, self.df_base_vel.t, self.df_base_vel.gain)
-        super().update()
+        self.x += dt * self.vel
 
 
 class VRMotionStimulus(SeamlessImageStimulus, DynamicStimulus):
