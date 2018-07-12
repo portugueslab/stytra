@@ -19,6 +19,9 @@ from os import path
 
 
 class FullFieldProtocol(Protocol):
+    """ Demonstrates usage of luminance stimuli
+
+    """
     name = "full_field"
 
     def get_stim_sequence(self):
@@ -36,6 +39,9 @@ class FullFieldProtocol(Protocol):
 
 
 class OKRProtocol(Protocol):
+    """ Demonstrates usage of OKR evoking windmill stimuli
+
+    """
     name = 'okr'
 
     def get_stim_sequence(self):
@@ -88,7 +94,6 @@ class GenerateStimuliMovie(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def waitend(self):
-        print("End happened")
         output_folder = (path.dirname(path.dirname(pkg_resources.resource_filename(__name__,
                                                                      ""))) +
                         "/docs/source/_static/")

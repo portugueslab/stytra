@@ -458,17 +458,12 @@ class JsonReader(QWidget):
         -------
 
         """
-        print("tree changes:")
         for param, change, data in changes:
             path = self.p.childPath(param)
             if path is not None:
                 childName = ".".join(path)
             else:
                 childName = param.name()
-            print("  parameter: %s" % childName)
-            print("  change:    %s" % change)
-            print("  data:      %s" % str(data))
-            print("  ----------")
 
             if change == "activated":
                 pass

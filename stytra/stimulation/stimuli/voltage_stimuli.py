@@ -4,6 +4,7 @@ except:
     print('No nidamax module found')
 from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus
 
+
 class NIVoltageStimulus(Stimulus):
     def __init__(self, *args, dev='Dev1', chan='ao0'):
         self.dev = dev

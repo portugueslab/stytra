@@ -34,10 +34,15 @@ functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv
 
-Once you have that, download stytra in a directory and install it via pip by::
+If you want to use video formats for stimulation or record videos, PyAV is required,
+also easily installable with Anaconda:
+
+    conda install -c conda-forge av
+
+Download Stytra from github as a zip file or clone it with git and install it via pip by::
 
     pip install path_to_stytra/stytra
-    
+
 To test the installation, you can try to run an example experiment from the prompt with::
     
     python -m stytra.examples.looming_experiment

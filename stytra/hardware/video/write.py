@@ -26,7 +26,6 @@ class VideoWriter(FrameProcess):
         while True:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             out_container = av.open(self.folder + timestamp + ".mp4", mode="w")
-            print("Recorder running, saving to ", self.folder + timestamp + ".mp4")
             out_stream = None
             video_frame = None
             while True:
@@ -46,7 +45,6 @@ class VideoWriter(FrameProcess):
                         video_frame.planes[0].update(current_frame)
                     else:
                         video_frame.planes[0].update(self.input_queue.get(timeout=1))
-                    print("Got and written frame")
                     packet = out_stream.encode(video_frame)
                     out_container.mux(packet)
                     self.update_framerate()

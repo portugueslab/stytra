@@ -13,9 +13,9 @@ Installing stytra
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
-functions. If you don't have it install, open the Anaconda prompt and type::
+functions. If you don't have it installed, open the Anaconda prompt and type::
 
-    conda install opencv -c conda-forge
+    conda install opencv
 
 Once you have that, download stytra in a directory and install it via pip by::
 

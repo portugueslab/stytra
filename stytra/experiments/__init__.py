@@ -321,7 +321,6 @@ class Experiment(QObject):
                         container = av.open(self.filename_base()+"stim_movie.mp4", mode="w")
                         stream = container.add_stream("mpeg4", rate=30)
                         stream.height, stream.width = movie[0].shape[:2]
-                        print(movie[0].shape[:2])
                         stream.pix_fmt = "yuv420p"
                         for frame in movie:
 

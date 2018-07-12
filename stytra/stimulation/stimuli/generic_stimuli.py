@@ -37,7 +37,6 @@ class Stimulus:
         2. Slow functions would slow down the entire main process, especially if
            called at every time step.
 
-
     Stimuli have parameters that are important to be logged in the final
     metadata and parameters that are not relevant. The get_state() method
     used to generate the log saves all attributes not starting with _.
@@ -108,10 +107,12 @@ class Stimulus:
         self.real_time_start = datetime.datetime.now()
 
     def initialise_external(self, experiment):
-        """Make a reference to the Experiment class inside the Stimulus.
+        """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
-        estimator for virtual reality.
+        estimators for virtual reality.
+        Also, the necessary preprocessing operations are handled here,
+        such as loading images or videos.
 
         Parameters
         ----------

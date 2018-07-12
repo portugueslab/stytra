@@ -22,7 +22,7 @@ keep track of time and set the Stimuli in the Protocol sequence with the proper 
 Stimuli examples
 ----------------
 
-Full-field luminance :class:`~stytra.tests.test_stimuli.FullFieldProtocol`
+Full-field luminance :py:cls:`~stytra.tests.test_stimuli.FullFieldProtocol`
 
 
 .. raw:: html

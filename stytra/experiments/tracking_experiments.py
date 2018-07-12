@@ -108,7 +108,6 @@ class CameraExperiment(Experiment):
         super().wrap_up(*args, **kwargs)
         self.camera.kill_event.set()
         self.camera.terminate()
-        print("Camera process terminated")
         self.gui_timer.stop()
 
     def excepthook(self, exctype, value, tb):
@@ -343,7 +342,6 @@ class TrackingExperiment(CameraExperiment):
         """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
-        print("Dispatcher process terminated")
 
     def excepthook(self, exctype, value, tb):
         """
