@@ -9,6 +9,7 @@ from stytra.tracking import ParametrizedImageproc
 
 class FishTrackingMethod(ParametrizedImageproc):
     name = "tracking_fish_params"
+
     def __init__(self):
         super().__init__()
         self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
@@ -19,7 +20,7 @@ class FishTrackingMethod(ParametrizedImageproc):
     @classmethod
     def detect(cls, im, threshold=128, image_scale=1, **extra_args):
         cent = centroid_bin(im < threshold)
-        return cent[0]/image_scale, cent[1]/image_scale, 0.0
+        return cent[0] / image_scale, cent[1] / image_scale, 0.0
 
 
 class ContourScorer:

@@ -22,9 +22,7 @@ from stytra.hardware.video import (
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
-from stytra.tracking.tail import (
-    TailTrackingMethod,
-)
+from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 
 from stytra.stimulation.estimators import (
@@ -177,10 +175,7 @@ class TrackingExperiment(CameraExperiment):
 
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
         method_name = tracking_config["tracking_method"]
         preproc_method_name = tracking_config.get("preprocessing_method", "prefilter")

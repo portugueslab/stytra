@@ -38,8 +38,9 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
     """
 
-    def __init__(self, protocol_runner, calibrator, record_stim_every=10,
-                 gl=False, **kwargs):
+    def __init__(
+        self, protocol_runner, calibrator, record_stim_every=10, gl=False, **kwargs
+    ):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.
@@ -68,8 +69,10 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         )
         self.widget_display.setMaximumSize(2000, 2000)
 
-        self.add_params(pos=dict(value=(0, 0), visible=False),
-                        size=dict(value=(400, 400), visible=False))
+        self.add_params(
+            pos=dict(value=(0, 0), visible=False),
+            size=dict(value=(400, 400), visible=False),
+        )
 
         self.setStyleSheet("background-color:black;")
         self.params.sigTreeStateChanged.connect(self.set_dims)
@@ -172,7 +175,7 @@ class StimDisplayWidget:
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
-            if (now-self.last_time).total_seconds() >= 1/self.record_framerate:
+            if (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()

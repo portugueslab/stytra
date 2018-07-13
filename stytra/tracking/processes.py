@@ -18,6 +18,7 @@ from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
 from stytra.tracking.movement import MovementDetectionParameters
 
+
 def get_tracking_method(name):
     tracking_methods_list = dict(
         centroid=CentroidTrackingMethod,
@@ -30,9 +31,9 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter,
-                       bgsub=BackgorundSubtractor,
-                       bgsubcv=CV2BgSub)
+    prepmethods = dict(
+        prefilter=Prefilter, bgsub=BackgorundSubtractor, bgsubcv=CV2BgSub
+    )
     return prepmethods.get(name, None)
 
 
@@ -95,7 +96,6 @@ class FrameDispatcher(FrameProcess):
 
         """
 
-
     def run(self):
         """Loop where the tracking function runs."""
         while not self.finished_signal.is_set():
@@ -125,7 +125,9 @@ class FrameDispatcher(FrameProcess):
                     processed = frame
 
                 if self.processing_obj is not None:
-                    output = self.processing_obj(processed, **self.processing_parameters)
+                    output = self.processing_obj(
+                        processed, **self.processing_parameters
+                    )
                     self.output_queue.put((datetime.now(), output))
 
                 # calculate the frame rate

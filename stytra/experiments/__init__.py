@@ -14,12 +14,16 @@ from stytra.collectors import DataCollector
 from stytra.stimulation import ProtocolRunner
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
-from stytra.gui.container_windows import SimpleExperimentWindow, DynamicStimExperimentWindow
+from stytra.gui.container_windows import (
+    SimpleExperimentWindow,
+    DynamicStimExperimentWindow,
+)
 
 try:
     import av
 except ImportError:
     pass
+
 
 class Experiment(QObject):
     """General class that runs an experiment.
@@ -60,6 +64,7 @@ class Experiment(QObject):
 
 
     """
+
     def __init__(
         self,
         app=None,
@@ -140,8 +145,10 @@ class Experiment(QObject):
             self.display_config = display_config
 
         self.window_display = StimulusDisplayWindow(
-            self.protocol_runner, self.calibrator, gl=self.display_config.get("gl", False),
-            record_stim_every=rec_stim_every
+            self.protocol_runner,
+            self.calibrator,
+            gl=self.display_config.get("gl", False),
+            record_stim_every=rec_stim_every,
         )
 
         if self.display_config.get("window_size", None) is not None:
@@ -310,27 +317,33 @@ class Experiment(QObject):
                 movie, movie_times = self.window_display.widget_display.get_movie()
                 if movie is not None:
                     if self.stim_movie_format == "h5":
-                        movie_dict = dict(movie=np.stack(movie, 0),
-                                          movie_times=movie_times)
+                        movie_dict = dict(
+                            movie=np.stack(movie, 0), movie_times=movie_times
+                        )
                         dd.io.save(
                             self.filename_base() + "stim_movie.h5",
                             movie_dict,
                             compression="blosc",
                         )
                     elif self.stim_movie_format == "mp4":
-                        container = av.open(self.filename_base()+"stim_movie.mp4", mode="w")
+                        container = av.open(
+                            self.filename_base() + "stim_movie.mp4", mode="w"
+                        )
                         stream = container.add_stream("mpeg4", rate=30)
                         stream.height, stream.width = movie[0].shape[:2]
                         stream.pix_fmt = "yuv420p"
                         for frame in movie:
 
-                            vidframe = av.VideoFrame.from_ndarray(np.ascontiguousarray(frame.astype(np.uint8)),
-                                                                  'rgb24')
+                            vidframe = av.VideoFrame.from_ndarray(
+                                np.ascontiguousarray(frame.astype(np.uint8)), "rgb24"
+                            )
                             packet = stream.encode(vidframe)
                             container.mux(packet)
                         container.close()
                     else:
-                        raise Exception("Tried to write the stimulus video into an unsupported format")
+                        raise Exception(
+                            "Tried to write the stimulus video into an unsupported format"
+                        )
 
             if self.protocol_runner.dynamic_log is not None:
                 self.protocol_runner.dynamic_log.save(

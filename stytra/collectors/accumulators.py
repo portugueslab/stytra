@@ -264,7 +264,7 @@ class DynamicLog(Accumulator):
         -------
 
         """
-        data_list = [time, ] + [np.nan, ]*(len(self.header_list)-1)
+        data_list = [time] + [np.nan] * (len(self.header_list) - 1)
         for k in data.keys():
             data_list[self.header_list.index(k)] = data[k]
         self.check_start()
@@ -280,11 +280,12 @@ class DynamicLog(Accumulator):
         dynamic_params = []
         for stimulus in stimuli:
             try:
-                dynamic_params.extend([stimulus.name + '_' + p for p in
-                                       stimulus.dynamic_parameters])
+                dynamic_params.extend(
+                    [stimulus.name + "_" + p for p in stimulus.dynamic_parameters]
+                )
             except AttributeError:
                 pass
-        self.header_list = ["t",] + dynamic_params
+        self.header_list = ["t"] + dynamic_params
         print(self.header_list)
         self.stored_data = []
 

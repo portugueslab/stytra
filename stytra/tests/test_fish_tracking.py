@@ -5,7 +5,6 @@ import numpy as np
 
 
 class TestCentroidTracking(unittest.TestCase):
-
     def test_centroid_tracking(self):
         im = np.zeros((5, 5), dtype=np.uint8)
         im[1:4, 1:4] = 2

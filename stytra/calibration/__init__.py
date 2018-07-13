@@ -10,6 +10,7 @@ from stytra.utilities import HasPyQtGraphParams
 
 class CalibrationException(Exception):
     """ """
+
     pass
 
 
@@ -90,7 +91,9 @@ class CrossCalibrator(Calibrator):
 
         else:
             self.outside = False
-            self.length_to_measure = "a line of the cross"  #TODO: world this better, unclear
+            self.length_to_measure = (
+                "a line of the cross"
+            )  # TODO: world this better, unclear
             if fixed_length is not None:
                 self.params["length_px"] = fixed_length
                 self.length_is_fixed = True

@@ -25,7 +25,6 @@ from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSe
 
 
 class QPlainTextEditLogger(logging.Handler):
-
     def __init__(self):
         super().__init__()
         self.widget = QPlainTextEdit()
@@ -170,7 +169,6 @@ class SimpleExperimentWindow(QMainWindow):
         self.experiment.wrap_up()
 
 
-
 class CameraExperimentWindow(SimpleExperimentWindow):
     """ """
 
@@ -220,7 +218,6 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         self.monitoring_layout.setStretch(1, 1)
         self.monitoring_layout.setStretch(0, 1)
         return self.monitoring_widget
-
 
 
 class TrackingExperimentWindow(SimpleExperimentWindow):
@@ -277,7 +274,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         """ """
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
-        previous_widget.layout().setContentsMargins(0,0,0,0)
+        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
         self.monitoring_layout.addWidget(previous_widget)
         self.monitoring_layout.setStretch(1, 1)
         self.monitoring_layout.setStretch(0, 1)

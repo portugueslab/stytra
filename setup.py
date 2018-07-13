@@ -25,7 +25,7 @@ setup(
         "colorspacious",
         "arrayqueues",
         "pillow",
-        "scikit-image"
+        "scikit-image",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

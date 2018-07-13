@@ -262,7 +262,6 @@ class CameraSelection(CameraViewWidget):
 
 
 class CameraEmbeddedTrackingSelection(CameraSelection):
-
     def __init__(self, tail=False, eyes=False, **kwargs):
         """ """
         self.eyes = eyes

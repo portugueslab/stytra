@@ -36,8 +36,10 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
 
     @classmethod
     def detect(cls, im, **kwargs):
-        AnglesTrackingMethod.detect(im, **kwargs) + \
-        EyeTrackingMethod.detect(im, **kwargs)
+        AnglesTrackingMethod.detect(im, **kwargs) + EyeTrackingMethod.detect(
+            im, **kwargs
+        )
+
 
 def trace_tail_eyes(
     im,
