@@ -37,9 +37,17 @@ class EyeTrackingMethod(ParametrizedImageproc):
         self.data_log_name = "behaviour_eyes_log"
 
     @classmethod
-    def detect(cls, im, wnd_pos, wnd_dim, threshold, image_scale, \
-                filter_size,
-                   color_invert, **kwargs):
+    def detect(
+        cls,
+        im,
+        wnd_pos,
+        wnd_dim,
+        threshold,
+        image_scale,
+        filter_size,
+        color_invert,
+        **kwargs
+    ):
         """
 
         Parameters
@@ -71,8 +79,8 @@ class EyeTrackingMethod(ParametrizedImageproc):
 
         cropped = _pad(
             im[
-            wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
-            wnd_pos[1]: wnd_pos[1] + wnd_dim[1]
+                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
+                wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
             ].copy(),
             padding=PAD,
             val=255,

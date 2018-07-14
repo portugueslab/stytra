@@ -17,6 +17,7 @@ from PyQt5.QtGui import QIcon
 import pkg_resources
 import qdarkstyle
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -100,8 +101,7 @@ class Stytra:
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         class_kwargs = dict(
-            app=app,
-            calibrator=(CircleCalibrator() if not embedded else None),
+            app=app, calibrator=(CircleCalibrator() if not embedded else None)
         )
         class_kwargs.update(kwargs)
 
@@ -118,8 +118,10 @@ class Stytra:
 
         app_icon = QIcon()
         for size in [32, 64, 128, 256]:
-            app_icon.addFile(pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
-                             QSize(size, size))
+            app_icon.addFile(
+                pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
+                QSize(size, size),
+            )
         app.setWindowIcon(app_icon)
 
         self.exp = base(**class_kwargs)

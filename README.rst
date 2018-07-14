@@ -2,17 +2,14 @@
 Stytra
 ======
 
-.. image:: https://readthedocs.org/projects/stytra/badge/?version=latest
-    :alt: Documentation Status
-    :scale: 100%
-    :target: https://stytra.readthedocs.io/en/latest/?badge=latest
-
 A modular package to control stimulation and track behaviour in zebrafish experiments.
 ---------------
 
 .. image:: https://cdn.rawgit.com/portugueslab/stytra/644a23d5/stytra/icons/stytra_logo.svg
     :scale: 50%
     :alt: Logo
+
+**`Documentation <http://www.portugueslab.com/stytra/>`_**
 
 Stytra is divided into independent modules which can be assembled
 depending on the experimental requirements.

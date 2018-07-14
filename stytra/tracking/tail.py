@@ -113,6 +113,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
 class AnglesTrackingMethod(TailTrackingMethod):
     """Angular sweep method to find consecutive segments."""
+
     name = "tracking_tail_params"
 
     def __init__(self):

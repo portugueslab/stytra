@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 
 
 class CollapseButton(QPushButton):
-
     def __init__(self, name, expanded=True):
         super().__init__()
         self.name = name
@@ -27,7 +26,6 @@ class CollapseButton(QPushButton):
 
 
 class CollapsibleWidget(QWidget):
-
     def __init__(self, child: QWidget, name="", expanded=True):
         super().__init__()
         self.setLayout(QVBoxLayout())

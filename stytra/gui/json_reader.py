@@ -21,6 +21,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 class DragDropLabel(QLabel):
     """ Empty label on which you can drag a file to open it.
     """
+
     acceptedFormat = "json"
     droppedFile = pyqtSignal(str)
 

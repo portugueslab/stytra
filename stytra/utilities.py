@@ -193,6 +193,7 @@ class HasPyQtGraphParams:
     -------
 
     """
+
     _params = Parameter.create(name="global_params", type="group")
 
     def __init__(self, name=None):

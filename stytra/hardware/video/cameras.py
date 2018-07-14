@@ -115,7 +115,9 @@ class XimeaCamera(Camera):
         try:
             self.cam = xiapi.Camera()
         except NameError:
-            raise Exception("The xiapi package must be installed to use a Ximea camera!")
+            raise Exception(
+                "The xiapi package must be installed to use a Ximea camera!"
+            )
 
     def open_camera(self):
         """ """

@@ -120,6 +120,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
 class ProjectorAndCalibrationWidget(QWidget):
     """ """
+
     sig_calibrating = pyqtSignal()
 
     def __init__(self, experiment, **kwargs):

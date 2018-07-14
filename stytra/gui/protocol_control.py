@@ -28,6 +28,7 @@ class ProtocolControlWidget(QWidget):
 
     **Signals**
     """
+
     sig_start_protocol = pyqtSignal()
     """ Emitted via the toggle button click, meant to
                          start the protocol """
