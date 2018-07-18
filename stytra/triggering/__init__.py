@@ -7,6 +7,7 @@ received via ZMQ from a microscope.
 from multiprocessing import Process, Event, Queue
 import datetime
 import time
+
 try:
     import zmq
 except ModuleNotFoundError:
@@ -141,6 +142,7 @@ class U3LabJackPulseTrigger(Trigger):
     """" This triiger uses the `labjack <https://github.com/labjack/LabJackPython/>`_ u3
     to recieve a TTL pulse from an external source. The DIO number is used as input.
     The pin is initialized as input automatically"""
+
     def __init__(self, chan):
         """"
 

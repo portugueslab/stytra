@@ -191,16 +191,7 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
         else:
             import cv2
-
-            im_sequence_flag = self.source_file.split(".")[-1] == "xiseq"
-            if im_sequence_flag:
-                frames_fn = glob.glob(
-                    "{}_files/*".format(self.source_file.split(".")[-2])
-                )
-                frames_fn.sort()
-                k = 0
-            else:
-                cap = cv2.VideoCapture(self.source_file)
+            cap = cv2.VideoCapture(self.source_file)
             ret = True
 
             if self.framerate is None:
@@ -210,13 +201,7 @@ class VideoFileSource(VideoSource):
 
             prt = None
             while ret and not self.kill_event.is_set():
-                if im_sequence_flag:
-                    frame = cv2.imread(frames_fn[k])
-                    k += 1
-                    if k == len(frames_fn) - 2:
-                        ret = False
-                else:
-                    ret, frame = cap.read()
+                ret, frame = cap.read()
 
                 # adjust the frame rate by adding extra time if the processing
                 # is quicker than the specified framerate
@@ -229,10 +214,7 @@ class VideoFileSource(VideoSource):
                     self.frame_queue.put(frame[:, :, 0])
                 else:
                     if self.loop:
-                        if im_sequence_flag:
-                            k = 0
-                        else:
-                            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         ret = True
                     else:
                         break

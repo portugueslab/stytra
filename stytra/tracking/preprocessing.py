@@ -64,19 +64,20 @@ class BgSubState:
     """
 
     def __init__(self):
-        self.collected_images = None
+        self.background_image = None
         self.i = 0
 
     def update(self, im, i_learn_every=1, learning_rate=0.01):
-        if self.collected_images is None:
-            self.collected_images = np.empty_like(im)
+        if self.background_image is None:
+            self.background_image = np.empty_like(im)
         elif self.i == 0:
-            self.collected_images[:, :] = (im*learning_rate +\
-                                           self.collected_images*(1-learning_rate)).astype(np.uint8)
+            self.background_image[:, :] = (
+                im * learning_rate + self.background_image * (1 - learning_rate)
+            ).astype(self.background_image.dtype)
         self.i = (self.i + 1) % i_learn_every
 
     def subtract(self, im):
-        return cv2.absdiff(im, self.collected_images)
+        return cv2.absdiff(im, self.background_image)
 
     def reset(self):
         self.n_collected = 0
@@ -85,18 +86,23 @@ class BgSubState:
 class BackgorundSubtractor(PreprocMethod):
     def __init__(self):
         super().__init__()
-        self.add_params(image_scale=dict(type="float", value=1,
-                                         limits=(0.01, 1.0)),
-            learning_rate=dict(type="float", value=0.01,
-                           limits=(0.001, 1.0),
-                           ),
-            learn_every=dict(type="int", value=1, limits=(1, 1000))
+        self.add_params(
+            image_scale=dict(type="float", value=1, limits=(0.01, 1.0)),
+            learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
+            learn_every=dict(type="int", value=1, limits=(1, 1000)),
         )
         self.collected_images = None
 
     @classmethod
-    def process(cls, im, state=None, learning_rate=0.001,
-                learn_every=1, image_scale=1, **extraparams):
+    def process(
+        cls,
+        im,
+        state=None,
+        learning_rate=0.001,
+        learn_every=1,
+        image_scale=1,
+        **extraparams
+    ):
         if image_scale != 1:
             im = cv2.resize(
                 im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
