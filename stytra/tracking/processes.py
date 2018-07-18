@@ -34,7 +34,7 @@ def get_preprocessing_method(name):
     prepmethods = dict(
         prefilter=Prefilter, bgsub=BackgorundSubtractor, bgsubcv=CV2BgSub
     )
-    return prepmethods.get(name, None)
+    return prepmethods.get(name, Prefilter)
 
 
 class FrameDispatcher(FrameProcess):

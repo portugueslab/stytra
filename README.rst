@@ -9,7 +9,7 @@ A modular package to control stimulation and track behaviour in zebrafish experi
     :scale: 50%
     :alt: Logo
 
-**`Documentation <http://www.portugueslab.com/stytra/>`_**
+`Documentation <http://www.portugueslab.com/stytra/>`_ 
 
 Stytra is divided into independent modules which can be assembled
 depending on the experimental requirements.

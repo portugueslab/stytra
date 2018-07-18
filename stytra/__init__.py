@@ -49,7 +49,7 @@ class Stytra:
 
         tracking_config : dict
             preprocessing_method: str
-                one of "prefilter" or "bgrem"
+                one of "prefilter" or "bgsub"
             tracking_method: str
                 one of "tail", "eyes", "fish"
             estimator: str
