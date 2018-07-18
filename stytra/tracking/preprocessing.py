@@ -85,7 +85,7 @@ class BackgorundSubtractor(PreprocMethod):
     def __init__(self):
         super().__init__()
         self.add_params(
-            n_mean=100, image_scale=dict(type="float", value=0.5, limits=(0.01, 1.0))
+            n_mean=100, image_scale=dict(type="float", value=1, limits=(0.01, 1.0))
         )
         self.collected_images = None
 
