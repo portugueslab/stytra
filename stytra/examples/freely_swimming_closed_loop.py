@@ -1,7 +1,7 @@
 from stytra import Stytra
 
 if __name__ == "__main__":
-    video_file = "/Users/vilimstich/PhD/TempData/Fish_recordings/20160406/20160406T141555m.avi"
+    video_file = r"J:\Vilim Stih\fish_recordings\20161012T102307m.avi"
 
     camera_config = dict(video_file=video_file,
                          rotation=0)
