@@ -156,17 +156,21 @@ class VideoFileSource(VideoSource):
 
     """
 
-    def __init__(self, source_file=None, loop=True, framerate=300, **kwargs):
+    def __init__(self, source_file=None, loop=True, framerate=None, **kwargs):
         super().__init__(**kwargs)
         self.source_file = source_file
         self.loop = loop
+        self.framerate = framerate
 
     def run(self):
 
         if self.source_file.endswith("h5"):
             framedata = dd.io.load(self.source_file)
             frames = framedata["video"]
-            delta_t = 1 / framedata.get("framerate", 30.0)
+            if self.framerate is None:
+                delta_t = 1 / framedata.get("framerate", 30.0)
+            else:
+                delta_t = 1 / self.framerate
             i_frame = 0
             prt = None
             while not self.kill_event.is_set():
@@ -199,14 +203,27 @@ class VideoFileSource(VideoSource):
                 cap = cv2.VideoCapture(self.source_file)
             ret = True
 
+            if self.framerate is None:
+                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
+            else:
+                delta_t = 1 / self.framerate
+
+            prt = None
             while ret and not self.kill_event.is_set():
-                if self.source_file.split(".")[-1] == "xiseq":
+                if im_sequence_flag:
                     frame = cv2.imread(frames_fn[k])
                     k += 1
                     if k == len(frames_fn) - 2:
                         ret = False
                 else:
                     ret, frame = cap.read()
+
+                # adjust the frame rate by adding extra time if the processing
+                # is quicker than the specified framerate
+                if prt is not None:
+                    extrat = delta_t - (time.process_time() - prt)
+                    if extrat > 0:
+                        time.sleep(extrat)
 
                 if ret:
                     self.frame_queue.put(frame[:, :, 0])
