@@ -77,7 +77,8 @@ class FrameDispatcher(FrameProcess):
         self.gui_framerate = gui_framerate
         self.preprocessing_obj = get_preprocessing_method(preprocessing_class).process
         self.preprocessing_state = None
-        self.processing_obj = get_tracking_method(processing_class).detect
+        if preprocessing_class is not None:
+            self.processing_obj = get_tracking_method(processing_class).detect
         self.processing_parameter_queue = processing_parameter_queue
 
     def process_internal(self, frame):

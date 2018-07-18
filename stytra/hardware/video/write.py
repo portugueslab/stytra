@@ -8,6 +8,7 @@ except ImportError:
 from stytra.utilities import FrameProcess
 from multiprocessing import Event
 from queue import Empty
+import os
 
 # TODO documentation
 class VideoWriter(FrameProcess):
@@ -20,6 +21,8 @@ class VideoWriter(FrameProcess):
         self.finished_signal = finished_signal
         self.kbit_rate = kbit_rate
         self.reset_signal = Event()
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
 
     def run(self):
         """ """

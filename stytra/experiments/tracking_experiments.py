@@ -1,9 +1,6 @@
 import traceback
 
-from PyQt5.QtCore import QTimer
 from multiprocessing import Queue, Event
-
-from stytra.calibration import CircleCalibrator
 
 from stytra.experiments import Experiment
 from stytra.gui.container_windows import (
@@ -16,6 +13,8 @@ from stytra.hardware.video import (
     VideoFileSource,
     CameraSource,
 )
+
+from stytra.tracking.movement import MovementDetectionParameters
 
 # imports for tracking
 
@@ -371,11 +370,11 @@ class VRExperiment(TrackingExperiment):
 class SwimmingRecordingExperiment(CameraExperiment):
     """Experiment where the fish is recorded while it is moving"""
 
-    def __init__(self, *args, tracking_config, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(
-            *args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs
+            *args, camera_queue_mb=500, **kwargs
         )
-
+        self.logger.info("Motion recording experiment")
         self.processing_params_queue = Queue()
         self.signal_start_rec = Event()
         self.finished_signal = Event()
@@ -389,7 +388,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
 
         self.frame_recorder = VideoWriter(
-            self.directory + "/video/",
+            self.folder_name + "/video/",
             self.frame_dispatcher.save_queue,
             self.finished_signal,
         )  # TODO proper filename
@@ -406,8 +405,9 @@ class SwimmingRecordingExperiment(CameraExperiment):
     def make_window(self):
         """ """
         self.window_main = TrackingExperimentWindow(
-            experiment=self, tail_tracking=False
+            experiment=self, tail=False, eyes=False
         )
+        self.window_main.stream_plot.add_stream(self.motion_acc)
         self.window_main.show()
 
     def go_live(self):

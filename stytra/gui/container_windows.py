@@ -261,7 +261,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
         # Tracking params button:
         self.button_tracking_params = QPushButton(
-            "Tracking params" if tracking else "Movement detection params"
+            "Tracking params" if (self.tail or self.eyes) else "Movement detection params"
         )
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
         self.monitoring_layout.addWidget(self.button_tracking_params)
@@ -285,8 +285,12 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
-        self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
+        if hasattr(self.experiment, "tracking_method"):
+            self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
+        if hasattr(self.experiment, "preprocessing_method"):
+            self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
+        if hasattr(self.experiment, "motion_detection_params"):
+            self.track_params_wnd.addParameters(self.experiment.motion_detection_params.params)
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()

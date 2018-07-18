@@ -425,11 +425,10 @@ class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
 
 def z_func_windmill(x, y, arms):
     """ Function for sinusoidal windmill of arbitrary number of arms
-    simmetrical with respect to perpendicular axes (for even n)
+    symmetrical with respect to perpendicular axes (for even n)
     """
     if np.mod(arms, 2) == 0:
-        return np.sin(np.arctan((x / y)) * arms + np.pi / 2)  # *(y>=0).astype(int) + \
-        # np.sin(np.arctan(-(x/y))*arms)*(y<0).astype(int)
+        return np.sin(np.arctan((x / y)) * arms + np.pi / 2)
     else:
         return np.cos(np.arctan((x / y)) * arms) * (y < 0).astype(int) + np.cos(
             np.arctan((x / y)) * arms + np.pi
