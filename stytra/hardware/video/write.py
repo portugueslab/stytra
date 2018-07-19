@@ -10,9 +10,21 @@ from multiprocessing import Event
 from queue import Empty
 import os
 
-# TODO documentation
+
 class VideoWriter(FrameProcess):
-    """ """
+    """Writes behavior movies into video files using PyAV
+
+    Parameters
+    ----------
+    folder
+        output folder
+    input_queue
+        queue of incoming frames
+    finished_signal
+        signal to finish recording
+    kbit_rate
+        ouput movie bitrate
+    """
 
     def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):
         super().__init__()
@@ -25,7 +37,6 @@ class VideoWriter(FrameProcess):
             os.makedirs(folder)
 
     def run(self):
-        """ """
         while True:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             out_container = av.open(self.folder + timestamp + ".mp4", mode="w")

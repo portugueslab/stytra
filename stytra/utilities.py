@@ -17,16 +17,17 @@ class Database:
     def __init__(self):
         pass
 
-    def add_experiment(self, exp):
+    def inset_experiment_data(self, exp_data):
         """
 
         Parameters
         ----------
-        exp :
+        exp_data : the data collector dictionary
             
 
         Returns
         -------
+        index of database entry
 
         """
         pass

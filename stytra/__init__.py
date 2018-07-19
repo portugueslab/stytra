@@ -113,7 +113,7 @@ class Stytra:
             if tracking_config is not None:
                 class_kwargs["tracking_config"] = tracking_config
                 base = TrackingExperiment
-            if recording_config is not None:
+            if recording_config:
                 base = SwimmingRecordingExperiment
 
         app_icon = QIcon()

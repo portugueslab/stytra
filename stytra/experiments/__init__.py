@@ -70,11 +70,12 @@ class Experiment(QObject):
         app=None,
         protocols=None,
         dir_save=None,
+        dir_assets="",
+        database=None,
         metadata_general=None,
         metadata_animal=None,
         calibrator=None,
         stim_plot=False,
-        dir_assets="",
         log_format="csv",
         stim_movie_format="h5",
         rec_stim_every=None,
@@ -90,6 +91,7 @@ class Experiment(QObject):
 
         self.asset_dir = dir_assets
         self.base_dir = dir_save
+        self.database = database
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
@@ -311,9 +313,18 @@ class Experiment(QObject):
                 self.dc.add_static_data(
                     self.protocol_runner.t_end, name="general_t_protocol_end"
                 )
+
+                if self.database is not None:
+                    db_id = self.database.insert_experiment_data(self.dc.get_clean_dict(paramstree=True,
+                                                                                eliminate_df=True,
+                                                                                convert_datetime=False))
+                else:
+                    db_id = -1
+                self.dc.add_static_data(db_id, name="general_db_index")
+
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 
-                # save the movie if it is generated
+                # save the stimulus movie if it is generated
                 movie, movie_times = self.window_display.widget_display.get_movie()
                 if movie is not None:
                     if self.stim_movie_format == "h5":
