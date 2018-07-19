@@ -286,7 +286,6 @@ class DynamicLog(Accumulator):
             except AttributeError:
                 pass
         self.header_list = ["t"] + dynamic_params
-        print(self.header_list)
         self.stored_data = []
 
 

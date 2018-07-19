@@ -40,7 +40,7 @@ class VideoWriter(FrameProcess):
     def run(self):
         while True:
             filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".mp4"
-            out_container = av.open(self.folder + filename, mode="w")
+            out_container = av.open(os.path.join(self.folder, filename), mode="w")
             self.filename_queue.put(filename)
             out_stream = None
             video_frame = None

@@ -138,10 +138,14 @@ class CircleCalibrator(Calibrator):
         super().__init__(*args, **kwargs)
         self.dh = dh
         self.r = r
-        self.params["length_px"] = dh
+        self.params["length_px"] = dh*2
         self.points = None
         self.points_cam = None
-        self.length_to_measure = "the largest distance between the points"
+        self.length_to_measure = "longest side of the triangle"
+
+    def set_pixel_scale(self, w, h):
+        """"Set pixel size, need to be called by the projector widget on resizes"""
+        self.params["length_px"] = self.dh*2
 
     def make_calibration_pattern(self, p, h, w, draw=True):
         """
@@ -164,7 +168,7 @@ class CircleCalibrator(Calibrator):
         assert isinstance(p, QPainter)
 
         d2h = self.dh // 2
-        d2w = int(self.dh * math.sqrt(3)) // 2
+        d2w = int(self.dh * math.sqrt(3) // 2)
         ch = h // 2
         cw = w // 2
         # the three points sorted in ascending angle order (30, 60, 90)

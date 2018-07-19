@@ -485,7 +485,6 @@ class WindmillStimulus(BackgroundStimulus):
 
     def draw_block(self, p, point, w, h):
         if self._qbackground.height() < h * 1.5 or self._qbackground.width() < w * 1.5:
-            print(np.max([h, w]))
             self.create_pattern(1.5 * np.max([h, w]))
 
         point.setX((w - self._qbackground.width()) / 2)

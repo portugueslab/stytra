@@ -1,6 +1,7 @@
 import traceback
 
 from multiprocessing import Queue, Event
+from queue import Empty
 
 from stytra.experiments import Experiment
 from stytra.gui.container_windows import (
@@ -388,7 +389,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
 
         self.frame_recorder = VideoWriter(
-            self.folder_name + "/video/",
+            self.folder_name,
             self.frame_dispatcher.save_queue,
             self.finished_signal,
         )  # TODO proper filename
@@ -461,6 +462,10 @@ class SwimmingRecordingExperiment(CameraExperiment):
         """
         self.finished_signal.set()
         self.frame_recorder.reset_signal.set()
-        recorded_filename = self.frame_recorder.filename_queue.get()
-        self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
+        try:
+            recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
+            self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
+        except Empty:
+            pass
+
         super().end_protocol(*args, **kwargs)

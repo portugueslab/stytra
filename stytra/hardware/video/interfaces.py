@@ -16,7 +16,7 @@ class CameraControlParameters(HasPyQtGraphParams):
 
     def __init__(self):
         super().__init__(name="camera_params")
-        standard_params_dict = dict(
+        self.add_params(
             exposure={
                 "value": 1.,
                 "type": "float",
@@ -34,13 +34,10 @@ class CameraControlParameters(HasPyQtGraphParams):
             gain={
                 "value": 1.,
                 "type": "float",
-                "limits": (0.1, 3),
+                "limits": (0.1, 12),
                 "tip": "Camera amplification gain",
             },
         )
-
-        for key, value in standard_params_dict.items():
-            self.add_one_param(key, value)
 
         self.exp = self.params.param("exposure")
         self.fps = self.params.param("framerate")
