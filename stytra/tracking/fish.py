@@ -8,10 +8,9 @@ from stytra.tracking import ParametrizedImageproc
 
 
 class FishTrackingMethod(ParametrizedImageproc):
-    name = "tracking_fish_params"
 
     def __init__(self):
-        super().__init__()
+        super().__init__(name = "tracking_fish_params")
         self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
 
         self.accumulator_headers = ["x", "y", "theta"]

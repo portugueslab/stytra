@@ -7,9 +7,6 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class ParametrizedImageproc(HasPyQtGraphParams):
-    def __init__(self):
-        super().__init__()
-
     def process(self, im, **kwargs):
         return im
 

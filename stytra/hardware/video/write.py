@@ -6,7 +6,7 @@ except ImportError:
     pass
 
 from stytra.utilities import FrameProcess
-from multiprocessing import Event
+from multiprocessing import Event, Queue
 from queue import Empty
 import os
 
@@ -30,6 +30,7 @@ class VideoWriter(FrameProcess):
         super().__init__()
         self.folder = folder
         self.input_queue = input_queue
+        self.filename_queue = Queue()
         self.finished_signal = finished_signal
         self.kbit_rate = kbit_rate
         self.reset_signal = Event()
@@ -38,8 +39,9 @@ class VideoWriter(FrameProcess):
 
     def run(self):
         while True:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            out_container = av.open(self.folder + timestamp + ".mp4", mode="w")
+            filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".mp4"
+            out_container = av.open(self.folder + filename, mode="w")
+            self.filename_queue.put(filename)
             out_stream = None
             video_frame = None
             while True:

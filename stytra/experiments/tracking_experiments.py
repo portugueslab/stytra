@@ -461,4 +461,6 @@ class SwimmingRecordingExperiment(CameraExperiment):
         """
         self.finished_signal.set()
         self.frame_recorder.reset_signal.set()
+        recorded_filename = self.frame_recorder.filename_queue.get()
+        self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
         super().end_protocol(*args, **kwargs)

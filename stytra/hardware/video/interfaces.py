@@ -15,7 +15,7 @@ class CameraControlParameters(HasPyQtGraphParams):
     """
 
     def __init__(self):
-        super().__init__(name="tracking_camera_params")
+        super().__init__(name="camera_params")
         standard_params_dict = dict(
             exposure={
                 "value": 1.,

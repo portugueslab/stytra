@@ -10,14 +10,14 @@ import numpy as np
 
 
 class PreprocMethod(ParametrizedImageproc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.add_params(display_processed=False)
 
 
 class Prefilter(PreprocMethod):
     def __init__(self):
-        super().__init__()
+        super().__init__(name="tracking_prefiltering")
         self.add_params(
             filter_size=0,
             image_scale=dict(type="float", value=0.5, limits=(0.01, 1.0)),
@@ -85,7 +85,7 @@ class BgSubState:
 
 class BackgorundSubtractor(PreprocMethod):
     def __init__(self):
-        super().__init__()
+        super().__init__(name="tracking_bgsubtraction")
         self.add_params(
             image_scale=dict(type="float", value=1, limits=(0.01, 1.0)),
             learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
