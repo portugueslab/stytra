@@ -210,7 +210,7 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
+    def __init__(self, *args, signal_start_rec, output_queue_mb=1000, **kwargs):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()

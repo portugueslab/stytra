@@ -460,7 +460,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         -------
 
         """
-        self.finished_signal.set()
+
         self.frame_recorder.reset_signal.set()
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
