@@ -372,9 +372,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
     """Experiment where the fish is recorded while it is moving"""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args, camera_queue_mb=500, **kwargs
-        )
+        super().__init__(*args, camera_queue_mb=500, **kwargs)
         self.logger.info("Motion recording experiment")
         self.processing_params_queue = Queue()
         self.signal_start_rec = Event()
@@ -389,9 +387,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
 
         self.frame_recorder = VideoWriter(
-            self.folder_name,
-            self.frame_dispatcher.save_queue,
-            self.finished_signal,
+            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
         )  # TODO proper filename
 
         self.motion_acc = QueueDataAccumulator(

@@ -15,9 +15,6 @@ from PyQt5.QtWidgets import (
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 
-from stytra.hardware.video import CameraControlParameters
-from stytra.utilities import prepare_json
-
 
 class SimpleCameraViewWWidget(QWidget):
     """Core of a widget to stream images from a camera or a video source.
@@ -48,7 +45,7 @@ class CameraViewWidget(QWidget):
 
     """
 
-    def __init__(self, experiment=None, camera=None):
+    def __init__(self, experiment=None):
         """
         :param experiment: experiment to which this belongs
                            (:class:Experiment <stytra.Experiment> object)
@@ -61,11 +58,10 @@ class CameraViewWidget(QWidget):
             self.camera = experiment.camera
             experiment.gui_timer.timeout.connect(self.update_image)
         else:
-            self.camera = camera
             self.gui_timer = QTimer()
             self.gui_timer.setSingleShot(False)
 
-        self.control_params = CameraControlParameters()
+        self.control_params = self.camera.control_params()
 
         # Create the layout for the camera view:
         self.camera_display_widget = pg.GraphicsLayoutWidget()

@@ -69,15 +69,15 @@ class BgSubState:
 
     def update(self, im, i_learn_every=1, learning_rate=0.01):
         if self.background_image is None:
-            self.background_image = np.empty_like(im)
+            self.background_image = im.astype(np.float32)
         elif self.i == 0:
-            self.background_image[:, :] = (
-                im * learning_rate + self.background_image * (1 - learning_rate)
-            ).astype(self.background_image.dtype)
+            self.background_image[:, :] = im.astype(np.float32) * np.float32(
+                learning_rate
+            ) + self.background_image * np.float32(1 - learning_rate)
         self.i = (self.i + 1) % i_learn_every
 
     def subtract(self, im):
-        return cv2.absdiff(im, self.background_image)
+        return cv2.absdiff(im, self.background_image.astype(np.uint8))
 
     def reset(self):
         self.n_collected = 0
@@ -90,6 +90,7 @@ class BackgorundSubtractor(PreprocMethod):
             image_scale=dict(type="float", value=1, limits=(0.01, 1.0)),
             learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
             learn_every=dict(type="int", value=1, limits=(1, 1000)),
+            reset=dict(type="bool", value=False),
         )
         self.collected_images = None
 
@@ -101,13 +102,14 @@ class BackgorundSubtractor(PreprocMethod):
         learning_rate=0.001,
         learn_every=1,
         image_scale=1,
+        reset=False,
         **extraparams
     ):
         if image_scale != 1:
             im = cv2.resize(
                 im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
             )
-        if state is None:
+        if state is None or reset:
             state = BgSubState()
         state.update(im, learn_every, learning_rate)
         return state.subtract(im), state
