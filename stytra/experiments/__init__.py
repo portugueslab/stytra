@@ -69,6 +69,7 @@ class Experiment(QObject):
         self,
         app=None,
         protocols=None,
+        default_protocol=None,
         dir_save=None,
         dir_assets="",
         database=None,
@@ -121,18 +122,21 @@ class Experiment(QObject):
             self.metadata_animal = metadata_animal()
 
         # We will collect data only of a directory for saving is specified:
-        if self.base_dir is not None:
-            self.dc = DataCollector(folder_path=self.base_dir)
-            self.dc.add_param_tree(self.metadata._params)
-            # Use the DataCollector object to find the last used protocol, to
-            # restore it
-            self.last_protocol = self.dc.get_last_value("stimulus_protocol_params")
+        if default_protocol is not None:
+            self.default_protocol = default_protocol
         else:
-            self.dc = None
-            self.last_protocol = None
+            if self.base_dir is not None:
+                self.dc = DataCollector(folder_path=self.base_dir)
+                self.dc.add_param_tree(self.metadata._params)
+                # Use the DataCollector object to find the last used protocol, to
+                # restore it
+                self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
+            else:
+                self.dc = None
+                self.default_protocol = None
 
-        self.protocol_runner = ProtocolRunner(
-            experiment=self, protocol=self.last_protocol
+            self.protocol_runner = ProtocolRunner(
+                experiment=self, protocol=self.default_protocol
         )
 
         # assign signals from protocol_runner to be used externally:
