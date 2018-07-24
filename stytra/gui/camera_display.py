@@ -14,7 +14,8 @@ from PyQt5.QtWidgets import (
 )
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
-
+from numba import jit
+from math import sin, cos
 
 class SimpleCameraViewWWidget(QWidget):
     """Core of a widget to stream images from a camera or a video source.
@@ -498,3 +499,68 @@ class CameraViewCalib(CameraViewWidget):
                 points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)
+
+
+@jit(nopython=True)
+def _tail_points_from_coords(coords, n_data_per_fish, seglen):
+    """ Computes the tail points from a list obtained from a data accumulator
+
+    Parameters
+    ----------
+    coords
+        per fish, will be x, y, theta, theta_00, theta_01, theta_02...
+    n_data_per_fish
+        number of coordinate entries per fish
+    seglen
+        length of a single segment
+
+    Returns
+    -------
+        xs, ys
+        list of coordinates
+    """
+
+    xs = []
+    ys = []
+
+    for i_fish in range(len(coords)//n_data_per_fish):
+        xs.append(coords[i_fish*n_data_per_fish])
+        ys.append(coords[i_fish*n_data_per_fish+1])
+        for i_a in range(3, n_data_per_fish):
+            # for drawing the lines, points need to be repeated
+            xs.append(xs[-1])
+            ys.append(ys[-1])
+
+            xs.append(xs[-1]+seglen*cos(coords[i_fish*n_data_per_fish + i_a]))
+            ys.append(ys[-1] + seglen * sin(coords[i_fish * n_data_per_fish + i_a]))
+      return xs, ys
+
+
+class CameraViewFish(CameraViewCalib):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.points_fish = pg.ScatterPlotItem()
+        self.lines_fish = pg.PlotCurveItem(connect="pairs")
+        self.display_area.addItem(self.points_fish)
+        self.display_area.addItem(self.lines_fish)
+
+    def update_image(self):
+        super().update_image()
+
+        if len(self.experiment.data_acc.stored_data) > 1:
+            # figure out in a quick and dirty way if the tail is being tracked
+            last_header_item = self.experiment.data_acc.header_list[-1]
+            if "theta_" in last_header_item:
+                n_points_tail = int(last_header_item[-2:])
+            else:
+                n_points_tail = 0
+
+            n_data_per_fish = n_points_tail+3 # the 3 is for x, y, z
+
+            retrieved_data = self.experiment.data_acc.stored_data[-1][1:]
+
+            self.points_fish.setData(x=retrieved_data[::n_data_per_fish], y=retrieved_data[1::n_data_per_fish])
+            if n_points_tail:
+                tail_len = 5 # TODO read out the tail length from the parameters
+                xs, ys = _tail_points_from_coords(retrieved_data, n_data_per_fish, tail_len)
+                self.points_fish.setData(x=xs, y=ys)

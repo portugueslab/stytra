@@ -213,7 +213,7 @@ def find_direction(start, image, seglen):
     -------
 
     """
-    n_angles = 20
+    n_angles = np.ceil(np.pi*2*seglen*2)
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
     detect_angles = angles
@@ -222,8 +222,8 @@ def find_direction(start, image, seglen):
 
     for i in range(detect_angles.shape[0]):
         coord = (
-            int(start[0] + seglen * np.cos(detect_angles[i])),
-            int(start[1] + seglen * np.sin(detect_angles[i])),
+            round(start[0] + seglen * np.cos(detect_angles[i])),
+            round(start[1] + seglen * np.sin(detect_angles[i])),
         )
         if (
             (coord[0] > 0)

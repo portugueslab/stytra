@@ -9,5 +9,6 @@ if __name__ == "__main__":
     )
 
     s = Stytra(
-        camera_config=camera_config, tracking_config=tracking_config, protocols=[]
+        camera_config=camera_config, tracking_config=tracking_config, protocols=[],
+        dir_save=r"C:\Users\vilim\Analysis\BehaviouralAnalysis\Tracking"
     )
