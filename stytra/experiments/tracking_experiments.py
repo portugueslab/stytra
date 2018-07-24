@@ -398,6 +398,10 @@ class SwimmingRecordingExperiment(CameraExperiment):
             self.frame_dispatcher.diagnostic_queue,
             header_list=self.frame_dispatcher.diagnostic_params,
         )
+        self.frametime_acc = QueueDataAccumulator(
+            self.frame_dispatcher.framestart_queue,
+            header_list=["t_rec"]
+        )
 
         self.motion_detection_params = MovementDetectionParameters()
         self.gui_timer.timeout.connect(self.send_params)
@@ -467,5 +471,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
             self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
         except Empty:
             pass
+
+        self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
 
         super().end_protocol(*args, **kwargs)
