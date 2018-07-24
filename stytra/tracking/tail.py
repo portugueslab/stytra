@@ -8,7 +8,7 @@ class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
     def __init__(self, **kwargs):
-        super().__init__(name = "tracking_tail_params", **kwargs)
+        super().__init__(name="tracking_tail_params", **kwargs)
         # TODO maybe getting default values here:
         self.add_params(
             n_segments=dict(value=10, type="int", limits=(2, 50)),
@@ -111,7 +111,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
 class AnglesTrackingMethod(TailTrackingMethod):
     """Angular sweep method to find consecutive segments."""
-
 
     def __init__(self):
         super().__init__()

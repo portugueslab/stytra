@@ -14,7 +14,7 @@ import deepdish as dd
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import CameraControlParameters
+from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParams
 
 import time
 
@@ -97,6 +97,7 @@ class CameraSource(VideoSource):
 
         self.camera_type = camera_type
         self.downsampling = downsampling
+        self.control_params = CameraControlParameters
         self.cam = None
 
     def run(self):
@@ -161,6 +162,13 @@ class VideoFileSource(VideoSource):
         self.source_file = source_file
         self.loop = loop
         self.framerate = framerate
+        self.control_params = VideoControlParams
+        self.offset = 0
+        self.paused = False
+        self.old_frame = None
+
+    def inner_loop(self):
+        pass
 
     def run(self):
 
@@ -191,6 +199,7 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
         else:
             import cv2
+
             cap = cv2.VideoCapture(self.source_file)
             ret = True
 
@@ -201,10 +210,29 @@ class VideoFileSource(VideoSource):
 
             prt = None
             while ret and not self.kill_event.is_set():
-                ret, frame = cap.read()
+                if self.paused:
+                    ret = True
+                    frame = self.old_frame
+                else:
+                    ret, frame = cap.read()
 
                 # adjust the frame rate by adding extra time if the processing
                 # is quicker than the specified framerate
+
+                if self.control_queue is not None:
+                    try:
+                        name, value = self.control_queue.get(timeout=0.0001)
+                        if name == "framerate":
+                            delta_t = 1 / value
+                        elif name == "offset":
+                            if value != self.offset:
+                                cap.set(cv2.CAP_PROP_POS_FRAMES, value)
+                                self.offset = value
+                        elif name == "paused":
+                            self.paused = value
+                    except Empty:
+                        pass
+
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
@@ -218,6 +246,9 @@ class VideoFileSource(VideoSource):
                         ret = True
                     else:
                         break
+
+                prt = time.process_time()
+                self.old_frame = frame
                 self.update_framerate()
             return
 

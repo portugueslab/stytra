@@ -138,14 +138,14 @@ class CircleCalibrator(Calibrator):
         super().__init__(*args, **kwargs)
         self.dh = dh
         self.r = r
-        self.params["length_px"] = dh*2
+        self.params["length_px"] = dh * 2
         self.points = None
         self.points_cam = None
         self.length_to_measure = "longest side of the triangle"
 
     def set_pixel_scale(self, w, h):
         """"Set pixel size, need to be called by the projector widget on resizes"""
-        self.params["length_px"] = self.dh*2
+        self.params["length_px"] = self.dh * 2
 
     def make_calibration_pattern(self, p, h, w, draw=True):
         """

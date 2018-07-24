@@ -315,9 +315,11 @@ class Experiment(QObject):
                 )
 
                 if self.database is not None:
-                    db_id = self.database.insert_experiment_data(self.dc.get_clean_dict(paramstree=True,
-                                                                                eliminate_df=True,
-                                                                                convert_datetime=False))
+                    db_id = self.database.insert_experiment_data(
+                        self.dc.get_clean_dict(
+                            paramstree=True, eliminate_df=True, convert_datetime=False
+                        )
+                    )
                 else:
                     db_id = -1
                 self.dc.add_static_data(db_id, name="general_db_index")

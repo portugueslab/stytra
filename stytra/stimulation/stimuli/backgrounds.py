@@ -7,6 +7,7 @@ import deepdish.io as dio
 import cv2
 import logging
 
+
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     """
 
@@ -55,7 +56,7 @@ def existing_file_background(filepath):
             return cv2.imread(filepath)[:, :, [2, 1, 0]]
         except TypeError:
             log = logging.getLogger()
-            log.info("Could nor load "+filepath)
+            log.info("Could nor load " + filepath)
             return np.zeros((10, 10), dtype=np.uint8)
 
 
