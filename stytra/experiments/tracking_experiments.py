@@ -212,7 +212,7 @@ class TrackingExperiment(CameraExperiment):
         # This probably should happen before starting the camera process??
         if isinstance(self.tracking_method, TailTrackingMethod):
             self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.change_segment_numb
+                self.change_segment_num
             )
 
         est_type = tracking_config.get("estimator", None)
@@ -229,7 +229,7 @@ class TrackingExperiment(CameraExperiment):
 
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
-    def change_segment_numb(self):
+    def change_segment_num(self):
         """ Take care of resetting the data accumulator if the number of
         segments (and therefore the points to be saved) is changed.
         """
@@ -284,27 +284,22 @@ class TrackingExperiment(CameraExperiment):
         super().start_protocol()
         self.data_acc.reset()
 
-    def end_protocol(self, *args, **kwargs):
+    def end_protocol(self, save=True):
         """Save tail position and dynamic parameters and terminate.
 
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
-
         """
-        super().end_protocol(*args, **kwargs)
-        self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+        if save:
+            self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+            try:
+                self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
+            except AttributeError:
+                pass
         try:
             self.estimator.log.reset()
-            self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
         except AttributeError:
             pass
+
+        super().end_protocol(save)
 
     def set_protocol(self, protocol):
         """Connect new protocol start to resetting of the data accumulator.

@@ -157,15 +157,16 @@ class Experiment(QObject):
             self.window_display.params["size"] = self.display_config["window_size"]
             self.window_display.set_dims()
 
-        self.current_instance = self.get_new_name()
         self.i_run = 0
+        self.current_timestamp = datetime.datetime.now()
+        self.current_instance = self.get_new_name()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
     def get_new_name(self):
         return (
-            datetime.datetime.now().strftime("%y%m%d")
+            self.current_timestamp.strftime("%y%m%d")
             + "_f"
             + str(self.metadata_animal.params["id"])
         )
@@ -179,7 +180,7 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return self.folder_name + "/{:03d}_".format(self.i_run)
+        return os.path.join(self.folder_name, self.current_timestamp.strftime("%H%M%S_"))
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -365,6 +366,7 @@ class Experiment(QObject):
 
         self.protocol_runner.reset()
         self.i_run += 1
+        self.current_timestamp = datetime.datetime.now()
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.
