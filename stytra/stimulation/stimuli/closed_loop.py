@@ -33,9 +33,8 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     swimming_threshold: float
         the velocity at which the fish is considered to be performing
         a bout
-    df_param: (optional) DataFrame
-        the dataframe which specifies the temporal dynamics of the previously
-        described parameters
+    fixed_vel: float
+        if not None, fixed velocity for the stimulus when fish swims
     """
 
     def __init__(
@@ -46,6 +45,7 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         lag=0,
         shunting=False,
         swimming_threshold=0.2 * -30,
+        fixed_vel=None,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -61,6 +61,7 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.fish_swimming = False
         self.shunting = shunting
         self.shunted = False
+        self.fixed_velocity = fixed_vel
 
         self.bout_start = None
         self.bout_stop = None
@@ -101,9 +102,15 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
 
             self.fish_swimming = False
 
-        self.vel = int(not self.shunted) * (
-            self.base_vel - self.fish_velocity * self.gain * int(self.fish_swimming)
-        )
+        if self.fixed_velocity is None:
+            self.vel = int(not self.shunted) * (
+                self.base_vel - self.fish_velocity * self.gain * int(self.fish_swimming)
+            )
+        else:
+            if self.fish_swimming and not self.base_vel == 0:
+                self.vel = self.fixed_velocity
+            else:
+                self.vel = self.base_vel
 
         if self.vel is None or self.vel > 50:
             self.vel = 0
