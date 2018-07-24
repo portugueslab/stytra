@@ -396,12 +396,13 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
         self.frametime_acc = QueueDataAccumulator(
             self.frame_dispatcher.framestart_queue,
-            header_list=["t_rec"]
+            header_list=["i_frame"]
         )
 
         self.motion_detection_params = MovementDetectionParameters()
         self.gui_timer.timeout.connect(self.send_params)
         self.gui_timer.timeout.connect(self.motion_acc.update_list)
+        self.gui_timer.timeout.connect(self.frametime_acc.update_list)
 
     def make_window(self):
         """ """
@@ -429,35 +430,15 @@ class SwimmingRecordingExperiment(CameraExperiment):
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+        """ Ends all the processes in the application
 
         """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
         self.frame_recorder.terminate()
 
-    def end_protocol(self, *args, **kwargs):
-        """Save tail position and dynamic parameters and terminate.
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+    def end_protocol(self, save=True):
+        """Save tail position and dynamic parameters. Reset what is necessary
 
         """
 
@@ -468,6 +449,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
         except Empty:
             pass
 
-        self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
+        if save:
+            self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
 
-        super().end_protocol(*args, **kwargs)
+        self.frametime_acc.reset()
+        super().end_protocol(save)
