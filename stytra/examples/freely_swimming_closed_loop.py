@@ -5,10 +5,11 @@ if __name__ == "__main__":
 
     camera_config = dict(video_file=video_file, rotation=0)
     tracking_config = dict(
-        preprocessing_method="bgsub", tracking_method="fish", estimator="fish"
+        preprocessing_method="prefilter", tracking_method="fish", estimator="fish"
     )
 
     s = Stytra(
-        camera_config=camera_config, tracking_config=tracking_config, protocols=[],
+        camera_config=camera_config, tracking_config=tracking_config,
+        protocols=[],
         dir_save=r"C:\Users\vilim\Analysis\BehaviouralAnalysis\Tracking"
     )

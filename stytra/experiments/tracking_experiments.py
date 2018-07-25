@@ -24,6 +24,7 @@ from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
 from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
+from stytra.tracking.fish import FishTrackingMethod
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -243,9 +244,9 @@ class TrackingExperiment(CameraExperiment):
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
         eyes = isinstance(self.tracking_method, EyeTrackingMethod)
-
+        fish = isinstance(self.tracking_method, FishTrackingMethod)
         self.window_main = TrackingExperimentWindow(
-            experiment=self, tail=tail, eyes=eyes
+            experiment=self, tail=tail, eyes=eyes, fish=fish,
         )
 
         # add streams

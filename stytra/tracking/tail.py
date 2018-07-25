@@ -35,6 +35,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
     def detect(
         cls,
         im,
+        state=None,
         tail_start=(0, 0),
         tail_length=(1, 1),
         n_segments=12,
@@ -106,7 +107,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
             :
-        ]
+        ], state
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
@@ -120,6 +121,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
     def detect(
         cls,
         im,
+        state=None,
         tail_start=(0, 0),
         n_segments=7,
         tail_length=(1, 1),
@@ -177,7 +179,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
             im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
         )
 
-        return angle_list
+        return angle_list, state
 
 
 @jit(nopython=True)

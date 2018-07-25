@@ -5,6 +5,7 @@ from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
 
+import tempfile
 
 class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
@@ -60,8 +61,8 @@ class ClosedLoop1DProt(Protocol):
 
 
 if __name__ == "__main__":
-    save_dir = r"/Users/vilimstich/PhD/Experimental/"
-    camera_config = dict(video_file="/Users/vilimstich/PhD/Experimental/fish_tail.h5")
+    save_dir = tempfile.mkdtemp()
+    camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
 
     tracking_config = dict(
         embedded=True, tracking_method="angle_sweep", estimator="vigor"

@@ -40,12 +40,13 @@ class EyeTrackingMethod(ParametrizedImageproc):
     def detect(
         cls,
         im,
-        wnd_pos,
-        wnd_dim,
-        threshold,
-        image_scale,
-        filter_size,
-        color_invert,
+        state=None,
+        wnd_pos=None,
+        wnd_dim=None,
+        threshold=None,
+        image_scale=None,
+        filter_size=None,
+        color_invert=None,
         **kwargs
     ):
         """
@@ -95,7 +96,7 @@ class EyeTrackingMethod(ParametrizedImageproc):
         else:
             e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
 
-        return np.array(e)
+        return np.array(e), state
 
 
 def _pad(im, padding=0, val=0):

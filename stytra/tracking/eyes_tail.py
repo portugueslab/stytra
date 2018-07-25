@@ -35,10 +35,10 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
         self.data_log_name = "behaviour_tail_eyes_log"
 
     @classmethod
-    def detect(cls, im, **kwargs):
-        AnglesTrackingMethod.detect(im, **kwargs) + EyeTrackingMethod.detect(
+    def detect(cls, im, state=None, **kwargs):
+        AnglesTrackingMethod.detect(im, **kwargs)[0] + EyeTrackingMethod.detect(
             im, **kwargs
-        )
+        )[0], state
 
 
 def trace_tail_eyes(

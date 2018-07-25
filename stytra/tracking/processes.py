@@ -79,6 +79,7 @@ class FrameDispatcher(FrameProcess):
         self.preprocessing_state = None
         if preprocessing_class is not None:
             self.processing_obj = get_tracking_method(processing_class).detect
+        self.processing_state = None
         self.processing_parameter_queue = processing_parameter_queue
 
     def process_internal(self, frame):
@@ -126,8 +127,8 @@ class FrameDispatcher(FrameProcess):
                     processed = frame
 
                 if self.processing_obj is not None:
-                    output = self.processing_obj(
-                        processed, **self.processing_parameters
+                    output, self.processing_state, = self.processing_obj(
+                        processed, self.processing_state, **self.processing_parameters
                     )
                     self.output_queue.put((datetime.now(), output))
 

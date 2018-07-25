@@ -87,7 +87,6 @@ class BackgorundSubtractor(PreprocMethod):
     def __init__(self):
         super().__init__(name="tracking_bgsubtraction")
         self.add_params(
-            image_scale=dict(type="float", value=1, limits=(0.01, 1.0)),
             learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
             learn_every=dict(type="int", value=1, limits=(1, 1000)),
             reset=dict(type="bool", value=False),
@@ -101,14 +100,9 @@ class BackgorundSubtractor(PreprocMethod):
         state=None,
         learning_rate=0.001,
         learn_every=1,
-        image_scale=1,
         reset=False,
         **extraparams
     ):
-        if image_scale != 1:
-            im = cv2.resize(
-                im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
-            )
         if state is None or reset:
             state = BgSubState()
         state.update(im, learn_every, learning_rate)

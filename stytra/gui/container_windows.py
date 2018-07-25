@@ -21,7 +21,7 @@ from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection
+from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection,  CameraViewFish
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -232,13 +232,17 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     """
 
-    def __init__(self, tracking=True, tail=False, eyes=False, *args, **kwargs):
+    def __init__(self, tracking=True, tail=False, eyes=False, fish=False,
+                 *args, **kwargs):
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
 
-        if tail or eyes:
+        if fish:
+            self.camera_display = CameraViewFish(
+                experiment=kwargs["experiment"])
+        elif tail or eyes:
             self.camera_display = CameraEmbeddedTrackingSelection(
                 experiment=kwargs["experiment"], tail=tail, eyes=eyes
             )
