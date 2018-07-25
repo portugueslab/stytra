@@ -69,6 +69,7 @@ class Experiment(QObject):
         self,
         app=None,
         protocols=None,
+        default_protocol=None,
         dir_save=None,
         dir_assets="",
         database=None,
@@ -120,19 +121,23 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal()
 
+        #TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
         if self.base_dir is not None:
             self.dc = DataCollector(folder_path=self.base_dir)
             self.dc.add_param_tree(self.metadata._params)
-            # Use the DataCollector object to find the last used protocol, to
-            # restore it
-            self.last_protocol = self.dc.get_last_value("stimulus_protocol_params")
+            # Use the DataCollector object to find the last used protocol,
+            #  to restore it
+            self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
         else:
             self.dc = None
-            self.last_protocol = None
+            self.default_protocol = None
+
+        if default_protocol is not None:
+            self.default_protocol = default_protocol
 
         self.protocol_runner = ProtocolRunner(
-            experiment=self, protocol=self.last_protocol
+            experiment=self, protocol=self.default_protocol
         )
 
         # assign signals from protocol_runner to be used externally:
@@ -157,15 +162,16 @@ class Experiment(QObject):
             self.window_display.params["size"] = self.display_config["window_size"]
             self.window_display.set_dims()
 
-        self.current_instance = self.get_new_name()
         self.i_run = 0
+        self.current_timestamp = datetime.datetime.now()
+        self.current_instance = self.get_new_name()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
     def get_new_name(self):
         return (
-            datetime.datetime.now().strftime("%y%m%d")
+            self.current_timestamp.strftime("%y%m%d")
             + "_f"
             + str(self.metadata_animal.params["id"])
         )
@@ -179,7 +185,7 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return self.folder_name + "/{:03d}_".format(self.i_run)
+        return os.path.join(self.folder_name, self.current_timestamp.strftime("%H%M%S_"))
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -365,6 +371,7 @@ class Experiment(QObject):
 
         self.protocol_runner.reset()
         self.i_run += 1
+        self.current_timestamp = datetime.datetime.now()
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.

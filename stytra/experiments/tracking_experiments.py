@@ -213,7 +213,7 @@ class TrackingExperiment(CameraExperiment):
         # This probably should happen before starting the camera process??
         if isinstance(self.tracking_method, TailTrackingMethod):
             self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.change_segment_numb
+                self.change_segment_num
             )
 
         est_type = tracking_config.get("estimator", None)
@@ -230,7 +230,7 @@ class TrackingExperiment(CameraExperiment):
 
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
-    def change_segment_numb(self):
+    def change_segment_num(self):
         """ Take care of resetting the data accumulator if the number of
         segments (and therefore the points to be saved) is changed.
         """
@@ -285,27 +285,22 @@ class TrackingExperiment(CameraExperiment):
         super().start_protocol()
         self.data_acc.reset()
 
-    def end_protocol(self, *args, **kwargs):
+    def end_protocol(self, save=True):
         """Save tail position and dynamic parameters and terminate.
 
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
-
         """
-        super().end_protocol(*args, **kwargs)
-        self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+        if save:
+            self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+            try:
+                self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
+            except AttributeError:
+                pass
         try:
             self.estimator.log.reset()
-            self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
         except AttributeError:
             pass
+
+        super().end_protocol(save)
 
     def set_protocol(self, protocol):
         """Connect new protocol start to resetting of the data accumulator.
@@ -395,10 +390,15 @@ class SwimmingRecordingExperiment(CameraExperiment):
             self.frame_dispatcher.diagnostic_queue,
             header_list=self.frame_dispatcher.diagnostic_params,
         )
+        self.frametime_acc = QueueDataAccumulator(
+            self.frame_dispatcher.framestart_queue,
+            header_list=["i_frame"]
+        )
 
         self.motion_detection_params = MovementDetectionParameters()
         self.gui_timer.timeout.connect(self.send_params)
         self.gui_timer.timeout.connect(self.motion_acc.update_list)
+        self.gui_timer.timeout.connect(self.frametime_acc.update_list)
 
     def make_window(self):
         """ """
@@ -426,35 +426,15 @@ class SwimmingRecordingExperiment(CameraExperiment):
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+        """ Ends all the processes in the application
 
         """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
         self.frame_recorder.terminate()
 
-    def end_protocol(self, *args, **kwargs):
-        """Save tail position and dynamic parameters and terminate.
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+    def end_protocol(self, save=True):
+        """Save tail position and dynamic parameters. Reset what is necessary
 
         """
 
@@ -465,4 +445,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
         except Empty:
             pass
 
-        super().end_protocol(*args, **kwargs)
+        if save:
+            self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
+
+        self.frametime_acc.reset()
+        super().end_protocol(save)

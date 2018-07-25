@@ -40,7 +40,7 @@ class VigourMotionEstimator:
         if new_dt > 0:
             self.last_dt = new_dt
         vigor = np.std(np.array(past_tail_motion[:, 1]))
-        self.log.update_list((past_tail_motion[0, 0], vigor))
+        self.log.update_list((past_tail_motion[-1, 0], vigor))
         return vigor * self.base_gain
 
     # n_samples_lag = max(int(round(lag / self.last_dt)), 0)

@@ -290,11 +290,11 @@ class MovingFrameDispatcher(FrameDispatcher):
                             if not recording_state:
                                 while image_buffer:
                                     time, im = image_buffer.popleft()
-                                    self.framestart_queue.put(time)
                                     self.save_queue.put(im)
+                                    self.framestart_queue.put((time, (i_recorded, )))
                                     i_recorded += 1
                             self.save_queue.put(current_frame)
-                            self.framestart_queue.put(current_time)
+                            self.framestart_queue.put((current_time, (i_recorded,)))
                             i_recorded += 1
                         recording_state = True
                         record_counter -= 1

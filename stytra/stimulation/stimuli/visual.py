@@ -386,7 +386,7 @@ class GratingStimulus(BackgroundStimulus):
     def create_pattern(self):
         l = int(
             self.grating_period
-            / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001))
+            / (max(self._experiment.calibrator.params["mm_px"], 0.0001))
         )
 
         if self.wave_shape == "square":
