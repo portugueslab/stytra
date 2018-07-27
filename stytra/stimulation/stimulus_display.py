@@ -38,8 +38,9 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
 
     """
 
-    def __init__(self, protocol_runner, calibrator, record_stim_every=10,
-                 gl=False, **kwargs):
+    def __init__(
+        self, protocol_runner, calibrator, record_stim_every=10, gl=False, **kwargs
+    ):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.
@@ -59,7 +60,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         else:
             QWidgetClass = QOpenGLWidget
 
-        StimDisplay = type("StimDisplay", (GLStimDisplay, QWidgetClass), {})
+        StimDisplay = type("StimDisplay", (StimDisplayWidget, QWidgetClass), {})
         self.widget_display = StimDisplay(
             self,
             calibrator=calibrator,
@@ -68,12 +69,9 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         )
         self.widget_display.setMaximumSize(2000, 2000)
 
-        # self.params.setName()
-        self.params.addChildren(
-            [
-                {"name": "pos", "value": (0, 0), "visible": False},
-                {"name": "size", "value": (400, 400), "visible": False},
-            ]
+        self.add_params(
+            pos=dict(value=(0, 0), visible=False),
+            size=dict(value=(400, 400), visible=False),
         )
 
         self.setStyleSheet("background-color:black;")
@@ -87,9 +85,7 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         self.widget_display.calibrator.set_physical_scale()
 
 
-# TODO why here paintEvent draws the stimulus and display_stimulus update
-# stimulus-related stuff? Do we need this?
-class GLStimDisplay:
+class StimDisplayWidget:
     """Widget for the actual display area contained inside the
     StimulusDisplayWindow.
 
@@ -110,7 +106,7 @@ class GLStimDisplay:
 
         self.calibrator = calibrator
         self.protocol_runner = protocol_runner
-        self.record_stim_every = record_stim_every
+        self.record_framerate = record_stim_every
 
         self.img = None
         self.calibrating = False
@@ -128,6 +124,7 @@ class GLStimDisplay:
 
         self.k = 0
         self.starting_time = datetime.now()
+        self.last_time = self.starting_time
 
         self.movie = []
         self.movie_timestamps = []
@@ -175,10 +172,10 @@ class GLStimDisplay:
         widget state for recording the stimulus movie. """
         self.update()
         # Grab frame if recording is enabled.
-        if self.record_stim_every is not None:
-            self.k += 1
+        if self.record_framerate:
+            now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
-            if np.mod(self.k, self.record_stim_every) == 0:
+            if (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()
@@ -188,7 +185,7 @@ class GLStimDisplay:
                     (datetime.now() - self.starting_time).total_seconds()
                 )
 
-                self.k = 0
+                self.last_time = now
 
     def get_movie(self):
         """Finalize stimulus movie.
@@ -201,7 +198,7 @@ class GLStimDisplay:
         -------
 
         """
-        if self.record_stim_every is not None:
+        if self.record_framerate is not None:
             movie_arr = self.movie
 
             movie_timestamps = np.array(self.movie_timestamps)
@@ -209,3 +206,13 @@ class GLStimDisplay:
 
         else:
             return None, None
+
+    def reset(self):
+        """ Resets the movie recorder
+
+        Returns
+        -------
+
+        """
+        self.movie = []
+        self.movie_timestamps = []

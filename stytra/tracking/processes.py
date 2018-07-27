@@ -18,6 +18,7 @@ from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
 from stytra.tracking.movement import MovementDetectionParameters
 
+
 def get_tracking_method(name):
     tracking_methods_list = dict(
         centroid=CentroidTrackingMethod,
@@ -30,10 +31,10 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter,
-                       bgsub=BackgorundSubtractor,
-                       bgsubcv=CV2BgSub)
-    return prepmethods.get(name, None)
+    prepmethods = dict(
+        prefilter=Prefilter, bgsub=BackgorundSubtractor, bgsubcv=CV2BgSub
+    )
+    return prepmethods.get(name, Prefilter)
 
 
 class FrameDispatcher(FrameProcess):
@@ -76,7 +77,9 @@ class FrameDispatcher(FrameProcess):
         self.gui_framerate = gui_framerate
         self.preprocessing_obj = get_preprocessing_method(preprocessing_class).process
         self.preprocessing_state = None
-        self.processing_obj = get_tracking_method(processing_class).detect
+        if preprocessing_class is not None:
+            self.processing_obj = get_tracking_method(processing_class).detect
+        self.processing_state = None
         self.processing_parameter_queue = processing_parameter_queue
 
     def process_internal(self, frame):
@@ -94,7 +97,6 @@ class FrameDispatcher(FrameProcess):
             processed output
 
         """
-
 
     def run(self):
         """Loop where the tracking function runs."""
@@ -125,14 +127,16 @@ class FrameDispatcher(FrameProcess):
                     processed = frame
 
                 if self.processing_obj is not None:
-                    output = self.processing_obj(processed, **self.processing_parameters)
+                    output, self.processing_state, = self.processing_obj(
+                        processed, self.processing_state, **self.processing_parameters
+                    )
                     self.output_queue.put((datetime.now(), output))
 
                 # calculate the frame rate
                 self.update_framerate()
 
                 # put current frame into the GUI queue
-                if self.processing_parameters["display_processed"]:
+                if self.processing_parameters.get("display_processed", False):
                     self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)
@@ -207,7 +211,7 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
+    def __init__(self, *args, signal_start_rec, output_queue_mb=1000, **kwargs):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
@@ -286,11 +290,11 @@ class MovingFrameDispatcher(FrameDispatcher):
                             if not recording_state:
                                 while image_buffer:
                                     time, im = image_buffer.popleft()
-                                    self.framestart_queue.put(time)
                                     self.save_queue.put(im)
+                                    self.framestart_queue.put((time, (i_recorded, )))
                                     i_recorded += 1
                             self.save_queue.put(current_frame)
-                            self.framestart_queue.put(current_time)
+                            self.framestart_queue.put((current_time, (i_recorded,)))
                             i_recorded += 1
                         recording_state = True
                         record_counter -= 1

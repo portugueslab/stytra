@@ -14,7 +14,7 @@ import deepdish as dd
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import CameraControlParameters
+from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParams
 
 import time
 
@@ -97,6 +97,7 @@ class CameraSource(VideoSource):
 
         self.camera_type = camera_type
         self.downsampling = downsampling
+        self.control_params = CameraControlParameters
         self.cam = None
 
     def run(self):
@@ -113,7 +114,7 @@ class CameraSource(VideoSource):
             CameraClass = self.camera_class_dict[self.camera_type]
             self.cam = CameraClass(debug=True, downsampling=self.downsampling)
         except KeyError:
-            print("{} is not a valid camera type!".format(self.camera_type))
+            raise Exception("{} is not a valid camera type!".format(self.camera_type))
         self.cam.open_camera()
         while True:
             # Kill if signal is set:
@@ -156,17 +157,28 @@ class VideoFileSource(VideoSource):
 
     """
 
-    def __init__(self, source_file=None, loop=True, framerate=300, **kwargs):
+    def __init__(self, source_file=None, loop=True, framerate=None, **kwargs):
         super().__init__(**kwargs)
         self.source_file = source_file
         self.loop = loop
+        self.framerate = framerate
+        self.control_params = VideoControlParams
+        self.offset = 0
+        self.paused = False
+        self.old_frame = None
+
+    def inner_loop(self):
+        pass
 
     def run(self):
 
         if self.source_file.endswith("h5"):
             framedata = dd.io.load(self.source_file)
             frames = framedata["video"]
-            delta_t = 1 / framedata.get("framerate", 30.0)
+            if self.framerate is None:
+                delta_t = 1 / framedata.get("framerate", 30.0)
+            else:
+                delta_t = 1 / self.framerate
             i_frame = 0
             prt = None
             while not self.kill_event.is_set():
@@ -188,37 +200,55 @@ class VideoFileSource(VideoSource):
         else:
             import cv2
 
-            im_sequence_flag = self.source_file.split(".")[-1] == "xiseq"
-            if im_sequence_flag:
-                frames_fn = glob.glob(
-                    "{}_files/*".format(self.source_file.split(".")[-2])
-                )
-                frames_fn.sort()
-                k = 0
-            else:
-                cap = cv2.VideoCapture(self.source_file)
+            cap = cv2.VideoCapture(self.source_file)
             ret = True
 
+            if self.framerate is None:
+                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
+            else:
+                delta_t = 1 / self.framerate
+
+            prt = None
             while ret and not self.kill_event.is_set():
-                if self.source_file.split(".")[-1] == "xiseq":
-                    frame = cv2.imread(frames_fn[k])
-                    k += 1
-                    if k == len(frames_fn) - 2:
-                        ret = False
+                if self.paused:
+                    ret = True
+                    frame = self.old_frame
                 else:
                     ret, frame = cap.read()
+
+                # adjust the frame rate by adding extra time if the processing
+                # is quicker than the specified framerate
+
+                if self.control_queue is not None:
+                    try:
+                        name, value = self.control_queue.get(timeout=0.0001)
+                        if name == "framerate":
+                            delta_t = 1 / value
+                        elif name == "offset":
+                            if value != self.offset:
+                                cap.set(cv2.CAP_PROP_POS_FRAMES, value)
+                                self.offset = value
+                        elif name == "paused":
+                            self.paused = value
+                    except Empty:
+                        pass
+
+                if prt is not None:
+                    extrat = delta_t - (time.process_time() - prt)
+                    if extrat > 0:
+                        time.sleep(extrat)
 
                 if ret:
                     self.frame_queue.put(frame[:, :, 0])
                 else:
                     if self.loop:
-                        if im_sequence_flag:
-                            k = 0
-                        else:
-                            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                         ret = True
                     else:
                         break
+
+                prt = time.process_time()
+                self.old_frame = frame
                 self.update_framerate()
             return
 

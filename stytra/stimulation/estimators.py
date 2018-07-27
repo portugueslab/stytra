@@ -10,12 +10,13 @@ from stytra.collectors import EstimatorLog, QueueDataAccumulator
 class VigourMotionEstimator:
     """ """
 
-    def __init__(self, data_acc, vigour_window=0.050):
+    def __init__(self, data_acc, vigour_window=0.050, base_gain=-30):
         assert isinstance(data_acc, QueueDataAccumulator)
         self.data_acc = data_acc
         self.vigour_window = vigour_window
         self.last_dt = 1 / 500.
         self.log = EstimatorLog(["vigour"])
+        self.base_gain = base_gain
 
     def get_velocity(self, lag=0):
         """
@@ -33,13 +34,14 @@ class VigourMotionEstimator:
         vigour_n_samples = max(int(round(self.vigour_window / self.last_dt)), 2)
         n_samples_lag = max(int(round(lag / self.last_dt)), 0)
         past_tail_motion = self.data_acc.get_last_n(vigour_n_samples + n_samples_lag)[
-                0:vigour_n_samples]
+            0:vigour_n_samples
+        ]
         new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
         vigor = np.std(np.array(past_tail_motion[:, 1]))
-        self.log.update_list((past_tail_motion[0, 0], vigor))
-        return vigor
+        self.log.update_list((past_tail_motion[-1, 0], vigor))
+        return vigor * self.base_gain
 
     # n_samples_lag = max(int(round(lag / self.last_dt)), 0)
     # past_tail_motion = self.data_acc.get_last_n(vigour_n_samples + n_samples_lag)[
@@ -52,7 +54,6 @@ class VigourMotionEstimator:
 
 
 class PositionEstimator:
-
     def __init__(self, data_acc, calibrator):
         self.data_acc = data_acc
         self.calibrator = calibrator
@@ -213,10 +214,8 @@ class SimulatedLocationEstimator:
         dt = (datetime.datetime.now() - self.start_t).total_seconds()
         if self.i_bout < len(self.bouts) and dt > self.bouts[self.i_bout].t:
             this_bout = self.bouts[self.i_bout]
-            print(this_bout)
             delta = rot_mat(self.past_theta) @ np.array([this_bout.dx, this_bout.dy])
             self.current_coordinates += delta
-            print(self.current_coordinates)
             self.past_theta = self.past_theta + this_bout.theta
             self.i_bout += 1
 

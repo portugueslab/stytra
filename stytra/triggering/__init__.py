@@ -7,7 +7,15 @@ received via ZMQ from a microscope.
 from multiprocessing import Process, Event, Queue
 import datetime
 import time
-import zmq
+
+try:
+    import zmq
+except ModuleNotFoundError:
+    pass
+try:
+    import u3
+except ModuleNotFoundError:
+    pass
 
 
 class Trigger(Process):
@@ -130,7 +138,37 @@ class ZmqTrigger(Trigger):
         super().run()
 
 
+class U3LabJackPulseTrigger(Trigger):
+    """" This triiger uses the `labjack <https://github.com/labjack/LabJackPython/>`_ u3
+    to recieve a TTL pulse from an external source. The DIO number is used as input.
+    The pin is initialized as input automatically"""
+
+    def __init__(self, chan):
+        """"
+
+        Parameters
+        ----------
+            chan: int
+            the DIO number used as input on the labjack
+        """
+        super().__init__()
+        self.chan = chan
+        self.device = None
+
+    def check_trigger(self):
+        """" Simply returns the state of the pin as a boolean """
+        return bool(self.device.getFeedback(u3.BitStateRead(self.chan))[0])
+
+    def run(self):
+        self.device = u3.U3()
+        self.device.getFeedback(u3.BitDirWrite(self.chan, 0))
+        super().run()
+
+
 if __name__ == "__main__":
-    port = "5555"
-    trigger = ZmqTrigger(port)
-    trigger.start()
+    # port = "5555"
+    # trigger = ZmqTrigger(port)
+    # trigger.start()
+    trig = U3LabJackPulseTrigger(6)
+    print("before")
+    trig.start()

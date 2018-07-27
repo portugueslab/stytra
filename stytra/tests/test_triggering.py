@@ -30,7 +30,6 @@ class DummyTrigger(Trigger):
 
 
 class TestExperimentClass(unittest.TestCase):
-
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
@@ -38,7 +37,6 @@ class TestExperimentClass(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_experiment_class(self):
-
         class TestProtocol(Protocol):
             name = "test_protocol"
 
@@ -48,8 +46,7 @@ class TestExperimentClass(unittest.TestCase):
         trigger = DummyTrigger()
         app = QApplication([])
         exp = Experiment(
-            app=app, protocols=[TestProtocol], dir_save=self.test_dir,
-            trigger=trigger
+            app=app, protocols=[TestProtocol], dir_save=self.test_dir, trigger=trigger
         )
         exp.start_experiment()
 

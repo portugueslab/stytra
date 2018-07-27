@@ -7,11 +7,7 @@ from stytra.utilities import HasPyQtGraphParams
 
 
 class ParametrizedImageproc(HasPyQtGraphParams):
-
-    def __init__(self):
-        super().__init__()
-
-    def process(self, im, **kwargs):
+    def process(self, im, state=None, **kwargs):
         return im
 
 
@@ -74,24 +70,6 @@ class FishTrackingProcess(Process):
                     )
                     self.fish_queue.put((time, output))
 
-                    if self.diagnostics:
-                        display = frame.copy()
-                        for fish in output:
-                            display = draw_fish_new(
-                                display, fish, self.processing_parameters
-                            )
-                        self.diagnostic_queue.put(display)
-
-                # calculate the framerate
-                if i_fps == n_fps_frames - 1:
-                    current_time = datetime.now()
-                    current_framerate = (
-                        n_fps_frames / (current_time - previous_time).total_seconds()
-                    )
-                    print("Fish detection runs on {:.2f} FPS".format(current_framerate))
-                    previous_time = current_time
-                i_fps = (i_fps + 1) % n_fps_frames
-                i_total += 1
 
             except Empty:
                 pass

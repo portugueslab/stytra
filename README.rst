@@ -2,17 +2,14 @@
 Stytra
 ======
 
-.. image:: https://readthedocs.org/projects/stytra/badge/?version=latest
-    :alt: Documentation Status
-    :scale: 100%
-    :target: https://stytra.readthedocs.io/en/latest/?badge=latest
-
 A modular package to control stimulation and track behaviour in zebrafish experiments.
 ---------------
 
 .. image:: https://cdn.rawgit.com/portugueslab/stytra/644a23d5/stytra/icons/stytra_logo.svg
     :scale: 50%
     :alt: Logo
+
+`Documentation <http://www.portugueslab.com/stytra/>`_ 
 
 Stytra is divided into independent modules which can be assembled
 depending on the experimental requirements.
@@ -34,10 +31,15 @@ functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv
 
-Once you have that, download stytra in a directory and install it via pip by::
+If you want to use video formats for stimulation or record videos, PyAV is required,
+also easily installable with Anaconda:
+
+    conda install -c conda-forge av
+
+Download Stytra from github as a zip file or clone it with git and install it via pip by::
 
     pip install path_to_stytra/stytra
-    
+
 To test the installation, you can try to run an example experiment from the prompt with::
     
     python -m stytra.examples.looming_experiment

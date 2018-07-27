@@ -13,7 +13,6 @@ from stytra.stimulation.stimuli import FullFieldVisualStimulus
 
 
 class TestExperimentClass(unittest.TestCase):
-
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
 
@@ -21,7 +20,6 @@ class TestExperimentClass(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_experiment_class(self):
-
         class TestProtocol0(Protocol):
             name = "test_protocol_0"
 

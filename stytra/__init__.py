@@ -17,6 +17,7 @@ from PyQt5.QtGui import QIcon
 import pkg_resources
 import qdarkstyle
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -48,7 +49,7 @@ class Stytra:
 
         tracking_config : dict
             preprocessing_method: str
-                one of "prefilter" or "bgrem"
+                one of "prefilter" or "bgsub"
             tracking_method: str
                 one of "tail", "eyes", "fish"
             estimator: str
@@ -92,15 +93,15 @@ class Stytra:
         tracking_config=None,
         recording_config=None,
         embedded=True,
-        **kwargs
+        exec=True,
+        **kwargs,
     ):
 
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
         class_kwargs = dict(
-            app=app,
-            calibrator=(CircleCalibrator() if not embedded else None),
+            app=app, calibrator=(CircleCalibrator() if not embedded else None)
         )
         class_kwargs.update(kwargs)
 
@@ -112,20 +113,22 @@ class Stytra:
             if tracking_config is not None:
                 class_kwargs["tracking_config"] = tracking_config
                 base = TrackingExperiment
-            if recording_config is not None:
+            if recording_config:
                 base = SwimmingRecordingExperiment
 
         app_icon = QIcon()
         for size in [32, 64, 128, 256]:
-            app_icon.addFile(pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
-                             QSize(size, size))
+            app_icon.addFile(
+                pkg_resources.resource_filename(__name__, "/icons/{}.png".format(size)),
+                QSize(size, size),
+            )
         app.setWindowIcon(app_icon)
 
         self.exp = base(**class_kwargs)
 
         self.exp.start_experiment()
-
-        app.exec_()
+        if exec:
+            app.exec_()
 
 
 if __name__ == "__main__":

@@ -115,7 +115,9 @@ class XimeaCamera(Camera):
         try:
             self.cam = xiapi.Camera()
         except NameError:
-            print("The xiapi package must be installed to use a Ximea camera!")
+            raise Exception(
+                "The xiapi package must be installed to use a Ximea camera!"
+            )
 
     def open_camera(self):
         """ """
@@ -205,7 +207,7 @@ class AvtCamera(Camera):
         try:
             self.vimba = Vimba()
         except NameError:
-            print("The pymba package must be installed to use an AVT camera!")
+            raise Exception("The pymba package must be installed to use an AVT camera!")
 
         self.frame = None
 

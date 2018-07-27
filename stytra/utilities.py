@@ -17,16 +17,17 @@ class Database:
     def __init__(self):
         pass
 
-    def add_experiment(self, exp):
+    def inset_experiment_data(self, exp_data):
         """
 
         Parameters
         ----------
-        exp :
+        exp_data : the data collector dictionary
             
 
         Returns
         -------
+        index of database entry
 
         """
         pass
@@ -38,17 +39,15 @@ class FrameProcess(Process):
 
     Parameters
     ----------
+        n_fps_frames:
+            the maximal number of frames to use to calculate framerate
 
     Returns
     -------
 
     """
 
-    def __init__(self, n_fps_frames=10, print_framerate=False):
-        """ Initialize the class.
-        :param n_fps_frames: number of frames after which framerate is updated.
-        :param print_framerate: flag for printing framerate
-        """
+    def __init__(self, n_fps_frames=10):
         super().__init__()
 
         # Set framerate calculation parameters
@@ -56,7 +55,6 @@ class FrameProcess(Process):
         self.i_fps = 0
         self.previous_time_fps = None
         self.current_framerate = None
-        self.print_framerate = print_framerate
 
         # Store current time timestamp:
         self.current_time = datetime.now()
@@ -75,8 +73,6 @@ class FrameProcess(Process):
                     )
                 except ZeroDivisionError:
                     self.current_framerate = 0
-                if self.print_framerate:
-                    print("FPS: " + str(self.current_framerate))
 
             self.previous_time_fps = self.current_time
         # Reset i after every n frames
@@ -91,7 +87,11 @@ def prepare_json(it, **kwargs):
     it :
         the item which will be recursively sanitized
     **kwargs :
-        
+        paramstree: bool
+        convert_datetime: bool
+            if datetiems are to be converted to strings for JSON serialization
+        eliminate_df: bool
+            remove dataframes from the dictionary
 
     Returns
     -------
@@ -194,6 +194,7 @@ class HasPyQtGraphParams:
     -------
 
     """
+
     _params = Parameter.create(name="global_params", type="group")
 
     def __init__(self, name=None):

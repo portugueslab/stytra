@@ -1,9 +1,7 @@
 import traceback
 
-from PyQt5.QtCore import QTimer
 from multiprocessing import Queue, Event
-
-from stytra.calibration import CircleCalibrator
+from queue import Empty
 
 from stytra.experiments import Experiment
 from stytra.gui.container_windows import (
@@ -17,15 +15,16 @@ from stytra.hardware.video import (
     CameraSource,
 )
 
+from stytra.tracking.movement import MovementDetectionParameters
+
 # imports for tracking
 
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
-from stytra.tracking.tail import (
-    TailTrackingMethod,
-)
+from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
+from stytra.tracking.fish import FishTrackingMethod
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -108,7 +107,6 @@ class CameraExperiment(Experiment):
         super().wrap_up(*args, **kwargs)
         self.camera.kill_event.set()
         self.camera.terminate()
-        print("Camera process terminated")
         self.gui_timer.stop()
 
     def excepthook(self, exctype, value, tb):
@@ -178,10 +176,7 @@ class TrackingExperiment(CameraExperiment):
 
         self.processing_params_queue = Queue()
         self.finished_sig = Event()
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
         method_name = tracking_config["tracking_method"]
         preproc_method_name = tracking_config.get("preprocessing_method", "prefilter")
@@ -218,7 +213,7 @@ class TrackingExperiment(CameraExperiment):
         # This probably should happen before starting the camera process??
         if isinstance(self.tracking_method, TailTrackingMethod):
             self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.change_segment_numb
+                self.change_segment_num
             )
 
         est_type = tracking_config.get("estimator", None)
@@ -235,7 +230,7 @@ class TrackingExperiment(CameraExperiment):
 
     # TODO probably could go to the interface, but this would mean linking
     # the data accumulator to the interface as well. Probably makes sense.
-    def change_segment_numb(self):
+    def change_segment_num(self):
         """ Take care of resetting the data accumulator if the number of
         segments (and therefore the points to be saved) is changed.
         """
@@ -249,9 +244,9 @@ class TrackingExperiment(CameraExperiment):
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
         eyes = isinstance(self.tracking_method, EyeTrackingMethod)
-
+        fish = isinstance(self.tracking_method, FishTrackingMethod)
         self.window_main = TrackingExperimentWindow(
-            experiment=self, tail=tail, eyes=eyes
+            experiment=self, tail=tail, eyes=eyes, fish=fish,
         )
 
         # add streams
@@ -290,27 +285,22 @@ class TrackingExperiment(CameraExperiment):
         super().start_protocol()
         self.data_acc.reset()
 
-    def end_protocol(self, *args, **kwargs):
+    def end_protocol(self, save=True):
         """Save tail position and dynamic parameters and terminate.
 
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
-
         """
-        super().end_protocol(*args, **kwargs)
-        self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+        if save:
+            self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+            try:
+                self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
+            except AttributeError:
+                pass
         try:
             self.estimator.log.reset()
-            self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
         except AttributeError:
             pass
+
+        super().end_protocol(save)
 
     def set_protocol(self, protocol):
         """Connect new protocol start to resetting of the data accumulator.
@@ -343,7 +333,6 @@ class TrackingExperiment(CameraExperiment):
         """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
-        print("Dispatcher process terminated")
 
     def excepthook(self, exctype, value, tb):
         """
@@ -378,11 +367,9 @@ class VRExperiment(TrackingExperiment):
 class SwimmingRecordingExperiment(CameraExperiment):
     """Experiment where the fish is recorded while it is moving"""
 
-    def __init__(self, *args, tracking_config, **kwargs):
-        super().__init__(
-            *args, calibrator=CircleCalibrator(), camera_queue_mb=500, **kwargs
-        )
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, camera_queue_mb=500, **kwargs)
+        self.logger.info("Motion recording experiment")
         self.processing_params_queue = Queue()
         self.signal_start_rec = Event()
         self.finished_signal = Event()
@@ -396,25 +383,29 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
 
         self.frame_recorder = VideoWriter(
-            self.directory + "/video/",
-            self.frame_dispatcher.save_queue,
-            self.finished_signal,
+            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
         )  # TODO proper filename
 
         self.motion_acc = QueueDataAccumulator(
             self.frame_dispatcher.diagnostic_queue,
             header_list=self.frame_dispatcher.diagnostic_params,
         )
+        self.frametime_acc = QueueDataAccumulator(
+            self.frame_dispatcher.framestart_queue,
+            header_list=["i_frame"]
+        )
 
         self.motion_detection_params = MovementDetectionParameters()
         self.gui_timer.timeout.connect(self.send_params)
         self.gui_timer.timeout.connect(self.motion_acc.update_list)
+        self.gui_timer.timeout.connect(self.frametime_acc.update_list)
 
     def make_window(self):
         """ """
         self.window_main = TrackingExperimentWindow(
-            experiment=self, tail_tracking=False
+            experiment=self, tail=False, eyes=False
         )
+        self.window_main.stream_plot.add_stream(self.motion_acc)
         self.window_main.show()
 
     def go_live(self):
@@ -435,37 +426,27 @@ class SwimmingRecordingExperiment(CameraExperiment):
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
-        """
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+        """ Ends all the processes in the application
 
         """
         super().wrap_up(*args, **kwargs)
         self.frame_dispatcher.terminate()
         self.frame_recorder.terminate()
 
-    def end_protocol(self, *args, **kwargs):
-        """Save tail position and dynamic parameters and terminate.
-
-        Parameters
-        ----------
-        *args :
-            
-        **kwargs :
-            
-
-        Returns
-        -------
+    def end_protocol(self, save=True):
+        """Save tail position and dynamic parameters. Reset what is necessary
 
         """
-        self.finished_signal.set()
+
         self.frame_recorder.reset_signal.set()
-        super().end_protocol(*args, **kwargs)
+        try:
+            recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
+            self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
+        except Empty:
+            pass
+
+        if save:
+            self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
+
+        self.frametime_acc.reset()
+        super().end_protocol(save)

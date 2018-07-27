@@ -24,6 +24,10 @@ class LoomingProtocol(Protocol):
         # This automatically creates a GUI to change them
         # (more elaborate ways of adding parameters are supported,
         # see the documentation of HasPyQtGraphParams)
+
+        # if you are not interested in parametrizing your
+        # protocol the the whole __init__ definition
+        # can be skipped
         # TODO figure out how to integrate this with Sphinx
         self.add_params(n_looms=10, max_loom_size=40, max_loom_duration=5)
 

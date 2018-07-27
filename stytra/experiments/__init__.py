@@ -14,12 +14,16 @@ from stytra.collectors import DataCollector
 from stytra.stimulation import ProtocolRunner
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
-from stytra.gui.container_windows import SimpleExperimentWindow, DynamicStimExperimentWindow
+from stytra.gui.container_windows import (
+    SimpleExperimentWindow,
+    DynamicStimExperimentWindow,
+)
 
 try:
     import av
 except ImportError:
     pass
+
 
 class Experiment(QObject):
     """General class that runs an experiment.
@@ -60,16 +64,19 @@ class Experiment(QObject):
 
 
     """
+
     def __init__(
         self,
         app=None,
         protocols=None,
+        default_protocol=None,
         dir_save=None,
+        dir_assets="",
+        database=None,
         metadata_general=None,
         metadata_animal=None,
         calibrator=None,
         stim_plot=False,
-        dir_assets="",
         log_format="csv",
         stim_movie_format="h5",
         rec_stim_every=None,
@@ -85,6 +92,7 @@ class Experiment(QObject):
 
         self.asset_dir = dir_assets
         self.base_dir = dir_save
+        self.database = database
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
@@ -113,19 +121,23 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal()
 
+        #TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
         if self.base_dir is not None:
             self.dc = DataCollector(folder_path=self.base_dir)
             self.dc.add_param_tree(self.metadata._params)
-            # Use the DataCollector object to find the last used protocol, to
-            # restore it
-            self.last_protocol = self.dc.get_last_value("stimulus_protocol_params")
+            # Use the DataCollector object to find the last used protocol,
+            #  to restore it
+            self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
         else:
             self.dc = None
-            self.last_protocol = None
+            self.default_protocol = None
+
+        if default_protocol is not None:
+            self.default_protocol = default_protocol
 
         self.protocol_runner = ProtocolRunner(
-            experiment=self, protocol=self.last_protocol
+            experiment=self, protocol=self.default_protocol
         )
 
         # assign signals from protocol_runner to be used externally:
@@ -140,23 +152,26 @@ class Experiment(QObject):
             self.display_config = display_config
 
         self.window_display = StimulusDisplayWindow(
-            self.protocol_runner, self.calibrator, gl=self.display_config.get("gl", False),
-            record_stim_every=rec_stim_every
+            self.protocol_runner,
+            self.calibrator,
+            gl=self.display_config.get("gl", False),
+            record_stim_every=rec_stim_every,
         )
 
         if self.display_config.get("window_size", None) is not None:
             self.window_display.params["size"] = self.display_config["window_size"]
             self.window_display.set_dims()
 
-        self.current_instance = self.get_new_name()
         self.i_run = 0
+        self.current_timestamp = datetime.datetime.now()
+        self.current_instance = self.get_new_name()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
     def get_new_name(self):
         return (
-            datetime.datetime.now().strftime("%y%m%d")
+            self.current_timestamp.strftime("%y%m%d")
             + "_f"
             + str(self.metadata_animal.params["id"])
         )
@@ -170,7 +185,7 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return self.folder_name + "/{:03d}_".format(self.i_run)
+        return os.path.join(self.folder_name, self.current_timestamp.strftime("%H%M%S_"))
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -244,6 +259,7 @@ class Experiment(QObject):
 
         """
         self.abort = False
+        self.window_display.widget_display.reset()
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
             self.logger.info("Waiting for trigger signal...")
             msg = QMessageBox()
@@ -294,7 +310,7 @@ class Experiment(QObject):
         """
 
         self.protocol_runner.stop()
-        if self.base_dir is not None:
+        if self.base_dir is not None and save:
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus_log")
                 self.dc.add_static_data(
@@ -303,34 +319,50 @@ class Experiment(QObject):
                 self.dc.add_static_data(
                     self.protocol_runner.t_end, name="general_t_protocol_end"
                 )
+
+                if self.database is not None:
+                    db_id = self.database.insert_experiment_data(
+                        self.dc.get_clean_dict(
+                            paramstree=True, eliminate_df=True, convert_datetime=False
+                        )
+                    )
+                else:
+                    db_id = -1
+                self.dc.add_static_data(db_id, name="general_db_index")
+
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 
-                # save the movie if it is generated
+                # save the stimulus movie if it is generated
                 movie, movie_times = self.window_display.widget_display.get_movie()
                 if movie is not None:
                     if self.stim_movie_format == "h5":
-                        movie_dict = dict(movie=np.stack(movie, 0),
-                                          movie_times=movie_times)
+                        movie_dict = dict(
+                            movie=np.stack(movie, 0), movie_times=movie_times
+                        )
                         dd.io.save(
                             self.filename_base() + "stim_movie.h5",
                             movie_dict,
                             compression="blosc",
                         )
                     elif self.stim_movie_format == "mp4":
-                        container = av.open(self.filename_base()+"stim_movie.mp4", mode="w")
+                        container = av.open(
+                            self.filename_base() + "stim_movie.mp4", mode="w"
+                        )
                         stream = container.add_stream("mpeg4", rate=30)
                         stream.height, stream.width = movie[0].shape[:2]
-                        print(movie[0].shape[:2])
                         stream.pix_fmt = "yuv420p"
                         for frame in movie:
 
-                            vidframe = av.VideoFrame.from_ndarray(np.ascontiguousarray(frame.astype(np.uint8)),
-                                                                  'rgb24')
+                            vidframe = av.VideoFrame.from_ndarray(
+                                np.ascontiguousarray(frame.astype(np.uint8)), "rgb24"
+                            )
                             packet = stream.encode(vidframe)
                             container.mux(packet)
                         container.close()
                     else:
-                        raise Exception("Tried to write the stimulus video into an unsupported format")
+                        raise Exception(
+                            "Tried to write the stimulus video into an unsupported format"
+                        )
 
             if self.protocol_runner.dynamic_log is not None:
                 self.protocol_runner.dynamic_log.save(
@@ -339,6 +371,7 @@ class Experiment(QObject):
 
         self.protocol_runner.reset()
         self.i_run += 1
+        self.current_timestamp = datetime.datetime.now()
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.

@@ -5,22 +5,65 @@ from numba import vectorize, uint8, jit
 from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
+from stytra.tracking.preprocessing import BackgorundSubtractor
+from stytra.tracking.tail import find_direction, _next_segment
+
+from itertools import chain
 
 
 class FishTrackingMethod(ParametrizedImageproc):
-    name = "tracking_fish_params"
-    def __init__(self):
-        super().__init__()
-        self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
-
-        self.accumulator_headers = ["x", "y", "theta"]
-        self.data_log_name = ""
+    def __init__(self, n_fish=1, n_tail=0):
+        super().__init__(name="tracking_fish_params")
+        self.add_params(function="fish",
+                        threshold=dict(type="int", limits=(0, 255)),
+                        bg_preresize=2,
+                        bglearning_rate=0.001,
+                        bgreset=False,
+                        bglearn_every=1,
+                        bgsub_dif_threshold=30,
+                        fish_size_min=4,
+                        fish_size_max=20,
+                        fish_length=10.5,
+                        )
+        self.accumulator_headers = list(chain.from_iterable(
+            [["f{:d}_x".format(i_fish), "f{:d}_y".format(i_fish), "f{:d}_theta".format(i_fish), ] +
+             ["f{:d}_theta_{:02d}".format(i_fish, i) for i in range(n_tail)] for i_fish in range(n_fish)]))
+        self.data_log_name = "fish_track"
 
     @classmethod
-    def detect(cls, im, threshold=128, image_scale=1, **extra_args):
-        cent = centroid_bin(im < threshold)
-        return cent[0]/image_scale, cent[1]/image_scale, 0.0
+    def detect(cls, im, state=None, bgpreresize=2, bglearning_rate=0.001,
+               bglearn_every=1, bgreset=False, bgdifthreshold=30,
+               fish_size_min=4,
+               fish_size_max=20, fish_length=10.5, n_fish_max=3, **extra_args):
+        if state is None:
+            bgstate, trackstate = None, None
+        else:
+            bgstate, trackstate= state
+        bgsub, bgstate = BackgorundSubtractor.process(
+            im,
+            bgstate, bglearning_rate, bglearn_every, bgreset)
+        if bgpreresize != 1:
+            bgsub_small = cv2.resize(bgsub, None, fx=1 / bgpreresize,
+                                 fy=1 / bgpreresize,
+                                 interpolation=cv2.INTER_AREA) > bgdifthreshold
+        else:
+            bgsub_small = bgsub
+        bgsub = bgsub > bgdifthreshold
 
+        stats = cv2.connectedComponentsWithStats(bgsub_small.astype(np.uint8))
+        results = []
+        for row in stats[2][1:, :]:
+            if fish_size_min < row[cv2.CC_STAT_AREA]*(bgpreresize**2) < fish_size_max:
+                fishpos = [(row[cv2.CC_STAT_TOP]+row[cv2.CC_STAT_HEIGHT]/2)*bgpreresize,
+                           (row[cv2.CC_STAT_LEFT] + row[
+                               cv2.CC_STAT_WIDTH] / 2) * bgpreresize]
+                fishdet = (255-im)*bgsub
+                theta = find_direction(fishpos, fishdet, fish_length/2)
+                results.extend(fishpos+[theta])
+                # TODO add tail tracking
+        while len(results) < 3*n_fish_max:
+            results.extend([np.nan, np.nan, np.nan])
+        return results, (bgstate, trackstate)
 
 class ContourScorer:
     """ """

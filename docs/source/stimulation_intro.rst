@@ -19,6 +19,38 @@ keep track of time and set the Stimuli in the Protocol sequence with the proper 
 
 .. autoclass::`~stytra.stimulation.ProtocolRunner`
 
+Stimuli examples
+----------------
+
+Full-field luminance :py:cls:`~stytra.tests.test_stimuli.FullFieldProtocol`
+
+
+.. raw:: html
+
+        <video loop src="_static/stim_movie_full_field.mp4"
+        width="200px" autoplay></video>
+
+Gratings
+
+.. raw:: html
+
+        <video loop src="_static/stim_movie_grating.mp4"
+        width="200px" autoplay></video>
+
+OKR inducing windmill
+
+.. raw:: html
+
+        <video loop src="_static/stim_movie_okr.mp4"
+        width="200px" autoplay></video>
+
+Seamlessly-tiled image
+
+.. raw:: html
+
+        <video loop src="_static/stim_movie_seamless_image.mp4"
+        width="200px" autoplay></video>
+
 
 
 

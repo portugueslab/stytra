@@ -8,17 +8,21 @@ import cv2
 from stytra.tracking import ParametrizedImageproc
 import numpy as np
 
+
 class PreprocMethod(ParametrizedImageproc):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.add_params(display_processed=False)
 
 
 class Prefilter(PreprocMethod):
-
     def __init__(self):
-        super().__init__()
-        self.add_params(filter_size=0, image_scale=dict(type="float", value=0.5, limits=(0.01, 1.0)), color_invert=False)
+        super().__init__(name="tracking_prefiltering")
+        self.add_params(
+            filter_size=0,
+            image_scale=dict(type="float", value=0.5, limits=(0.01, 1.0)),
+            color_invert=False,
+        )
 
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process
@@ -59,63 +63,82 @@ class BgSubState:
 
     """
 
-    def __init__(self, im, n_mean):
-        self.collected_images = np.empty((n_mean,) + im.shape, im.dtype)
+    def __init__(self):
+        self.background_image = None
         self.i = 0
-        self.n_collected = 0
-        self.n_mean = n_mean
 
-    def update(self, im):
-        self.collected_images[self.i, :, :] = im
-        self.i = (self.i + 1) % self.n_mean
-        self.n_collected = min(self.n_collected + 1, self.n_mean)
+    def update(self, im, i_learn_every=1, learning_rate=0.01):
+        if self.background_image is None:
+            self.background_image = im.astype(np.float32)
+        elif self.i == 0:
+            self.background_image[:, :] = im.astype(np.float32) * np.float32(
+                learning_rate
+            ) + self.background_image * np.float32(1 - learning_rate)
+        self.i = (self.i + 1) % i_learn_every
 
     def subtract(self, im):
-        return cv2.absdiff(im, np.mean(self.collected_images[: self.n_collected, :, :]))
+        return cv2.absdiff(im, self.background_image.astype(np.uint8))
 
     def reset(self):
         self.n_collected = 0
 
 
 class BackgorundSubtractor(PreprocMethod):
-
     def __init__(self):
-        super().__init__()
-        self.add_params(n_mean=100, image_scale=dict(type="float", value=0.5, limits=(0.01, 1.0)))
+        super().__init__(name="tracking_bgsubtraction")
+        self.add_params(
+            learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
+            learn_every=dict(type="int", value=1, limits=(1, 1000)),
+            reset=dict(type="bool", value=False),
+        )
         self.collected_images = None
 
     @classmethod
-    def process(cls, im, state=None, n_mean=100, image_scale=1, **extraparams):
-        if image_scale != 1:
-            im = cv2.resize(
-                im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
-            )
-        if state is None or state.n_mean != n_mean:
-            state = BgSubState(im, n_mean)
-        state.update(im)
+    def process(
+        cls,
+        im,
+        state=None,
+        learning_rate=0.001,
+        learn_every=1,
+        reset=False,
+        **extraparams
+    ):
+        if state is None or reset:
+            state = BgSubState()
+        state.update(im, learn_every, learning_rate)
         return state.subtract(im), state
+
 
 class CVSubtractorState:
     def __init__(self, method, threshold):
         self.method = method
         self.threshold = threshold
         if method == "knn":
-            self.subtractor = cv2.createBackgroundSubtractorKNN(dist2Threshhold=threshold, detectShadows=False)
+            self.subtractor = cv2.createBackgroundSubtractorKNN(
+                dist2Threshhold=threshold, detectShadows=False
+            )
         else:
-            self.subtractor = cv2.createBackgroundSubtractorMOG2(varThreshold=threshold, detectShadows=False)
+            self.subtractor = cv2.createBackgroundSubtractorMOG2(
+                varThreshold=threshold, detectShadows=False
+            )
 
     def update(self, im):
         return self.subtractor.apply(im)
 
-class CV2BgSub(PreprocMethod):
 
+class CV2BgSub(PreprocMethod):
     def __init__(self):
         super().__init__()
-        self.add_params(method=dict(type="list", value="mog2", values=["knn", "mog2"]), threshold=128)
+        self.add_params(
+            method=dict(type="list", value="mog2", values=["knn", "mog2"]),
+            threshold=128,
+        )
         self.collected_images = None
 
     @classmethod
-    def process(cls, im, state=None, method="mog2", image_scale=1, threshold=128, **extraparams):
-        if state is None or state.method != method or state.threshold!=threshold:
+    def process(
+        cls, im, state=None, method="mog2", image_scale=1, threshold=128, **extraparams
+    ):
+        if state is None or state.method != method or state.threshold != threshold:
             state = CVSubtractorState(method, threshold)
         return state.update(im), state

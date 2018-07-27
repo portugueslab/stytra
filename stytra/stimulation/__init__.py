@@ -311,8 +311,7 @@ class ProtocolRunner(QObject):
 
     def update_dynamic_log(self):
         """Update a dynamic log. Called only if one is present."""
-        self.dynamic_log.update_list(self.t,
-                                     self.current_stimulus.get_dynamic_state())
+        self.dynamic_log.update_list(self.t, self.current_stimulus.get_dynamic_state())
 
     def get_duration(self):
         """Get total duration of the protocol in sec, calculated from stimuli

@@ -21,11 +21,10 @@ from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection
+from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection,  CameraViewFish
 
 
 class QPlainTextEditLogger(logging.Handler):
-
     def __init__(self):
         super().__init__()
         self.widget = QPlainTextEdit()
@@ -170,7 +169,6 @@ class SimpleExperimentWindow(QMainWindow):
         self.experiment.wrap_up()
 
 
-
 class CameraExperimentWindow(SimpleExperimentWindow):
     """ """
 
@@ -222,7 +220,6 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         return self.monitoring_widget
 
 
-
 class TrackingExperimentWindow(SimpleExperimentWindow):
     """Window for controlling an experiment where the tail of an
     embedded fish is tracked.
@@ -235,13 +232,17 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     """
 
-    def __init__(self, tracking=True, tail=False, eyes=False, *args, **kwargs):
+    def __init__(self, tracking=True, tail=False, eyes=False, fish=False,
+                 *args, **kwargs):
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
 
-        if tail or eyes:
+        if fish:
+            self.camera_display = CameraViewFish(
+                experiment=kwargs["experiment"])
+        elif tail or eyes:
             self.camera_display = CameraEmbeddedTrackingSelection(
                 experiment=kwargs["experiment"], tail=tail, eyes=eyes
             )
@@ -264,7 +265,9 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
         # Tracking params button:
         self.button_tracking_params = QPushButton(
-            "Tracking params" if tracking else "Movement detection params"
+            "Tracking params"
+            if (self.tail or self.eyes)
+            else "Movement detection params"
         )
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
         self.monitoring_layout.addWidget(self.button_tracking_params)
@@ -277,7 +280,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         """ """
         self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
-        previous_widget.layout().setContentsMargins(0,0,0,0)
+        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
         self.monitoring_layout.addWidget(previous_widget)
         self.monitoring_layout.setStretch(1, 1)
         self.monitoring_layout.setStretch(0, 1)
@@ -288,8 +291,16 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
     def open_tracking_params_tree(self):
         """ """
         self.track_params_wnd = ParameterTree()
-        self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
-        self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
+        if hasattr(self.experiment, "tracking_method"):
+            self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
+        if hasattr(self.experiment, "preprocessing_method"):
+            self.track_params_wnd.addParameters(
+                self.experiment.preprocessing_method.params
+            )
+        if hasattr(self.experiment, "motion_detection_params"):
+            self.track_params_wnd.addParameters(
+                self.experiment.motion_detection_params.params
+            )
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()

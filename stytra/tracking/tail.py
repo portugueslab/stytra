@@ -8,7 +8,7 @@ class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(name="tracking_tail_params", **kwargs)
         # TODO maybe getting default values here:
         self.add_params(
             n_segments=dict(value=10, type="int", limits=(2, 50)),
@@ -25,8 +25,6 @@ class TailTrackingMethod(ParametrizedImageproc):
 class CentroidTrackingMethod(TailTrackingMethod):
     """Center-of-mass method to find consecutive segments."""
 
-    name = "tracking_tail_params"
-
     def __init__(self):
         super().__init__()
         self.add_params(
@@ -37,6 +35,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
     def detect(
         cls,
         im,
+        state=None,
         tail_start=(0, 0),
         tail_length=(1, 1),
         n_segments=12,
@@ -108,12 +107,11 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
             :
-        ]
+        ], state
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
     """Angular sweep method to find consecutive segments."""
-    name = "tracking_tail_params"
 
     def __init__(self):
         super().__init__()
@@ -123,6 +121,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
     def detect(
         cls,
         im,
+        state=None,
         tail_start=(0, 0),
         n_segments=7,
         tail_length=(1, 1),
@@ -180,7 +179,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
             im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
         )
 
-        return angle_list
+        return angle_list, state
 
 
 @jit(nopython=True)
@@ -216,7 +215,7 @@ def find_direction(start, image, seglen):
     -------
 
     """
-    n_angles = 20
+    n_angles = np.ceil(np.pi*2*seglen*2)
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
     detect_angles = angles
@@ -225,8 +224,8 @@ def find_direction(start, image, seglen):
 
     for i in range(detect_angles.shape[0]):
         coord = (
-            int(start[0] + seglen * np.cos(detect_angles[i])),
-            int(start[1] + seglen * np.sin(detect_angles[i])),
+            round(start[0] + seglen * np.cos(detect_angles[i])),
+            round(start[1] + seglen * np.sin(detect_angles[i])),
         )
         if (
             (coord[0] > 0)

@@ -16,7 +16,6 @@ from stytra.triggering import Trigger
 
 
 class NewFileTrigger(Trigger):
-
     def __init__(self, pathname):
         self.path = Path(pathname)
         self.files_n = len(list(self.path.glob("*")))

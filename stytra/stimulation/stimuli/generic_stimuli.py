@@ -37,7 +37,6 @@ class Stimulus:
         2. Slow functions would slow down the entire main process, especially if
            called at every time step.
 
-
     Stimuli have parameters that are important to be logged in the final
     metadata and parameters that are not relevant. The get_state() method
     used to generate the log saves all attributes not starting with _.
@@ -108,10 +107,12 @@ class Stimulus:
         self.real_time_start = datetime.datetime.now()
 
     def initialise_external(self, experiment):
-        """Make a reference to the Experiment class inside the Stimulus.
+        """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
-        estimator for virtual reality.
+        estimators for virtual reality.
+        Also, the necessary preprocessing operations are handled here,
+        such as loading images or videos.
 
         Parameters
         ----------
@@ -153,9 +154,10 @@ class DynamicStimulus(Stimulus):
 
     def get_dynamic_state(self):
         """ """
-        state_dict = {self.name + '_' + param:
-                          getattr(self, param, 0) for param in
-                      self.dynamic_parameters}
+        state_dict = {
+            self.name + "_" + param: getattr(self, param, 0)
+            for param in self.dynamic_parameters
+        }
         return state_dict
 
 
@@ -186,12 +188,14 @@ class InterpolatedStimulus(Stimulus):
         self.df_param = df_param
         self.duration = float(df_param.t.iat[-1])
         self._past_t = 0
+        self._dt = 1 / 60.
 
     def update(self):
         """ """
         # to use parameters defined as velocities, we need the time
         # difference before previous display
-        dt = self._elapsed - self._past_t
+        self._dt = self._elapsed - self._past_t
+        self._past_t = self._elapsed
 
         for col in self.df_param.columns:
             if col != "t":
@@ -201,7 +205,7 @@ class InterpolatedStimulus(Stimulus):
                         self,
                         col[4:],
                         getattr(self, col[4:])
-                        + dt
+                        + self._dt
                         * np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                     )
                 # otherwise it is set by interpolating the column of the
@@ -212,6 +216,3 @@ class InterpolatedStimulus(Stimulus):
                         col,
                         np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                     )
-
-        # the time of refresh is saved to calculate the differences
-        self._past_t = self._elapsed
