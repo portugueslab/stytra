@@ -279,7 +279,7 @@ class MultiStreamPlot(QWidget):
                         else:
                             new_bounds.append([0, 0])
                     new_bounds = np.array(new_bounds)
-                    
+
                     if self.bounds[i_acc] is None:
                         self.bounds[i_acc] = new_bounds
                     else:
