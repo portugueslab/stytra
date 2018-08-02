@@ -540,7 +540,9 @@ def _tail_points_from_coords(coords, n_data_per_fish, seglen):
 class CameraViewFish(CameraViewCalib):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.points_fish = pg.ScatterPlotItem()
+        self.points_fish = pg.ScatterPlotItem(
+            size=5, pxMode=True, brush=(255, 0, 0), pen=None
+        )
         self.lines_fish = pg.PlotCurveItem(connect="pairs")
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
@@ -556,17 +558,18 @@ class CameraViewFish(CameraViewCalib):
             else:
                 n_points_tail = 0
 
-            n_data_per_fish = n_points_tail + 3  # the 3 is for x, y, z
+            n_data_per_fish = n_points_tail + 5 + 2  # the 5 is for x, vx, y, vy, theta
 
-            retrieved_data = self.experiment.data_acc.stored_data[-1][1:]
-
+            retrieved_data = np.array(
+                self.experiment.data_acc.stored_data[-1][1:]
+            ).reshape(-1, n_data_per_fish)
+            valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
             self.points_fish.setData(
-                x=retrieved_data[::n_data_per_fish],
-                y=retrieved_data[1::n_data_per_fish],
+                x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
             )
-            if n_points_tail:
-                tail_len = 5  # TODO read out the tail length from the parameters
-                xs, ys = _tail_points_from_coords(
-                    retrieved_data, n_data_per_fish, tail_len
-                )
-                self.points_fish.setData(x=xs, y=ys)
+            # if n_points_tail:
+            #     tail_len = 5  # TODO read out the tail length from the parameters
+            #     xs, ys = _tail_points_from_coords(
+            #         retrieved_data, n_data_per_fish, tail_len
+            #     )
+            #     self.points_fish.setData(x=xs, y=ys)

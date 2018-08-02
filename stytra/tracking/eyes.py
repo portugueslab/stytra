@@ -36,11 +36,9 @@ class EyeTrackingMethod(ParametrizedImageproc):
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_eyes_log"
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
-        state=None,
         wnd_pos=None,
         wnd_dim=None,
         threshold=None,
@@ -96,7 +94,7 @@ class EyeTrackingMethod(ParametrizedImageproc):
         else:
             e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
 
-        return np.array(e), state
+        return np.array(e)
 
 
 def _pad(im, padding=0, val=0):

@@ -70,6 +70,5 @@ class FishTrackingProcess(Process):
                     )
                     self.fish_queue.put((time, output))
 
-
             except Empty:
                 pass

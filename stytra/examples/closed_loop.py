@@ -7,6 +7,7 @@ from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
 
 import tempfile
 
+
 class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
 

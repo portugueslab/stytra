@@ -277,7 +277,7 @@ class HasPyQtGraphParams:
         :param kwargs:
         :return:
         """
-        for key, value in kwargs:
+        for key, value in kwargs.items():
             self.params[key] = value
 
     def get_clean_values(self):

@@ -121,7 +121,7 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal()
 
-        #TODO update to remove possibility of empty folder
+        # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
         if self.base_dir is not None:
             self.dc = DataCollector(folder_path=self.base_dir)
@@ -185,7 +185,9 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return os.path.join(self.folder_name, self.current_timestamp.strftime("%H%M%S_"))
+        return os.path.join(
+            self.folder_name, self.current_timestamp.strftime("%H%M%S_")
+        )
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.

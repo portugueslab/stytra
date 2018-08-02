@@ -21,7 +21,11 @@ from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection,  CameraViewFish
+from stytra.gui.camera_display import (
+    CameraViewWidget,
+    CameraEmbeddedTrackingSelection,
+    CameraViewFish,
+)
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -232,16 +236,16 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     """
 
-    def __init__(self, tracking=True, tail=False, eyes=False, fish=False,
-                 *args, **kwargs):
+    def __init__(
+        self, tracking=True, tail=False, eyes=False, fish=False, *args, **kwargs
+    ):
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
 
         if fish:
-            self.camera_display = CameraViewFish(
-                experiment=kwargs["experiment"])
+            self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
         elif tail or eyes:
             self.camera_display = CameraEmbeddedTrackingSelection(
                 experiment=kwargs["experiment"], tail=tail, eyes=eyes
@@ -293,7 +297,10 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.track_params_wnd = ParameterTree()
         if hasattr(self.experiment, "tracking_method"):
             self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
-        if hasattr(self.experiment, "preprocessing_method"):
+        if (
+            hasattr(self.experiment, "preprocessing_method")
+            and self.experiment.preprocessing_method is not None
+        ):
             self.track_params_wnd.addParameters(
                 self.experiment.preprocessing_method.params
             )

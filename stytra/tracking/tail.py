@@ -31,11 +31,9 @@ class CentroidTrackingMethod(TailTrackingMethod):
             window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
         )
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
-        state=None,
         tail_start=(0, 0),
         tail_length=(1, 1),
         n_segments=12,
@@ -107,7 +105,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
             :
-        ], state
+        ]
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
@@ -117,11 +115,9 @@ class AnglesTrackingMethod(TailTrackingMethod):
         super().__init__()
         self.add_params(dark_tail=False)
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
-        state=None,
         tail_start=(0, 0),
         n_segments=7,
         tail_length=(1, 1),
@@ -143,8 +139,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
             tail length (Default value = (1)
         n_segments :
             number of segments (Default value = 7)
-        filter_size :
-            Box for smoothing the image (Default value = 0)
         dark_tail :
             True for inverting image colors (Default value = False)
         im :
@@ -179,7 +173,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
             im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
         )
 
-        return angle_list, state
+        return angle_list
 
 
 @jit(nopython=True)
@@ -215,7 +209,7 @@ def find_direction(start, image, seglen):
     -------
 
     """
-    n_angles = np.ceil(np.pi*2*seglen*2)
+    n_angles = np.ceil(np.pi * 2 * seglen * 2)
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
     detect_angles = angles

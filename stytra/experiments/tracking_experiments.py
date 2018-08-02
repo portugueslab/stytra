@@ -179,9 +179,10 @@ class TrackingExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
 
         method_name = tracking_config["tracking_method"]
-        preproc_method_name = tracking_config.get("preprocessing_method", "prefilter")
+        preproc_method_name = tracking_config.get("preprocessing_method", None)
 
-        self.preprocessing_method = get_preprocessing_method(preproc_method_name)()
+        preproc_method = get_preprocessing_method(preproc_method_name)
+        self.preprocessing_method = preproc_method() if preproc_method else None
         self.tracking_method = get_tracking_method(method_name)()
 
         self.data_name = self.tracking_method.data_log_name
@@ -246,8 +247,9 @@ class TrackingExperiment(CameraExperiment):
         eyes = isinstance(self.tracking_method, EyeTrackingMethod)
         fish = isinstance(self.tracking_method, FishTrackingMethod)
         self.window_main = TrackingExperimentWindow(
-            experiment=self, tail=tail, eyes=eyes, fish=fish,
+            experiment=self, tail=tail, eyes=eyes, fish=fish
         )
+        print("Preprocesing method ", self.preprocessing_method)
 
         # add streams
         self.window_main.stream_plot.add_stream(self.data_acc)
@@ -274,7 +276,11 @@ class TrackingExperiment(CameraExperiment):
         self.processing_params_queue.put(
             {
                 **self.tracking_method.get_clean_values(),
-                **self.preprocessing_method.get_clean_values(),
+                **(
+                    self.preprocessing_method.get_clean_values()
+                    if self.preprocessing_method is not None
+                    else {}
+                ),
             }
         )
 
@@ -292,7 +298,9 @@ class TrackingExperiment(CameraExperiment):
         if save:
             self.data_acc.save(self.filename_base() + "tracking", self.log_format)
             try:
-                self.estimator.log.save(self.filename_base() + "estimator", self.log_format)
+                self.estimator.log.save(
+                    self.filename_base() + "estimator", self.log_format
+                )
             except AttributeError:
                 pass
         try:
@@ -391,8 +399,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
             header_list=self.frame_dispatcher.diagnostic_params,
         )
         self.frametime_acc = QueueDataAccumulator(
-            self.frame_dispatcher.framestart_queue,
-            header_list=["i_frame"]
+            self.frame_dispatcher.framestart_queue, header_list=["i_frame"]
         )
 
         self.motion_detection_params = MovementDetectionParameters()
@@ -446,7 +453,9 @@ class SwimmingRecordingExperiment(CameraExperiment):
             pass
 
         if save:
-            self.frametime_acc.save(self.filename_base() + "frametimes", self.log_format)
+            self.frametime_acc.save(
+                self.filename_base() + "frametimes", self.log_format
+            )
 
         self.frametime_acc.reset()
         super().end_protocol(save)
