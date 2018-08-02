@@ -7,7 +7,8 @@ import cv2
 
 from stytra.tracking import ParametrizedImageproc
 import numpy as np
-from numba import vectorize,  uint8
+from numba import vectorize, uint8
+
 
 class PreprocMethod(ParametrizedImageproc):
     def __init__(self, *args, **kwargs):

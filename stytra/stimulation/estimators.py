@@ -60,14 +60,32 @@ class PositionEstimator:
         self.log = EstimatorLog(["x", "y", "theta"])
 
     def get_position(self):
-        past_position = self.data_acc.get_last_n(1)
+        past_coords = {
+            name: value
+            for name, value in zip(
+                self.data_acc.get_last_n(1)[0, :], self.data_acc.header_list
+            )
+        }
         if self.calibrator.params["cam_to_proj"] is not None:
             projmat = np.array(self.calibrator.params["cam_to_proj"])
-            y, x = projmat @ np.array([past_position[-1, 2], past_position[-1, 1], 1.0])
-            self.log.update_list((past_position[-1, 0], x, y, 0))
+            y, x = projmat @ np.array([past_coords["x"], past_coords["y"], 1.0])
+            theta = np.arctan2(
+                *(
+                    projmat
+                    @ np.array(
+                        [
+                            np.sin(past_coords["theta"]),
+                            np.cos(past_coords["theta"]),
+                            1,
+                            0,
+                        ]
+                    )
+                )
+            )
+            self.log.update_list((past_coords["t"], x, y, theta))
             return y, x, 0
 
-        self.log.update_list((past_position[-1, 0], -1, -1, 0))
+        self.log.update_list((past_coords["t"], -1, -1, 0))
         return -1, -1, 0
 
 

@@ -523,12 +523,12 @@ def _tail_points_from_coords(coords, seglen):
 
     xs = []
     ys = []
-    angles = np.zeros(coords.shape[1]-5)
+    angles = np.zeros(coords.shape[1] - 5)
     for i_fish in range(coords.shape[0]):
         xs.append(coords[i_fish, 2])
         ys.append(coords[i_fish, 0])
         angles[0] = coords[i_fish, 4]
-        angles[1:] = angles[0]+coords[i_fish, 6:]
+        angles[1:] = angles[0] + coords[i_fish, 6:]
         for i, an in enumerate(angles):
             if i > 0:
                 xs.append(xs[-1])
@@ -547,7 +547,9 @@ class CameraViewFish(CameraViewCalib):
         self.points_fish = pg.ScatterPlotItem(
             size=5, pxMode=True, brush=(255, 0, 0), pen=None
         )
-        self.lines_fish = pg.PlotCurveItem(connect="pairs", pen=pg.mkPen((10, 100, 200), width=3))
+        self.lines_fish = pg.PlotCurveItem(
+            connect="pairs", pen=pg.mkPen((10, 100, 200), width=3)
+        )
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
 
@@ -572,8 +574,9 @@ class CameraViewFish(CameraViewCalib):
                 x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
             )
             if n_points_tail:
-                tail_len = self.experiment.tracking_method.params["tail_length"] / self.experiment.tracking_method.params["n_segments"]
-                xs, ys = _tail_points_from_coords(
-                    retrieved_data, tail_len
+                tail_len = (
+                    self.experiment.tracking_method.params["tail_length"]
+                    / self.experiment.tracking_method.params["n_segments"]
                 )
+                xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
                 self.lines_fish.setData(x=xs, y=ys)

@@ -49,6 +49,14 @@ class Accumulator:
         )  # headers which are included in the stream plot
         self.starting_time = None
         self.fps_calc_points = fps_calc_points
+        self._header_dict = None
+
+    @property
+    def header_dict(self):
+        """  for each header name gives the column
+        """
+        if self._header_dict is None:
+            self.header_dict = {hn: i for i, hn in enumerate(self.header_list)}
 
     def reset(self, header_list=None):
         """Reset accumulator and assign a new headers list.

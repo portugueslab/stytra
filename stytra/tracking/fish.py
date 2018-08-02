@@ -61,14 +61,16 @@ class FishTrackingMethod(ParametrizedImageproc):
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
-                        for i in range(self.params["n_segments"]-2)
+                        for i in range(self.params["n_segments"] - 2)
                     ]
                     for i_fish in range(self.params["n_fish_max"])
                 ]
             )
         )
-        self.monitored_headers = ["f{:d}_theta_{:02d}".format(i_fish, self.params["n_segments"]-3)
-                                  for i_fish in range(self.params["n_fish_max"])]
+        self.monitored_headers = [
+            "f{:d}_theta_{:02d}".format(i_fish, self.params["n_segments"] - 3)
+            for i_fish in range(self.params["n_fish_max"])
+        ]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
         self.idx_book = IndexBooking(self.params["n_fish_max"])
@@ -175,7 +177,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                 fishdet,
                 *this_fish,
                 self.params["tail_track_window"],
-                self.params["tail_length"]/self.params["n_segments"],
+                self.params["tail_length"] / self.params["n_segments"],
                 self.params["n_segments"]
             )
 
@@ -185,11 +187,10 @@ class FishTrackingMethod(ParametrizedImageproc):
                 continue
 
             # also, make the angles continuous
-            angles[1:] = np.unwrap(reduce_to_pi(angles[1:]-angles[0]))
+            angles[1:] = np.unwrap(reduce_to_pi(angles[1:] - angles[0]))
 
             # put the data together for one fish
-            this_fish = np.concatenate([cent_shift + np.array(points[0][:2]),
-                                        angles])
+            this_fish = np.concatenate([cent_shift + np.array(points[0][:2]), angles])
 
             # check if this is a new fish, or it is an update of
             # a fish detected previously
@@ -200,8 +201,9 @@ class FishTrackingMethod(ParametrizedImageproc):
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
-                new_fish.append(Fish(this_fish, self.idx_book,
-                                     pred_coef=self.params["kalman_coef"]))
+                new_fish.append(
+                    Fish(this_fish, self.idx_book, pred_coef=self.params["kalman_coef"])
+                )
         current_fish = []
 
         # remove fish not detected in two subsequent frames
@@ -223,9 +225,9 @@ class FishTrackingMethod(ParametrizedImageproc):
         # if a debugging image is to be shown, set it
         if self.params["display_processed"]:
             if self.params["display_processed"] == 1:
-                self.diagnostic_image = (
-                    frame < self.params["threshold_eyes"]
-                ).view(dtype=np.uint8)
+                self.diagnostic_image = (frame < self.params["threshold_eyes"]).view(
+                    dtype=np.uint8
+                )
             else:
                 self.diagnostic_image = bg
 
@@ -271,7 +273,7 @@ class Fish:
         uncertanties = np.array(
             [pos_std, pos_std] + [angle_std for _ in range(self.n_dof - 2)]
         )
-        self.f.x[::2, 0] = initial_state[:self.n_dof]
+        self.f.x[::2, 0] = initial_state[: self.n_dof]
         self.f.F = block_diag(
             *[np.array([[1.0, 1.0], [0.0, 1.0]]) for _ in range(self.n_dof)]
         )
@@ -286,7 +288,7 @@ class Fish:
         )
         self.f.H[:, ::2] = np.eye(self.n_dof)
 
-        self.unfiltered = initial_state[self.n_dof:]
+        self.unfiltered = initial_state[self.n_dof :]
 
     def predict(self):
         self.f.predict()
@@ -294,19 +296,21 @@ class Fish:
 
     def update(self, new_fish_state):
         self.f.update(new_fish_state[: self.n_dof])
-        self.unfiltered[:] = new_fish_state[self.n_dof:]
+        self.unfiltered[:] = new_fish_state[self.n_dof :]
         self.i_not_updated = 0
 
     def serialize(self):
         return np.concatenate([self.f.x.flatten(), self.unfiltered])
 
-    def is_close(self, new_fish, n_px=12, d_theta=np.pi/2):
+    def is_close(self, new_fish, n_px=12, d_theta=np.pi / 2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
         dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
-        return np.sum(dists ** 2) < n_px ** 2 and np.abs(reduce_to_pi(new_fish[3]-self.f.x[4]))
+        return np.sum(dists ** 2) < n_px ** 2 and np.abs(
+            reduce_to_pi(new_fish[3] - self.f.x[4])
+        )
 
 
 @jit(nopython=True)
