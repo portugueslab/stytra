@@ -55,6 +55,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                         "f{:d}_y".format(i_fish),
                         "f{:d}_vy".format(i_fish),
                         "f{:d}_theta".format(i_fish),
+                        "f{:d}_vtheta".format(i_fish),
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
@@ -64,7 +65,6 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ]
             )
         )
-
         self.monitored_headers = ["f{:d}_theta".format(i_fish) for i_fish in range(self.params["n_fish_max"])]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
@@ -182,7 +182,6 @@ class FishTrackingMethod(ParametrizedImageproc):
                 continue
 
             # put the data together for one fish
-            print(len(angles))
             this_fish = np.concatenate([cent_shift + np.array(points[0][:2]), angles])
 
             # check if this is a new fish, or it is an update of

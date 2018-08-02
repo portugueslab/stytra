@@ -503,7 +503,7 @@ class CameraViewCalib(CameraViewWidget):
 
 
 @jit(nopython=True)
-def _tail_points_from_coords(coords, n_data_per_fish, seglen):
+def _tail_points_from_coords(coords, seglen):
     """ Computes the tail points from a list obtained from a data accumulator
 
     Parameters
@@ -523,17 +523,22 @@ def _tail_points_from_coords(coords, n_data_per_fish, seglen):
 
     xs = []
     ys = []
+    angles = np.zeros(coords.shape[1]-5)
+    for i_fish in range(coords.shape[0]):
+        xs.append(coords[i_fish, 2])
+        ys.append(coords[i_fish, 0])
+        angles[0] = coords[i_fish, 4]
+        angles[1:] = coords[i_fish, 6:]
+        for i, an in enumerate(angles):
+            if i > 0:
+                xs.append(xs[-1])
+                ys.append(ys[-1])
 
-    for i_fish in range(len(coords) // n_data_per_fish):
-        xs.append(coords[i_fish * n_data_per_fish])
-        ys.append(coords[i_fish * n_data_per_fish + 1])
-        for i_a in range(3, n_data_per_fish):
             # for drawing the lines, points need to be repeated
-            xs.append(xs[-1])
-            ys.append(ys[-1])
+            xs.append(xs[-1] + seglen * sin(an))
+            ys.append(ys[-1] + seglen * cos(an))
 
-            xs.append(xs[-1] + seglen * cos(coords[i_fish * n_data_per_fish + i_a]))
-            ys.append(ys[-1] + seglen * sin(coords[i_fish * n_data_per_fish + i_a]))
+
     return xs, ys
 
 
@@ -543,7 +548,7 @@ class CameraViewFish(CameraViewCalib):
         self.points_fish = pg.ScatterPlotItem(
             size=5, pxMode=True, brush=(255, 0, 0), pen=None
         )
-        self.lines_fish = pg.PlotCurveItem(connect="pairs")
+        self.lines_fish = pg.PlotCurveItem(connect="pairs", pen=pg.mkPen((10, 100, 200), width=3))
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
 
@@ -567,9 +572,9 @@ class CameraViewFish(CameraViewCalib):
             self.points_fish.setData(
                 x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
             )
-            # if n_points_tail:
-            #     tail_len = 5  # TODO read out the tail length from the parameters
-            #     xs, ys = _tail_points_from_coords(
-            #         retrieved_data, n_data_per_fish, tail_len
-            #     )
-            #     self.points_fish.setData(x=xs, y=ys)
+            if n_points_tail:
+                tail_len = self.experiment.tracking_method.params["tail_seglen"]
+                xs, ys = _tail_points_from_coords(
+                    retrieved_data, tail_len
+                )
+                self.lines_fish.setData(x=xs, y=ys)

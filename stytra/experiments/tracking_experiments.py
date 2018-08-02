@@ -249,7 +249,6 @@ class TrackingExperiment(CameraExperiment):
         self.window_main = TrackingExperimentWindow(
             experiment=self, tail=tail, eyes=eyes, fish=fish
         )
-        print("Preprocesing method ", self.preprocessing_method)
 
         # add streams
         self.window_main.stream_plot.add_stream(self.data_acc)
