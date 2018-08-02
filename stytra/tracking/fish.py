@@ -1,11 +1,12 @@
 import cv2
 import numpy as np
-from numba import vectorize, uint8, jit
+from numba import jit
 import filterpy.kalman
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
 from stytra.tracking.preprocessing import BackgorundSubtractor
+from stytra.bouter.angles import reduce_to_pi
 from stytra.tracking.tail import find_direction, _next_segment
 
 from itertools import chain
@@ -19,18 +20,19 @@ class FishTrackingMethod(ParametrizedImageproc):
             function="fish",
             n_fish_max=3,
             n_segments=10,
+            reset=False,
             threshold_eyes=dict(type="int", limits=(0, 255), value=30),
             bg_preresize=2,
             bglearning_rate=0.04,
-            reset=False,
             bglearn_every=400,
             bgdif_threshold=10,
             fish_target_area=150,
-            fish_area_std=60,
-            fish_length=10.5,
+            fish_area_margin=60,
             margin_fish=10,
             tail_track_window=3,
-            tail_seglen=2.5,
+            tail_length=40.5,
+            persist_fish_for=2,
+            kalman_coef=0.1,
             display_processed=dict(type="int", limits=(0, 2), value=0),
         )
         self.accumulator_headers = None
@@ -65,7 +67,8 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ]
             )
         )
-        self.monitored_headers = ["f{:d}_theta".format(i_fish) for i_fish in range(self.params["n_fish_max"])]
+        self.monitored_headers = ["f{:d}_theta_{:02d}".format(i_fish, self.params["n_segments"]-3)
+                                  for i_fish in range(self.params["n_fish_max"])]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
         self.idx_book = IndexBooking(self.params["n_fish_max"])
@@ -98,21 +101,21 @@ class FishTrackingMethod(ParametrizedImageproc):
             > self.params["bgdif_threshold"]
         ).view(dtype=np.uint8)
 
-        # find regions where there is a difference with the backgorund
+        # find regions where there is a difference with the background
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
             (bg).view(dtype=np.uint8)
         )
 
-        # iterate through all the regions different from the backgorund and try
+        # iterate through all the regions different from the background and try
         # to find fish
         new_fish = []
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not (
                 (
-                    self.params["fish_target_area"] - self.params["fish_area_std"]
+                    self.params["fish_target_area"] - self.params["fish_area_margin"]
                     < row[cv2.CC_STAT_AREA]
-                    < self.params["fish_target_area"] + self.params["fish_area_std"]
+                    < self.params["fish_target_area"] + self.params["fish_area_margin"]
                 )
                 and (row[cv2.CC_STAT_LEFT] - self.params["margin_fish"] >= 0)
                 and (
@@ -172,7 +175,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                 fishdet,
                 *this_fish,
                 self.params["tail_track_window"],
-                self.params["tail_seglen"],
+                self.params["tail_length"]/self.params["n_segments"],
                 self.params["n_segments"]
             )
 
@@ -181,24 +184,31 @@ class FishTrackingMethod(ParametrizedImageproc):
             if len(angles) == 0:
                 continue
 
+            # also, make the angles continuous
+            angles[1:] = np.unwrap(reduce_to_pi(angles[1:]-angles[0]))
+
             # put the data together for one fish
-            this_fish = np.concatenate([cent_shift + np.array(points[0][:2]), angles])
+            this_fish = np.concatenate([cent_shift + np.array(points[0][:2]),
+                                        angles])
 
             # check if this is a new fish, or it is an update of
             # a fish detected previously
             for past_fish in self.previous_fish:
-                if past_fish.is_close(this_fish):
+                if past_fish.is_close(this_fish) and past_fish.i_not_updated < 0:
                     past_fish.update(this_fish)
                     break
-            # the else exectes if no past fish is close
+            # the else executes if no past fish is close, so a new fish
+            # has to be instantiated for this measurement
             else:
-                new_fish.append(Fish(this_fish, self.idx_book))
+                new_fish.append(Fish(this_fish, self.idx_book,
+                                     pred_coef=self.params["kalman_coef"]))
         current_fish = []
 
-        # remove fish not detected in two subsequent drames
+        # remove fish not detected in two subsequent frames
         for pf in self.previous_fish:
-            if pf.i_not_updated <= -1:
+            if pf.i_not_updated < -self.params["persist_fish_for"]:
                 self.idx_book.full[pf.i_ar] = False
+                self.recorded[pf.i_ar, :] = np.nan
             else:
                 current_fish.append(pf)
 
@@ -248,10 +258,10 @@ class Fish:
         idx_book,
         pos_std=1.0,
         angle_std=np.pi / 10,
-        pred_coef=3,
+        pred_coef=20,
         filter_tail=False,
     ):
-        self.i_not_updated = -1
+        self.i_not_updated = 0
         self.i_ar = idx_book.get_next()
         self.n_dof = len(initial_state) if filter_tail else 3
 
@@ -271,7 +281,7 @@ class Fish:
         self.f.Q = block_diag(
             *[
                 filterpy.common.Q_discrete_white_noise(2, 0.02, uc * pred_coef)
-                for uc in self.f.R[0]
+                for uc in uncertanties
             ]
         )
         self.f.H[:, ::2] = np.eye(self.n_dof)
@@ -290,33 +300,13 @@ class Fish:
     def serialize(self):
         return np.concatenate([self.f.x.flatten(), self.unfiltered])
 
-    def is_close(self, new_fish, n_px=5):
+    def is_close(self, new_fish, n_px=12, d_theta=np.pi/2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
+        and within a certain angle
         """
         dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
-        return np.sum(dists ** 2) < n_px ** 2
-
-
-@vectorize([uint8(uint8, uint8)])
-def absdif(x, y):
-    """
-
-    Parameters
-    ----------
-    x :
-        
-    y :
-        
-
-    Returns
-    -------
-
-    """
-    if x > y:
-        return x - y
-    else:
-        return y - x
+        return np.sum(dists ** 2) < n_px ** 2 and np.abs(reduce_to_pi(new_fish[3]-self.f.x[4]))
 
 
 @jit(nopython=True)

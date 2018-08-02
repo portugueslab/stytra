@@ -528,7 +528,7 @@ def _tail_points_from_coords(coords, seglen):
         xs.append(coords[i_fish, 2])
         ys.append(coords[i_fish, 0])
         angles[0] = coords[i_fish, 4]
-        angles[1:] = coords[i_fish, 6:]
+        angles[1:] = angles[0]+coords[i_fish, 6:]
         for i, an in enumerate(angles):
             if i > 0:
                 xs.append(xs[-1])
@@ -537,7 +537,6 @@ def _tail_points_from_coords(coords, seglen):
             # for drawing the lines, points need to be repeated
             xs.append(xs[-1] + seglen * sin(an))
             ys.append(ys[-1] + seglen * cos(an))
-
 
     return xs, ys
 
@@ -573,7 +572,7 @@ class CameraViewFish(CameraViewCalib):
                 x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
             )
             if n_points_tail:
-                tail_len = self.experiment.tracking_method.params["tail_seglen"]
+                tail_len = self.experiment.tracking_method.params["tail_length"] / self.experiment.tracking_method.params["n_segments"]
                 xs, ys = _tail_points_from_coords(
                     retrieved_data, tail_len
                 )

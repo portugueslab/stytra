@@ -206,7 +206,7 @@ class MultiStreamPlot(QWidget):
         self.bounds.append(None)
         i_curve = len(self.curves)
         for header_item in header_items:
-            c = pg.PlotCurveItem(x=np.array([0]), y=np.array([i_curve]))
+            c = pg.PlotCurveItem(x=np.array([0]), y=np.array([i_curve]), connect="finite")
             self.plotContainter.addItem(c)
             self.curves.append(c)
             curve_label = pg.TextItem(header_item, anchor=(0, 1))

@@ -7,7 +7,7 @@ import cv2
 
 from stytra.tracking import ParametrizedImageproc
 import numpy as np
-
+from numba import vectorize,  uint8
 
 class PreprocMethod(ParametrizedImageproc):
     def __init__(self, *args, **kwargs):
@@ -50,6 +50,27 @@ class Prefilter(PreprocMethod):
         return im
 
 
+@vectorize([uint8(uint8, uint8)])
+def negdif(x, y):
+    """
+
+    Parameters
+    ----------
+    x :
+
+    y :
+
+
+    Returns
+    -------
+
+    """
+    if y < x:
+        return x - y
+    else:
+        return 0
+
+
 class BackgorundSubtractor(PreprocMethod):
     def __init__(self):
         super().__init__(name="tracking_bgsubtraction")
@@ -76,7 +97,7 @@ class BackgorundSubtractor(PreprocMethod):
 
         self.i = (self.i + 1) % learn_every
 
-        return cv2.absdiff(im, self.background_image.astype(np.uint8))
+        return negdif(self.background_image.astype(np.uint8), im)
 
 
 class CV2BgSub(PreprocMethod):
@@ -86,9 +107,6 @@ class CV2BgSub(PreprocMethod):
             method=dict(type="list", value="mog2", values=["knn", "mog2"]),
             threshold=128,
         )
-        self.method = method
-        self.threshold = threshold
-        self.subtractor = None
 
     def process(self, im, method="mog2", image_scale=1, threshold=128, **extraparams):
 
