@@ -101,7 +101,8 @@ class SimpleExperimentWindow(QMainWindow):
         self.setWindowTitle("Stytra")
 
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
-        self.widget_projection = ProjectorAndCalibrationWidget(experiment)
+        if not self.experiment.offline:
+            self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
 
         # Connect signals from the protocol_control:
@@ -137,9 +138,10 @@ class SimpleExperimentWindow(QMainWindow):
         central_widget = QWidget()
         protocol_layout = QVBoxLayout()
         # central_widget.layout().addWidget(self.label_debug)
-        protocol_layout.addWidget(
-            CollapsibleWidget(self.widget_projection, "Projector setup")
-        )
+        if not self.experiment.offline:
+            protocol_layout.addWidget(
+                CollapsibleWidget(self.widget_projection, "Projector setup")
+            )
         protocol_layout.addWidget(
             CollapsibleWidget(self.logger.widget, "Log", expanded=False)
         )

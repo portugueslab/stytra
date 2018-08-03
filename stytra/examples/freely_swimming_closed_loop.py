@@ -11,4 +11,5 @@ if __name__ == "__main__":
         tracking_config=tracking_config,
         protocols=[],
         dir_save=r"C:\Users\vilim\Analysis\BehaviouralAnalysis\Tracking",
+        offline=True
     )

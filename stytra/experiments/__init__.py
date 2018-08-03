@@ -61,7 +61,8 @@ class Experiment(QObject):
         directory in an .h5 file.
     trigger : :class:`Trigger <stytra.triggering.Trigger>` object
         (optional) Trigger class to control the beginning of the stimulation.
-
+    offline : bool
+        if stytra is used in offline analysis, stimulus is not displayed
 
     """
 
@@ -82,6 +83,7 @@ class Experiment(QObject):
         rec_stim_every=None,
         display_config=None,
         trigger=None,
+        offline=False,
     ):
         """ """
         super().__init__()
@@ -89,6 +91,7 @@ class Experiment(QObject):
         self.app = app
         self.protocols = protocols
         self.trigger = trigger
+        self.offline = offline
 
         self.asset_dir = dir_assets
         self.base_dir = dir_save
@@ -151,16 +154,17 @@ class Experiment(QObject):
         else:
             self.display_config = display_config
 
-        self.window_display = StimulusDisplayWindow(
-            self.protocol_runner,
-            self.calibrator,
-            gl=self.display_config.get("gl", False),
-            record_stim_every=rec_stim_every,
-        )
-
-        if self.display_config.get("window_size", None) is not None:
-            self.window_display.params["size"] = self.display_config["window_size"]
-            self.window_display.set_dims()
+        if not self.offline:
+            self.window_display = StimulusDisplayWindow(
+                self.protocol_runner,
+                self.calibrator,
+                gl=self.display_config.get("gl", False),
+                record_stim_every=rec_stim_every,
+            )
+            if self.display_config.get("window_size", None) is not None:
+                self.window_display.params["size"] = self.display_config[
+                    "window_size"]
+                self.window_display.set_dims()
 
         self.i_run = 0
         self.current_timestamp = datetime.datetime.now()
@@ -201,6 +205,7 @@ class Experiment(QObject):
         """
         self.make_window()
         self.initialize_metadata()
+
         self.show_stimulus_screen(self.display_config["full_screen"])
         if self.trigger is not None:
             self.trigger.start()
@@ -240,6 +245,8 @@ class Experiment(QObject):
         -------
 
         """
+        if self.offline:
+            return None
         self.window_display.show()
         if full_screen:
             try:
