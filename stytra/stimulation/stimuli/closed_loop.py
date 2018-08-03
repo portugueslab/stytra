@@ -118,6 +118,15 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.x += self._dt * self.vel
 
 
+class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
+    """ A stimulus which is always kept perpendicular to the fish
+
+    """
+    def update(self):
+        x, y, self.theta = self._experiment.estimator.get_position()
+        super().update()
+
+
 class TrackingStimulus(CircleStimulus):
     def update(self):
         self.x, self.y, _ = self._experiment.estimator.get_position()

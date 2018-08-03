@@ -155,7 +155,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     time, self.current_image = self.frame_queue.get(timeout=0.0001)
-                    first = False
+                    #first = False
                 else:
                     # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)

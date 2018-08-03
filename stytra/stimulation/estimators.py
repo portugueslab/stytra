@@ -63,19 +63,19 @@ class PositionEstimator:
         past_coords = {
             name: value
             for name, value in zip(
-                self.data_acc.get_last_n(1)[0, :], self.data_acc.header_list
+                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
             )
         }
         if self.calibrator.params["cam_to_proj"] is not None:
             projmat = np.array(self.calibrator.params["cam_to_proj"])
-            y, x = projmat @ np.array([past_coords["x"], past_coords["y"], 1.0])
+            y, x = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
             theta = np.arctan2(
                 *(
                     projmat
                     @ np.array(
                         [
-                            np.sin(past_coords["theta"]),
-                            np.cos(past_coords["theta"]),
+                            np.sin(past_coords["f0_theta"]),
+                            np.cos(past_coords["f0_theta"]),
                             1,
                             0,
                         ]

@@ -26,6 +26,7 @@ setup(
         "arrayqueues",
         "pillow",
         "scikit-image",
+        "filterpy"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
