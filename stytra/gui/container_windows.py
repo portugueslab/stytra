@@ -27,6 +27,8 @@ from stytra.gui.camera_display import (
     CameraViewFish,
 )
 
+import json
+
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
@@ -245,6 +247,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
+        self.fish = fish
 
         if fish:
             self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
@@ -269,14 +272,25 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
+        self.layout_track_btns = QHBoxLayout()
+        self.layout_track_btns.setContentsMargins(0,0,0,0)
+
         # Tracking params button:
         self.button_tracking_params = QPushButton(
             "Tracking params"
-            if (self.tail or self.eyes)
+            if (self.tail or self.eyes or self.fish)
             else "Movement detection params"
         )
+
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
-        self.monitoring_layout.addWidget(self.button_tracking_params)
+
+        self.button_save_tracking_params = QPushButton("Save parameters")
+        self.button_save_tracking_params.clicked.connect(self.save_tracking_params)
+
+        self.layout_track_btns.addWidget(self.button_tracking_params)
+        self.layout_track_btns.addWidget(self.button_save_tracking_params)
+
+        self.monitoring_layout.addLayout(self.layout_track_btns)
 
         self.track_params_wnd = None
 
@@ -313,6 +327,10 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
+
+    def save_tracking_params(self):
+        json.dump(self.experiment.tracking_method.get_clean_values,
+                  open(self.experiment.filename_base() + "tracking_params.json"))
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

@@ -1,12 +1,12 @@
-# from stytra.stimulation.visual import MovingSeamless
+from stytra.stimulation.stimuli import SeamlessImageStimulus
 from stytra.bouter.angles import transform_affine
 import numpy as np
 import cv2
 
 
 class MovingBackground:
-    """A class to manage transformations of the bacground to enable studying of
-    different aspectos of backgound follwing in OMR
+    """A class to manage transformations of the background to enable studying of
+    different aspects of backgound follwing in OMR
 
     Parameters
     ----------
@@ -18,7 +18,8 @@ class MovingBackground:
 
     def __init__(self, exp):
         self.exp = exp
-        self.stim = MovingSeamless(
+
+        self.stim = SeamlessImageStimulus(
             background=exp["stimulus"]["background"],
             motion=exp["stimulus"]["motion"],
             output_shape=tuple(map(int, exp["stimulus"]["window"]["size"])),

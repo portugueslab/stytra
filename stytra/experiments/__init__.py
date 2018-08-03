@@ -63,7 +63,8 @@ class Experiment(QObject):
         (optional) Trigger class to control the beginning of the stimulation.
     offline : bool
         if stytra is used in offline analysis, stimulus is not displayed
-
+    log_format : str
+        one of "csv", "feather", "hdf5" (pytables-based) or "json"
     """
 
     def __init__(
@@ -172,6 +173,14 @@ class Experiment(QObject):
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
+
+    def save_log(self, log, name, category="tracking"):
+        log.save(
+            self.filename_base() + name, self.log_format
+        )
+        self.dc.add_static_data(
+            self.current_timestamp.strftime("%H%M%S_") + name+ "." + self.log_format,
+            category+"_"+name)
 
     def get_new_name(self):
         return (

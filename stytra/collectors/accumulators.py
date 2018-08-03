@@ -58,7 +58,7 @@ class Accumulator:
         if self._header_dict is None:
             self.header_dict = {hn: i for i, hn in enumerate(self.header_list)}
 
-    def reset(self, header_list=None):
+    def reset(self, header_list=None, monitored_headers=None):
         """Reset accumulator and assign a new headers list.
 
         Parameters
@@ -72,6 +72,8 @@ class Accumulator:
         """
         if header_list is not None:
             self.header_list = ["t"] + header_list
+        if monitored_headers is not None:
+            self.monitored_headers = monitored_headers
         self.stored_data = []
         self.starting_time = None
 

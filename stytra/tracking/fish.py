@@ -36,6 +36,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             display_processed=dict(type="int", limits=(0, 2), value=0),
         )
         self.accumulator_headers = None
+        self.monitored_headers = None
         self.data_log_name = "fish_track"
         self.bg_subtractor = BackgorundSubtractor()
         self.track_state = None
@@ -85,10 +86,13 @@ class FishTrackingMethod(ParametrizedImageproc):
         if (
             new_params["reset"]
             or new_params["n_fish_max"] != self.params["n_fish_max"]
-            or self.params["n_segments"] != new_params["n_segments"]
+            or new_params["n_segments"] != self.params["n_segments"]
         ):
+            self.update_params(**new_params)
             self.reset_state()
-        self.update_params(**new_params)
+        else:
+            self.update_params(**new_params)
+
         inv_thresh_eyes = 255 - self.params["threshold_eyes"]
 
         # update the previously-detected fish using the Kalman filter

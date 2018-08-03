@@ -214,7 +214,15 @@ class TrackingExperiment(CameraExperiment):
         # This probably should happen before starting the camera process??
         if isinstance(self.tracking_method, TailTrackingMethod):
             self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.change_segment_num
+                self.refresh_accumulator_headers
+            )
+
+        if isinstance(self.tracking_method, FishTrackingMethod):
+            self.tracking_method.params.param("n_segments").sigValueChanged.connect(
+                self.refresh_accumulator_headers
+            )
+            self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
+                self.refresh_accumulator_headers
             )
 
         est_type = tracking_config.get("estimator", None)
@@ -229,18 +237,11 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
-    # TODO probably could go to the interface, but this would mean linking
-    # the data accumulator to the interface as well. Probably makes sense.
-    def change_segment_num(self):
-        """ Take care of resetting the data accumulator if the number of
-        segments (and therefore the points to be saved) is changed.
+    def refresh_accumulator_headers(self):
+        """ Refreshes the data accumulators if somehting changed
         """
-
-        new_header = ["tail_sum"] + [
-            "theta_{:02}".format(i)
-            for i in range(self.tracking_method.params["n_segments"])
-        ]
-        self.data_acc.reset(header_list=new_header)
+        self.data_acc.reset(header_list=self.tracking_method.accumulator_headers,
+                            monitored_headers=self.tracking_method.monitored_headers)
 
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
@@ -295,11 +296,9 @@ class TrackingExperiment(CameraExperiment):
 
         """
         if save:
-            self.data_acc.save(self.filename_base() + "tracking", self.log_format)
+            self.save_log(self.data_acc, "log")
             try:
-                self.estimator.log.save(
-                    self.filename_base() + "estimator", self.log_format
-                )
+                self.save_log(self.estimator.log, "estimator_log")
             except AttributeError:
                 pass
         try:
@@ -448,13 +447,12 @@ class SwimmingRecordingExperiment(CameraExperiment):
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
             self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
+
         except Empty:
             pass
 
         if save:
-            self.frametime_acc.save(
-                self.filename_base() + "frametimes", self.log_format
-            )
+            self.save_log(self.frametime_acc, "frametimes")
 
         self.frametime_acc.reset()
         super().end_protocol(save)
