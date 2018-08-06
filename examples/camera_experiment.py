@@ -29,7 +29,7 @@ if __name__ == "__main__":
     camera_config = dict(video_file=file, rotation=1)
 
     # Reading from a Ximea camera:
-    # camera_config = dict(type="ximea")
+    camera_config = dict(type="spinnaker")
 
     tracking_config = dict(
         embedded=True, tracking_method="angle_sweep", preprocessing_method="prefilter"
