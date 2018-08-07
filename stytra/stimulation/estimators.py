@@ -68,7 +68,7 @@ class PositionEstimator:
         }
         if self.calibrator.params["cam_to_proj"] is not None:
             projmat = np.array(self.calibrator.params["cam_to_proj"])
-            y, x = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
+            x, y = projmat @ np.array([past_coords["f0_y"], past_coords["f0_x"], 1.0])
             theta = np.arctan2(
                 *(
                     projmat[:, :2]
@@ -80,7 +80,7 @@ class PositionEstimator:
                     )[::-1]
                 )
             )
-            self.log.update_list((past_coords["t"], x, y, theta))
+            self.log.update_list((past_coords["t"], y, x, theta))
             return y, x, theta
 
         self.log.update_list((past_coords["t"], -1, -1, 0))

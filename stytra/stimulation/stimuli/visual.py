@@ -417,6 +417,44 @@ class GratingStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
+class HalfFieldStimulus(BackgroundStimulus):
+    """ For phototaxis
+
+    """
+    def __init__(self, *args, left=False, color=(255,255,255), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.left = left
+        self.color = color
+        self.name = "half_field"
+
+    def draw_block(self, p, point, w, h):
+        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.drawRect(QRect(point.x(), point.y(), w, h/2))
+
+
+class FishOverlayStimulus(BackgroundStimulus):
+    """ For testing freely-swimming closed loop
+
+    """
+
+    def __init__(self, *args, color=(255, 50,0), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.color = color
+        self.name = "fish_overlay"
+
+    def draw_block(self, p, point, w, h):
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(255, 255, 255)))
+        p.drawRect(point.x() - 2, point.y(), 4, 8)
+        p.drawEllipse(point.x(), point.y(), 3, 3)
+
+
+
+
 class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

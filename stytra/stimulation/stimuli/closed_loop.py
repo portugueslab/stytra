@@ -129,6 +129,16 @@ class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimu
         super().update()
 
 
+class FishTrackingStimulus(BackgroundStimulus, DynamicStimulus):
+    def update(self):
+        x, y, theta = self._experiment.estimator.get_position()
+        if np.isfinite(theta):
+            self.x = x
+            self.y = y
+            self.theta = theta
+        super().update()
+
+
 class TrackingStimulus(CircleStimulus):
     def update(self):
         self.x, self.y, _ = self._experiment.estimator.get_position()
