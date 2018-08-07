@@ -9,6 +9,7 @@ Subpackages
     stytra.bouter
     stytra.calibration
     stytra.collectors
+    stytra.examples
     stytra.experiments
     stytra.gui
     stytra.hardware

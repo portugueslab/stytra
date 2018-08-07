@@ -11,18 +11,10 @@ Subpackages
 Submodules
 ----------
 
-stytra.stimulation.closed\_loop module
---------------------------------------
+stytra.stimulation.estimators module
+------------------------------------
 
-.. automodule:: stytra.stimulation.closed_loop
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra.stimulation.motion\_estimators module
---------------------------------------------
-
-.. automodule:: stytra.stimulation.motion_estimators
+.. automodule:: stytra.stimulation.estimators
     :members:
     :undoc-members:
     :show-inheritance:

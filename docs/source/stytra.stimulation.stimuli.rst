@@ -12,6 +12,14 @@ stytra.stimulation.stimuli.backgrounds module
     :undoc-members:
     :show-inheritance:
 
+stytra.stimulation.stimuli.closed\_loop module
+----------------------------------------------
+
+.. automodule:: stytra.stimulation.stimuli.closed_loop
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.stimulation.stimuli.external module
 ------------------------------------------
 
@@ -32,6 +40,14 @@ stytra.stimulation.stimuli.visual module
 ----------------------------------------
 
 .. automodule:: stytra.stimulation.stimuli.visual
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.stimulation.stimuli.voltage\_stimuli module
+--------------------------------------------------
+
+.. automodule:: stytra.stimulation.stimuli.voltage_stimuli
     :members:
     :undoc-members:
     :show-inheritance:

@@ -30,26 +30,30 @@ class Stytra:
 
         display_config : dict
             full_screen : bool
+                displays the stimulus full screen on the secondary monitor, otherwise
+                it is in a window
             window_size : tuple(int, int)
                 optional specification of the size of the stimulus display area
 
         camera_config : dict
-            video_file
+            video_file : str
                 or
             type: str
-                "ximea" or "avt" cameras are currently supported
+                supported cameras are
+                "ximea" (with the official API)
+                "avt" (With the Pymba API)
+                "spinnaker" (PointGray/FLIR)
 
             rotation: int
                 how many times to rotate the camera image by 90 degrees to get the
-                right orientation, matching the projcetor
+                right orientation, matching the projector
 
             downsampling: int
-                how many times to downsample the image (for ximea cameras)
-
+                how many times to downsample the image (for some ximea cameras)
 
         tracking_config : dict
-            preprocessing_method: str
-                one of "prefilter" or "bgsub"
+            preprocessing_method: str, optional
+               "prefilter" or "bgsub"
             tracking_method: str
                 one of "tail", "eyes", "fish"
             estimator: str
@@ -60,7 +64,8 @@ class Stytra:
             for video-recording experiments
 
         embedded : bool
-            if not embedded, use circle calibrator to match the camera and projector
+            if not embedded, use circle calibrator
+            to match the camera and projector
 
         dir_assets : str
             the location of assets used for stimulation (pictures, videos, models
