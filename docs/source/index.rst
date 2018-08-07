@@ -54,6 +54,7 @@ Modules
     install_guide
     stimulation_intro
     create_protocol
+    running_experiments
     triggering_intro
     image_processing
     parameters_stytra

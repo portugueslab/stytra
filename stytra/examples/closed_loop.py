@@ -63,6 +63,9 @@ class ClosedLoop1DProt(Protocol):
 
 if __name__ == "__main__":
     save_dir = tempfile.mkdtemp()
+
+    # Here you configure the camera input
+    #
     camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
 
     tracking_config = dict(
