@@ -6,13 +6,11 @@ import pandas as pd
 import pkg_resources
 
 
-class PerpendicularMotionProtocol(Protocol):
-    name = "Perpendicular motion"
+class PhototaxisProtocol(Protocol):
+    name = "phototaxis"
     def get_stim_sequence(self):
-        moving_stuff = type("ClosedLoopImage",
-                            (FishTrackingStimulus, FishOverlayStimulus),
-                            {})
-        return [moving_stuff(duration=600)]
+        stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
+        return [stim(duration=600)]
 
 
 if __name__ == "__main__":
@@ -25,7 +23,7 @@ if __name__ == "__main__":
         dir_assets=pkg_resources.resource_filename("stytra",
                                                    "tests/test_assets"),
         tracking_config=tracking_config,
-        protocols=[PerpendicularMotionProtocol],
+        protocols=[PhototaxisProtocol],
         dir_save=r"D:\stytra",
         log_format="csv",
         embedded=False,

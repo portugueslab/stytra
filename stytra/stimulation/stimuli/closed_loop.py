@@ -3,9 +3,8 @@ import numpy as np
 from stytra.stimulation.stimuli import (
     DynamicStimulus,
     BackgroundStimulus,
-    SeamlessImageStimulus,
     CircleStimulus,
-    MovingGratingStimulus,
+    PositionStimulus,
     InterpolatedStimulus,
 )
 
@@ -129,9 +128,9 @@ class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimu
         super().update()
 
 
-class FishTrackingStimulus(BackgroundStimulus, DynamicStimulus):
+class FishTrackingStimulus(PositionStimulus):
     def update(self):
-        x, y, theta = self._experiment.estimator.get_position()
+        y, x, theta = self._experiment.estimator.get_position()
         if np.isfinite(theta):
             self.x = x
             self.y = y

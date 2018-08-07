@@ -5,7 +5,7 @@ import pims
 import qimage2ndarray
 from PyQt5.QtCore import QPoint, QRect, QPointF
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
 
 from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
@@ -209,16 +209,20 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
         )
 
 
-class BackgroundStimulus(VisualStimulus, DynamicStimulus):
+class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
-    """
-
+        """
     def __init__(self, *args, **kwargs):
         """ """
         self.x = 0
         self.y = 0
         self.theta = 0
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
+
+
+class BackgroundStimulus(PositionStimulus):
+    """Stimulus with a tiling background
+        """
 
     def get_unit_dims(self, w, h):
         return w, h
@@ -417,7 +421,7 @@ class GratingStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
-class HalfFieldStimulus(BackgroundStimulus):
+class HalfFieldStimulus(PositionStimulus):
     """ For phototaxis
 
     """
@@ -427,30 +431,67 @@ class HalfFieldStimulus(BackgroundStimulus):
         self.color = color
         self.name = "half_field"
 
-    def draw_block(self, p, point, w, h):
+    def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
-        p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(QRect(point.x(), point.y(), w, h/2))
+        p.setRenderHint(QPainter.Antialiasing)
 
+        points = []
+        if self.left:
+            dtheta = np.pi/2
+        else:
+            dtheta = -np.pi/2
 
-class FishOverlayStimulus(BackgroundStimulus):
+        theta = self.theta
+
+        sx = self.x + h/2*np.cos(theta)
+        sy = self.y + h/2*np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += w * np.cos(theta)
+        sy += w * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += h * np.cos(theta)
+        sy += h * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += w * np.cos(theta)
+        sy += w * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += h * np.cos(theta)
+        sy += h * np.sin(theta)
+        points.append(QPoint(sx, sy))
+
+        poly = QPolygon(points)
+        p.drawPolygon(poly)
+
+class FishOverlayStimulus(PositionStimulus):
     """ For testing freely-swimming closed loop
 
     """
 
-    def __init__(self, *args, color=(255, 50,0), **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, color=(255, 50, 0), **kwargs):
+        super().__init__(**kwargs)
         self.color = color
         self.name = "fish_overlay"
 
-    def draw_block(self, p, point, w, h):
+    def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.color)))
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(255, 255, 255)))
-        p.drawRect(point.x() - 2, point.y(), 4, 8)
-        p.drawEllipse(point.x(), point.y(), 3, 3)
+        p.drawEllipse(self.x, self.y, 3, 3)
+        p.setPen(QPen(QColor(*self.color)))
+        l=20
+        p.drawLine(self.x, self.y,
+                   self.x + np.cos(self.theta)*l,
+                   self.y + np.sin(self.theta)*l)
 
 
 
