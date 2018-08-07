@@ -123,7 +123,9 @@ class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimu
 
     """
     def update(self):
-        x, y, self.theta = self._experiment.estimator.get_position()
+        x, y, theta = self._experiment.estimator.get_position()
+        if np.isfinite(theta):
+            self.theta = theta
         super().update()
 
 

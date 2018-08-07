@@ -10,6 +10,9 @@ class ParametrizedImageproc(HasPyQtGraphParams):
     def process(self, im, state=None, **kwargs):
         return im
 
+    def reset_state(self):
+        pass
+
 
 class FishTrackingProcess(Process):
     """ """

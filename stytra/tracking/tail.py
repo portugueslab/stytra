@@ -21,6 +21,11 @@ class TailTrackingMethod(ParametrizedImageproc):
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "behaviour_tail_log"
 
+    def reset_state(self):
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        ]
+
 
 class CentroidTrackingMethod(TailTrackingMethod):
     """Center-of-mass method to find consecutive segments."""

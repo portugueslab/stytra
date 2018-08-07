@@ -142,6 +142,7 @@ class XimeaCamera(Camera):
                 )
 
         self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
+        self.cam.set_framerate(100.0)
 
     def set(self, param, val):
         """

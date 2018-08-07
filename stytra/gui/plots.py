@@ -243,6 +243,19 @@ class MultiStreamPlot(QWidget):
                 label.setColor(color)
         self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
 
+    def remove_streams(self):
+        for label_set in self.valueLabels:
+            for label in label_set:
+                self.plotContainter.removeItem(label)
+        self.valueLabels = []
+        for curve in self.curves:
+            self.plotContainter.removeItem(curve)
+        self.curves = []
+        self.stream_names = []
+        self.header_indexes = []
+        self.accumulators = []
+        self.bounds = []
+
     def update(self):
         """Function called by external timer to update the plot"""
         if not self.color_set:

@@ -71,19 +71,17 @@ class PositionEstimator:
             y, x = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
             theta = np.arctan2(
                 *(
-                    projmat
+                    projmat[:, :2]
                     @ np.array(
                         [
-                            np.sin(past_coords["f0_theta"]),
                             np.cos(past_coords["f0_theta"]),
-                            1,
-                            0,
+                            np.sin(past_coords["f0_theta"]),
                         ]
-                    )
+                    )[::-1]
                 )
             )
             self.log.update_list((past_coords["t"], x, y, theta))
-            return y, x, 0
+            return y, x, theta
 
         self.log.update_list((past_coords["t"], -1, -1, 0))
         return -1, -1, 0

@@ -238,10 +238,13 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = None
 
     def refresh_accumulator_headers(self):
-        """ Refreshes the data accumulators if somehting changed
+        """ Refreshes the data accumulators if something changed
         """
+        self.tracking_method.reset_state()
         self.data_acc.reset(header_list=self.tracking_method.accumulator_headers,
                             monitored_headers=self.tracking_method.monitored_headers)
+        self.window_main.stream_plot.remove_streams()
+        self.initialize_plots()
 
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
@@ -251,7 +254,11 @@ class TrackingExperiment(CameraExperiment):
             experiment=self, tail=tail, eyes=eyes, fish=fish
         )
 
-        # add streams
+        self.initialize_plots()
+
+        self.window_main.show()
+
+    def initialize_plots(self):
         self.window_main.stream_plot.add_stream(self.data_acc)
 
         if self.estimator is not None:
@@ -259,8 +266,6 @@ class TrackingExperiment(CameraExperiment):
 
             # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
-
-        self.window_main.show()
 
     def send_new_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative

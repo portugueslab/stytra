@@ -18,22 +18,22 @@ class FishTrackingMethod(ParametrizedImageproc):
         super().__init__(name="tracking_fish_params")
         self.add_params(
             function="fish",
-            n_fish_max=3,
-            n_segments=10,
+            n_fish_max=1,
+            n_segments=8,
             reset=False,
-            threshold_eyes=dict(type="int", limits=(0, 255), value=30),
+            threshold_eyes=dict(type="int", limits=(0, 255), value=70),
             bg_preresize=2,
             bglearning_rate=0.04,
             bglearn_every=400,
-            bgdif_threshold=10,
-            fish_target_area=150,
-            fish_area_margin=60,
+            bgdif_threshold=30,
+            fish_target_area=700,
+            fish_area_margin=350,
             margin_fish=10,
             tail_track_window=3,
-            tail_length=40.5,
+            tail_length=50.5,
             persist_fish_for=2,
             kalman_coef=0.1,
-            display_processed=dict(type="int", limits=(0, 2), value=0),
+            display_processed=dict(type="int", limits=(0, 4), value=0),
         )
         self.accumulator_headers = None
         self.monitored_headers = None
@@ -69,7 +69,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             )
         )
         self.monitored_headers = [
-            "f{:d}_theta_{:02d}".format(i_fish, self.params["n_segments"] - 3)
+            "f{:d}_theta".format(i_fish)
             for i_fish in range(self.params["n_fish_max"])
         ]
         self.bg_subtractor = BackgorundSubtractor()
@@ -93,8 +93,6 @@ class FishTrackingMethod(ParametrizedImageproc):
         else:
             self.update_params(**new_params)
 
-        inv_thresh_eyes = 255 - self.params["threshold_eyes"]
-
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
             pfish.predict()
@@ -103,18 +101,18 @@ class FishTrackingMethod(ParametrizedImageproc):
         bg = (
             self.bg_subtractor.process(
                 frame, self.params["bglearning_rate"], self.params["bglearn_every"]
-            )
-            > self.params["bgdif_threshold"]
-        ).view(dtype=np.uint8)
+            ))
+        bg_thresh = (bg > self.params["bgdif_threshold"]).view(dtype=np.uint8)
 
         # find regions where there is a difference with the background
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
-            (bg).view(dtype=np.uint8)
+            bg_thresh
         )
 
         # iterate through all the regions different from the background and try
         # to find fish
         new_fish = []
+        fishdet = None
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not (
@@ -148,6 +146,8 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ]
             )
 
+            # takes the area around the
+
             slices = (
                 slice(
                     row[cv2.CC_STAT_TOP] - self.params["margin_fish"],
@@ -164,13 +164,12 @@ class FishTrackingMethod(ParametrizedImageproc):
             )
 
             # take the region and mask the backgorund away to aid detection
-            fishdet = (255 - frame[slices]) * cv2.dilate(
-                (bg[slices]).view(dtype=np.uint8), self.dilation_kernel
-            )
+            fishdet = bg[slices].copy()
+            fishdet[cv2.dilate(bg_thresh[slices], self.dilation_kernel) == 0] = 0
 
             # estimate the position of the head and the approximate
             # direction of the tail
-            this_fish = fish_start_n(fishdet, inv_thresh_eyes)
+            this_fish = fish_start_n(fishdet, self.params["threshold_eyes"])
 
             # if no actual fish was found here, continue on to the next connected component
             if this_fish[0] == -1:
@@ -228,10 +227,14 @@ class FishTrackingMethod(ParametrizedImageproc):
 
         # if a debugging image is to be shown, set it
         if self.params["display_processed"]:
-            if self.params["display_processed"] == 1:
-                self.diagnostic_image = (frame < self.params["threshold_eyes"]).view(
-                    dtype=np.uint8
-                )
+            if self.params["display_processed"] == 2:
+                self.diagnostic_image = bg_thresh
+            elif self.params["display_processed"] == 4:
+                fishdet = bg.copy()
+                fishdet[cv2.dilate(bg_thresh, self.dilation_kernel) == 0] = 0
+                self.diagnostic_image = fishdet
+            elif self.params["display_processed"] == 3:
+                self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
             else:
                 self.diagnostic_image = bg
 
@@ -285,8 +288,8 @@ class Fish:
         self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
 
         self.f.Q = block_diag(
-            *[
-                filterpy.common.Q_discrete_white_noise(2, 0.02, uc * pred_coef)
+            *[  np.array([[0.,0.],[0.,uc*pred_coef]])
+                # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
                 for uc in uncertanties
             ]
         )
@@ -325,7 +328,7 @@ def points_to_angles(points):
     return angles
 
 
-def fish_start_n(mask, take_min=100):
+def fish_start_n(mask, take_min=50):
     """Find the centre of head of the fish
 
     Parameters
