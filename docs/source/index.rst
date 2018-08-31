@@ -56,6 +56,7 @@ Modules
     create_protocol
     running_experiments
     triggering_intro
+    swimming_tracking
     image_processing
     parameters_stytra
     hardware_list
