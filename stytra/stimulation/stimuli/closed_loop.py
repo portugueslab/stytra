@@ -121,6 +121,7 @@ class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimu
     """ A stimulus which is always kept perpendicular to the fish
 
     """
+
     def update(self):
         x, y, theta = self._experiment.estimator.get_position()
         if np.isfinite(theta):
@@ -136,6 +137,41 @@ class FishTrackingStimulus(PositionStimulus):
             self.y = y
             self.theta = theta
         super().update()
+
+
+class CenteringWrapper(PositionStimulus):
+    """ A meta-stimulus which turns on centering if the fish
+    veers too much towrds the edge
+
+    """
+
+    def __init__(self, stimulus, centering, margin=200, **kwargs):
+        super().__init__(**kwargs)
+        self.margin = margin**2
+        self.stimulus = stimulus
+        self.active = self.stimulus
+        self.centering = centering
+        self.xc = 320
+        self.yc = 240
+        self.duration = self.stimulus.duration
+
+    def initialise_external(self, experiment):
+        super().initialise_external(experiment)
+        self.stimulus.initialise_external(experiment)
+        self.centering.initialise_external(experiment)
+
+    def update(self):
+        y, x, theta = self._experiment.estimator.get_position()
+        if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2 ) > self.margin:
+            self.active = self.centering
+        else:
+            self.active = self.stimulus
+        self.active._elapsed = self._elapsed
+        self.active.update()
+
+    def paint(self, p, w, h):
+        self.xc, self.yc = w / 2, h / 2
+        self.active.paint(p, w, h)
 
 
 class TrackingStimulus(CircleStimulus):

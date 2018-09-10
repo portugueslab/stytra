@@ -59,6 +59,15 @@ class PositionEstimator:
         self.calibrator = calibrator
         self.log = EstimatorLog(["x", "y", "theta"])
 
+    def get_camera_position(self):
+        past_coords = {
+            name: value
+            for name, value in zip(
+                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
+            )
+        }
+        return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
+
     def get_position(self):
         past_coords = {
             name: value
@@ -66,25 +75,24 @@ class PositionEstimator:
                 self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
             )
         }
-        if self.calibrator.params["cam_to_proj"] is not None:
-            projmat = np.array(self.calibrator.params["cam_to_proj"])
-            x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
-            theta = np.arctan2(
-                *(
-                    projmat[:, :2]
-                    @ np.array(
-                        [
-                            np.cos(past_coords["f0_theta"]),
-                            np.sin(past_coords["f0_theta"]),
-                        ]
-                    )[::-1]
-                )
-            )
-            self.log.update_list((past_coords["t"], y, x, theta))
-            return y, x, theta
+        if self.calibrator.params["cam_to_proj"] is None or not np.isfinite(
+            past_coords["f0_x"]
+        ):
+            self.log.update_list((past_coords["t"], -1, -1, 0))
+            return -1, -1, 0
 
-        self.log.update_list((past_coords["t"], -1, -1, 0))
-        return -1, -1, 0
+        projmat = np.array(self.calibrator.params["cam_to_proj"])
+        x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
+        theta = np.arctan2(
+            *(
+                projmat[:, :2]
+                @ np.array(
+                    [np.cos(past_coords["f0_theta"]), np.sin(past_coords["f0_theta"])]
+                )[::-1]
+            )
+        )
+        self.log.update_list((past_coords["t"], y, x, theta))
+        return y, x, theta
 
 
 class LSTMLocationEstimator:

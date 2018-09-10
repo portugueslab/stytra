@@ -33,7 +33,12 @@ class FishTrackingMethod(ParametrizedImageproc):
             tail_length=50.5,
             persist_fish_for=2,
             kalman_coef=0.1,
-            display_processed=dict(type="int", limits=(0, 4), value=0),
+            display_processed=dict(type="list", limits=["raw",
+                                                        "background difference",
+                                                        "thresholded background difference",
+                                                        "fish detection",
+                                                        "thresholded for eye and swim bladder"],
+                                   value="raw"),
         )
         self.accumulator_headers = None
         self.monitored_headers = None
@@ -226,17 +231,16 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.recorded[pf.i_ar, :] = pf.serialize()
 
         # if a debugging image is to be shown, set it
-        if self.params["display_processed"]:
-            if self.params["display_processed"] == 2:
-                self.diagnostic_image = bg_thresh
-            elif self.params["display_processed"] == 4:
-                fishdet = bg.copy()
-                fishdet[cv2.dilate(bg_thresh, self.dilation_kernel) == 0] = 0
-                self.diagnostic_image = fishdet
-            elif self.params["display_processed"] == 3:
-                self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
-            else:
-                self.diagnostic_image = bg
+        if self.params["display_processed"] == "background difference":
+            self.diagnostic_image = bg
+        elif self.params["display_processed"] == "thresholded background difference":
+            self.diagnostic_image = bg_thresh
+        elif self.params["display_processed"] == "fish detection":
+            fishdet = bg.copy()
+            fishdet[cv2.dilate(bg_thresh, self.dilation_kernel) == 0] = 0
+            self.diagnostic_image = fishdet
+        elif self.params["display_processed"] == "thresholded for eye and swim bladder":
+            self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
 
         return tuple(self.recorded.flatten())
 
