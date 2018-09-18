@@ -22,14 +22,14 @@ class FishTrackingMethod(ParametrizedImageproc):
             n_segments=8,
             bglearning_rate=0.04,
             bglearn_every=400,
-            bgdif_threshold=30,
+            bgdif_threshold=25,
             reset=False,
-            threshold_eyes=dict(type="int", limits=(0, 255), value=70),
+            threshold_eyes=dict(type="int", limits=(0, 255), value=35),
             angle_uncertainty=dict(type="float", limits=(0, np.pi), value=np.pi/10),
             pos_uncertainty=dict(type="float", limits=(0, 10.0), value=1.0),
             bg_preresize=2,
-            fish_target_area=700,
-            fish_area_margin=350,
+            fish_target_area=160,
+            fish_area_margin=120,
             margin_fish=10,
             tail_track_window=3,
             tail_length=50.5,
@@ -109,7 +109,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.bg_subtractor.process(
                 frame, self.params["bglearning_rate"], self.params["bglearn_every"]
             ))
-        bg_thresh = (bg > self.params["bgdif_threshold"]).view(dtype=np.uint8)
+        bg_thresh = cv2.dilate((bg > self.params["bgdif_threshold"]).view(dtype=np.uint8), self.dilation_kernel)
 
         # find regions where there is a difference with the background
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
@@ -172,7 +172,7 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # take the region and mask the backgorund away to aid detection
             fishdet = bg[slices].copy()
-            fishdet[cv2.dilate(bg_thresh[slices], self.dilation_kernel) == 0] = 0
+            fishdet[bg_thresh[slices] == 0] = 0
 
             # estimate the position of the head and the approximate
             # direction of the tail
@@ -242,7 +242,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.diagnostic_image = bg_thresh
         elif self.params["display_processed"] == "fish detection":
             fishdet = bg.copy()
-            fishdet[cv2.dilate(bg_thresh, self.dilation_kernel) == 0] = 0
+            fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
         elif self.params["display_processed"] == "thresholded for eye and swim bladder":
             self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])

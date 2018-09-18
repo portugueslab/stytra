@@ -28,12 +28,12 @@ class PhototaxisProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    # video_file = r"J:\Vilim Stih\fish_recordings\20180719_170349.mp4"
+    video_file = r"J:\Vilim Stih\fish_recordings\old\20180719_170349.mp4"
 
-    # camera_config = dict(video_file=video_file, rotation=0)
+    camera_config = dict(video_file=video_file, rotation=0)
     tracking_config = dict(tracking_method="fish", estimator="position")
     s = Stytra(
-        camera_config=dict(type="ximea", downsampling=2),
+        camera_config=camera_config,
         dir_assets=pkg_resources.resource_filename("stytra", "tests/test_assets"),
         tracking_config=tracking_config,
         protocols=[PhototaxisProtocol],
