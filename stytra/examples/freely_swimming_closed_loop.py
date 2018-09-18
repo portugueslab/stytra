@@ -13,11 +13,18 @@ import pkg_resources
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"
 
+    def __init__(self):
+        super().__init__()
+
+        self.add_params(
+            duration=600,
+        )
+
     def get_stim_sequence(self):
-        duration = 600
+        duration = self.params["duration"]
         centering = RadialSineStimulus(duration=duration)
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
-        return [CenteringWrapper(stim(duration=600), centering)]
+        return [CenteringWrapper(stim(self.params["duration"]), centering)]
 
 
 if __name__ == "__main__":

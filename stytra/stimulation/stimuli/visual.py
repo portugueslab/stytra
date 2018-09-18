@@ -430,9 +430,10 @@ class HalfFieldStimulus(PositionStimulus):
 
     """
 
-    def __init__(self, *args, left=False, color=(255, 255, 255), **kwargs):
+    def __init__(self, *args, left=False, color=(255, 255, 255), center_dist=5, **kwargs):
         super().__init__(*args, **kwargs)
         self.left = left
+        self.center_dist = center_dist
         self.color = color
         self.name = "half_field"
 
@@ -449,8 +450,8 @@ class HalfFieldStimulus(PositionStimulus):
 
         theta = self.theta
 
-        sx = self.x + h / 2 * np.cos(theta)
-        sy = self.y + h / 2 * np.sin(theta)
+        sx = self.x + h / 2 * np.cos(theta) + self.center_dist*np.cos(theta-np.pi/2)
+        sy = self.y + h / 2 * np.sin(theta) + self.center_dist*np.sin(theta-np.pi/2)
         points.append(QPoint(sx, sy))
         theta += dtheta
 

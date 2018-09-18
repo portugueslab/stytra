@@ -25,6 +25,8 @@ class FishTrackingMethod(ParametrizedImageproc):
             bgdif_threshold=30,
             reset=False,
             threshold_eyes=dict(type="int", limits=(0, 255), value=70),
+            angle_uncertainty=dict(type="float", limits=(0, np.pi), value=np.pi/10),
+            pos_uncertainty=dict(type="float", limits=(0, 10.0), value=1.0),
             bg_preresize=2,
             fish_target_area=700,
             fish_area_margin=350,
@@ -210,7 +212,10 @@ class FishTrackingMethod(ParametrizedImageproc):
             # has to be instantiated for this measurement
             else:
                 new_fish.append(
-                    Fish(this_fish, self.idx_book, pred_coef=self.params["kalman_coef"])
+                    Fish(this_fish, self.idx_book,
+                         pred_coef=self.params["kalman_coef"],
+                         pos_std=self.params["pos_uncertainty"],
+                         angle_std=self.params["angle_uncertainty"])
                 )
         current_fish = []
 
@@ -292,7 +297,7 @@ class Fish:
         self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
 
         self.f.Q = block_diag(
-            *[  np.array([[0.,0.],[0.,uc*pred_coef]])
+            *[  np.array([[0.,0.],[0., uc*pred_coef]])
                 # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
                 for uc in uncertanties
             ]
