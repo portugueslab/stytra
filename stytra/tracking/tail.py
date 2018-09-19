@@ -459,7 +459,7 @@ def _tail_trace_core_ls(
 
 
 @jit(nopython=True, cache=True)
-def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points=20):
     """Finds a midline for a fish image, with the starting point and direction
 
     Parameters
@@ -470,7 +470,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
         param angle:
     r :
         param m: (Default value = 9)
-    n_points_max :
+    n_points :
         return: (Default value = 20)
     xm :
         
@@ -488,7 +488,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
     dy = np.sin(angle) * m
 
     points = [(xm, ym, 0)]
-    for i in range(1, n_points_max):
+    for i in range(1, n_points):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
         if xm > 0:
             points.append((xm, ym, acc))

@@ -26,7 +26,8 @@ setup(
         "arrayqueues",
         "pillow",
         "scikit-image",
-        "filterpy"
+        "filterpy",
+        "multiprocessing-logging"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

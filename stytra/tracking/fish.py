@@ -12,6 +12,7 @@ from stytra.tracking.tail import find_direction, _next_segment
 from itertools import chain
 from scipy.linalg import block_diag
 
+import logging
 
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
@@ -54,6 +55,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         self.recorded = None
         self.diagnostic_image = None
         self.reset_state()
+        self.logger = logging.getLogger()
 
     def reset_state(self):
         self.accumulator_headers = list(
@@ -69,22 +71,25 @@ class FishTrackingMethod(ParametrizedImageproc):
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
-                        for i in range(self.params["n_segments"] - 2)
+                        for i in range(self.params["n_segments"] - 1)
                     ]
                     for i_fish in range(self.params["n_fish_max"])
                 ]
             )
-        )
+        ) + ["biggest_area"]
         self.monitored_headers = [
             "f{:d}_theta".format(i_fish)
             for i_fish in range(self.params["n_fish_max"])
-        ]
+        ] + ["biggest_area"]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
+
+        # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params["n_fish_max"])
         self.recorded = np.full(
-            (self.params["n_fish_max"], 4 + self.params["n_segments"]), np.nan
+            (self.params["n_fish_max"], 6 + self.params["n_segments"]-1), np.nan
         )
+        self.logger = logging.getLogger()
 
     def detect(self, frame, **new_params):
 
@@ -115,6 +120,11 @@ class FishTrackingMethod(ParametrizedImageproc):
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
             bg_thresh
         )
+
+        try:
+            max_area = np.max(stats[1:, cv2.CC_STAT_AREA])
+        except ValueError:
+            max_area = 0
 
         # iterate through all the regions different from the background and try
         # to find fish
@@ -170,7 +180,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ),
             )
 
-            # take the region and mask the backgorund away to aid detection
+            # take the region and mask the background away to aid detection
             fishdet = bg[slices].copy()
             fishdet[bg_thresh[slices] == 0] = 0
 
@@ -184,16 +194,17 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # find the points of the tail
             points = find_fish_midline(
-                fishdet,
+                bg[slices],
                 *this_fish,
                 self.params["tail_track_window"],
                 self.params["tail_length"] / self.params["n_segments"],
-                self.params["n_segments"]
+                self.params["n_segments"]+1
             )
 
             # convert to angles
             angles = points_to_angles(points)
             if len(angles) == 0:
+                self.logger.info("Tail not completely detectable")
                 continue
 
             # also, make the angles continuous
@@ -247,7 +258,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         elif self.params["display_processed"] == "thresholded for eye and swim bladder":
             self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
 
-        return tuple(self.recorded.flatten())
+        return tuple(self.recorded.flatten()) + (max_area*1.0, )
 
 
 class IndexBooking:

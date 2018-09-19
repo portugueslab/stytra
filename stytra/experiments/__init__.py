@@ -5,6 +5,7 @@ from queue import Empty
 import numpy as np
 import deepdish as dd
 import logging
+import multiprocessing_logging
 
 from PyQt5.QtCore import QObject, QTimer
 from PyQt5.QtWidgets import QMessageBox
@@ -88,6 +89,7 @@ class Experiment(QObject):
     ):
         """ """
         super().__init__()
+        multiprocessing_logging.install_mp_handler()
 
         self.app = app
         self.protocols = protocols
