@@ -135,9 +135,11 @@ class FrameDispatcher(FrameProcess):
                 self.update_framerate()
 
                 # put current frame into the GUI queue
-                if self.processing_parameters.get("display_processed",
-                                                  "raw") != "raw":
-                    self.send_to_gui(tracker.diagnostic_image)
+                if self.processing_parameters.get("display_processed", "raw") != "raw":
+                    try:
+                        self.send_to_gui(tracker.diagnostic_image)
+                    except AttributeError:
+                        self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)
 
