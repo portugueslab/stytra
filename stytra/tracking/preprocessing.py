@@ -13,7 +13,10 @@ from numba import vectorize, uint8, float32
 class PreprocMethod(ParametrizedImageproc):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.add_params(display_processed=False)
+        self.add_params(display_processed=dict(limits=["raw",
+                                                       "filtered"],
+                                               type='list',
+                                               value="raw"))
 
 
 class Prefilter(PreprocMethod):
