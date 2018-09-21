@@ -194,8 +194,10 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # find the points of the tail
             points = find_fish_midline(
-                bg[slices],
-                *this_fish,
+                bg,
+                this_fish[0]+slices[1].start,
+                this_fish[1]+slices[0].start,
+                this_fish[2],
                 self.params["tail_track_window"],
                 self.params["tail_length"] / self.params["n_segments"],
                 self.params["n_segments"]+1
@@ -211,7 +213,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             angles[1:] = np.unwrap(reduce_to_pi(angles[1:] - angles[0]))
 
             # put the data together for one fish
-            this_fish = np.concatenate([cent_shift + np.array(points[0][:2]), angles])
+            this_fish = np.concatenate([np.array(points[0][:2]), angles])
 
             # check if this is a new fish, or it is an update of
             # a fish detected previously

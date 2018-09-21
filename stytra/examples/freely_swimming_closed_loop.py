@@ -18,13 +18,17 @@ class PhototaxisProtocol(Protocol):
 
         self.add_params(
             duration=600,
+            center_offset=0,
+            brightness=dict(type="int", limits=(0,255), value=255)
         )
 
     def get_stim_sequence(self):
         duration = self.params["duration"]
         centering = RadialSineStimulus(duration=duration)
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
-        return [CenteringWrapper(stim(self.params["duration"]), centering)]
+        return [CenteringWrapper(stim(duration=self.params["duration"],
+                                      color=(self.params["brightness"],)*3,
+                                      center_dist=self.params["center_offset"],), centering)]
 
 
 if __name__ == "__main__":
