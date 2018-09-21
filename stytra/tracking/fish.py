@@ -186,18 +186,21 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # estimate the position of the head and the approximate
             # direction of the tail
-            this_fish = fish_start_n(fishdet, self.params["threshold_eyes"])
+            head_coords = fish_start_n(fishdet, self.params["threshold_eyes"])
 
             # if no actual fish was found here, continue on to the next connected component
-            if this_fish[0] == -1:
+            if head_coords[0] == -1:
                 continue
+
+            theta = _fish_direction_n(frame, head_coords + cent_shift,
+                                      int(round(self.params["tail_length"]/2)))
 
             # find the points of the tail
             points = find_fish_midline(
                 bg,
-                this_fish[0]+slices[1].start,
-                this_fish[1]+slices[0].start,
-                this_fish[2],
+                head_coords[0]+slices[1].start,
+                head_coords[1]+slices[0].start,
+                theta,
                 self.params["tail_track_window"],
                 self.params["tail_length"] / self.params["n_segments"],
                 self.params["n_segments"]+1
@@ -213,19 +216,19 @@ class FishTrackingMethod(ParametrizedImageproc):
             angles[1:] = np.unwrap(reduce_to_pi(angles[1:] - angles[0]))
 
             # put the data together for one fish
-            this_fish = np.concatenate([np.array(points[0][:2]), angles])
+            head_coords = np.concatenate([np.array(points[0][:2]), angles])
 
             # check if this is a new fish, or it is an update of
             # a fish detected previously
             for past_fish in self.previous_fish:
-                if past_fish.is_close(this_fish) and past_fish.i_not_updated < 0:
-                    past_fish.update(this_fish)
+                if past_fish.is_close(head_coords) and past_fish.i_not_updated < 0:
+                    past_fish.update(head_coords)
                     break
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
                 new_fish.append(
-                    Fish(this_fish, self.idx_book,
+                    Fish(head_coords, self.idx_book,
                          pred_coef=self.params["kalman_coef"],
                          pos_std=self.params["pos_uncertainty"],
                          angle_std=self.params["angle_uncertainty"])
