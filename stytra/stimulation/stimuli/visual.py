@@ -430,7 +430,7 @@ class HalfFieldStimulus(PositionStimulus):
 
     """
 
-    def __init__(self, *args, left=False, color=(255, 255, 255), center_dist=5, **kwargs):
+    def __init__(self, *args, left=False, color=(255, 255, 255), center_dist=0, **kwargs):
         super().__init__(*args, **kwargs)
         self.left = left
         self.center_dist = center_dist
