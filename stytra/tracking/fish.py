@@ -368,5 +368,67 @@ def fish_start_n(mask, take_min=50):
         return np.array([-1, -1, 0])
     y0 = mom["m01"] / mom["m00"]
     x0 = mom["m10"] / mom["m00"]
-    angle = np.arctan2(mask.shape[0] / 2 - y0, mask.shape[1] / 2 - x0)
-    return np.array([x0, y0, angle])
+    return np.array([x0, y0])
+
+@jit(nopython=True)
+def _symmetry_points(x0, y0, x, y):
+    return [
+        (x0 + x, y0 + y),
+        (x0 - x, y0 + y),
+        (x0 + x, y0 - y),
+        (x0 - x, y0 - y),
+        (x0 + y, y0 + x),
+        (x0 - y, y0 + x),
+        (x0 + y, y0 - x),
+        (x0 - y, y0 - x),
+    ]
+
+@jit(nopython=True)
+def _circle_points(x0, y0, radius):
+    """ Bresenham's circle algorithm
+
+    Parameters
+    ----------
+    xc : center x
+    yc : center y
+    r : radius
+
+    Returns
+    -------
+    a list of points
+
+    """
+    f = 1 - radius
+    ddf_x = 1
+    ddf_y = -2 * radius
+    x = 0
+    y = radius
+    points = [
+        (x0, y0 + radius),
+        (x0, y0 - radius),
+        (x0 + radius, y0),
+        (x0 - radius, y0),
+    ]
+    while x < y:
+        if f >= 0:
+            y -= 1
+            ddf_y += 2
+            f += ddf_y
+        x += 1
+        ddf_x += 2
+        f += ddf_x
+        points.extend(_symmetry_points(x0, y0, x, y))
+    return points
+
+
+@jit(nopython=True)
+def _fish_direction_n(image, start_loc, radius):
+    centre_int = start_loc.astype(np.int16)
+    pixels_rad = _circle_points(centre_int[0], centre_int[1], radius)
+    min_point = pixels_rad[0]
+    min_val = 255
+    for x, y in pixels_rad:
+        if image[y, x] < min_val:
+            min_val = image[y, x]
+            min_point = (x, y)
+    return np.arctan2(min_point[1]-centre_int[1], min_point[0]-centre_int[0])
