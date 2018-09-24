@@ -26,11 +26,12 @@ install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
   - conda install coverage --yes
+  - conda install -c conda-forge opencv --yes;
   - conda install av -c conda-forge --yes
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
-  - conda install opencv --yes;
+
 
   - which python
   - python --version
