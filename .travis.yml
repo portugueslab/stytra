@@ -34,12 +34,11 @@ install:
   - echo ${TEST}
   - echo ${PYTHON}
 
-
   - which python
   - python --version
   - pwd
   - ls
-
+  - pip install PyQt5
   - pip install pytest-xdist # multi-thread py.test
   - pip install pytest-cov # add coverage stats
   - pip install coveralls
