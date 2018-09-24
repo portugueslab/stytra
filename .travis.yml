@@ -25,6 +25,8 @@ before_install:
 install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
+  - conda create -n test_env python=${PYTHON} --yes
+  - source activate test_env
   - conda install coverage --yes
   - conda install -c conda-forge opencv --yes;
   - conda install av -c conda-forge --yes
@@ -51,6 +53,7 @@ before_script:
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
 script:
+ - source activate test_env
  - pytest --cov=stytra
 
 after_success:
