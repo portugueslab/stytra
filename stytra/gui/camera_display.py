@@ -560,22 +560,28 @@ class CameraViewFish(CameraViewCalib):
             # figure out in a quick and dirty way if the tail is being tracked
             last_header_item = self.experiment.data_acc.header_list[-2]
             if "theta_" in last_header_item:
-                n_points_tail = int(last_header_item[-2:])
+                n_tail_angles = int(last_header_item[-2:])+1
             else:
-                n_points_tail = 0
+                n_tail_angles = 0
 
-            n_data_per_fish = n_points_tail + 7  # the 6 is for x, vx, y, vy, theta, vtheta
-            retrieved_data = np.array(
-                self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
-            ).reshape(-1, n_data_per_fish)
-            valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
-            self.points_fish.setData(
-                x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
-            )
-            if n_points_tail:
-                tail_len = (
-                    self.experiment.tracking_method.params["tail_length"]
-                    / self.experiment.tracking_method.params["n_segments"]
+            n_data_per_fish = n_tail_angles + 6  # the 6 is for x, vx, y, vy, theta, vtheta
+            try:
+                retrieved_data = np.array(
+                    self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
+                ).reshape(-1, n_data_per_fish)
+
+                valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
+                self.points_fish.setData(
+                    x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
                 )
-                xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
-                self.lines_fish.setData(x=xs, y=ys)
+                if n_tail_angles:
+                    tail_len = (
+                        self.experiment.tracking_method.params["tail_length"]
+                        / self.experiment.tracking_method.params["n_segments"]
+                    )
+                    xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
+                    self.lines_fish.setData(x=xs, y=ys)
+            # if there is a temporary mismatch between number of segments expected
+            # and sent
+            except ValueError:
+                pass

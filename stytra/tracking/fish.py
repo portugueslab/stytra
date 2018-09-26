@@ -129,7 +129,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         # iterate through all the regions different from the background and try
         # to find fish
         new_fish = []
-        fishdet = None
+
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not (
@@ -208,7 +208,7 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # convert to angles
             angles = points_to_angles(points)
-            if len(angles) == 0:
+            if len(angles) != self.params["n_segments"]:
                 self.logger.info("Tail not completely detectable")
                 continue
 
