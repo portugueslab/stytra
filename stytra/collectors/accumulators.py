@@ -257,10 +257,12 @@ class DynamicLog(Accumulator):
 
     def __init__(self, stimuli):
         """ """
-
+        self.dict_header = None
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
+
         self.update_stimuli(stimuli)
+
 
     def update_list(self, time, data):
         """
@@ -275,27 +277,23 @@ class DynamicLog(Accumulator):
 
         """
         data_list = [time] + [np.nan] * (len(self.header_list) - 1)
-        for k in data.keys():
-            data_list[self.header_list.index(k)] = data[k]
+        for key, val in data.items():
+            data_list[self.dict_header[key]] = val
         self.check_start()
         self.stored_data.append(tuple(data_list))
 
     def update_stimuli(self, stimuli):
-        # it is assumed the first dynamic stimulus has all the fields
-        # for stimulus in stimuli:
-        #     if isinstance(stimulus, DynamicStimulus):
-        #         self.header_list = ['t'] + stimulus.dynamic_parameters
-        #         print(self.header_list)
-        # self.stored_data = []
         dynamic_params = []
         for stimulus in stimuli:
             try:
-                dynamic_params.extend(
-                    [stimulus.name + "_" + p for p in stimulus.dynamic_parameters]
-                )
+                for p in stimulus.dynamic_parameters:
+                    new_param = stimulus.name + "_" + p
+                    if not new_param in dynamic_params:
+                        dynamic_params.append(new_param)
             except AttributeError:
                 pass
         self.header_list = ["t"] + dynamic_params
+        self.dict_header = {k : i for i, k in enumerate(self.header_list)}
         self.stored_data = []
 
 
