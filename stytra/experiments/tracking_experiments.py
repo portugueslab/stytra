@@ -295,6 +295,10 @@ class TrackingExperiment(CameraExperiment):
         # when waiting for the microscope!
         super().start_protocol()
         self.data_acc.reset()
+        try:
+            self.estimator.log.reset()
+        except AttributeError:
+            pass
 
     def end_protocol(self, save=True):
         """Save tail position and dynamic parameters and terminate.
@@ -303,11 +307,15 @@ class TrackingExperiment(CameraExperiment):
         if save:
             self.save_log(self.data_acc, "log")
             try:
+                print('saving estimator log')
                 self.save_log(self.estimator.log, "estimator_log")
+                print('save log')
             except AttributeError:
                 pass
         try:
+            print('trying resetting')
             self.estimator.log.reset()
+            print('reset')
         except AttributeError:
             pass
 

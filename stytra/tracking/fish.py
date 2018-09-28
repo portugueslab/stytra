@@ -125,7 +125,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         # iterate through all the regions different from the background and try
         # to find fish
         new_fish = []
-        fishdet = None
+
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not (

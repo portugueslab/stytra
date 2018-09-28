@@ -563,17 +563,22 @@ class CameraViewFish(CameraViewCalib):
 
             n_data_per_fish = len(self.experiment.data_acc.stored_data[-1]) - 2 # the first is time, the last is area
             n_points_tail = n_data_per_fish - 5
-            retrieved_data = np.array(
-                self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
-            ).reshape(-1, n_data_per_fish)
-            valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
-            self.points_fish.setData(
-                x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
-            )
-            if n_points_tail:
-                tail_len = (
-                    self.experiment.tracking_method.params["tail_length"]
-                    / self.experiment.tracking_method.params["n_segments"]
+            try:
+                retrieved_data = np.array(
+                    self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
+                ).reshape(-1, n_data_per_fish)
+                valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
+                self.points_fish.setData(
+                    x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
                 )
-                xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
-                self.lines_fish.setData(x=xs, y=ys)
+                if n_points_tail:
+                    tail_len = (
+                        self.experiment.tracking_method.params["tail_length"]
+                        / self.experiment.tracking_method.params["n_segments"]
+                    )
+                    xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
+                    self.lines_fish.setData(x=xs, y=ys)
+            # if there is a temporary mismatch between number of segments expected
+            # and sent
+            except ValueError:
+                pass
