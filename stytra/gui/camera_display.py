@@ -559,12 +559,10 @@ class CameraViewFish(CameraViewCalib):
         if len(self.experiment.data_acc.stored_data) > 1:
             # figure out in a quick and dirty way if the tail is being tracked
             last_header_item = self.experiment.data_acc.header_list[-2]
-            if "theta_" in last_header_item:
-                n_points_tail = int(last_header_item[-2:])
-            else:
-                n_points_tail = 0
+            n_fish = int(last_header_item[1])+1
 
-            n_data_per_fish = n_points_tail + 7  # the 6 is for x, vx, y, vy, theta, vtheta
+            n_data_per_fish = len(self.experiment.data_acc.stored_data[-1]) - 2 # the first is time, the last is area
+            n_points_tail = n_data_per_fish - 5
             retrieved_data = np.array(
                 self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
             ).reshape(-1, n_data_per_fish)

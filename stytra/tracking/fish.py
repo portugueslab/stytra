@@ -6,8 +6,6 @@ import filterpy.kalman
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
 from stytra.tracking.preprocessing import BackgorundSubtractor
-from stytra.bouter.angles import reduce_to_pi
-from stytra.tracking.tail import find_direction, _next_segment
 
 from itertools import chain
 from scipy.linalg import block_diag
@@ -26,7 +24,6 @@ class FishTrackingMethod(ParametrizedImageproc):
             bgdif_threshold=25,
             reset=False,
             threshold_eyes=dict(type="int", limits=(0, 255), value=35),
-            angle_uncertainty=dict(type="float", limits=(0, np.pi), value=np.pi/10),
             pos_uncertainty=dict(type="float", limits=(0, 10.0), value=1.0),
             bg_preresize=2,
             fish_target_area=160,
@@ -67,7 +64,6 @@ class FishTrackingMethod(ParametrizedImageproc):
                         "f{:d}_y".format(i_fish),
                         "f{:d}_vy".format(i_fish),
                         "f{:d}_theta".format(i_fish),
-                        "f{:d}_vtheta".format(i_fish),
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
@@ -87,7 +83,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params["n_fish_max"])
         self.recorded = np.full(
-            (self.params["n_fish_max"], 6 + self.params["n_segments"]-1), np.nan
+            (self.params["n_fish_max"], 5 + self.params["n_segments"]-1), np.nan
         )
         self.logger = logging.getLogger()
 
@@ -207,13 +203,13 @@ class FishTrackingMethod(ParametrizedImageproc):
             )
 
             # convert to angles
-            angles = points_to_angles(points)
+            angles = np.mod(points_to_angles(points)+np.pi, np.pi*2)-np.pi
             if len(angles) == 0:
                 self.logger.info("Tail not completely detectable")
                 continue
 
             # also, make the angles continuous
-            angles[1:] = np.unwrap(reduce_to_pi(angles[1:] - angles[0]))
+            angles[1:] = np.unwrap(angles[1:] - angles[0])
 
             # put the data together for one fish
             head_coords = np.concatenate([np.array(points[0][:2]), angles])
@@ -230,8 +226,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                 new_fish.append(
                     Fish(head_coords, self.idx_book,
                          pred_coef=self.params["kalman_coef"],
-                         pos_std=self.params["pos_uncertainty"],
-                         angle_std=self.params["angle_uncertainty"])
+                         pos_std=self.params["pos_uncertainty"])
                 )
         current_fish = []
 
@@ -291,19 +286,17 @@ class Fish:
         initial_state,
         idx_book,
         pos_std=1.0,
-        angle_std=np.pi / 10,
         pred_coef=20,
-        filter_tail=False,
     ):
         self.i_not_updated = 0
         self.i_ar = idx_book.get_next()
-        self.n_dof = len(initial_state) if filter_tail else 3
+        self.n_dof = 2
 
         # the position will be Kalman-filtered
         self.f = filterpy.kalman.KalmanFilter(dim_x=self.n_dof * 2, dim_z=self.n_dof)
 
         uncertanties = np.array(
-            [pos_std, pos_std] + [angle_std for _ in range(self.n_dof - 2)]
+            [pos_std, pos_std]
         )
         self.f.x[::2, 0] = initial_state[: self.n_dof]
         self.f.F = block_diag(
@@ -340,9 +333,8 @@ class Fish:
         and within a certain angle
         """
         dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
-        return np.sum(dists ** 2) < n_px ** 2 and np.abs(
-            reduce_to_pi(new_fish[3] - self.f.x[4])
-        )
+        dtheta = np.abs(np.mod(new_fish[3] - self.unfiltered[0]+np.pi, np.pi*2)-np.pi)
+        return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 
 @jit(nopython=True)

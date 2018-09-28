@@ -1,11 +1,11 @@
 import numpy as np
 import datetime
 
-from stytra.bouter.angles import rot_mat
-from stytra.bouter.kinematic_features import velocities_to_coordinates
-from stytra.bouter.angles import smooth_tail_angles_series, reduce_to_pi
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
 
+def rot_mat(theta):
+    """The rotation matrix for an angle theta """
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 class VigourMotionEstimator:
     """ """
