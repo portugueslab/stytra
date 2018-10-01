@@ -115,17 +115,6 @@ class Experiment(QObject):
         self.logger = logging.getLogger()
         self.logger.setLevel("INFO")
 
-        # to the constructor we need to pass classes, not instances
-        # otherwise there are problems because the metadatas are QObjects
-        if metadata_general is None:
-            self.metadata = GeneralMetadata()
-        else:
-            self.metadata = metadata_general()
-
-        if metadata_animal is None:
-            self.metadata_animal = AnimalMetadata()
-        else:
-            self.metadata_animal = metadata_animal()
 
         # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
@@ -141,6 +130,16 @@ class Experiment(QObject):
 
         if default_protocol is not None:
             self.default_protocol = default_protocol
+
+        if metadata_general is None:
+            self.metadata = GeneralMetadata(tree=self.dc)
+        else:
+            self.metadata = metadata_general(tree=self.dc)
+
+        if metadata_animal is None:
+            self.metadata_animal = AnimalMetadata(tree=self.dc)
+        else:
+            self.metadata_animal = metadata_animal(tree=self.dc)
 
         self.protocol_runner = ProtocolRunner(
             experiment=self, protocol=self.default_protocol
@@ -188,7 +187,7 @@ class Experiment(QObject):
         return (
             self.current_timestamp.strftime("%y%m%d")
             + "_f"
-            + str(self.metadata_animal.params["id"])
+            + str(self.metadata_animal.id)
         )
 
     @property

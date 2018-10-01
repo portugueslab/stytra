@@ -16,6 +16,9 @@ try:
 except ImportError:
     pass
 
+from pathlib import Path
+
+from poparam import ParameterTree
 
 def strip_values(it):
     """Convert OrderedDict of OrderedDict in dict of dict.
@@ -94,7 +97,7 @@ def metadata_dataframe(metadata_dict, time_step=0.005):
     return final_df
 
 
-class DataCollector:
+class DataCollector(ParameterTree):
     """Class for saving all data and data_log produced during an experiment.
 
     There are two kind of data that are collected:
@@ -149,12 +152,9 @@ class DataCollector:
         """ """
 
         # Check validity of directory:
-        if os.path.isdir(folder_path):
-            if not folder_path.endswith("/"):
-                folder_path += "/"
-            self.folder_path = folder_path
-        else:
-            raise ValueError("The specified directory does not exist!")
+        self.folder_path = Path(folder_path)
+        if not self.folder_path.is_dir():
+            self.folder_path.mkdir(parents=True)
 
         # Try to find previously saved data_log:
         self.last_metadata = None

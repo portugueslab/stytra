@@ -27,6 +27,8 @@ from stytra.gui.camera_display import (
     CameraViewFish,
 )
 
+from poparam.gui import ParameterGui
+
 import json
 
 
@@ -128,10 +130,10 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
         self.metadata_win.layout().addWidget(
-            self.experiment.metadata.show_metadata_gui()
+            ParameterGui(self.experiment.metadata)
         )
         self.metadata_win.layout().addWidget(
-            self.experiment.metadata_animal.show_metadata_gui()
+            ParameterGui(self.experiment.metadata_animal)
         )
         self.metadata_win.show()
 

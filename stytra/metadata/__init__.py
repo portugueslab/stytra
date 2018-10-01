@@ -1,6 +1,6 @@
 from stytra.utilities import HasPyQtGraphParams
 from pyqtgraph.parametertree import Parameter, ParameterTree
-
+from poparam import Parametrized, Param
 
 class GuiMetadata(HasPyQtGraphParams):
     """General class for a group of metadata that can be controlled via
@@ -45,32 +45,24 @@ class GuiMetadata(HasPyQtGraphParams):
         return self.protocol_params_tree
 
 
-class GeneralMetadata(GuiMetadata):
+class GeneralMetadata(Parametrized):
     """General metadata for the experiment.
     """
 
-    def __init__(self):
-        super().__init__()
-        self.params.setName("general_metadata")
-        self.add_params(
-            session_id=dict(type="int", value=0),
-            experimenter_name=dict(type="list", value="", values=[""]),
-            setup_name=dict(type="list", value="", values=[""]),
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(name="general/basic", **kwargs)
+        self.session_id = Param(0, limits=(0,100))
+        self.experimenter_name = Param("", limits=[""])
+        self.setup_name = Param("", limits=[""])
 
 
-class AnimalMetadata(GuiMetadata):
+class AnimalMetadata(Parametrized):
     """Metadata about the animal.
      """
 
-    def __init__(self):
-        super().__init__()
-        self.params.setName("animal_metadata")
-        self.add_params(
-            id=dict(type="int", value=0),
-            age=dict(
-                type="int", value=7, limits=(3, 21), tip="Animal age", suffix="dpf"
-            ),
-            comments=dict(type="str", value=""),
-            genotype=dict(type="list", values=[""], value=""),
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, name="general/animal", **kwargs)
+        self.id = Param(0, limits=(0, 100))
+        self.age = Param(7, limits=(3, 21), desc="age of the animal")
+        self.comments = Param("", desc="Comments on the animal or experiment")
+        self.genotype = Param("",[""])
