@@ -5,6 +5,7 @@ from numba import vectorize, uint8, jit
 
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.tail import AnglesTrackingMethod, TailTrackingMethod
+from itertools import chain
 
 # TODO it would be better to avoid this function and sequentially apply its
 # two parts
@@ -33,11 +34,11 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
         self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_tail_eyes_log"
+        self.method_chain = [AnglesTrackingMethod(), EyeTrackingMethod()]
 
-    @classmethod
-    def detect(cls, im, **kwargs):
-        AnglesTrackingMethod.detect(im, **kwargs) + EyeTrackingMethod.detect(
-            im, **kwargs
+    def detect(self, im, **kwargs):
+        return tuple(
+            chain.from_iterable(met.detect(im, **kwargs) for met in self.method_chain)
         )
 
 

@@ -36,16 +36,15 @@ class EyeTrackingMethod(ParametrizedImageproc):
         self.accumulator_headers = headers
         self.data_log_name = "behaviour_eyes_log"
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
-        wnd_pos,
-        wnd_dim,
-        threshold,
-        image_scale,
-        filter_size,
-        color_invert,
+        wnd_pos=None,
+        wnd_dim=None,
+        threshold=None,
+        image_scale=None,
+        filter_size=None,
+        color_invert=None,
         **kwargs
     ):
         """

@@ -1,368 +1,351 @@
 import cv2
 import numpy as np
-from numba import vectorize, uint8, jit
+from numba import jit
+import filterpy.kalman
 
-from stytra.utilities import HasPyQtGraphParams
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
+from stytra.tracking.preprocessing import BackgorundSubtractor
 
+from itertools import chain
+from scipy.linalg import block_diag
+
+import logging
 
 class FishTrackingMethod(ParametrizedImageproc):
-
     def __init__(self):
-        super().__init__(name = "tracking_fish_params")
-        self.add_params(function="fish", threshold=dict(type="int", limits=(0, 255)))
-
-        self.accumulator_headers = ["x", "y", "theta"]
-        self.data_log_name = ""
-
-    @classmethod
-    def detect(cls, im, threshold=128, image_scale=1, **extra_args):
-        cent = centroid_bin(im < threshold)
-        return cent[0] / image_scale, cent[1] / image_scale, 0.0
-
-
-class ContourScorer:
-    """ """
-
-    def __init__(self, target_area, target_ratio, ratio_weight=1):
-        self.target_area = target_area
-        self.target_ratio = target_ratio
-        self.ratio_weight = ratio_weight
-
-    def score(self, cont):
-        """
-
-        Parameters
-        ----------
-        cont :
-            
-
-        Returns
-        -------
-
-        """
-        area = cv2.contourArea(cont)
-        if area < 2:
-            return 10000
-        err_area = ((area - self.target_area) / self.target_area) ** 2
-        _, el_axes, _ = cv2.minAreaRect(cont)
-        if el_axes[0] == 0.0:
-            ratio = 0.0
-        else:
-            ratio = el_axes[1] / el_axes[0]
-            if ratio > 1:
-                ratio = 1 / ratio
-        err_ratio = (ratio - self.target_ratio) ** 2
-
-        return self.ratio_weight * err_ratio + err_area
-
-    def best_n(self, contours, n=1):
-        """
-
-        Parameters
-        ----------
-        contours :
-            
-        n :
-             (Default value = 1)
-
-        Returns
-        -------
-
-        """
-        idxs = np.argsort([self.score(cont) for cont in contours])
-        if n == 1:
-            return contours[idxs[0]]
-        else:
-            return [contours[idxs[i]] for i in range(n)]
-
-    def above_threshold(self, contours, threshold):
-        """
-
-        Parameters
-        ----------
-        contours :
-            
-        threshold :
-            
-
-        Returns
-        -------
-
-        """
-        print([self.score(cont) for cont in contours])
-        good_conts = [cont for cont in contours if self.score(cont) < threshold]
-        return good_conts
-
-
-class EyeMeasurement:
-    """ """
-
-    def __init__(self):
-        self.eyes = np.array([[0, 0], [0, 0]])
-
-    def update(self, eyes):
-        """
-
-        Parameters
-        ----------
-        eyes :
-            
-
-        Returns
-        -------
-
-        """
-        self.eyes = eyes
-
-    def dx(self):
-        """ """
-        return self.eyes[1][0] - self.eyes[0][0]
-
-    def dy(self):
-        """ """
-        return self.eyes[1][1] - self.eyes[0][1]
-
-    def perpendicular(self):
-        """ """
-        return np.arctan2(-self.dx(), self.dy())
-
-    def centre(self):
-        """ """
-        return np.mean(self.eyes, 0)
-
-
-def detect_eyes_tail(frame, frame_tail, start_x, start_y, params, diag_image=None):
-    """
-
-    Parameters
-    ----------
-    frame :
-        
-    frame_tail :
-        
-    start_x :
-        
-    start_y :
-        
-    params :
-        
-    diag_image :
-         (Default value = None)
-
-    Returns
-    -------
-
-    """
-    # find the eyes
-    ret, thresh_eyes = cv2.threshold(
-        frame, params.eye_threshold, 255, cv2.THRESH_BINARY
-    )
-    diag_image[
-        start_y : start_y + frame.shape[0], start_x : start_x + frame.shape[1]
-    ] = thresh_eyes
-    _, eye_conts, _ = cv2.findContours(
-        255 - thresh_eyes.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
-    )
-    # if no eye contours are present return error state
-    if len(eye_conts) < 3:
-        # erode to escape that sometimes eyes connect
-        thresh_eyes = cv2.dilate(thresh_eyes, np.ones((3, 3), dtype=np.uint8))
-        _, eye_conts, _ = cv2.findContours(
-            255 - thresh_eyes.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+        super().__init__(name="tracking_fish_params")
+        self.add_params(
+            function="fish",
+            n_fish_max=1,
+            n_segments=8,
+            bglearning_rate=0.04,
+            bglearn_every=400,
+            bgdif_threshold=25,
+            reset=False,
+            threshold_eyes=dict(type="int", limits=(0, 255), value=35),
+            pos_uncertainty=dict(type="float", limits=(0, 10.0), value=1.0),
+            bg_preresize=2,
+            fish_target_area=160,
+            fish_area_margin=120,
+            margin_fish=10,
+            tail_track_window=3,
+            tail_length=50.5,
+            persist_fish_for=2,
+            kalman_coef=0.1,
+            display_processed=dict(type="list", limits=["raw",
+                                                        "background difference",
+                                                        "thresholded background difference",
+                                                        "fish detection",
+                                                        "thresholded for eye and swim bladder"],
+                                   value="raw"),
         )
+        self.accumulator_headers = None
+        self.monitored_headers = None
+        self.data_log_name = "fish_track"
+        self.bg_subtractor = BackgorundSubtractor()
+        self.track_state = None
+        self.bg_im = None
+        self.previous_fish = []
+        self.idx_book = None
+        self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
+        self.recorded = None
+        self.diagnostic_image = None
+        self.reset_state()
+        self.logger = logging.getLogger()
 
-        if len(eye_conts) < 2:
-            return -1, 0, 0, 0
-
-    # find the darkest two contours which will presumably be eyes
-    brightnesses = np.empty(len(eye_conts))
-    for idx, eye_cont in enumerate(eye_conts):
-        x, y, w, h = cv2.boundingRect(eye_cont)
-        if cv2.contourArea(eye_cont) < 3:
-            brightnesses[idx] = 255
-        else:
-            brightnesses[idx] = np.mean(
-                frame_tail[
-                    start_y + y : start_y + y + h, start_x + x : start_x + x + w
-                ].flatten()
+    def reset_state(self):
+        self.accumulator_headers = list(
+            chain.from_iterable(
+                [
+                    [
+                        "f{:d}_x".format(i_fish),
+                        "f{:d}_vx".format(i_fish),
+                        "f{:d}_y".format(i_fish),
+                        "f{:d}_vy".format(i_fish),
+                        "f{:d}_theta".format(i_fish),
+                    ]
+                    + [
+                        "f{:d}_theta_{:02d}".format(i_fish, i)
+                        for i in range(self.params["n_segments"] - 1)
+                    ]
+                    for i_fish in range(self.params["n_fish_max"])
+                ]
             )
-            if diag_image is not None:
-                cv2.putText(
-                    diag_image,
-                    str(brightnesses[idx]),
-                    (start_x + x, start_y + y),
-                    cv2.FONT_HERSHEY_PLAIN,
-                    0.5,
-                    0,
-                )
+        ) + ["biggest_area"]
+        self.monitored_headers = [
+            "f{:d}_theta".format(i_fish)
+            for i_fish in range(self.params["n_fish_max"])
+        ] + ["biggest_area"]
+        self.bg_subtractor = BackgorundSubtractor()
+        self.previous_fish = []
 
-    order = np.argsort(brightnesses)
-    eye_locs = np.empty((2, 2))
-    for i in range(2):
-        eye_locs[i] = np.mean(eye_conts[order[i]], 0)
+        # used for booking a spot for one of the potentially tracked fish
+        self.idx_book = IndexBooking(self.params["n_fish_max"])
+        self.recorded = np.full(
+            (self.params["n_fish_max"], 5 + self.params["n_segments"]-1), np.nan
+        )
+        self.logger = logging.getLogger()
 
-    centre_eyes = np.array([start_x, start_y]) + np.mean(eye_locs, 0)
+    def detect(self, frame, **new_params):
 
-    fish_length = params["fish_length"]
-    tail_len = fish_length * params["tail_to_body_ratio"]
-    eyes_to_tail = fish_length * params["tail_start_from_eye_centre"]
-
-    dir_tail, tail_angles = detect_tail_unknown_dir(
-        image=(255 - frame_tail),
-        start_point=centre_eyes.copy(),
-        tail_length=tail_len,
-        eyes_to_tail=eyes_to_tail,
-        segments=params.n_tail_segments,
-    )
-
-    theta = dir_tail - tail_angles[0]
-
-    tail_segment = (eyes_to_tail) * np.array([np.cos(dir_tail), np.sin(dir_tail)]) + (
-        tail_len / params["n_tail_segments"]
-    ) * np.array([np.cos(theta), np.sin(theta)])
-    dir_fish = np.arctan2(tail_segment[1], tail_segment[0]) + np.pi
-
-    return centre_eyes[0], centre_eyes[1], dir_fish, -tail_angles
-
-
-@vectorize([uint8(uint8, uint8)])
-def bgdif(x, y):
-    """
-
-    Parameters
-    ----------
-    x :
-        
-    y :
-        
-
-    Returns
-    -------
-
-    """
-    if x > y:
-        return x - y
-    else:
-        return y - x
-
-
-class MidlineDetectionParams(HasPyQtGraphParams):
-    """ """
-
-    def __init__(self):
-        super().__init__(name="stimulus_protocol_params")
-
-        for child in self.params.children():
-            self.params.removeChild(child)
-
-        standard_params_dict = {
-            "target_area": {"type": "int", "value": 450, "limits": (0, 1500)},
-            "area_tolerance": {"type": "int", "value": 320, "limits": (0, 700)},
-            "n_tail_segments": {"type": "int", "value": 14, "limits": (1, 20)},
-            "tail_segment_length": {"type": "float", "value": 4., "limits": (0.5, 10)},
-            "tail_detection_radius": {
-                "type": "int",
-                "value": 450,
-                "limits": (0, 1500),
-                "tip": "size of area used to find the next segment",
-            },
-            "eye_and_bladder_threshold": {
-                "type": "int",
-                "value": 100,
-                "limits": (0, 255),
-                "tip": "Threshold used to find head centre of mass",
-            },
-        }
-
-        for key in standard_params_dict.keys():
-            self.add_one_param(key, standard_params_dict[key])
-
-
-def find_fishes_midlines(frame, mask, params):
-    """Finds the fishes in the frame using the mask
-    obtained by background subtraction
-
-    Parameters
-    ----------
-    frame :
-        video frame
-    mask :
-        corresponding mask
-        obtained with background subtraction
-    params :
-        return: list of named tuples containing the fish measurements
-
-    Returns
-    -------
-    type
-        list of named tuples containing the fish measurements
-
-    """
-    _, contours, _ = cv2.findContours(
-        mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
-    )
-
-    # if there are no contours, report no fish in this frame
-
-    if len(contours) == 0:
-        return []
-
-    # find the contours corresponding to a fish
-    measurements = []
-
-    # go through all the contours
-    for fish_contour in contours:
-
-        # skip if the area is too small or too big
+        # if the parameters affecting the dimensions of the result changed,
+        # reset everything
         if (
-            np.abs(cv2.contourArea(fish_contour) - params.target_area)
-            > params.area_tolerance
+            new_params["reset"]
+            or new_params["n_fish_max"] != self.params["n_fish_max"]
+            or new_params["n_segments"] != self.params["n_segments"]
         ):
-            continue
+            self.update_params(**new_params)
+            self.reset_state()
+        else:
+            self.update_params(**new_params)
 
-        fx, fy, fw, fh = cv2.boundingRect(fish_contour)
+        # update the previously-detected fish using the Kalman filter
+        for pfish in self.previous_fish:
+            pfish.predict()
 
-        # crop the frame around the contour
-        mc = mask[fy : fy + fh, fx : fx + fw]
+        # subtract background
+        bg = (
+            self.bg_subtractor.process(
+                frame, self.params["bglearning_rate"], self.params["bglearn_every"]
+            ))
+        bg_thresh = cv2.dilate((bg > self.params["bgdif_threshold"]).view(dtype=np.uint8), self.dilation_kernel)
 
-        # construct an image of the fish masked by the contour
-        fc = (255 - frame[fy : fy + fh, fx : fx + fw]) * (mc // 255)
-
-        # find the beginning
-        y0, x0, angle = fish_start(fc, params.eye_and_bladder_threshold)
-
-        # if the fish start has not been found, go to the next contour
-        if y0 < 0:
-            continue
-
-        # find the midline (while also refining the beginning)
-        points = find_fish_midline(
-            fc,
-            x0,
-            y0,
-            angle,
-            m=params.tail_segment_length,
-            r=params.tail_detection_radius,
-            n_points_max=params.n_tail_segments,
+        # find regions where there is a difference with the background
+        n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
+            bg_thresh
         )
 
-        # if all the points of the tail have been found, calculate
-        # the angle of each segment
-        if len(points) == params.n_tail_segments:
-            angles = []
-            for p1, p2 in zip(points[0:-1], points[1:]):
-                angles.append(np.arctan2(p2[1] - p1[1], p2[0] - p1[0]))
+        try:
+            max_area = np.max(stats[1:, cv2.CC_STAT_AREA])
+        except ValueError:
+            max_area = 0
 
-            measurements.append(
-                ((points[0][0] + fx, points[0][1] + fy) + tuple(angles))
+        # iterate through all the regions different from the background and try
+        # to find fish
+        new_fish = []
+
+        for row, centroid in zip(stats, centroids):
+            # check if the contour is fish-sized and central enough
+            if not (
+                (
+                    self.params["fish_target_area"] - self.params["fish_area_margin"]
+                    < row[cv2.CC_STAT_AREA]
+                    < self.params["fish_target_area"] + self.params["fish_area_margin"]
+                )
+                and (row[cv2.CC_STAT_LEFT] - self.params["margin_fish"] >= 0)
+                and (
+                    row[cv2.CC_STAT_LEFT]
+                    + row[cv2.CC_STAT_WIDTH]
+                    + self.params["margin_fish"]
+                    < frame.shape[1]
+                )
+                and (row[cv2.CC_STAT_TOP] - self.params["margin_fish"] >= 0)
+                and (
+                    row[cv2.CC_STAT_TOP]
+                    + row[cv2.CC_STAT_HEIGHT]
+                    + self.params["margin_fish"]
+                    < frame.shape[0]
+                )
+            ):
+                continue
+
+            # how much is this region shifted from the upper left corner of the image
+            cent_shift = np.array(
+                [
+                    row[cv2.CC_STAT_LEFT] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_TOP] - self.params["margin_fish"],
+                ]
             )
 
-    return measurements
+            # takes the area around the
+
+            slices = (
+                slice(
+                    row[cv2.CC_STAT_TOP] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_TOP]
+                    + row[cv2.CC_STAT_HEIGHT]
+                    + self.params["margin_fish"],
+                ),
+                slice(
+                    row[cv2.CC_STAT_LEFT] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_LEFT]
+                    + row[cv2.CC_STAT_WIDTH]
+                    + self.params["margin_fish"],
+                ),
+            )
+
+            # take the region and mask the background away to aid detection
+            fishdet = bg[slices].copy()
+            fishdet[bg_thresh[slices] == 0] = 0
+
+            # estimate the position of the head and the approximate
+            # direction of the tail
+            head_coords = fish_start_n(fishdet, self.params["threshold_eyes"])
+
+            # if no actual fish was found here, continue on to the next connected component
+            if head_coords[0] == -1:
+                continue
+
+            theta = _fish_direction_n(frame, head_coords + cent_shift,
+                                      int(round(self.params["tail_length"]/2)))
+
+            # find the points of the tail
+            points = find_fish_midline(
+                bg,
+                head_coords[0]+slices[1].start,
+                head_coords[1]+slices[0].start,
+                theta,
+                self.params["tail_track_window"],
+                self.params["tail_length"] / self.params["n_segments"],
+                self.params["n_segments"]+1
+            )
+
+            # convert to angles
+            angles = np.mod(points_to_angles(points)+np.pi, np.pi*2)-np.pi
+            if len(angles) == 0:
+                self.logger.info("Tail not completely detectable")
+                continue
+
+            # also, make the angles continuous
+            angles[1:] = np.unwrap(angles[1:] - angles[0])
+
+            # put the data together for one fish
+            head_coords = np.concatenate([np.array(points[0][:2]), angles])
+
+            # check if this is a new fish, or it is an update of
+            # a fish detected previously
+            for past_fish in self.previous_fish:
+                if past_fish.is_close(head_coords) and past_fish.i_not_updated < 0:
+                    past_fish.update(head_coords)
+                    break
+            # the else executes if no past fish is close, so a new fish
+            # has to be instantiated for this measurement
+            else:
+                new_fish.append(
+                    Fish(head_coords, self.idx_book,
+                         pred_coef=self.params["kalman_coef"],
+                         pos_std=self.params["pos_uncertainty"])
+                )
+        current_fish = []
+
+        # remove fish not detected in two subsequent frames
+        for pf in self.previous_fish:
+            if pf.i_not_updated < -self.params["persist_fish_for"]:
+                self.idx_book.full[pf.i_ar] = False
+                self.recorded[pf.i_ar, :] = np.nan
+            else:
+                current_fish.append(pf)
+
+        # add the new fish to the previously updated fish
+        current_fish.extend(new_fish)
+        self.previous_fish = current_fish
+
+        # serialize the fish data for queue communication
+        for pf in self.previous_fish:
+            self.recorded[pf.i_ar, :] = pf.serialize()
+
+        # if a debugging image is to be shown, set it
+        if self.params["display_processed"] == "background difference":
+            self.diagnostic_image = bg
+        elif self.params["display_processed"] == "thresholded background difference":
+            self.diagnostic_image = bg_thresh
+        elif self.params["display_processed"] == "fish detection":
+            fishdet = bg.copy()
+            fishdet[bg_thresh == 0] = 0
+            self.diagnostic_image = fishdet
+        elif self.params["display_processed"] == "thresholded for eye and swim bladder":
+            self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
+
+        return tuple(self.recorded.flatten()) + (max_area*1.0, )
 
 
-def fish_start(mask, take_min=100):
+class IndexBooking:
+    """ Class that keeps track of which array columns
+    are free to put in fish data
+
+    """
+
+    def __init__(self, n_max=3):
+        self.full = np.zeros(n_max, dtype=np.bool)
+
+    def get_next(self):
+        i_next = np.argmin(self.full)
+        self.full[i_next] = True
+        return i_next
+
+
+class Fish:
+    """ Class for Kalman-filtered tracking of individual fish
+
+    """
+
+    def __init__(
+        self,
+        initial_state,
+        idx_book,
+        pos_std=1.0,
+        pred_coef=20,
+    ):
+        self.i_not_updated = 0
+        self.i_ar = idx_book.get_next()
+        self.n_dof = 2
+
+        # the position will be Kalman-filtered
+        self.f = filterpy.kalman.KalmanFilter(dim_x=self.n_dof * 2, dim_z=self.n_dof)
+
+        uncertanties = np.array(
+            [pos_std, pos_std]
+        )
+        self.f.x[::2, 0] = initial_state[: self.n_dof]
+        self.f.F = block_diag(
+            *[np.array([[1.0, 1.0], [0.0, 1.0]]) for _ in range(self.n_dof)]
+        )
+        self.f.R = np.diag(uncertanties)
+        self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
+
+        self.f.Q = block_diag(
+            *[  np.array([[0.,0.],[0., uc*pred_coef]])
+                # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
+                for uc in uncertanties
+            ]
+        )
+        self.f.H[:, ::2] = np.eye(self.n_dof)
+
+        self.unfiltered = initial_state[self.n_dof :]
+
+    def predict(self):
+        self.f.predict()
+        self.i_not_updated -= 1
+
+    def update(self, new_fish_state):
+        self.f.update(new_fish_state[: self.n_dof])
+        self.unfiltered[:] = new_fish_state[self.n_dof :]
+        self.i_not_updated = 0
+
+    def serialize(self):
+        return np.concatenate([self.f.x.flatten(), self.unfiltered])
+
+    def is_close(self, new_fish, n_px=12, d_theta=np.pi / 2):
+        """ Check whether the new coordinates are
+        within a certain number of pixels of the old estimate
+        and within a certain angle
+        """
+        dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
+        dtheta = np.abs(np.mod(new_fish[3] - self.unfiltered[0]+np.pi, np.pi*2)-np.pi)
+        return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
+
+
+@jit(nopython=True)
+def points_to_angles(points):
+    angles = np.empty(len(points) - 1, dtype=np.float64)
+    for i, (p1, p2) in enumerate(zip(points[0:-1], points[1:])):
+        angles[i] = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
+    return angles
+
+
+def fish_start_n(mask, take_min=50):
     """Find the centre of head of the fish
 
     Parameters
@@ -377,30 +360,72 @@ def fish_start(mask, take_min=100):
 
     """
     # take the centre of mass of only the darkest parts, the eyes and the
-    mom = cv2.moments(
-        np.maximum(mask.astype(np.int16) - take_min, 0)
-    )  # cv2.erode(mask,np.ones((7,7), dtype=np.uint8))
+    mom = cv2.moments(np.maximum(mask, take_min) - take_min)  #
     if mom["m00"] == 0:
-        return -1, -1, 0
+        return np.array([-1, -1, 0])
     y0 = mom["m01"] / mom["m00"]
     x0 = mom["m10"] / mom["m00"]
-    angle = np.arctan2(mask.shape[0] / 2 - y0, mask.shape[1] / 2 - x0)
-    return y0, x0, angle
+    return np.array([x0, y0])
+
+@jit(nopython=True)
+def _symmetry_points(x0, y0, x, y):
+    return [
+        (x0 + x, y0 + y),
+        (x0 - x, y0 + y),
+        (x0 + x, y0 - y),
+        (x0 - x, y0 - y),
+        (x0 + y, y0 + x),
+        (x0 - y, y0 + x),
+        (x0 + y, y0 - x),
+        (x0 - y, y0 - x),
+    ]
+
+@jit(nopython=True)
+def _circle_points(x0, y0, radius):
+    """ Bresenham's circle algorithm
+
+    Parameters
+    ----------
+    xc : center x
+    yc : center y
+    r : radius
+
+    Returns
+    -------
+    a list of points
+
+    """
+    f = 1 - radius
+    ddf_x = 1
+    ddf_y = -2 * radius
+    x = 0
+    y = radius
+    points = [
+        (x0, y0 + radius),
+        (x0, y0 - radius),
+        (x0 + radius, y0),
+        (x0 - radius, y0),
+    ]
+    while x < y:
+        if f >= 0:
+            y -= 1
+            ddf_y += 2
+            f += ddf_y
+        x += 1
+        ddf_x += 2
+        f += ddf_x
+        points.extend(_symmetry_points(x0, y0, x, y))
+    return points
 
 
 @jit(nopython=True)
-def centroid_bin(im):
-    """ Binary centroid function """
-    si = 0
-    sj = 0
-    sw = 0
-    for i in range(im.shape[0]):
-        for j in range(im.shape[1]):
-            if im[i, j]:
-                si += i
-                sj += j
-                sw += 1
-    if sw > 0:
-        return si / sw, sj / sw
-
-    return (-1.0, -1.0)
+def _fish_direction_n(image, start_loc, radius):
+    centre_int = start_loc.astype(np.int16)
+    pixels_rad = _circle_points(centre_int[0], centre_int[1], radius)
+    min_point = pixels_rad[0]
+    min_val = 255
+    for x, y in pixels_rad:
+        if image[y, x] < min_val:
+            min_val = image[y, x]
+            min_point = (x, y)
+    return np.arctan2(min_point[1]-centre_int[1], min_point[0]-centre_int[0])

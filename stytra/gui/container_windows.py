@@ -21,7 +21,13 @@ from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlWidget
-from stytra.gui.camera_display import CameraViewWidget, CameraEmbeddedTrackingSelection
+from stytra.gui.camera_display import (
+    CameraViewWidget,
+    CameraEmbeddedTrackingSelection,
+    CameraViewFish,
+)
+
+import json
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -97,7 +103,8 @@ class SimpleExperimentWindow(QMainWindow):
         self.setWindowTitle("Stytra")
 
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
-        self.widget_projection = ProjectorAndCalibrationWidget(experiment)
+        if not self.experiment.offline:
+            self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
 
         # Connect signals from the protocol_control:
@@ -133,9 +140,10 @@ class SimpleExperimentWindow(QMainWindow):
         central_widget = QWidget()
         protocol_layout = QVBoxLayout()
         # central_widget.layout().addWidget(self.label_debug)
-        protocol_layout.addWidget(
-            CollapsibleWidget(self.widget_projection, "Projector setup")
-        )
+        if not self.experiment.offline:
+            protocol_layout.addWidget(
+                CollapsibleWidget(self.widget_projection, "Projector setup")
+            )
         protocol_layout.addWidget(
             CollapsibleWidget(self.logger.widget, "Log", expanded=False)
         )
@@ -232,13 +240,18 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     """
 
-    def __init__(self, tracking=True, tail=False, eyes=False, *args, **kwargs):
+    def __init__(
+        self, tracking=True, tail=False, eyes=False, fish=False, *args, **kwargs
+    ):
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
+        self.fish = fish
 
-        if tail or eyes:
+        if fish:
+            self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
+        elif tail or eyes:
             self.camera_display = CameraEmbeddedTrackingSelection(
                 experiment=kwargs["experiment"], tail=tail, eyes=eyes
             )
@@ -259,12 +272,25 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
+        self.layout_track_btns = QHBoxLayout()
+        self.layout_track_btns.setContentsMargins(0,0,0,0)
+
         # Tracking params button:
         self.button_tracking_params = QPushButton(
-            "Tracking params" if (self.tail or self.eyes) else "Movement detection params"
+            "Tracking params"
+            if (self.tail or self.eyes or self.fish)
+            else "Movement detection params"
         )
+
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
-        self.monitoring_layout.addWidget(self.button_tracking_params)
+
+        self.button_save_tracking_params = QPushButton("Save parameters")
+        self.button_save_tracking_params.clicked.connect(self.save_tracking_params)
+
+        self.layout_track_btns.addWidget(self.button_tracking_params)
+        self.layout_track_btns.addWidget(self.button_save_tracking_params)
+
+        self.monitoring_layout.addLayout(self.layout_track_btns)
 
         self.track_params_wnd = None
 
@@ -287,13 +313,24 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.track_params_wnd = ParameterTree()
         if hasattr(self.experiment, "tracking_method"):
             self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
-        if hasattr(self.experiment, "preprocessing_method"):
-            self.track_params_wnd.addParameters(self.experiment.preprocessing_method.params)
+        if (
+            hasattr(self.experiment, "preprocessing_method")
+            and self.experiment.preprocessing_method is not None
+        ):
+            self.track_params_wnd.addParameters(
+                self.experiment.preprocessing_method.params
+            )
         if hasattr(self.experiment, "motion_detection_params"):
-            self.track_params_wnd.addParameters(self.experiment.motion_detection_params.params)
+            self.track_params_wnd.addParameters(
+                self.experiment.motion_detection_params.params
+            )
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
+
+    def save_tracking_params(self):
+        json.dump(self.experiment.tracking_method.get_clean_values,
+                  open(self.experiment.filename_base() + "tracking_params.json"))
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

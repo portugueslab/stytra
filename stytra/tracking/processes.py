@@ -34,7 +34,7 @@ def get_preprocessing_method(name):
     prepmethods = dict(
         prefilter=Prefilter, bgsub=BackgorundSubtractor, bgsubcv=CV2BgSub
     )
-    return prepmethods.get(name, Prefilter)
+    return prepmethods.get(name, None)
 
 
 class FrameDispatcher(FrameProcess):
@@ -75,10 +75,8 @@ class FrameDispatcher(FrameProcess):
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
-        self.preprocessing_obj = get_preprocessing_method(preprocessing_class).process
-        self.preprocessing_state = None
-        if preprocessing_class is not None:
-            self.processing_obj = get_tracking_method(processing_class).detect
+        self.preprocessing_cls = get_preprocessing_method(preprocessing_class)
+        self.tracking_cls = get_tracking_method(processing_class)
         self.processing_parameter_queue = processing_parameter_queue
 
     def process_internal(self, frame):
@@ -99,6 +97,10 @@ class FrameDispatcher(FrameProcess):
 
     def run(self):
         """Loop where the tracking function runs."""
+        preprocessor = (
+            self.preprocessing_cls() if self.preprocessing_cls is not None else None
+        )
+        tracker = self.tracking_cls()
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue
@@ -118,25 +120,26 @@ class FrameDispatcher(FrameProcess):
 
                 # If a processing function is specified, apply it:
 
-                if self.preprocessing_obj is not None:
-                    processed, self.preprocessing_state = self.preprocessing_obj(
-                        frame, self.preprocessing_state, **self.processing_parameters
+                if self.preprocessing_cls is not None:
+                    processed = preprocessor.process(
+                        frame, **self.processing_parameters
                     )
                 else:
                     processed = frame
 
-                if self.processing_obj is not None:
-                    output = self.processing_obj(
-                        processed, **self.processing_parameters
-                    )
+                if self.tracking_cls is not None:
+                    output = tracker.detect(processed, **self.processing_parameters)
                     self.output_queue.put((datetime.now(), output))
 
                 # calculate the frame rate
                 self.update_framerate()
 
                 # put current frame into the GUI queue
-                if self.processing_parameters.get("display_processed", False):
-                    self.send_to_gui(processed)
+                if self.processing_parameters.get("display_processed", "raw") != "raw":
+                    try:
+                        self.send_to_gui(tracker.diagnostic_image)
+                    except AttributeError:
+                        self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)
 
@@ -210,7 +213,7 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_start_rec, output_queue_mb=500, **kwargs):
+    def __init__(self, *args, signal_start_rec, output_queue_mb=1000, **kwargs):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
@@ -289,11 +292,11 @@ class MovingFrameDispatcher(FrameDispatcher):
                             if not recording_state:
                                 while image_buffer:
                                     time, im = image_buffer.popleft()
-                                    self.framestart_queue.put(time)
                                     self.save_queue.put(im)
+                                    self.framestart_queue.put((time, (i_recorded,)))
                                     i_recorded += 1
                             self.save_queue.put(current_frame)
-                            self.framestart_queue.put(current_time)
+                            self.framestart_queue.put((current_time, (i_recorded,)))
                             i_recorded += 1
                         recording_state = True
                         record_counter -= 1

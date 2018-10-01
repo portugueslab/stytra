@@ -8,7 +8,7 @@ class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
     def __init__(self, **kwargs):
-        super().__init__(name = "tracking_tail_params", **kwargs)
+        super().__init__(name="tracking_tail_params", **kwargs)
         # TODO maybe getting default values here:
         self.add_params(
             n_segments=dict(value=10, type="int", limits=(2, 50)),
@@ -21,6 +21,11 @@ class TailTrackingMethod(ParametrizedImageproc):
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "behaviour_tail_log"
 
+    def reset_state(self):
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        ]
+
 
 class CentroidTrackingMethod(TailTrackingMethod):
     """Center-of-mass method to find consecutive segments."""
@@ -31,9 +36,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
             window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
         )
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
         tail_start=(0, 0),
         tail_length=(1, 1),
@@ -112,14 +116,12 @@ class CentroidTrackingMethod(TailTrackingMethod):
 class AnglesTrackingMethod(TailTrackingMethod):
     """Angular sweep method to find consecutive segments."""
 
-
     def __init__(self):
         super().__init__()
         self.add_params(dark_tail=False)
 
-    @classmethod
     def detect(
-        cls,
+        self,
         im,
         tail_start=(0, 0),
         n_segments=7,
@@ -142,8 +144,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
             tail length (Default value = (1)
         n_segments :
             number of segments (Default value = 7)
-        filter_size :
-            Box for smoothing the image (Default value = 0)
         dark_tail :
             True for inverting image colors (Default value = False)
         im :
@@ -214,7 +214,7 @@ def find_direction(start, image, seglen):
     -------
 
     """
-    n_angles = 20
+    n_angles = np.ceil(np.pi * 2 * seglen * 2)
     angles = np.arange(n_angles) * np.pi * 2 / n_angles
 
     detect_angles = angles
@@ -223,8 +223,8 @@ def find_direction(start, image, seglen):
 
     for i in range(detect_angles.shape[0]):
         coord = (
-            int(start[0] + seglen * np.cos(detect_angles[i])),
-            int(start[1] + seglen * np.sin(detect_angles[i])),
+            round(start[0] + seglen * np.cos(detect_angles[i])),
+            round(start[1] + seglen * np.sin(detect_angles[i])),
         )
         if (
             (coord[0] > 0)
@@ -459,7 +459,7 @@ def _tail_trace_core_ls(
 
 
 @jit(nopython=True, cache=True)
-def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points=20):
     """Finds a midline for a fish image, with the starting point and direction
 
     Parameters
@@ -470,7 +470,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
         param angle:
     r :
         param m: (Default value = 9)
-    n_points_max :
+    n_points :
         return: (Default value = 20)
     xm :
         
@@ -488,7 +488,7 @@ def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points_max=20):
     dy = np.sin(angle) * m
 
     points = [(xm, ym, 0)]
-    for i in range(1, n_points_max):
+    for i in range(1, n_points):
         xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
         if xm > 0:
             points.append((xm, ym, acc))

@@ -10,6 +10,7 @@ from stytra.stimulation.stimuli import (
     WindmillStimulus,
     SeamlessImageStimulus,
     InterpolatedStimulus,
+    RadialSineStimulus,
 )
 
 from PyQt5.QtCore import QTimer
@@ -21,6 +22,17 @@ from stytra import Stytra
 import shutil
 
 from os import path
+
+
+class RadialSine(Protocol):
+    """ Demonstrates usage of luminance stimuli
+
+    """
+
+    name = "radial_sine"
+
+    def get_stim_sequence(self):
+        return [RadialSineStimulus(duration=5, period=10, velocity=15)]
 
 
 class FullFieldProtocol(Protocol):
@@ -111,6 +123,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         asset_dir = pkg_resources.resource_filename(__name__, "/test_assets/")
 
         self.protocols = [
+            RadialSine,
             FullFieldProtocol,
             OKRProtocol,
             GratingProtocol,

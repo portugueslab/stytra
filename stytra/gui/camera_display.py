@@ -14,9 +14,8 @@ from PyQt5.QtWidgets import (
 )
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
-
-from stytra.hardware.video import CameraControlParameters
-from stytra.utilities import prepare_json
+from numba import jit
+from math import sin, cos
 
 
 class SimpleCameraViewWWidget(QWidget):
@@ -48,7 +47,7 @@ class CameraViewWidget(QWidget):
 
     """
 
-    def __init__(self, experiment=None, camera=None):
+    def __init__(self, experiment=None):
         """
         :param experiment: experiment to which this belongs
                            (:class:Experiment <stytra.Experiment> object)
@@ -61,11 +60,10 @@ class CameraViewWidget(QWidget):
             self.camera = experiment.camera
             experiment.gui_timer.timeout.connect(self.update_image)
         else:
-            self.camera = camera
             self.gui_timer = QTimer()
             self.gui_timer.setSingleShot(False)
 
-        self.control_params = CameraControlParameters()
+        self.control_params = self.camera.control_params()
 
         # Create the layout for the camera view:
         self.camera_display_widget = pg.GraphicsLayoutWidget()
@@ -157,7 +155,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     time, self.current_image = self.frame_queue.get(timeout=0.0001)
-                    first = False
+                    #first = False
                 else:
                     # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)
@@ -502,3 +500,85 @@ class CameraViewCalib(CameraViewWidget):
                 points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)
+
+
+@jit(nopython=True)
+def _tail_points_from_coords(coords, seglen):
+    """ Computes the tail points from a list obtained from a data accumulator
+
+    Parameters
+    ----------
+    coords
+        per fish, will be x, y, theta, theta_00, theta_01, theta_02...
+    n_data_per_fish
+        number of coordinate entries per fish
+    seglen
+        length of a single segment
+
+    Returns
+    -------
+        xs, ys
+        list of coordinates
+    """
+
+    xs = []
+    ys = []
+    angles = np.zeros(coords.shape[1] - 5)
+    for i_fish in range(coords.shape[0]):
+        xs.append(coords[i_fish, 2])
+        ys.append(coords[i_fish, 0])
+        angles[0] = coords[i_fish, 4]
+        angles[1:] = angles[0] + coords[i_fish, 6:]
+        for i, an in enumerate(angles):
+            if i > 0:
+                xs.append(xs[-1])
+                ys.append(ys[-1])
+
+            # for drawing the lines, points need to be repeated
+            xs.append(xs[-1] + seglen * sin(an))
+            ys.append(ys[-1] + seglen * cos(an))
+
+    return xs, ys
+
+
+class CameraViewFish(CameraViewCalib):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.points_fish = pg.ScatterPlotItem(
+            size=5, pxMode=True, brush=(255, 0, 0), pen=None
+        )
+        self.lines_fish = pg.PlotCurveItem(
+            connect="pairs", pen=pg.mkPen((10, 100, 200), width=3)
+        )
+        self.display_area.addItem(self.points_fish)
+        self.display_area.addItem(self.lines_fish)
+
+    def update_image(self):
+        super().update_image()
+
+        if len(self.experiment.data_acc.stored_data) > 1:
+            # figure out in a quick and dirty way if the tail is being tracked
+            last_header_item = self.experiment.data_acc.header_list[-2]
+            n_fish = int(last_header_item[1])+1
+
+            n_data_per_fish = len(self.experiment.data_acc.stored_data[-1]) - 2 # the first is time, the last is area
+            n_points_tail = n_data_per_fish - 5
+            try:
+                retrieved_data = np.array(
+                    self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
+                ).reshape(-1, n_data_per_fish)
+                valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
+                self.points_fish.setData(
+                    x=retrieved_data[valid, 2], y=retrieved_data[valid, 0]
+                )
+                if n_points_tail:
+                    tail_len = (
+                        self.experiment.tracking_method.params["tail_length"]
+                        / self.experiment.tracking_method.params["n_segments"]
+                    )
+                    xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
+                    self.lines_fish.setData(x=xs, y=ys)
+            # if there is a temporary mismatch between number of segments expected
+            # and sent
+            except ValueError:
+                pass

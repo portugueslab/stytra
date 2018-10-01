@@ -3,9 +3,11 @@ from itertools import product
 import numpy as np
 import pims
 import qimage2ndarray
+import pandas as pd
+
 from PyQt5.QtCore import QPoint, QRect, QPointF
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QBrush, QColor
+from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
 from PyQt5.QtGui import QTransform, QPolygon, QRegion
 
 from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
@@ -209,9 +211,9 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
         )
 
 
-class BackgroundStimulus(VisualStimulus, DynamicStimulus):
+class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
-    """
+        """
 
     def __init__(self, *args, **kwargs):
         """ """
@@ -219,6 +221,11 @@ class BackgroundStimulus(VisualStimulus, DynamicStimulus):
         self.y = 0
         self.theta = 0
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
+
+
+class BackgroundStimulus(PositionStimulus):
+    """Stimulus with a tiling background
+        """
 
     def get_unit_dims(self, w, h):
         return w, h
@@ -381,12 +388,13 @@ class GratingStimulus(BackgroundStimulus):
         self.color_1 = grating_col_1
         self.color_2 = grating_col_2
         self._pattern = None
+        self._qbackground = None
         self.name = "gratings"
 
     def create_pattern(self):
         l = int(
             self.grating_period
-            / (2 * max(self._experiment.calibrator.params["mm_px"], 0.0001))
+            / (max(self._experiment.calibrator.params["mm_px"], 0.0001))
         )
 
         if self.wave_shape == "square":
@@ -415,6 +423,114 @@ class GratingStimulus(BackgroundStimulus):
     def draw_block(self, p, point, w, h):
         # Get background image from folder:
         p.drawImage(point, self._qbackground)
+
+
+class HalfFieldStimulus(PositionStimulus):
+    """ For phototaxis
+
+    """
+
+    def __init__(self, *args, left=False, color=(255, 255, 255), center_dist=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.left = left
+        self.center_dist = center_dist
+        self.color = color
+        self.name = "half_field"
+
+    def paint(self, p, w, h):
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.setRenderHint(QPainter.Antialiasing)
+
+        points = []
+        if self.left:
+            dtheta = np.pi / 2
+        else:
+            dtheta = -np.pi / 2
+
+        theta = self.theta
+
+        sx = self.x + h / 2 * np.cos(theta) + self.center_dist*np.cos(theta-np.pi/2)
+        sy = self.y + h / 2 * np.sin(theta) + self.center_dist*np.sin(theta-np.pi/2)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += w * np.cos(theta)
+        sy += w * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += h * np.cos(theta)
+        sy += h * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += w * np.cos(theta)
+        sy += w * np.sin(theta)
+        points.append(QPoint(sx, sy))
+        theta += dtheta
+
+        sx += h * np.cos(theta)
+        sy += h * np.sin(theta)
+        points.append(QPoint(sx, sy))
+
+        poly = QPolygon(points)
+        p.drawPolygon(poly)
+
+
+class RadialSineStimulus(InterpolatedStimulus, VisualStimulus):
+    """ Stimulus which makes the fish move to the center of the dish
+
+    """
+
+    def __init__(self, period=8, velocity=5, duration=1, **kwargs):
+        param_df = pd.DataFrame(dict(t=[0, duration], phase=[0, duration * velocity]))
+        super().__init__(df_param=param_df, **kwargs)
+        self.phase = 0
+        self.period = period
+        self.image = None
+
+    def paint(self, p, w, h):
+        x, y = (
+            (np.arange(d) - d / 2) * self._experiment.calibrator.params["mm_px"]
+            for d in (w, h)
+        )
+
+        self.image = np.round(
+            np.sin(
+                np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))
+                + self.phase
+            )
+            * 127
+            + 127
+        ).astype(np.uint8)
+        p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
+
+
+class FishOverlayStimulus(PositionStimulus):
+    """ For testing freely-swimming closed loop
+
+    """
+
+    def __init__(self, color=(255, 50, 0), **kwargs):
+        super().__init__(**kwargs)
+        self.color = color
+        self.name = "fish_overlay"
+
+    def paint(self, p, w, h):
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(255, 255, 255)))
+        p.drawEllipse(self.x, self.y, 3, 3)
+        p.setPen(QPen(QColor(*self.color)))
+        l = 20
+        p.drawLine(
+            self.x,
+            self.y,
+            self.x + np.cos(self.theta) * l,
+            self.y + np.sin(self.theta) * l,
+        )
 
 
 class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
@@ -485,7 +601,6 @@ class WindmillStimulus(BackgroundStimulus):
 
     def draw_block(self, p, point, w, h):
         if self._qbackground.height() < h * 1.5 or self._qbackground.width() < w * 1.5:
-            print(np.max([h, w]))
             self.create_pattern(1.5 * np.max([h, w]))
 
         point.setX((w - self._qbackground.width()) / 2)

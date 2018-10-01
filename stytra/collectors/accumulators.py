@@ -49,8 +49,16 @@ class Accumulator:
         )  # headers which are included in the stream plot
         self.starting_time = None
         self.fps_calc_points = fps_calc_points
+        self._header_dict = None
 
-    def reset(self, header_list=None):
+    @property
+    def header_dict(self):
+        """  for each header name gives the column
+        """
+        if self._header_dict is None:
+            self.header_dict = {hn: i for i, hn in enumerate(self.header_list)}
+
+    def reset(self, header_list=None, monitored_headers=None):
         """Reset accumulator and assign a new headers list.
 
         Parameters
@@ -64,6 +72,8 @@ class Accumulator:
         """
         if header_list is not None:
             self.header_list = ["t"] + header_list
+        if monitored_headers is not None:
+            self.monitored_headers = monitored_headers
         self.stored_data = []
         self.starting_time = None
 
@@ -247,10 +257,12 @@ class DynamicLog(Accumulator):
 
     def __init__(self, stimuli):
         """ """
-
+        self.dict_header = None
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
+
         self.update_stimuli(stimuli)
+
 
     def update_list(self, time, data):
         """
@@ -265,28 +277,23 @@ class DynamicLog(Accumulator):
 
         """
         data_list = [time] + [np.nan] * (len(self.header_list) - 1)
-        for k in data.keys():
-            data_list[self.header_list.index(k)] = data[k]
+        for key, val in data.items():
+            data_list[self.dict_header[key]] = val
         self.check_start()
         self.stored_data.append(tuple(data_list))
 
     def update_stimuli(self, stimuli):
-        # it is assumed the first dynamic stimulus has all the fields
-        # for stimulus in stimuli:
-        #     if isinstance(stimulus, DynamicStimulus):
-        #         self.header_list = ['t'] + stimulus.dynamic_parameters
-        #         print(self.header_list)
-        # self.stored_data = []
         dynamic_params = []
         for stimulus in stimuli:
             try:
-                dynamic_params.extend(
-                    [stimulus.name + "_" + p for p in stimulus.dynamic_parameters]
-                )
+                for p in stimulus.dynamic_parameters:
+                    new_param = stimulus.name + "_" + p
+                    if not new_param in dynamic_params:
+                        dynamic_params.append(new_param)
             except AttributeError:
                 pass
         self.header_list = ["t"] + dynamic_params
-        print(self.header_list)
+        self.dict_header = {k : i for i, k in enumerate(self.header_list)}
         self.stored_data = []
 
 

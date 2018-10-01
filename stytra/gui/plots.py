@@ -206,7 +206,9 @@ class MultiStreamPlot(QWidget):
         self.bounds.append(None)
         i_curve = len(self.curves)
         for header_item in header_items:
-            c = pg.PlotCurveItem(x=np.array([0]), y=np.array([i_curve]))
+            c = pg.PlotCurveItem(
+                x=np.array([0]), y=np.array([i_curve]), connect="finite"
+            )
             self.plotContainter.addItem(c)
             self.curves.append(c)
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
@@ -240,6 +242,19 @@ class MultiStreamPlot(QWidget):
             for label in labels:
                 label.setColor(color)
         self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
+
+    def remove_streams(self):
+        for label_set in self.valueLabels:
+            for label in label_set:
+                self.plotContainter.removeItem(label)
+        self.valueLabels = []
+        for curve in self.curves:
+            self.plotContainter.removeItem(curve)
+        self.curves = []
+        self.stream_names = []
+        self.header_indexes = []
+        self.accumulators = []
+        self.bounds = []
 
     def update(self):
         """Function called by external timer to update the plot"""

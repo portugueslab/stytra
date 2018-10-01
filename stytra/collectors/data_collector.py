@@ -11,6 +11,11 @@ from pyqtgraph.pgcollections import OrderedDict
 
 from stytra.utilities import prepare_json
 
+try:
+    import dictdiffer  # optional dependency, for debugging
+except ImportError:
+    pass
+
 
 def strip_values(it):
     """Convert OrderedDict of OrderedDict in dict of dict.
@@ -26,7 +31,7 @@ def strip_values(it):
     """
     if isinstance(it, OrderedDict) or isinstance(it, dict):
         new_dict = dict()
-        for key, value in it.items():
+        for key, value in sorted(it.items()):
             if not key == "value":
                 new_dict[key] = strip_values(value)
         return new_dict
@@ -197,6 +202,10 @@ class DataCollector:
                 # This means that functions connected to the treeStateChange
                 # of the params of HasPyQtGraphParams instances may be called
                 # multiple times.
+            else:
+                print("The parameter configuation has been changed, resetting: ",
+                      list(dictdiffer.diff(current_dict, prev_dict)))
+
 
     def add_param_tree(self, params_tree):
         """Add the params tree that will be used for reading and restoring

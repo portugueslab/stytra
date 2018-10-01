@@ -4,14 +4,6 @@ stytra.experiments package
 Submodules
 ----------
 
-stytra.experiments.closed\_loop module
---------------------------------------
-
-.. automodule:: stytra.experiments.closed_loop
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.experiments.tracking\_experiments module
 -----------------------------------------------
 

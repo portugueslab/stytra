@@ -5,6 +5,7 @@ from queue import Empty
 import numpy as np
 import deepdish as dd
 import logging
+import multiprocessing_logging
 
 from PyQt5.QtCore import QObject, QTimer
 from PyQt5.QtWidgets import QMessageBox
@@ -61,14 +62,17 @@ class Experiment(QObject):
         directory in an .h5 file.
     trigger : :class:`Trigger <stytra.triggering.Trigger>` object
         (optional) Trigger class to control the beginning of the stimulation.
-
-
+    offline : bool
+        if stytra is used in offline analysis, stimulus is not displayed
+    log_format : str
+        one of "csv", "feather", "hdf5" (pytables-based) or "json"
     """
 
     def __init__(
         self,
         app=None,
         protocols=None,
+        default_protocol=None,
         dir_save=None,
         dir_assets="",
         database=None,
@@ -81,13 +85,16 @@ class Experiment(QObject):
         rec_stim_every=None,
         display_config=None,
         trigger=None,
+        offline=False,
     ):
         """ """
         super().__init__()
+        multiprocessing_logging.install_mp_handler()
 
         self.app = app
         self.protocols = protocols
         self.trigger = trigger
+        self.offline = offline
 
         self.asset_dir = dir_assets
         self.base_dir = dir_save
@@ -120,19 +127,23 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal()
 
+        # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
         if self.base_dir is not None:
             self.dc = DataCollector(folder_path=self.base_dir)
             self.dc.add_param_tree(self.metadata._params)
-            # Use the DataCollector object to find the last used protocol, to
-            # restore it
-            self.last_protocol = self.dc.get_last_value("stimulus_protocol_params")
+            # Use the DataCollector object to find the last used protocol,
+            #  to restore it
+            self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
         else:
             self.dc = None
-            self.last_protocol = None
+            self.default_protocol = None
+
+        if default_protocol is not None:
+            self.default_protocol = default_protocol
 
         self.protocol_runner = ProtocolRunner(
-            experiment=self, protocol=self.last_protocol
+            experiment=self, protocol=self.default_protocol
         )
 
         # assign signals from protocol_runner to be used externally:
@@ -146,26 +157,36 @@ class Experiment(QObject):
         else:
             self.display_config = display_config
 
-        self.window_display = StimulusDisplayWindow(
-            self.protocol_runner,
-            self.calibrator,
-            gl=self.display_config.get("gl", False),
-            record_stim_every=rec_stim_every,
-        )
+        if not self.offline:
+            self.window_display = StimulusDisplayWindow(
+                self.protocol_runner,
+                self.calibrator,
+                gl=self.display_config.get("gl", False),
+                record_stim_every=rec_stim_every,
+            )
+            if self.display_config.get("window_size", None) is not None:
+                self.window_display.params["size"] = self.display_config[
+                    "window_size"]
+                self.window_display.set_dims()
 
-        if self.display_config.get("window_size", None) is not None:
-            self.window_display.params["size"] = self.display_config["window_size"]
-            self.window_display.set_dims()
-
-        self.current_instance = self.get_new_name()
         self.i_run = 0
+        self.current_timestamp = datetime.datetime.now()
+        self.current_instance = self.get_new_name()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
+    def save_log(self, log, name, category="tracking"):
+        log.save(
+            self.filename_base() + name, self.log_format
+        )
+        self.dc.add_static_data(
+            self.current_timestamp.strftime("%H%M%S_") + name+ "." + self.log_format,
+            category+"_"+name)
+
     def get_new_name(self):
         return (
-            datetime.datetime.now().strftime("%y%m%d")
+            self.current_timestamp.strftime("%y%m%d")
             + "_f"
             + str(self.metadata_animal.params["id"])
         )
@@ -179,7 +200,9 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return self.folder_name + "/{:03d}_".format(self.i_run)
+        return os.path.join(
+            self.folder_name, self.current_timestamp.strftime("%H%M%S_")
+        )
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -193,6 +216,7 @@ class Experiment(QObject):
         """
         self.make_window()
         self.initialize_metadata()
+
         self.show_stimulus_screen(self.display_config["full_screen"])
         if self.trigger is not None:
             self.trigger.start()
@@ -232,6 +256,8 @@ class Experiment(QObject):
         -------
 
         """
+        if self.offline:
+            return None
         self.window_display.show()
         if full_screen:
             try:
@@ -315,9 +341,11 @@ class Experiment(QObject):
                 )
 
                 if self.database is not None:
-                    db_id = self.database.insert_experiment_data(self.dc.get_clean_dict(paramstree=True,
-                                                                                eliminate_df=True,
-                                                                                convert_datetime=False))
+                    db_id = self.database.insert_experiment_data(
+                        self.dc.get_clean_dict(
+                            paramstree=True, eliminate_df=True, convert_datetime=False
+                        )
+                    )
                 else:
                     db_id = -1
                 self.dc.add_static_data(db_id, name="general_db_index")
@@ -363,6 +391,7 @@ class Experiment(QObject):
 
         self.protocol_runner.reset()
         self.i_run += 1
+        self.current_timestamp = datetime.datetime.now()
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.

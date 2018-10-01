@@ -5,6 +5,8 @@ from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
 
+import tempfile
+
 
 class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
@@ -39,10 +41,10 @@ class ClosedLoop1DProt(Protocol):
         gain.extend([0, 0, gain_values[0], gain_values[0], 0, 0])
 
         # Low, medium, high gain:
-        for g in [0.5, 1, 1.5]:
-            t.extend(t[-1] + np.array(t_base))
-            vel.extend(vel_base)
-            gain.extend([0, 0, g, g, 0, 0])
+        # for g in gain_values:
+        #     t.extend(t[-1] + np.array(t_base))
+        #     vel.extend(vel_base)
+        #     gain.extend([0, 0, g, g, 0, 0])
 
         df = pd.DataFrame(dict(t=t, base_vel=vel, gain=gain))
 
@@ -60,12 +62,17 @@ class ClosedLoop1DProt(Protocol):
 
 
 if __name__ == "__main__":
-    save_dir = r"/Users/vilimstich/PhD/Experimental/"
-    camera_config = dict(video_file="/Users/vilimstich/PhD/Experimental/fish_tail.h5")
+    # save_dir = tempfile.mkdtemp()
+    save_dir = r"C:\Users\portugueslab\data\stytra"
+    # Here you configure the camera input
+    #
+    # camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
+    camera_config = dict(type='ximea')
 
     tracking_config = dict(
-        embedded=True, tracking_method="angle_sweep", estimator="vigor"
-    )
+        embedded=True, tracking_method="centroid", estimator="vigor",
+        preprocessing_method='prefilter')
+
 
     display_config = dict(full_screen=True)
 

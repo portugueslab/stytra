@@ -1,11 +1,11 @@
 import numpy as np
 import datetime
 
-from stytra.bouter.angles import rot_mat
-from stytra.bouter.kinematic_features import velocities_to_coordinates
-from stytra.bouter.angles import smooth_tail_angles_series, reduce_to_pi
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
 
+def rot_mat(theta):
+    """The rotation matrix for an angle theta """
+    return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 class VigourMotionEstimator:
     """ """
@@ -40,7 +40,7 @@ class VigourMotionEstimator:
         if new_dt > 0:
             self.last_dt = new_dt
         vigor = np.std(np.array(past_tail_motion[:, 1]))
-        self.log.update_list((past_tail_motion[0, 0], vigor))
+        self.log.update_list((past_tail_motion[-1, 0], vigor))
         return vigor * self.base_gain
 
     # n_samples_lag = max(int(round(lag / self.last_dt)), 0)
@@ -59,16 +59,40 @@ class PositionEstimator:
         self.calibrator = calibrator
         self.log = EstimatorLog(["x", "y", "theta"])
 
-    def get_position(self):
-        past_position = self.data_acc.get_last_n(1)
-        if self.calibrator.params["cam_to_proj"] is not None:
-            projmat = np.array(self.calibrator.params["cam_to_proj"])
-            y, x = projmat @ np.array([past_position[-1, 2], past_position[-1, 1], 1.0])
-            self.log.update_list((past_position[-1, 0], x, y, 0))
-            return y, x, 0
+    def get_camera_position(self):
+        past_coords = {
+            name: value
+            for name, value in zip(
+                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
+            )
+        }
+        return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
 
-        self.log.update_list((past_position[-1, 0], -1, -1, 0))
-        return -1, -1, 0
+    def get_position(self):
+        past_coords = {
+            name: value
+            for name, value in zip(
+                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
+            )
+        }
+        if self.calibrator.params["cam_to_proj"] is None or not np.isfinite(
+            past_coords["f0_x"]
+        ):
+            self.log.update_list((past_coords["t"], -1, -1, 0))
+            return -1, -1, 0
+
+        projmat = np.array(self.calibrator.params["cam_to_proj"])
+        x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
+        theta = np.arctan2(
+            *(
+                projmat[:, :2]
+                @ np.array(
+                    [np.cos(past_coords["f0_theta"]), np.sin(past_coords["f0_theta"])]
+                )[::-1]
+            )
+        )
+        self.log.update_list((past_coords["t"], y, x, theta))
+        return y, x, theta
 
 
 class LSTMLocationEstimator:

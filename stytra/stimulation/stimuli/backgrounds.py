@@ -5,6 +5,7 @@ from itertools import product
 from PIL import Image, ImageDraw
 import deepdish.io as dio
 import cv2
+import logging
 
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
@@ -51,7 +52,12 @@ def existing_file_background(filepath):
         return dio.load(filepath)
     else:
         # If using OpenCV, we have to get RGB, not BGR
-        return cv2.imread(filepath)[:, :, [2, 1, 0]]
+        try:
+            return cv2.imread(filepath)[:, :, [2, 1, 0]]
+        except TypeError:
+            log = logging.getLogger()
+            log.info("Could nor load " + filepath)
+            return np.zeros((10, 10), dtype=np.uint8)
 
 
 def poisson_disk_background(size, distance, radius):
