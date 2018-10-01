@@ -340,6 +340,11 @@ class SpinnakerCamera(Camera):
         # Set integer value from entry node as new value of enumeration node
         node_acquisition_mode.SetIntValue(acquisition_mode_continuous)
 
+        self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+        self.cam.GainAuto.SetValue(PySpin.GainAuto_Off)
+        self.cam.AcquisitionFrameRateEnable.SetValue(True)
+        self.cam.AcquisitionFrameRate.SetValue(400)
+
         self.cam.BeginAcquisition()
 
     def set(self, param, val):
@@ -360,6 +365,7 @@ class SpinnakerCamera(Camera):
             if param == "exposure":
                 # camera wants exposure in us:
                 self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+                self.cam.ExposureAuto.SetValue(PySpin.GainAuto_Off)
                 self.cam.ExposureTime.SetValue(val*1000)
 
             if param == "framerate":
@@ -367,6 +373,7 @@ class SpinnakerCamera(Camera):
 
         except PySpin.SpinnakerException as ex:
             print('Error: %s' % ex)
+        pass
 
     def read(self):
         try:
