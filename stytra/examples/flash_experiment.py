@@ -20,5 +20,5 @@ class FlashProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    st = Stytra(protocols=[FlashProtocol])
+    st = Stytra(protocols=[FlashProtocol], display_config=dict(full_screen=True))
     st.base.close()
