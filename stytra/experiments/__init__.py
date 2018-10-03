@@ -89,7 +89,6 @@ class Experiment(QObject):
     ):
         """ """
         super().__init__()
-        multiprocessing_logging.install_mp_handler()
 
         self.app = app
         self.protocols = protocols
@@ -113,6 +112,7 @@ class Experiment(QObject):
         self.abort = False
 
         self.logger = logging.getLogger()
+        multiprocessing_logging.install_mp_handler(self.logger)
         self.logger.setLevel("INFO")
 
         # to the constructor we need to pass classes, not instances
