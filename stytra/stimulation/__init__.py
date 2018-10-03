@@ -5,6 +5,7 @@ from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from stytra.utilities import HasPyQtGraphParams
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
 from stytra.collectors.accumulators import DynamicLog
+from poparam.param_qt import ParametrizedQt, Param
 
 
 class ProtocolRunner(QObject):
@@ -91,7 +92,8 @@ class ProtocolRunner(QObject):
 
         self.prot_class_dict = {c.name: c for c in experiment.protocols}
         self.set_new_protocol(protocol)
-        self.sig_protocol_updated.emit()
+        self.update_protocol()
+        self.protocol.sig_param_changed.connect(self.update_protocol)
 
         # Log will be a list of stimuli states:
         self.log = []
@@ -107,20 +109,12 @@ class ProtocolRunner(QObject):
             Protocol to be set.
 
         """
-        # If there was a protocol before, block params signal to avoid duplicate
-        # calls of the ProtocolRunner update_protocol function.
-        # Otherwise it would be called by the change of the params three caused
-        # by its deletion from the  _params called in the Protocol __init__().
         if protocol is not None:
-            if self.protocol is not None:
-                self.protocol.params.blockSignals(True)
-
             self.protocol = protocol
 
             self.update_protocol()
-
             # Connect changes to protocol parameters to update function:
-            self.protocol.params.sigTreeStateChanged.connect(self.update_protocol)
+            self.protocol.sig_param_changed.connect(self.update_protocol)
 
             # Why were we resetting here?
             self.reset()
@@ -136,18 +130,12 @@ class ProtocolRunner(QObject):
 
 
         """
-        if protocol_name is not None:
-            try:
-                ProtocolClass = self.prot_class_dict[protocol_name]
-                protocol = ProtocolClass()
-                self._set_new_protocol(protocol)
 
-                self.sig_protocol_updated.emit()
-            except KeyError:
-                print(
-                    "protocol in the config file is not defined in the "
-                    "protocols file"
-                )
+        ProtocolClass = self.prot_class_dict[protocol_name]
+        protocol = ProtocolClass()
+        self._set_new_protocol(protocol)
+
+        self.sig_protocol_updated.emit()
 
     def update_protocol(self):
         """Update current Protocol (get a new stimulus list if protocol
@@ -310,7 +298,10 @@ class ProtocolRunner(QObject):
         self.log.append(new_dict)
 
     def update_dynamic_log(self):
-        """Update a dynamic log. Called only if one is present."""
+        """
+        Update a dynamic log. Called only if one is present.
+        """
+
         self.dynamic_log.update_list(self.t, self.current_stimulus.get_dynamic_state())
 
     def get_duration(self):
@@ -338,7 +329,7 @@ class ProtocolRunner(QObject):
         print(string)
 
 
-class Protocol(HasPyQtGraphParams):
+class Protocol(ParametrizedQt):
     """Describe a sequence of Stimuli and their parameters.
 
     The Protocol class is thought as an easily subclassable class that
@@ -387,12 +378,15 @@ class Protocol(HasPyQtGraphParams):
         """
         Add standard parameters common to all kind of protocols.
         """
-        super().__init__(name="stimulus_protocol_params")
+        # super().__init__(name="stimulus_protocol_params")
+        super().__init__(name="protocol_params", category="stimulus")
 
-        for child in self.params.children():
-            self.params.removeChild(child)
+        self.pre_pause = Param(0.)
+        self.post_pause = Param(0.)
+        self.n_repeats = Param(1, limits=(1, 10000))
 
-        self.add_params(name=self.name, n_repeats=1, pre_pause=0., post_pause=0.)
+        print(self.params.items().items())
+        print('protocol')
 
     def _get_stimulus_list(self):
         """Generate protocol from specified parameters. Called by the
@@ -412,14 +406,15 @@ class Protocol(HasPyQtGraphParams):
         """
         main_stimuli = self.get_stim_sequence()
         stimuli = []
-        if self.params["pre_pause"] > 0:
-            stimuli.append(Pause(duration=self.params["pre_pause"]))
+        if self.pre_pause > 0:
+            stimuli.append(Pause(duration=self.pre_pause))  #self.params[
+                           # "pre_pause"]))
 
-        for i in range(max(self.params["n_repeats"], 1)):
+        for i in range(self.n_repeats):
             stimuli.extend(deepcopy(main_stimuli))
 
-        if self.params["post_pause"] > 0:
-            stimuli.append(Pause(duration=self.params["post_pause"]))
+        if self.post_pause > 0:
+            stimuli.append(Pause(duration=self.post_pause))
 
         return stimuli
 

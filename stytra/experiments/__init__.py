@@ -130,6 +130,8 @@ class Experiment(QObject):
 
         if default_protocol is not None:
             self.default_protocol = default_protocol
+        else:
+            self.default_protocol = protocols[0].name
 
         if metadata_general is None:
             self.metadata = GeneralMetadata(tree=self.dc)

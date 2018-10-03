@@ -12,6 +12,7 @@ from scipy.linalg import block_diag
 
 import logging
 
+
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
         super().__init__(name="tracking_fish_params")
