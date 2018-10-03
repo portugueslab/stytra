@@ -27,7 +27,6 @@ except ImportError:
     pass
 
 
-
 class Camera:
     """Abstract class for controlling a camera.
 

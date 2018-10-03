@@ -25,9 +25,9 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         super().__init__(*args, **kwargs)
 
         self.roi_params = roi_params
-        print(roi_params)
 
-        self.view_box = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)
+        self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
+                                   enableMouse=False)
         self.addItem(self.view_box)
 
         self.roi_box = pg.ROI(

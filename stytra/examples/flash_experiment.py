@@ -1,5 +1,6 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
+from poparam import Param
 
 
 class FlashProtocol(Protocol):
@@ -7,13 +8,14 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.add_params(period_sec=5., flash_duration=2.)
+        self.period_sec = Param(10., limits=(0.2, None))
+        self.flash_duration = Param(1., limits=(0., None))
 
     def get_stim_sequence(self):
         stimuli = [
-            Pause(duration=self.params["period_sec"] - self.params["flash_duration"]),
+            Pause(duration=self.period_sec - self.flash_duration),
             FullFieldVisualStimulus(
-                duration=self.params["flash_duration"], color=(255, 255, 255)
+                duration=self.flash_duration, color=(255, 255, 255)
             ),
         ]
         return stimuli
