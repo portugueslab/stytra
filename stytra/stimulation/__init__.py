@@ -379,7 +379,7 @@ class Protocol(ParametrizedQt):
         Add standard parameters common to all kind of protocols.
         """
         # super().__init__(name="stimulus_protocol_params")
-        super().__init__(name="protocol_params", category="stimulus")
+        super().__init__(name="stimulus/protocol_params")
 
         self.pre_pause = Param(0.)
         self.post_pause = Param(0.)

@@ -118,21 +118,18 @@ class Experiment(QObject):
 
         # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
-        if self.base_dir is not None:
-            self.dc = DataCollector(folder_path=self.base_dir)
-            self.dc.add_param_tree(self.metadata._params)
-            # Use the DataCollector object to find the last used protocol,
-            #  to restore it
-            self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
-        else:
-            self.dc = None
-            self.default_protocol = None
+        self.dc = DataCollector(folder_path=self.base_dir)
+        # Use the DataCollector object to find the last used protocol,
+        #  to restore it
+        self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
 
         if default_protocol is not None:
             self.default_protocol = default_protocol
         else:
             self.default_protocol = protocols[0].name
 
+        # Conditional, in case metadata are generated and passed from the
+        # configuration file:
         if metadata_general is None:
             self.metadata = GeneralMetadata(tree=self.dc)
         else:

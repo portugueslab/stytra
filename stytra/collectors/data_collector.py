@@ -20,6 +20,7 @@ from pathlib import Path
 
 from poparam import ParameterTree
 
+
 def strip_values(it):
     """Convert OrderedDict of OrderedDict in dict of dict.
 
@@ -150,6 +151,8 @@ class DataCollector(ParameterTree):
 
     def __init__(self, *data_tuples_list, folder_path="C:/"):
         """ """
+        super().__init__()
+        self.metadata_fn = "config.h5"
 
         # Check validity of directory:
         self.folder_path = Path(folder_path)
@@ -159,8 +162,10 @@ class DataCollector(ParameterTree):
         # Try to find previously saved data_log:
         self.last_metadata = None
         list_metadata = sorted(
-            [fn for fn in os.listdir(folder_path) if fn.endswith("config.h5")]
+            [fn for fn in os.listdir(folder_path) if fn.endswith(
+                self.metadata_fn)]
         )
+
 
         if len(list_metadata) > 0:
             self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
@@ -189,22 +194,28 @@ class DataCollector(ParameterTree):
 
         """
         if self.last_metadata is not None:
+            print(self.last_metadata)
+            print(self.serialize())
+            print('restoring')
+            self.deserialize(self.last_metadata)
+            print(self.serialize())
             # Make clean dictionaries without the values:
-            current_dict = strip_values(self.params_metadata.saveState())
-            prev_dict = strip_values(self.last_metadata)
 
-            # Restore only if equal:
-            if current_dict == prev_dict:
-                self.params_metadata.restoreState(self.last_metadata, blockSignals=True)
-                # Here using the restoreState of the _params for some reason
-                #  does not block signals coming from restoring the values
-                # of its params children.
-                # This means that functions connected to the treeStateChange
-                # of the params of HasPyQtGraphParams instances may be called
-                # multiple times.
-            else:
-                print("The parameter configuation has been changed, resetting: ",
-                      list(dictdiffer.diff(current_dict, prev_dict)))
+            # current_dict = strip_values(self.params_metadata.saveState())
+            # prev_dict = strip_values(self.last_metadata)
+            #
+            # # Restore only if equal:
+            # if current_dict == prev_dict:
+            #     self.params_metadata.restoreState(self.last_metadata, blockSignals=True)
+            #     # Here using the restoreState of the _params for some reason
+            #     #  does not block signals coming from restoring the values
+            #     # of its params children.
+            #     # This means that functions connected to the treeStateChange
+            #     # of the params of HasPyQtGraphParams instances may be called
+            #     # multiple times.
+            # else:
+            #     print("The parameter configuation has been changed, resetting: ",
+            #           list(dictdiffer.diff(current_dict, prev_dict)))
 
 
     def add_param_tree(self, params_tree):
@@ -275,41 +286,42 @@ class DataCollector(ParameterTree):
             dictionary with the sorted data.
 
         """
-        clean_data_dict = dict(
-            animal={},
-            stimulus={},
-            imaging={},
-            behaviour={},
-            general={},
-            camera={},
-            tracking={},
-            unassigned={},
-        )
-
-        # Params data_log:
-        value_dict = deepcopy(self.params_metadata.getValues())
+        # clean_data_dict = dict(
+        #     animal={},
+        #     stimulus={},
+        #     imaging={},
+        #     behaviour={},
+        #     general={},
+        #     camera={},
+        #     tracking={},
+        #     unassigned={},
+        # )
+        #
+        # # Params data_log:
+        clean_data_dict = prepare_json(self.serialize())
 
         # Static data dictionary:
-        value_dict.update(deepcopy(self.log_data_dict))
-
-        for key in value_dict.keys():
-            category = key.split("_")[0]
-            value = prepare_json(
-                value_dict[key],
-                paramstree=paramstree,
-                convert_datetime=convert_datetime,
-                eliminate_df=eliminate_df,
-            )
-            if category in clean_data_dict.keys():
-                split_name = key.split("_")
-                if split_name[1] == "metadata":
-                    clean_data_dict[category] = value
-                else:
-                    clean_data_dict[category]["_".join(split_name[1:])] = value
-            else:
-                clean_data_dict["unassigned"][key] = value
+        # value_dict.update(deepcopy(self.log_data_dict))
+        #
+        # for key in value_dict.keys():
+        #     category = key.split("_")[0]
+        #     value = prepare_json(
+        #         value_dict[key],
+        #         paramstree=paramstree,
+        #         convert_datetime=convert_datetime,
+        #         eliminate_df=eliminate_df,
+        #     )
+        #     if category in clean_data_dict.keys():
+        #         split_name = key.split("_")
+        #         if split_name[1] == "metadata":
+        #             clean_data_dict[category] = value
+        #         else:
+        #             clean_data_dict[category]["_".join(split_name[1:])] = value
+        #     else:
+        #         clean_data_dict["unassigned"][key] = value
 
         return clean_data_dict
+
 
     def get_last_value(self, class_param_key):
         """Get the last saved value for a specific class_param_key.
@@ -326,14 +338,14 @@ class DataCollector(ParameterTree):
             value of the parameter in the config.h5 file.
 
         """
-        if self.last_metadata is not None:
-            # This syntax is ugly but apparently necessary to scan through
-            # the dictionary saved by pyqtgraph.Parameter.saveState().
-            return self.last_metadata["children"][class_param_key]["children"]["name"][
-                "value"
-            ]
-        else:
-            return None
+        # if self.last_metadata is not None:
+        #     # This syntax is ugly but apparently necessary to scan through
+        #     # the dictionary saved by pyqtgraph.Parameter.saveState().
+        #     return self.last_metadata["children"][class_param_key]["children"]["name"][
+        #         "value"
+        #     ]
+        # else:
+        return None
 
     def save_config_file(self):
         """Save the config.h5 file with the current state of the params
@@ -346,7 +358,9 @@ class DataCollector(ParameterTree):
         -------
 
         """
-        dd.io.save(self.folder_path + "config.h5", self.params_metadata.saveState())
+        dd.io.save(str(self.folder_path / "config.h5"),
+                   self.serialize())
+        # dd.io.save(self.folder_path + "config.h5", self.params_metadata.saveState())
 
     def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources

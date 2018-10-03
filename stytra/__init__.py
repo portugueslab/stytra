@@ -104,7 +104,7 @@ class Stytra:
 
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
+        print(kwargs)
         class_kwargs = dict(
             app=app, calibrator=(CircleCalibrator() if not embedded else None)
         )

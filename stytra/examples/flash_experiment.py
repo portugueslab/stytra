@@ -22,5 +22,6 @@ class FlashProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    st = Stytra(protocols=[FlashProtocol])
+    st = Stytra(protocols=[FlashProtocol],
+                dir_save=r'C:\Users\lpetrucco\Desktop\metadata\\')
     st.base.close()
