@@ -6,6 +6,7 @@ from stytra.utilities import HasPyQtGraphParams
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
 from stytra.collectors.accumulators import DynamicLog
 
+import logging
 
 class ProtocolRunner(QObject):
     """Class for managing and running stimulation Protocols.
@@ -66,7 +67,7 @@ class ProtocolRunner(QObject):
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
     """Emitted when protocol is changed/updated"""
 
-    def __init__(self, experiment=None, dt=1 / 60, log_print=True, protocol=None):
+    def __init__(self, experiment=None, log_print=True, protocol=None):
         """ """
         super().__init__()
 
@@ -77,8 +78,6 @@ class ProtocolRunner(QObject):
         self.completed = False
         self.t = 0
 
-        # TODO do we need this dt?
-        self.dt = dt
         self.timer = QTimer()
 
         self.protocol = None
@@ -294,19 +293,20 @@ class ProtocolRunner(QObject):
         """
         # Update with the data of the current stimulus:
         current_stim_dict = self.current_stimulus.get_state()
+        t_stim_stop = current_stim_dict["real_time_stop"] or datetime.datetime.now()
         try:
             new_dict = dict(
                 current_stim_dict,
                 t_start=(
                     current_stim_dict["real_time_start"] - self.t_start
                 ).total_seconds(),
-                t_stop=(
-                    current_stim_dict["real_time_stop"] - self.t_start
+                t_stop=(t_stim_stop
+                     - self.t_start
                 ).total_seconds(),
             )
         except TypeError:  # if time is None stimulus was not run
             new_dict = dict()
-
+            logging.getLogger().info("Stimulus times incorrect, state not saved")
         self.log.append(new_dict)
 
     def update_dynamic_log(self):
