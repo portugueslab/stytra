@@ -1,7 +1,7 @@
 from collections import deque
 from datetime import datetime
 from queue import Empty
-from multiprocessing import Queue
+from multiprocessing import Queue, Event
 
 import cv2
 import numpy as np
@@ -52,7 +52,7 @@ class FrameDispatcher(FrameProcess):
     def __init__(
         self,
         in_frame_queue,
-        finished_signal=None,
+        finished_signal: Event =None,
         processing_class=None,
         preprocessing_class=None,
         processing_parameter_queue=None,
@@ -213,7 +213,7 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_start_rec, output_queue_mb=1000, **kwargs):
+    def __init__(self, *args, signal_recording: Event, signal_start_recording: Event, output_queue_mb=1000, **kwargs):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()
@@ -221,7 +221,8 @@ class MovingFrameDispatcher(FrameDispatcher):
 
         self.processing_parameters = MovementDetectionParameters().get_clean_values()
 
-        self.signal_start_rec = signal_start_rec
+        self.signal_recording = signal_recording
+        self.signal_start_recording = signal_start_recording
         self.mem_use = 0
 
         self.diagnostic_params = [
@@ -264,6 +265,11 @@ class MovingFrameDispatcher(FrameDispatcher):
                     pass
 
             try:
+                if self.signal_start_recording.is_set():
+                    i_recorded = 0
+                    image_buffer.clear()
+                    self.signal_start_recording.clear()
+
                 current_time, current_frame = self.frame_queue.get(timeout=0.001)
                 # process frames as they come, threshold them to roughly
                 # find the fish (e.g. eyes)
@@ -288,7 +294,7 @@ class MovingFrameDispatcher(FrameDispatcher):
                         record_counter = self.processing_parameters["n_next_save"]
 
                     if record_counter > 0:
-                        if self.signal_start_rec.is_set() and self.mem_use < 0.9:
+                        if self.signal_recording.is_set() and self.mem_use < 0.9:
                             if not recording_state:
                                 while image_buffer:
                                     time, im = image_buffer.popleft()

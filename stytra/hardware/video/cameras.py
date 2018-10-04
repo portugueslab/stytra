@@ -26,6 +26,8 @@ try:
 except ImportError:
     pass
 
+import logging
+import multiprocessing_logging
 
 
 class Camera:
@@ -68,6 +70,8 @@ class Camera:
         """
         self.cam = None
         self.debug = debug
+        self.error_log = logging.getLogger()
+        multiprocessing_logging.install_mp_handler(self.error_log)
 
     def open_camera(self):
         """Initialise the camera."""
@@ -136,8 +140,7 @@ class XimeaCamera(Camera):
         self.im = xiapi.Image()
         self.cam.start_acquisition()
 
-        if self.debug:
-            print("Detected camera {}.".format(self.cam.get_device_name()))
+        self.error_log.info("Detected camera {}.".format(self.cam.get_device_name()))
 
         # If camera supports hardware downsampling (MQ013MG-ON does,
         # MQ003MG-CM does not):
@@ -340,6 +343,11 @@ class SpinnakerCamera(Camera):
         # Set integer value from entry node as new value of enumeration node
         node_acquisition_mode.SetIntValue(acquisition_mode_continuous)
 
+        self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+        self.cam.GainAuto.SetValue(PySpin.GainAuto_Off)
+        self.cam.AcquisitionFrameRateEnable.SetValue(True)
+        self.cam.AcquisitionFrameRate.SetValue(400)
+
         self.cam.BeginAcquisition()
 
     def set(self, param, val):
@@ -360,6 +368,7 @@ class SpinnakerCamera(Camera):
             if param == "exposure":
                 # camera wants exposure in us:
                 self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+                self.cam.ExposureAuto.SetValue(PySpin.GainAuto_Off)
                 self.cam.ExposureTime.SetValue(val*1000)
 
             if param == "framerate":
@@ -367,6 +376,7 @@ class SpinnakerCamera(Camera):
 
         except PySpin.SpinnakerException as ex:
             print('Error: %s' % ex)
+        pass
 
     def read(self):
         try:

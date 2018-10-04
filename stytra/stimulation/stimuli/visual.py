@@ -215,11 +215,12 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
         """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, centre_relative=True, **kwargs):
         """ """
         self.x = 0
         self.y = 0
         self.theta = 0
+        self.centre_relative = centre_relative
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
 
@@ -252,17 +253,18 @@ class BackgroundStimulus(PositionStimulus):
 
         self.clip(p, w, h)
 
-        # find the centres of the display and image
-        display_centre = (w / 2, h / 2)
         imw, imh = self.get_unit_dims(w, h)
 
-        image_centre = (imw / 2, imh / 2)
+        dx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw
+        dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
-        cx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw
-        cy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
+        if self.centre_relative:
+            # find the centres of the display and image
+            display_centre = (w / 2, h / 2)
+            image_centre = (imw / 2, imh / 2)
 
-        dx = display_centre[0] - image_centre[0] + cx
-        dy = display_centre[1] - image_centre[1] - cy
+            dx = display_centre[0] - image_centre[0] + dx
+            dy = display_centre[1] - image_centre[1] - dy
 
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.get_rot_transform(w, h))
