@@ -90,11 +90,10 @@ class CameraViewWidget(QWidget):
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
 
-        self.camera_params_tree = ParameterTree(showHeader=False)
-
         # Connect changes in the camera parameters:
         for c in self.control_params.params.children():
             c.sigValueChanged.connect(self.update_controls)
+        self.
 
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
