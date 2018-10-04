@@ -194,11 +194,7 @@ class DataCollector(ParameterTree):
 
         """
         if self.last_metadata is not None:
-            print(self.last_metadata)
-            print(self.serialize())
-            print('restoring')
             self.deserialize(self.last_metadata)
-            print(self.serialize())
             # Make clean dictionaries without the values:
 
             # current_dict = strip_values(self.params_metadata.saveState())

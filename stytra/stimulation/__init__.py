@@ -115,6 +115,7 @@ class ProtocolRunner(QObject):
             self.update_protocol()
             # Connect changes to protocol parameters to update function:
             self.protocol.sig_param_changed.connect(self.update_protocol)
+            self.experiment.dc.add(self.protocol)
 
             # Why were we resetting here?
             self.reset()
