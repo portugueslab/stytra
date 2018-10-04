@@ -6,13 +6,10 @@ from PyQt5.QtCore import QPoint, QRect
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QWidget
 
-from stytra.utilities import HasPyQtGraphParams
+from poparam.param_qt import ParametrizedWidget, Param
 
 
-# TODO what do we gain from two different widgets defined?
-
-
-class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
+class StimulusDisplayWindow(ParametrizedWidget):
     """Display window for a visual simulation protocol,
     with a display area that can be controlled and changed from a
     ProtocolControlWindow.
@@ -48,9 +45,8 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         :param record_stim_every: either None or the number of events every
         which a displayed frame is acquired and stored.
         """
-        super().__init__(name="stimulus_display_params", **kwargs)
+        super().__init__(name="stimulus/display_params", **kwargs)
         self.setWindowTitle("Stytra stimulus display")
-
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
@@ -69,19 +65,24 @@ class StimulusDisplayWindow(QDialog, HasPyQtGraphParams):
         )
         self.widget_display.setMaximumSize(2000, 2000)
 
-        self.add_params(
-            pos=dict(value=(0, 0), visible=False),
-            size=dict(value=(400, 400), visible=False),
-        )
+        # self.add_params(
+        #     pos=dict(value=(0, 0), visible=False),
+        #     size=dict(value=(400, 400), visible=False),
+        # )
+        self.pos = Param((0, 0))
+        self.size = Param((400, 400))
 
         self.setStyleSheet("background-color:black;")
-        self.params.sigTreeStateChanged.connect(self.set_dims)
+        self.sig_param_changed.connect(self.set_dims)
         self.set_dims()
 
     def set_dims(self):
-        """ """
-        self.widget_display.setGeometry(*(self.params["pos"] + self.params["size"]))
-        self.widget_display.calibrator.set_pixel_scale(*self.params["size"])
+        """ Set monitor dimensions when changed from the control GUI.
+        """
+        # print('setting dimensions')
+        # pass
+        self.widget_display.setGeometry(*(self.pos + self.size))
+        self.widget_display.calibrator.set_pixel_scale(*self.size)
         self.widget_display.calibrator.set_physical_scale()
 
 

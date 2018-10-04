@@ -85,7 +85,6 @@ class ProtocolControlWidget(QWidget):
         self.timer = None
 
         # Connect events and signals from the ProtocolRunner to update the GUI:
-        print('connecting')
         self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
         # self.update_stim_duration()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
@@ -140,7 +139,6 @@ class ProtocolControlWidget(QWidget):
     def update_stim_duration(self):
         """ Change the displayed durtion of the stimulus
         """
-        print('updating duration')
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))
         self.progress_bar.setValue(0)
 

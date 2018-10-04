@@ -7,6 +7,7 @@ import pyqtgraph as pg
 from stytra.gui.parameter_widgets import ParameterSpinBox
 from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException
 from PyQt5.QtWidgets import QVBoxLayout
+from poparam.gui import ControlSpin
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -21,10 +22,10 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
     """
 
-    def __init__(self, *args, display_size=(1280, 800), roi_params, **kwargs):
+    def __init__(self, *args, display_size=(1280, 800), display, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.roi_params = roi_params
+        self.display = display
 
         self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
                                    enableMouse=False)
@@ -32,14 +33,14 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box = pg.ROI(
             maxBounds=QRectF(0, 0, display_size[0], display_size[1]),
-            size=roi_params["size"],
-            pos=roi_params["pos"],
+            size=display.size,  # ["size"].value,
+            pos=display.pos  # roi_params["pos"].value,
         )
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
         self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
-        self.roi_params.sigTreeStateChanged.connect(self.set_roi)
+        self.display.sig_param_changed.connect(self.set_roi)
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(
             QRectF(0, 0, display_size[0], display_size[1]),
@@ -64,19 +65,16 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
     def set_roi(self):
         """ """
-        self.roi_box.setPos(self.roi_params["pos"], finish=False)
-        self.roi_box.setSize(self.roi_params["size"])
+        # pass
+        # print('setting roi')
+        self.roi_box.setPos(self.display.pos, finish=False)
+        self.roi_box.setSize(self.display.size)
 
     def set_param_val(self):
         """ """
-
-        with self.roi_params.treeChangeBlocker():
-            self.roi_params.param("size").setValue(
-                tuple([int(p) for p in self.roi_box.size()])
-            )
-            self.roi_params.param("pos").setValue(
-                tuple([int(p) for p in self.roi_box.pos()])
-            )
+        self.display.size = (tuple([int(p) for p in self.roi_box.size()]))
+        self.display.pos = (tuple([int(p) for p in self.roi_box.pos()]))
+        self.display.sig_param_changed.emit(dict(a=1))
 
     def display_calibration_pattern(
         self, calibrator, camera_resolution=(480, 640), image=None
@@ -137,7 +135,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.container_layout.setContentsMargins(0, 0, 0, 0)
 
         self.widget_proj_viewer = ProjectorViewer(
-            roi_params=experiment.window_display.params
+            display=experiment.window_display
         )
 
         self.container_layout.addWidget(self.widget_proj_viewer)
@@ -155,9 +153,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
-        self.calibrator_len_spin = ParameterSpinBox(
-            parameter=self.calibrator.params.param("length_mm")
-        )
+        self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
 
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
 
