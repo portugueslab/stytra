@@ -99,7 +99,7 @@ class Stytra:
         recording_config=None,
         embedded=True,
         exec=True,
-        **kwargs,
+        **kwargs
     ):
 
         app = QApplication([])

@@ -39,7 +39,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
         self.roi_box.addScaleHandle([1, 1], [0, 0])
-        self.roi_box.sigRegionChangeFinished.connect(self.set_param_val)
+        self.roi_box.sigRegionChanged.connect(self.set_param_val)
         self.display.sig_param_changed.connect(self.set_roi)
         self.view_box.addItem(self.roi_box)
         self.view_box.setRange(
@@ -63,18 +63,22 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
 
+        self.setting_param_val = False
+
     def set_roi(self):
         """ """
         # pass
         # print('setting roi')
-        self.roi_box.setPos(self.display.pos, finish=False)
-        self.roi_box.setSize(self.display.size)
+        if not self.setting_param_val:
+            self.roi_box.setPos(self.display.pos)
+            self.roi_box.setSize(self.display.size)
 
     def set_param_val(self):
         """ """
+        self.setting_param_val = True
         self.display.size = (tuple([int(p) for p in self.roi_box.size()]))
         self.display.pos = (tuple([int(p) for p in self.roi_box.pos()]))
-        self.display.sig_param_changed.emit(dict(a=1))
+        self.setting_param_val = False
 
     def display_calibration_pattern(
         self, calibrator, camera_resolution=(480, 640), image=None
