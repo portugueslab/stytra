@@ -62,7 +62,7 @@ class Camera:
 
     """
 
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, **kwargs):
         """
         Parameters
         ----------
@@ -450,6 +450,7 @@ class SpinnakerCamera(Camera):
 
 class IMAQCamera(Camera):
     def __init__(self, *args, camera_id="img0", **kwargs):
+        super().__init__(*args, **kwargs)
         self.cam_id = ctypes.c_char_p(bytes(camera_id, "ansi"))
         self.interface_id = ctypes.c_uint32()
         self.session_id = ctypes.c_uint32()
@@ -487,12 +488,14 @@ class IMAQCamera(Camera):
         attr_exposure = ctypes.c_uint32(attr_base + 0x01C0)
         attr_framerate = ctypes.c_uint32(attr_base + 0x01C1)
 
+        ret = -100
         if param == "exposure":
-            # camera wants exposure in us:
-            pass
+            # camera wants exposure in ms:
+            ret = self.imaq.imgSetAttribute2(self.session_id, attr_exposure, ctypes.c_uint32(int(val)))
 
         if param == "framerate":
-            pass
+            ret = self.imaq.imgSetAttribute2(self.session_id, attr_framerate, ctypes.c_uint32(int(val)))
+        print(param, val, ret)
 
 
     def read(self):

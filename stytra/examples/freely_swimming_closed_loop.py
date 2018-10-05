@@ -8,6 +8,8 @@ from stytra.stimulation.stimuli import (
 
 from stytra.stimulation import Protocol
 import pkg_resources
+import tempfile
+from lightparam import Param
 
 
 class PhototaxisProtocol(Protocol):
@@ -15,33 +17,31 @@ class PhototaxisProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-
-        self.add_params(
-            duration=600,
-            center_offset=0,
-            brightness=dict(type="int", limits=(0,255), value=255)
-        )
+        self.duration = Param(600)
+        self.center_offset = Param(0, (-100, 100))
+        self.brightness = Param(255, (0, 255))
 
     def get_stim_sequence(self):
-        duration = self.params["duration"]
-        centering = RadialSineStimulus(duration=duration)
+        centering = RadialSineStimulus(duration=self.duration)
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
-        return [CenteringWrapper(stim(duration=self.params["duration"],
-                                      color=(self.params["brightness"],)*3,
-                                      center_dist=self.params["center_offset"],), centering)]
+        return [CenteringWrapper(stim(duration=self.duration,
+                                      color=(self.brightness,)*3,
+                                      center_dist=self.center_offset,), centering)]
 
 
 if __name__ == "__main__":
     video_file = r"J:\Vilim Stih\fish_recordings\old\20180719_170349.mp4"
+    tempdir = tempfile.gettempdir()
 
-    camera_config = dict(video_file=video_file, rotation=0)
+    #camera_config = dict(video_file=video_file, rotation=0)
+    camera_config = dict(type="imaq")
     tracking_config = dict(tracking_method="fish", estimator="position")
     s = Stytra(
         camera_config=camera_config,
         dir_assets=pkg_resources.resource_filename("stytra", "tests/test_assets"),
         tracking_config=tracking_config,
         protocols=[PhototaxisProtocol],
-        dir_save=r"D:\stytra",
+        dir_save=tempdir,
         log_format="csv",
         embedded=False,
         display_config=dict(full_screen=True),
