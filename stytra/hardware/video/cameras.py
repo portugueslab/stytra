@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-    Author: Andreas Kist
+    Authors:
+    Vilim Stih
+    Andreas Kist
+    Luigi Petrucco
 """
 """
 This module implement classes that can be used in stytra to control cameras.
@@ -26,6 +29,7 @@ try:
 except ImportError:
     pass
 
+import ctypes
 
 class Camera:
     """Abstract class for controlling a camera.
@@ -442,3 +446,60 @@ class SpinnakerCamera(Camera):
         self.cam.DeInit()
         del self.cam
         self.system.ReleaseInstance()
+
+
+class IMAQCamera(Camera):
+    def __init__(self, *args, camera_id="img0", **kwargs):
+        self.cam_id = ctypes.c_char_p(bytes(camera_id, "ansi"))
+        self.interface_id = ctypes.c_uint32()
+        self.session_id = ctypes.c_uint32()
+        self.w, self.h = ctypes.c_uint32(), ctypes.c_uint32()
+        self.b_per_px = ctypes.c_uint32()
+        self.img_buffer = None
+        self.buffer_address = None
+        try:
+            self.imaq = ctypes.windll.imaq
+        except OSError:
+            print("NI Vision drivers not installed")
+
+    def open_camera(self):
+        int_opened = self.imaq.imgInterfaceOpen(self.cam_id, ctypes.byref(self.interface_id))
+        session_opened = self.imaq.imgSessionOpen(self.interface_id, ctypes.byref(self.session_id))
+        self.imaq.imgGrabSetup(self.session_id, 1)
+
+        attr_base = 0x3FF60000
+
+        attr_h = 0x01A7
+        attr_w = 0x01A6
+        attr_bytes_px = 0x0067
+
+        for atr, var in zip([attr_h, attr_w, attr_bytes_px],
+                            [self.h, self.w, self.b_per_px]):
+            self.imaq.imgGetAttribute(self.session_id,
+                                 ctypes.c_uint32(attr_base + atr),
+                                 ctypes.byref(var))
+
+        self.img_buffer = np.ndarray(shape=(self.h.value, self.w.value), dtype=ctypes.c_uint8)
+        self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
+
+    def set(self, param, val):
+        attr_base = 0x3FF60000
+        attr_exposure = ctypes.c_uint32(attr_base + 0x01C0)
+        attr_framerate = ctypes.c_uint32(attr_base + 0x01C1)
+
+        if param == "exposure":
+            # camera wants exposure in us:
+            pass
+
+        if param == "framerate":
+            pass
+
+
+    def read(self):
+        err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)
+        return self.img_buffer
+
+    def release(self):
+        self.imaq.imgSessionStopAcquisition(self.session_id)
+        self.imaq.imgClose(self.session_id, True)
+        self.imaq.imgClose(self.interface_id, True)
