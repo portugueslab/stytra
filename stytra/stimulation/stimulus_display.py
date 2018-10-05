@@ -6,7 +6,7 @@ from PyQt5.QtCore import QPoint, QRect
 from PyQt5.QtGui import QPainter, QBrush, QColor
 from PyQt5.QtWidgets import QDialog, QOpenGLWidget, QWidget
 
-from poparam.param_qt import ParametrizedWidget, Param
+from lightparam.param_qt import ParametrizedWidget, Param
 
 
 class StimulusDisplayWindow(ParametrizedWidget):

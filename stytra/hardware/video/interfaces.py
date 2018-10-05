@@ -1,4 +1,4 @@
-from poparam.param_qt import ParametrizedQt, Param
+from lightparam.param_qt import ParametrizedQt, Param
 
 
 class VideoControlParams(ParametrizedQt):

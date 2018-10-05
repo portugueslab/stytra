@@ -1,4 +1,4 @@
-from poparam import Parametrized, Param
+from lightparam import Parametrized, Param
 
 
 class GeneralMetadata(Parametrized):

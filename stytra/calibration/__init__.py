@@ -5,7 +5,7 @@ import numpy as np
 from PyQt5.QtCore import QRect, QPoint
 from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 
-from poparam.param_qt import ParametrizedQt, Param
+from lightparam.param_qt import ParametrizedQt, Param
 
 
 class CalibrationException(Exception):

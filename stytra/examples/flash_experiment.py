@@ -1,6 +1,6 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
-from poparam import Param
+from lightparam import Param
 
 
 class FlashProtocol(Protocol):

@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QDoubleSpinBox, QWidget, QLabel
-from poparam.gui import ControlSpin
+from lightparam.gui import ControlSpin
 
 
 class ParameterSpinBox(QDoubleSpinBox):

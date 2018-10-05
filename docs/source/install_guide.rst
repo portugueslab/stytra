@@ -11,6 +11,10 @@ Other Python versions have not been tested.
 Installing stytra
 -----------------
 
+Until the lightparam package is registered, install int first
+
+`lightparam <https://github.com/porgugueslab/lightparam`_
+
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
 functions. If you don't have it installed, open the Anaconda prompt and type::

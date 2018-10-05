@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 )
 
 from pyqtgraph.parametertree import ParameterTree
-from poparam.gui import ParameterGui
+from lightparam.gui import ParameterGui
 
 
 class ProtocolControlWidget(QWidget):
