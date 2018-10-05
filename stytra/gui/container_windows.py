@@ -27,7 +27,7 @@ from stytra.gui.camera_display import (
     CameraViewFish,
 )
 
-from poparam.gui import ParameterGui
+from lightparam.gui import ParameterGui
 
 import json
 

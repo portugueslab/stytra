@@ -7,7 +7,7 @@ import pyqtgraph as pg
 from stytra.gui.parameter_widgets import ParameterSpinBox
 from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException
 from PyQt5.QtWidgets import QVBoxLayout
-from poparam.gui import ControlSpin
+from lightparam.gui import ControlSpin
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):

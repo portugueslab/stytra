@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from pathlib import Path
-from poparam import ParameterTree
+from lightparam import ParameterTree
 from stytra.utilities import prepare_json
 
 
