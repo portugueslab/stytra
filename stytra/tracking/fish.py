@@ -52,8 +52,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             )
         ) + ["biggest_area"]
         self.monitored_headers = [
-            "f{:d}_theta".format(i_fish)
-            for i_fish in range(self.params.n_fish_max)
+            "f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)
         ] + ["biggest_area"]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
@@ -61,40 +60,47 @@ class FishTrackingMethod(ParametrizedImageproc):
         # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params.n_fish_max)
         self.recorded = np.full(
-            (self.params.n_fish_max, 5 + self.params.n_segments-1), np.nan
+            (self.params.n_fish_max, 5 + self.params.n_segments - 1), np.nan
         )
         self.logger = logging.getLogger()
 
-    def detect(self, frame,
-               reset: Param(False),
-               n_fish_max: Param(1, (1, 10)),
-               n_segments: Param(10, (2, 30)),
-
-               bg_downsample: Param(1, (1, 8)),
-               bg_learning_rate: Param(0.04, (0.0, 1.0)),
-               bg_learn_every: Param(400, (1, 10000)),
-               bg_dif_threshold: Param(25, (0, 255)),
-
-               threshold_eyes: Param(35, (0, 255)),
-
-               pos_uncertainty: Param(1.0, (0, 10.0),
-                                      desc="Uncertainty in pixels about the location of the head center of mass"),
-               persist_fish_for: Param(2, (1, 50), desc="How many frames does the fish persist for if it is not detected"),
-               prediction_uncertainty: Param(0.1, (0.0, 10.0)),
-
-               fish_area: Param((100, 400), (1, 2500)),
-               border_margin: Param(10, (0, 100)),
-               tail_length: Param(50.5, (1.0, 200.0)),
-               tail_track_window: Param(3, (3, 70)),
-
-               display_processed: Param("raw", ["raw",
-                                               "background difference",
-                                               "thresholded background difference",
-                                               "fish detection",
-                                               "thresholded for eye and swim bladder"]),
-
-
-               ):
+    def detect(
+        self,
+        frame,
+        reset: Param(False),
+        n_fish_max: Param(1, (1, 10)),
+        n_segments: Param(10, (2, 30)),
+        bg_downsample: Param(1, (1, 8)),
+        bg_learning_rate: Param(0.04, (0.0, 1.0)),
+        bg_learn_every: Param(400, (1, 10000)),
+        bg_dif_threshold: Param(25, (0, 255)),
+        threshold_eyes: Param(35, (0, 255)),
+        pos_uncertainty: Param(
+            1.0,
+            (0, 10.0),
+            desc="Uncertainty in pixels about the location of the head center of mass",
+        ),
+        persist_fish_for: Param(
+            2,
+            (1, 50),
+            desc="How many frames does the fish persist for if it is not detected",
+        ),
+        prediction_uncertainty: Param(0.1, (0.0, 10.0)),
+        fish_area: Param((100, 400), (1, 2500)),
+        border_margin: Param(10, (0, 100)),
+        tail_length: Param(50.5, (1.0, 200.0)),
+        tail_track_window: Param(3, (3, 70)),
+        display_processed: Param(
+            "raw",
+            [
+                "raw",
+                "background difference",
+                "thresholded background difference",
+                "fish detection",
+                "thresholded for eye and swim bladder",
+            ],
+        ),
+    ):
 
         # if the parameters affecting the dimensions of the result changed,
         # reset everything
@@ -113,30 +119,25 @@ class FishTrackingMethod(ParametrizedImageproc):
         for pfish in self.previous_fish:
             pfish.predict()
 
-
-        area_scale = bg_downsample*bg_downsample
+        area_scale = bg_downsample * bg_downsample
 
         # subtract background
-        bg = (
-            self.bg_subtractor.process(
-                frame, bg_learning_rate, bg_learn_every
-            ))
+        bg = self.bg_subtractor.process(frame, bg_learning_rate, bg_learn_every)
 
         if bg_downsample > 1:
-            bg_small = cv2.resize(bg, None, fx=1/bg_downsample, fy=1/bg_downsample)
+            bg_small = cv2.resize(bg, None, fx=1 / bg_downsample, fy=1 / bg_downsample)
         else:
             bg_small = bg
 
-        bg_thresh = cv2.dilate((bg_small > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel)
-
-        # find regions where there is a difference with the background
-        n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
-            bg_thresh
+        bg_thresh = cv2.dilate(
+            (bg_small > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel
         )
 
+        # find regions where there is a difference with the background
+        n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(bg_thresh)
 
         try:
-            max_area = np.max(stats[1:, cv2.CC_STAT_AREA])*area_scale
+            max_area = np.max(stats[1:, cv2.CC_STAT_AREA]) * area_scale
         except ValueError:
             max_area = 0
 
@@ -146,38 +147,33 @@ class FishTrackingMethod(ParametrizedImageproc):
 
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
-            if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < \
-                   fish_area[1]:
+            if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < fish_area[1]:
                 continue
 
-            ftop, fleft, fheight, fwidth = (int(round(row[x] * bg_downsample))
-                                            for x in
-                                            [cv2.CC_STAT_TOP,
-                                             cv2.CC_STAT_LEFT,
-                                             cv2.CC_STAT_HEIGHT,
-                                             cv2.CC_STAT_WIDTH])
+            ftop, fleft, fheight, fwidth = (
+                int(round(row[x] * bg_downsample))
+                for x in [
+                    cv2.CC_STAT_TOP,
+                    cv2.CC_STAT_LEFT,
+                    cv2.CC_STAT_HEIGHT,
+                    cv2.CC_STAT_WIDTH,
+                ]
+            )
 
-            if not ((fleft - border_margin >= 0)
+            if not (
+                (fleft - border_margin >= 0)
                 and (fleft + fwidth + border_margin < frame.shape[1])
                 and (ftop - border_margin >= 0)
-                and (ftop + fheight + border_margin < frame.shape[0])):
+                and (ftop + fheight + border_margin < frame.shape[0])
+            ):
                 continue
 
             # how much is this region shifted from the upper left corner of the image
-            cent_shift = np.array(
-                [fleft - border_margin, ftop - border_margin])
+            cent_shift = np.array([fleft - border_margin, ftop - border_margin])
 
             slices = (
-                slice(
-                   ftop - border_margin,
-                    ftop
-                    + fheight
-                    + border_margin,
-                ),
-                slice(
-                    fleft - border_margin,
-                    fleft + fwidth + border_margin,
-                ),
+                slice(ftop - border_margin, ftop + fheight + border_margin),
+                slice(fleft - border_margin, fleft + fwidth + border_margin),
             )
 
             # take the region and mask the background away to aid detection
@@ -191,10 +187,11 @@ class FishTrackingMethod(ParametrizedImageproc):
             if head_coords[0] == -1:
                 continue
 
-            head_coords_up = (head_coords+cent_shift)
+            head_coords_up = head_coords + cent_shift
 
-            theta = _fish_direction_n(frame, head_coords_up,
-                                      int(round(tail_length/2)))
+            theta = _fish_direction_n(
+                frame, head_coords_up, int(round(tail_length / 2))
+            )
 
             # find the points of the tail
             points = find_fish_midline(
@@ -203,11 +200,11 @@ class FishTrackingMethod(ParametrizedImageproc):
                 theta,
                 tail_track_window,
                 tail_length / n_segments,
-                n_segments+1,
+                n_segments + 1,
             )
 
             # convert to angles
-            angles = np.mod(points_to_angles(points)+np.pi, np.pi*2)-np.pi
+            angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
             if len(angles) == 0:
                 self.logger.info("Tail not completely detectable")
                 continue
@@ -228,9 +225,12 @@ class FishTrackingMethod(ParametrizedImageproc):
             # has to be instantiated for this measurement
             else:
                 new_fish.append(
-                    Fish(head_coords, self.idx_book,
-                         pred_coef=prediction_uncertainty,
-                         pos_std=pos_uncertainty)
+                    Fish(
+                        head_coords,
+                        self.idx_book,
+                        pred_coef=prediction_uncertainty,
+                        pos_std=pos_uncertainty,
+                    )
                 )
         current_fish = []
 
@@ -260,9 +260,9 @@ class FishTrackingMethod(ParametrizedImageproc):
             fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
         elif display_processed == "thresholded for eye and swim bladder":
-            self.diagnostic_image = (np.maximum(bg, threshold_eyes) - threshold_eyes)
+            self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
 
-        return tuple(self.recorded.flatten()) + (max_area*1.0, )
+        return tuple(self.recorded.flatten()) + (max_area * 1.0,)
 
 
 class IndexBooking:
@@ -285,13 +285,7 @@ class Fish:
 
     """
 
-    def __init__(
-        self,
-        initial_state,
-        idx_book,
-        pos_std=1.0,
-        pred_coef=20,
-    ):
+    def __init__(self, initial_state, idx_book, pos_std=1.0, pred_coef=20):
         self.i_not_updated = 0
         self.i_ar = idx_book.get_next()
         self.n_dof = 2
@@ -299,9 +293,7 @@ class Fish:
         # the position will be Kalman-filtered
         self.f = filterpy.kalman.KalmanFilter(dim_x=self.n_dof * 2, dim_z=self.n_dof)
 
-        uncertanties = np.array(
-            [pos_std, pos_std]
-        )
+        uncertanties = np.array([pos_std, pos_std])
         self.f.x[::2, 0] = initial_state[: self.n_dof]
         self.f.F = block_diag(
             *[np.array([[1.0, 1.0], [0.0, 1.0]]) for _ in range(self.n_dof)]
@@ -310,7 +302,8 @@ class Fish:
         self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
 
         self.f.Q = block_diag(
-            *[  np.array([[0.,0.],[0., uc*pred_coef]])
+            *[
+                np.array([[0., 0.], [0., uc * pred_coef]])
                 # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
                 for uc in uncertanties
             ]
@@ -337,7 +330,9 @@ class Fish:
         and within a certain angle
         """
         dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
-        dtheta = np.abs(np.mod(new_fish[3] - self.unfiltered[0]+np.pi, np.pi*2)-np.pi)
+        dtheta = np.abs(
+            np.mod(new_fish[3] - self.unfiltered[0] + np.pi, np.pi * 2) - np.pi
+        )
         return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 
@@ -371,6 +366,7 @@ def fish_start_n(mask, take_min=50):
     x0 = mom["m10"] / mom["m00"]
     return np.array([x0, y0])
 
+
 @jit(nopython=True)
 def _symmetry_points(x0, y0, x, y):
     return [
@@ -383,6 +379,7 @@ def _symmetry_points(x0, y0, x, y):
         (x0 + y, y0 - x),
         (x0 - y, y0 - x),
     ]
+
 
 @jit(nopython=True)
 def _circle_points(x0, y0, radius):
@@ -432,4 +429,4 @@ def _fish_direction_n(image, start_loc, radius):
         if image[y, x] < min_val:
             min_val = image[y, x]
             min_point = (x, y)
-    return np.arctan2(min_point[1]-centre_int[1], min_point[0]-centre_int[0])
+    return np.arctan2(min_point[1] - centre_int[1], min_point[0] - centre_int[0])

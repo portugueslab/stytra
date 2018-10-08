@@ -57,7 +57,7 @@ class CameraExperiment(Experiment):
         file for the test input
         :param kwargs:
         """
-
+        super().__init__(*args, **kwargs)
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(
                 camera_config["type"],
@@ -65,20 +65,23 @@ class CameraExperiment(Experiment):
                 downsampling=camera_config.get("downsampling", 1),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_control_params = CameraControlParameters()
+            self.camera_control_params = CameraControlParameters(tree=self.dc)
         else:
             self.camera = VideoFileSource(
                 camera_config["video_file"],
                 rotation=camera_config.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_control_params = VideoControlParameters()
+            self.camera_control_params = VideoControlParameters(tree=self.dc)
 
-        super().__init__(*args, **kwargs)
 
+        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, "fps")
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
+
+    def initialize_plots(self):
+        self.window_main.framerate_widget.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
         self.camera.control_queue.put(self.camera_control_params.params.values)
@@ -253,6 +256,7 @@ class TrackingExperiment(CameraExperiment):
         self.window_main.show()
 
     def initialize_plots(self):
+        super().initialize_plots()
         self.window_main.stream_plot.add_stream(self.data_acc)
 
         if self.estimator is not None:
