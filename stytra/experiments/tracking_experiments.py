@@ -10,6 +10,7 @@ from stytra.gui.container_windows import (
 )
 from stytra.hardware.video import (
     CameraControlParameters,
+    VideoControlParameters,
     VideoWriter,
     VideoFileSource,
     CameraSource,
@@ -64,16 +65,18 @@ class CameraExperiment(Experiment):
                 downsampling=camera_config.get("downsampling", 1),
                 max_mbytes_queue=camera_queue_mb,
             )
+            self.camera_control_params = CameraControlParameters()
         else:
             self.camera = VideoFileSource(
                 camera_config["video_file"],
                 rotation=camera_config.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
+            self.camera_control_params = VideoControlParameters()
 
         super().__init__(*args, **kwargs)
 
-        self.camera_control_params = CameraControlParameters()
+
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
 
@@ -216,20 +219,6 @@ class TrackingExperiment(CameraExperiment):
         # start frame dispatcher process:
         self.frame_dispatcher.start()
 
-        # This probably should happen before starting the camera process??
-        if isinstance(self.tracking_method, TailTrackingMethod):
-            self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-
-        if isinstance(self.tracking_method, FishTrackingMethod):
-            self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-            self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-
         est_type = tracking_config.get("estimator", None)
         if est_type == "position":
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
@@ -284,9 +273,25 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().send_gui_parameters()
+
+        # TODO deal with parameters that impact the accumulators, maybe automatically link it to receiving something different
+        # if isinstance(self.tracking_method, TailTrackingMethod):
+        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #
+        # if isinstance(self.tracking_method, FishTrackingMethod):
+        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #     self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #
+
         self.processing_params_queue.put(
             {
-                **self.tracking_method.get_clean_values(),
+                **self.tracking_method.params.params.values,
                 **(
                     self.preprocessing_method.get_clean_values()
                     if self.preprocessing_method is not None

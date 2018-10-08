@@ -570,8 +570,8 @@ class CameraViewFish(CameraViewCalib):
                 )
                 if n_points_tail:
                     tail_len = (
-                        self.experiment.tracking_method.params["tail_length"]
-                        / self.experiment.tracking_method.params["n_segments"]
+                        self.experiment.tracking_method.params.tail_length
+                        / self.experiment.tracking_method.params.n_segments
                     )
                     xs, ys = _tail_points_from_coords(retrieved_data, tail_len)
                     self.lines_fish.setData(x=xs, y=ys)

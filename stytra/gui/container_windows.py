@@ -7,12 +7,12 @@ from PyQt5.QtWidgets import (
     QWidget,
     QHBoxLayout,
     QPushButton,
-    QComboBox,
     QPlainTextEdit,
     QMainWindow,
     QCheckBox,
     QVBoxLayout,
     QSplitter,
+    QDockWidget,
 )
 
 from pyqtgraph.parametertree import ParameterTree
@@ -73,14 +73,6 @@ class DebugLabel(QLabel):
         else:
             self.setText("Experiment ready, please ensure the data_log is correct")
             self.setStyleSheet("background-color: #002b36")
-
-
-class TrackingSettingsGui(QWidget):
-    """ """
-
-    def __init__(self):
-        self.combo_method = QComboBox()
-        self.combo_method.set_editable(False)
 
 
 class SimpleExperimentWindow(QMainWindow):
@@ -265,12 +257,7 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        # Stream plot:
-        # if eyes:
-        time_past = 30
-        # else:
-        #     time_past = 5
-        self.stream_plot = MultiStreamPlot(time_past=time_past)
+        self.stream_plot = MultiStreamPlot()
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
@@ -312,20 +299,24 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
     def open_tracking_params_tree(self):
         """ """
-        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd = QWidget()
+        self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "tracking_method"):
-            self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
+            self.track_params_wnd.layout().addWidget(QLabel("Tracking method"))
+            self.track_params_wnd.layout().addWidget(ParameterGui(self.experiment.tracking_method.params))
         if (
             hasattr(self.experiment, "preprocessing_method")
             and self.experiment.preprocessing_method is not None
         ):
+            self.track_params_wnd.layout().addWidget(QLabel("Preprocessing method"))
             self.track_params_wnd.addParameters(
-                self.experiment.preprocessing_method.params
+                self.track_params_wnd.layout().addWidget(
+                    ParameterGui(self.experiment.preprocessing_method.params))
             )
         if hasattr(self.experiment, "motion_detection_params"):
-            self.track_params_wnd.addParameters(
-                self.experiment.motion_detection_params.params
-            )
+            self.track_params_wnd.layout().addWidget(QLabel("Motion detection"))
+            self.track_params_wnd.layout().addWidget(
+                ParameterGui(self.experiment.motion_detection_params))
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()

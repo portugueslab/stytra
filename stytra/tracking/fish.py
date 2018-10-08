@@ -11,36 +11,11 @@ from itertools import chain
 from scipy.linalg import block_diag
 
 import logging
-
+from lightparam import Param, Parametrized
 
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
-        super().__init__(name="tracking_fish_params")
-        self.add_params(
-            function="fish",
-            n_fish_max=1,
-            n_segments=8,
-            bglearning_rate=0.04,
-            bglearn_every=400,
-            bgdif_threshold=25,
-            reset=False,
-            threshold_eyes=dict(type="int", limits=(0, 255), value=35),
-            pos_uncertainty=dict(type="float", limits=(0, 10.0), value=1.0),
-            bg_preresize=2,
-            fish_target_area=160,
-            fish_area_margin=120,
-            margin_fish=10,
-            tail_track_window=3,
-            tail_length=50.5,
-            persist_fish_for=2,
-            kalman_coef=0.1,
-            display_processed=dict(type="list", limits=["raw",
-                                                        "background difference",
-                                                        "thresholded background difference",
-                                                        "fish detection",
-                                                        "thresholded for eye and swim bladder"],
-                                   value="raw"),
-        )
+        super().__init__()
         self.accumulator_headers = None
         self.monitored_headers = None
         self.data_log_name = "fish_track"
@@ -52,8 +27,9 @@ class FishTrackingMethod(ParametrizedImageproc):
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.recorded = None
         self.diagnostic_image = None
-        self.reset_state()
         self.logger = logging.getLogger()
+        self.params = Parametrized(name="tracking/fish", params=self.detect)
+        self.reset_state()
 
     def reset_state(self):
         self.accumulator_headers = list(
@@ -68,39 +44,65 @@ class FishTrackingMethod(ParametrizedImageproc):
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
-                        for i in range(self.params["n_segments"] - 1)
+                        for i in range(self.params.n_segments - 1)
                     ]
-                    for i_fish in range(self.params["n_fish_max"])
+                    for i_fish in range(self.params.n_fish_max)
                 ]
             )
         ) + ["biggest_area"]
         self.monitored_headers = [
             "f{:d}_theta".format(i_fish)
-            for i_fish in range(self.params["n_fish_max"])
+            for i_fish in range(self.params.n_fish_max)
         ] + ["biggest_area"]
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
 
         # used for booking a spot for one of the potentially tracked fish
-        self.idx_book = IndexBooking(self.params["n_fish_max"])
+        self.idx_book = IndexBooking(self.params.n_fish_max)
         self.recorded = np.full(
-            (self.params["n_fish_max"], 5 + self.params["n_segments"]-1), np.nan
+            (self.params.n_fish_max, 5 + self.params.n_segments-1), np.nan
         )
         self.logger = logging.getLogger()
 
-    def detect(self, frame, **new_params):
+    def detect(self, frame,
+               reset: Param(False),
+               n_fish_max: Param(1, (1, 10)),
+               n_segments: Param(10, (2, 30)),
+
+               bg_downsample: Param(1, (1, 8)),
+               bg_learning_rate: Param(0.04, (0.0, 1.0)),
+               bg_learn_every: Param(400, (1, 10000)),
+               bg_dif_threshold: Param(25, (0, 255)),
+
+               threshold_eyes: Param(35, (0, 255)),
+
+               pos_uncertainty: Param(1.0, (0, 10.0),
+                                      desc="Uncertainty in pixels about the location of the head center of mass"),
+               persist_fish_for: Param(2, (1, 50), desc="How many frames does the fish persist for if it is not detected"),
+               prediction_uncertainty: Param(0.1, (0.0, 10.0)),
+
+               fish_area: Param((100, 400), (1, 40000)),
+               border_margin: Param(10, (0, 100)),
+               tail_length: Param(50.5, (1.0, 200.0)),
+               tail_track_window: Param(3, (3, 70)),
+
+               display_processed: Param("raw", ["raw",
+                                               "background difference",
+                                               "thresholded background difference",
+                                               "fish detection",
+                                               "thresholded for eye and swim bladder"]),
+
+
+               ):
 
         # if the parameters affecting the dimensions of the result changed,
         # reset everything
         if (
-            new_params["reset"]
-            or new_params["n_fish_max"] != self.params["n_fish_max"]
-            or new_params["n_segments"] != self.params["n_segments"]
+            reset
+            or n_fish_max != self.params.n_fish_max
+            or n_segments != self.params.n_segments
         ):
-            self.update_params(**new_params)
             self.reset_state()
-        else:
-            self.update_params(**new_params)
 
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
@@ -109,9 +111,9 @@ class FishTrackingMethod(ParametrizedImageproc):
         # subtract background
         bg = (
             self.bg_subtractor.process(
-                frame, self.params["bglearning_rate"], self.params["bglearn_every"]
+                frame, bg_learning_rate, bg_learn_every
             ))
-        bg_thresh = cv2.dilate((bg > self.params["bgdif_threshold"]).view(dtype=np.uint8), self.dilation_kernel)
+        bg_thresh = cv2.dilate((bg > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel)
 
         # find regions where there is a difference with the background
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
@@ -131,22 +133,20 @@ class FishTrackingMethod(ParametrizedImageproc):
             # check if the contour is fish-sized and central enough
             if not (
                 (
-                    self.params["fish_target_area"] - self.params["fish_area_margin"]
-                    < row[cv2.CC_STAT_AREA]
-                    < self.params["fish_target_area"] + self.params["fish_area_margin"]
+                    fish_area[0] < row[cv2.CC_STAT_AREA] < fish_area[1]
                 )
-                and (row[cv2.CC_STAT_LEFT] - self.params["margin_fish"] >= 0)
+                and (row[cv2.CC_STAT_LEFT] - border_margin >= 0)
                 and (
                     row[cv2.CC_STAT_LEFT]
                     + row[cv2.CC_STAT_WIDTH]
-                    + self.params["margin_fish"]
+                    + border_margin
                     < frame.shape[1]
                 )
-                and (row[cv2.CC_STAT_TOP] - self.params["margin_fish"] >= 0)
+                and (row[cv2.CC_STAT_TOP] - border_margin >= 0)
                 and (
                     row[cv2.CC_STAT_TOP]
                     + row[cv2.CC_STAT_HEIGHT]
-                    + self.params["margin_fish"]
+                    + border_margin
                     < frame.shape[0]
                 )
             ):
@@ -155,8 +155,8 @@ class FishTrackingMethod(ParametrizedImageproc):
             # how much is this region shifted from the upper left corner of the image
             cent_shift = np.array(
                 [
-                    row[cv2.CC_STAT_LEFT] - self.params["margin_fish"],
-                    row[cv2.CC_STAT_TOP] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_LEFT] - border_margin,
+                    row[cv2.CC_STAT_TOP] - border_margin,
                 ]
             )
 
@@ -164,16 +164,16 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             slices = (
                 slice(
-                    row[cv2.CC_STAT_TOP] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_TOP] - border_margin,
                     row[cv2.CC_STAT_TOP]
                     + row[cv2.CC_STAT_HEIGHT]
-                    + self.params["margin_fish"],
+                    + border_margin,
                 ),
                 slice(
-                    row[cv2.CC_STAT_LEFT] - self.params["margin_fish"],
+                    row[cv2.CC_STAT_LEFT] - border_margin,
                     row[cv2.CC_STAT_LEFT]
                     + row[cv2.CC_STAT_WIDTH]
-                    + self.params["margin_fish"],
+                    + border_margin,
                 ),
             )
 
@@ -183,14 +183,14 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # estimate the position of the head and the approximate
             # direction of the tail
-            head_coords = fish_start_n(fishdet, self.params["threshold_eyes"])
+            head_coords = fish_start_n(fishdet, threshold_eyes)
 
             # if no actual fish was found here, continue on to the next connected component
             if head_coords[0] == -1:
                 continue
 
             theta = _fish_direction_n(frame, head_coords + cent_shift,
-                                      int(round(self.params["tail_length"]/2)))
+                                      int(round(tail_length/2)))
 
             # find the points of the tail
             points = find_fish_midline(
@@ -198,9 +198,9 @@ class FishTrackingMethod(ParametrizedImageproc):
                 head_coords[0]+slices[1].start,
                 head_coords[1]+slices[0].start,
                 theta,
-                self.params["tail_track_window"],
-                self.params["tail_length"] / self.params["n_segments"],
-                self.params["n_segments"]+1
+                tail_track_window,
+                tail_length / n_segments,
+                n_segments+1,
             )
 
             # convert to angles
@@ -226,14 +226,14 @@ class FishTrackingMethod(ParametrizedImageproc):
             else:
                 new_fish.append(
                     Fish(head_coords, self.idx_book,
-                         pred_coef=self.params["kalman_coef"],
-                         pos_std=self.params["pos_uncertainty"])
+                         pred_coef=prediction_uncertainty,
+                         pos_std=pos_uncertainty)
                 )
         current_fish = []
 
         # remove fish not detected in two subsequent frames
         for pf in self.previous_fish:
-            if pf.i_not_updated < -self.params["persist_fish_for"]:
+            if pf.i_not_updated < -persist_fish_for:
                 self.idx_book.full[pf.i_ar] = False
                 self.recorded[pf.i_ar, :] = np.nan
             else:
@@ -248,16 +248,16 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.recorded[pf.i_ar, :] = pf.serialize()
 
         # if a debugging image is to be shown, set it
-        if self.params["display_processed"] == "background difference":
+        if display_processed == "background difference":
             self.diagnostic_image = bg
-        elif self.params["display_processed"] == "thresholded background difference":
+        elif display_processed == "thresholded background difference":
             self.diagnostic_image = bg_thresh
-        elif self.params["display_processed"] == "fish detection":
+        elif display_processed == "fish detection":
             fishdet = bg.copy()
             fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
-        elif self.params["display_processed"] == "thresholded for eye and swim bladder":
-            self.diagnostic_image = (np.maximum(bg, self.params["threshold_eyes"]) - self.params["threshold_eyes"])
+        elif display_processed == "thresholded for eye and swim bladder":
+            self.diagnostic_image = (np.maximum(bg, threshold_eyes) - threshold_eyes)
 
         return tuple(self.recorded.flatten()) + (max_area*1.0, )
 

@@ -1,7 +1,7 @@
 from lightparam.param_qt import ParametrizedQt, Param
 
 
-class VideoControlParams(ParametrizedQt):
+class VideoControlParameters(ParametrizedQt):
     def __init__(self):
         super().__init__(name="video_params")
         self.framerate = Param(150., limits=(10, 700),

@@ -6,7 +6,7 @@ from stytra.tracking.diagnostics import draw_found_fish
 from stytra.utilities import HasPyQtGraphParams
 
 
-class ParametrizedImageproc(HasPyQtGraphParams):
+class ParametrizedImageproc():
     def process(self, im, state=None, **kwargs):
         return im
 

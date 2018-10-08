@@ -77,7 +77,7 @@ class MultiStreamPlot(QWidget):
 
     """
 
-    def __init__(self, time_past=6, bounds_update=0.1,
+    def __init__(self, time_past=30, bounds_update=0.1,
                  round_bounds=None,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)

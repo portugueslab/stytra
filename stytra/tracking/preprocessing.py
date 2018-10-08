@@ -76,14 +76,9 @@ def negdif(xf, y):
         return 0
 
 
-class BackgorundSubtractor(PreprocMethod):
+class BackgorundSubtractor():
     def __init__(self):
-        super().__init__(name="tracking_bgsubtraction")
-        self.add_params(
-            learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
-            learn_every=dict(type="int", value=1, limits=(1, 1000)),
-            reset=dict(type="bool", value=False),
-        )
+        super().__init__()
         self.background_image = None
         self.i = 0
 

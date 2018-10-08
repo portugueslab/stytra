@@ -100,7 +100,6 @@ class DataCollector(ParameterTree):
 
         """
         if self.last_metadata is not None:
-            print('deserializing')
             self.deserialize(self.last_metadata)
 
     def add_static_data(self, entry, name="unspecified_entry"):
