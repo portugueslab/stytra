@@ -113,20 +113,21 @@ class FishTrackingMethod(ParametrizedImageproc):
         for pfish in self.previous_fish:
             pfish.predict()
 
-        if bg_downsample != 1:
-            frame_small = cv2.resize(frame, None, fx=1/bg_downsample,
-                                     fy=1/bg_downsample, interpolation=cv2.INTER_AREA)
-        else:
-            frame_small = frame
 
         area_scale = bg_downsample*bg_downsample
 
         # subtract background
         bg = (
             self.bg_subtractor.process(
-                frame_small, bg_learning_rate, bg_learn_every
+                frame, bg_learning_rate, bg_learn_every
             ))
-        bg_thresh = cv2.dilate((bg > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel)
+
+        if bg_downsample > 1:
+            bg_small = cv2.resize(bg, None, fx=1/bg_downsample, fy=1/bg_downsample)
+        else:
+            bg_small = bg
+
+        bg_thresh = cv2.dilate((bg_small > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel)
 
         # find regions where there is a difference with the background
         n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(
@@ -166,33 +167,21 @@ class FishTrackingMethod(ParametrizedImageproc):
             cent_shift = np.array(
                 [fleft - border_margin, ftop - border_margin])
 
-            # takes the area around the head contour
-            oftop, ofleft, ofheight, ofwidth = (row[x]
-                                            for x in
-                                            [cv2.CC_STAT_TOP,
-                                             cv2.CC_STAT_LEFT,
-                                             cv2.CC_STAT_HEIGHT,
-                                             cv2.CC_STAT_WIDTH])
-
-            oborder_margin = int(round(border_margin/bg_downsample))
             slices = (
                 slice(
-                    oftop - oborder_margin,
-                    oftop
-                    + ofheight
-                    + oborder_margin,
+                   ftop - border_margin,
+                    ftop
+                    + fheight
+                    + border_margin,
                 ),
                 slice(
-                    ofleft - oborder_margin,
-                    ofleft + ofwidth + oborder_margin,
+                    fleft - border_margin,
+                    fleft + fwidth + border_margin,
                 ),
             )
-            ocent_shift = np.array(
-                [ofleft - border_margin, oftop - oborder_margin])
 
             # take the region and mask the background away to aid detection
             fishdet = bg[slices].copy()
-            fishdet[bg_thresh[slices] == 0] = 0
 
             # estimate the position of the head and the approximate
             # direction of the tail
@@ -202,7 +191,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             if head_coords[0] == -1:
                 continue
 
-            head_coords_up = (head_coords+ocent_shift)*bg_downsample
+            head_coords_up = (head_coords+cent_shift)
 
             theta = _fish_direction_n(frame, head_coords_up,
                                       int(round(tail_length/2)))
