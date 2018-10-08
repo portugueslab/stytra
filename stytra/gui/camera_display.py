@@ -10,12 +10,14 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QCheckBox,
+    QDialog,
     QLabel,
 )
 from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 from numba import jit
 from math import sin, cos
+from lightparam.gui import ParameterGui
 
 
 class SimpleCameraViewWWidget(QWidget):
@@ -63,7 +65,7 @@ class CameraViewWidget(QWidget):
             self.gui_timer = QTimer()
             self.gui_timer.setSingleShot(False)
 
-        self.control_params = self.camera.control_params()
+        self.control_params = self.experiment.camera_control_params
 
         # Create the layout for the camera view:
         self.camera_display_widget = pg.GraphicsLayoutWidget()
@@ -90,16 +92,13 @@ class CameraViewWidget(QWidget):
         self.control_queue = self.camera.control_queue
         self.camera_rotation = self.camera.rotation
 
-        # Connect changes in the camera parameters:
-        for c in self.control_params.params.children():
-            c.sigValueChanged.connect(self.update_controls)
-
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.layout.addWidget(self.camera_display_widget)
 
         self.layout_control = QHBoxLayout()
+
         if self.control_queue is not None:
             self.params_button = QPushButton("Camera params")
             self.params_button.clicked.connect(self.show_params_gui)
@@ -113,6 +112,8 @@ class CameraViewWidget(QWidget):
         self.current_image = None
 
         self.setLayout(self.layout)
+
+        self.param_widget = None
 
     def update_controls(self, value):
         """
@@ -175,10 +176,8 @@ class CameraViewWidget(QWidget):
 
     def show_params_gui(self):
         """ """
-        self.camera_params_tree.setParameters(self.control_params.params)
-        self.camera_params_tree.show()
-        self.camera_params_tree.setWindowTitle("Camera parameters")
-        self.camera_params_tree.resize(450, 600)
+        self.param_widget = ParameterGui(self.control_params)
+        self.param_widget.show()
 
 
 class CameraSelection(CameraViewWidget):

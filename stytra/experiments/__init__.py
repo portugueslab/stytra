@@ -370,7 +370,6 @@ class Experiment(QObject):
                         stream.height, stream.width = movie[0].shape[:2]
                         stream.pix_fmt = "yuv420p"
                         for frame in movie:
-
                             vidframe = av.VideoFrame.from_ndarray(
                                 np.ascontiguousarray(frame.astype(np.uint8)), "rgb24"
                             )

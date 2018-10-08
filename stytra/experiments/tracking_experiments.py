@@ -56,6 +56,7 @@ class CameraExperiment(Experiment):
         file for the test input
         :param kwargs:
         """
+
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(
                 camera_config["type"],
@@ -70,9 +71,14 @@ class CameraExperiment(Experiment):
                 max_mbytes_queue=camera_queue_mb,
             )
 
-        self.camera_control_params = CameraControlParameters()
-
         super().__init__(*args, **kwargs)
+
+        self.camera_control_params = CameraControlParameters()
+        # New parameters are sent with GUI timer:
+        self.gui_timer.timeout.connect(self.send_gui_parameters)
+
+    def send_gui_parameters(self):
+        self.camera.control_queue.put(self.camera_control_params.params.values)
 
     def start_experiment(self):
         """ """
@@ -203,8 +209,7 @@ class TrackingExperiment(CameraExperiment):
 
         # Data accumulator is updated with GUI timer:
         self.gui_timer.timeout.connect(self.data_acc.update_list)
-        # New parameters are sent with GUI timer:
-        self.gui_timer.timeout.connect(self.send_new_parameters)
+
         # Tracking is reset at experiment start:
         self.protocol_runner.sig_protocol_started.connect(self.data_acc.reset)
 
@@ -267,7 +272,7 @@ class TrackingExperiment(CameraExperiment):
             # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
 
-    def send_new_parameters(self):
+    def send_gui_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative
         queue.
 
@@ -278,6 +283,7 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
+        super().send_gui_parameters()
         self.processing_params_queue.put(
             {
                 **self.tracking_method.get_clean_values(),

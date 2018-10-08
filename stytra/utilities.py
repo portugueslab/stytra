@@ -1,7 +1,7 @@
 import datetime
 import time
 from collections import OrderedDict
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 from datetime import datetime
 
 import numpy as np
@@ -47,7 +47,7 @@ class FrameProcess(Process):
 
     """
 
-    def __init__(self, n_fps_frames=10):
+    def __init__(self, n_fps_frames=10, record_framerate=True):
         super().__init__()
 
         # Set framerate calculation parameters
@@ -59,6 +59,8 @@ class FrameProcess(Process):
         # Store current time timestamp:
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
+
+        self.framerate_queue = Queue()
 
     def update_framerate(self):
         """Calculate the framerate every n_fps_frames frames."""
@@ -73,6 +75,7 @@ class FrameProcess(Process):
                     )
                 except ZeroDivisionError:
                     self.current_framerate = 0
+                self.framerate_queue.put(self.current_framerate)
 
             self.previous_time_fps = self.current_time
         # Reset i after every n frames

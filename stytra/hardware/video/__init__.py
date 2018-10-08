@@ -12,7 +12,7 @@ from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 import deepdish as dd
 
-from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera
+from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, IMAQCamera
 from stytra.hardware.video.write import VideoWriter
 from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParams
 
@@ -89,7 +89,8 @@ class CameraSource(VideoSource):
     """
 
     camera_class_dict = dict(ximea=XimeaCamera, avt=AvtCamera,
-                             spinnaker=SpinnakerCamera)
+                             spinnaker=SpinnakerCamera,
+                             imaq=IMAQCamera)
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(self, camera_type, *args, downsampling=1, **kwargs):
@@ -126,13 +127,15 @@ class CameraSource(VideoSource):
             # Try to get new parameters from the control queue:
             if self.control_queue is not None:
                 try:
-                    param, value = self.control_queue.get(timeout=0.0001)
-                    self.cam.set(param, value)
+                    param_dict = self.control_queue.get(timeout=0.0001)
+                    for param, value in param_dict.items():
+                        self.cam.set(param, value)
                 except Empty:
                     pass
 
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
+            self.update_framerate()
             if arr is not None:
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
