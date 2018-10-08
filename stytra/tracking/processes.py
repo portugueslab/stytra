@@ -114,37 +114,42 @@ class FrameDispatcher(FrameProcess):
                 except Empty:
                     pass
 
-            # Gets frame from its queue:
-            try:
-                time, frame = self.frame_queue.get(timeout=0.001)
+            # Gets frame from its queue, if the input is too fast, drop frames
+            # and process the latest, if it is too slow continue:
+            frame = None
+            while True:
+                try:
+                    time, frame = self.frame_queue.get(timeout=0.001)
+                except Empty:
+                    break
+            if frame is None:
+                continue
 
-                # If a processing function is specified, apply it:
 
-                if self.preprocessing_cls is not None:
-                    processed = preprocessor.process(
-                        frame, **self.processing_parameters
-                    )
-                else:
-                    processed = frame
+            # If a processing function is specified, apply it:
+            if self.preprocessing_cls is not None:
+                processed = preprocessor.process(
+                    frame, **self.processing_parameters
+                )
+            else:
+                processed = frame
 
-                if self.tracking_cls is not None:
-                    output = tracker.detect(processed, **self.processing_parameters)
-                    self.output_queue.put((datetime.now(), output))
+            if self.tracking_cls is not None:
+                output = tracker.detect(processed, **self.processing_parameters)
+                self.output_queue.put((datetime.now(), output))
 
-                # calculate the frame rate
-                self.update_framerate()
+            # calculate the frame rate
+            self.update_framerate()
 
-                # put current frame into the GUI queue
-                if self.processing_parameters.get("display_processed", "raw") != "raw":
-                    try:
-                        self.send_to_gui(tracker.diagnostic_image)
-                    except AttributeError:
-                        self.send_to_gui(processed)
-                else:
-                    self.send_to_gui(frame)
+            # put current frame into the GUI queue
+            if self.processing_parameters.get("display_processed", "raw") != "raw":
+                try:
+                    self.send_to_gui(tracker.diagnostic_image)
+                except AttributeError:
+                    self.send_to_gui(processed)
+            else:
+                self.send_to_gui(frame)
 
-            except Empty:  # if there is nothing in frame queue
-                pass
         return
 
     def send_to_gui(self, frame):

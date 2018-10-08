@@ -13,6 +13,7 @@ from scipy.linalg import block_diag
 import logging
 from lightparam import Param, Parametrized
 
+
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
         super().__init__()
@@ -81,7 +82,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                persist_fish_for: Param(2, (1, 50), desc="How many frames does the fish persist for if it is not detected"),
                prediction_uncertainty: Param(0.1, (0.0, 10.0)),
 
-               fish_area: Param((100, 400), (1, 40000)),
+               fish_area: Param((100, 400), (1, 2500)),
                border_margin: Param(10, (0, 100)),
                tail_length: Param(50.5, (1.0, 200.0)),
                tail_track_window: Param(3, (3, 70)),
@@ -101,17 +102,29 @@ class FishTrackingMethod(ParametrizedImageproc):
             reset
             or n_fish_max != self.params.n_fish_max
             or n_segments != self.params.n_segments
+            or bg_downsample != self.params.bg_downsample
         ):
             self.reset_state()
+            self.params.params.bg_downsample.value = bg_downsample
+            self.params.params.n_segments.value = n_segments
+            self.params.params.n_fish_max = n_fish_max
 
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
             pfish.predict()
 
+        if bg_downsample != 1:
+            frame_small = cv2.resize(frame, None, fx=1/bg_downsample,
+                                     fy=1/bg_downsample, interpolation=cv2.INTER_AREA)
+        else:
+            frame_small = frame
+
+        area_scale = bg_downsample*bg_downsample
+
         # subtract background
         bg = (
             self.bg_subtractor.process(
-                frame, bg_learning_rate, bg_learn_every
+                frame_small, bg_learning_rate, bg_learn_every
             ))
         bg_thresh = cv2.dilate((bg > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel)
 
@@ -120,8 +133,9 @@ class FishTrackingMethod(ParametrizedImageproc):
             bg_thresh
         )
 
+
         try:
-            max_area = np.max(stats[1:, cv2.CC_STAT_AREA])
+            max_area = np.max(stats[1:, cv2.CC_STAT_AREA])*area_scale
         except ValueError:
             max_area = 0
 
@@ -131,51 +145,50 @@ class FishTrackingMethod(ParametrizedImageproc):
 
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
-            if not (
-                (
-                    fish_area[0] < row[cv2.CC_STAT_AREA] < fish_area[1]
-                )
-                and (row[cv2.CC_STAT_LEFT] - border_margin >= 0)
-                and (
-                    row[cv2.CC_STAT_LEFT]
-                    + row[cv2.CC_STAT_WIDTH]
-                    + border_margin
-                    < frame.shape[1]
-                )
-                and (row[cv2.CC_STAT_TOP] - border_margin >= 0)
-                and (
-                    row[cv2.CC_STAT_TOP]
-                    + row[cv2.CC_STAT_HEIGHT]
-                    + border_margin
-                    < frame.shape[0]
-                )
-            ):
+            if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < \
+                   fish_area[1]:
+                continue
+
+            ftop, fleft, fheight, fwidth = (int(round(row[x] * bg_downsample))
+                                            for x in
+                                            [cv2.CC_STAT_TOP,
+                                             cv2.CC_STAT_LEFT,
+                                             cv2.CC_STAT_HEIGHT,
+                                             cv2.CC_STAT_WIDTH])
+
+            if not ((fleft - border_margin >= 0)
+                and (fleft + fwidth + border_margin < frame.shape[1])
+                and (ftop - border_margin >= 0)
+                and (ftop + fheight + border_margin < frame.shape[0])):
                 continue
 
             # how much is this region shifted from the upper left corner of the image
             cent_shift = np.array(
-                [
-                    row[cv2.CC_STAT_LEFT] - border_margin,
-                    row[cv2.CC_STAT_TOP] - border_margin,
-                ]
-            )
+                [fleft - border_margin, ftop - border_margin])
 
-            # takes the area around the
+            # takes the area around the head contour
+            oftop, ofleft, ofheight, ofwidth = (row[x]
+                                            for x in
+                                            [cv2.CC_STAT_TOP,
+                                             cv2.CC_STAT_LEFT,
+                                             cv2.CC_STAT_HEIGHT,
+                                             cv2.CC_STAT_WIDTH])
 
+            oborder_margin = int(round(border_margin/bg_downsample))
             slices = (
                 slice(
-                    row[cv2.CC_STAT_TOP] - border_margin,
-                    row[cv2.CC_STAT_TOP]
-                    + row[cv2.CC_STAT_HEIGHT]
-                    + border_margin,
+                    oftop - oborder_margin,
+                    oftop
+                    + ofheight
+                    + oborder_margin,
                 ),
                 slice(
-                    row[cv2.CC_STAT_LEFT] - border_margin,
-                    row[cv2.CC_STAT_LEFT]
-                    + row[cv2.CC_STAT_WIDTH]
-                    + border_margin,
+                    ofleft - oborder_margin,
+                    ofleft + ofwidth + oborder_margin,
                 ),
             )
+            ocent_shift = np.array(
+                [ofleft - border_margin, oftop - oborder_margin])
 
             # take the region and mask the background away to aid detection
             fishdet = bg[slices].copy()
@@ -189,14 +202,15 @@ class FishTrackingMethod(ParametrizedImageproc):
             if head_coords[0] == -1:
                 continue
 
-            theta = _fish_direction_n(frame, head_coords + cent_shift,
+            head_coords_up = (head_coords+ocent_shift)*bg_downsample
+
+            theta = _fish_direction_n(frame, head_coords_up,
                                       int(round(tail_length/2)))
 
             # find the points of the tail
             points = find_fish_midline(
                 bg,
-                head_coords[0]+slices[1].start,
-                head_coords[1]+slices[0].start,
+                *head_coords_up,
                 theta,
                 tail_track_window,
                 tail_length / n_segments,

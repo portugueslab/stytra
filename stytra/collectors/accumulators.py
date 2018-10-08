@@ -40,10 +40,12 @@ class Accumulator:
 
     """
 
-    def __init__(self, fps_calc_points=10, monitored_headers=None):
+    def __init__(self, fps_calc_points=10,
+                 header_list=None,
+                 monitored_headers=None):
         """ """
         self.stored_data = []
-        self.header_list = ["t"]
+        self.header_list = ["t"] + (header_list if header_list else [])
         self.monitored_headers = (
             monitored_headers
         )  # headers which are included in the stream plot
@@ -220,7 +222,8 @@ class QueueDataAccumulator(QObject, Accumulator):
         self.stored_data = []
 
         # First data column will always be time:
-        self.header_list.extend(header_list)
+        if header_list:
+            self.header_list.extend(header_list)
 
     def update_list(self):
         """Upon calling put all available data into a list.

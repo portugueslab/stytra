@@ -174,6 +174,8 @@ class Experiment(QObject):
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
+        self.display_framerate_acc = None # TODO display framerate calculation
+
     def save_log(self, log, name, category="tracking"):
         log.save(
             self.filename_base() + name, self.log_format
