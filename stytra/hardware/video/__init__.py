@@ -63,7 +63,6 @@ class VideoSource(FrameProcess):
         self.rotation = rotation
         self.control_queue = Queue()
         self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
-        self.framerate_queue = Queue()
         self.kill_event = Event()
 
 
@@ -137,7 +136,6 @@ class CameraSource(VideoSource):
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             self.update_framerate()
-            self.framerate_queue.put(self.current_framerate)
             if arr is not None:
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:

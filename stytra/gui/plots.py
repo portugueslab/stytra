@@ -77,7 +77,9 @@ class MultiStreamPlot(QWidget):
 
     """
 
-    def __init__(self, time_past=6, bounds_update=0.1, *args, **kwargs):
+    def __init__(self, time_past=6, bounds_update=0.1,
+                 round_bounds=None,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.time_past = time_past
@@ -133,6 +135,7 @@ class MultiStreamPlot(QWidget):
 
         # trick to set color on update
         self.color_set = False
+        self.round_bounds = round_bounds
 
         self.toggle_freeze()
         self.update_zoom(time_past)
@@ -256,6 +259,17 @@ class MultiStreamPlot(QWidget):
         self.accumulators = []
         self.bounds = []
 
+    def _round_bounds(self, bounds):
+        if self.round_bounds >=1:
+            return (int(np.floor(bounds[0]/self.round_bounds))*self.round_bounds,
+                int(np.ceil(
+                    bounds[1] / self.round_bounds)) * self.round_bounds)
+        else:
+            return (
+            np.floor(bounds[0] / self.round_bounds) * self.round_bounds,
+            np.ceil(
+                bounds[1] / self.round_bounds) * self.round_bounds)
+
     def update(self):
         """Function called by external timer to update the plot"""
         if not self.color_set:
@@ -302,12 +316,21 @@ class MultiStreamPlot(QWidget):
                     new_bounds = np.array(new_bounds)
 
                     if self.bounds[i_acc] is None:
-                        self.bounds[i_acc] = new_bounds
+                        if not self.round_bounds:
+                            self.bounds[i_acc] = new_bounds
+                        else:
+                            self.bounds[i_acc] = self.round_bounds(new_bounds)
                     else:
-                        self.bounds[i_acc] = (
-                            self.bounds_update * new_bounds
-                            + (1 - self.bounds_update) * self.bounds[i_acc]
-                        )
+                        if not self.round_bounds:
+                            self.bounds[i_acc] = (
+                                self.bounds_update * new_bounds
+                                + (1 - self.bounds_update) * self.bounds[i_acc]
+                            )
+                        else:
+                            if new_bounds[1] > 1.5*self.bounds[i_acc][1] or \
+                                    new_bounds[0] < 0.5 * self.bounds[i_acc][0]:
+                                self.bounds[i_acc] = self.round_bounds(
+                                    new_bounds)
 
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
@@ -333,8 +356,6 @@ class MultiStreamPlot(QWidget):
                 try:
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
-                        if scale < 0.00001:
-                            scale = 1
                         self.valueLabels[i_stream][0].setText("")
                         self.valueLabels[i_stream][1].setText("")
                         self.valueLabels[i_stream][2].setText("")
@@ -368,3 +389,6 @@ class MultiStreamPlot(QWidget):
         ) in enumerate(self.valueLabels):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
             fps_label.setPos(-self.time_past * 0.9, i_curve + 1)
+
+
+
