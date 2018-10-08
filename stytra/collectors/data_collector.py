@@ -72,13 +72,9 @@ class DataCollector(ParameterTree):
 
         # Try to find previously saved data_log:
         self.last_metadata = None
-        list_metadata = sorted(
-            [fn for fn in os.listdir(folder_path) if fn.endswith(
-                self.metadata_fn)]
-        )
-
-        if len(list_metadata) > 0:
-            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
+        metadata_files = list(self.folder_path.glob("*"+self.metadata_fn))
+        if metadata_files:
+            self.last_metadata = dd.io.load(str(metadata_files[0]))
 
         self.log_data_dict = dict()
         self.params_metadata = None
