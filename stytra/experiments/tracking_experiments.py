@@ -410,20 +410,22 @@ class SwimmingRecordingExperiment(CameraExperiment):
         super().__init__(*args, camera_queue_mb=500, **kwargs)
         self.logger.info("Motion recording experiment")
         self.processing_params_queue = Queue()
-        self.signal_start_rec = Event()
+        self.signal_recording = Event()
+        self.signal_start_recording = Event()
         self.finished_signal = Event()
 
         self.frame_dispatcher = MovingFrameDispatcher(
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
-            signal_start_rec=self.signal_start_rec,
+            signal_recording=self.signal_recording,
+            signal_start_recording=self.signal_start_recording,
             processing_parameter_queue=self.processing_params_queue,
             gui_framerate=20,
         )
 
         self.frame_recorder = VideoWriter(
-            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
-        )  # TODO proper filename
+            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal,
+        )
 
         self.motion_acc = QueueDataAccumulator(
             self.frame_dispatcher.diagnostic_queue,
@@ -460,7 +462,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
     def start_protocol(self):
         """ """
-        self.signal_start_rec.set()
+        self.signal_start_recording.set()
+        self.signal_recording.set()
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
@@ -475,8 +478,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
         """Save tail position and dynamic parameters. Reset what is necessary
 
         """
-
         self.frame_recorder.reset_signal.set()
+        self.signal_recording.clear()
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
             self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
