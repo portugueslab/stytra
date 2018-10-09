@@ -335,9 +335,7 @@ class TrackingExperiment(CameraExperiment):
             except AttributeError:
                 pass
         try:
-            print('trying resetting')
             self.estimator.log.reset()
-            print('reset')
         except AttributeError:
             pass
 

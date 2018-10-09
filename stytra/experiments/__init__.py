@@ -25,6 +25,7 @@ try:
 except ImportError:
     pass
 
+from lightparam import Parametrized, Param
 
 class Experiment(QObject):
     """General class that runs an experiment.
@@ -84,7 +85,7 @@ class Experiment(QObject):
         stim_movie_format="h5",
         rec_stim_every=None,
         display_config=None,
-        trigger=None,
+        scope_triggering=None,
         offline=False,
     ):
         """ """
@@ -93,7 +94,7 @@ class Experiment(QObject):
 
         self.app = app
         self.protocols = protocols
-        self.trigger = trigger
+        self.trigger = scope_triggering
         self.offline = offline
 
         self.asset_dir = dir_assets
@@ -114,7 +115,6 @@ class Experiment(QObject):
 
         self.logger = logging.getLogger()
         self.logger.setLevel("INFO")
-
 
         # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
@@ -139,6 +139,10 @@ class Experiment(QObject):
             self.metadata_animal = AnimalMetadata(tree=self.dc)
         else:
             self.metadata_animal = metadata_animal(tree=self.dc)
+
+        self.gui_params = Parametrized("gui", tree=self.dc,
+                                       params=dict(geometry=Param(None),
+                                                   window_state=Param(None)))
 
         self.protocol_runner = ProtocolRunner(
             experiment=self, protocol=self.default_protocol
@@ -407,6 +411,8 @@ class Experiment(QObject):
         -------
 
         """
+        self.gui_params.window_state = self.window_main.saveState()
+        self.gui_params.geometry = self.window_main.saveGeometry()
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:

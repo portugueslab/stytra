@@ -364,8 +364,7 @@ class MultiStreamPlot(QWidget):
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         self.valueLabels[i_stream][0].setText("")
                         self.valueLabels[i_stream][1].setText("")
-                        self.valueLabels[i_stream][2].setText("")
-                        self.valueLabels[i_stream][4].setText("")
+                        self.valueLabels[i_stream][3].setText("")
                         self.curves[i_stream].setData(x=[], y=[])
                         i_stream += 1
                 except TypeError:
