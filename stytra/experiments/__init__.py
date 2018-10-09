@@ -103,10 +103,14 @@ class Experiment(QObject):
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
 
+        self.dc = DataCollector(folder_path=self.base_dir)
+
         if calibrator is None:
             self.calibrator = CrossCalibrator()
         else:
             self.calibrator = calibrator
+
+        self.dc.add(self.calibrator)
 
         self.window_main = None
         self.scope_config = None
@@ -118,7 +122,7 @@ class Experiment(QObject):
 
         # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
-        self.dc = DataCollector(folder_path=self.base_dir)
+
         # Use the DataCollector object to find the last used protocol,
         #  to restore it
         self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")

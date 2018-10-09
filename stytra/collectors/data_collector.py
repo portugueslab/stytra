@@ -123,7 +123,7 @@ class DataCollector(ParameterTree):
         self.log_data_dict[name] = entry
 
     def get_clean_dict(
-        self, paramstree=True, eliminate_df=False, convert_datetime=False
+        self, **kwargs
     ):
         """Collect data from all sources and put them together in
         the final hierarchical dictionary that will be saved in the .json file.
@@ -148,9 +148,9 @@ class DataCollector(ParameterTree):
             dictionary with the sorted data.
 
         """
-        clean_data_dict = prepare_json(self.serialize())
-
-        return clean_data_dict
+        clean_data_dict = self.serialize()
+        clean_data_dict.update(self.log_data_dict)
+        return prepare_json(clean_data_dict, **kwargs)
 
     def get_last_value(self, class_param_key):
         """Get the last saved value for a specific class_param_key.
