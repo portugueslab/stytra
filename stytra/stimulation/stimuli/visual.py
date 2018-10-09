@@ -243,7 +243,7 @@ class BackgroundStimulus(PositionStimulus):
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.params["mm_px"]
+            mm_px = self._experiment.calibrator.mm_px
         else:
             mm_px = 1
 
@@ -396,7 +396,7 @@ class GratingStimulus(BackgroundStimulus):
     def create_pattern(self):
         l = int(
             self.grating_period
-            / (max(self._experiment.calibrator.params["mm_px"], 0.0001))
+            / (max(self._experiment.calibrator.mm_px, 0.0001))
         )
 
         if self.wave_shape == "square":
@@ -494,7 +494,7 @@ class RadialSineStimulus(InterpolatedStimulus, VisualStimulus):
 
     def paint(self, p, w, h):
         x, y = (
-            (np.arange(d) - d / 2) * self._experiment.calibrator.params["mm_px"]
+            (np.arange(d) - d / 2) * self._experiment.calibrator.mm_px
             for d in (w, h)
         )
 
@@ -729,7 +729,7 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
         super().paint(p, w, h)
 
         if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.params["mm_px"]
+            mm_px = self._experiment.calibrator.mm_px
         else:
             mm_px = 1
 

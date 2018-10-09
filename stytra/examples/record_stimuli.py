@@ -140,7 +140,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         )
 
         self.exp = s.exp
-        self.exp.calibrator.params["mm_px"] = 30 / 400
+        self.exp.calibrator.mm_px = 30 / 400
         s.exp.window_main.widget_control.combo_prot.setCurrentText("protocol_stim")
         s.exp.protocol_runner.sig_protocol_finished.connect(self.waitend)
         s.exp.start_protocol()
