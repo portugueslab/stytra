@@ -74,14 +74,14 @@ class CameraExperiment(Experiment):
             )
             self.camera_control_params = VideoControlParameters(tree=self.dc)
 
-
-        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, "fps")
+        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, ["fps"])
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
+        self.gui_timer.timeout.connect(self.camera_framerate_acc.update_list)
 
     def initialize_plots(self):
-        self.window_main.framerate_widget.add_stream(self.camera_framerate_acc)
+        self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
         self.camera.control_queue.put(self.camera_control_params.params.values)
@@ -94,7 +94,9 @@ class CameraExperiment(Experiment):
     def make_window(self):
         """ """
         self.window_main = CameraExperimentWindow(experiment=self)
+        self.gui_timer.timeout.connect(self.window_main.plot_framerate.update)
         self.window_main.show()
+        self.initialize_plots()
 
     def go_live(self):
         """ """

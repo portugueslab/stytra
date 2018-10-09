@@ -177,13 +177,14 @@ class CameraExperimentWindow(SimpleExperimentWindow):
     def __init__(self, *args, **kwargs):
         self.camera_splitter = QSplitter(Qt.Horizontal)
         self.camera_display = CameraViewWidget(kwargs["experiment"])
-        self.framerate_widget = MultiStreamPlot()
+        self.plot_framerate = MultiStreamPlot(time_past=5, round_bounds=10)
+
         super().__init__(*args, **kwargs)
 
     def construct_ui(self):
         """ """
         previous_widget = super().construct_ui()
-        previous_widget.layout().addWidget(self.framerate_widget)
+        previous_widget.layout().addWidget(self.plot_framerate)
         self.camera_splitter.addWidget(self.camera_display)
         self.camera_splitter.addWidget(previous_widget)
         return self.camera_splitter

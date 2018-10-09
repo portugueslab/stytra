@@ -217,9 +217,6 @@ class MultiStreamPlot(QWidget):
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
 
-            fps_label = pg.TextItem("", anchor=(0, 0))
-            fps_label.setPos(-self.time_past * 0.9, i_curve + 1)
-
             max_label = pg.TextItem("", anchor=(0, 0))
             max_label.setPos(0, i_curve + 1)
 
@@ -232,11 +229,10 @@ class MultiStreamPlot(QWidget):
             self.plotContainter.addItem(curve_label)
             self.plotContainter.addItem(min_label)
             self.plotContainter.addItem(max_label)
-            self.plotContainter.addItem(fps_label)
             self.plotContainter.addItem(value_label)
 
             self.valueLabels.append(
-                (min_label, max_label, fps_label, curve_label, value_label)
+                (min_label, max_label, curve_label, value_label)
             )
             i_curve += 1
 
@@ -260,15 +256,32 @@ class MultiStreamPlot(QWidget):
         self.bounds = []
 
     def _round_bounds(self, bounds):
-        if self.round_bounds >=1:
-            return (int(np.floor(bounds[0]/self.round_bounds))*self.round_bounds,
-                int(np.ceil(
-                    bounds[1] / self.round_bounds)) * self.round_bounds)
+        rounded = np.stack([np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
+                             np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds],
+                           1)
+        if self.round_bounds >= 1:
+            return rounded.astype(np.int32)
         else:
-            return (
-            np.floor(bounds[0] / self.round_bounds) * self.round_bounds,
-            np.ceil(
-                bounds[1] / self.round_bounds) * self.round_bounds)
+            return rounded
+
+    def _update_round_bounds(self, old_bounds, new_bounds):
+        """ If bounds are exceeed by tolerance
+
+        Parameters
+        ----------
+        old_bounds
+        new_bounds
+
+        Returns
+        -------
+
+        """
+        tol_u = 1.2
+        tol_d = 0.6
+        to_update = np.any(np.logical_or(old_bounds*tol_u < new_bounds,
+                                         new_bounds < old_bounds*tol_d), 1)
+        old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
+        return old_bounds
 
     def update(self):
         """Function called by external timer to update the plot"""
@@ -319,7 +332,7 @@ class MultiStreamPlot(QWidget):
                         if not self.round_bounds:
                             self.bounds[i_acc] = new_bounds
                         else:
-                            self.bounds[i_acc] = self.round_bounds(new_bounds)
+                            self.bounds[i_acc] = self._round_bounds(new_bounds)
                     else:
                         if not self.round_bounds:
                             self.bounds[i_acc] = (
@@ -327,10 +340,7 @@ class MultiStreamPlot(QWidget):
                                 + (1 - self.bounds_update) * self.bounds[i_acc]
                             )
                         else:
-                            if new_bounds[1] > 1.5*self.bounds[i_acc][1] or \
-                                    new_bounds[0] < 0.5 * self.bounds[i_acc][0]:
-                                self.bounds[i_acc] = self.round_bounds(
-                                    new_bounds)
+                            self.bounds[i_acc] = self._update_round_bounds(new_bounds, self.bounds[i_acc])
 
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
@@ -338,10 +348,7 @@ class MultiStreamPlot(QWidget):
                             scale = 1
                         self.valueLabels[i_stream][0].setText("{:07.3f}".format(lb))
                         self.valueLabels[i_stream][1].setText("{:07.3f}".format(ub))
-                        self.valueLabels[i_stream][2].setText(
-                            "{:06.2f} FPS".format(fps)
-                        )
-                        self.valueLabels[i_stream][4].setText(
+                        self.valueLabels[i_stream][3].setText(
                             "{:7.3f}".format(data_array[-1, i_var])
                         )
                         self.curves[i_stream].setData(
@@ -355,7 +362,6 @@ class MultiStreamPlot(QWidget):
             else:
                 try:
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
-                        scale = ub - lb
                         self.valueLabels[i_stream][0].setText("")
                         self.valueLabels[i_stream][1].setText("")
                         self.valueLabels[i_stream][2].setText("")
@@ -385,10 +391,9 @@ class MultiStreamPlot(QWidget):
         # shift the labels
         for (
             i_curve,
-            (min_label, max_label, fps_label, curve_label, value_label),
+            (min_label, max_label, curve_label, value_label),
         ) in enumerate(self.valueLabels):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
-            fps_label.setPos(-self.time_past * 0.9, i_curve + 1)
 
 
 
