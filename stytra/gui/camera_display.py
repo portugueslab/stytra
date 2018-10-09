@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QCheckBox,
-    QDialog,
+    QDockWidget,
     QLabel,
 )
 from pyqtgraph.parametertree import ParameterTree
@@ -18,21 +18,6 @@ from skimage.io import imsave
 from numba import jit
 from math import sin, cos
 from lightparam.gui import ParameterGui
-
-
-class SimpleCameraViewWWidget(QWidget):
-    """Core of a widget to stream images from a camera or a video source.
-    It does not require a :class:Experiment <stytra.Experiment> to run.
-    
-    # TODO implement this
-
-    Parameters
-    ----------
-
-    Returns
-    -------
-
-    """
 
 
 class CameraViewWidget(QWidget):
@@ -49,13 +34,13 @@ class CameraViewWidget(QWidget):
 
     """
 
-    def __init__(self, experiment=None):
+    def __init__(self, *args, experiment=None, **kwargs):
         """
         :param experiment: experiment to which this belongs
                            (:class:Experiment <stytra.Experiment> object)
         """
 
-        super().__init__()
+        super().__init__(*args, **kwargs)
 
         self.experiment = experiment
         if experiment is not None:
@@ -98,6 +83,7 @@ class CameraViewWidget(QWidget):
         self.layout.addWidget(self.camera_display_widget)
 
         self.layout_control = QHBoxLayout()
+        self.layout_control.setContentsMargins(10, 0, 10, 10)
 
         if self.control_queue is not None:
             self.params_button = QPushButton("Camera params")

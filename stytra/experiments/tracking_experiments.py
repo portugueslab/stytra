@@ -74,7 +74,7 @@ class CameraExperiment(Experiment):
             )
             self.camera_control_params = VideoControlParameters(tree=self.dc)
 
-        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, ["fps"])
+        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, ["camera"])
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
@@ -94,7 +94,7 @@ class CameraExperiment(Experiment):
     def make_window(self):
         """ """
         self.window_main = CameraExperimentWindow(experiment=self)
-        self.gui_timer.timeout.connect(self.window_main.plot_framerate.update)
+        self.window_main.construct_ui()
         self.window_main.show()
         self.initialize_plots()
 
@@ -236,6 +236,11 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
+        self.tracking_framerate_acc = QueueDataAccumulator(
+            self.frame_dispatcher.framerate_queue, ["tracking"])
+
+        self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
+
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
         """
@@ -252,14 +257,14 @@ class TrackingExperiment(CameraExperiment):
         self.window_main = TrackingExperimentWindow(
             experiment=self, tail=tail, eyes=eyes, fish=fish
         )
-
+        self.window_main.construct_ui()
         self.initialize_plots()
-
         self.window_main.show()
 
     def initialize_plots(self):
         super().initialize_plots()
         self.window_main.stream_plot.add_stream(self.data_acc)
+        self.window_main.plot_framerate.add_stream(self.tracking_framerate_acc)
 
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
