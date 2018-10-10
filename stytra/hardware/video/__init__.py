@@ -9,7 +9,7 @@ import glob
 from multiprocessing import Queue, Event
 from multiprocessing.queues import Empty, Full
 from stytra.utilities import FrameProcess
-from arrayqueues.shared_arrays import TimestampedArrayQueue
+from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, IMAQCamera
@@ -62,7 +62,7 @@ class VideoSource(FrameProcess):
         super().__init__()
         self.rotation = rotation
         self.control_queue = Queue()
-        self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
+        self.frame_queue = IndexedArrayQueue(max_mbytes=max_mbytes_queue)
         self.kill_event = Event()
 
 

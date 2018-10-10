@@ -1,6 +1,6 @@
 import traceback
 
-from multiprocessing import Queue, Event
+from multiprocessing import Queue, Event, Value
 from queue import Empty
 
 from stytra.experiments import Experiment
@@ -178,7 +178,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking_config, **kwargs):
+    def __init__(self, *args, tracking_config, n_dispatchers=2, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -189,9 +189,12 @@ class TrackingExperiment(CameraExperiment):
         """
 
         self.processing_params_queue = Queue()
+        self.tracking_output_queue = Queue()
+        self.processing_counter = Value("i", -1)
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
+        self.n_dispatchers = n_dispatchers
         method_name = tracking_config["tracking_method"]
         preproc_method_name = tracking_config.get("preprocessing_method", None)
 
@@ -200,17 +203,20 @@ class TrackingExperiment(CameraExperiment):
         self.tracking_method = get_tracking_method(method_name)()
 
         self.data_name = self.tracking_method.data_log_name
-        self.frame_dispatcher = FrameDispatcher(
+        self.frame_dispatchers = [FrameDispatcher(
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
             preprocessing_class=preproc_method_name,
             processing_class=method_name,
             processing_parameter_queue=self.processing_params_queue,
+            output_queue=self.tracking_output_queue,
+            processing_counter=self.processing_counter,
+            gui_dispatcher=(i == 0), # only the first process dispatches to the GUI
             gui_framerate=20,
-        )
+        ) for i in range(self.n_dispatchers)]
 
         self.data_acc = QueueDataAccumulator(
-            self.frame_dispatcher.output_queue,
+            self.tracking_output_queue,
             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
             header_list=self.tracking_method.accumulator_headers,
         )
@@ -222,7 +228,8 @@ class TrackingExperiment(CameraExperiment):
         self.protocol_runner.sig_protocol_started.connect(self.data_acc.reset)
 
         # start frame dispatcher process:
-        self.frame_dispatcher.start()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.start()
 
         est_type = tracking_config.get("estimator", None)
         if est_type == "position":
@@ -237,7 +244,7 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = None
 
         self.tracking_framerate_acc = QueueDataAccumulator(
-            self.frame_dispatcher.framerate_queue, ["tracking"])
+            self.frame_dispatchers[0].framerate_queue, ["tracking"])
 
         self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
 
@@ -371,7 +378,8 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().wrap_up(*args, **kwargs)
-        self.frame_dispatcher.terminate()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.terminate()
 
     def excepthook(self, exctype, value, tb):
         """
@@ -393,7 +401,8 @@ class TrackingExperiment(CameraExperiment):
         print("{0}: {1}".format(exctype, value))
         self.finished_sig.set()
         self.camera.terminate()
-        self.frame_dispatcher.terminate()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.terminate()
 
 
 class VRExperiment(TrackingExperiment):
