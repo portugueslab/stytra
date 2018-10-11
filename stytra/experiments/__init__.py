@@ -5,6 +5,7 @@ from queue import Empty
 import numpy as np
 import deepdish as dd
 import logging
+import tempfile
 import multiprocessing_logging
 
 from PyQt5.QtCore import QObject, QTimer
@@ -97,6 +98,9 @@ class Experiment(QObject):
         self.offline = offline
 
         self.asset_dir = dir_assets
+
+        if dir_save is None:
+            dir_save = tempfile.gettempdir()
         self.base_dir = dir_save
         self.database = database
         self.log_format = log_format
