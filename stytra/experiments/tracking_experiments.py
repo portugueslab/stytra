@@ -10,6 +10,7 @@ from stytra.gui.container_windows import (
 )
 from stytra.hardware.video import (
     CameraControlParameters,
+    VideoControlParameters,
     VideoWriter,
     VideoFileSource,
     CameraSource,
@@ -56,7 +57,7 @@ class CameraExperiment(Experiment):
         file for the test input
         :param kwargs:
         """
-
+        super().__init__(*args, **kwargs)
         if camera_config.get("video_file", None) is None:
             self.camera = CameraSource(
                 camera_config["type"],
@@ -64,18 +65,23 @@ class CameraExperiment(Experiment):
                 downsampling=camera_config.get("downsampling", 1),
                 max_mbytes_queue=camera_queue_mb,
             )
+            self.camera_control_params = CameraControlParameters(tree=self.dc)
         else:
             self.camera = VideoFileSource(
                 camera_config["video_file"],
                 rotation=camera_config.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
+            self.camera_control_params = VideoControlParameters(tree=self.dc)
 
-        super().__init__(*args, **kwargs)
+        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, ["camera"])
 
-        self.camera_control_params = CameraControlParameters()
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
+        self.gui_timer.timeout.connect(self.camera_framerate_acc.update_list)
+
+    def initialize_plots(self):
+        self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
         self.camera.control_queue.put(self.camera_control_params.params.values)
@@ -88,7 +94,9 @@ class CameraExperiment(Experiment):
     def make_window(self):
         """ """
         self.window_main = CameraExperimentWindow(experiment=self)
+        self.window_main.construct_ui()
         self.window_main.show()
+        self.initialize_plots()
 
     def go_live(self):
         """ """
@@ -216,20 +224,6 @@ class TrackingExperiment(CameraExperiment):
         # start frame dispatcher process:
         self.frame_dispatcher.start()
 
-        # This probably should happen before starting the camera process??
-        if isinstance(self.tracking_method, TailTrackingMethod):
-            self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-
-        if isinstance(self.tracking_method, FishTrackingMethod):
-            self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-            self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
-                self.refresh_accumulator_headers
-            )
-
         est_type = tracking_config.get("estimator", None)
         if est_type == "position":
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
@@ -241,6 +235,11 @@ class TrackingExperiment(CameraExperiment):
             )
         else:
             self.estimator = None
+
+        self.tracking_framerate_acc = QueueDataAccumulator(
+            self.frame_dispatcher.framerate_queue, ["tracking"])
+
+        self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
 
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
@@ -258,13 +257,14 @@ class TrackingExperiment(CameraExperiment):
         self.window_main = TrackingExperimentWindow(
             experiment=self, tail=tail, eyes=eyes, fish=fish
         )
-
+        self.window_main.construct_ui()
         self.initialize_plots()
-
         self.window_main.show()
 
     def initialize_plots(self):
+        super().initialize_plots()
         self.window_main.stream_plot.add_stream(self.data_acc)
+        self.window_main.plot_framerate.add_stream(self.tracking_framerate_acc)
 
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
@@ -284,9 +284,25 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().send_gui_parameters()
+
+        # TODO deal with parameters that impact the accumulators, maybe automatically link it to receiving something different
+        # if isinstance(self.tracking_method, TailTrackingMethod):
+        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #
+        # if isinstance(self.tracking_method, FishTrackingMethod):
+        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #     self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
+        #         self.refresh_accumulator_headers
+        #     )
+        #
+
         self.processing_params_queue.put(
             {
-                **self.tracking_method.get_clean_values(),
+                **self.tracking_method.params.params.values,
                 **(
                     self.preprocessing_method.get_clean_values()
                     if self.preprocessing_method is not None
@@ -319,9 +335,7 @@ class TrackingExperiment(CameraExperiment):
             except AttributeError:
                 pass
         try:
-            print('trying resetting')
             self.estimator.log.reset()
-            print('reset')
         except AttributeError:
             pass
 
@@ -396,20 +410,22 @@ class SwimmingRecordingExperiment(CameraExperiment):
         super().__init__(*args, camera_queue_mb=500, **kwargs)
         self.logger.info("Motion recording experiment")
         self.processing_params_queue = Queue()
-        self.signal_start_rec = Event()
+        self.signal_recording = Event()
+        self.signal_start_recording = Event()
         self.finished_signal = Event()
 
         self.frame_dispatcher = MovingFrameDispatcher(
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
-            signal_start_rec=self.signal_start_rec,
+            signal_recording=self.signal_recording,
+            signal_start_recording=self.signal_start_recording,
             processing_parameter_queue=self.processing_params_queue,
             gui_framerate=20,
         )
 
         self.frame_recorder = VideoWriter(
-            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
-        )  # TODO proper filename
+            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal,
+        )
 
         self.motion_acc = QueueDataAccumulator(
             self.frame_dispatcher.diagnostic_queue,
@@ -446,7 +462,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
     def start_protocol(self):
         """ """
-        self.signal_start_rec.set()
+        self.signal_start_recording.set()
+        self.signal_recording.set()
         super().start_protocol()
 
     def wrap_up(self, *args, **kwargs):
@@ -461,8 +478,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
         """Save tail position and dynamic parameters. Reset what is necessary
 
         """
-
         self.frame_recorder.reset_signal.set()
+        self.signal_recording.clear()
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
             self.dc.add_static_data(recorded_filename, "tracking_recorded_video")

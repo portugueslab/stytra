@@ -72,13 +72,9 @@ class DataCollector(ParameterTree):
 
         # Try to find previously saved data_log:
         self.last_metadata = None
-        list_metadata = sorted(
-            [fn for fn in os.listdir(folder_path) if fn.endswith(
-                self.metadata_fn)]
-        )
-
-        if len(list_metadata) > 0:
-            self.last_metadata = dd.io.load(folder_path + list_metadata[-1])
+        metadata_files = list(self.folder_path.glob("*"+self.metadata_fn))
+        if metadata_files:
+            self.last_metadata = dd.io.load(str(metadata_files[0]))
 
         self.log_data_dict = dict()
         self.params_metadata = None
@@ -104,7 +100,6 @@ class DataCollector(ParameterTree):
 
         """
         if self.last_metadata is not None:
-            print('deserializing')
             self.deserialize(self.last_metadata)
 
     def add_static_data(self, entry, name="unspecified_entry"):
@@ -128,7 +123,7 @@ class DataCollector(ParameterTree):
         self.log_data_dict[name] = entry
 
     def get_clean_dict(
-        self, paramstree=True, eliminate_df=False, convert_datetime=False
+        self, **kwargs
     ):
         """Collect data from all sources and put them together in
         the final hierarchical dictionary that will be saved in the .json file.
@@ -153,9 +148,9 @@ class DataCollector(ParameterTree):
             dictionary with the sorted data.
 
         """
-        clean_data_dict = prepare_json(self.serialize())
-
-        return clean_data_dict
+        clean_data_dict = self.serialize()
+        clean_data_dict.update(self.log_data_dict)
+        return prepare_json(clean_data_dict, **kwargs)
 
     def get_last_value(self, class_param_key):
         """Get the last saved value for a specific class_param_key.

@@ -75,7 +75,7 @@ class FrameProcess(Process):
                     )
                 except ZeroDivisionError:
                     self.current_framerate = 0
-                self.framerate_queue.put(self.current_framerate)
+                self.framerate_queue.put((self.current_time, (self.current_framerate,)))
 
             self.previous_time_fps = self.current_time
         # Reset i after every n frames

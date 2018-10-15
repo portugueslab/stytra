@@ -110,7 +110,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         points_calib = np.pad(
             calibrator.points, ((0, 0), (0, 1)), mode="constant", constant_values=1
         )
-        points_proj = points_cam @ np.array(calibrator.params["cam_to_proj"]).T
+        points_proj = points_cam @ np.array(calibrator.cam_to_proj).T
         x0, y0 = self.roi_box.pos()
         self.calibration_frame.setData(
             x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0

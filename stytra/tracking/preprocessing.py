@@ -8,7 +8,7 @@ import cv2
 from stytra.tracking import ParametrizedImageproc
 import numpy as np
 from numba import vectorize, uint8, float32
-
+from lightparam import Parametrized, Param
 
 class PreprocMethod(ParametrizedImageproc):
     def __init__(self, *args, **kwargs):
@@ -22,16 +22,14 @@ class PreprocMethod(ParametrizedImageproc):
 class Prefilter(PreprocMethod):
     def __init__(self):
         super().__init__(name="tracking_prefiltering")
-        self.add_params(
-            filter_size=0,
-            image_scale=dict(type="float", value=1.0, limits=(0.01, 1.0)),
-            color_invert=False,
-        )
+        self.params = Parametrized(params=self.process)
 
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process
     def process(
-        self, im, image_scale=1, filter_size=0, color_invert=False, **extraparams
+        self, im, image_scale=Param(1.0, (0.05, 1.0)),
+            filter_size=Param(0,(0,15)), color_invert=Param(False),
+            **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
 
@@ -76,14 +74,9 @@ def negdif(xf, y):
         return 0
 
 
-class BackgorundSubtractor(PreprocMethod):
+class BackgorundSubtractor():
     def __init__(self):
-        super().__init__(name="tracking_bgsubtraction")
-        self.add_params(
-            learning_rate=dict(type="float", value=0.01, limits=(0.001, 1.0)),
-            learn_every=dict(type="int", value=1, limits=(1, 1000)),
-            reset=dict(type="bool", value=False),
-        )
+        super().__init__()
         self.background_image = None
         self.i = 0
 

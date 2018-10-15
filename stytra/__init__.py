@@ -17,6 +17,7 @@ from PyQt5.QtGui import QIcon
 import pkg_resources
 import qdarkstyle
 
+import pyqtgraph as pg
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
@@ -99,7 +100,8 @@ class Stytra:
         recording_config=None,
         embedded=True,
         exec=True,
-        **kwargs
+        scope_triggering=None,
+        **kwargs,
     ):
 
         app = QApplication([])
@@ -108,6 +110,11 @@ class Stytra:
             app=app, calibrator=(CircleCalibrator() if not embedded else None)
         )
         class_kwargs.update(kwargs)
+
+
+        if scope_triggering=='zmq':
+            from stytra.triggering import ZmqTrigger
+            class_kwargs['trigger'] = ZmqTrigger(port='5555')
 
         base = Experiment
 
@@ -127,6 +134,8 @@ class Stytra:
                 QSize(size, size),
             )
         app.setWindowIcon(app_icon)
+
+        pg.setConfigOptions(imageAxisOrder="row-major")
 
         self.exp = base(**class_kwargs)
 

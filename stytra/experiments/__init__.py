@@ -5,6 +5,7 @@ from queue import Empty
 import numpy as np
 import deepdish as dd
 import logging
+import tempfile
 import multiprocessing_logging
 
 from PyQt5.QtCore import QObject, QTimer
@@ -25,6 +26,7 @@ try:
 except ImportError:
     pass
 
+from lightparam import Parametrized, Param
 
 class Experiment(QObject):
     """General class that runs an experiment.
@@ -84,41 +86,47 @@ class Experiment(QObject):
         stim_movie_format="h5",
         rec_stim_every=None,
         display_config=None,
-        trigger=None,
+        scope_triggering=None,
         offline=False,
     ):
         """ """
         super().__init__()
-        multiprocessing_logging.install_mp_handler()
 
         self.app = app
         self.protocols = protocols
-        self.trigger = trigger
+        self.trigger = scope_triggering
         self.offline = offline
 
         self.asset_dir = dir_assets
+
+        if dir_save is None:
+            dir_save = tempfile.gettempdir()
         self.base_dir = dir_save
         self.database = database
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
 
+        self.dc = DataCollector(folder_path=self.base_dir)
+
         if calibrator is None:
             self.calibrator = CrossCalibrator()
         else:
             self.calibrator = calibrator
+
+        self.dc.add(self.calibrator)
 
         self.window_main = None
         self.scope_config = None
         self.abort = False
 
         self.logger = logging.getLogger()
+        multiprocessing_logging.install_mp_handler(self.logger)
         self.logger.setLevel("INFO")
-
 
         # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
-        self.dc = DataCollector(folder_path=self.base_dir)
+
         # Use the DataCollector object to find the last used protocol,
         #  to restore it
         self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
@@ -139,6 +147,10 @@ class Experiment(QObject):
             self.metadata_animal = AnimalMetadata(tree=self.dc)
         else:
             self.metadata_animal = metadata_animal(tree=self.dc)
+
+        self.gui_params = Parametrized("gui", tree=self.dc,
+                                       params=dict(geometry=Param(None),
+                                                   window_state=Param(None)))
 
         self.protocol_runner = ProtocolRunner(
             experiment=self, protocol=self.default_protocol
@@ -173,6 +185,8 @@ class Experiment(QObject):
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
+
+        self.display_framerate_acc = None # TODO display framerate calculation
 
     def save_log(self, log, name, category="tracking"):
         log.save(
@@ -229,6 +243,7 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
+        self.window_main.construct_ui()
         self.window_main.show()
 
     def initialize_metadata(self):
@@ -404,6 +419,8 @@ class Experiment(QObject):
         -------
 
         """
+        self.gui_params.window_state = self.window_main.saveState()
+        self.gui_params.geometry = self.window_main.saveGeometry()
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:

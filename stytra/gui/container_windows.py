@@ -7,12 +7,12 @@ from PyQt5.QtWidgets import (
     QWidget,
     QHBoxLayout,
     QPushButton,
-    QComboBox,
     QPlainTextEdit,
     QMainWindow,
     QCheckBox,
     QVBoxLayout,
     QSplitter,
+    QDockWidget,
 )
 
 from pyqtgraph.parametertree import ParameterTree
@@ -75,14 +75,6 @@ class DebugLabel(QLabel):
             self.setStyleSheet("background-color: #002b36")
 
 
-class TrackingSettingsGui(QWidget):
-    """ """
-
-    def __init__(self):
-        self.combo_method = QComboBox()
-        self.combo_method.set_editable(False)
-
-
 class SimpleExperimentWindow(QMainWindow):
     """Window for controlling a simple experiment including only a monitor
     the relative controls and the buttons for data_log and protocol control.
@@ -121,9 +113,9 @@ class SimpleExperimentWindow(QMainWindow):
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
 
-        self.setCentralWidget(self.construct_ui())
-
         self.metadata_win = None
+
+        self.docks = []
 
     def show_metadata_gui(self):
         """ """
@@ -157,6 +149,7 @@ class SimpleExperimentWindow(QMainWindow):
         central_layout = QHBoxLayout()
         central_layout.addLayout(protocol_layout)
         central_widget.setLayout(central_layout)
+        self.setCentralWidget(central_widget)
         return central_widget
 
     def write_log(self, msg):
@@ -182,17 +175,38 @@ class SimpleExperimentWindow(QMainWindow):
 class CameraExperimentWindow(SimpleExperimentWindow):
     """ """
 
-    def __init__(self, *args, **kwargs):
-        self.camera_splitter = QSplitter(Qt.Horizontal)
-        self.camera_display = CameraViewWidget(kwargs["experiment"])
-        super().__init__(*args, **kwargs)
+    def __init__(self, fish=False, tail=False, eyes=False, **kwargs):
+        super().__init__(**kwargs)
+
+        if fish:
+            self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
+        elif tail or eyes:
+            self.camera_display = CameraEmbeddedTrackingSelection(
+                experiment=kwargs["experiment"], tail=tail, eyes=eyes
+            )
+        else:
+            self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
+
+        self.plot_framerate = MultiStreamPlot(time_past=5, round_bounds=10)
 
     def construct_ui(self):
-        """ """
         previous_widget = super().construct_ui()
-        self.camera_splitter.addWidget(self.camera_display)
-        self.camera_splitter.addWidget(previous_widget)
-        return self.camera_splitter
+
+        self.experiment.gui_timer.timeout.connect(
+            self.plot_framerate.update)
+
+        self.setCentralWidget(previous_widget)
+        dockCamera = QDockWidget("Camera", self)
+        dockCamera.setWidget(self.camera_display)
+
+        dockFramerate = QDockWidget("Frame rates", self)
+        dockFramerate.setWidget(self.plot_framerate)
+
+        self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
+        self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
+        self.docks.extend([dockCamera, dockFramerate])
+
+        return previous_widget
 
 
 class DynamicStimExperimentWindow(SimpleExperimentWindow):
@@ -230,7 +244,7 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         return self.monitoring_widget
 
 
-class TrackingExperimentWindow(SimpleExperimentWindow):
+class TrackingExperimentWindow(CameraExperimentWindow):
     """Window for controlling an experiment where the tail of an
     embedded fish is tracked.
 
@@ -245,32 +259,18 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
     def __init__(
         self, tracking=True, tail=False, eyes=False, fish=False, *args, **kwargs
     ):
+        super().__init__(*args,  tail=tail, eyes=eyes, fish=fish,**kwargs)
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
         self.eyes = eyes
         self.fish = fish
 
-        if fish:
-            self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
-        elif tail or eyes:
-            self.camera_display = CameraEmbeddedTrackingSelection(
-                experiment=kwargs["experiment"], tail=tail, eyes=eyes
-            )
-        else:
-            self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
-
-        self.camera_splitter = QSplitter(Qt.Horizontal)
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        # Stream plot:
-        # if eyes:
-        time_past = 30
-        # else:
-        #     time_past = 5
-        self.stream_plot = MultiStreamPlot(time_past=time_past)
+        self.stream_plot = MultiStreamPlot()
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
@@ -296,36 +296,38 @@ class TrackingExperimentWindow(SimpleExperimentWindow):
 
         self.track_params_wnd = None
 
-        super().__init__(*args, **kwargs)
-
     def construct_ui(self):
         """ """
-        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         previous_widget = super().construct_ui()
-        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
-        self.monitoring_layout.addWidget(previous_widget)
-        self.monitoring_layout.setStretch(1, 1)
-        self.monitoring_layout.setStretch(0, 1)
-        self.camera_splitter.addWidget(self.camera_display)
-        self.camera_splitter.addWidget(self.monitoring_widget)
-        return self.camera_splitter
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update) # TODO put in right place
+        monitoring_widget = QWidget()
+        monitoring_widget.setLayout(self.monitoring_layout)
+        monitoring_dock = QDockWidget("Tracking", self)
+        monitoring_dock.setWidget(monitoring_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+        self.docks.append(monitoring_dock)
+        return previous_widget
 
     def open_tracking_params_tree(self):
         """ """
-        self.track_params_wnd = ParameterTree()
+        self.track_params_wnd = QWidget()
+        self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "tracking_method"):
-            self.track_params_wnd.addParameters(self.experiment.tracking_method.params)
+            self.track_params_wnd.layout().addWidget(QLabel("Tracking method"))
+            self.track_params_wnd.layout().addWidget(ParameterGui(self.experiment.tracking_method.params))
         if (
             hasattr(self.experiment, "preprocessing_method")
             and self.experiment.preprocessing_method is not None
         ):
+            self.track_params_wnd.layout().addWidget(QLabel("Preprocessing method"))
             self.track_params_wnd.addParameters(
-                self.experiment.preprocessing_method.params
+                self.track_params_wnd.layout().addWidget(
+                    ParameterGui(self.experiment.preprocessing_method.params))
             )
         if hasattr(self.experiment, "motion_detection_params"):
-            self.track_params_wnd.addParameters(
-                self.experiment.motion_detection_params.params
-            )
+            self.track_params_wnd.layout().addWidget(QLabel("Motion detection"))
+            self.track_params_wnd.layout().addWidget(
+                ParameterGui(self.experiment.motion_detection_params))
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()

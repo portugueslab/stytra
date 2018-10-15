@@ -14,7 +14,7 @@ import deepdish as dd
 
 from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, IMAQCamera
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParams
+from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParameters
 
 import time
 
@@ -166,7 +166,7 @@ class VideoFileSource(VideoSource):
         self.source_file = source_file
         self.loop = loop
         self.framerate = framerate
-        self.control_params = VideoControlParams
+        self.control_params = VideoControlParameters
         self.offset = 0
         self.paused = False
         self.old_frame = None
@@ -225,15 +225,17 @@ class VideoFileSource(VideoSource):
 
                 if self.control_queue is not None:
                     try:
-                        name, value = self.control_queue.get(timeout=0.0001)
-                        if name == "framerate":
-                            delta_t = 1 / value
-                        elif name == "offset":
-                            if value != self.offset:
-                                cap.set(cv2.CAP_PROP_POS_FRAMES, value)
-                                self.offset = value
-                        elif name == "paused":
-                            self.paused = value
+                        # TODO make nicer
+                        param_dict = self.control_queue.get(timeout=0.0001)
+                        for name, value in param_dict.items():
+                            if name == "framerate":
+                                delta_t = 1 / value
+                            elif name == "offset":
+                                if value != self.offset:
+                                    cap.set(cv2.CAP_PROP_POS_FRAMES, value)
+                                    self.offset = value
+                            elif name == "paused":
+                                self.paused = value
                     except Empty:
                         pass
 
