@@ -11,6 +11,7 @@ from itertools import chain
 from scipy.linalg import block_diag
 
 import logging
+from stytra.tracking.simple_kalman import SimpleKalman
 
 
 class FishTrackingMethod(ParametrizedImageproc):
@@ -307,7 +308,8 @@ class Fish:
         self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
 
         self.f.Q = block_diag(
-            *[  np.array([[0.,0.],[0., uc*pred_coef]])
+            *[  np.array([[0., 0.],
+                          [0., uc*pred_coef]])
                 # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
                 for uc in uncertanties
             ]
@@ -368,6 +370,9 @@ def fish_start_n(mask, take_min=50):
     x0 = mom["m10"] / mom["m00"]
     return np.array([x0, y0])
 
+
+# Utilities for drawing circlses.
+
 @jit(nopython=True)
 def _symmetry_points(x0, y0, x, y):
     return [
@@ -380,6 +385,7 @@ def _symmetry_points(x0, y0, x, y):
         (x0 + y, y0 - x),
         (x0 - y, y0 - x),
     ]
+
 
 @jit(nopython=True)
 def _circle_points(x0, y0, radius):
@@ -430,3 +436,7 @@ def _fish_direction_n(image, start_loc, radius):
             min_val = image[y, x]
             min_point = (x, y)
     return np.arctan2(min_point[1]-centre_int[1], min_point[0]-centre_int[0])
+
+@jit(nopython=True)
+def _minimal_angle_dif(th_old, th_new):
+    return th_old + np.mod(th_new - th_old + np.pi, np.pi * 2) - np.pi
