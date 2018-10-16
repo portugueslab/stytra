@@ -1,25 +1,26 @@
 import numpy as np
 from numba import jit
 import cv2
+from lightparam import Param, Parametrized
 from stytra.tracking import ParametrizedImageproc
 
 
 class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
-    def __init__(self, **kwargs):
-        super().__init__(name="tracking_tail_params", **kwargs)
+    def __init__(self,*args, **kwargs):
+        super().__init__(*args, **kwargs)
         # TODO maybe getting default values here:
-        self.add_params(
-            n_segments=dict(value=10, type="int", limits=(2, 50)),
-            tail_start=dict(value=(440, 225), visible=False),
-            tail_length=dict(value=(-250, 30), visible=False),
-        )
-        self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
-        ]
+        # self.add_params(
+        #     n_segments=dict(value=10, type="int", limits=(2, 50)),
+        #     tail_start=dict(value=(440, 225), visible=False),
+        #     tail_length=dict(value=(-250, 30), visible=False),
+        # )
+        # self.accumulator_headers = ["tail_sum"] + [
+        #     "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        # ]
         self.monitored_headers = ["tail_sum"]
-        self.data_log_name = "behaviour_tail_log"
+        self.data_log_name = "tail_track"
 
     def reset_state(self):
         self.accumulator_headers = ["tail_sum"] + [
@@ -32,18 +33,22 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        self.add_params(
-            window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
-        )
+        # self.add_params(
+        #     window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
+        # )
+        self.params = Parametrized(name="tracking/tail_centroids",
+                                   params=self.detect)
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)]
 
     def detect(
         self,
         im,
-        tail_start=(0, 0),
-        tail_length=(1, 1),
-        n_segments=12,
-        window_size=7,
-        image_scale=1,
+        tail_start: Param((0, 0), gui=False),
+        tail_length: Param((1, 1), gui=False),
+        n_segments: Param(12),
+        window_size: Param(7),
+        image_scale: Param(1),
         **extraparams
     ):
         """Finds the tail for an embedded fish, given the starting point and
@@ -118,16 +123,20 @@ class AnglesTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        self.add_params(dark_tail=False)
+        # self.add_params(dark_tail=False)
+        self.params = Parametrized(name="tracking/tail_angles",
+                                   params=self.detect)
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)]
 
     def detect(
         self,
         im,
-        tail_start=(0, 0),
-        n_segments=7,
-        tail_length=(1, 1),
-        dark_tail=False,
-        image_scale=1,
+        tail_start: Param((0, 0), gui=False),
+        n_segments: Param(7),
+        tail_length: Param((1, 1), gui=False),
+        dark_tail: Param(False),
+        image_scale: Param(1),
         **extraparams
     ):
         """Tail tracing based on min (or max) detection on arches. Wraps

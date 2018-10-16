@@ -394,11 +394,10 @@ class GratingStimulus(BackgroundStimulus):
         self.name = "gratings"
 
     def create_pattern(self):
-        l = int(
+        l = max(2, int(
             self.grating_period
             / (max(self._experiment.calibrator.mm_px, 0.0001))
-        )
-
+        ))
         if self.wave_shape == "square":
             self._pattern = np.ones((l, 3), np.uint8) * self.color_1
             self._pattern[int(l / 2) :, :] = self.color_2
