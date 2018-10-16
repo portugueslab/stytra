@@ -513,7 +513,7 @@ def _tail_points_from_coords(coords, seglen):
 
     xs = []
     ys = []
-    angles = np.zeros(coords.shape[1] - 5)
+    angles = np.zeros(coords.shape[1] - 6)
     for i_fish in range(coords.shape[0]):
         xs.append(coords[i_fish, 2])
         ys.append(coords[i_fish, 0])
@@ -552,7 +552,7 @@ class CameraViewFish(CameraViewCalib):
             n_fish = int(last_header_item[1])+1
 
             n_data_per_fish = len(self.experiment.data_acc.stored_data[-1]) - 2 # the first is time, the last is area
-            n_points_tail = n_data_per_fish - 5
+            n_points_tail = n_data_per_fish - 6
             try:
                 retrieved_data = np.array(
                     self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area

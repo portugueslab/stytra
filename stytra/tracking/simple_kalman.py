@@ -3,8 +3,8 @@ import numpy as np
 
 
 class SimpleKalman:
-    def __init__(self, n_dims, F, R, P, Q, H):
-        self.x = np.zeros((n_dims, 1))
+    def __init__(self, x0, F, R, P, Q, H):
+        self.x = x0
         self.F = F
         self.R = R
         self.P = P
