@@ -31,7 +31,7 @@ def _update(z, x, P, R):
     y = z - x[0]
 
     # project system uncertainty into measurement space
-    S = P[1, 1] + R
+    S = P[0, 0] + R
     K = P[:, 0] / S
 
     x = x + K * y

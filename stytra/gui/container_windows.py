@@ -96,14 +96,17 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.setWindowTitle("Stytra")
 
+        self.docks = []
+
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.widget_control = ProtocolControlToolbar(experiment.protocol_runner)
+        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner,
+                                                      self)
 
         # Connect signals from the protocol_control:
-        self.widget_control.sig_start_protocol.connect(experiment.start_protocol)
-        self.widget_control.sig_stop_protocol.connect(experiment.end_protocol)
+        self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
+        self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
         self.button_metadata = QPushButton("Edit metadata")
 
         if experiment.trigger is not None:
@@ -115,7 +118,6 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.metadata_win = None
 
-        self.docks = []
 
     def show_metadata_gui(self):
         """ """
@@ -141,10 +143,10 @@ class SimpleExperimentWindow(QMainWindow):
         protocol_layout.addWidget(
             CollapsibleWidget(self.logger.widget, "Log", expanded=False)
         )
-        self.addToolBar(Qt.TopToolBarArea, self.widget_control)
+        self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
         if self.experiment.trigger is not None:
             protocol_layout.addWidget(self.chk_scope)
-        protocol_layout.addWidget(self.button_metadata)
+        self.toolbar_control.addWidget(self.button_metadata)
 
         central_layout = QHBoxLayout()
         central_layout.addLayout(protocol_layout)

@@ -1,10 +1,10 @@
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (
     QHBoxLayout,
-    QWidget,
+    QDockWidget,
     QComboBox,
     QProgressBar,
-    QToolBar
+    QToolBar,
 )
 
 from lightparam.gui import ParameterGui
@@ -36,14 +36,14 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
-    def __init__(self, protocol_runner=None, *args):
+    def __init__(self, protocol_runner=None, main_window=None):
         """ """
-        super().__init__(*args)
+        super().__init__("Protocol running")
+        self.main_window = main_window
         self.protocol_runner = protocol_runner
 
         self.toggleStatus = self.addAction("▶")
         self.toggleStatus.triggered.connect(self.toggle_protocol_running)
-
 
         # Dropdown menu with the protocol classes found in the Experiment:
         self.combo_prot = QComboBox()
@@ -78,11 +78,11 @@ class ProtocolControlToolbar(QToolBar):
     def show_stim_params_gui(self):
         """Create and show window to update protocol parameters.
         """
-        self.prot_param_win = QWidget()
-        self.prot_param_win.setLayout(QHBoxLayout())
-        self.prot_param_win.layout().addWidget(
+        self.prot_param_win = QDockWidget("Protocol parameters", self.main_window)
+        self.prot_param_win.setWidget(
             ParameterGui(self.protocol_runner.protocol))
-        self.prot_param_win.show()
+        self.main_window.docks.append(self.prot_param_win)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.prot_param_win)
 
     def toggle_protocol_running(self):
         """Emit the start and stop signals. These can be used in the Experiment
@@ -124,7 +124,7 @@ class ProtocolControlToolbar(QToolBar):
         self.progress_bar.setValue(int(self.protocol_runner.t))
         rem = (self.protocol_runner.duration-self.protocol_runner.t)
         rem_min = int(floor(rem/60))
-        self.progress_bar.setFormat("{}/{} s, {}:{} remaining".format(
+        self.progress_bar.setFormat("{}/{}s ({}:{} remaining)".format(
             int(self.protocol_runner.t), int(self.protocol_runner.duration),
             rem_min, int(rem-rem_min*60)
         )

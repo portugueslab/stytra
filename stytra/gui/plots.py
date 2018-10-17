@@ -262,7 +262,7 @@ class MultiStreamPlot(QWidget):
 
     def _round_bounds(self, bounds):
         rounded = np.stack([np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
-                             np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds],
+                            np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds],
                            1)
         if self.round_bounds >= 1:
             return rounded.astype(np.int32)
