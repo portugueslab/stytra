@@ -20,7 +20,7 @@ from stytra.tracking.movement import MovementDetectionParameters
 
 # imports for tracking
 
-from stytra.collectors import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
 from stytra.tracking.tail import TailTrackingMethod
@@ -178,7 +178,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking_config, n_dispatchers=2, **kwargs):
+    def __init__(self, *args, tracking_config, n_tracking_processes=2, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -194,7 +194,7 @@ class TrackingExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.n_dispatchers = n_dispatchers
+        self.n_dispatchers = n_tracking_processes
         method_name = tracking_config["tracking_method"]
         preproc_method_name = tracking_config.get("preprocessing_method", None)
 
@@ -243,8 +243,9 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
-        self.tracking_framerate_acc = QueueDataAccumulator(
-            self.frame_dispatchers[0].framerate_queue, ["tracking"])
+        self.tracking_framerate_acc = QueueSummingAccumulator(
+            [fd.framerate_queue for fd in self.frame_dispatchers],
+            ["tracking"])
 
         self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
 
@@ -306,16 +307,16 @@ class TrackingExperiment(CameraExperiment):
         #         self.refresh_accumulator_headers
         #     )
         #
-
-        self.processing_params_queue.put(
-            {
-                **self.tracking_method.params.params.values,
-                **(
-                    self.preprocessing_method.get_clean_values()
-                    if self.preprocessing_method is not None
-                    else {}
-                ),
-            }
+        for i in range(self.n_dispatchers):
+            self.processing_params_queue.put(
+                {
+                    **self.tracking_method.params.params.values,
+                    **(
+                        self.preprocessing_method.params.values
+                        if self.preprocessing_method is not None
+                        else {}
+                    ),
+                }
         )
 
     def start_protocol(self):
