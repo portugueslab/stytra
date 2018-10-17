@@ -62,7 +62,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params.n_fish_max)
         self.recorded = np.full(
-            (self.params.n_fish_max, 6 + self.params.n_segments - 1), np.nan
+            (self.params.n_fish_max, 3*2 + self.params.n_segments - 1), np.nan
         )
         self.logger = logging.getLogger()
 
@@ -263,7 +263,6 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.diagnostic_image = fishdet
         elif display_processed == "thresholded for eye and swim bladder":
             self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
-
         return tuple(self.recorded.flatten()) + (max_area * 1.0,)
 
 
