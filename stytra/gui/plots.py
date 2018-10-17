@@ -78,38 +78,40 @@ class MultiStreamPlot(QWidget):
     """
 
     def __init__(self, time_past=30, bounds_update=0.1,
-                 round_bounds=None,
+                 round_bounds=None, compact=False,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.time_past = time_past
+        self.compact = compact
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
 
-        self.control_layout = QHBoxLayout()
-        self.control_layout.setContentsMargins(0, 0, 0, 0)
+        if not compact:
+            self.control_layout = QHBoxLayout()
+            self.control_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.btn_freeze = QPushButton()
-        self.btn_freeze.setMinimumSize(80, 16)
-        self.btn_freeze.clicked.connect(self.toggle_freeze)
-        self.control_layout.addWidget(self.btn_freeze)
+            self.btn_freeze = QPushButton()
+            self.btn_freeze.setMinimumSize(80, 16)
+            self.btn_freeze.clicked.connect(self.toggle_freeze)
+            self.control_layout.addWidget(self.btn_freeze)
 
-        self.lbl_zoom = QLabel("Plot past ")
-        self.spn_zoom = QDoubleSpinBox()
-        self.spn_zoom.setValue(time_past)
-        self.spn_zoom.setSuffix("s")
-        self.spn_zoom.setMinimum(0.1)
-        self.spn_zoom.setMaximum(30)
-        self.spn_zoom.valueChanged.connect(self.update_zoom)
+            self.lbl_zoom = QLabel("Plot past ")
+            self.spn_zoom = QDoubleSpinBox()
+            self.spn_zoom.setValue(time_past)
+            self.spn_zoom.setSuffix("s")
+            self.spn_zoom.setMinimum(0.1)
+            self.spn_zoom.setMaximum(30)
+            self.spn_zoom.valueChanged.connect(self.update_zoom)
 
-        self.control_layout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        )
-        self.control_layout.addWidget(self.lbl_zoom)
-        self.control_layout.addWidget(self.spn_zoom)
+            self.control_layout.addItem(
+                QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            )
+            self.control_layout.addWidget(self.lbl_zoom)
+            self.control_layout.addWidget(self.spn_zoom)
 
-        self.layout().addLayout(self.control_layout)
+            self.layout().addLayout(self.control_layout)
 
         self.plotContainter = pg.PlotWidget()
         self.plotContainter.showAxis("left", False)
@@ -373,10 +375,12 @@ class MultiStreamPlot(QWidget):
     def toggle_freeze(self):
         self.frozen = not self.frozen
         if self.frozen:
-            self.btn_freeze.setText("Live plot")
+            if not self.compact:
+                self.btn_freeze.setText("Live plot")
             self.plotContainter.plotItem.vb.setMouseEnabled(x=True, y=True)
         else:
-            self.btn_freeze.setText("Freeze plot")
+            if not self.compact:
+                self.btn_freeze.setText("Freeze plot")
             self.plotContainter.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainter.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)

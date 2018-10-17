@@ -247,6 +247,47 @@ class QueueDataAccumulator(QObject, Accumulator):
                 break
 
 
+class QueueSummingAccumulator(QObject, Accumulator):
+    def __init__(self, data_queues, header_list=None, **kwargs):
+        """ Accumulator using for summing inputs, current use
+        for summing framerates of multiple dispatchers"""
+        super().__init__(**kwargs)
+
+        # Store externally the starting time make us free to keep
+        # only time differences in milliseconds in the list (faster)
+        self.starting_time = None
+
+        self.data_queues = data_queues
+        self.stored_data = []
+
+        # First data column will always be time:
+        if header_list:
+            self.header_list.extend(header_list)
+
+    def update_list(self):
+        """Upon calling put all available data into a list.
+        """
+        while True:
+            try:
+                # Get data from queue:
+                d_s = 0
+                for q in self.data_queues:
+                    t, data = q.get(timeout=0.00001)
+                    d_s += data[0]
+
+                # If we are at the starting time:
+                if len(self.stored_data) == 0:
+                    self.starting_time = t
+
+                # Time in ms (for having np and not datetime objects)
+                t_ms = (t - self.starting_time).total_seconds()
+
+                # append:
+                l = (t_ms, d_s)
+                self.stored_data.append(l)
+            except Empty:
+                break
+
 class DynamicLog(Accumulator):
     """Accumulator to save feature of a stimulus, e.g. velocity of gratings
     in a closed-loop experiment.

@@ -187,7 +187,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         else:
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
-        self.plot_framerate = MultiStreamPlot(time_past=5, round_bounds=10)
+        self.plot_framerate = MultiStreamPlot(time_past=5, round_bounds=10, compact=True)
 
     def construct_ui(self):
         previous_widget = super().construct_ui()

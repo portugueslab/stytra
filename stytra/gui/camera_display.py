@@ -68,8 +68,8 @@ class CameraViewWidget(QWidget):
         self.camera_display_widget.addItem(self.display_area)
 
         # Queue of frames coming from the camera
-        if hasattr(experiment, "frame_dispatcher"):
-            self.frame_queue = self.experiment.frame_dispatcher.gui_queue
+        if hasattr(experiment, "frame_dispatchers"):
+            self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
         else:
             self.frame_queue = self.camera.frame_queue
 

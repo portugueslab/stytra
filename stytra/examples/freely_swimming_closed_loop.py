@@ -45,4 +45,5 @@ if __name__ == "__main__":
         log_format="csv",
         embedded=False,
         display_config=dict(full_screen=False),
+        n_tracking_processes=1,
     )
