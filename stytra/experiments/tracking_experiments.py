@@ -34,7 +34,7 @@ from stytra.stimulation.estimators import (
 )
 
 import sys
-
+import logging
 
 class CameraExperiment(Experiment):
     """General class for Experiment that need to handle a camera.
@@ -178,7 +178,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking_config, n_tracking_processes=2, **kwargs):
+    def __init__(self, *args, tracking_config, n_tracking_processes=1, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -248,6 +248,8 @@ class TrackingExperiment(CameraExperiment):
             ["tracking"])
 
         self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
+        self.logger.info("Tracking with ", self.n_dispatchers, " processess")
+
 
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
