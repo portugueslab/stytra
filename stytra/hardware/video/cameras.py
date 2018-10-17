@@ -459,7 +459,7 @@ class SpinnakerCamera(Camera):
         self.system.ReleaseInstance()
 
 
-class IMAQCamera(Camera):
+class MikrotronCLCamera(Camera):
     def __init__(self, *args, camera_id="img0", **kwargs):
         super().__init__(*args, **kwargs)
         self.cam_id = ctypes.c_char_p(bytes(camera_id, "ansi"))
@@ -477,6 +477,17 @@ class IMAQCamera(Camera):
     def open_camera(self):
         int_opened = self.imaq.imgInterfaceOpen(self.cam_id, ctypes.byref(self.interface_id))
         session_opened = self.imaq.imgSessionOpen(self.interface_id, ctypes.byref(self.session_id))
+
+        # TODO read from serial
+        # command = ctypes.c_char_p(bytes(":v", "ansi"))
+        # self.imaq.imgSessionSerialWrite(self.session_id, command, len(command.value), 100)
+        # response = ctypes.create_string_buffer(256)
+        # self.imaq.imgSessionSerialRead(self.session_id,response, 256, 100)
+        # print(response.value)
+
+        h, w = 1024, 1024
+        self.imaq.imgSessionConfigureROI(self.session_id, ctypes.c_uint32(0), ctypes.c_uint32(0), ctypes.c_uint32(h),
+                                         ctypes.c_uint32(w));
         self.imaq.imgGrabSetup(self.session_id, 1)
 
         attr_base = 0x3FF60000
@@ -491,7 +502,23 @@ class IMAQCamera(Camera):
                                  ctypes.c_uint32(attr_base + atr),
                                  ctypes.byref(var))
 
-        self.img_buffer = np.ndarray(shape=(self.h.value, self.w.value), dtype=ctypes.c_uint8)
+        print(self.h.value, self.w.value)
+
+
+        for atr, var in zip([attr_h, attr_w],
+                            [h, w]):
+            self.imaq.imgSetAttribute2(self.session_id,
+                                 ctypes.c_uint32(attr_base + atr),
+                                 ctypes.c_uint32(var))
+
+        for atr, var in zip([attr_h, attr_w, attr_bytes_px],
+                            [self.h, self.w, self.b_per_px]):
+            self.imaq.imgGetAttribute(self.session_id,
+                                      ctypes.c_uint32(attr_base + atr),
+                                      ctypes.byref(var))
+        print(self.h.value, self.w.value)
+
+        self.img_buffer = np.ndarray(shape=(h, w), dtype=ctypes.c_uint8)
         self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
 
     def set(self, param, val):
@@ -506,8 +533,6 @@ class IMAQCamera(Camera):
 
         if param == "framerate":
             ret = self.imaq.imgSetAttribute2(self.session_id, attr_framerate, ctypes.c_uint32(int(val)))
-        print(param, val, ret)
-
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)

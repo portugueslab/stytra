@@ -12,7 +12,7 @@ from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 import deepdish as dd
 
-from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, IMAQCamera
+from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, MikrotronCLCamera
 from stytra.hardware.video.write import VideoWriter
 from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParameters
 
@@ -90,7 +90,7 @@ class CameraSource(VideoSource):
 
     camera_class_dict = dict(ximea=XimeaCamera, avt=AvtCamera,
                              spinnaker=SpinnakerCamera,
-                             imaq=IMAQCamera)
+                             mikrotron=MikrotronCLCamera)
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(self, camera_type, *args, downsampling=1, **kwargs):
