@@ -91,6 +91,9 @@ class Stytra:
             a trigger object, synchronising stimulus presentation
             to imaging acquisition
 
+        n_tracking_processes : int
+            number of tracking processes to be used
+
     """
 
     def __init__(

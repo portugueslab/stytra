@@ -1,18 +1,16 @@
 import cv2
 import numpy as np
 from numba import jit
-import filterpy.kalman
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
 from stytra.tracking.preprocessing import BackgorundSubtractor
 
 from itertools import chain
-from scipy.linalg import block_diag
 
 import logging
 from lightparam import Param, Parametrized
-from stytra.tracking.simple_kalman import SimpleKalman
+from stytra.tracking.simple_kalman import NewtonianKalman
 
 
 class FishTrackingMethod(ParametrizedImageproc):
@@ -114,10 +112,10 @@ class FishTrackingMethod(ParametrizedImageproc):
             or n_segments != self.params.n_segments
             or bg_downsample != self.params.bg_downsample
         ):
-            self.reset_state()
             self.params.params.bg_downsample.value = bg_downsample
             self.params.params.n_segments.value = n_segments
-            self.params.params.n_fish_max = n_fish_max
+            self.params.params.n_fish_max.value = n_fish_max
+            self.reset_state()
 
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
@@ -297,14 +295,7 @@ class Fish:
         dt = 0.02
         # the position will be Kalman-filtered
         self.filters = [
-            SimpleKalman(np.array([x0, 0.0]),
-                               F=np.array([[1.0, 1.0], [0.0, 1.0]]),
-                               R=np.array([[stdev]]),
-                               P=np.diag([stdev, stdev]),
-                               Q=np.array([[0.25*dt**4, 0.5*dt**3],
-                                           [0.5*dt**3, dt**2]])*pred_coef,
-                               H=np.array([[1.0, 0.0]])
-                               )
+            NewtonianKalman(x0, stdev, dt, pred_coef)
             for x0, stdev in zip(initial_state[:3], [pos_std, pos_std, angle_std])
         ]
 

@@ -19,6 +19,7 @@ class Paintme(VisualStimulus):
         p.setBrush(QBrush(QColor(255, 0,255)))
         p.drawEllipse(100, 400, 5, 5)
 
+
 class ExternalStimulusProtocol(Protocol):
     def get_stim_sequence(self):
         # Here instead of pause, you will put the Arduino TTL stimulus, which

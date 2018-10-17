@@ -201,6 +201,9 @@ class TrackingExperiment(CameraExperiment):
 
         preproc_method = get_preprocessing_method(preproc_method_name)
         self.preprocessing_method = preproc_method() if preproc_method else None
+        if preproc_method:
+            self.preprocessing_params = ParametrizedQt(name="tracking/preprocessing",
+                                              params=self.preprocessing_method.process)
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(name="tracking/tail_centroids",
                                    params=self.tracking_method.detect)
@@ -253,15 +256,13 @@ class TrackingExperiment(CameraExperiment):
         self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
         self.logger.info("Tracking with ", self.n_dispatchers, " processess")
 
-
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
         """
         self.tracking_method.reset_state()
         self.data_acc.reset(header_list=self.tracking_method.accumulator_headers,
                             monitored_headers=self.tracking_method.monitored_headers)
-        self.window_main.stream_plot.remove_streams()
-        self.initialize_plots()
+        self.refresh_plots()
 
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
@@ -276,14 +277,19 @@ class TrackingExperiment(CameraExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.stream_plot.add_stream(self.data_acc)
         self.window_main.plot_framerate.add_stream(self.tracking_framerate_acc)
+        self.refresh_plots()
+
+    def refresh_plots(self):
+        self.window_main.stream_plot.remove_streams()
+        self.window_main.stream_plot.add_stream(self.data_acc)
 
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
 
             # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
-            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
+            self.window_main.stream_plot.add_stream(
+                self.protocol_runner.dynamic_log)
 
     def send_gui_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative
@@ -298,31 +304,34 @@ class TrackingExperiment(CameraExperiment):
         """
         super().send_gui_parameters()
 
-        # TODO deal with parameters that impact the accumulators, maybe automatically link it to receiving something different
-        # if isinstance(self.tracking_method, TailTrackingMethod):
-        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #
-        # if isinstance(self.tracking_method, FishTrackingMethod):
-        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #     self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #
+        try:
+            if self.tracking_params.params.n_segments.changed:
+                self.refresh_accumulator_headers()
+
+            if self.tracking_params.params.n_fish_max.changed:
+                self.refresh_accumulator_headers()
+
+        except AttributeError as e:
+            print(e)
+
         for i in range(self.n_dispatchers):
             self.processing_params_queue.put(
                 {
-                    **self.tracking_method.params.params.values,
+                    **self.tracking_params.params.values,
                     **(
-                        self.preprocessing_method.params.params.values
+                        self.preprocessing_params.params.values
                         if self.preprocessing_method is not None
                         else {}
                     ),
                 }
             )
+
+        try:
+            self.tracking_params.params.n_segments.changed = False
+            self.tracking_params.params.n_fish_max.changed = False
+
+        except AttributeError:
+            pass
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""

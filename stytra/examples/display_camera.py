@@ -6,12 +6,12 @@ from stytra.stimulation.stimuli import (
 from stytra.stimulation import Protocol
 import pkg_resources
 import tempfile
-from lightparam import Param
 
 
 class Nostim(Protocol):
     def get_stim_sequence(self):
         return [Pause(duration=10)]
+
 
 if __name__ == "__main__":
     video_file = r"J:\Vilim Stih\fish_recordings\old\20180719_170349.mp4"

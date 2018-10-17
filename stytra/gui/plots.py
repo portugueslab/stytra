@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QFont
 from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QLabel,
@@ -226,6 +226,9 @@ class MultiStreamPlot(QWidget):
             min_label.setPos(0, i_curve)
 
             value_label = pg.TextItem("", anchor=(0, 0.5))
+            font_bold = QFont("Sans Serif", 8)
+            font_bold.setBold(True)
+            value_label.setFont(font_bold)
             value_label.setPos(0, i_curve + 0.5)
 
             self.plotContainter.addItem(curve_label)
