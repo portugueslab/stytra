@@ -20,7 +20,7 @@ from pyqtgraph.parametertree import ParameterTree
 from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
-from stytra.gui.protocol_control import ProtocolControlWidget
+from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
     CameraViewWidget,
     CameraEmbeddedTrackingSelection,
@@ -99,7 +99,7 @@ class SimpleExperimentWindow(QMainWindow):
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
+        self.widget_control = ProtocolControlToolbar(experiment.protocol_runner)
 
         # Connect signals from the protocol_control:
         self.widget_control.sig_start_protocol.connect(experiment.start_protocol)
@@ -141,7 +141,7 @@ class SimpleExperimentWindow(QMainWindow):
         protocol_layout.addWidget(
             CollapsibleWidget(self.logger.widget, "Log", expanded=False)
         )
-        protocol_layout.addWidget(self.widget_control)
+        self.addToolBar(Qt.TopToolBarArea, self.widget_control)
         if self.experiment.trigger is not None:
             protocol_layout.addWidget(self.chk_scope)
         protocol_layout.addWidget(self.button_metadata)
