@@ -147,7 +147,7 @@ class CenteringWrapper(PositionStimulus):
 
     def __init__(self, stimulus, centering, margin=200, **kwargs):
         super().__init__(**kwargs)
-        self.margin = margin**2
+        self.margin = margin ** 2
         self.stimulus = stimulus
         self.active = self.stimulus
         self.centering = centering
@@ -162,7 +162,7 @@ class CenteringWrapper(PositionStimulus):
 
     def update(self):
         y, x, theta = self._experiment.estimator.get_position()
-        if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2 ) > self.margin:
+        if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
             self.active = self.centering
         else:
             self.active = self.stimulus

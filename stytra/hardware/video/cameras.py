@@ -323,22 +323,26 @@ class SpinnakerCamera(Camera):
         self.cam.Init()
         nodemap = self.cam.GetNodeMap()
         node_acquisition_mode = PySpin.CEnumerationPtr(
-            nodemap.GetNode('AcquisitionMode'))
-        if not PySpin.IsAvailable(
-                node_acquisition_mode) or not PySpin.IsWritable(
-                node_acquisition_mode):
+            nodemap.GetNode("AcquisitionMode")
+        )
+        if not PySpin.IsAvailable(node_acquisition_mode) or not PySpin.IsWritable(
+            node_acquisition_mode
+        ):
             print(
-                'Unable to set acquisition mode to continuous (enum retrieval). Aborting...')
+                "Unable to set acquisition mode to continuous (enum retrieval). Aborting..."
+            )
             return False
 
         # Retrieve entry node from enumeration node
         node_acquisition_mode_continuous = node_acquisition_mode.GetEntryByName(
-            'Continuous')
+            "Continuous"
+        )
         if not PySpin.IsAvailable(
-                node_acquisition_mode_continuous) or not PySpin.IsReadable(
-                node_acquisition_mode_continuous):
+            node_acquisition_mode_continuous
+        ) or not PySpin.IsReadable(node_acquisition_mode_continuous):
             print(
-                'Unable to set acquisition mode to continuous (entry retrieval). Aborting...')
+                "Unable to set acquisition mode to continuous (entry retrieval). Aborting..."
+            )
             return False
 
         # Retrieve integer value from entry node
@@ -373,13 +377,13 @@ class SpinnakerCamera(Camera):
                 # camera wants exposure in us:
                 self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
                 self.cam.ExposureAuto.SetValue(PySpin.GainAuto_Off)
-                self.cam.ExposureTime.SetValue(val*1000)
+                self.cam.ExposureTime.SetValue(val * 1000)
 
             if param == "framerate":
                 self.cam.AcquisitionFrameRate.SetValue(val)
 
         except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
+            print("Error: %s" % ex)
         pass
 
     def read(self):
@@ -427,8 +431,9 @@ class SpinnakerCamera(Camera):
                 #
                 #  When converting images, color processing algorithm is an
                 #  optional parameter.
-                image_converted = image_result.Convert(PySpin.PixelFormat_Mono8,
-                                                       PySpin.HQ_LINEAR)
+                image_converted = image_result.Convert(
+                    PySpin.PixelFormat_Mono8, PySpin.HQ_LINEAR
+                )
 
                 # Create a unique filename
                 #  Save image
@@ -437,7 +442,6 @@ class SpinnakerCamera(Camera):
                 #  The standard practice of the examples is to use device
                 #  serial numbers to keep images of one device from
                 #  overwriting those of another.
-
 
                 #  Release image
                 #
@@ -449,7 +453,7 @@ class SpinnakerCamera(Camera):
                 return image_converted.GetNDArray()
 
         except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
+            print("Error: %s" % ex)
             return None
 
     def release(self):
@@ -475,8 +479,12 @@ class IMAQCamera(Camera):
             print("NI Vision drivers not installed")
 
     def open_camera(self):
-        int_opened = self.imaq.imgInterfaceOpen(self.cam_id, ctypes.byref(self.interface_id))
-        session_opened = self.imaq.imgSessionOpen(self.interface_id, ctypes.byref(self.session_id))
+        int_opened = self.imaq.imgInterfaceOpen(
+            self.cam_id, ctypes.byref(self.interface_id)
+        )
+        session_opened = self.imaq.imgSessionOpen(
+            self.interface_id, ctypes.byref(self.session_id)
+        )
         self.imaq.imgGrabSetup(self.session_id, 1)
 
         attr_base = 0x3FF60000
@@ -485,14 +493,19 @@ class IMAQCamera(Camera):
         attr_w = 0x01A6
         attr_bytes_px = 0x0067
 
-        for atr, var in zip([attr_h, attr_w, attr_bytes_px],
-                            [self.h, self.w, self.b_per_px]):
-            self.imaq.imgGetAttribute(self.session_id,
-                                 ctypes.c_uint32(attr_base + atr),
-                                 ctypes.byref(var))
+        for atr, var in zip(
+            [attr_h, attr_w, attr_bytes_px], [self.h, self.w, self.b_per_px]
+        ):
+            self.imaq.imgGetAttribute(
+                self.session_id, ctypes.c_uint32(attr_base + atr), ctypes.byref(var)
+            )
 
-        self.img_buffer = np.ndarray(shape=(self.h.value, self.w.value), dtype=ctypes.c_uint8)
-        self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
+        self.img_buffer = np.ndarray(
+            shape=(self.h.value, self.w.value), dtype=ctypes.c_uint8
+        )
+        self.buffer_address = self.img_buffer.ctypes.data_as(
+            ctypes.POINTER(ctypes.c_long)
+        )
 
     def set(self, param, val):
         attr_base = 0x3FF60000
@@ -502,12 +515,15 @@ class IMAQCamera(Camera):
         ret = -100
         if param == "exposure":
             # camera wants exposure in ms:
-            ret = self.imaq.imgSetAttribute2(self.session_id, attr_exposure, ctypes.c_uint32(int(val)))
+            ret = self.imaq.imgSetAttribute2(
+                self.session_id, attr_exposure, ctypes.c_uint32(int(val))
+            )
 
         if param == "framerate":
-            ret = self.imaq.imgSetAttribute2(self.session_id, attr_framerate, ctypes.c_uint32(int(val)))
+            ret = self.imaq.imgSetAttribute2(
+                self.session_id, attr_framerate, ctypes.c_uint32(int(val))
+            )
         print(param, val, ret)
-
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)

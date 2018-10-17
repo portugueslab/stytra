@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QFont
 from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QLabel,
@@ -77,39 +77,47 @@ class MultiStreamPlot(QWidget):
 
     """
 
-    def __init__(self, time_past=30, bounds_update=0.1,
-                 round_bounds=None,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        time_past=30,
+        bounds_update=0.1,
+        round_bounds=None,
+        compact=False,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self.time_past = time_past
+        self.compact = compact
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
 
-        self.control_layout = QHBoxLayout()
-        self.control_layout.setContentsMargins(0, 0, 0, 0)
+        if not compact:
+            self.control_layout = QHBoxLayout()
+            self.control_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.btn_freeze = QPushButton()
-        self.btn_freeze.setMinimumSize(80, 16)
-        self.btn_freeze.clicked.connect(self.toggle_freeze)
-        self.control_layout.addWidget(self.btn_freeze)
+            self.btn_freeze = QPushButton()
+            self.btn_freeze.setMinimumSize(80, 16)
+            self.btn_freeze.clicked.connect(self.toggle_freeze)
+            self.control_layout.addWidget(self.btn_freeze)
 
-        self.lbl_zoom = QLabel("Plot past ")
-        self.spn_zoom = QDoubleSpinBox()
-        self.spn_zoom.setValue(time_past)
-        self.spn_zoom.setSuffix("s")
-        self.spn_zoom.setMinimum(0.1)
-        self.spn_zoom.setMaximum(30)
-        self.spn_zoom.valueChanged.connect(self.update_zoom)
+            self.lbl_zoom = QLabel("Plot past ")
+            self.spn_zoom = QDoubleSpinBox()
+            self.spn_zoom.setValue(time_past)
+            self.spn_zoom.setSuffix("s")
+            self.spn_zoom.setMinimum(0.1)
+            self.spn_zoom.setMaximum(30)
+            self.spn_zoom.valueChanged.connect(self.update_zoom)
 
-        self.control_layout.addItem(
-            QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        )
-        self.control_layout.addWidget(self.lbl_zoom)
-        self.control_layout.addWidget(self.spn_zoom)
+            self.control_layout.addItem(
+                QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            )
+            self.control_layout.addWidget(self.lbl_zoom)
+            self.control_layout.addWidget(self.spn_zoom)
 
-        self.layout().addLayout(self.control_layout)
+            self.layout().addLayout(self.control_layout)
 
         self.plotContainter = pg.PlotWidget()
         self.plotContainter.showAxis("left", False)
@@ -224,6 +232,9 @@ class MultiStreamPlot(QWidget):
             min_label.setPos(0, i_curve)
 
             value_label = pg.TextItem("", anchor=(0, 0.5))
+            font_bold = QFont("Sans Serif", 8)
+            font_bold.setBold(True)
+            value_label.setFont(font_bold)
             value_label.setPos(0, i_curve + 0.5)
 
             self.plotContainter.addItem(curve_label)
@@ -231,9 +242,7 @@ class MultiStreamPlot(QWidget):
             self.plotContainter.addItem(max_label)
             self.plotContainter.addItem(value_label)
 
-            self.valueLabels.append(
-                (min_label, max_label, curve_label, value_label)
-            )
+            self.valueLabels.append((min_label, max_label, curve_label, value_label))
             i_curve += 1
 
         for curve, color, labels in zip(self.curves, self.colors, self.valueLabels):
@@ -256,9 +265,13 @@ class MultiStreamPlot(QWidget):
         self.bounds = []
 
     def _round_bounds(self, bounds):
-        rounded = np.stack([np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
-                             np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds],
-                           1)
+        rounded = np.stack(
+            [
+                np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
+                np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds,
+            ],
+            1,
+        )
         if self.round_bounds >= 1:
             return rounded.astype(np.int32)
         else:
@@ -278,8 +291,12 @@ class MultiStreamPlot(QWidget):
         """
         tol_u = 1.2
         tol_d = 0.6
-        to_update = np.any(np.logical_or(old_bounds*tol_u < new_bounds,
-                                         new_bounds < old_bounds*tol_d), 1)
+        to_update = np.any(
+            np.logical_or(
+                old_bounds * tol_u < new_bounds, new_bounds < old_bounds * tol_d
+            ),
+            1,
+        )
         old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
         return old_bounds
 
@@ -340,7 +357,9 @@ class MultiStreamPlot(QWidget):
                                 + (1 - self.bounds_update) * self.bounds[i_acc]
                             )
                         else:
-                            self.bounds[i_acc] = self._update_round_bounds(new_bounds, self.bounds[i_acc])
+                            self.bounds[i_acc] = self._update_round_bounds(
+                                new_bounds, self.bounds[i_acc]
+                            )
 
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
@@ -373,10 +392,12 @@ class MultiStreamPlot(QWidget):
     def toggle_freeze(self):
         self.frozen = not self.frozen
         if self.frozen:
-            self.btn_freeze.setText("Live plot")
+            if not self.compact:
+                self.btn_freeze.setText("Live plot")
             self.plotContainter.plotItem.vb.setMouseEnabled(x=True, y=True)
         else:
-            self.btn_freeze.setText("Freeze plot")
+            if not self.compact:
+                self.btn_freeze.setText("Freeze plot")
             self.plotContainter.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainter.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
@@ -388,11 +409,7 @@ class MultiStreamPlot(QWidget):
             xRange=(-self.time_past * 0.9, self.time_past * 0.05)
         )
         # shift the labels
-        for (
-            i_curve,
-            (min_label, max_label, curve_label, value_label),
-        ) in enumerate(self.valueLabels):
+        for (i_curve, (min_label, max_label, curve_label, value_label)) in enumerate(
+            self.valueLabels
+        ):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
-
-
-

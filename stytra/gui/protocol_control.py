@@ -1,18 +1,11 @@
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import (
-    QVBoxLayout,
-    QPushButton,
-    QHBoxLayout,
-    QWidget,
-    QComboBox,
-    QProgressBar,
-)
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QComboBox, QProgressBar, QToolBar
 
-from pyqtgraph.parametertree import ParameterTree
 from lightparam.gui import ParameterGui
+from math import floor
 
 
-class ProtocolControlWidget(QWidget):
+class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
 
     This class implements:
@@ -37,56 +30,33 @@ class ProtocolControlWidget(QWidget):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
-    def __init__(self, protocol_runner=None, *args):
+    def __init__(self, protocol_runner=None, main_window=None):
         """ """
-        super().__init__(*args)
+        super().__init__("Protocol running")
+        self.main_window = main_window
         self.protocol_runner = protocol_runner
 
-        # Create parametertree for protocol parameter control
-        self.protocol_params_tree = ParameterTree(showHeader=False)
-
-        # Layout for selecting the protocol:
-        self.lyt_prot_selection = QHBoxLayout()
+        self.toggleStatus = self.addAction("▶")
+        self.toggleStatus.triggered.connect(self.toggle_protocol_running)
 
         # Dropdown menu with the protocol classes found in the Experiment:
         self.combo_prot = QComboBox()
         self.combo_prot.addItems(list(self.protocol_runner.prot_class_dict.keys()))
 
         self.combo_prot.currentIndexChanged.connect(self.set_protocol)
-        self.lyt_prot_selection.addWidget(self.combo_prot)
+        self.addWidget(self.combo_prot)
 
         # Window with the protocol parameters:
-        self.protocol_params_butt = QPushButton("Protocol parameters")
-        self.protocol_params_butt.clicked.connect(self.show_stim_params_gui)
-        self.lyt_prot_selection.addWidget(self.protocol_params_butt)
-
-        # Layout for protocol start and progression report:
-        self.lyt_run = QHBoxLayout()
-
-        # Button for startup:
-        self.button_toggle_prot = QPushButton("▶")
-
-        self.button_toggle_prot.clicked.connect(self.toggle_protocol_running)
-        self.lyt_run.addWidget(self.button_toggle_prot)
+        self.act_edit = self.addAction("Edit protocol parameters")
+        self.act_edit.triggered.connect(self.show_stim_params_gui)
 
         # Progress bar for monitoring the protocol:
         self.progress_bar = QProgressBar()
-        self.progress_bar.setFormat("%p% %v/%m")
-
-        self.lyt_run.addWidget(self.progress_bar)
-
-        # Global layout:
-        self.lyt = QVBoxLayout()
-        self.lyt.setContentsMargins(0, 0, 0, 0)
-        self.lyt.addLayout(self.lyt_run)
-        self.lyt.addLayout(self.lyt_prot_selection)
-        self.setLayout(self.lyt)
-
-        self.timer = None
+        self.addSeparator()
+        self.addWidget(self.progress_bar)
 
         # Connect events and signals from the ProtocolRunner to update the GUI:
         self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
-        # self.update_stim_duration()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
@@ -102,11 +72,10 @@ class ProtocolControlWidget(QWidget):
     def show_stim_params_gui(self):
         """Create and show window to update protocol parameters.
         """
-        self.prot_param_win = QWidget()
-        self.prot_param_win.setLayout(QHBoxLayout())
-        self.prot_param_win.layout().addWidget(
-            ParameterGui(self.protocol_runner.protocol))
-        self.prot_param_win.show()
+        self.prot_param_win = QDockWidget("Protocol parameters", self.main_window)
+        self.prot_param_win.setWidget(ParameterGui(self.protocol_runner.protocol))
+        self.main_window.docks.append(self.prot_param_win)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.prot_param_win)
 
     def toggle_protocol_running(self):
         """Emit the start and stop signals. These can be used in the Experiment
@@ -130,11 +99,11 @@ class ProtocolControlWidget(QWidget):
     def toggle_icon(self):
         """Change the play/stop icon of the GUI.
         """
-        if self.button_toggle_prot.text() == "■":
-            self.button_toggle_prot.setText("▶")
+        if self.toggleStatus.text() == "■":
+            self.toggleStatus.setText("▶")
             self.progress_bar.setValue(0)
         else:
-            self.button_toggle_prot.setText("■")
+            self.toggleStatus.setText("■")
 
     def update_stim_duration(self):
         """ Change the displayed durtion of the stimulus
@@ -146,6 +115,16 @@ class ProtocolControlWidget(QWidget):
         """ Update progress bar
         """
         self.progress_bar.setValue(int(self.protocol_runner.t))
+        rem = self.protocol_runner.duration - self.protocol_runner.t
+        rem_min = int(floor(rem / 60))
+        self.progress_bar.setFormat(
+            "{}/{}s ({}:{} remaining)".format(
+                int(self.protocol_runner.t),
+                int(self.protocol_runner.duration),
+                rem_min,
+                int(rem - rem_min * 60),
+            )
+        )
 
     def set_protocol(self):
         """Use value in the dropdown menu to change the protocol.

@@ -46,7 +46,10 @@ class TestExperimentClass(unittest.TestCase):
         trigger = DummyTrigger()
         app = QApplication([])
         exp = Experiment(
-            app=app, protocols=[TestProtocol], dir_save=self.test_dir, scope_triggering=trigger
+            app=app,
+            protocols=[TestProtocol],
+            dir_save=self.test_dir,
+            scope_triggering=trigger,
         )
         exp.start_experiment()
 

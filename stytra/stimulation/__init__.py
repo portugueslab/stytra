@@ -8,6 +8,7 @@ from lightparam.param_qt import ParametrizedQt, Param
 
 import logging
 
+
 class ProtocolRunner(QObject):
     """Class for managing and running stimulation Protocols.
 
@@ -288,9 +289,7 @@ class ProtocolRunner(QObject):
                 t_start=(
                     current_stim_dict["real_time_start"] - self.t_start
                 ).total_seconds(),
-                t_stop=(t_stim_stop
-                     - self.t_start
-                ).total_seconds(),
+                t_stop=(t_stim_stop - self.t_start).total_seconds(),
             )
         except TypeError:  # if time is None stimulus was not run
             new_dict = dict()
@@ -385,7 +384,6 @@ class Protocol(ParametrizedQt):
         self.post_pause = Param(0.)
         self.n_repeats = Param(1, limits=(1, 10000))
 
-
     def _get_stimulus_list(self):
         """Generate protocol from specified parameters. Called by the
         ProtocolRunner class where the Protocol instance is defined.
@@ -405,8 +403,8 @@ class Protocol(ParametrizedQt):
         main_stimuli = self.get_stim_sequence()
         stimuli = []
         if self.pre_pause > 0:
-            stimuli.append(Pause(duration=self.pre_pause))  #self.params[
-                           # "pre_pause"]))
+            stimuli.append(Pause(duration=self.pre_pause))  # self.params[
+            # "pre_pause"]))
 
         for i in range(self.n_repeats):
             stimuli.extend(deepcopy(main_stimuli))
