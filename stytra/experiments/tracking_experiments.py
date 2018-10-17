@@ -26,6 +26,7 @@ from stytra.tracking.processes import get_tracking_method, get_preprocessing_met
 from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
+from lightparam.param_qt import ParametrizedQt
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -198,6 +199,8 @@ class TrackingExperiment(CameraExperiment):
         preproc_method = get_preprocessing_method(preproc_method_name)
         self.preprocessing_method = preproc_method() if preproc_method else None
         self.tracking_method = get_tracking_method(method_name)()
+        self.tracking_params = ParametrizedQt(name="tracking/tail_centroids",
+                                   params=self.tracking_method.detect)
 
         self.data_name = self.tracking_method.data_log_name
         self.frame_dispatcher = FrameDispatcher(
@@ -304,7 +307,7 @@ class TrackingExperiment(CameraExperiment):
             {
                 **self.tracking_method.params.params.values,
                 **(
-                    self.preprocessing_method.get_clean_values()
+                    self.preprocessing_method.params.params.values
                     if self.preprocessing_method is not None
                     else {}
                 ),
@@ -456,6 +459,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
     def send_params(self):
         """ """
+        
         self.processing_params_queue.put(
             self.motion_detection_params.get_clean_values()
         )

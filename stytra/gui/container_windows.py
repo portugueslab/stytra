@@ -320,10 +320,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             and self.experiment.preprocessing_method is not None
         ):
             self.track_params_wnd.layout().addWidget(QLabel("Preprocessing method"))
-            self.track_params_wnd.addParameters(
-                self.track_params_wnd.layout().addWidget(
-                    ParameterGui(self.experiment.preprocessing_method.params))
-            )
+            self.track_params_wnd.layout().addWidget(
+                ParameterGui(self.experiment.preprocessing_method.params))
         if hasattr(self.experiment, "motion_detection_params"):
             self.track_params_wnd.layout().addWidget(QLabel("Motion detection"))
             self.track_params_wnd.layout().addWidget(
