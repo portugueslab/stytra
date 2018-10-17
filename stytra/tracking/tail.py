@@ -135,8 +135,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
         tail_start: Param((0, 0), gui=False),
         n_segments: Param(7),
         tail_length: Param((1, 1), gui=False),
-        dark_tail: Param(False),
-        image_scale: Param(1),
         **extraparams
     ):
         """Tail tracing based on min (or max) detection on arches. Wraps
@@ -173,18 +171,18 @@ class AnglesTrackingMethod(TailTrackingMethod):
         tail_length_y, tail_length_x = tail_length
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * image_scale / n_segments
-        disp_y = tail_length_y * image_scale / n_segments
+        disp_x = tail_length_x * n_segments
+        disp_y = tail_length_y * n_segments
 
-        start_x *= image_scale
-        start_y *= image_scale
+        # start_x *= image_scale
+        # start_y *= image_scale
 
         # Use jitted function for the actual calculation:
         angle_list = _tail_trace_core_ls(
-            im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
+            im, start_x, start_y, disp_x, disp_y, n_segments, length_tail
         )
 
         return angle_list
@@ -381,7 +379,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
 
 @jit(nopython=True)
 def _tail_trace_core_ls(
-    img, start_x, start_y, disp_x, disp_y, num_points, tail_length, color_invert
+    img, start_x, start_y, disp_x, disp_y, num_points, tail_length
 ):
     """Tail tracing based on min (or max) detection on arches. Wrapped by
     trace_tail_angular_sweep.
@@ -401,9 +399,7 @@ def _tail_trace_core_ls(
     num_points :
         
     tail_length :
-        
-    color_invert :
-        
+
 
     Returns
     -------
@@ -438,10 +434,7 @@ def _tail_trace_core_ls(
 
         # Find minimum or maximum of the arch.
         # This switch is much faster than inverting the entire image.
-        if color_invert:
-            ident = np.argmin(intensity_vect)
-        else:
-            ident = np.argmax(intensity_vect)
+        ident = np.argmax(intensity_vect)
 
         if not np.isnan(lin[ident]):
             new_angle = lin[ident]
