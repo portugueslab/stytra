@@ -56,10 +56,26 @@ class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
         chan_value = self.device.voltageToDACBits(self.voltage, dacNumber=0, is16Bits=False)
         self.device.getFeedback(self.chan(chan_value))
 
+
+class InterpolatedU3LabJackVoltageStimulus(U3LabJackVoltageStimulus, InterpolatedStimulus):
+    def __init__(self, *args, **kwargs):
+        self.voltage = 0
+        super().__init__(*args, **kwargs)
+
+    def update(self):
+        super().update()
+        chan_value = self.device.voltageToDACBits(self.voltage, dacNumber=0, is16Bits=False)
+        self.device.getFeedback(self.chan(chan_value))
+
+
+
+
 if __name__ == "__main__":
     stim = SetU3LabJackVoltageStimulus()
-    #for v in range (5):
-        #stim.voltage == v
     stim.start()
-        #sleep(1)
     print("sending pulse")
+
+
+#if __name__=='__main__':
+    #stim = SetVoltageStimulus(dev="Dev2", chan="P07")
+    #stim.start()
