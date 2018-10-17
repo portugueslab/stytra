@@ -1,7 +1,5 @@
 from stytra import Stytra
-from stytra.stimulation.stimuli import (
-    Pause
-)
+from stytra.stimulation.stimuli import Pause
 
 from stytra.stimulation import Protocol
 import pkg_resources
@@ -18,7 +16,7 @@ if __name__ == "__main__":
     tempdir = tempfile.gettempdir()
 
     camera_config = dict(video_file=video_file, rotation=0)
-    #camera_config = dict(type="imaq")
+    # camera_config = dict(type="imaq")
     s = Stytra(
         camera_config=camera_config,
         dir_assets=pkg_resources.resource_filename("stytra", "tests/test_assets"),

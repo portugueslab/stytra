@@ -1,11 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import (
-    QHBoxLayout,
-    QDockWidget,
-    QComboBox,
-    QProgressBar,
-    QToolBar,
-)
+from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QComboBox, QProgressBar, QToolBar
 
 from lightparam.gui import ParameterGui
 from math import floor
@@ -79,8 +73,7 @@ class ProtocolControlToolbar(QToolBar):
         """Create and show window to update protocol parameters.
         """
         self.prot_param_win = QDockWidget("Protocol parameters", self.main_window)
-        self.prot_param_win.setWidget(
-            ParameterGui(self.protocol_runner.protocol))
+        self.prot_param_win.setWidget(ParameterGui(self.protocol_runner.protocol))
         self.main_window.docks.append(self.prot_param_win)
         self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.prot_param_win)
 
@@ -122,12 +115,15 @@ class ProtocolControlToolbar(QToolBar):
         """ Update progress bar
         """
         self.progress_bar.setValue(int(self.protocol_runner.t))
-        rem = (self.protocol_runner.duration-self.protocol_runner.t)
-        rem_min = int(floor(rem/60))
-        self.progress_bar.setFormat("{}/{}s ({}:{} remaining)".format(
-            int(self.protocol_runner.t), int(self.protocol_runner.duration),
-            rem_min, int(rem-rem_min*60)
-        )
+        rem = self.protocol_runner.duration - self.protocol_runner.t
+        rem_min = int(floor(rem / 60))
+        self.progress_bar.setFormat(
+            "{}/{}s ({}:{} remaining)".format(
+                int(self.protocol_runner.t),
+                int(self.protocol_runner.duration),
+                rem_min,
+                int(rem - rem_min * 60),
+            )
         )
 
     def set_protocol(self):

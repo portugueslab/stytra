@@ -19,6 +19,7 @@ from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2Bg
 from stytra.tracking.movement import MovementDetectionParameters
 from time import sleep
 
+
 def get_tracking_method(name):
     tracking_methods_list = dict(
         centroid=CentroidTrackingMethod,
@@ -52,12 +53,12 @@ class FrameDispatcher(FrameProcess):
     def __init__(
         self,
         in_frame_queue,
-        finished_signal: Event=None,
+        finished_signal: Event = None,
         processing_class=None,
         preprocessing_class=None,
         processing_parameter_queue=None,
         output_queue=None,
-        processing_counter: Value=None,
+        processing_counter: Value = None,
         gui_framerate=30,
         gui_dispatcher=False,
         **kwargs
@@ -129,9 +130,7 @@ class FrameDispatcher(FrameProcess):
 
             # If a processing function is specified, apply it:
             if self.preprocessing_cls is not None:
-                processed = preprocessor.process(
-                    frame, **self.processing_parameters
-                )
+                processed = preprocessor.process(frame, **self.processing_parameters)
             else:
                 processed = frame
 
@@ -139,7 +138,10 @@ class FrameDispatcher(FrameProcess):
                 output = tracker.detect(processed, **self.processing_parameters)
 
                 # Handle the single output queue
-                while self.processing_counter.value != frame_idx - 1 and not self.finished_signal.is_set():
+                while (
+                    self.processing_counter.value != frame_idx - 1
+                    and not self.finished_signal.is_set()
+                ):
                     sleep(0.00001)
                 with self.processing_counter.get_lock():
                     self.processing_counter.value = frame_idx
@@ -226,7 +228,14 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_recording: Event, signal_start_recording: Event, output_queue_mb=1000, **kwargs):
+    def __init__(
+        self,
+        *args,
+        signal_recording: Event,
+        signal_start_recording: Event,
+        output_queue_mb=1000,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()

@@ -12,9 +12,17 @@ from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
 
-from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, IMAQCamera
+from stytra.hardware.video.cameras import (
+    XimeaCamera,
+    AvtCamera,
+    SpinnakerCamera,
+    IMAQCamera,
+)
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParameters
+from stytra.hardware.video.interfaces import (
+    CameraControlParameters,
+    VideoControlParameters,
+)
 
 import time
 
@@ -89,9 +97,9 @@ class CameraSource(VideoSource):
 
     """
 
-    camera_class_dict = dict(ximea=XimeaCamera, avt=AvtCamera,
-                             spinnaker=SpinnakerCamera,
-                             imaq=IMAQCamera)
+    camera_class_dict = dict(
+        ximea=XimeaCamera, avt=AvtCamera, spinnaker=SpinnakerCamera, imaq=IMAQCamera
+    )
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(self, camera_type, *args, downsampling=1, **kwargs):
@@ -141,7 +149,7 @@ class CameraSource(VideoSource):
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
                     arr = np.rot90(arr, self.rotation)
-                if self.frame_queue.queue.qsize() < self.n_consumers+1:
+                if self.frame_queue.queue.qsize() < self.n_consumers + 1:
                     self.frame_queue.put(arr)
                 else:
                     print("Dropped frame")

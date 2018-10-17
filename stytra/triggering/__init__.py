@@ -123,7 +123,7 @@ class ZmqTrigger(Trigger):
         string. Add to the queue_trigger_params Queue the received dictionary,
         so that the experiment class can store it with the rest of the data.
         """
-        print('waiting...')
+        print("waiting...")
         self.lightsheet_config = self.zmq_socket.recv_json()
         self.queue_trigger_params.put(self.lightsheet_config)
         self.zmq_socket.send_json("received")

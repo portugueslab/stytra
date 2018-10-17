@@ -72,7 +72,7 @@ class DataCollector(ParameterTree):
 
         # Try to find previously saved data_log:
         self.last_metadata = None
-        metadata_files = list(self.folder_path.glob("*"+self.metadata_fn))
+        metadata_files = list(self.folder_path.glob("*" + self.metadata_fn))
         if metadata_files:
             self.last_metadata = dd.io.load(str(metadata_files[0]))
 
@@ -122,9 +122,7 @@ class DataCollector(ParameterTree):
         """
         self.log_data_dict[name] = entry
 
-    def get_clean_dict(
-        self, **kwargs
-    ):
+    def get_clean_dict(self, **kwargs):
         """Collect data from all sources and put them together in
         the final hierarchical dictionary that will be saved in the .json file.
         The first level in the dictionary is fixed and defined by the keys

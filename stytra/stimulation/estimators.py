@@ -3,9 +3,11 @@ import datetime
 
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
 
+
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
+
 
 class VigourMotionEstimator:
     """ """

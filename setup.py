@@ -27,7 +27,7 @@ setup(
         "pillow",
         "scikit-image",
         "filterpy",
-        "multiprocessing-logging"
+        "multiprocessing-logging",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

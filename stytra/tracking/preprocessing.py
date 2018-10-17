@@ -25,17 +25,17 @@ class PreprocMethod(ParametrizedImageproc):
 class Prefilter(PreprocMethod):
     def __init__(self):
         super().__init__()
-        self.params = Parametrized(name="tracking/prefiltering",
-                                   params=self.process)
+        self.params = Parametrized(name="tracking/prefiltering", params=self.process)
 
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process
-    def process(self,
-                im,
-                image_scale: Param(1.0, (0.05, 1.0)),
-                filter_size: Param(0, (0,15)),
-                color_invert: Param(False),
-                **extraparams
+    def process(
+        self,
+        im,
+        image_scale: Param(1.0, (0.05, 1.0)),
+        filter_size: Param(0, (0, 15)),
+        color_invert: Param(False),
+        **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
 
@@ -80,7 +80,7 @@ def negdif(xf, y):
         return 0
 
 
-class BackgorundSubtractor():
+class BackgorundSubtractor:
     def __init__(self):
         super().__init__()
         self.background_image = None

@@ -8,8 +8,10 @@ class NewtonianKalman:
         self.F = np.array([[1.0, 1.0], [0.0, 1.0]])
         self.R = stdev
         self.P = np.diag([stdev, stdev])
-        self.Q = np.array([[0.25*dt**4, 0.5*dt**3],
-                           [0.5*dt**3, dt**2]])*pred_coef
+        self.Q = (
+            np.array([[0.25 * dt ** 4, 0.5 * dt ** 3], [0.5 * dt ** 3, dt ** 2]])
+            * pred_coef
+        )
 
     def predict(self):
         self.x, self.P = _predict(self.x, self.P, self.F, self.Q)
@@ -36,8 +38,7 @@ def _update(z, x, P, R):
 
     x = x + K * y
 
-    I_KH = np.array([[1-K[0], 0.0],
-                     [-K[1], 1.0]])
+    I_KH = np.array([[1 - K[0], 0.0], [-K[1], 1.0]])
 
     P = ((I_KH @ P) @ I_KH.T) + R * (K @ K.T)
 

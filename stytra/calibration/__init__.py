@@ -269,9 +269,5 @@ class CircleCalibrator(Calibrator):
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
 
-        self.proj_to_cam = self.arr_to_tuple(
-            self.points_cam.T @ np.linalg.inv(x_proj)
-        )
-        self.cam_to_proj = self.arr_to_tuple(
-            points_proj.T @ np.linalg.inv(x_cam)
-        )
+        self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
+        self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))

@@ -3,6 +3,7 @@ from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from lightparam import Param
 import tempfile
 
+
 class FlashProtocol(Protocol):
     name = "flash protocol"
 
@@ -23,6 +24,5 @@ class FlashProtocol(Protocol):
 
 if __name__ == "__main__":
     tempdir = tempfile.gettempdir()
-    st = Stytra(protocols=[FlashProtocol],
-                dir_save=tempdir)
+    st = Stytra(protocols=[FlashProtocol], dir_save=tempdir)
     st.base.close()

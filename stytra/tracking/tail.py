@@ -8,7 +8,7 @@ from stytra.tracking import ParametrizedImageproc
 class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
-    def __init__(self,*args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # TODO maybe getting default values here:
         # self.add_params(
@@ -36,10 +36,10 @@ class CentroidTrackingMethod(TailTrackingMethod):
         # self.add_params(
         #     window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
         # )
-        self.params = Parametrized(name="tracking/tail_centroids",
-                                   params=self.detect)
+        self.params = Parametrized(name="tracking/tail_centroids", params=self.detect)
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_segments)]
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+        ]
 
     def detect(
         self,
@@ -124,10 +124,10 @@ class AnglesTrackingMethod(TailTrackingMethod):
     def __init__(self):
         super().__init__()
         # self.add_params(dark_tail=False)
-        self.params = Parametrized(name="tracking/tail_angles",
-                                   params=self.detect)
+        self.params = Parametrized(name="tracking/tail_angles", params=self.detect)
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_segments)]
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+        ]
 
     def detect(
         self,

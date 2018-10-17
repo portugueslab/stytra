@@ -67,8 +67,11 @@ if __name__ == "__main__":
     # camera_config = dict(type='ximea')
 
     tracking_config = dict(
-        embedded=True, tracking_method="angle_sweep", estimator="vigor",
-        preprocessing_method='prefilter')
+        embedded=True,
+        tracking_method="angle_sweep",
+        estimator="vigor",
+        preprocessing_method="prefilter",
+    )
 
     display_config = dict(full_screen=True)
 

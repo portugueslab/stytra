@@ -14,9 +14,9 @@ import tempfile
 class Paintme(VisualStimulus):
     def paint(self, p, w, h):
         p.setPen(Qt.NoPen)
-        p.setBrush(QBrush(QColor(255,0,0)))
-        p.drawEllipse(0.0,0.0,5,5)
-        p.setBrush(QBrush(QColor(255, 0,255)))
+        p.setBrush(QBrush(QColor(255, 0, 0)))
+        p.drawEllipse(0.0, 0.0, 5, 5)
+        p.setBrush(QBrush(QColor(255, 0, 255)))
         p.drawEllipse(100, 400, 5, 5)
 
 

@@ -140,7 +140,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     time, self.current_image = self.frame_queue.get(timeout=0.0001)
-                    #first = False
+                    # first = False
                 else:
                     # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)
@@ -333,10 +333,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         if self.tail:
             p1, p2 = self.roi_tail.getHandles()
             # with self.track_params.treeChangeBlocker():
-            self.track_params.tail_start = (p1.y(),
-                                                  p1.x())
-            self.track_params.tail_length = (p2.y() - p1.y(),
-                                                   p2.x() - p1.x())
+            self.track_params.tail_start = (p1.y(), p1.x())
+            self.track_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
 
         # if self.eyes:
         #     with self.track_params.treeChangeBlocker():
@@ -380,8 +378,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 for angle in angles:
                     points.append(
                         points[-1]
-                        + tail_segment_length * np.array([np.cos(angle),
-                                                          np.sin(angle)])
+                        + tail_segment_length * np.array([np.cos(angle), np.sin(angle)])
                     )
                 points = np.array(points)
                 self.curve_tail.setData(x=points[:, 1], y=points[:, 0])
@@ -549,13 +546,17 @@ class CameraViewFish(CameraViewCalib):
         if len(self.experiment.data_acc.stored_data) > 1:
             # figure out in a quick and dirty way if the tail is being tracked
             last_header_item = self.experiment.data_acc.header_list[-2]
-            n_fish = int(last_header_item[1])+1
+            n_fish = int(last_header_item[1]) + 1
 
-            n_data_per_fish = len(self.experiment.data_acc.stored_data[-1]) - 2 # the first is time, the last is area
+            n_data_per_fish = (
+                len(self.experiment.data_acc.stored_data[-1]) - 2
+            )  # the first is time, the last is area
             n_points_tail = n_data_per_fish - 6
             try:
                 retrieved_data = np.array(
-                    self.experiment.data_acc.stored_data[-1][1:-1] # the -1 if for the diagnostic area
+                    self.experiment.data_acc.stored_data[-1][
+                        1:-1
+                    ]  # the -1 if for the diagnostic area
                 ).reshape(-1, n_data_per_fish)
                 valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
                 self.points_fish.setData(

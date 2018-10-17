@@ -1,8 +1,9 @@
 from PyQt5.QtCore import QPoint
-from PyQt5.QtWidgets import QWidget, QApplication # TODO remove QApp after tested
+from PyQt5.QtWidgets import QWidget, QApplication  # TODO remove QApp after tested
 from PyQt5.QtGui import QPainter, QColor, QPen
 
 import numpy as np
+
 
 class FramerateWidget(QWidget):
     def __init__(self):
@@ -17,11 +18,11 @@ class FramerateWidget(QWidget):
 
         framerates = np.array([15, 17.5, 19.2, 15.5])
 
-        min_bound = int(np.floor(np.min(framerates)/10))*10
-        max_bound = int(np.ceil(np.max(framerates)/10))*10
+        min_bound = int(np.floor(np.min(framerates) / 10)) * 10
+        max_bound = int(np.ceil(np.max(framerates) / 10)) * 10
 
         fps = framerates[-1]
-        loc = (fps-min_bound)/(max_bound-min_bound)
+        loc = (fps - min_bound) / (max_bound - min_bound)
 
         indicator_color = (230, 40, 0)
         limit_color = (30, 30, 30)
@@ -29,9 +30,9 @@ class FramerateWidget(QWidget):
         p = QPainter()
         p.begin(self)
         w_min = pad
-        w_max = w-pad
+        w_max = w - pad
         text_height = 10
-        h_max = h-pad
+        h_max = h - pad
         h_min = text_height + pad
         p.setPen(QPen(QColor(*limit_color)))
         p.drawLine(w_min, h_min, w_min, h_max)
@@ -39,14 +40,14 @@ class FramerateWidget(QWidget):
 
         # Draw the indicator line
         p.setPen(QPen(QColor(*indicator_color)))
-        w_l = int(w_min + loc*(w_max-w_min))
-        p.drawLine(w_l, h_min-5, w_l, h_max)
+        w_l = int(w_min + loc * (w_max - w_min))
+        p.drawLine(w_l, h_min - 5, w_l, h_max)
 
         p.drawText(QPoint(w_min, pad), str(min_bound))
         fm = p.fontMetrics()
         maxst = str(max_bound)
         textw = fm.width(maxst)
-        p.drawText(QPoint(w_max-textw, pad), maxst)
+        p.drawText(QPoint(w_max - textw, pad), maxst)
 
 
 if __name__ == "__main__":

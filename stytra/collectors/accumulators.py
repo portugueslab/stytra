@@ -40,9 +40,7 @@ class Accumulator:
 
     """
 
-    def __init__(self, fps_calc_points=10,
-                 header_list=None,
-                 monitored_headers=None):
+    def __init__(self, fps_calc_points=10, header_list=None, monitored_headers=None):
         """ """
         self.stored_data = []
         self.header_list = ["t"] + (header_list if header_list else [])
@@ -288,6 +286,7 @@ class QueueSummingAccumulator(QObject, Accumulator):
             except Empty:
                 break
 
+
 class DynamicLog(Accumulator):
     """Accumulator to save feature of a stimulus, e.g. velocity of gratings
     in a closed-loop experiment.
@@ -306,7 +305,6 @@ class DynamicLog(Accumulator):
         # it is assumed the first dynamic stimulus has all the fields
 
         self.update_stimuli(stimuli)
-
 
     def update_list(self, time, data):
         """
@@ -337,7 +335,7 @@ class DynamicLog(Accumulator):
             except AttributeError:
                 pass
         self.header_list = ["t"] + dynamic_params
-        self.dict_header = {k : i for i, k in enumerate(self.header_list)}
+        self.dict_header = {k: i for i, k in enumerate(self.header_list)}
         self.stored_data = []
 
 

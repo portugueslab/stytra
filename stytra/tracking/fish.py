@@ -51,11 +51,11 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ]
             )
         ) + ["biggest_area"]
-        self.monitored_headers = ([
-            "f{:d}_x".format(i_fish) for i_fish in range(self.params.n_fish_max)
-        ]+[
-            "f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)
-        ] + ["biggest_area"])
+        self.monitored_headers = (
+            ["f{:d}_x".format(i_fish) for i_fish in range(self.params.n_fish_max)]
+            + ["f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)]
+            + ["biggest_area"]
+        )
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
 
@@ -287,8 +287,9 @@ class Fish:
 
     """
 
-    def __init__(self, initial_state, idx_book, pos_std=1.0, angle_std=np.pi/10,
-                 pred_coef=1):
+    def __init__(
+        self, initial_state, idx_book, pos_std=1.0, angle_std=np.pi / 10, pred_coef=1
+    ):
         self.i_not_updated = 0
         self.i_ar = idx_book.get_next()
 
@@ -307,21 +308,25 @@ class Fish:
         self.i_not_updated -= 1
 
     def update(self, new_fish_state):
-        for f, s in zip(self.filters, new_fish_state[:3]):
+        for i, (f, s) in enumerate(zip(self.filters, new_fish_state[:3])):
+            # Angle needs to be updated specially:
+            if i == 2:
+                s = _minimal_angle_dif(f.x[0], s)
             f.update(np.array([s]))
         self.unfiltered[:] = new_fish_state[3:]
         self.i_not_updated = 0
 
     def serialize(self):
-        return np.concatenate([f.x.flatten() for f in self.filters]+[self.unfiltered])
+        return np.concatenate([f.x.flatten() for f in self.filters] + [self.unfiltered])
 
     def is_close(self, new_fish, n_px=12, d_theta=np.pi / 2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
-        dists = np.array([(new_fish[i] - f.x[0])
-                          for i, f in enumerate(self.filters[:2])])
+        dists = np.array(
+            [(new_fish[i] - f.x[0]) for i, f in enumerate(self.filters[:2])]
+        )
         dtheta = np.abs(
             np.mod(new_fish[3] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
         )
@@ -359,8 +364,8 @@ def fish_start_n(mask, take_min=50):
     return np.array([x0, y0])
 
 
-
 # Utilities for drawing circles.
+
 
 @jit(nopython=True)
 def _symmetry_points(x0, y0, x, y):
@@ -425,6 +430,7 @@ def _fish_direction_n(image, start_loc, radius):
             min_val = image[y, x]
             min_point = (x, y)
     return np.arctan2(min_point[1] - centre_int[1], min_point[0] - centre_int[0])
+
 
 @jit(nopython=True)
 def _minimal_angle_dif(th_old, th_new):
