@@ -23,7 +23,7 @@ setup(
         "GitPython",
         "pymongo",
         "colorspacious",
-        "arrayqueues",
+        "arrayqueues>=1.1.0b0",
         "pillow",
         "scikit-image",
         "filterpy",
