@@ -28,6 +28,7 @@ except ImportError:
 
 from lightparam import Parametrized, Param
 
+
 class Experiment(QObject):
     """General class that runs an experiment.
 
@@ -148,9 +149,11 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal(tree=self.dc)
 
-        self.gui_params = Parametrized("gui", tree=self.dc,
-                                       params=dict(geometry=Param(None),
-                                                   window_state=Param(None)))
+        self.gui_params = Parametrized(
+            "gui",
+            tree=self.dc,
+            params=dict(geometry=Param(None), window_state=Param(None)),
+        )
 
         self.protocol_runner = ProtocolRunner(
             experiment=self, protocol=self.default_protocol
@@ -175,8 +178,7 @@ class Experiment(QObject):
                 record_stim_every=rec_stim_every,
             )
             if self.display_config.get("window_size", None) is not None:
-                self.window_display.params["size"] = self.display_config[
-                    "window_size"]
+                self.window_display.params["size"] = self.display_config["window_size"]
                 self.window_display.set_dims()
 
         self.i_run = 0
@@ -186,15 +188,14 @@ class Experiment(QObject):
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
-        self.display_framerate_acc = None # TODO display framerate calculation
+        self.display_framerate_acc = None  # TODO display framerate calculation
 
     def save_log(self, log, name, category="tracking"):
-        log.save(
-            self.filename_base() + name, self.log_format
-        )
+        log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.current_timestamp.strftime("%H%M%S_") + name+ "." + self.log_format,
-            category+"_"+name)
+            self.current_timestamp.strftime("%H%M%S_") + name + "." + self.log_format,
+            category + "_" + name,
+        )
 
     def get_new_name(self):
         return (

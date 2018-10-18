@@ -9,12 +9,21 @@ import glob
 from multiprocessing import Queue, Event
 from multiprocessing.queues import Empty, Full
 from stytra.utilities import FrameProcess
-from arrayqueues.shared_arrays import TimestampedArrayQueue
+from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
 
-from stytra.hardware.video.cameras import XimeaCamera, AvtCamera, SpinnakerCamera, MikrotronCLCamera
+from stytra.hardware.video.cameras import (
+    XimeaCamera,
+    AvtCamera,
+    SpinnakerCamera,
+    MikrotronCLCamera,
+)
+
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import CameraControlParameters, VideoControlParameters
+from stytra.hardware.video.interfaces import (
+    CameraControlParameters,
+    VideoControlParameters,
+)
 
 import time
 
@@ -57,13 +66,14 @@ class VideoSource(FrameProcess):
 
     """
 
-    def __init__(self, rotation=False, max_mbytes_queue=100):
+    def __init__(self, rotation=False, max_mbytes_queue=100, n_consumers=1):
         """ """
         super().__init__()
         self.rotation = rotation
         self.control_queue = Queue()
-        self.frame_queue = TimestampedArrayQueue(max_mbytes=max_mbytes_queue)
+        self.frame_queue = IndexedArrayQueue(max_mbytes=max_mbytes_queue)
         self.kill_event = Event()
+        self.n_consumers = 1
 
 
 class CameraSource(VideoSource):
@@ -140,7 +150,10 @@ class CameraSource(VideoSource):
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
                     arr = np.rot90(arr, self.rotation)
-                self.frame_queue.put(arr)
+                if self.frame_queue.queue.qsize() < self.n_consumers + 1:
+                    self.frame_queue.put(arr)
+                else:
+                    print("Dropped frame")
 
         self.cam.release()
 

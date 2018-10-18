@@ -394,10 +394,10 @@ class GratingStimulus(BackgroundStimulus):
         self.name = "gratings"
 
     def create_pattern(self):
-        l = max(2, int(
-            self.grating_period
-            / (max(self._experiment.calibrator.mm_px, 0.0001))
-        ))
+        l = max(
+            2,
+            int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
+        )
         if self.wave_shape == "square":
             self._pattern = np.ones((l, 3), np.uint8) * self.color_1
             self._pattern[int(l / 2) :, :] = self.color_2
@@ -431,7 +431,9 @@ class HalfFieldStimulus(PositionStimulus):
 
     """
 
-    def __init__(self, *args, left=False, color=(255, 255, 255), center_dist=0, **kwargs):
+    def __init__(
+        self, *args, left=False, color=(255, 255, 255), center_dist=0, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.left = left
         self.center_dist = center_dist
@@ -451,8 +453,16 @@ class HalfFieldStimulus(PositionStimulus):
 
         theta = self.theta
 
-        sx = self.x + h / 2 * np.cos(theta) + self.center_dist*np.cos(theta-np.pi/2)
-        sy = self.y + h / 2 * np.sin(theta) + self.center_dist*np.sin(theta-np.pi/2)
+        sx = (
+            self.x
+            + h / 2 * np.cos(theta)
+            + self.center_dist * np.cos(theta - np.pi / 2)
+        )
+        sy = (
+            self.y
+            + h / 2 * np.sin(theta)
+            + self.center_dist * np.sin(theta - np.pi / 2)
+        )
         points.append(QPoint(sx, sy))
         theta += dtheta
 
@@ -493,8 +503,7 @@ class RadialSineStimulus(InterpolatedStimulus, VisualStimulus):
 
     def paint(self, p, w, h):
         x, y = (
-            (np.arange(d) - d / 2) * self._experiment.calibrator.mm_px
-            for d in (w, h)
+            (np.arange(d) - d / 2) * self._experiment.calibrator.mm_px for d in (w, h)
         )
 
         self.image = np.round(

@@ -45,8 +45,9 @@ class StimulusDisplayWindow(ParametrizedWidget):
         :param record_stim_every: either None or the number of events every
         which a displayed frame is acquired and stored.
         """
-        super().__init__(name="stimulus/display_params",
-                         tree=protocol_runner.experiment.dc, **kwargs)
+        super().__init__(
+            name="stimulus/display_params", tree=protocol_runner.experiment.dc, **kwargs
+        )
         self.setWindowTitle("Stytra stimulus display")
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,

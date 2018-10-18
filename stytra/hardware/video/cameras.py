@@ -323,22 +323,26 @@ class SpinnakerCamera(Camera):
         self.cam.Init()
         nodemap = self.cam.GetNodeMap()
         node_acquisition_mode = PySpin.CEnumerationPtr(
-            nodemap.GetNode('AcquisitionMode'))
-        if not PySpin.IsAvailable(
-                node_acquisition_mode) or not PySpin.IsWritable(
-                node_acquisition_mode):
+            nodemap.GetNode("AcquisitionMode")
+        )
+        if not PySpin.IsAvailable(node_acquisition_mode) or not PySpin.IsWritable(
+            node_acquisition_mode
+        ):
             print(
-                'Unable to set acquisition mode to continuous (enum retrieval). Aborting...')
+                "Unable to set acquisition mode to continuous (enum retrieval). Aborting..."
+            )
             return False
 
         # Retrieve entry node from enumeration node
         node_acquisition_mode_continuous = node_acquisition_mode.GetEntryByName(
-            'Continuous')
+            "Continuous"
+        )
         if not PySpin.IsAvailable(
-                node_acquisition_mode_continuous) or not PySpin.IsReadable(
-                node_acquisition_mode_continuous):
+            node_acquisition_mode_continuous
+        ) or not PySpin.IsReadable(node_acquisition_mode_continuous):
             print(
-                'Unable to set acquisition mode to continuous (entry retrieval). Aborting...')
+                "Unable to set acquisition mode to continuous (entry retrieval). Aborting..."
+            )
             return False
 
         # Retrieve integer value from entry node
@@ -373,13 +377,13 @@ class SpinnakerCamera(Camera):
                 # camera wants exposure in us:
                 self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
                 self.cam.ExposureAuto.SetValue(PySpin.GainAuto_Off)
-                self.cam.ExposureTime.SetValue(val*1000)
+                self.cam.ExposureTime.SetValue(val * 1000)
 
             if param == "framerate":
                 self.cam.AcquisitionFrameRate.SetValue(val)
 
         except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
+            print("Error: %s" % ex)
         pass
 
     def read(self):
@@ -427,8 +431,9 @@ class SpinnakerCamera(Camera):
                 #
                 #  When converting images, color processing algorithm is an
                 #  optional parameter.
-                image_converted = image_result.Convert(PySpin.PixelFormat_Mono8,
-                                                       PySpin.HQ_LINEAR)
+                image_converted = image_result.Convert(
+                    PySpin.PixelFormat_Mono8, PySpin.HQ_LINEAR
+                )
 
                 # Create a unique filename
                 #  Save image
@@ -437,7 +442,6 @@ class SpinnakerCamera(Camera):
                 #  The standard practice of the examples is to use device
                 #  serial numbers to keep images of one device from
                 #  overwriting those of another.
-
 
                 #  Release image
                 #
@@ -449,7 +453,7 @@ class SpinnakerCamera(Camera):
                 return image_converted.GetNDArray()
 
         except PySpin.SpinnakerException as ex:
-            print('Error: %s' % ex)
+            print("Error: %s" % ex)
             return None
 
     def release(self):
