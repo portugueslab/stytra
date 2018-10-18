@@ -525,6 +525,7 @@ class MikrotronCLCamera(Camera):
             if int(val) != self.framerate_current:
                 self._send_command(":q{:06X}".format(int(val)))
                 self._read_response()
+                self.framerate_current = int(val)
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)

@@ -60,6 +60,7 @@ class CameraViewWidget(QWidget):
         self.display_area.setRange(
             QRectF(0, 0, 640, 640), update=True, disableAutoRange=True
         )
+        self.display_area.invertY(True)
         # Image to which the frame will be set, initially black:
         self.image_item = pg.ImageItem()
         self.image_item.setImage(np.zeros((640, 480), dtype=np.uint8))
@@ -139,7 +140,7 @@ class CameraViewWidget(QWidget):
                 # In this way, the frame displayed is actually the most
                 # recent one added to the queue, as a queue is FILO:
                 if first:
-                    time, self.current_image = self.frame_queue.get(timeout=0.0001)
+                    time, index, self.current_image = self.frame_queue.get(timeout=0.0001)
                     # first = False
                 else:
                     # Else, get to free the queue:
