@@ -469,6 +469,8 @@ class MikrotronCLCamera(Camera):
         self.b_per_px = ctypes.c_uint32()
         self.img_buffer = None
         self.buffer_address = None
+        self.exp_current = None
+        self.framerate_current = None
         try:
             self.imaq = ctypes.windll.imaq
         except OSError:
@@ -478,61 +480,47 @@ class MikrotronCLCamera(Camera):
         int_opened = self.imaq.imgInterfaceOpen(self.cam_id, ctypes.byref(self.interface_id))
         session_opened = self.imaq.imgSessionOpen(self.interface_id, ctypes.byref(self.session_id))
 
-        # TODO read from serial
-        # command = ctypes.c_char_p(bytes(":v", "ansi"))
-        # self.imaq.imgSessionSerialWrite(self.session_id, command, len(command.value), 100)
-        # response = ctypes.create_string_buffer(256)
-        # self.imaq.imgSessionSerialRead(self.session_id,response, 256, 100)
-        # print(response.value)
+        # get dimensions
+        # if residual response left, clear it
+        self.imaq.imgSessionSerialFlush(self.session_id)
+        self._send_command(":d?")
+        response = self._read_response(16)
+        _, _, w, h = [int(x, 16) for x in response.split(" ")]
 
-        h, w = 1024, 1024
-        self.imaq.imgSessionConfigureROI(self.session_id, ctypes.c_uint32(0), ctypes.c_uint32(0), ctypes.c_uint32(h),
+        self.imaq.imgSessionConfigureROI(self.session_id, ctypes.c_uint32(0),
+                                         ctypes.c_uint32(0), ctypes.c_uint32(h),
                                          ctypes.c_uint32(w));
         self.imaq.imgGrabSetup(self.session_id, 1)
-
-        attr_base = 0x3FF60000
-
-        attr_h = 0x01A7
-        attr_w = 0x01A6
-        attr_bytes_px = 0x0067
-
-        for atr, var in zip([attr_h, attr_w, attr_bytes_px],
-                            [self.h, self.w, self.b_per_px]):
-            self.imaq.imgGetAttribute(self.session_id,
-                                 ctypes.c_uint32(attr_base + atr),
-                                 ctypes.byref(var))
-
-        print(self.h.value, self.w.value)
-
-
-        for atr, var in zip([attr_h, attr_w],
-                            [h, w]):
-            self.imaq.imgSetAttribute2(self.session_id,
-                                 ctypes.c_uint32(attr_base + atr),
-                                 ctypes.c_uint32(var))
-
-        for atr, var in zip([attr_h, attr_w, attr_bytes_px],
-                            [self.h, self.w, self.b_per_px]):
-            self.imaq.imgGetAttribute(self.session_id,
-                                      ctypes.c_uint32(attr_base + atr),
-                                      ctypes.byref(var))
-        print(self.h.value, self.w.value)
 
         self.img_buffer = np.ndarray(shape=(h, w), dtype=ctypes.c_uint8)
         self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
 
+    def _send_command(self, com):
+        command = ctypes.c_char_p(bytes(com, "ansi"))
+        comlen = ctypes.c_uint32(len(command.value))
+        timeout = ctypes.c_uint32(100)
+        return self.imaq.imgSessionSerialWrite(self.session_id, command,
+                                         ctypes.byref(comlen), timeout)
+
+    def _read_response(self, resplen=256):
+        response = ctypes.create_string_buffer(256)
+        comlen = ctypes.c_uint32(resplen)
+        timeout = ctypes.c_uint32(100)
+        self.imaq.imgSessionSerialReadBytes(self.session_id, response,
+                                            ctypes.byref(comlen), timeout)
+        return response.value.decode("ansi")
+
     def set(self, param, val):
-        attr_base = 0x3FF60000
-        attr_exposure = ctypes.c_uint32(attr_base + 0x01C0)
-        attr_framerate = ctypes.c_uint32(attr_base + 0x01C1)
-
-        ret = -100
         if param == "exposure":
-            # camera wants exposure in ms:
-            ret = self.imaq.imgSetAttribute2(self.session_id, attr_exposure, ctypes.c_uint32(int(val)))
-
+            exptime = int(val*1000)
+            if exptime != self.exp_current:
+                self._send_command(":t{:06X}".format(exptime))
+                self._read_response()
+                self.exp_current = exptime
         if param == "framerate":
-            ret = self.imaq.imgSetAttribute2(self.session_id, attr_framerate, ctypes.c_uint32(int(val)))
+            if int(val) != self.framerate_current:
+                self._send_command(":q{:06X}".format(int(val)))
+                self._read_response()
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)
