@@ -129,26 +129,26 @@ class SimpleExperimentWindow(QMainWindow):
 
     def construct_ui(self):
         """ """
-        central_widget = QWidget()
-        protocol_layout = QVBoxLayout()
-        # central_widget.layout().addWidget(self.label_debug)
-        if not self.experiment.offline:
-            protocol_layout.addWidget(
-                CollapsibleWidget(self.widget_projection, "Projector setup")
-            )
-        protocol_layout.addWidget(
-            CollapsibleWidget(self.logger.widget, "Log", expanded=False)
-        )
         self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
+
+        if not self.experiment.offline:
+            proj_dock = QDockWidget("Projector configuration", self)
+            proj_dock.setWidget(self.widget_projection)
+            self.docks.append(proj_dock)
+            self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
+
+        log_dock = QDockWidget("Log", self)
+        log_dock.setWidget(self.logger.widget)
+        self.docks.append(log_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, log_dock)
+
         if self.experiment.trigger is not None:
-            protocol_layout.addWidget(self.chk_scope)
+            self.toolbar_control.addWidget(self.chk_scope)
+
         self.toolbar_control.addWidget(self.button_metadata)
 
-        central_layout = QHBoxLayout()
-        central_layout.addLayout(protocol_layout)
-        central_widget.setLayout(central_layout)
-        self.setCentralWidget(central_widget)
-        return central_widget
+        self.setCentralWidget(None)
+        return None
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
