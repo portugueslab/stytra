@@ -74,7 +74,6 @@ class FrameDispatcher(FrameProcess):
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
-        self.processing_parameters = dict()
         self.processing_counter = processing_counter
 
         self.finished_signal = finished_signal
@@ -82,6 +81,8 @@ class FrameDispatcher(FrameProcess):
         self.gui_framerate = gui_framerate
         self.gui_dispatcher = gui_dispatcher
         self.preprocessing_cls = get_preprocessing_method(preprocessing_class)
+
+        self.processing_parameters = None
         self.tracking_cls = get_tracking_method(processing_class)
         self.processing_parameter_queue = processing_parameter_queue
 
@@ -103,10 +104,15 @@ class FrameDispatcher(FrameProcess):
 
     def run(self):
         """Loop where the tracking function runs."""
+
+        tracker = self.tracking_cls()
+        self.processing_parameters = tracker.params.params.values
         preprocessor = (
             self.preprocessing_cls() if self.preprocessing_cls is not None else None
         )
-        tracker = self.tracking_cls()
+        if preprocessor is not None:
+            self.processing_parameters.update(preprocessor.params.params.values)
+
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue

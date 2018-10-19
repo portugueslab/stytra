@@ -88,7 +88,8 @@ class CameraExperiment(Experiment):
         self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
-        self.camera.control_queue.put(self.camera_control_params.params.values)
+        self.camera.control_queue.put(self.camera_control_params.params.changed_values())
+        self.camera_control_params.params.acknowledge_changes()
 
     def start_experiment(self):
         """ """
@@ -312,21 +313,15 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().send_gui_parameters()
+        changed = self.tracking_params.params.changed_values()
 
-        try:
-            if self.tracking_params.params.n_segments.changed:
-                self.refresh_accumulator_headers()
-
-            if self.tracking_params.params.n_fish_max.changed:
-                self.refresh_accumulator_headers()
-
-        except AttributeError as e:
-            print(e)
+        if "n_segments" in changed.keys() or "n_fish_max" in changed.keys():
+            self.refresh_accumulator_headers()
 
         for i in range(self.n_dispatchers):
             self.processing_params_queue.put(
                 {
-                    **self.tracking_params.params.values,
+                    **changed,
                     **(
                         self.preprocessing_params.params.values
                         if self.preprocessing_method is not None
@@ -334,13 +329,7 @@ class TrackingExperiment(CameraExperiment):
                     ),
                 }
             )
-
-        try:
-            self.tracking_params.params.n_segments.changed = False
-            self.tracking_params.params.n_fish_max.changed = False
-
-        except AttributeError:
-            pass
+        self.tracking_params.params.acknowledge_changes()
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
