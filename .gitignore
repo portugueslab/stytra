@@ -93,3 +93,5 @@ ENV/
 
 
 stytra/examples/folder\.txt
+
+\.pytest_cache/
