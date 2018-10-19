@@ -5,6 +5,10 @@
 from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus
 from time import sleep
 
+try:
+    import u3
+except ImportError:
+    pass
 
 class NIVoltageStimulus(Stimulus):
     def __init__(self, *args, dev="Dev1", chan="ao0"):
@@ -42,10 +46,9 @@ class InterpolatedVoltageStimulus(NIVoltageStimulus, InterpolatedStimulus):
 
 
 class U3LabJackVoltageStimulus(Stimulus):
-    def __init__(self):
-        import u3
-        self.device = u3.U3()
-        self.chan = u3.DAC0_8
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
 class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
     def __init__(self, *args, voltage=0.0, **kwargs):
@@ -57,15 +60,17 @@ class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
         self.device.getFeedback(self.chan(chan_value))
 
 
-class InterpolatedU3LabJackVoltageStimulus(U3LabJackVoltageStimulus, InterpolatedStimulus):
+class InterpolatedU3LabJackVoltageStimulus(InterpolatedStimulus, U3LabJackVoltageStimulus):
     def __init__(self, *args, **kwargs):
         self.voltage = 0
         super().__init__(*args, **kwargs)
 
     def update(self):
         super().update()
-        chan_value = self.device.voltageToDACBits(self.voltage, dacNumber=0, is16Bits=False)
-        self.device.getFeedback(self.chan(chan_value))
+        device = u3.U3()
+        chan = u3.DAC0_8
+        chan_value = device.voltageToDACBits(self.voltage, dacNumber=0, is16Bits=False)
+        device.getFeedback(chan(chan_value))
 
 
 
