@@ -140,7 +140,8 @@ class CameraViewWidget(QWidget):
                 # In this way, the frame displayed is actually the most
                 # recent one added to the queue, as a queue is FILO:
                 if first:
-                    time, index, self.current_image = self.frame_queue.get(timeout=0.0001)
+                    qr = self.frame_queue.get(timeout=0.0001)
+                    self.current_image = qr[-1]
                     # first = False
                 else:
                     # Else, get to free the queue:
