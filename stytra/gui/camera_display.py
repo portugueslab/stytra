@@ -189,12 +189,12 @@ class CameraSelection(CameraViewWidget):
         super().__init__(**kwargs)
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
-        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
+        self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
         self.track_params = self.experiment.tracking_method.params
 
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
-        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
+        self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
 
         # Get the tracking parameters from the experiment class and connect
         # their change signal to update ROI position:

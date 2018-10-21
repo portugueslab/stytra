@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     tracking_config = dict(
         embedded=True,
-        tracking_method="angle_sweep",
+        tracking_method="centroid",
         estimator="vigor",
         preprocessing_method="prefilter",
     )
