@@ -28,6 +28,7 @@ except ImportError:
 
 from lightparam import Parametrized, Param
 
+
 class Experiment(QObject):
     """General class that runs an experiment.
 
@@ -57,7 +58,7 @@ class Experiment(QObject):
         (optional) Dictionary with specifications for the display. Possible
         key values are "full_screen" and "window_size".
         gl_display : bool (False)
-    rec_stim_every : int
+    rec_stim_framerate : int
         (optional) Set to record a movie of the displayed visual stimulus. It
         specifies every how many frames one will be saved (set to 1 to
         record) all displayed frames. The final movie will be saved in the
@@ -84,10 +85,11 @@ class Experiment(QObject):
         stim_plot=False,
         log_format="csv",
         stim_movie_format="h5",
-        rec_stim_every=None,
+        rec_stim_framerate=None,
         display_config=None,
         scope_triggering=None,
         offline=False,
+        **kwargs,
     ):
         """ """
         super().__init__()
@@ -148,9 +150,11 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal(tree=self.dc)
 
-        self.gui_params = Parametrized("gui", tree=self.dc,
-                                       params=dict(geometry=Param(None),
-                                                   window_state=Param(None)))
+        self.gui_params = Parametrized(
+            "gui",
+            tree=self.dc,
+            params=dict(geometry=Param(None), window_state=Param(None)),
+        )
 
         self.protocol_runner = ProtocolRunner(
             experiment=self, protocol=self.default_protocol
@@ -172,11 +176,10 @@ class Experiment(QObject):
                 self.protocol_runner,
                 self.calibrator,
                 gl=self.display_config.get("gl", False),
-                record_stim_every=rec_stim_every,
+                record_stim_framerate=rec_stim_framerate,
             )
             if self.display_config.get("window_size", None) is not None:
-                self.window_display.params["size"] = self.display_config[
-                    "window_size"]
+                self.window_display.params["size"] = self.display_config["window_size"]
                 self.window_display.set_dims()
 
         self.i_run = 0
@@ -186,15 +189,14 @@ class Experiment(QObject):
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
-        self.display_framerate_acc = None # TODO display framerate calculation
+        self.display_framerate_acc = None  # TODO display framerate calculation
 
     def save_log(self, log, name, category="tracking"):
-        log.save(
-            self.filename_base() + name, self.log_format
-        )
+        log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.current_timestamp.strftime("%H%M%S_") + name+ "." + self.log_format,
-            category+"_"+name)
+            self.current_timestamp.strftime("%H%M%S_") + name + "." + self.log_format,
+            category + "_" + name,
+        )
 
     def get_new_name(self):
         return (
@@ -345,7 +347,7 @@ class Experiment(QObject):
         self.protocol_runner.stop()
         if self.base_dir is not None and save:
             if self.dc is not None:
-                self.dc.add_static_data(self.protocol_runner.log, name="stimulus_log")
+                self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
                 self.dc.add_static_data(
                     self.protocol_runner.t_start, name="general_t_protocol_start"
                 )

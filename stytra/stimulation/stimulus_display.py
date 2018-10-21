@@ -36,23 +36,24 @@ class StimulusDisplayWindow(ParametrizedWidget):
     """
 
     def __init__(
-        self, protocol_runner, calibrator, record_stim_every=10, gl=False, **kwargs
+        self, protocol_runner, calibrator, record_stim_framerate=10, gl=False, **kwargs
     ):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim
         sequence.
         :param calibrator: Calibrator object
-        :param record_stim_every: either None or the number of events every
+        :param record_stim_framerate: either None or the number of events every
         which a displayed frame is acquired and stored.
         """
-        super().__init__(name="stimulus/display_params",
-                         tree=protocol_runner.experiment.dc, **kwargs)
+        super().__init__(
+            name="stimulus/display_params", tree=protocol_runner.experiment.dc, **kwargs
+        )
         self.setWindowTitle("Stytra stimulus display")
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
 
-        if record_stim_every is not None or not gl:
+        if record_stim_framerate is not None or not gl:
             QWidgetClass = QWidget
         else:
             QWidgetClass = QOpenGLWidget
@@ -62,7 +63,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
             self,
             calibrator=calibrator,
             protocol_runner=protocol_runner,
-            record_stim_every=record_stim_every,
+            record_stim_framerate=record_stim_framerate,
         )
         self.widget_display.setMaximumSize(2000, 2000)
 
@@ -99,7 +100,7 @@ class StimDisplayWidget:
 
     """
 
-    def __init__(self, *args, protocol_runner, calibrator, record_stim_every):
+    def __init__(self, *args, protocol_runner, calibrator, record_stim_framerate):
         """
         Check ProtocolControlWindow __init__ documentation for description
         of arguments.
@@ -108,7 +109,7 @@ class StimDisplayWidget:
 
         self.calibrator = calibrator
         self.protocol_runner = protocol_runner
-        self.record_framerate = record_stim_every
+        self.record_framerate = record_stim_framerate
 
         self.img = None
         self.calibrating = False
@@ -116,7 +117,7 @@ class StimDisplayWidget:
 
         # storing of displayed frames
         self.k = 0
-        if record_stim_every is None:
+        if record_stim_framerate is None:
             self.stored_frames = None
         else:
             self.stored_frames = []
@@ -125,7 +126,7 @@ class StimDisplayWidget:
         self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
         self.k = 0
-        self.starting_time = datetime.now()
+        self.starting_time = None
         self.last_time = self.starting_time
 
         self.movie = []
@@ -174,6 +175,9 @@ class StimDisplayWidget:
         widget state for recording the stimulus movie. """
         self.update()
         # Grab frame if recording is enabled.
+        if self.starting_time is None:
+            self.starting_time = datetime.now()
+            self.last_time = self.starting_time
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
@@ -218,3 +222,4 @@ class StimDisplayWidget:
         """
         self.movie = []
         self.movie_timestamps = []
+        self.starting_time = None

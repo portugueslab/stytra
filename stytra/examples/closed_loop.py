@@ -4,8 +4,7 @@ import pandas as pd
 from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
-
-import tempfile
+from lightparam import Param
 
 
 class ClosedLoop1DProt(Protocol):
@@ -14,19 +13,17 @@ class ClosedLoop1DProt(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.add_params(
-            inter_stim_pause=20.,
-            grating_vel=10.,
-            grating_duration=10.,
-            grating_cycle=10,
-        )
+        self.inter_stim_pause = Param(20.)
+        self.grating_vel = Param(10.)
+        self.grating_duration = Param(10.)
+        self.grating_cycle = Param(10.)
 
     def get_stim_sequence(self):
         stimuli = []
         # # gratings
-        p = self.params["inter_stim_pause"] / 2
-        v = self.params["grating_vel"]
-        d = self.params["grating_duration"]
+        p = self.inter_stim_pause / 2
+        v = self.grating_vel
+        d = self.grating_duration
 
         t_base = [0, p, p, p + d, p + d, 2 * p + d]
         vel_base = [0, 0, -v, -v, 0, 0]
@@ -54,7 +51,7 @@ class ClosedLoop1DProt(Protocol):
             ClosedLoop1DGratings(
                 df_param=df,
                 grating_angle=np.pi / 2,
-                grating_period=self.params["grating_cycle"],
+                grating_period=self.grating_cycle,
                 grating_col_1=(255,) * 3,
             )
         )
@@ -63,16 +60,18 @@ class ClosedLoop1DProt(Protocol):
 
 if __name__ == "__main__":
     # save_dir = tempfile.mkdtemp()
-    save_dir = r"C:\Users\portugueslab\data\stytra"
+    # dir_save = r"C:\Users\portugueslab\data\stytra"
     # Here you configure the camera input
     #
-    # camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
-    camera_config = dict(type='ximea')
+    camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
+    # camera_config = dict(type='ximea')
 
     tracking_config = dict(
-        embedded=True, tracking_method="centroid", estimator="vigor",
-        preprocessing_method='prefilter')
-
+        embedded=True,
+        tracking_method="centroid",
+        estimator="vigor",
+        preprocessing_method="prefilter",
+    )
 
     display_config = dict(full_screen=True)
 
@@ -82,5 +81,6 @@ if __name__ == "__main__":
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,
-        dir_save=save_dir,
+        # dir_save=dir_save,
+        # log_format='hdf5'
     )

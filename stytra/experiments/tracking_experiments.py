@@ -1,6 +1,6 @@
 import traceback
 
-from multiprocessing import Queue, Event
+from multiprocessing import Queue, Event, Value
 from queue import Empty
 
 from stytra.experiments import Experiment
@@ -16,16 +16,15 @@ from stytra.hardware.video import (
     CameraSource,
 )
 
-from stytra.tracking.movement import MovementDetectionParameters
-
 # imports for tracking
 
-from stytra.collectors import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
 from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
+from lightparam.param_qt import ParametrizedQt
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -34,6 +33,7 @@ from stytra.stimulation.estimators import (
 )
 
 import sys
+import logging
 
 
 class CameraExperiment(Experiment):
@@ -74,7 +74,9 @@ class CameraExperiment(Experiment):
             )
             self.camera_control_params = VideoControlParameters(tree=self.dc)
 
-        self.camera_framerate_acc = QueueDataAccumulator(self.camera.framerate_queue, ["camera"])
+        self.camera_framerate_acc = QueueDataAccumulator(
+            self.camera.framerate_queue, ["camera"]
+        )
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
@@ -84,7 +86,8 @@ class CameraExperiment(Experiment):
         self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
-        self.camera.control_queue.put(self.camera_control_params.params.values)
+        self.camera.control_queue.put(self.camera_control_params.params.changed_values())
+        self.camera_control_params.params.acknowledge_changes()
 
     def start_experiment(self):
         """ """
@@ -178,7 +181,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking_config, **kwargs):
+    def __init__(self, *args, tracking_config, n_tracking_processes=1, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -189,28 +192,44 @@ class TrackingExperiment(CameraExperiment):
         """
 
         self.processing_params_queue = Queue()
+        self.tracking_output_queue = Queue()
+        self.processing_counter = Value("i", -1)
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
+        self.n_dispatchers = n_tracking_processes
         method_name = tracking_config["tracking_method"]
         preproc_method_name = tracking_config.get("preprocessing_method", None)
 
         preproc_method = get_preprocessing_method(preproc_method_name)
         self.preprocessing_method = preproc_method() if preproc_method else None
+        if preproc_method:
+            self.preprocessing_params = ParametrizedQt(
+                name="tracking/preprocessing", params=self.preprocessing_method.process
+            )
         self.tracking_method = get_tracking_method(method_name)()
-
-        self.data_name = self.tracking_method.data_log_name
-        self.frame_dispatcher = FrameDispatcher(
-            in_frame_queue=self.camera.frame_queue,
-            finished_signal=self.camera.kill_event,
-            preprocessing_class=preproc_method_name,
-            processing_class=method_name,
-            processing_parameter_queue=self.processing_params_queue,
-            gui_framerate=20,
+        self.tracking_params = ParametrizedQt(
+            name="tracking/tail_centroids", params=self.tracking_method.detect
         )
 
+        self.data_name = self.tracking_method.data_log_name
+        self.frame_dispatchers = [
+            FrameDispatcher(
+                in_frame_queue=self.camera.frame_queue,
+                finished_signal=self.camera.kill_event,
+                preprocessing_class=preproc_method_name,
+                processing_class=method_name,
+                processing_parameter_queue=self.processing_params_queue,
+                output_queue=self.tracking_output_queue,
+                processing_counter=self.processing_counter,
+                gui_dispatcher=(i == 0),  # only the first process dispatches to the GUI
+                gui_framerate=20,
+            )
+            for i in range(self.n_dispatchers)
+        ]
+
         self.data_acc = QueueDataAccumulator(
-            self.frame_dispatcher.output_queue,
+            self.tracking_output_queue,
             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
             header_list=self.tracking_method.accumulator_headers,
         )
@@ -222,7 +241,8 @@ class TrackingExperiment(CameraExperiment):
         self.protocol_runner.sig_protocol_started.connect(self.data_acc.reset)
 
         # start frame dispatcher process:
-        self.frame_dispatcher.start()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.start()
 
         est_type = tracking_config.get("estimator", None)
         if est_type == "position":
@@ -236,19 +256,22 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
-        self.tracking_framerate_acc = QueueDataAccumulator(
-            self.frame_dispatcher.framerate_queue, ["tracking"])
+        self.tracking_framerate_acc = QueueSummingAccumulator(
+            [fd.framerate_queue for fd in self.frame_dispatchers], ["tracking"]
+        )
 
         self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
+        self.logger.info("Tracking with ", self.n_dispatchers, " processess")
 
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
         """
         self.tracking_method.reset_state()
-        self.data_acc.reset(header_list=self.tracking_method.accumulator_headers,
-                            monitored_headers=self.tracking_method.monitored_headers)
-        self.window_main.stream_plot.remove_streams()
-        self.initialize_plots()
+        self.data_acc.reset(
+            header_list=self.tracking_method.accumulator_headers,
+            monitored_headers=self.tracking_method.monitored_headers,
+        )
+        self.refresh_plots()
 
     def make_window(self):
         tail = isinstance(self.tracking_method, TailTrackingMethod)
@@ -263,8 +286,12 @@ class TrackingExperiment(CameraExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.stream_plot.add_stream(self.data_acc)
         self.window_main.plot_framerate.add_stream(self.tracking_framerate_acc)
+        self.refresh_plots()
+
+    def refresh_plots(self):
+        self.window_main.stream_plot.remove_streams()
+        self.window_main.stream_plot.add_stream(self.data_acc)
 
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
@@ -284,32 +311,23 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().send_gui_parameters()
+        changed = self.tracking_params.params.changed_values()
 
-        # TODO deal with parameters that impact the accumulators, maybe automatically link it to receiving something different
-        # if isinstance(self.tracking_method, TailTrackingMethod):
-        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #
-        # if isinstance(self.tracking_method, FishTrackingMethod):
-        #     self.tracking_method.params.param("n_segments").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #     self.tracking_method.params.param("n_fish_max").sigValueChanged.connect(
-        #         self.refresh_accumulator_headers
-        #     )
-        #
+        if "n_segments" in changed.keys() or "n_fish_max" in changed.keys():
+            self.refresh_accumulator_headers()
 
-        self.processing_params_queue.put(
-            {
-                **self.tracking_method.params.params.values,
-                **(
-                    self.preprocessing_method.get_clean_values()
-                    if self.preprocessing_method is not None
-                    else {}
-                ),
-            }
-        )
+        for i in range(self.n_dispatchers):
+            self.processing_params_queue.put(
+                {
+                    **changed,
+                    **(
+                        self.preprocessing_params.params.values
+                        if self.preprocessing_method is not None
+                        else {}
+                    ),
+                }
+            )
+        self.tracking_params.params.acknowledge_changes()
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
@@ -329,9 +347,9 @@ class TrackingExperiment(CameraExperiment):
         if save:
             self.save_log(self.data_acc, "log")
             try:
-                print('saving estimator log')
+                print("saving estimator log")
                 self.save_log(self.estimator.log, "estimator_log")
-                print('save log')
+                print("save log")
             except AttributeError:
                 pass
         try:
@@ -371,7 +389,8 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().wrap_up(*args, **kwargs)
-        self.frame_dispatcher.terminate()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.terminate()
 
     def excepthook(self, exctype, value, tb):
         """
@@ -393,7 +412,8 @@ class TrackingExperiment(CameraExperiment):
         print("{0}: {1}".format(exctype, value))
         self.finished_sig.set()
         self.camera.terminate()
-        self.frame_dispatcher.terminate()
+        for dispatcher in self.frame_dispatchers:
+            dispatcher.terminate()
 
 
 class VRExperiment(TrackingExperiment):
@@ -424,7 +444,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         )
 
         self.frame_recorder = VideoWriter(
-            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal,
+            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
         )
 
         self.motion_acc = QueueDataAccumulator(

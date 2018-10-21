@@ -24,9 +24,16 @@ class PhototaxisProtocol(Protocol):
     def get_stim_sequence(self):
         centering = RadialSineStimulus(duration=self.duration)
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
-        return [CenteringWrapper(stim(duration=self.duration,
-                                      color=(self.brightness,)*3,
-                                      center_dist=self.center_offset,), centering)]
+        return [
+            CenteringWrapper(
+                stim(
+                    duration=self.duration,
+                    color=(self.brightness,) * 3,
+                    center_dist=self.center_offset,
+                ),
+                centering,
+            )
+        ]
 
 
 if __name__ == "__main__":
@@ -34,7 +41,7 @@ if __name__ == "__main__":
     tempdir = tempfile.gettempdir()
 
     camera_config = dict(video_file=video_file, rotation=0)
-    #camera_config = dict(type="imaq")
+    # camera_config = dict(type="imaq")
     tracking_config = dict(tracking_method="fish", estimator="position")
     s = Stytra(
         camera_config=camera_config,
@@ -45,4 +52,5 @@ if __name__ == "__main__":
         log_format="csv",
         embedded=False,
         display_config=dict(full_screen=False),
+        n_tracking_processes=1,
     )

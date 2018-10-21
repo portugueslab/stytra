@@ -1,17 +1,16 @@
 import cv2
 import numpy as np
 from numba import jit
-import filterpy.kalman
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
 from stytra.tracking.preprocessing import BackgorundSubtractor
 
 from itertools import chain
-from scipy.linalg import block_diag
 
 import logging
 from lightparam import Param, Parametrized
+from stytra.tracking.simple_kalman import NewtonianKalman
 
 
 class FishTrackingMethod(ParametrizedImageproc):
@@ -42,6 +41,7 @@ class FishTrackingMethod(ParametrizedImageproc):
                         "f{:d}_y".format(i_fish),
                         "f{:d}_vy".format(i_fish),
                         "f{:d}_theta".format(i_fish),
+                        "f{:d}_vtheta".format(i_fish),
                     ]
                     + [
                         "f{:d}_theta_{:02d}".format(i_fish, i)
@@ -51,16 +51,18 @@ class FishTrackingMethod(ParametrizedImageproc):
                 ]
             )
         ) + ["biggest_area"]
-        self.monitored_headers = [
-            "f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)
-        ] + ["biggest_area"]
+        self.monitored_headers = (
+            ["f{:d}_x".format(i_fish) for i_fish in range(self.params.n_fish_max)]
+            + ["f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)]
+            + ["biggest_area"]
+        )
         self.bg_subtractor = BackgorundSubtractor()
         self.previous_fish = []
 
         # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params.n_fish_max)
         self.recorded = np.full(
-            (self.params.n_fish_max, 5 + self.params.n_segments - 1), np.nan
+            (self.params.n_fish_max, 3*2 + self.params.n_segments - 1), np.nan
         )
         self.logger = logging.getLogger()
 
@@ -110,10 +112,10 @@ class FishTrackingMethod(ParametrizedImageproc):
             or n_segments != self.params.n_segments
             or bg_downsample != self.params.bg_downsample
         ):
-            self.reset_state()
             self.params.params.bg_downsample.value = bg_downsample
             self.params.params.n_segments.value = n_segments
-            self.params.params.n_fish_max = n_fish_max
+            self.params.params.n_fish_max.value = n_fish_max
+            self.reset_state()
 
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
@@ -261,7 +263,6 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.diagnostic_image = fishdet
         elif display_processed == "thresholded for eye and swim bladder":
             self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
-
         return tuple(self.recorded.flatten()) + (max_area * 1.0,)
 
 
@@ -285,53 +286,48 @@ class Fish:
 
     """
 
-    def __init__(self, initial_state, idx_book, pos_std=1.0, pred_coef=20):
+    def __init__(
+        self, initial_state, idx_book, pos_std=1.0, angle_std=np.pi / 10, pred_coef=1
+    ):
         self.i_not_updated = 0
         self.i_ar = idx_book.get_next()
-        self.n_dof = 2
 
+        dt = 0.02
         # the position will be Kalman-filtered
-        self.f = filterpy.kalman.KalmanFilter(dim_x=self.n_dof * 2, dim_z=self.n_dof)
+        self.filters = [
+            NewtonianKalman(x0, stdev, dt, pred_coef)
+            for x0, stdev in zip(initial_state[:3], [pos_std, pos_std, angle_std])
+        ]
 
-        uncertanties = np.array([pos_std, pos_std])
-        self.f.x[::2, 0] = initial_state[: self.n_dof]
-        self.f.F = block_diag(
-            *[np.array([[1.0, 1.0], [0.0, 1.0]]) for _ in range(self.n_dof)]
-        )
-        self.f.R = np.diag(uncertanties)
-        self.f.P = np.diag(np.ravel(np.column_stack((uncertanties, uncertanties))))
-
-        self.f.Q = block_diag(
-            *[
-                np.array([[0., 0.], [0., uc * pred_coef]])
-                # filterpy.common.Q_discrete_white_noise(2, 0.01, uc * pred_coef)
-                for uc in uncertanties
-            ]
-        )
-        self.f.H[:, ::2] = np.eye(self.n_dof)
-
-        self.unfiltered = initial_state[self.n_dof :]
+        self.unfiltered = initial_state[3:]
 
     def predict(self):
-        self.f.predict()
+        for f in self.filters:
+            f.predict()
         self.i_not_updated -= 1
 
     def update(self, new_fish_state):
-        self.f.update(new_fish_state[: self.n_dof])
-        self.unfiltered[:] = new_fish_state[self.n_dof :]
+        for i, (f, s) in enumerate(zip(self.filters, new_fish_state[:3])):
+            # Angle needs to be updated specially:
+            if i == 2:
+                s = _minimal_angle_dif(f.x[0], s)
+            f.update(np.array([s]))
+        self.unfiltered[:] = new_fish_state[3:]
         self.i_not_updated = 0
 
     def serialize(self):
-        return np.concatenate([self.f.x.flatten(), self.unfiltered])
+        return np.concatenate([f.x.flatten() for f in self.filters] + [self.unfiltered])
 
     def is_close(self, new_fish, n_px=12, d_theta=np.pi / 2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
-        dists = np.array([(new_fish[i] - self.f.x[i * 2]) for i in range(2)])
+        dists = np.array(
+            [(new_fish[i] - f.x[0]) for i, f in enumerate(self.filters[:2])]
+        )
         dtheta = np.abs(
-            np.mod(new_fish[3] - self.unfiltered[0] + np.pi, np.pi * 2) - np.pi
+            np.mod(new_fish[3] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
         )
         return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
@@ -365,6 +361,9 @@ def fish_start_n(mask, take_min=50):
     y0 = mom["m01"] / mom["m00"]
     x0 = mom["m10"] / mom["m00"]
     return np.array([x0, y0])
+
+
+# Utilities for drawing circles.
 
 
 @jit(nopython=True)
@@ -430,3 +429,8 @@ def _fish_direction_n(image, start_loc, radius):
             min_val = image[y, x]
             min_point = (x, y)
     return np.arctan2(min_point[1] - centre_int[1], min_point[0] - centre_int[0])
+
+
+@jit(nopython=True)
+def _minimal_angle_dif(th_old, th_new):
+    return th_old + np.mod(th_new - th_old + np.pi, np.pi * 2) - np.pi

@@ -14,13 +14,14 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QDockWidget,
 )
+from PyQt5.QtGui import QPalette
 
 from pyqtgraph.parametertree import ParameterTree
 
 from stytra.gui.extra_widgets import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
-from stytra.gui.protocol_control import ProtocolControlWidget
+from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
     CameraViewWidget,
     CameraEmbeddedTrackingSelection,
@@ -31,6 +32,8 @@ from lightparam.gui import ParameterGui
 
 import json
 
+from multiprocessing import Queue
+from queue import Empty
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
@@ -45,34 +48,38 @@ class QPlainTextEditLogger(logging.Handler):
         self.widget.appendPlainText(msg)
 
 
-class DebugLabel(QLabel):
+class StatusMessageLabel(QLabel):
     """ """
 
     def __init__(self, *args, debug_on=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("border-radius: 2px")
-        self.set_debug(debug_on)
-        self.setMinimumHeight(36)
 
-    def set_debug(self, debug_on=False):
-        """
-
-        Parameters
-        ----------
-        debug_on :
-             (Default value = False)
-
-        Returns
-        -------
-
-        """
-        if debug_on:
-            self.setText("Debug mode is on, data will not be saved!")
+    def setMessage(self, text):
+        if text[0] == "E":
+            self.setStyleSheet("background-color: #dc322f;color:#fff")
+        if text[0] == "W":
             self.setStyleSheet("background-color: #dc322f;color:#fff")
         else:
-            self.setText("Experiment ready, please ensure the data_log is correct")
-            self.setStyleSheet("background-color: #002b36")
+            pass;
+            # TODO figure out how to get the color
+            #self.setStyleSheet("background_color: #{};color:#fff".format(self.palette().color(QPalette.Button)))
+        self.setText(text)
+
+
+class QueueStatusMessageLabel(StatusMessageLabel):
+    def __init__(self, experiment, queue: Queue):
+        super().__init__()
+        self.queue = queue
+        experiment.gui_timer.timeout.connect(self.update_message)
+
+    def update_message(self):
+        message = ""
+        while True:
+            try:
+                message = self.queue.get(timeout=0.0001)
+            except Empty:
+                break
+        self.setMessage(message)
 
 
 class SimpleExperimentWindow(QMainWindow):
@@ -96,34 +103,40 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.setWindowTitle("Stytra")
 
+        self.docks = []
+
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.widget_control = ProtocolControlWidget(experiment.protocol_runner)
+        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
 
         # Connect signals from the protocol_control:
-        self.widget_control.sig_start_protocol.connect(experiment.start_protocol)
-        self.widget_control.sig_stop_protocol.connect(experiment.end_protocol)
-        self.button_metadata = QPushButton("Edit metadata")
+        self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
+        self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
+
+        act_metadata = self.toolbar_control.addAction("Edit metadata")
+        act_metadata.triggered.connect(self.show_metadata_gui)
 
         if experiment.trigger is not None:
             self.chk_scope = QCheckBox("Wait for trigger signal")
-        self.button_metadata.clicked.connect(self.show_metadata_gui)
 
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
 
-        self.metadata_win = None
+        if self.experiment.database is not None:
+            self.status_db = StatusMessageLabel()
+            self.statusBar().addWidget(self.status_db)
 
-        self.docks = []
+        self.status_metadata = StatusMessageLabel()
+        self.statusBar().addWidget(self.status_metadata)
+
+        self.metadata_win = None
 
     def show_metadata_gui(self):
         """ """
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
-        self.metadata_win.layout().addWidget(
-            ParameterGui(self.experiment.metadata)
-        )
+        self.metadata_win.layout().addWidget(ParameterGui(self.experiment.metadata))
         self.metadata_win.layout().addWidget(
             ParameterGui(self.experiment.metadata_animal)
         )
@@ -131,26 +144,26 @@ class SimpleExperimentWindow(QMainWindow):
 
     def construct_ui(self):
         """ """
-        central_widget = QWidget()
-        protocol_layout = QVBoxLayout()
-        # central_widget.layout().addWidget(self.label_debug)
-        if not self.experiment.offline:
-            protocol_layout.addWidget(
-                CollapsibleWidget(self.widget_projection, "Projector setup")
-            )
-        protocol_layout.addWidget(
-            CollapsibleWidget(self.logger.widget, "Log", expanded=False)
-        )
-        protocol_layout.addWidget(self.widget_control)
-        if self.experiment.trigger is not None:
-            protocol_layout.addWidget(self.chk_scope)
-        protocol_layout.addWidget(self.button_metadata)
+        self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
 
-        central_layout = QHBoxLayout()
-        central_layout.addLayout(protocol_layout)
-        central_widget.setLayout(central_layout)
-        self.setCentralWidget(central_widget)
-        return central_widget
+        if not self.experiment.offline:
+            proj_dock = QDockWidget("Projector configuration", self)
+            proj_dock.setWidget(self.widget_projection)
+            proj_dock.setObjectName("dock_projector")
+            self.docks.append(proj_dock)
+            self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
+
+        log_dock = QDockWidget("Log", self)
+        log_dock.setObjectName("dock_log")
+        log_dock.setWidget(self.logger.widget)
+        self.docks.append(log_dock)
+        self.addDockWidget(Qt.RightDockWidgetArea, log_dock)
+
+        if self.experiment.trigger is not None:
+            self.toolbar_control.addWidget(self.chk_scope)
+
+        self.setCentralWidget(None)
+        return None
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
@@ -187,20 +200,23 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         else:
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
-        self.plot_framerate = MultiStreamPlot(time_past=5, round_bounds=10)
+        self.plot_framerate = MultiStreamPlot(
+            time_past=5, round_bounds=10, compact=True
+        )
 
     def construct_ui(self):
         previous_widget = super().construct_ui()
 
-        self.experiment.gui_timer.timeout.connect(
-            self.plot_framerate.update)
+        self.experiment.gui_timer.timeout.connect(self.plot_framerate.update)
 
         self.setCentralWidget(previous_widget)
         dockCamera = QDockWidget("Camera", self)
         dockCamera.setWidget(self.camera_display)
+        dockCamera.setObjectName("dock_camera")
 
         dockFramerate = QDockWidget("Frame rates", self)
         dockFramerate.setWidget(self.plot_framerate)
+        dockFramerate.setObjectName("dock_framerates")
 
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
         self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
@@ -259,7 +275,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
     def __init__(
         self, tracking=True, tail=False, eyes=False, fish=False, *args, **kwargs
     ):
-        super().__init__(*args,  tail=tail, eyes=eyes, fish=fish,**kwargs)
+        super().__init__(*args, tail=tail, eyes=eyes, fish=fish, **kwargs)
         # TODO refactor movement detection
         self.tracking = tracking
         self.tail = tail
@@ -275,7 +291,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.monitoring_layout.addWidget(self.stream_plot)
 
         self.layout_track_btns = QHBoxLayout()
-        self.layout_track_btns.setContentsMargins(0,0,0,0)
+        self.layout_track_btns.setContentsMargins(0, 0, 0, 0)
 
         # Tracking params button:
         self.button_tracking_params = QPushButton(
@@ -299,7 +315,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
     def construct_ui(self):
         """ """
         previous_widget = super().construct_ui()
-        self.experiment.gui_timer.timeout.connect(self.stream_plot.update) # TODO put in right place
+        self.experiment.gui_timer.timeout.connect(
+            self.stream_plot.update
+        )  # TODO put in right place
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
         monitoring_dock = QDockWidget("Tracking", self)
@@ -314,27 +332,31 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "tracking_method"):
             self.track_params_wnd.layout().addWidget(QLabel("Tracking method"))
-            self.track_params_wnd.layout().addWidget(ParameterGui(self.experiment.tracking_method.params))
+            self.track_params_wnd.layout().addWidget(
+                ParameterGui(self.experiment.tracking_method.params)
+            )
         if (
             hasattr(self.experiment, "preprocessing_method")
             and self.experiment.preprocessing_method is not None
         ):
             self.track_params_wnd.layout().addWidget(QLabel("Preprocessing method"))
-            self.track_params_wnd.addParameters(
-                self.track_params_wnd.layout().addWidget(
-                    ParameterGui(self.experiment.preprocessing_method.params))
+            self.track_params_wnd.layout().addWidget(
+                ParameterGui(self.experiment.preprocessing_method.params)
             )
         if hasattr(self.experiment, "motion_detection_params"):
             self.track_params_wnd.layout().addWidget(QLabel("Motion detection"))
             self.track_params_wnd.layout().addWidget(
-                ParameterGui(self.experiment.motion_detection_params))
+                ParameterGui(self.experiment.motion_detection_params)
+            )
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
 
     def save_tracking_params(self):
-        json.dump(self.experiment.tracking_method.get_clean_values,
-                  open(self.experiment.filename_base() + "tracking_params.json"))
+        json.dump(
+            self.experiment.tracking_method.get_clean_values,
+            open(self.experiment.filename_base() + "tracking_params.json"),
+        )
 
 
 class VRExperimentWindow(SimpleExperimentWindow):

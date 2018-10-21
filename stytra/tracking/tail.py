@@ -1,29 +1,30 @@
 import numpy as np
 from numba import jit
 import cv2
+from lightparam import Param, Parametrized
 from stytra.tracking import ParametrizedImageproc
 
 
 class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
 
-    def __init__(self, **kwargs):
-        super().__init__(name="tracking_tail_params", **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         # TODO maybe getting default values here:
-        self.add_params(
-            n_segments=dict(value=10, type="int", limits=(2, 50)),
-            tail_start=dict(value=(440, 225), visible=False),
-            tail_length=dict(value=(-250, 30), visible=False),
-        )
-        self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
-        ]
+        # self.add_params(
+        #     n_segments=dict(value=10, type="int", limits=(2, 50)),
+        #     tail_start=dict(value=(440, 225), visible=False),
+        #     tail_length=dict(value=(-250, 30), visible=False),
+        # )
+        # self.accumulator_headers = ["tail_sum"] + [
+        #     "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+        # ]
         self.monitored_headers = ["tail_sum"]
-        self.data_log_name = "behaviour_tail_log"
+        self.data_log_name = "tail_track"
 
     def reset_state(self):
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
         ]
 
 
@@ -32,18 +33,21 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        self.add_params(
-            window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
-        )
+        # self.add_params(
+        #     window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
+        # )
+        self.params = Parametrized(name="tracking/tail_centroids", params=self.detect)
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+        ]
 
     def detect(
         self,
         im,
-        tail_start=(0, 0),
-        tail_length=(1, 1),
-        n_segments=12,
-        window_size=7,
-        image_scale=1,
+        tail_start: Param((0, 0), gui=False),
+        tail_length: Param((1, 1), gui=False),
+        n_segments: Param(12),
+        window_size: Param(7),
         **extraparams
     ):
         """Finds the tail for an embedded fish, given the starting point and
@@ -84,18 +88,20 @@ class CentroidTrackingMethod(TailTrackingMethod):
         n_segments += 1
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+        length_tail = np.sqrt(
+            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
+            'image_scale']
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * image_scale / n_segments
-        disp_y = tail_length_y * image_scale / n_segments
+        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
+        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
 
         angles = []
-        start_x *= image_scale
-        start_y *= image_scale
+        start_x *= extraparams['image_scale']
+        start_y *= extraparams['image_scale']
 
         halfwin = window_size / 2
         for i in range(1, n_segments):
@@ -118,16 +124,18 @@ class AnglesTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        self.add_params(dark_tail=False)
+        # self.add_params(dark_tail=False)
+        self.params = Parametrized(name="tracking/tail_angles", params=self.detect)
+        self.accumulator_headers = ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+        ]
 
     def detect(
         self,
         im,
-        tail_start=(0, 0),
-        n_segments=7,
-        tail_length=(1, 1),
-        dark_tail=False,
-        image_scale=1,
+        tail_start: Param((0, 0), gui=False),
+        n_segments: Param(7),
+        tail_length: Param((1, 1), gui=False),
         **extraparams
     ):
         """Tail tracing based on min (or max) detection on arches. Wraps
@@ -159,23 +167,24 @@ class AnglesTrackingMethod(TailTrackingMethod):
         -------
 
         """
-
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+        length_tail = np.sqrt(
+            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
+            'image_scale']
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * image_scale / n_segments
-        disp_y = tail_length_y * image_scale / n_segments
+        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
+        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
 
-        start_x *= image_scale
-        start_y *= image_scale
+        start_x *= extraparams['image_scale']
+        start_y *= extraparams['image_scale']
 
         # Use jitted function for the actual calculation:
         angle_list = _tail_trace_core_ls(
-            im, start_x, start_y, disp_x, disp_y, n_segments, length_tail, dark_tail
+            im, start_x, start_y, disp_x, disp_y, n_segments, length_tail
         )
 
         return angle_list
@@ -372,7 +381,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
 
 @jit(nopython=True)
 def _tail_trace_core_ls(
-    img, start_x, start_y, disp_x, disp_y, num_points, tail_length, color_invert
+    img, start_x, start_y, disp_x, disp_y, num_points, tail_length
 ):
     """Tail tracing based on min (or max) detection on arches. Wrapped by
     trace_tail_angular_sweep.
@@ -392,9 +401,7 @@ def _tail_trace_core_ls(
     num_points :
         
     tail_length :
-        
-    color_invert :
-        
+
 
     Returns
     -------
@@ -429,10 +436,7 @@ def _tail_trace_core_ls(
 
         # Find minimum or maximum of the arch.
         # This switch is much faster than inverting the entire image.
-        if color_invert:
-            ident = np.argmin(intensity_vect)
-        else:
-            ident = np.argmax(intensity_vect)
+        ident = np.argmax(intensity_vect)
 
         if not np.isnan(lin[ident]):
             new_angle = lin[ident]

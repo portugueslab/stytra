@@ -27,14 +27,13 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.display = display
 
-        self.view_box = pg.ViewBox(invertY=True, lockAspect=1,
-                                   enableMouse=False)
+        self.view_box = pg.ViewBox(invertY=True, lockAspect=1, enableMouse=False)
         self.addItem(self.view_box)
 
         self.roi_box = pg.ROI(
             maxBounds=QRectF(0, 0, display_size[0], display_size[1]),
             size=display.size,  # ["size"].value,
-            pos=display.pos  # roi_params["pos"].value,
+            pos=display.pos,  # roi_params["pos"].value,
         )
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
@@ -76,8 +75,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     def set_param_val(self):
         """ """
         self.setting_param_val = True
-        self.display.size = (tuple([int(p) for p in self.roi_box.size()]))
-        self.display.pos = (tuple([int(p) for p in self.roi_box.pos()]))
+        self.display.size = tuple([int(p) for p in self.roi_box.size()])
+        self.display.pos = tuple([int(p) for p in self.roi_box.pos()])
         self.setting_param_val = False
 
     def display_calibration_pattern(
@@ -138,9 +137,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.container_layout = QVBoxLayout()
         self.container_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.widget_proj_viewer = ProjectorViewer(
-            display=experiment.window_display
-        )
+        self.widget_proj_viewer = ProjectorViewer(display=experiment.window_display)
 
         self.container_layout.addWidget(self.widget_proj_viewer)
 

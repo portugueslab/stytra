@@ -1,7 +1,7 @@
 from collections import deque
 from datetime import datetime
 from queue import Empty
-from multiprocessing import Queue, Event
+from multiprocessing import Queue, Event, Value
 
 import cv2
 import numpy as np
@@ -16,7 +16,7 @@ from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 
 from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
-from stytra.tracking.movement import MovementDetectionParameters
+from time import sleep
 
 
 def get_tracking_method(name):
@@ -52,11 +52,14 @@ class FrameDispatcher(FrameProcess):
     def __init__(
         self,
         in_frame_queue,
-        finished_signal: Event =None,
+        finished_signal: Event = None,
         processing_class=None,
         preprocessing_class=None,
         processing_parameter_queue=None,
+        output_queue=None,
+        processing_counter: Value = None,
         gui_framerate=30,
+        gui_dispatcher=False,
         **kwargs
     ):
         """
@@ -69,13 +72,16 @@ class FrameDispatcher(FrameProcess):
 
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
-        self.output_queue = Queue()  # queue for processing output (e.g., pos)
-        self.processing_parameters = dict()
+        self.output_queue = output_queue  # queue for processing output (e.g., pos)
+        self.processing_counter = processing_counter
 
         self.finished_signal = finished_signal
         self.i = 0
         self.gui_framerate = gui_framerate
+        self.gui_dispatcher = gui_dispatcher
         self.preprocessing_cls = get_preprocessing_method(preprocessing_class)
+
+        self.processing_parameters = None
         self.tracking_cls = get_tracking_method(processing_class)
         self.processing_parameter_queue = processing_parameter_queue
 
@@ -97,10 +103,15 @@ class FrameDispatcher(FrameProcess):
 
     def run(self):
         """Loop where the tracking function runs."""
+
+        tracker = self.tracking_cls()
+        self.processing_parameters = tracker.params.params.values
         preprocessor = (
             self.preprocessing_cls() if self.preprocessing_cls is not None else None
         )
-        tracker = self.tracking_cls()
+        if preprocessor is not None:
+            self.processing_parameters.update(preprocessor.params.params.values)
+
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue
@@ -117,38 +128,42 @@ class FrameDispatcher(FrameProcess):
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
             frame = None
-            while True:
-                try:
-                    time, frame = self.frame_queue.get(timeout=0.001)
-                except Empty:
-                    break
-            if frame is None:
+            try:
+                time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
+            except Empty:
                 continue
-
 
             # If a processing function is specified, apply it:
             if self.preprocessing_cls is not None:
-                processed = preprocessor.process(
-                    frame, **self.processing_parameters
-                )
+                processed = preprocessor.process(frame, **self.processing_parameters)
             else:
                 processed = frame
 
             if self.tracking_cls is not None:
                 output = tracker.detect(processed, **self.processing_parameters)
+
+                # Handle the single output queue
+                while (
+                    self.processing_counter.value != frame_idx - 1
+                    and not self.finished_signal.is_set()
+                ):
+                    sleep(0.00001)
+                with self.processing_counter.get_lock():
+                    self.processing_counter.value = frame_idx
                 self.output_queue.put((datetime.now(), output))
 
             # calculate the frame rate
             self.update_framerate()
 
             # put current frame into the GUI queue
-            if self.processing_parameters.get("display_processed", "raw") != "raw":
-                try:
-                    self.send_to_gui(tracker.diagnostic_image)
-                except AttributeError:
-                    self.send_to_gui(processed)
-            else:
-                self.send_to_gui(frame)
+            if self.gui_dispatcher:
+                if self.processing_parameters.get("display_processed", "raw") != "raw":
+                    try:
+                        self.send_to_gui(tracker.diagnostic_image)
+                    except AttributeError:
+                        self.send_to_gui(processed)
+                else:
+                    self.send_to_gui(frame)
 
         return
 
@@ -218,7 +233,14 @@ def _compare_to_previous(current, previous):
 class MovingFrameDispatcher(FrameDispatcher):
     """ """
 
-    def __init__(self, *args, signal_recording: Event, signal_start_recording: Event, output_queue_mb=1000, **kwargs):
+    def __init__(
+        self,
+        *args,
+        signal_recording: Event,
+        signal_start_recording: Event,
+        output_queue_mb=1000,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
         self.framestart_queue = Queue()

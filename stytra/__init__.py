@@ -19,6 +19,7 @@ import qdarkstyle
 
 import pyqtgraph as pg
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -91,6 +92,9 @@ class Stytra:
             a trigger object, synchronising stimulus presentation
             to imaging acquisition
 
+        n_tracking_processes : int
+            number of tracking processes to be used
+
     """
 
     def __init__(
@@ -111,12 +115,13 @@ class Stytra:
         )
         class_kwargs.update(kwargs)
 
-
-        if scope_triggering=='zmq':
+        if scope_triggering == "zmq":
             from stytra.triggering import ZmqTrigger
             class_kwargs['trigger'] = ZmqTrigger(port='5555')
         else:
             class_kwargs['trigger'] = scope_triggering
+
+            class_kwargs["trigger"] = ZmqTrigger(port="5555")
 
         base = Experiment
 
