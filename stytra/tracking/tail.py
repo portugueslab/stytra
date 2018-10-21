@@ -24,7 +24,7 @@ class TailTrackingMethod(ParametrizedImageproc):
 
     def reset_state(self):
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+            "theta_{:02}".format(i) for i in range(self.params.n_segments)
         ]
 
 
@@ -48,7 +48,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
         tail_length: Param((1, 1), gui=False),
         n_segments: Param(12),
         window_size: Param(7),
-        image_scale: Param(1),
         **extraparams
     ):
         """Finds the tail for an embedded fish, given the starting point and
@@ -89,18 +88,18 @@ class CentroidTrackingMethod(TailTrackingMethod):
         n_segments += 1
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * image_scale
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * image_scale / n_segments
-        disp_y = tail_length_y * image_scale / n_segments
+        disp_x = tail_length_x / n_segments
+        disp_y = tail_length_y / n_segments
 
         angles = []
-        start_x *= image_scale
-        start_y *= image_scale
+        # start_x *= image_scale
+        # start_y *= image_scale
 
         halfwin = window_size / 2
         for i in range(1, n_segments):
@@ -166,7 +165,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
         -------
 
         """
-
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
 

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # Here you configure the camera input
     #
     camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
-    # camera_config = dict(type='ximea')
+    camera_config = dict(type='ximea')
 
     tracking_config = dict(
         embedded=True,
