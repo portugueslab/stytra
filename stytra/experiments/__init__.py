@@ -58,7 +58,7 @@ class Experiment(QObject):
         (optional) Dictionary with specifications for the display. Possible
         key values are "full_screen" and "window_size".
         gl_display : bool (False)
-    rec_stim_every : int
+    rec_stim_framerate : int
         (optional) Set to record a movie of the displayed visual stimulus. It
         specifies every how many frames one will be saved (set to 1 to
         record) all displayed frames. The final movie will be saved in the
@@ -85,10 +85,11 @@ class Experiment(QObject):
         stim_plot=False,
         log_format="csv",
         stim_movie_format="h5",
-        rec_stim_every=None,
+        rec_stim_framerate=None,
         display_config=None,
         scope_triggering=None,
         offline=False,
+        **kwargs,
     ):
         """ """
         super().__init__()
@@ -175,7 +176,7 @@ class Experiment(QObject):
                 self.protocol_runner,
                 self.calibrator,
                 gl=self.display_config.get("gl", False),
-                record_stim_every=rec_stim_every,
+                record_stim_framerate=rec_stim_framerate,
             )
             if self.display_config.get("window_size", None) is not None:
                 self.window_display.params["size"] = self.display_config["window_size"]
