@@ -56,7 +56,7 @@ class Stytra:
             preprocessing_method: str, optional
                "prefilter" or "bgsub"
             tracking_method: str
-                one of "tail", "eyes", "fish"
+                one of "centroid", "tail_angles", "eyes", "fish"
             estimator: str
                 for closed-loop experiments: either "vigor" or "lstm" for embedded experiments
                     or "fish" for freely-swimming ones
@@ -115,6 +115,8 @@ class Stytra:
         if scope_triggering=='zmq':
             from stytra.triggering import ZmqTrigger
             class_kwargs['trigger'] = ZmqTrigger(port='5555')
+        else:
+            class_kwargs['trigger'] = scope_triggering
 
         base = Experiment
 

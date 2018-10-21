@@ -55,6 +55,7 @@ Modules
     stimulation_intro
     create_protocol
     running_experiments
+    data_saving
     triggering_intro
     swimming_tracking
     image_processing
