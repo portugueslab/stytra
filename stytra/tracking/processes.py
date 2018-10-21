@@ -16,7 +16,6 @@ from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 
 from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor, CV2BgSub
-from stytra.tracking.movement import MovementDetectionParameters
 from time import sleep
 
 

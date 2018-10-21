@@ -35,6 +35,7 @@ class Prefilter(PreprocMethod):
         image_scale: Param(1.0, (0.05, 1.0)),
         filter_size: Param(0, (0, 15)),
         color_invert: Param(False),
+        threshold: Param(0, (0, 255)),
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
@@ -54,6 +55,8 @@ class Prefilter(PreprocMethod):
             im = cv2.boxFilter(im, -1, (filter_size, filter_size))
         if color_invert:
             im = 255 - im
+        if threshold > 0:
+            im[im < threshold] = 0
 
         return im
 

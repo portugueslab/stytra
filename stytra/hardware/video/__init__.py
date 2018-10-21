@@ -153,7 +153,8 @@ class CameraSource(VideoSource):
                 if self.frame_queue.queue.qsize() < self.n_consumers + 1:
                     self.frame_queue.put(arr)
                 else:
-                    print("Dropped frame")
+                    pass
+                    # print("Dropped frame")
 
         self.cam.release()
 

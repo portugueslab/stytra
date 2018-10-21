@@ -336,7 +336,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             p1, p2 = self.roi_tail.getHandles()
             # with self.track_params.treeChangeBlocker():
             self.track_params.tail_start = (p1.y(), p1.x())
+            self.track_params.params.tail_start.changed = True
             self.track_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
+            self.track_params.params.tail_length.changed = True
 
         # if self.eyes:
         #     with self.track_params.treeChangeBlocker():
