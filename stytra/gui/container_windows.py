@@ -16,9 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QPalette
 
-from pyqtgraph.parametertree import ParameterTree
-
-from stytra.gui.extra_widgets import CollapsibleWidget
+from lightparam.gui.collapsible_widget import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
