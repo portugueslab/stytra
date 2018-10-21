@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from pathlib import Path
-from lightparam import ParameterTree
+from lightparam import ParameterTree, set_nested
 from stytra.utilities import prepare_json
 
 
@@ -111,9 +111,10 @@ class DataCollector(ParameterTree):
             data that will be stored;
         name : str
             name in the dictionary. It should take the form
-            "category_name",
+            "category/name",
             where "category" should be one of the possible keys
             of the dictionary produced in get_clean_dict() (animal, stimulus, *etc.*).
+            Nested categories are supported, eg. animal/screening/image
             (Default value = 'unspecified_entry')
 
         Returns
@@ -134,11 +135,11 @@ class DataCollector(ParameterTree):
         Parameters
         ----------
         paramstree :
-            see sanitize_item docs; (Default value = True)
+            see prepare_json docs; (Default value = True)
         eliminate_df : bool
-            see sanitize_item docs; (Default value = False)
+            see prepare_json docs; (Default value = False)
         convert_datetime : bool
-            see sanitize_item docs; (Default value = False)
+            see prepare_json docs; (Default value = False)
 
         Returns
         -------
@@ -147,7 +148,9 @@ class DataCollector(ParameterTree):
 
         """
         clean_data_dict = self.serialize()
-        clean_data_dict.update(self.log_data_dict)
+        for k in self.log_data_dict.keys():
+            set_nested(clean_data_dict, k.split("/"), self.log_data_dict[k])
+        # clean_data_dict.update(self.log_data_dict)
         return prepare_json(clean_data_dict, **kwargs)
 
     def get_last_value(self, class_param_key):

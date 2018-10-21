@@ -502,7 +502,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
         self.signal_recording.clear()
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
-            self.dc.add_static_data(recorded_filename, "tracking_recorded_video")
+            self.dc.add_static_data(recorded_filename,
+                                    "tracking/recorded_video")
 
         except Empty:
             pass

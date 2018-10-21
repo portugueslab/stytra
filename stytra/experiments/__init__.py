@@ -89,7 +89,7 @@ class Experiment(QObject):
         display_config=None,
         scope_triggering=None,
         offline=False,
-        **kwargs,
+        **kwargs
     ):
         """ """
         super().__init__()
@@ -195,7 +195,7 @@ class Experiment(QObject):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
             self.current_timestamp.strftime("%H%M%S_") + name + "." + self.log_format,
-            category + "_" + name,
+            category + "/" + name,
         )
 
     def get_new_name(self):
@@ -316,7 +316,7 @@ class Experiment(QObject):
 
                         if self.dc is not None:
                             self.dc.add_static_data(
-                                self.scope_config, "imaging_microscope_config"
+                                self.scope_config, "imaging/microscope_config"
                             )
                     except Empty:
                         self.logger.info("No trigger configuration received")
@@ -349,10 +349,11 @@ class Experiment(QObject):
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
                 self.dc.add_static_data(
-                    self.protocol_runner.t_start, name="general_t_protocol_start"
+                    self.protocol_runner.t_start,
+                    name="general/t_protocol_start"
                 )
                 self.dc.add_static_data(
-                    self.protocol_runner.t_end, name="general_t_protocol_end"
+                    self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
 
                 if self.database is not None:
@@ -363,7 +364,7 @@ class Experiment(QObject):
                     )
                 else:
                     db_id = -1
-                self.dc.add_static_data(db_id, name="general_db_index")
+                self.dc.add_static_data(db_id, name="general/db_index")
 
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
 

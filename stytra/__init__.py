@@ -105,7 +105,7 @@ class Stytra:
         embedded=True,
         exec=True,
         scope_triggering=None,
-        **kwargs,
+        **kwargs
     ):
 
         app = QApplication([])
@@ -120,8 +120,6 @@ class Stytra:
             class_kwargs['trigger'] = ZmqTrigger(port='5555')
         else:
             class_kwargs['trigger'] = scope_triggering
-
-            class_kwargs["trigger"] = ZmqTrigger(port="5555")
 
         base = Experiment
 
