@@ -16,8 +16,6 @@ from stytra.hardware.video import (
     CameraSource,
 )
 
-from stytra.tracking.movement import MovementDetectionParameters
-
 # imports for tracking
 
 from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
