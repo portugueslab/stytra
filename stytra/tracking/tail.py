@@ -88,18 +88,20 @@ class CentroidTrackingMethod(TailTrackingMethod):
         n_segments += 1
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
+        length_tail = np.sqrt(
+            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
+            'image_scale']
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x / n_segments
-        disp_y = tail_length_y / n_segments
+        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
+        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
 
         angles = []
-        # start_x *= image_scale
-        # start_y *= image_scale
+        start_x *= extraparams['image_scale']
+        start_y *= extraparams['image_scale']
 
         halfwin = window_size / 2
         for i in range(1, n_segments):
@@ -169,14 +171,16 @@ class AnglesTrackingMethod(TailTrackingMethod):
         tail_length_y, tail_length_x = tail_length
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
+        length_tail = np.sqrt(
+            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
+            'image_scale']
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * n_segments
-        disp_y = tail_length_y * n_segments
+        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
+        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
 
-        # start_x *= image_scale
-        # start_y *= image_scale
+        start_x *= extraparams['image_scale']
+        start_y *= extraparams['image_scale']
 
         # Use jitted function for the actual calculation:
         angle_list = _tail_trace_core_ls(
