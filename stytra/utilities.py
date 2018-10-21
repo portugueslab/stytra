@@ -61,6 +61,7 @@ class FrameProcess(Process):
         self.starting_time = datetime.now()
 
         self.framerate_queue = Queue()
+        self.message_queue = Queue()
 
     def update_framerate(self):
         """Calculate the framerate every n_fps_frames frames."""

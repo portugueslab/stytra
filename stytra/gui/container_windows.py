@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QDockWidget,
 )
+from PyQt5.QtGui import QPalette
 
 from pyqtgraph.parametertree import ParameterTree
 
@@ -31,6 +32,8 @@ from lightparam.gui import ParameterGui
 
 import json
 
+from multiprocessing import Queue
+from queue import Empty
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
@@ -45,34 +48,38 @@ class QPlainTextEditLogger(logging.Handler):
         self.widget.appendPlainText(msg)
 
 
-class DebugLabel(QLabel):
+class StatusMessageLabel(QLabel):
     """ """
 
     def __init__(self, *args, debug_on=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("border-radius: 2px")
-        self.set_debug(debug_on)
-        self.setMinimumHeight(36)
 
-    def set_debug(self, debug_on=False):
-        """
-
-        Parameters
-        ----------
-        debug_on :
-             (Default value = False)
-
-        Returns
-        -------
-
-        """
-        if debug_on:
-            self.setText("Debug mode is on, data will not be saved!")
+    def setMessage(self, text):
+        if text[0] == "E":
+            self.setStyleSheet("background-color: #dc322f;color:#fff")
+        if text[0] == "W":
             self.setStyleSheet("background-color: #dc322f;color:#fff")
         else:
-            self.setText("Experiment ready, please ensure the data_log is correct")
-            self.setStyleSheet("background-color: #002b36")
+            pass;
+            # TODO figure out how to get the color
+            #self.setStyleSheet("background_color: #{};color:#fff".format(self.palette().color(QPalette.Button)))
+        self.setText(text)
+
+
+class QueueStatusMessageLabel(StatusMessageLabel):
+    def __init__(self, experiment, queue: Queue):
+        super().__init__()
+        self.queue = queue
+        experiment.gui_timer.timeout.connect(self.update_message)
+
+    def update_message(self):
+        message = ""
+        while True:
+            try:
+                message = self.queue.get(timeout=0.0001)
+            except Empty:
+                break
+        self.setMessage(message)
 
 
 class SimpleExperimentWindow(QMainWindow):
@@ -115,6 +122,13 @@ class SimpleExperimentWindow(QMainWindow):
 
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
+
+        if self.experiment.database is not None:
+            self.status_db = StatusMessageLabel()
+            self.statusBar().addWidget(self.status_db)
+
+        self.status_metadata = StatusMessageLabel()
+        self.statusBar().addWidget(self.status_metadata)
 
         self.metadata_win = None
 
