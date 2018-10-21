@@ -60,11 +60,11 @@ class ClosedLoop1DProt(Protocol):
 
 if __name__ == "__main__":
     # save_dir = tempfile.mkdtemp()
-    # save_dir = r"C:\Users\portugueslab\data\stytra"
+    # dir_save = r"C:\Users\portugueslab\data\stytra"
     # Here you configure the camera input
     #
     camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
-    camera_config = dict(type='ximea')
+    # camera_config = dict(type='ximea')
 
     tracking_config = dict(
         embedded=True,
@@ -81,4 +81,6 @@ if __name__ == "__main__":
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,
+        # dir_save=dir_save,
+        # log_format='hdf5'
     )
