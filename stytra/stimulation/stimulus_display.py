@@ -126,7 +126,7 @@ class StimDisplayWidget:
         self.protocol_runner.sig_timestep.connect(self.display_stimulus)
 
         self.k = 0
-        self.starting_time = datetime.now()
+        self.starting_time = None
         self.last_time = self.starting_time
 
         self.movie = []
@@ -175,6 +175,9 @@ class StimDisplayWidget:
         widget state for recording the stimulus movie. """
         self.update()
         # Grab frame if recording is enabled.
+        if self.starting_time is None:
+            self.starting_time = datetime.now()
+            self.last_time = self.starting_time
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
@@ -219,3 +222,4 @@ class StimDisplayWidget:
         """
         self.movie = []
         self.movie_timestamps = []
+        self.starting_time = None

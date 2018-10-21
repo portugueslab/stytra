@@ -347,7 +347,7 @@ class Experiment(QObject):
         self.protocol_runner.stop()
         if self.base_dir is not None and save:
             if self.dc is not None:
-                self.dc.add_static_data(self.protocol_runner.log, name="stimulus_log")
+                self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
                 self.dc.add_static_data(
                     self.protocol_runner.t_start, name="general_t_protocol_start"
                 )

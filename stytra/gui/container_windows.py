@@ -106,11 +106,12 @@ class SimpleExperimentWindow(QMainWindow):
         # Connect signals from the protocol_control:
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
-        self.button_metadata = QPushButton("Edit metadata")
+
+        act_metadata = self.toolbar_control.addAction("Edit metadata")
+        act_metadata.triggered.connect(self.show_metadata_gui)
 
         if experiment.trigger is not None:
             self.chk_scope = QCheckBox("Wait for trigger signal")
-        self.button_metadata.clicked.connect(self.show_metadata_gui)
 
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
@@ -134,18 +135,18 @@ class SimpleExperimentWindow(QMainWindow):
         if not self.experiment.offline:
             proj_dock = QDockWidget("Projector configuration", self)
             proj_dock.setWidget(self.widget_projection)
+            proj_dock.setObjectName("dock_projector")
             self.docks.append(proj_dock)
             self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
 
         log_dock = QDockWidget("Log", self)
+        log_dock.setObjectName("dock_log")
         log_dock.setWidget(self.logger.widget)
         self.docks.append(log_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, log_dock)
 
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
-
-        self.toolbar_control.addWidget(self.button_metadata)
 
         self.setCentralWidget(None)
         return None
@@ -197,9 +198,11 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.setCentralWidget(previous_widget)
         dockCamera = QDockWidget("Camera", self)
         dockCamera.setWidget(self.camera_display)
+        dockCamera.setObjectName("dock_camera")
 
         dockFramerate = QDockWidget("Frame rates", self)
         dockFramerate.setWidget(self.plot_framerate)
+        dockFramerate.setObjectName("dock_framerates")
 
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
         self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
