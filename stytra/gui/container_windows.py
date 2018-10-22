@@ -33,6 +33,7 @@ import json
 from multiprocessing import Queue
 from queue import Empty
 
+
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
         super().__init__()
@@ -58,9 +59,8 @@ class StatusMessageLabel(QLabel):
         if text[0] == "W":
             self.setStyleSheet("background-color: #dc322f;color:#fff")
         else:
-            pass;
-            # TODO figure out how to get the color
-            #self.setStyleSheet("background_color: #{};color:#fff".format(self.palette().color(QPalette.Button)))
+            self.setStyleSheet("background_color: #{};color:#fff".format(
+                self.palette().color(QPalette.Button).name()))
         self.setText(text)
 
 
@@ -202,6 +202,9 @@ class CameraExperimentWindow(SimpleExperimentWindow):
             time_past=5, round_bounds=10, compact=True
         )
 
+        self.status_camera = QueueStatusMessageLabel(
+            self.experiment, self.experiment.camera.message_queue)
+
     def construct_ui(self):
         previous_widget = super().construct_ui()
 
@@ -219,6 +222,8 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
         self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
         self.docks.extend([dockCamera, dockFramerate])
+
+        self.statusBar().insertWidget(self.status_camera, 0)
 
         return previous_widget
 
@@ -310,6 +315,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.track_params_wnd = None
 
+        self.status_tracking = QueueStatusMessageLabel(self.experiment,
+                                                       self.experiment.frame_dispatchers[0].message_queue)
+
     def construct_ui(self):
         """ """
         previous_widget = super().construct_ui()
@@ -322,6 +330,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
+        self.statusBar().insertWidget(self.status_tracking, 1)
         return previous_widget
 
     def open_tracking_params_tree(self):

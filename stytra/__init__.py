@@ -60,7 +60,7 @@ class Stytra:
                 one of "centroid", "tail_angles", "eyes", "fish"
             estimator: str
                 for closed-loop experiments: either "vigor" or "lstm" for embedded experiments
-                    or "fish" for freely-swimming ones
+                    or "position" for freely-swimming ones
 
         recording_config : bool
             for video-recording experiments
