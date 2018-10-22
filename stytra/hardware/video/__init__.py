@@ -152,6 +152,7 @@ class CameraSource(VideoSource):
                     arr = np.rot90(arr, self.rotation)
                 if self.frame_queue.queue.qsize() < self.n_consumers + 1:
                     self.frame_queue.put(arr)
+                    self.message_queue.put("")
                 else:
                     self.message_queue.put("E:Dropped frame")
 
