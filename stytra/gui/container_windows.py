@@ -54,14 +54,16 @@ class StatusMessageLabel(QLabel):
         super().__init__(*args, **kwargs)
 
     def setMessage(self, text):
-        if text[0] == "E":
+        if len(text) == 0:
+            return
+        if text[0] == "E:":
             self.setStyleSheet("background-color: #dc322f;color:#fff")
-        if text[0] == "W":
+        if text[0] == "W:":
             self.setStyleSheet("background-color: #dc322f;color:#fff")
         else:
             self.setStyleSheet("background_color: #{};color:#fff".format(
                 self.palette().color(QPalette.Button).name()))
-        self.setText(text)
+        self.setText(text[2:])
 
 
 class QueueStatusMessageLabel(StatusMessageLabel):
@@ -223,7 +225,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
         self.docks.extend([dockCamera, dockFramerate])
 
-        self.statusBar().insertWidget(self.status_camera, 0)
+        self.statusBar().insertWidget(0, self.status_camera)
 
         return previous_widget
 
@@ -330,7 +332,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
-        self.statusBar().insertWidget(self.status_tracking, 1)
+        self.statusBar().insertWidget(1, self.status_tracking)
         return previous_widget
 
     def open_tracking_params_tree(self):
