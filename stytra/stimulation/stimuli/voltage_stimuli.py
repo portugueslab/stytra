@@ -1,12 +1,18 @@
-try:
-    import nidaqmx
-except:
-    print("No nidamax module found")
-from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus
+#try:
+    #import nidaqmx
+#except:
+    #print("No nidamax module found")
+from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus, DynamicStimulus
+from time import sleep
 
+try:
+    import u3
+except ImportError:
+    pass
 
 class NIVoltageStimulus(Stimulus):
     def __init__(self, *args, dev="Dev1", chan="ao0"):
+        import nidaqmx
         self.dev = dev
         self.chan = chan
 
@@ -33,6 +39,57 @@ class InterpolatedVoltageStimulus(NIVoltageStimulus, InterpolatedStimulus):
             task.ao_channels.add_ao_voltage_chan("{}/{}".format(self.dev, self.chan))
             task.write(self.voltage)
 
-        # with nidaqmx.Task() as task:
-        #     task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
-        #     print(task.read())
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_ai_voltage_chan("Dev1/ai1")
+            print(task.read())
+
+
+
+class U3LabJackVoltageStimulus(Stimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
+class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
+    def __init__(self, *args, voltage=0.0, **kwargs):
+        self.voltage_out = voltage
+        super().__init__(*args, **kwargs)
+
+    def start (self):
+        chan_value = self.device.voltageToDACBits(self.voltage_out, dacNumber=0, is16Bits=False)
+        self.device.getFeedback(self.chan(chan_value))
+
+
+class InterpolatedU3LabJackVoltageStimulus(InterpolatedStimulus, DynamicStimulus, U3LabJackVoltageStimulus):
+    def __init__(self, *args, **kwargs):
+        self.voltage_out = 0
+        dynamic_parameters = ["voltage_in_thermo", "voltage_in_peltier", "voltage_out"]
+        super().__init__(*args, dynamic_parameters=dynamic_parameters, **kwargs)
+
+        self.voltage_in_thermo = 0
+        self.voltage_in_peltier = 0
+
+    def update(self):
+        super().update()
+        device = u3.U3()
+        chan = u3.DAC0_8
+        chan_value = device.voltageToDACBits(self.voltage_out, dacNumber=0, is16Bits=False)
+        device.getFeedback(chan(chan_value))
+
+        device.configIO(FIOAnalog=15)
+        self.voltage_in_thermo = device.getAIN(0)
+        self.voltage_in_peltier = device.getAIN(1)
+
+
+
+
+
+if __name__ == "__main__":
+    stim = SetU3LabJackVoltageStimulus()
+    stim.start()
+    print("sending pulse")
+
+
+#if __name__=='__main__':
+    #stim = SetVoltageStimulus(dev="Dev2", chan="P07")
+    #stim.start()

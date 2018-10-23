@@ -83,6 +83,7 @@ class Experiment(QObject):
         metadata_animal=None,
         calibrator=None,
         stim_plot=False,
+        loop_protocol=False,
         log_format="csv",
         stim_movie_format="h5",
         rec_stim_framerate=None,
@@ -108,6 +109,7 @@ class Experiment(QObject):
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
+        self.loop_protocol = loop_protocol
 
         self.dc = DataCollector(folder_path=self.base_dir)
 
@@ -313,7 +315,7 @@ class Experiment(QObject):
                         self.scope_config = self.trigger.queue_trigger_params.get(
                             timeout=0.001
                         )
-
+                        self.logger.info(self.scope_config)
                         if self.dc is not None:
                             self.dc.add_static_data(
                                 self.scope_config, "imaging/microscope_config"
@@ -404,9 +406,14 @@ class Experiment(QObject):
                     self.filename_base() + "dynamic_log", self.log_format
                 )
 
-        self.protocol_runner.reset()
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()
+
+        if self.loop_protocol and self.protocol_runner.completed:
+            self.protocol_runner.reset()
+            self.start_protocol()
+        else:
+            self.protocol_runner.reset()
 
     def wrap_up(self, *args, **kwargs):
         """Clean up things before closing gui. Called by close button.
