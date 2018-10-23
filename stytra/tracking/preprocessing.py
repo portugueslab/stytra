@@ -12,20 +12,11 @@ from lightparam import Parametrized, Param
 from lightparam.param_qt import ParametrizedQt
 
 
-class PreprocMethod(ParametrizedImageproc):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # self.params = Parametrized(name="tracking/fish", params=self.detect)
-        # self.add_params(display_processed=dict(limits=["raw",
-        #                                                "filtered"],
-        #                                        type='list',
-        #                                        value="raw"))
-
-
-class Prefilter(PreprocMethod):
+class Prefilter:
     def __init__(self):
         super().__init__()
-        self.params = Parametrized(name="tracking/prefiltering", params=self.process)
+        self.params = Parametrized(name="tracking/prefiltering",
+                                   params=self.process)
 
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process
@@ -35,7 +26,7 @@ class Prefilter(PreprocMethod):
         image_scale: Param(1.0, (0.05, 1.0)),
         filter_size: Param(0, (0, 15)),
         color_invert: Param(False),
-        threshold: Param(0, (0, 255)),
+        clip: Param(0, (0, 255)),
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
@@ -55,8 +46,8 @@ class Prefilter(PreprocMethod):
             im = cv2.boxFilter(im, -1, (filter_size, filter_size))
         if color_invert:
             im = 255 - im
-        if threshold > 0:
-            im[im < threshold] = 0
+        if clip > 0:
+            im = np.maximum(im, clip) - clip
 
         return im
 
@@ -105,29 +96,3 @@ class BackgorundSubtractor:
         self.i = (self.i + 1) % learn_every
 
         return negdif(self.background_image, im)
-
-
-class CV2BgSub(PreprocMethod):
-    def __init__(self):
-        super().__init__()
-        self.add_params(
-            method=dict(type="list", value="mog2", values=["knn", "mog2"]),
-            threshold=128,
-        )
-
-    def process(self, im, method="mog2", image_scale=1, threshold=128, **extraparams):
-
-        if (
-            self.subtractor is None
-            or self.method != method
-            or self.threshold != threshold
-        ):
-            if method == "knn":
-                self.subtractor = cv2.createBackgroundSubtractorKNN(
-                    dist2Threshhold=threshold, detectShadows=False
-                )
-            else:
-                self.subtractor = cv2.createBackgroundSubtractorMOG2(
-                    varThreshold=threshold, detectShadows=False
-                )
-        return self.subtractor.apply(im)
