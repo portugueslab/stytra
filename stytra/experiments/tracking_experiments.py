@@ -205,11 +205,13 @@ class TrackingExperiment(CameraExperiment):
         self.preprocessing_method = preproc_method() if preproc_method else None
         if preproc_method:
             self.preprocessing_params = ParametrizedQt(
-                name="tracking/preprocessing", params=self.preprocessing_method.process
+                name="tracking/preprocessing", params=self.preprocessing_method.process,
+                tree=self.dc
             )
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(
-            name="tracking/tail_centroids", params=self.tracking_method.detect
+            name="tracking/tail_centroids", params=self.tracking_method.detect,
+            tree=self.dc
         )
 
         self.data_name = self.tracking_method.data_log_name

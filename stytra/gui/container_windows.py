@@ -55,11 +55,14 @@ class StatusMessageLabel(QLabel):
 
     def setMessage(self, text):
         if len(text) == 0:
+            self.setStyleSheet("background-color: {};".format(
+                self.palette().color(QPalette.Button).name()))
+            self.setText("")
             return
         if text[0] == "E":
             self.setStyleSheet("background-color: #dc322f;")
-        if text[0] == "W":
-            self.setStyleSheet("background-color: #dc322f;")
+        elif text[0] == "W":
+            self.setStyleSheet("background-color: #d8b02d;")
         else:
             self.setStyleSheet("background-color: {};".format(
                 self.palette().color(QPalette.Button).name()))

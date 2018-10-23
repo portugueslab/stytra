@@ -230,8 +230,8 @@ class Experiment(QObject):
         -------
 
         """
+        self.dc.restore_from_saved()
         self.make_window()
-        self.initialize_metadata()
 
         self.show_stimulus_screen(self.display_config["full_screen"])
         if self.trigger is not None:
@@ -249,16 +249,6 @@ class Experiment(QObject):
             self.window_main = SimpleExperimentWindow(self)
         self.window_main.construct_ui()
         self.window_main.show()
-
-    def initialize_metadata(self):
-        """Restore parameters from saved config.h5 file.
-        """
-        # When restoring here data_log to previous values, there may be
-        # multiple (one per parameter), calls of functions connected to
-        # a change in the params three state.
-        # See comment in DataCollector.restore_from_saved()
-        if self.dc is not None:
-            self.dc.restore_from_saved()
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen

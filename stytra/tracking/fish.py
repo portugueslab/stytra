@@ -122,6 +122,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             pfish.predict()
 
         area_scale = bg_downsample * bg_downsample
+        border_margin = border_margin // bg_downsample
 
         # subtract background
         bg = self.bg_subtractor.process(frame, bg_learning_rate, bg_learn_every)
@@ -147,6 +148,8 @@ class FishTrackingMethod(ParametrizedImageproc):
         # to find fish
         new_fish = []
 
+        message = "W:No object of right area, between {} and {}".format(*fish_area)
+
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < fish_area[1]:
@@ -164,11 +167,11 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             if not (
                 (fleft - border_margin >= 0)
-                and (fleft + fwidth + border_margin < frame.shape[1])
+                and (fleft + fwidth + border_margin < bg_small.shape[1])
                 and (ftop - border_margin >= 0)
-                and (ftop + fheight + border_margin < frame.shape[0])
+                and (ftop + fheight + border_margin < bg_small.shape[0])
             ):
-                continue
+                message = "W:No object of right area, between {} and {} within the margins".format(*fish_area)
 
             # how much is this region shifted from the upper left corner of the image
             cent_shift = np.array([fleft - border_margin, ftop - border_margin])
@@ -183,13 +186,14 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             # estimate the position of the head and the approximate
             # direction of the tail
-            head_coords = fish_start_n(fishdet, threshold_eyes)
+            fish_coords = fish_start_n(fishdet, threshold_eyes)
 
             # if no actual fish was found here, continue on to the next connected component
-            if head_coords[0] == -1:
+            if fish_coords[0] == -1:
+                message = "W:No appropriate tail start direction found"
                 continue
 
-            head_coords_up = head_coords + cent_shift
+            head_coords_up = fish_coords + cent_shift
 
             theta = _fish_direction_n(
                 frame, head_coords_up, int(round(tail_length / 2))
@@ -208,32 +212,33 @@ class FishTrackingMethod(ParametrizedImageproc):
             # convert to angles
             angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
             if len(angles) == 0:
-                self.logger.info("Tail not completely detectable")
+                message = "W:Tail not completely detectable"
                 continue
 
             # also, make the angles continuous
             angles[1:] = np.unwrap(angles[1:] - angles[0])
 
             # put the data together for one fish
-            head_coords = np.concatenate([np.array(points[0][:2]), angles])
+            fish_coords = np.concatenate([np.array(points[0][:2]), angles])
 
             # check if this is a new fish, or it is an update of
             # a fish detected previously
             for past_fish in self.previous_fish:
-                if past_fish.is_close(head_coords) and past_fish.i_not_updated < 0:
-                    past_fish.update(head_coords)
+                if past_fish.is_close(fish_coords) and past_fish.i_not_updated < 0:
+                    past_fish.update(fish_coords)
                     break
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
                 new_fish.append(
                     Fish(
-                        head_coords,
+                        fish_coords,
                         self.idx_book,
                         pred_coef=prediction_uncertainty,
                         pos_std=pos_uncertainty,
                     )
                 )
+                message = ""
         current_fish = []
 
         # remove fish not detected in two subsequent frames
@@ -263,7 +268,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.diagnostic_image = fishdet
         elif display_processed == "thresholded for eye and swim bladder":
             self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
-        return tuple(self.recorded.flatten()) + (max_area * 1.0,)
+        return message, tuple(self.recorded.flatten()) + (max_area * 1.0,)
 
 
 class IndexBooking:
@@ -318,7 +323,7 @@ class Fish:
     def serialize(self):
         return np.concatenate([f.x.flatten() for f in self.filters] + [self.unfiltered])
 
-    def is_close(self, new_fish, n_px=12, d_theta=np.pi / 2):
+    def is_close(self, new_fish, n_px=6, d_theta=np.pi / 2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
