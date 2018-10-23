@@ -124,7 +124,7 @@ class CrossCalibrator(Calibrator):
 class CircleCalibrator(Calibrator):
     """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle"""
 
-    def __init__(self, *args, dh=80, r=3, **kwargs):
+    def __init__(self, *args, dh=80, r=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.dh = dh
         self.r = r
