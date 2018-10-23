@@ -131,4 +131,3 @@ class ProtocolControlToolbar(QToolBar):
         """
         protocol_name = self.combo_prot.currentText()
         self.protocol_runner.set_new_protocol(protocol_name)
-        self.button_toggle_prot.setEnabled(True)
