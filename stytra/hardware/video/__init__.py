@@ -127,7 +127,7 @@ class CameraSource(VideoSource):
             self.cam = CameraClass(downsampling=self.downsampling)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.cam.open_camera()
+        self.message_queue.put("W:"+self.cam.open_camera())
         while True:
             # Kill if signal is set:
             self.kill_event.wait(0.0001)
@@ -152,9 +152,9 @@ class CameraSource(VideoSource):
                     arr = np.rot90(arr, self.rotation)
                 if self.frame_queue.queue.qsize() < self.n_consumers + 1:
                     self.frame_queue.put(arr)
+                    self.message_queue.put("")
                 else:
-                    pass
-                    # print("Dropped frame")
+                    self.message_queue.put("E:Dropped frame")
 
         self.cam.release()
 

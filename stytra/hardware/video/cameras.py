@@ -357,6 +357,7 @@ class SpinnakerCamera(Camera):
         self.cam.AcquisitionFrameRate.SetValue(400)
 
         self.cam.BeginAcquisition()
+        return "Spinnaker API camera successfully opened"
 
     def set(self, param, val):
         """
@@ -498,6 +499,7 @@ class MikrotronCLCamera(Camera):
 
         self.img_buffer = np.ndarray(shape=(h, w), dtype=ctypes.c_uint8)
         self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
+        return "Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
 
     def _send_command(self, com):
         command = ctypes.c_char_p(bytes(com, "ansi"))

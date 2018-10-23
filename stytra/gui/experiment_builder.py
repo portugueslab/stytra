@@ -16,15 +16,12 @@ from PyQt5.QtWidgets import (
 )
 
 from lightparam.gui.collapsible_widget import CollapsibleWidget
-from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
-from stytra.gui.protocol_control import ProtocolControlToolbar
-
-
-from lightparam.gui import ParameterGui
+from lightparam.gui import ParameterTreeGui, ParameterGui
+from lightparam import ParameterTree, Parametrized, Param
 
 
 
-class SimpleExperimentWindow(QMainWindow):
+class ExperimentBuilderWindow(QMainWindow):
     """Window for controlling a simple experiment including only a monitor
     the relative controls and the buttons for data_log and protocol control.
 
@@ -43,6 +40,42 @@ class SimpleExperimentWindow(QMainWindow):
         super().__init__(**kwargs)
 
         self.setWindowTitle("Stytra")
+        self.param_tree = ParameterTree()
+        self.folder_params = Parametrized(
+            name='saving_folder',
+            params=dict(name=Param('/',
+                                   gui="folder")),
+            tree=self.param_tree)
+        self.monitor_params = Parametrized(
+            name='monitor',
+            params=dict(fullscreen=Param(True),
+                        monitor=Param(1)),
+            tree=self.param_tree)
+        self.camera_params = Parametrized(
+            name='camera',
+            params=dict(type=Param(value='None',
+                                   limits=['avt',
+                                           'ximea',
+                                       'spinnaker']),
+                        rotation=Param(0)),
+            tree=self.param_tree)
+        self.tracking_params = Parametrized(
+            name="tracking_params",
+            params=dict(preprocessing_method=Param(value='None',
+                                                   limits=["prefilter",
+                                                           "bgsub"]),
+                        tracking_method=Param(value='None',
+                                              limits=["centroid",
+                                                      "tail_angles",
+                                                      "eyes",
+                                                      "fish"]),
+                        estimator=Param(value='None',
+                                        limits=["vigor",
+                                                "position"]),
+                        n_tracking_processes=Param(1)),
+
+            tree=self.param_tree)
+
         #
         # self.docks = []
         #
@@ -66,17 +99,9 @@ class SimpleExperimentWindow(QMainWindow):
         #
         # self.metadata_win = None
 
-        self.lyt_main = QVBoxLayout()
-
-        self.lyt_folder = QHBoxLayout()
-        self.labl_file = QLabel()
-        self.btn_folder = QPushButton("Browse")
-        self.lyt_main.addLayout(self.lyt_folder)
-
-        self.
-
-        self.setLayout(self.lyt_main)
-        self.show()
+        # self.lyt_main = QVBoxLayout()
+        self.layout().addWidget(ParameterTreeGui(self.param_tree))
+        # self.setLayout(self.lyt_main)
         # if not self.experiment.offline:
         #     proj_dock = QDockWidget("Projector configuration", self)
         #     proj_dock.setWidget(self.widget_projection)
@@ -111,3 +136,12 @@ class SimpleExperimentWindow(QMainWindow):
     #
     #     """
     #     pass
+
+
+if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication
+    tree = ParameterTree()
+    app = QApplication([])
+    p = ExperimentBuilderWindow()
+    p.show()
+    app.exec_()
