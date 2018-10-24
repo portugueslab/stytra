@@ -142,7 +142,11 @@ class FrameDispatcher(FrameProcess):
             if self.tracking_cls is not None:
                 message, output = tracker.detect(processed, **self.processing_parameters)
 
-                self.message_queue.put(message)
+                if message == "":
+                    self.message_queue.put("W:No message from tracking function".format(frame_idx))
+                else:
+                    self.message_queue.put(message)
+
                 # Handle the single output queue
                 while (
                     self.processing_counter.value != frame_idx - 1

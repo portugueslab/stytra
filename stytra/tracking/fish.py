@@ -87,9 +87,9 @@ class FishTrackingMethod(ParametrizedImageproc):
             (1, 50),
             desc="How many frames does the fish persist for if it is not detected",
         ),
-        prediction_uncertainty: Param(0.1, (0.0, 10.0)),
+        prediction_uncertainty: Param(0.1, (0.0, 10.0, 0.0001)),
         fish_area: Param((100, 400), (1, 2500)),
-        border_margin: Param(10, (0, 100)),
+        border_margin: Param(40, (0, 100)),
         tail_length: Param(50.5, (1.0, 200.0)),
         tail_track_window: Param(3, (3, 70)),
         display_processed: Param(
@@ -184,8 +184,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             # take the region and mask the background away to aid detection
             fishdet = bg[slices].copy()
 
-            # estimate the position of the head and the approximate
-            # direction of the tail
+            # estimate the position of the head
             fish_coords = fish_start_n(fishdet, threshold_eyes)
 
             # if no actual fish was found here, continue on to the next connected component
@@ -196,7 +195,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             head_coords_up = fish_coords + cent_shift
 
             theta = _fish_direction_n(
-                frame, head_coords_up, int(round(tail_length / 2))
+                bg, head_coords_up, int(round(tail_length / 2))
             )
 
             # find the points of the tail
@@ -230,15 +229,15 @@ class FishTrackingMethod(ParametrizedImageproc):
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
-                new_fish.append(
-                    Fish(
-                        fish_coords,
-                        self.idx_book,
-                        pred_coef=prediction_uncertainty,
-                        pos_std=pos_uncertainty,
+                if not np.all(self.idx_book.full):
+                    new_fish.append(
+                        Fish(
+                            fish_coords,
+                            self.idx_book,
+                            pred_coef=prediction_uncertainty,
+                            pos_std=pos_uncertainty,
+                        )
                     )
-                )
-                message = ""
         current_fish = []
 
         # remove fish not detected in two subsequent frames
@@ -252,6 +251,9 @@ class FishTrackingMethod(ParametrizedImageproc):
         # add the new fish to the previously updated fish
         current_fish.extend(new_fish)
         self.previous_fish = current_fish
+
+        if len(current_fish) > 0:
+            message = "I:Found {} fish".format(len(current_fish))
 
         # serialize the fish data for queue communication
         for pf in self.previous_fish:
@@ -268,6 +270,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             self.diagnostic_image = fishdet
         elif display_processed == "thresholded for eye and swim bladder":
             self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
+
         return message, tuple(self.recorded.flatten()) + (max_area * 1.0,)
 
 
@@ -427,13 +430,16 @@ def _circle_points(x0, y0, radius):
 def _fish_direction_n(image, start_loc, radius):
     centre_int = start_loc.astype(np.int16)
     pixels_rad = _circle_points(centre_int[0], centre_int[1], radius)
-    min_point = pixels_rad[0]
-    min_val = 255
+    max_point = pixels_rad[0]
+    max_val = 0
+    h, w = image.shape
     for x, y in pixels_rad:
-        if image[y, x] < min_val:
-            min_val = image[y, x]
-            min_point = (x, y)
-    return np.arctan2(min_point[1] - centre_int[1], min_point[0] - centre_int[0])
+        if x < 0 or y < 0 or x >= w or y >= h:
+            continue
+        if image[y, x] > max_val:
+            max_val = image[y, x]
+            max_point = (x, y)
+    return np.arctan2(max_point[1] - centre_int[1], max_point[0] - centre_int[0])
 
 
 @jit(nopython=True)

@@ -83,6 +83,7 @@ class MultiStreamPlot(QWidget):
         bounds_update=0.1,
         round_bounds=None,
         compact=False,
+        n_points_max=500,
         *args,
         **kwargs
     ):
@@ -90,6 +91,7 @@ class MultiStreamPlot(QWidget):
 
         self.time_past = time_past
         self.compact = compact
+        self.n_points_max = n_points_max
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -322,7 +324,14 @@ class MultiStreamPlot(QWidget):
                 delta_t = (acc.starting_time - self.start).total_seconds()
             except (TypeError, IndexError):
                 delta_t = 0
+
+            # TODO improve so that not the full list is acquired
+
             data_array = acc.get_last_t(self.time_past)
+
+            if len(data_array) > self.n_points_max:
+                data_array = data_array[::len(data_array)//self.n_points_max]
+
             if len(data_array) > 1:
                 try:
                     # ...to be added to the array of times in s in the data accumulator
