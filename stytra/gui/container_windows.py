@@ -112,6 +112,7 @@ class SimpleExperimentWindow(QMainWindow):
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
+        self.toolbar_control.setObjectName("toolbar")
 
         # Connect signals from the protocol_control:
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
@@ -165,6 +166,7 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
+        self.toolbar_control.setObjectName("toolbar_control")
         self.setCentralWidget(None)
         return None
 

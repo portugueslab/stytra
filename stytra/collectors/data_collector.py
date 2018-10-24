@@ -63,7 +63,7 @@ class DataCollector(ParameterTree):
     def __init__(self, *data_tuples_list, folder_path="C:/"):
         """ """
         super().__init__()
-        self.metadata_fn = "config.h5"
+        self.metadata_fn = "config.json"
 
         # Check validity of directory:
         self.folder_path = Path(folder_path)
@@ -74,7 +74,7 @@ class DataCollector(ParameterTree):
         self.last_metadata = None
         metadata_files = list(self.folder_path.glob("*" + self.metadata_fn))
         if metadata_files:
-            self.last_metadata = dd.io.load(str(metadata_files[0]))
+            self.last_metadata = json.load(open(metadata_files[0]))
 
         self.log_data_dict = dict()
         self.params_metadata = None
@@ -134,8 +134,6 @@ class DataCollector(ParameterTree):
 
         Parameters
         ----------
-        paramstree :
-            see prepare_json docs; (Default value = True)
         eliminate_df : bool
             see prepare_json docs; (Default value = False)
         convert_datetime : bool
@@ -181,7 +179,8 @@ class DataCollector(ParameterTree):
         -------
 
         """
-        dd.io.save(str(self.folder_path / "config.h5"), self.serialize())
+        config = prepare_json(self.serialize())
+        json.dump(config, open(self.folder_path / self.metadata_fn,"w"))
 
     def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources

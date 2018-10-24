@@ -246,8 +246,8 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
             self.gui_timer.start(1000 // 60)
         else:
-            self.window_main = SimpleExperimentWindow(self.default_protocol.name)
-        self.window_main.toolbar_control.combo_prot.setCurrentText()
+            self.window_main = SimpleExperimentWindow(self)
+        self.window_main.toolbar_control.combo_prot.setCurrentText(self.default_protocol)
         self.window_main.construct_ui()
         self.window_main.show()
 
@@ -351,8 +351,7 @@ class Experiment(QObject):
 
                 if self.database is not None:
                     db_id = self.database.insert_experiment_data(
-                        self.dc.get_clean_dict(
-                            paramstree=True, eliminate_df=True, convert_datetime=False
+                        self.dc.get_clean_dict(eliminate_df=True, convert_datetime=False
                         )
                     )
                 else:
@@ -420,8 +419,6 @@ class Experiment(QObject):
         -------
 
         """
-        self.gui_params.window_state = self.window_main.saveState()
-        self.gui_params.geometry = self.window_main.saveGeometry()
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
@@ -430,6 +427,10 @@ class Experiment(QObject):
             self.trigger.kill_event.set()
             # self.trigger.join()
             self.trigger.terminate()
+
+        self.gui_params.window_state = self.window_main.saveState()
+        self.gui_params.geometry = self.window_main.saveGeometry()
+        self.dc.save_config_file()
         self.app.closeAllWindows()
 
     def excepthook(self, exctype, value, tb):
