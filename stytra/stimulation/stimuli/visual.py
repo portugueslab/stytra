@@ -337,16 +337,23 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
     def __init__(self, *args, background, **kwargs):
         super().__init__(*args, **kwargs)
-        self.background = background
+        self._background = background
+        if isinstance(background, str):
+            self.background_name = background
+        else:
+            self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
 
         # Get background image from folder:
-        self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_dir + "/" + self.background)
-        )
+        if isinstance(self._background, str):
+            self._qbackground = qimage2ndarray.array2qimage(
+                existing_file_background(self._experiment.asset_dir + "/" + self._background)
+            )
+        else:
+            self._qbackground = qimage2ndarray.array2qimage(self._background)
 
     def get_unit_dims(self, w, h):
         w, h = self._qbackground.width(), self._qbackground.height()
