@@ -261,13 +261,17 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         """ """
-        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
-        previous_widget = super().construct_ui()
-        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
-        self.monitoring_layout.addWidget(previous_widget)
-        self.monitoring_layout.setStretch(1, 1)
-        self.monitoring_layout.setStretch(0, 1)
-        return self.monitoring_widget
+
+        super().construct_ui()
+        self.experiment.gui_timer.timeout.connect(
+            self.stream_plot.update
+        )  # TODO put in right place
+        monitoring_widget = QWidget()
+        monitoring_widget.setLayout(self.monitoring_layout)
+        monitoring_dock = QDockWidget("Tracking", self)
+        monitoring_dock.setWidget(monitoring_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+        self.docks.append(monitoring_dock)
 
 
 class TrackingExperimentWindow(CameraExperimentWindow):
