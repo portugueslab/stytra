@@ -111,7 +111,8 @@ class SimpleExperimentWindow(QMainWindow):
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
+        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner,
+                                                      self)
         self.toolbar_control.setObjectName("toolbar")
 
         # Connect signals from the protocol_control:
