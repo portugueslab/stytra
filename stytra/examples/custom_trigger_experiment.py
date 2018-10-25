@@ -3,7 +3,7 @@
 # showing a Flash.
 
 from pathlib import Path
-
+from lightparam.param_qt import ParametrizedWidget, Param
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from stytra.triggering import Trigger
@@ -36,7 +36,8 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.add_params(period_sec=5., flash_duration=2.)
+        self.period_sec= Param(5.)
+        self.flash_duration=Param(2.)
 
     def get_stim_sequence(self):
         stimuli = [
