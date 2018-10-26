@@ -167,11 +167,12 @@ class FishTrackingMethod(ParametrizedImageproc):
 
             if not (
                 (fleft - border_margin >= 0)
-                and (fleft + fwidth + border_margin < bg_small.shape[1])
+                and (fleft + fwidth + border_margin < frame.shape[1])
                 and (ftop - border_margin >= 0)
-                and (ftop + fheight + border_margin < bg_small.shape[0])
+                and (ftop + fheight + border_margin < frame.shape[0])
             ):
                 message = "W:No object of right area, between {} and {} within the margins".format(*fish_area)
+                continue
 
             # how much is this region shifted from the upper left corner of the image
             cent_shift = np.array([fleft - border_margin, ftop - border_margin])
@@ -185,11 +186,11 @@ class FishTrackingMethod(ParametrizedImageproc):
             fishdet = bg[slices].copy()
 
             # estimate the position of the head
-            fish_coords = fish_start_n(fishdet, threshold_eyes)
+            fish_coords = fish_start(fishdet, threshold_eyes)
 
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
-                message = "W:No appropriate tail start direction found"
+                message = "W:No appropriate tail start position fiybd"
                 continue
 
             head_coords_up = fish_coords + cent_shift
@@ -225,10 +226,12 @@ class FishTrackingMethod(ParametrizedImageproc):
             for past_fish in self.previous_fish:
                 if past_fish.is_close(fish_coords) and past_fish.i_not_updated < 0:
                     past_fish.update(fish_coords)
+                    message = "I:Updated previous fish"
                     break
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
+                message = "I:Trying to add new fish"
                 if not np.all(self.idx_book.full):
                     new_fish.append(
                         Fish(
@@ -238,6 +241,9 @@ class FishTrackingMethod(ParametrizedImageproc):
                             pos_std=pos_uncertainty,
                         )
                     )
+                else:
+                    message = "E:overbooked"
+
         current_fish = []
 
         # remove fish not detected in two subsequent frames
@@ -251,9 +257,6 @@ class FishTrackingMethod(ParametrizedImageproc):
         # add the new fish to the previously updated fish
         current_fish.extend(new_fish)
         self.previous_fish = current_fish
-
-        if len(current_fish) > 0:
-            message = "I:Found {} fish".format(len(current_fish))
 
         # serialize the fish data for queue communication
         for pf in self.previous_fish:
@@ -319,14 +322,14 @@ class Fish:
             # Angle needs to be updated specially:
             if i == 2:
                 s = _minimal_angle_dif(f.x[0], s)
-            f.update(np.array([s]))
+            f.update(s)
         self.unfiltered[:] = new_fish_state[3:]
         self.i_not_updated = 0
 
     def serialize(self):
         return np.concatenate([f.x.flatten() for f in self.filters] + [self.unfiltered])
 
-    def is_close(self, new_fish, n_px=6, d_theta=np.pi / 2):
+    def is_close(self, new_fish, n_px=15, d_theta=np.pi / 2):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
@@ -335,8 +338,9 @@ class Fish:
             [(new_fish[i] - f.x[0]) for i, f in enumerate(self.filters[:2])]
         )
         dtheta = np.abs(
-            np.mod(new_fish[3] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
+            np.mod(new_fish[2] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
         )
+        print(np.sum(dists ** 2), dtheta)
         return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 
@@ -347,28 +351,24 @@ def points_to_angles(points):
         angles[i] = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
     return angles
 
+@jit(nopython=True)
+def fish_start(mask, take_min):
+    su = 0.
+    ret = np.full((2,), 0.0)
+    for i in range(mask.shape[0]):
+        for j in range(mask.shape[1]):
+            if mask[i, j] > take_min:
+                dm = mask[i, j] - take_min
+                ret[1] += dm*i
+                ret[0] += dm*j
+                su += dm
 
-def fish_start_n(mask, take_min=50):
-    """Find the centre of head of the fish
 
-    Parameters
-    ----------
-    mask :
-        param take_min:
-    take_min :
-         (Default value = 100)
-
-    Returns
-    -------
-
-    """
-    # take the centre of mass of only the darkest parts, the eyes and the
-    mom = cv2.moments(np.maximum(mask, take_min) - take_min)  #
-    if mom["m00"] == 0:
-        return np.array([-1, -1, 0])
-    y0 = mom["m01"] / mom["m00"]
-    x0 = mom["m10"] / mom["m00"]
-    return np.array([x0, y0])
+    if su > 0.0:
+        return ret/su
+    else:
+        ret[:] = -1
+        return ret
 
 
 # Utilities for drawing circles.
