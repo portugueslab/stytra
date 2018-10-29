@@ -13,6 +13,20 @@ from lightparam import Param, Parametrized
 from stytra.tracking.simple_kalman import NewtonianKalman
 
 
+def _fish_column_names(i_fish, n_segments):
+    return [
+               "f{:d}_x".format(i_fish),
+               "f{:d}_vx".format(i_fish),
+               "f{:d}_y".format(i_fish),
+               "f{:d}_vy".format(i_fish),
+               "f{:d}_theta".format(i_fish),
+               "f{:d}_vtheta".format(i_fish),
+           ] + [
+               "f{:d}_theta_{:02d}".format(i_fish, i)
+               for i in range(n_segments)
+           ]
+
+
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
         super().__init__()
@@ -35,18 +49,7 @@ class FishTrackingMethod(ParametrizedImageproc):
         self.accumulator_headers = list(
             chain.from_iterable(
                 [
-                    [
-                        "f{:d}_x".format(i_fish),
-                        "f{:d}_vx".format(i_fish),
-                        "f{:d}_y".format(i_fish),
-                        "f{:d}_vy".format(i_fish),
-                        "f{:d}_theta".format(i_fish),
-                        "f{:d}_vtheta".format(i_fish),
-                    ]
-                    + [
-                        "f{:d}_theta_{:02d}".format(i_fish, i)
-                        for i in range(self.params.n_segments - 1)
-                    ]
+                    _fish_column_names(i_fish, self.params.n_segments-1)
                     for i_fish in range(self.params.n_fish_max)
                 ]
             )
