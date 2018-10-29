@@ -343,7 +343,6 @@ class Fish:
         dtheta = np.abs(
             np.mod(new_fish[2] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
         )
-        print(np.sum(dists ** 2), dtheta)
         return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 

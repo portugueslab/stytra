@@ -86,6 +86,10 @@ class CameraViewWidget(QWidget):
         self.layout_control = QHBoxLayout()
         self.layout_control.setContentsMargins(10, 0, 10, 10)
 
+        self.pauseButton = QPushButton("Pause")
+        self.pauseButton.clicked.connect(self.toggle_pause)
+        self.layout_control.addWidget(self.pauseButton)
+
         if self.control_queue is not None:
             self.params_button = QPushButton("Camera params")
             self.params_button.clicked.connect(self.show_params_gui)
@@ -102,20 +106,15 @@ class CameraViewWidget(QWidget):
 
         self.param_widget = None
 
-    def update_controls(self, value):
-        """
-
-        Parameters
-        ----------
-        value :
-            Parameter object that have changed
-
-        Returns
-        -------
-
-        """
-        # Put in the queue tuple with name and new value of the parameter:
-        self.control_queue.put((value.name(), value.value()))
+    def toggle_pause(self):
+        if self.experiment.camera.paused:
+            self.experiment.camera.paused = False
+            self.experiment.camera.control_queue.put(dict(paused=False))
+            self.pauseButton.setText("Pause")
+        else:
+            self.experiment.camera.paused = True
+            self.experiment.camera.control_queue.put(dict(paused=True))
+            self.pauseButton.setText("Start")
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done
@@ -574,7 +573,7 @@ class CameraViewFish(CameraViewCalib):
                     ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
                     self.lines_fish.setData(x=xs, y=ys)
             except ValueError as e:
-                print("Not managed ", e)
+                pass
             # if there is a temporary mismatch between number of segments expected
             # and sent
             # except ValueError as e:

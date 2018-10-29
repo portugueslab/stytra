@@ -84,6 +84,7 @@ class MultiStreamPlot(QWidget):
         round_bounds=None,
         compact=False,
         n_points_max=500,
+        precision=None,
         *args,
         **kwargs
     ):
@@ -95,6 +96,10 @@ class MultiStreamPlot(QWidget):
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
+
+        self.round_bounds = round_bounds
+
+        self.precision = precision or 3
 
         if not compact:
             self.control_layout = QHBoxLayout()
@@ -145,7 +150,6 @@ class MultiStreamPlot(QWidget):
 
         # trick to set color on update
         self.color_set = False
-        self.round_bounds = round_bounds
 
         self.toggle_freeze()
         self.update_zoom(time_past)
@@ -279,7 +283,7 @@ class MultiStreamPlot(QWidget):
         else:
             return rounded
 
-    def _update_round_bounds(self, old_bounds, new_bounds):
+    def _update_round_bounds(self, old_bounds, new_bounds, tolerance=0.1):
         """ If bounds are exceeed by tolerance
 
         Parameters
@@ -291,14 +295,7 @@ class MultiStreamPlot(QWidget):
         -------
 
         """
-        tol_u = 1.2
-        tol_d = 0.6
-        to_update = np.any(
-            np.logical_or(
-                old_bounds * tol_u < new_bounds, new_bounds < old_bounds * tol_d
-            ),
-            1,
-        )
+        to_update = np.any(np.abs(old_bounds-new_bounds) > tolerance*np.abs(old_bounds), 1)
         old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
         return old_bounds
 
@@ -334,25 +331,17 @@ class MultiStreamPlot(QWidget):
 
             if len(data_array) > 1:
                 try:
-                    # ...to be added to the array of times in s in the data accumulator
-                    fps = acc.get_fps()
-
                     time_array = delta_t + data_array[:, 0]
 
                     # loop to handle nan values in a single column
-                    new_bounds = []
-                    for i in indexes:
+                    new_bounds = np.zeros((len(indexes), 2))
+                    for id, i in enumerate(indexes):
                         # Exclude nans from calculation of percentile boundaries:
                         d = data_array[:, i]
                         b = ~np.isnan(d)
-                        if np.sum(b) > 0:
+                        if np.any(b):
                             non_nan_data = data_array[b, i]
-                            new_bounds.append(
-                                np.percentile(non_nan_data, (0.5, 99.5), 0).T
-                            )
-                        else:
-                            new_bounds.append([0, 0])
-                    new_bounds = np.array(new_bounds)
+                            new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
 
                     if self.bounds[i_acc] is None:
                         if not self.round_bounds:
@@ -367,22 +356,35 @@ class MultiStreamPlot(QWidget):
                             )
                         else:
                             self.bounds[i_acc] = self._update_round_bounds(
-                                new_bounds, self.bounds[i_acc]
+                                self.bounds[i_acc], new_bounds
                             )
 
                     for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
                         scale = ub - lb
                         if scale < 0.00001:
-                            scale = 1
-                        self.valueLabels[i_stream][0].setText("{:07.3f}".format(lb))
-                        self.valueLabels[i_stream][1].setText("{:07.3f}".format(ub))
-                        self.valueLabels[i_stream][3].setText(
-                            "{:7.3f}".format(data_array[-1, i_var])
-                        )
-                        self.curves[i_stream].setData(
-                            x=time_array,
-                            y=i_stream + ((data_array[:, i_var] - lb) / scale),
-                        )
+                            self.valueLabels[i_stream][0].setText("-".format(lb))
+                            self.valueLabels[i_stream][1].setText("-".format(ub))
+                            self.valueLabels[i_stream][3].setText(
+                                "NaN".format(data_array[-1, i_var])
+                            )
+                            self.curves[i_stream].setData(
+                                x=[],
+                                y=[],
+                            )
+                        else:
+                            if self.round_bounds:
+                                self.valueLabels[i_stream][0].setText("{:07d}".format(lb, prec=self.precision))
+                                self.valueLabels[i_stream][1].setText("{:07d}".format(ub, prec=self.precision))
+                            else:
+                                self.valueLabels[i_stream][0].setText("{:07.{prec}f}".format(lb, prec=self.precision))
+                                self.valueLabels[i_stream][1].setText("{:07.{prec}f}".format(ub, prec=self.precision))
+                            self.valueLabels[i_stream][3].setText(
+                                "{:7.{prec}f}".format(data_array[-1, i_var], prec=self.precision)
+                            )
+                            self.curves[i_stream].setData(
+                                x=time_array,
+                                y=i_stream + ((data_array[:, i_var] - lb) / scale),
+                            )
                         i_stream += 1
                 except IndexError:
                     pass

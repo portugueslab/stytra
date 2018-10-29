@@ -111,6 +111,7 @@ class CameraSource(VideoSource):
         self.downsampling = downsampling
         self.control_params = CameraControlParameters
         self.cam = None
+        self.paused = False
 
     def run(self):
         """
@@ -138,6 +139,7 @@ class CameraSource(VideoSource):
             if self.control_queue is not None:
                 try:
                     param_dict = self.control_queue.get(timeout=0.0001)
+                    self.paused = param_dict.get("paused", self.paused)
                     for param, value in param_dict.items():
                         self.cam.set(param, value)
                 except Empty:
@@ -146,7 +148,7 @@ class CameraSource(VideoSource):
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             self.update_framerate()
-            if arr is not None:
+            if arr is not None and not self.paused:
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
                     arr = np.rot90(arr, self.rotation)
@@ -274,9 +276,3 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
-
-
-if __name__ == "__main__":
-    process = CameraSource("ximea")
-    process.start()
-    process.kill_event.set()
