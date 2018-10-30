@@ -335,13 +335,16 @@ class SeamlessImageStimulus(BackgroundStimulus):
     some image editing any texture can be adjusted to be seamless.
     """
 
-    def __init__(self, *args, background, **kwargs):
+    def __init__(self, *args, background, background_name=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._background = background
-        if isinstance(background, str):
-            self.background_name = background
+        if background_name is not None:
+            self.background_name = background_name
         else:
-            self.background_name = "array {}x{}".format(*self._background.shape)
+            if isinstance(background, str):
+                self.background_name = background
+            else:
+                self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
 
     def initialise_external(self, experiment):
