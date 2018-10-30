@@ -229,7 +229,7 @@ class QueueDataAccumulator(QObject, Accumulator):
         while True:
             try:
                 # Get data from queue:
-                t, data = self.data_queue.get(timeout=0.00001)
+                t, data = self.data_queue.get(timeout=0.001)
 
                 # If we are at the starting time:
                 if len(self.stored_data) == 0:

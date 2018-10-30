@@ -373,11 +373,11 @@ class MultiStreamPlot(QWidget):
                             )
                         else:
                             if self.round_bounds:
-                                self.valueLabels[i_stream][0].setText("{:07d}".format(lb, prec=self.precision))
-                                self.valueLabels[i_stream][1].setText("{:07d}".format(ub, prec=self.precision))
+                                self.valueLabels[i_stream][0].setText("{:7d}".format(lb, prec=self.precision))
+                                self.valueLabels[i_stream][1].setText("{:7d}".format(ub, prec=self.precision))
                             else:
-                                self.valueLabels[i_stream][0].setText("{:07.{prec}f}".format(lb, prec=self.precision))
-                                self.valueLabels[i_stream][1].setText("{:07.{prec}f}".format(ub, prec=self.precision))
+                                self.valueLabels[i_stream][0].setText("{:7.{prec}f}".format(lb, prec=self.precision))
+                                self.valueLabels[i_stream][1].setText("{:7.{prec}f}".format(ub, prec=self.precision))
                             self.valueLabels[i_stream][3].setText(
                                 "{:7.{prec}f}".format(data_array[-1, i_var], prec=self.precision)
                             )

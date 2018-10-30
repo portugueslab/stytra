@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from numba import jit
+from numba import jit, jitclass
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking import ParametrizedImageproc
