@@ -65,7 +65,8 @@ class Camera:
 
     """
 
-    def __init__(self, debug=False, **kwargs):
+    def __init__(self, debug=False, downsampling=1, roi=(-1,-1,-1,-1),
+                 **kwargs):
         """
         Parameters
         ----------
@@ -73,9 +74,8 @@ class Camera:
             if True, info about the camera state will be printed.
         """
         self.cam = None
-        self.debug = debug
-        self.error_log = logging.getLogger()
-        multiprocessing_logging.install_mp_handler(self.error_log)
+        self.downsampling = downsampling
+        self.roi = roi
 
     def open_camera(self):
         """Initialise the camera."""
@@ -118,7 +118,7 @@ class XimeaCamera(Camera):
 
     """
 
-    def __init__(self, downsampling=1, **kwargs):
+    def __init__(self, **kwargs):
         """
 
         Parameters
@@ -127,7 +127,6 @@ class XimeaCamera(Camera):
             downsampling factor for the camera
         """
         super().__init__(**kwargs)
-        self.downsampling = downsampling
 
         # Test if API for the camera is available
         try:
@@ -142,6 +141,13 @@ class XimeaCamera(Camera):
         self.cam.open_device()
 
         self.im = xiapi.Image()
+
+        if self.roi[0] >= 0:
+            self.cam.set_aeag_roi_offset_y(self.roi[0])
+            self.cam.set_aeag_roi_offset_x(self.roi[1])
+            self.cam.set_aeag_roi_height(self.roi[2])
+            self.cam.set_aeag_roi_width(self.roi[3])
+
         self.cam.start_acquisition()
 
         self.error_log.info("Detected camera {}.".format(self.cam.get_device_name()))
@@ -159,7 +165,7 @@ class XimeaCamera(Camera):
                 )
 
         self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
-        self.cam.set_framerate(100.0)
+        return "Opened Ximea camera"
 
     def set(self, param, val):
         """
@@ -182,7 +188,7 @@ class XimeaCamera(Camera):
             if param == "framerate":
                 self.cam.set_framerate(val)
         except xiapi.Xi_error:
-            print("Invalid camera parameters")
+            return "Invalid camera parameters"
 
     def read(self):
         """ """
@@ -191,8 +197,6 @@ class XimeaCamera(Camera):
             frame = self.im.get_image_data_numpy()
         except xiapi.Xi_error:
             frame = None
-            if self.debug:
-                print("Unable to acquire frame")
 
         return frame
 
@@ -280,7 +284,7 @@ class AvtCamera(Camera):
                 # interrupted:
                 pass
         except VimbaException:
-            print("Invalid value! The parameter will not be changed.")
+            return "Invalid value! The parameter will not be changed."
 
     def read(self):
         """ """
@@ -384,8 +388,8 @@ class SpinnakerCamera(Camera):
                 self.cam.AcquisitionFrameRate.SetValue(val)
 
         except PySpin.SpinnakerException as ex:
-            print("Error: %s" % ex)
-        pass
+            return "Invalid parameters"
+        return ""
 
     def read(self):
         try:
@@ -528,6 +532,7 @@ class MikrotronCLCamera(Camera):
                 self._send_command(":q{:06X}".format(int(val)))
                 self._read_response()
                 self.framerate_current = int(val)
+        return ""
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)

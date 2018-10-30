@@ -150,4 +150,25 @@ class Stytra:
 
 
 if __name__ == "__main__":
-    st = Stytra()
+    import argparse
+    from pathlib import Path
+    default_config_file = Path("~/setup_config.json")
+
+    import json
+
+    if default_config_file.is_file():
+        config = json.load(open(default_config_file))
+    else:
+        config = dict()
+
+    parser = argparse.ArgumentParser(description="Run Stytra")
+    parser.add_argument("configuration", type=str, action="store", nargs="?", help="json", default=None)
+    args = parser.parse_args()
+
+    if args.configuration is not None:
+        try:
+            config.update(json.load(open(args.config)))
+        except OSError as e:
+            print("Config file not valid ", e)
+
+    st = Stytra(**config)

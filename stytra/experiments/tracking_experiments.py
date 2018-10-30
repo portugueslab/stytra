@@ -63,6 +63,7 @@ class CameraExperiment(Experiment):
                 camera_config["type"],
                 rotation=camera_config.get("rotation", 0),
                 downsampling=camera_config.get("downsampling", 1),
+                roi=camera_config.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
             )
             self.camera_control_params = CameraControlParameters(tree=self.dc)
