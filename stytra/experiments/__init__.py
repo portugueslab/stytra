@@ -392,9 +392,8 @@ class Experiment(QObject):
                         )
 
             if self.protocol_runner.dynamic_log is not None:
-                self.protocol_runner.dynamic_log.save(
-                    self.filename_base() + "dynamic_log", self.log_format
-                )
+                self.save_log(self.protocol_runner.dynamic_log, "dynamic_log",
+                              "stimulus")
 
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()
