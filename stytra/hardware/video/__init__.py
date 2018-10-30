@@ -103,12 +103,13 @@ class CameraSource(VideoSource):
                              mikrotron=MikrotronCLCamera)
     """ dictionary listing classes used to instantiate camera object."""
 
-    def __init__(self, camera_type, *args, downsampling=1, **kwargs):
+    def __init__(self, camera_type, *args, downsampling=1, roi=(-1,-1,-1,-1), **kwargs):
         """ """
         super().__init__(*args, **kwargs)
 
         self.camera_type = camera_type
         self.downsampling = downsampling
+        self.roi = roi
         self.control_params = CameraControlParameters
         self.cam = None
         self.paused = False
@@ -125,7 +126,7 @@ class CameraSource(VideoSource):
         """
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
-            self.cam = CameraClass(downsampling=self.downsampling)
+            self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
         self.message_queue.put("I:"+str(self.cam.open_camera()))

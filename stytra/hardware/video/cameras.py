@@ -143,14 +143,12 @@ class XimeaCamera(Camera):
         self.im = xiapi.Image()
 
         if self.roi[0] >= 0:
-            self.cam.set_aeag_roi_offset_y(self.roi[0])
-            self.cam.set_aeag_roi_offset_x(self.roi[1])
-            self.cam.set_aeag_roi_height(self.roi[2])
-            self.cam.set_aeag_roi_width(self.roi[3])
+            self.cam.set_offsetX(self.roi[0])
+            self.cam.set_offsetY(self.roi[1])
+            self.cam.set_width(self.roi[2])
+            self.cam.set_height(self.roi[3])
 
         self.cam.start_acquisition()
-
-        self.error_log.info("Detected camera {}.".format(self.cam.get_device_name()))
 
         # If camera supports hardware downsampling (MQ013MG-ON does,
         # MQ003MG-CM does not):
@@ -165,7 +163,7 @@ class XimeaCamera(Camera):
                 )
 
         self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
-        return "Opened Ximea camera"
+        return "Opened Ximea camera "+str(self.cam.get_device_name())
 
     def set(self, param, val):
         """
