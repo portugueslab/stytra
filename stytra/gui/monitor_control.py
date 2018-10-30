@@ -4,7 +4,6 @@ from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QPushButton
 import numpy as np
 import pyqtgraph as pg
 
-from stytra.gui.parameter_widgets import ParameterSpinBox
 from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException
 from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
