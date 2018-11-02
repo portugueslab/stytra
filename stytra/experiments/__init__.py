@@ -106,6 +106,7 @@ class Experiment(QObject):
             dir_save = tempfile.gettempdir()
         self.base_dir = dir_save
         self.database = database
+        self.use_db = True if database else False
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
@@ -351,7 +352,7 @@ class Experiment(QObject):
                     self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
 
-                if self.database is not None:
+                if self.database is not None and self.use_db:
                     db_id = self.database.insert_experiment_data(
                         self.dc.get_clean_dict(eliminate_df=True, convert_datetime=False
                         )

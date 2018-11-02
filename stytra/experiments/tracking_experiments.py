@@ -32,6 +32,8 @@ from stytra.stimulation.estimators import (
     Estimator,
 )
 
+from inspect import isclass
+
 import sys
 import logging
 
@@ -253,7 +255,7 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
         elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.data_acc)
-        elif issubclass(est_type, Estimator):
+        elif isclass(est_type) and issubclass(est_type, Estimator):
             self.estimator = est_type(
                 self.data_acc, self.calibrator, **tracking_config.get("estimator_params", {})
             )
