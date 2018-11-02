@@ -215,6 +215,7 @@ class TrackingExperiment(CameraExperiment):
             tree=self.dc
         )
 
+        # TODO self.data_name is not used, check if necessary!
         self.data_name = self.tracking_method.data_log_name
         self.frame_dispatchers = [
             FrameDispatcher(
@@ -348,7 +349,7 @@ class TrackingExperiment(CameraExperiment):
 
         """
         if save:
-            self.save_log(self.data_acc, "log")
+            self.save_log(self.data_acc, "behavior_log")
             try:
                 self.save_log(self.estimator.log, "estimator_log")
             except AttributeError:
