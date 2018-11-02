@@ -59,8 +59,8 @@ class Stytra:
             tracking_method: str
                 one of "centroid", "tail_angles", "eyes", "fish"
             estimator: str
-                for closed-loop experiments: either "vigor" or "lstm" for embedded experiments
-                    or "position" for freely-swimming ones
+                for closed-loop experiments: either "vigor" for embedded experiments
+                    or "position" for freely-swimming ones. A custom estimator can be supplied
 
         recording_config : bool
             for video-recording experiments

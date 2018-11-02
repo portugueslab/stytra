@@ -29,7 +29,7 @@ from lightparam.param_qt import ParametrizedQt
 from stytra.stimulation.estimators import (
     PositionEstimator,
     VigourMotionEstimator,
-    LSTMLocationEstimator,
+    Estimator,
 )
 
 import sys
@@ -174,8 +174,8 @@ class TrackingExperiment(CameraExperiment):
     ----------
         tracking_config: dict
             containing fields:  tracking_method
-                                estimator: can be vigor or lstm for embedded fish, position
-                                    for freely-swimming
+                                estimator: can be vigor for embedded fish, position
+                                    for freely-swimming, or a custom subclass of Estimator
 
     Returns
     -------
@@ -252,9 +252,9 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
         elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.data_acc)
-        elif est_type == "lstm":
-            self.estimator = LSTMLocationEstimator(
-                self.data_acc, self.asset_dir + "/swim_lstm.h5"
+        elif issubclass(est_type, Estimator):
+            self.estimator = est_type(
+                self.data_acc, self.calibrator, **tracking_config.get("estimator_params", {})
             )
         else:
             self.estimator = None
@@ -416,13 +416,6 @@ class TrackingExperiment(CameraExperiment):
         self.camera.terminate()
         for dispatcher in self.frame_dispatchers:
             dispatcher.terminate()
-
-
-class VRExperiment(TrackingExperiment):
-    """ """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
 
 class SwimmingRecordingExperiment(CameraExperiment):
