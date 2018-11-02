@@ -211,7 +211,7 @@ class TrackingExperiment(CameraExperiment):
             )
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(
-            name="tracking/tail_centroids", params=self.tracking_method.detect,
+            name="tracking/".format(self.tracking_method.name), params=self.tracking_method.detect,
             tree=self.dc
         )
 
@@ -350,9 +350,7 @@ class TrackingExperiment(CameraExperiment):
         if save:
             self.save_log(self.data_acc, "log")
             try:
-                print("saving estimator log")
                 self.save_log(self.estimator.log, "estimator_log")
-                print("save log")
             except AttributeError:
                 pass
         try:
@@ -391,9 +389,10 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        super().wrap_up(*args, **kwargs)
         for dispatcher in self.frame_dispatchers:
+            dispatcher.finished_signal.set()
             dispatcher.terminate()
+        super().wrap_up(*args, **kwargs)
 
     def excepthook(self, exctype, value, tb):
         """

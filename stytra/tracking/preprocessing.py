@@ -18,6 +18,7 @@ class Prefilter:
         self.params = Parametrized(name="tracking/prefiltering",
                                    params=self.process)
 
+
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process
     def process(
@@ -27,6 +28,7 @@ class Prefilter:
         filter_size: Param(0, (0, 15)),
         color_invert: Param(False),
         clip: Param(0, (0, 255)),
+        display_processed: Param("raw", ["raw", "filtered"]) = "raw",
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
