@@ -414,11 +414,11 @@ class GratingStimulus(BackgroundStimulus):
         elif self.wave_shape == "sine":
             # Define sinusoidally varying weights for the two colors and then
             #  sum them in the pattern
-            w = (np.sin(2 * np.pi * np.linspace(0, 1, l)) + 1) / 2
+            w = (np.sin(2 * np.pi * np.linspace(1/l, 1, l)) + 1) / 2
 
             self._pattern = (
                 w[:, None] * np.array(self.color_1)[None, :]
-                + (1 - w[:None]) * np.array(self.color_2)[None, :]
+                + (1 - w[:, None]) * np.array(self.color_2)[None, :]
             ).astype(np.uint8)
 
     def initialise_external(self, experiment):
@@ -556,7 +556,7 @@ class FishOverlayStimulus(PositionStimulus):
 class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ["y"]
+        self.dynamic_parameters = ["vel_x"]
 
 
 def z_func_windmill(x, y, arms):

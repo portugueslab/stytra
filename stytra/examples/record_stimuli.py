@@ -1,5 +1,4 @@
 import unittest
-import shutil
 import tempfile
 import pkg_resources
 import numpy as np
@@ -12,8 +11,6 @@ from stytra.stimulation.stimuli import (
     InterpolatedStimulus,
     RadialSineStimulus,
 )
-
-from PyQt5.QtCore import QTimer
 
 from stytra.stimulation import Protocol
 

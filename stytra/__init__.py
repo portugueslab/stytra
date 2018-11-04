@@ -117,9 +117,9 @@ class Stytra:
 
         if scope_triggering == "zmq":
             from stytra.triggering import ZmqTrigger
-            class_kwargs['trigger'] = ZmqTrigger(port='5555')
+            class_kwargs['scope_triggering'] = ZmqTrigger(port='5555')
         else:
-            class_kwargs['trigger'] = scope_triggering
+            class_kwargs['scope_triggering'] = scope_triggering
 
         base = Experiment
 

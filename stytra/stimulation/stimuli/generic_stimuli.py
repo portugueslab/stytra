@@ -158,6 +158,7 @@ class DynamicStimulus(Stimulus):
             self.name + "_" + param: getattr(self, param, 0)
             for param in self.dynamic_parameters
         }
+        print(state_dict)
         return state_dict
 
 
@@ -210,9 +211,9 @@ class InterpolatedStimulus(Stimulus):
                     )
                 # otherwise it is set by interpolating the column of the
                 # dataframe
-                else:
-                    setattr(
-                        self,
-                        col,
-                        np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
-                    )
+                # else:
+                setattr(
+                    self,
+                    col,
+                    np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
+                )
