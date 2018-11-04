@@ -15,7 +15,7 @@ In stytra, an experiment is started by creating in a script a
 :class:`Stytra <stytra.Stytra.get_stim_sequence()>` object.
 
 
-As we said before, the only required input to start an experiment is to have
+As mentioned before, the only required input to start an experiment is to have
 a list or protocols that we will pass to the Stytra class. Here we create a
 simple protocol for showing a flash of 1 second, and we run a stytra
 experiment with it:
@@ -49,9 +49,9 @@ Obviously, there are many more things we might want to specify when running an
 experiment, like setting the directory for saving data or making the
 stimulus window full screen. For this reason, there is a number of
 parameters accepted as inputs by the Stytra class.
-Define different kinds of Stytra experiments requires simply to pass
-different configuration parameters to initialize the Stytra object. In the
-next sections we will have a look at how to set up different experiments.
+Different kinds of Stytra experiments require different configuration parameters
+ to initialize the Stytra object. In the next sections we will have a look at how
+  to set up different experiments.
 
 For now, let's simply look at which basic parameters can be useful for our
 simple experiment:

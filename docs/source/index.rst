@@ -40,10 +40,10 @@ Modules
     :py:mod:`stytra.calibration`
         Classes to register the camera view to the projector display and
         set physical dimentions
+
     :py:mod:`stytra.tracking`
         Fish, eye and tail tracking functions together with appropriate interfaces
-    :py:mod:`stytra.bouter`
-        Uitilities for analysis of bouts
+
 
 
 

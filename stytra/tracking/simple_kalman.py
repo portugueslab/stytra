@@ -38,7 +38,9 @@ def _update(z, x, P, R):
 
     x = x + K * y
 
-    I_KH = np.array([[1 - K[0], 0.0], [-K[1], 1.0]])
+    I_KH = np.eye(2)
+    I_KH[0, 0] -= K[0]
+    I_KH[1, 0] = -K[1]
 
     P = ((I_KH @ P) @ I_KH.T) + R * (K @ K.T)
 

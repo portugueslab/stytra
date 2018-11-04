@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 import inspect
 
-from pyqtgraph.parametertree import Parameter
+from pathlib import Path
+
+import collections
 
 
 class Database:
@@ -91,7 +93,6 @@ def prepare_json(it, **kwargs):
     it :
         the item which will be recursively sanitized
     **kwargs :
-        paramstree: bool
         convert_datetime: bool
             if datetiems are to be converted to strings for JSON serialization
         eliminate_df: bool
@@ -112,18 +113,7 @@ def prepare_json(it, **kwargs):
             new_dict[key] = prepare_json(value, **kwargs)
         return new_dict
     if isinstance(it, tuple):
-        tuple_out = tuple([prepare_json(el, **kwargs) for el in it])
-        if (
-            len(tuple_out) == 2
-            and kwargs.get("paramstree", False)
-            and isinstance(tuple_out[1], dict)
-        ):
-            if len(tuple_out[1]) == 0:
-                return tuple_out[0]
-            else:
-                return tuple_out[1]
-        else:
-            return tuple_out
+        return tuple([prepare_json(el, **kwargs) for el in it])
     if isinstance(it, list):
         return [prepare_json(el, **kwargs) for el in it]
     if isinstance(it, np.generic):
@@ -139,6 +129,8 @@ def prepare_json(it, **kwargs):
             return 0
         else:
             return it.to_dict("list")
+    if isinstance(it, Path):
+        return str(it)
     return 0
 
 
@@ -210,3 +202,18 @@ def get_classes_from_module(input_module, parent_class):
     )
 
     return ls_classes
+
+
+def recursive_update(d, u):
+    """ Simple recursive update of dictionaries, from StackOverflow
+
+    :param d: dict to update
+    :param u: new values
+    :return:
+    """
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            d[k] = recursive_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d

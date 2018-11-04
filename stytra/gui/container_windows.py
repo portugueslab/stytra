@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QSplitter,
     QDockWidget,
+    QToolButton,
 )
 from PyQt5.QtGui import QPalette
 
@@ -55,11 +56,14 @@ class StatusMessageLabel(QLabel):
 
     def setMessage(self, text):
         if len(text) == 0:
+            self.setStyleSheet("background-color: {};".format(
+                self.palette().color(QPalette.Button).name()))
+            self.setText("")
             return
         if text[0] == "E":
             self.setStyleSheet("background-color: #dc322f;")
-        if text[0] == "W":
-            self.setStyleSheet("background-color: #dc322f;")
+        elif text[0] == "W":
+            self.setStyleSheet("background-color: #d8b02d;")
         else:
             self.setStyleSheet("background-color: {};".format(
                 self.palette().color(QPalette.Button).name()))
@@ -108,7 +112,9 @@ class SimpleExperimentWindow(QMainWindow):
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
+        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner,
+                                                      self)
+        self.toolbar_control.setObjectName("toolbar")
 
         # Connect signals from the protocol_control:
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
@@ -116,6 +122,15 @@ class SimpleExperimentWindow(QMainWindow):
 
         act_metadata = self.toolbar_control.addAction("Edit metadata")
         act_metadata.triggered.connect(self.show_metadata_gui)
+
+        if self.experiment.database is not None:
+            self.chk_db = QToolButton()
+            self.chk_db.setText("Use DB")
+            self.chk_db.setCheckable(True)
+            self.chk_db.setChecked(not self.experiment.use_db)
+            self.chk_db.clicked.connect(self.toggle_db)
+            self.toggle_db()
+            self.toolbar_control.addWidget(self.chk_db)
 
         if experiment.trigger is not None:
             self.chk_scope = QCheckBox("Wait for trigger signal")
@@ -162,11 +177,21 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
+        self.toolbar_control.setObjectName("toolbar_control")
         self.setCentralWidget(None)
         return None
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
+
+    def toggle_db(self):
+        if self.chk_db.isChecked():
+            self.chk_db.setStyleSheet("background_color: {}; border: none;".format(
+                self.palette().color(QPalette.Button).name()))
+            self.experiment.use_db = True
+        else:
+            self.chk_db.setStyleSheet("background_color: #dc322f; border: none;")
+            self.experiment.use_db = False
 
     def closeEvent(self, *args, **kwargs):
         """
@@ -256,13 +281,17 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
 
     def construct_ui(self):
         """ """
-        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
-        previous_widget = super().construct_ui()
-        previous_widget.layout().setContentsMargins(0, 0, 0, 0)
-        self.monitoring_layout.addWidget(previous_widget)
-        self.monitoring_layout.setStretch(1, 1)
-        self.monitoring_layout.setStretch(0, 1)
-        return self.monitoring_widget
+
+        super().construct_ui()
+        self.experiment.gui_timer.timeout.connect(
+            self.stream_plot.update
+        )  # TODO put in right place
+        monitoring_widget = QWidget()
+        monitoring_widget.setLayout(self.monitoring_layout)
+        monitoring_dock = QDockWidget("Tracking", self)
+        monitoring_dock.setWidget(monitoring_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+        self.docks.append(monitoring_dock)
 
 
 class TrackingExperimentWindow(CameraExperimentWindow):

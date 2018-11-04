@@ -77,8 +77,8 @@ class InterpolatedU3LabJackVoltageStimulus(InterpolatedStimulus, DynamicStimulus
         device.getFeedback(chan(chan_value))
 
         device.configIO(FIOAnalog=15)
-        self.voltage_in_thermo = device.getAIN(0)
-        self.voltage_in_peltier = device.getAIN(1)
+        self.voltage_in_thermo = device.getAIN(2, 32)
+        self.voltage_in_peltier = device.getAIN(1, 32)
 
 
 

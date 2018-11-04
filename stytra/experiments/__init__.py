@@ -106,6 +106,7 @@ class Experiment(QObject):
             dir_save = tempfile.gettempdir()
         self.base_dir = dir_save
         self.database = database
+        self.use_db = True if database else False
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
@@ -196,7 +197,7 @@ class Experiment(QObject):
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.current_timestamp.strftime("%H%M%S_") + name + "." + self.log_format,
+            self.filename_prefix() + name + "." + self.log_format,
             category + "/" + name,
         )
 
@@ -214,11 +215,13 @@ class Experiment(QObject):
             os.makedirs(foldername)
         return foldername
 
+    def filename_prefix(self):
+        return self.current_timestamp.strftime("%H%M%S_")
+
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         return os.path.join(
-            self.folder_name, self.current_timestamp.strftime("%H%M%S_")
-        )
+            self.folder_name, self.filename_prefix())
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -230,8 +233,8 @@ class Experiment(QObject):
         -------
 
         """
+        self.dc.restore_from_saved()
         self.make_window()
-        self.initialize_metadata()
 
         self.show_stimulus_screen(self.display_config["full_screen"])
         if self.trigger is not None:
@@ -247,18 +250,9 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
+        self.window_main.toolbar_control.combo_prot.setCurrentText(self.default_protocol)
         self.window_main.construct_ui()
         self.window_main.show()
-
-    def initialize_metadata(self):
-        """Restore parameters from saved config.h5 file.
-        """
-        # When restoring here data_log to previous values, there may be
-        # multiple (one per parameter), calls of functions connected to
-        # a change in the params three state.
-        # See comment in DataCollector.restore_from_saved()
-        if self.dc is not None:
-            self.dc.restore_from_saved()
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen
@@ -358,10 +352,9 @@ class Experiment(QObject):
                     self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
 
-                if self.database is not None:
+                if self.database is not None and self.use_db:
                     db_id = self.database.insert_experiment_data(
-                        self.dc.get_clean_dict(
-                            paramstree=True, eliminate_df=True, convert_datetime=False
+                        self.dc.get_clean_dict(eliminate_df=True, convert_datetime=False
                         )
                     )
                 else:
@@ -402,9 +395,8 @@ class Experiment(QObject):
                         )
 
             if self.protocol_runner.dynamic_log is not None:
-                self.protocol_runner.dynamic_log.save(
-                    self.filename_base() + "dynamic_log", self.log_format
-                )
+                self.save_log(self.protocol_runner.dynamic_log, "stimulus_log",
+                              "stimulus")
 
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()
@@ -429,8 +421,6 @@ class Experiment(QObject):
         -------
 
         """
-        self.gui_params.window_state = self.window_main.saveState()
-        self.gui_params.geometry = self.window_main.saveGeometry()
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
             if self.protocol_runner.protocol is not None:
@@ -439,6 +429,10 @@ class Experiment(QObject):
             self.trigger.kill_event.set()
             # self.trigger.join()
             self.trigger.terminate()
+
+        self.gui_params.window_state = self.window_main.saveState()
+        self.gui_params.geometry = self.window_main.saveGeometry()
+        self.dc.save_config_file()
         self.app.closeAllWindows()
 
     def excepthook(self, exctype, value, tb):

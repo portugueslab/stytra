@@ -1,5 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QComboBox, QProgressBar, QToolBar
+from stytra.stimulation import ProtocolRunner
 
 from lightparam.gui import ParameterGui
 from math import floor
@@ -30,7 +31,7 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
-    def __init__(self, protocol_runner=None, main_window=None):
+    def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
         self.main_window = main_window
@@ -65,7 +66,7 @@ class ProtocolControlToolbar(QToolBar):
         # If a previous protocol was already set in the protocol runner
         # change the GUI values accordingly:
         if protocol_runner.protocol is not None:
-            self.combo_prot.setCurrentText(protocol_runner.protocol.name)
+            self.combo_prot.setCurrentText(type(protocol_runner.protocol).name)
         else:
             self.set_protocol()
 
@@ -131,4 +132,3 @@ class ProtocolControlToolbar(QToolBar):
         """
         protocol_name = self.combo_prot.currentText()
         self.protocol_runner.set_new_protocol(protocol_name)
-        self.button_toggle_prot.setEnabled(True)

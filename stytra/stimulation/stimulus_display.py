@@ -83,7 +83,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
         """
         # print('setting dimensions')
         # pass
-        self.widget_display.setGeometry(*(self.pos + self.size))
+        self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
         self.widget_display.calibrator.set_pixel_scale(*self.size)
         self.widget_display.calibrator.set_physical_scale()
 

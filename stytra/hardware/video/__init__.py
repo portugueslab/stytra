@@ -103,14 +103,16 @@ class CameraSource(VideoSource):
                              mikrotron=MikrotronCLCamera)
     """ dictionary listing classes used to instantiate camera object."""
 
-    def __init__(self, camera_type, *args, downsampling=1, **kwargs):
+    def __init__(self, camera_type, *args, downsampling=1, roi=(-1,-1,-1,-1), **kwargs):
         """ """
         super().__init__(*args, **kwargs)
 
         self.camera_type = camera_type
         self.downsampling = downsampling
+        self.roi = roi
         self.control_params = CameraControlParameters
         self.cam = None
+        self.paused = False
 
     def run(self):
         """
@@ -124,10 +126,10 @@ class CameraSource(VideoSource):
         """
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
-            self.cam = CameraClass(downsampling=self.downsampling)
+            self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.message_queue.put("W:"+self.cam.open_camera())
+        self.message_queue.put("I:"+str(self.cam.open_camera()))
         while True:
             # Kill if signal is set:
             self.kill_event.wait(0.0001)
@@ -135,18 +137,20 @@ class CameraSource(VideoSource):
                 break
 
             # Try to get new parameters from the control queue:
+            message = ""
             if self.control_queue is not None:
                 try:
                     param_dict = self.control_queue.get(timeout=0.0001)
+                    self.paused = param_dict.get("paused", self.paused)
                     for param, value in param_dict.items():
-                        self.cam.set(param, value)
+                        message = self.cam.set(param, value)
                 except Empty:
                     pass
 
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             self.update_framerate()
-            if arr is not None:
+            if arr is not None and not self.paused:
                 # If the queue is full, arrayqueues should print a warning!
                 if self.rotation:
                     arr = np.rot90(arr, self.rotation)
@@ -154,7 +158,7 @@ class CameraSource(VideoSource):
                     self.frame_queue.put(arr)
                     self.message_queue.put("")
                 else:
-                    self.message_queue.put("E:Dropped frame")
+                    self.message_queue.put("W:Dropped frame")
 
         self.cam.release()
 
@@ -274,9 +278,3 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
-
-
-if __name__ == "__main__":
-    process = CameraSource("ximea")
-    process.start()
-    process.kill_event.set()

@@ -24,7 +24,7 @@ def test_fish():
     ib = IndexBooking(1)
     f = Fish(np.array([0.0, 0.0, np.pi + 0.1]), ib)
     f.predict()
-    f.update([1.0, 1.0, np.pi])
+    f.update([1.0, 1.0, np.pi+2*np.pi])
     assert np.allclose(
         f.serialize(),
         np.array(
@@ -34,7 +34,7 @@ def test_fish():
 
     f = Fish(np.array([0.0, 0.0, np.pi + 0.1]), ib)
     f.predict()
-    f.update([1.0, 1.0, -np.pi])
+    f.update([1.0, 1.0, -np.pi-2*np.pi])
     assert np.allclose(
         f.serialize(),
         np.array(

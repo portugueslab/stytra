@@ -59,8 +59,8 @@ class Stytra:
             tracking_method: str
                 one of "centroid", "tail_angles", "eyes", "fish"
             estimator: str
-                for closed-loop experiments: either "vigor" or "lstm" for embedded experiments
-                    or "position" for freely-swimming ones
+                for closed-loop experiments: either "vigor" for embedded experiments
+                    or "position" for freely-swimming ones. A custom estimator can be supplied
 
         recording_config : bool
             for video-recording experiments
@@ -117,9 +117,9 @@ class Stytra:
 
         if scope_triggering == "zmq":
             from stytra.triggering import ZmqTrigger
-            class_kwargs['trigger'] = ZmqTrigger(port='5555')
+            class_kwargs['scope_triggering'] = ZmqTrigger(port='5555')
         else:
-            class_kwargs['trigger'] = scope_triggering
+            class_kwargs['scope_triggering'] = scope_triggering
 
         base = Experiment
 
@@ -150,4 +150,25 @@ class Stytra:
 
 
 if __name__ == "__main__":
-    st = Stytra()
+    import argparse
+    from pathlib import Path
+    default_config_file = Path("~/setup_config.json")
+
+    import json
+
+    if default_config_file.is_file():
+        config = json.load(open(default_config_file))
+    else:
+        config = dict()
+
+    parser = argparse.ArgumentParser(description="Run Stytra")
+    parser.add_argument("configuration", type=str, action="store", nargs="?", help="json", default=None)
+    args = parser.parse_args()
+
+    if args.configuration is not None:
+        try:
+            config.update(json.load(open(args.config)))
+        except OSError as e:
+            print("Config file not valid ", e)
+
+    st = Stytra(**config)

@@ -10,6 +10,7 @@ class TailTrackingMethod(ParametrizedImageproc):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = "tail"
         # TODO maybe getting default values here:
         # self.add_params(
         #     n_segments=dict(value=10, type="int", limits=(2, 50)),
@@ -82,6 +83,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
             list of cumulative sum + list of angles
 
         """
+        message = ""
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
 
@@ -114,7 +116,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
             abs_angle = np.arctan2(disp_x, disp_y)
             angles.append(abs_angle)
 
-        return [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
+        return message, [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
             :
         ]
 

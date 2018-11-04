@@ -335,18 +335,28 @@ class SeamlessImageStimulus(BackgroundStimulus):
     some image editing any texture can be adjusted to be seamless.
     """
 
-    def __init__(self, *args, background, **kwargs):
+    def __init__(self, *args, background, background_name=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.background = background
+        self._background = background
+        if background_name is not None:
+            self.background_name = background_name
+        else:
+            if isinstance(background, str):
+                self.background_name = background
+            else:
+                self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
 
         # Get background image from folder:
-        self._qbackground = qimage2ndarray.array2qimage(
-            existing_file_background(self._experiment.asset_dir + "/" + self.background)
-        )
+        if isinstance(self._background, str):
+            self._qbackground = qimage2ndarray.array2qimage(
+                existing_file_background(self._experiment.asset_dir + "/" + self._background)
+            )
+        else:
+            self._qbackground = qimage2ndarray.array2qimage(self._background)
 
     def get_unit_dims(self, w, h):
         w, h = self._qbackground.width(), self._qbackground.height()
@@ -404,11 +414,11 @@ class GratingStimulus(BackgroundStimulus):
         elif self.wave_shape == "sine":
             # Define sinusoidally varying weights for the two colors and then
             #  sum them in the pattern
-            w = (np.sin(2 * np.pi * np.linspace(0, 1, l)) + 1) / 2
+            w = (np.sin(2 * np.pi * np.linspace(1/l, 1, l)) + 1) / 2
 
             self._pattern = (
                 w[:, None] * np.array(self.color_1)[None, :]
-                + (1 - w[:None]) * np.array(self.color_2)[None, :]
+                + (1 - w[:, None]) * np.array(self.color_2)[None, :]
             ).astype(np.uint8)
 
     def initialise_external(self, experiment):
@@ -546,7 +556,7 @@ class FishOverlayStimulus(PositionStimulus):
 class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ["y"]
+        self.dynamic_parameters = ["vel_x"]
 
 
 def z_func_windmill(x, y, arms):
