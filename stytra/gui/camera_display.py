@@ -339,14 +339,13 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.track_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
             self.track_params.params.tail_length.changed = True
 
-        # if self.eyes:
-        #     with self.track_params.treeChangeBlocker():
-        #         self.track_params.param("wnd_dim").setValue(
-        #             tuple([int(p) for p in self.roi_eyes.size()])
-        #         )
-        #         self.track_params.param("wnd_pos").setValue(
-        #             tuple([int(p) for p in self.roi_eyes.pos()])
-        #         )
+        if self.eyes:
+            self.track_params.params.wnd_dim.changed = True
+            self.track_params.wnd_dim = tuple(
+                [int(p) for p in self.roi_eyes.size()])
+            self.track_params.params.wnd_pos.changed = True
+            self.track_params.wnd_pos = tuple(
+                [int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def update_image(self):
@@ -388,11 +387,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
             if self.eyes:
                 im = self.current_image
-
-                # In this widget a toggle button allows the user to see the
-                # thresholded image used by the ellipse fitting function:
-                if self.tgl_threshold_view.isChecked():
-                    im = (im < self.track_params.threshold).astype(np.uint8)
 
                 if len(self.experiment.data_acc.stored_data) > 1:
                     self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
