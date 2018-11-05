@@ -118,7 +118,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
         angles = list(np.unwrap(np.array(angles)))
-        return message, [reduce_to_pi(angles[-1] + angles[-2] - angles[0] - angles[1])] + angles[
+        return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[
             :
         ]
 
