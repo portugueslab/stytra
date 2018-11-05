@@ -7,10 +7,10 @@ from stytra.tracking import ParametrizedImageproc
 
 class TailTrackingMethod(ParametrizedImageproc):
     """General tail tracking method."""
+    name = "tail"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name = "tail"
         # TODO maybe getting default values here:
         # self.add_params(
         #     n_segments=dict(value=10, type="int", limits=(2, 50)),

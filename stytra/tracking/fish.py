@@ -28,9 +28,10 @@ def _fish_column_names(i_fish, n_segments):
 
 
 class FishTrackingMethod(ParametrizedImageproc):
+    name = "fish"
+
     def __init__(self):
         super().__init__()
-        self.name = "fish"
         self.accumulator_headers = None
         self.monitored_headers = None
         self.data_log_name = "fish_track"
