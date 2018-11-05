@@ -56,7 +56,8 @@ class Accumulator:
         """  for each header name gives the column
         """
         if self._header_dict is None:
-            self.header_dict = {hn: i for i, hn in enumerate(self.header_list)}
+            self._header_dict = {hn: i for i, hn in enumerate(self.header_list)}
+        return self._header_dict
 
     def reset(self, header_list=None, monitored_headers=None):
         """Reset accumulator and assign a new headers list.

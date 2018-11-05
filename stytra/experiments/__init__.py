@@ -170,7 +170,7 @@ class Experiment(QObject):
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
         if display_config is None:
-            self.display_config = dict(full_screen=False, gl=False)
+            self.display_config = dict(full_screen=False, gl=True)
         else:
             self.display_config = display_config
 
@@ -178,12 +178,9 @@ class Experiment(QObject):
             self.window_display = StimulusDisplayWindow(
                 self.protocol_runner,
                 self.calibrator,
-                gl=self.display_config.get("gl", False),
+                gl=self.display_config.get("gl", True),
                 record_stim_framerate=rec_stim_framerate,
             )
-            if self.display_config.get("window_size", None) is not None:
-                self.window_display.params["size"] = self.display_config["window_size"]
-                self.window_display.set_dims()
 
         self.i_run = 0
         self.current_timestamp = datetime.datetime.now()
@@ -237,6 +234,10 @@ class Experiment(QObject):
         self.make_window()
 
         self.show_stimulus_screen(self.display_config["full_screen"])
+        if self.display_config.get("window_size", None) is not None:
+            self.window_display.size = self.display_config["window_size"]
+            self.window_display.set_dims()
+
         if self.trigger is not None:
             self.trigger.start()
 
