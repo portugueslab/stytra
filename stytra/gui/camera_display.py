@@ -339,14 +339,13 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.track_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
             self.track_params.params.tail_length.changed = True
 
-        # if self.eyes:
-        #     with self.track_params.treeChangeBlocker():
-        #         self.track_params.param("wnd_dim").setValue(
-        #             tuple([int(p) for p in self.roi_eyes.size()])
-        #         )
-        #         self.track_params.param("wnd_pos").setValue(
-        #             tuple([int(p) for p in self.roi_eyes.pos()])
-        #         )
+        if self.eyes:
+            self.track_params.params.wnd_dim.changed = True
+            self.track_params.wnd_dim = tuple(
+                [int(p) for p in self.roi_eyes.size()])
+            self.track_params.params.wnd_pos.changed = True
+            self.track_params.wnd_pos = tuple(
+                [int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def update_image(self):

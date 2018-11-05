@@ -6,19 +6,23 @@ import numpy as np
 from skimage.filters import threshold_local, threshold_otsu
 import cv2
 from stytra.tracking import ParametrizedImageproc
+from lightparam import Parametrized, Param
 
 
 class EyeTrackingMethod(ParametrizedImageproc):
     """General eyes tracking method."""
+    name = "eyes"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         # TODO maybe getting default values here:
-        self.add_params(
-            wnd_pos={"value": (140, 200), "visible": False},
-            wnd_dim={"value": (110, 60), "visible": False},
-            threshold=dict(value=64, type="int", limits=(0, 255)),
-        )
+        self.params = Parametrized(name="tracking/eyes",
+                                   params=self.detect)
+        # self.add_params(
+        #     wnd_pos={"value": (140, 200), "visible": False},
+        #     wnd_dim={"value": (110, 60), "visible": False},
+        #     threshold=dict(value=64, type="int", limits=(0, 255)),
+        # )
 
         headers = []
         for i in range(2):
@@ -39,13 +43,9 @@ class EyeTrackingMethod(ParametrizedImageproc):
     def detect(
         self,
         im,
-        wnd_pos=None,
-        wnd_dim=None,
-        threshold=None,
-        image_scale=None,
-        filter_size=None,
-        color_invert=None,
-        **kwargs
+        wnd_pos: Param((0, 0), gui=False),
+        wnd_dim: Param((0, 0), gui=False),
+        **extraparams
     ):
         """
 
@@ -74,27 +74,28 @@ class EyeTrackingMethod(ParametrizedImageproc):
         -------
 
         """
+        message = ""
         PAD = 0
 
         cropped = _pad(
             im[
-                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
                 wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
+                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
             ].copy(),
             padding=PAD,
             val=255,
         )
 
-        thresholded = (cropped < threshold).astype(np.uint8)
-
         # try:
-        e = _fit_ellipse(thresholded)
+        print(cropped.shape)
+        e = _fit_ellipse(cropped)
+        print(e)
         if e is False:
             e = (np.nan,) * 10
         else:
             e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
 
-        return np.array(e)
+        return message, np.array(e)
 
 
 def _pad(im, padding=0, val=0):
@@ -185,6 +186,3 @@ def _fit_ellipse(thresholded_image):
         # Not at least two eyes + maybe dirt found...
         return False
 
-
-# TODO: function for scaling/filtering/invert should be unique for both
-# tail and eye tracking

@@ -23,7 +23,7 @@ def get_tracking_method(name):
     tracking_methods_list = dict(
         centroid=CentroidTrackingMethod,
         angle_sweep=AnglesTrackingMethod,
-        eye_threshold=EyeTrackingMethod,
+        eyes=EyeTrackingMethod,
         eyes_tail=TailEyesTrackingMethod,
         fish=FishTrackingMethod,
     )
