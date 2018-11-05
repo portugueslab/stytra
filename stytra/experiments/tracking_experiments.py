@@ -257,7 +257,7 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = VigourMotionEstimator(self.data_acc)
         elif isclass(est_type) and issubclass(est_type, Estimator):
             self.estimator = est_type(
-                self.data_acc, self.calibrator, **tracking_config.get("estimator_params", {})
+                self.data_acc, **tracking_config.get("estimator_params", {})
             )
         else:
             self.estimator = None
@@ -342,6 +342,7 @@ class TrackingExperiment(CameraExperiment):
         super().start_protocol()
         self.data_acc.reset()
         try:
+            self.estimator.reset()
             self.estimator.log.reset()
         except AttributeError:
             pass

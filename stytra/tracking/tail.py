@@ -194,17 +194,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
 
 @jit(nopython=True)
 def reduce_to_pi(angle):
-    """
-
-    Parameters
-    ----------
-    angle :
-        
-
-    Returns
-    -------
-
-    """
+    """Puts an angle or array of angles inside the (-pi, pi) range"""
     return np.mod(angle + np.pi, 2 * np.pi) - np.pi
 
 

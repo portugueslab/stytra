@@ -359,6 +359,5 @@ class EstimatorLog(Accumulator):
         -------
 
         """
-        # delta_t = (datetime.datetime.now()-self.starting_time).total_seconds()
         self.check_start()
         self.stored_data.append(data)
