@@ -112,8 +112,10 @@ class CentroidTrackingMethod(TailTrackingMethod):
             start_x, start_y, disp_x, disp_y, acc = _next_segment(
                 im, start_x, start_y, disp_x, disp_y, halfwin, seg_length
             )
-
-            abs_angle = np.arctan2(disp_x, disp_y)
+            if start_x < 0:
+                abs_angle = np.nan
+            else:
+                abs_angle = np.arctan2(disp_x, disp_y)
             angles.append(abs_angle)
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
