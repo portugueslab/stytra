@@ -53,12 +53,12 @@ Example::
             super().__init__()
 
             # Add new parameters to the Protocol parameters:
-            self.set_new_param('pause_duration', 9)  # default value 9 (sec)
-            self.set_new_param('flash_duration', 1)  # default value 1 (sec)
+            self.pause_duration = Param(9, limits=(0, 10)  # default value 9 (sec)
+            self.flash_duration = Param(1, limits=(0, 10))  # default value 1 (sec)
 
         def get_stim_sequence(self):
-            stimuli = [Pause(duration=self.params['pause_duration'])),
-                       FullFieldPainterStimulus(self.params['flash_duration'],
+            stimuli = [Pause(duration=self.pause_duration)),
+                       FullFieldPainterStimulus(self.flash_duration,
                                                 color=(255, 255, 255)))]
 
             return stimuli

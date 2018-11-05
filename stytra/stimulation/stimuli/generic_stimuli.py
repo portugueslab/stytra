@@ -158,7 +158,6 @@ class DynamicStimulus(Stimulus):
             self.name + "_" + param: getattr(self, param, 0)
             for param in self.dynamic_parameters
         }
-        print(state_dict)
         return state_dict
 
 

@@ -58,7 +58,7 @@ class Stytra:
                "prefilter" or "bgsub"
             tracking_method: str
                 one of "centroid", "tail_angles", "eyes", "fish"
-            estimator: str
+            estimator: str or class
                 for closed-loop experiments: either "vigor" for embedded experiments
                     or "position" for freely-swimming ones. A custom estimator can be supplied
 

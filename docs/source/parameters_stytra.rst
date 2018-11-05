@@ -1,5 +1,4 @@
 Parameters in stytra
 ====================
 
-(In progress..)
-
+Various aspects of the experiments are parametrised using the lightparam package.
