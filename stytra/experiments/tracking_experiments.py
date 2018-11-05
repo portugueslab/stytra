@@ -29,8 +29,10 @@ from lightparam.param_qt import ParametrizedQt
 from stytra.stimulation.estimators import (
     PositionEstimator,
     VigourMotionEstimator,
-    LSTMLocationEstimator,
+    Estimator,
 )
+
+from inspect import isclass
 
 import sys
 import logging
@@ -174,8 +176,8 @@ class TrackingExperiment(CameraExperiment):
     ----------
         tracking_config: dict
             containing fields:  tracking_method
-                                estimator: can be vigor or lstm for embedded fish, position
-                                    for freely-swimming
+                                estimator: can be vigor for embedded fish, position
+                                    for freely-swimming, or a custom subclass of Estimator
 
     Returns
     -------
@@ -211,10 +213,11 @@ class TrackingExperiment(CameraExperiment):
             )
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(
-            name="tracking/tail_centroids", params=self.tracking_method.detect,
+            name="tracking/".format(self.tracking_method.name), params=self.tracking_method.detect,
             tree=self.dc
         )
 
+        # TODO self.data_name is not used, check if necessary!
         self.data_name = self.tracking_method.data_log_name
         self.frame_dispatchers = [
             FrameDispatcher(
@@ -252,9 +255,9 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = PositionEstimator(self.data_acc, self.calibrator)
         elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.data_acc)
-        elif est_type == "lstm":
-            self.estimator = LSTMLocationEstimator(
-                self.data_acc, self.asset_dir + "/swim_lstm.h5"
+        elif isclass(est_type) and issubclass(est_type, Estimator):
+            self.estimator = est_type(
+                self.data_acc, self.calibrator, **tracking_config.get("estimator_params", {})
             )
         else:
             self.estimator = None
@@ -348,11 +351,9 @@ class TrackingExperiment(CameraExperiment):
 
         """
         if save:
-            self.save_log(self.data_acc, "log")
+            self.save_log(self.data_acc, "behavior_log")
             try:
-                print("saving estimator log")
                 self.save_log(self.estimator.log, "estimator_log")
-                print("save log")
             except AttributeError:
                 pass
         try:
@@ -391,9 +392,10 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
-        super().wrap_up(*args, **kwargs)
         for dispatcher in self.frame_dispatchers:
+            dispatcher.finished_signal.set()
             dispatcher.terminate()
+        super().wrap_up(*args, **kwargs)
 
     def excepthook(self, exctype, value, tb):
         """
@@ -417,13 +419,6 @@ class TrackingExperiment(CameraExperiment):
         self.camera.terminate()
         for dispatcher in self.frame_dispatchers:
             dispatcher.terminate()
-
-
-class VRExperiment(TrackingExperiment):
-    """ """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
 
 
 class SwimmingRecordingExperiment(CameraExperiment):

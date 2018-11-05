@@ -3,10 +3,11 @@
 # showing a Flash.
 
 from pathlib import Path
-
+from lightparam.param_qt import ParametrizedWidget, Param
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from stytra.triggering import Trigger
+from PyQt5.QtWidgets import QFileDialog
 
 
 # The simplest way to implement a new trigger is inheriting from the Trigger
@@ -36,25 +37,32 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.add_params(period_sec=5., flash_duration=2.)
+        self.period_sec= Param(5.)
+        self.flash_duration=Param(2.)
 
     def get_stim_sequence(self):
         stimuli = [
-            Pause(duration=self.params["period_sec"] - self.params["flash_duration"]),
+            Pause(duration=self.period_sec - self.flash_duration),
             FullFieldVisualStimulus(
-                duration=self.params["flash_duration"], color=(255, 255, 255)
+                duration=self.flash_duration, color=(255, 255, 255)
             ),
         ]
         return stimuli
 
 
 if __name__ == "__main__":
+    from PyQt5.QtWidgets import QApplication
     # Select a directory:
-    path = "."
+    app = QApplication([])
+    folder = QFileDialog.getExistingDirectory(caption='Trigger folder',
+                                              directory=None)
 
     # Instantiate the trigger:
-    trigger = NewFileTrigger(path)
+    if folder is not None:
+        trigger = NewFileTrigger(folder)
 
-    # Call stytra assigning the triggering. Note that stytra will wait for
-    # the trigger only if the "wait for trigger" checkbox is ticked!
-    st = Stytra(protocols=[FlashProtocol], trigger=trigger)
+        # Call stytra assigning the triggering. Note that stytra will wait for
+        # the trigger only if the "wait for trigger" checkbox is ticked!
+        st = Stytra(app=app,
+                    protocols=[FlashProtocol],
+                    scope_triggering=trigger)

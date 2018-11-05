@@ -179,7 +179,7 @@ class Accumulator:
         elif format == "feather":
             self.get_dataframe().to_feather(outpath)
         elif format == "hdf5":
-            self.get_dataframe().to_hdf(outpath, "/data")
+            self.get_dataframe().to_hdf(outpath, "/data", complib="blosc", complevel=5)
         elif format == "json":
             json.dump(self.get_dataframe().to_dict(), open(outpath, "w"))
         else:

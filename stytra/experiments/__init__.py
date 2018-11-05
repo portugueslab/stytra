@@ -106,6 +106,7 @@ class Experiment(QObject):
             dir_save = tempfile.gettempdir()
         self.base_dir = dir_save
         self.database = database
+        self.use_db = True if database else False
         self.log_format = log_format
         self.stim_movie_format = stim_movie_format
         self.stim_plot = stim_plot
@@ -196,7 +197,7 @@ class Experiment(QObject):
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.current_timestamp.strftime("%H%M%S_") + name + "." + self.log_format,
+            self.filename_prefix() + name + "." + self.log_format,
             category + "/" + name,
         )
 
@@ -214,11 +215,13 @@ class Experiment(QObject):
             os.makedirs(foldername)
         return foldername
 
+    def filename_prefix(self):
+        return self.current_timestamp.strftime("%H%M%S_")
+
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         return os.path.join(
-            self.folder_name, self.current_timestamp.strftime("%H%M%S_")
-        )
+            self.folder_name, self.filename_prefix())
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -349,7 +352,7 @@ class Experiment(QObject):
                     self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
 
-                if self.database is not None:
+                if self.database is not None and self.use_db:
                     db_id = self.database.insert_experiment_data(
                         self.dc.get_clean_dict(eliminate_df=True, convert_datetime=False
                         )
@@ -392,7 +395,7 @@ class Experiment(QObject):
                         )
 
             if self.protocol_runner.dynamic_log is not None:
-                self.save_log(self.protocol_runner.dynamic_log, "dynamic_log",
+                self.save_log(self.protocol_runner.dynamic_log, "stimulus_log",
                               "stimulus")
 
         self.i_run += 1

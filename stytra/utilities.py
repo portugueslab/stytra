@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 import inspect
 
-from pyqtgraph.parametertree import Parameter
 from pathlib import Path
+
+import collections
+
 
 class Database:
     """ """
@@ -200,3 +202,18 @@ def get_classes_from_module(input_module, parent_class):
     )
 
     return ls_classes
+
+
+def recursive_update(d, u):
+    """ Simple recursive update of dictionaries, from StackOverflow
+
+    :param d: dict to update
+    :param u: new values
+    :return:
+    """
+    for k, v in u.items():
+        if isinstance(v, collections.Mapping):
+            d[k] = recursive_update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d

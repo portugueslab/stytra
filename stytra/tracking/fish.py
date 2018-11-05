@@ -30,6 +30,7 @@ def _fish_column_names(i_fish, n_segments):
 class FishTrackingMethod(ParametrizedImageproc):
     def __init__(self):
         super().__init__()
+        self.name = "fish"
         self.accumulator_headers = None
         self.monitored_headers = None
         self.data_log_name = "fish_track"
@@ -91,7 +92,7 @@ class FishTrackingMethod(ParametrizedImageproc):
             desc="How many frames does the fish persist for if it is not detected",
         ),
         prediction_uncertainty: Param(0.1, (0.0, 10.0, 0.0001)),
-        fish_area: Param((100, 400), (1, 2500)),
+        fish_area: Param((100, 400), (1, 4000)),
         border_margin: Param(40, (0, 100)),
         tail_length: Param(50.5, (1.0, 200.0)),
         tail_track_window: Param(3, (3, 70)),

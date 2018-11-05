@@ -74,7 +74,8 @@ class DataCollector(ParameterTree):
         self.last_metadata = None
         metadata_files = list(self.folder_path.glob("*" + self.metadata_fn))
         if metadata_files:
-            self.last_metadata = json.load(open(metadata_files[0]))
+            with open(str(metadata_files[0]), 'r') as f:
+                self.last_metadata = json.load(f)
 
         self.log_data_dict = dict()
         self.params_metadata = None
@@ -169,7 +170,7 @@ class DataCollector(ParameterTree):
         return None
 
     def save_config_file(self):
-        """Save the config.h5 file with the current state of the params
+        """Save the config.json file with the current state of the params
         data_log.
 
         Parameters
@@ -180,7 +181,8 @@ class DataCollector(ParameterTree):
 
         """
         config = prepare_json(self.serialize())
-        json.dump(config, open(self.folder_path / self.metadata_fn,"w"))
+        with open(str(self.folder_path / self.metadata_fn), "w") as f:
+            json.dump(config, f)
 
     def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources

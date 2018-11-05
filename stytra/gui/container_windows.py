@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QSplitter,
     QDockWidget,
+    QToolButton,
 )
 from PyQt5.QtGui import QPalette
 
@@ -122,6 +123,15 @@ class SimpleExperimentWindow(QMainWindow):
         act_metadata = self.toolbar_control.addAction("Edit metadata")
         act_metadata.triggered.connect(self.show_metadata_gui)
 
+        if self.experiment.database is not None:
+            self.chk_db = QToolButton()
+            self.chk_db.setText("Use DB")
+            self.chk_db.setCheckable(True)
+            self.chk_db.setChecked(not self.experiment.use_db)
+            self.chk_db.clicked.connect(self.toggle_db)
+            self.toggle_db()
+            self.toolbar_control.addWidget(self.chk_db)
+
         if experiment.trigger is not None:
             self.chk_scope = QCheckBox("Wait for trigger signal")
 
@@ -173,6 +183,15 @@ class SimpleExperimentWindow(QMainWindow):
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
+
+    def toggle_db(self):
+        if self.chk_db.isChecked():
+            self.chk_db.setStyleSheet("background_color: {}; border: none;".format(
+                self.palette().color(QPalette.Button).name()))
+            self.experiment.use_db = True
+        else:
+            self.chk_db.setStyleSheet("background_color: #dc322f; border: none;")
+            self.experiment.use_db = False
 
     def closeEvent(self, *args, **kwargs):
         """
