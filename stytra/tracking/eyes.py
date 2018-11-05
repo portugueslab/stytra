@@ -87,14 +87,13 @@ class EyeTrackingMethod(ParametrizedImageproc):
         )
 
         # try:
-        print(cropped.shape)
         e = _fit_ellipse(cropped)
-        print(e)
+
         if e is False:
             e = (np.nan,) * 10
         else:
-            e = e[0][0] + e[0][1] + (e[0][2],) + e[1][0] + e[1][1] + (e[1][2],)
-
+            e = e[0][0][::-1] + e[0][1][::-1] + (e[0][2],) + \
+                e[1][0][::-1] + e[1][1][::-1] + (e[1][2],)
         return message, np.array(e)
 
 

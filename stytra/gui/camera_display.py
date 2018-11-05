@@ -388,11 +388,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             if self.eyes:
                 im = self.current_image
 
-                # In this widget a toggle button allows the user to see the
-                # thresholded image used by the ellipse fitting function:
-                if self.tgl_threshold_view.isChecked():
-                    im = (im < self.track_params.threshold).astype(np.uint8)
-
                 if len(self.experiment.data_acc.stored_data) > 1:
                     self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
                     e = retrieved_data[-10:]
