@@ -362,6 +362,8 @@ class Experiment(QObject):
                 self.dc.add_static_data(db_id, name="general/db_index")
 
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
+                self.logger.info("Saved log files under {}".format(
+                    self.filename_base()))
 
                 # save the stimulus movie if it is generated
                 movie, movie_times = self.window_display.widget_display.get_movie()
