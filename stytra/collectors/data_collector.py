@@ -177,11 +177,14 @@ class DataCollector(ParameterTree):
         # Update config file using also old entries, so configurations from
         # other kinds of experiments are not lost
         config = prepare_json(self.serialize())
-        d = {'/'.join(k): v for k, v in visit_dict(self.last_metadata)}
-        d.update({'/'.join(k): v for k, v in visit_dict(config)})
+        if self.last_metadata is not None:
+            d = {'/'.join(k): v for k, v in visit_dict(self.last_metadata)}
+            d.update({'/'.join(k): v for k, v in visit_dict(config)})
 
-        final_dict = dict()
-        [set_nested(final_dict, k.split("/"), d[k]) for k in d.keys()]
+            final_dict = dict()
+            [set_nested(final_dict, k.split("/"), d[k]) for k in d.keys()]
+        else:
+            final_dict = config
 
         with open(str(self.folder_path / self.metadata_fn), "w") as f:
             json.dump(final_dict, f)

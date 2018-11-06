@@ -39,28 +39,6 @@ class MixedProtocol(Protocol):
         theta = [theta[0]] + list(theta) + [theta[-1]]
         df = pd.DataFrame(dict(t=t, theta=theta))
         stimuli.append(MovingWindmillStimulus(df_param=df))
-
-        # Gratings
-        v = self.grating_vel
-
-        t_base = [0, p, p, p + d, p + d, 2 * p + d]
-        vel_base = [0, 0, -v, -v, 0, 0]
-        t = []
-        vel = []
-
-        t.extend(t_base)
-        vel.extend(vel_base)
-
-        df = pd.DataFrame(dict(t=t, vel_x=vel))
-        stimuli.append(
-            MovingGratingStimulus(
-                df_param=df,
-                grating_angle=0,
-                grating_period=10,
-                grating_col_1=(255, 0, 0),
-                wave_shape=self.wave_shape,
-            )
-        )
         return stimuli
 
 
@@ -69,8 +47,8 @@ if __name__ == "__main__":
     # dir_save = r"C:\Users\lpetrucco\Desktop\stytra"
     # Here you configure the camera input
     #
-    camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
-    # camera_config = dict(type='ximea')
+    # camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
+    camera_config = dict(type='ximea')
 
     tracking_config = dict(
         embedded=True,
