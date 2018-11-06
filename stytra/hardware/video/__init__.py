@@ -278,4 +278,5 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
                 self.old_frame = frame
                 self.update_framerate()
+            print('out of the loop of the death')
             return

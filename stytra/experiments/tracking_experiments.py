@@ -126,7 +126,7 @@ class CameraExperiment(Experiment):
         """
         super().wrap_up(*args, **kwargs)
         self.camera.kill_event.set()
-        self.camera.terminate()
+        self.camera.join()
         self.gui_timer.stop()
 
     def excepthook(self, exctype, value, tb):
@@ -148,7 +148,7 @@ class CameraExperiment(Experiment):
         traceback.print_tb(tb)
         print("{0}: {1}".format(exctype, value))
         self.camera.kill_event.set()
-        self.camera.terminate()
+        self.camera.join()
 
 
 class TrackingExperiment(CameraExperiment):
