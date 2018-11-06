@@ -300,11 +300,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 self.display_area.addItem(c)
                 [c.removeHandle(h) for h in c.getHandles()]
 
-            self.tgl_threshold_view = QCheckBox()
-            self.lbl_threshold_view = QLabel("View thresholded image")
-            self.layout_control.addWidget(self.tgl_threshold_view)
-            self.layout_control.addWidget(self.lbl_threshold_view)
-
             self.initialise_roi(self.roi_eyes)
         else:
             self.roi_eyes = None
