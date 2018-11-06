@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from lightparam import ParameterTree, set_nested
+from lightparam import ParameterTree, set_nested, visit_dict
 from stytra.utilities import prepare_json
 
 
@@ -143,7 +143,6 @@ class DataCollector(ParameterTree):
         clean_data_dict = self.serialize()
         for k in self.log_data_dict.keys():
             set_nested(clean_data_dict, k.split("/"), self.log_data_dict[k])
-        # clean_data_dict.update(self.log_data_dict)
         return prepare_json(clean_data_dict, **kwargs)
 
     def get_last_value(self, class_param_key):
@@ -174,9 +173,18 @@ class DataCollector(ParameterTree):
         -------
 
         """
+
+        # Update config file using also old entries, so configurations from
+        # other kinds of experiments are not lost
         config = prepare_json(self.serialize())
+        d = {'/'.join(k): v for k, v in visit_dict(self.last_metadata)}
+        d.update({'/'.join(k): v for k, v in visit_dict(config)})
+
+        final_dict = dict()
+        [set_nested(final_dict, k.split("/"), d[k]) for k in d.keys()]
+
         with open(str(self.folder_path / self.metadata_fn), "w") as f:
-            json.dump(config, f)
+            json.dump(final_dict, f)
 
     def save_json_log(self, output_path):
         """Save the .json file with all the data from both static sources
