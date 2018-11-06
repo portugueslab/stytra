@@ -337,8 +337,6 @@ class TrackingExperiment(CameraExperiment):
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
-        # TODO camera queue should be emptied to avoid accumulation of frames!!
-        # when waiting for the microscope!
         super().start_protocol()
         self.data_acc.reset()
         try:

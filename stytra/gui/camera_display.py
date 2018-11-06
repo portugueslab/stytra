@@ -315,7 +315,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         if not self.setting_param_val:
             if self.tail:
                 p1, p2 = self.roi_tail.getHandles()
-                p1.setPos(QPointF(*self.track_params.tail_start))
+                p1.setPos(QPointF(*self.track_params.tail_start[::-1]))
                 p2.setPos(
                     QPointF(
                         self.track_params.tail_start[1]

@@ -204,6 +204,7 @@ class VideoFileSource(VideoSource):
             i_frame = 0
             prt = None
             while not self.kill_event.is_set():
+
                 # we adjust the framerate
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)

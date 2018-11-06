@@ -38,7 +38,7 @@ class EyeTrackingMethod:
         self,
         im,
         wnd_pos: Param((0, 0), gui=False),
-        wnd_dim: Param((0, 0), gui=False),
+        wnd_dim: Param((100, 100), gui=False),
         **extraparams
     ):
         """
@@ -85,9 +85,10 @@ class EyeTrackingMethod:
 
         if e is False:
             e = (np.nan,) * 10
+            message = "eyes not detected!"
         else:
-            e = e[0][0][::-1] + e[0][1][::-1] + (e[0][2],) + \
-                e[1][0][::-1] + e[1][1][::-1] + (e[1][2],)
+            e = e[0][0][::-1] + e[0][1][::-1] + (-e[0][2],) + \
+                e[1][0][::-1] + e[1][1][::-1] + (-e[1][2],)
         return message, np.array(e)
 
 
