@@ -252,7 +252,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Draw ROI for tail selection:
         if tail:
-            print(self.track_params.tail_start)
             self.roi_tail = pg.PolyLineROI(
                 (
                     self.track_params.tail_start[::-1],
@@ -279,7 +278,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         self.pre_th = [0, 0]
         if eyes:
-            print(self.track_params.wnd_dim)
             self.roi_eyes = pg.ROI(
                 pos=self.track_params.wnd_pos,
                 size=self.track_params.wnd_dim,
@@ -310,7 +308,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
     def set_pos_from_tree(self):
         """Go to parent for definition."""
         if not self.setting_param_val:
-            print("resetting")
             if self.tail:
                 p1, p2 = self.roi_tail.getHandles()
                 p1.setPos(QPointF(*self.track_params.tail_start[::-1]))
