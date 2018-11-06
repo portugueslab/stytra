@@ -1,9 +1,8 @@
 import cv2
 import numpy as np
-from numba import jit, jitclass
+from numba import jit
 
 from stytra.tracking.tail import find_fish_midline
-from stytra.tracking import ParametrizedImageproc
 from stytra.tracking.preprocessing import BackgorundSubtractor
 
 from itertools import chain
@@ -27,7 +26,7 @@ def _fish_column_names(i_fish, n_segments):
            ]
 
 
-class FishTrackingMethod(ParametrizedImageproc):
+class FishTrackingMethod:
     name = "fish"
 
     def __init__(self):

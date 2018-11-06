@@ -377,8 +377,11 @@ class Protocol(ParametrizedQt):
         """
         Add standard parameters common to all kind of protocols.
         """
-        # super().__init__(name="stimulus_protocol_params")
-        super().__init__(name="stimulus/protocol_params")
+        try:
+            assert len(self.__class__.name) > 0
+        except AssertionError:
+            raise ValueError("Protocol does not have a specified name")
+        super().__init__(name="stimulus/protocol/"+self.__class__.name)
 
         self.pre_pause = Param(0.)
         self.post_pause = Param(0.)

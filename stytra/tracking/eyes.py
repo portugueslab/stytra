@@ -1,15 +1,14 @@
 """
-    Author: Andreas Kist
+    Authors: Andreas Kist, Luigi Petrucco
 """
 
 import numpy as np
-from skimage.filters import threshold_local, threshold_otsu
+from skimage.filters import threshold_local
 import cv2
-from stytra.tracking import ParametrizedImageproc
 from lightparam import Parametrized, Param
 
 
-class EyeTrackingMethod(ParametrizedImageproc):
+class EyeTrackingMethod:
     """General eyes tracking method."""
     name = "eyes"
 
@@ -18,11 +17,6 @@ class EyeTrackingMethod(ParametrizedImageproc):
         # TODO maybe getting default values here:
         self.params = Parametrized(name="tracking/eyes",
                                    params=self.detect)
-        # self.add_params(
-        #     wnd_pos={"value": (140, 200), "visible": False},
-        #     wnd_dim={"value": (110, 60), "visible": False},
-        #     threshold=dict(value=64, type="int", limits=(0, 255)),
-        # )
 
         headers = []
         for i in range(2):

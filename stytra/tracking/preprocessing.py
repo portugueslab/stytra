@@ -5,11 +5,9 @@
 """
 import cv2
 
-from stytra.tracking import ParametrizedImageproc
 import numpy as np
 from numba import vectorize, uint8, float32
 from lightparam import Parametrized, Param
-from lightparam.param_qt import ParametrizedQt
 
 
 class Prefilter:

@@ -2,10 +2,9 @@ import numpy as np
 from numba import jit
 import cv2
 from lightparam import Param, Parametrized
-from stytra.tracking import ParametrizedImageproc
 
 
-class TailTrackingMethod(ParametrizedImageproc):
+class TailTrackingMethod:
     """General tail tracking method."""
     name = "tail"
 

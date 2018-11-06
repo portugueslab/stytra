@@ -213,7 +213,7 @@ class TrackingExperiment(CameraExperiment):
             )
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(
-            name="tracking/".format(self.tracking_method.name), params=self.tracking_method.detect,
+            name="tracking/"+type(self.tracking_method).name, params=self.tracking_method.detect,
             tree=self.dc
         )
 
