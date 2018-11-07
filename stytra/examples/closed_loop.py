@@ -69,8 +69,7 @@ if __name__ == "__main__":
     tracking_config = dict(
         embedded=True,
         tracking_method="centroid",
-        estimator="vigor",
-        preprocessing_method="prefilter",
+        estimator="vigor"
     )
 
     display_config = dict(full_screen=True)
