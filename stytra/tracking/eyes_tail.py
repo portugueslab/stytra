@@ -7,7 +7,7 @@ from itertools import chain
 
 
 class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
-    name = "tracking_eyes_tail_params"
+    name = "eyes_tail"
 
     def __init__(self):
         super().__init__()

@@ -205,7 +205,7 @@ class TrackingExperiment(CameraExperiment):
         preproc_method_name = tracking_config.get("preprocessing_method", None)
 
         # If centroid or eyes method is used, prefilter by default:
-        if preproc_method_name is None and method_name in ["centroid", "eyes"]:
+        if preproc_method_name is None and method_name in ["tail", "eyes"]:
             preproc_method_name = "prefilter"
 
         preproc_method = get_preprocessing_method(preproc_method_name)
@@ -352,9 +352,14 @@ class TrackingExperiment(CameraExperiment):
 
         """
         if save:
-            self.save_log(self.data_acc, "behavior_log")
+            # Save image of the fish:
             self.window_main.camera_display.save_image(
-                name=self.filename_base() + "_img.png")
+                name=self.filename_base() + "img.png")
+            self.dc.add_static_data(
+                self.filename_prefix() + "img.png", "tracking/image")
+
+            # Save log and estimators:
+            self.save_log(self.data_acc, "behavior_log")
             try:
                 self.save_log(self.estimator.log, "estimator_log")
             except AttributeError:

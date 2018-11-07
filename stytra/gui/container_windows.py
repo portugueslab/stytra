@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QDockWidget,
     QToolButton,
+    QFileDialog
 )
 from PyQt5.QtGui import QPalette
 
@@ -123,6 +124,10 @@ class SimpleExperimentWindow(QMainWindow):
         act_metadata = self.toolbar_control.addAction("Edit metadata")
         act_metadata.triggered.connect(self.show_metadata_gui)
 
+        self.act_folder = self.toolbar_control.addAction("Save in {}".format(
+            self.experiment.base_dir))
+        self.act_folder.triggered.connect(self.change_folder_gui)
+
         if self.experiment.database is not None:
             self.chk_db = QToolButton()
             self.chk_db.setText("Use DB")
@@ -146,6 +151,14 @@ class SimpleExperimentWindow(QMainWindow):
         self.statusBar().addWidget(self.status_metadata)
 
         self.metadata_win = None
+
+    def change_folder_gui(self):
+        folder = QFileDialog.getExistingDirectory(caption='Trigger folder',
+                                                  directory=self.experiment.base_dir)
+        if folder is not None:
+            self.experiment.base_dir = folder
+            self.act_folder.setText("Save in {}".format(
+                self.experiment.base_dir))
 
     def show_metadata_gui(self):
         """ """

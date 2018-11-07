@@ -24,7 +24,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        self.params = Parametrized(name="tracking/tail_centroids", params=self.detect)
+        self.params = Parametrized(name="tracking/tail", params=self.detect)
         self.accumulator_headers = ["tail_sum"] + [
             "theta_{:02}".format(i) for i in range(self.params.n_segments)
         ]

@@ -21,7 +21,7 @@ from time import sleep
 
 def get_tracking_method(name):
     tracking_methods_list = dict(
-        centroid=CentroidTrackingMethod,
+        tail=CentroidTrackingMethod,
         angle_sweep=AnglesTrackingMethod,
         eyes=EyeTrackingMethod,
         eyes_tail=TailEyesTrackingMethod,

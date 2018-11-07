@@ -81,7 +81,7 @@ class ProtocolRunner(QObject):
 
         self.timer = QTimer()
 
-        self.protocol = None
+        self.protocol = experiment.protocol
         self.stimuli = []
         self.i_current_stimulus = None  # index of current stimulus
         self.current_stimulus = None  # current stimulus object
@@ -89,8 +89,8 @@ class ProtocolRunner(QObject):
         self.duration = None  # total duration of the protocol
         self.dynamic_log = None  # dynamic log for stimuli
 
-        self.prot_class_dict = {c.name: c for c in experiment.protocols}
-        self.set_new_protocol(protocol)
+        # self.prot_class_dict = {c.name: c for c in experiment.protocols}
+        self._set_new_protocol(self.protocol)
         self.update_protocol()
         self.protocol.sig_param_changed.connect(self.update_protocol)
 
@@ -118,24 +118,22 @@ class ProtocolRunner(QObject):
 
             # Why were we resetting here?
             self.reset()
+            self.sig_protocol_updated.emit()
 
-    def set_new_protocol(self, protocol_name):
-        """Set a new protocol from its name. Uses the dictionary of protocols
-        generated from the stytra.stimulation.protocols file.
-
-        Parameters
-        ----------
-        protocol_name : str
-            string with the protocol name.
-
-
-        """
-
-        ProtocolClass = self.prot_class_dict[protocol_name]
-        protocol = ProtocolClass()
-        self._set_new_protocol(protocol)
-
-        self.sig_protocol_updated.emit()
+    # def set_new_protocol(self, protocol_name):
+    #     """Set a new protocol from its name. Uses the dictionary of protocols
+    #     generated from the stytra.stimulation.protocols file.
+    #
+    #     Parameters
+    #     ----------
+    #     protocol_name : str
+    #         string with the protocol name.
+    #
+    #
+    #     """
+    #     # ProtocolClass = self.prot_class_dict[protocol_name]
+    #     # protocol = ProtocolClass()
+    #     self._set_new_protocol(protocol)
 
     def update_protocol(self):
         """Update current Protocol (get a new stimulus list if protocol
