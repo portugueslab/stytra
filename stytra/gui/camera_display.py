@@ -99,6 +99,11 @@ class CameraViewWidget(QWidget):
         self.captureButton.clicked.connect(self.save_image)
         self.layout_control.addWidget(self.captureButton)
 
+        self.autorangeCheckBox = QCheckBox()
+        self.autorangeLabel = QLabel('Autoscale image')
+        self.layout_control.addWidget(self.autorangeLabel)
+        self.layout_control.addWidget(self.autorangeCheckBox)
+
         self.layout.addLayout(self.layout_control)
         self.current_image = None
 
@@ -153,7 +158,8 @@ class CameraViewWidget(QWidget):
 
         # Once obtained current image, display it:
         if self.current_image is not None:
-            self.image_item.setImage(self.current_image)
+            self.image_item.setImage(self.current_image,
+                                     autoLevels=self.autorangeCheckBox.isChecked())
 
     def save_image(self):
         """Save a frame to the current directory."""
@@ -449,7 +455,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                                 ell.setPen(None)
                             self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
-                self.image_item.setImage(im)
+
+                self.image_item.setImage(im, autoLevels=self.autorangeCheckBox.isChecked())
+                print(self.image_item.levels)
 
 
 class CameraViewCalib(CameraViewWidget):
