@@ -86,8 +86,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
 
-        n_segments += 1
-
         # Calculate tail length:
         length_tail = np.sqrt(
             tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
@@ -95,6 +93,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
+
+        n_segments += 1
 
         # Initial displacements in x and y:
         disp_x = tail_length_x * extraparams['image_scale'] / n_segments
@@ -116,7 +116,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
             else:
                 abs_angle = np.arctan2(disp_x, disp_y)
             angles.append(abs_angle)
-
         # Total curvature as sum of the last 2 angles - sum of the first 2
         angles = list(np.unwrap(np.array(angles)))
         return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[

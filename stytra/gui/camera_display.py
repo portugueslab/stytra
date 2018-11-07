@@ -368,7 +368,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
                 # Get segment length:
-                tail_segment_length = tail_length / (len(angles) - 1)
+                tail_segment_length = tail_length / (len(angles))
                 points = [np.array([start_x, start_y])]
 
                 # Calculate tail points from angles and position:
