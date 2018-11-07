@@ -103,6 +103,7 @@ class CameraViewWidget(QWidget):
         self.current_image = None
 
         self.setLayout(self.layout)
+        self.current_frame_time = None
 
         self.param_widget = None
 
@@ -141,6 +142,7 @@ class CameraViewWidget(QWidget):
                 if first:
                     qr = self.frame_queue.get(timeout=0.0001)
                     self.current_image = qr[-1]
+                    self.current_frame_time = qr[0]
                     # first = False
                 else:
                     # Else, get to free the queue:
@@ -350,7 +352,15 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         # Get data from queue(first is timestamp)
 
         if len(self.experiment.data_acc.stored_data) > 1:
-            retrieved_data = self.experiment.data_acc.stored_data[-1][1:]
+            # To match tracked points and frame displayed looks for matching
+            # timestamps from the two different queues:
+            recent_data = self.experiment.data_acc.stored_data[-50:]
+            dt_list = [(self.experiment.data_acc.starting_time +
+                   datetime.timedelta(0, t[0]) - self.current_frame_time).total_seconds()
+                   for t in recent_data]
+            idx = np.argmin(np.abs(np.array(dt_list)))
+
+            retrieved_data = recent_data[idx][1:]
             # Check for data to be displayed:
             if self.tail:
                 # Retrieve tail angles from tail (if there are eyes, last 5*2
