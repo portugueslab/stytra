@@ -278,3 +278,4 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
+
