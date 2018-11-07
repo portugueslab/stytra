@@ -166,6 +166,11 @@ class FrameDispatcher(FrameProcess):
                     try:
                         self.send_to_gui(tracker.diagnostic_image)
                     except AttributeError:
+                        if processed.shape != frame.shape:
+                            processed = cv2.resize(processed, None,
+                                                   fx=frame.shape[0]/processed.shape[0],
+                                                   fy=frame.shape[1]/processed.shape[1],
+                                                   interpolation=cv2.INTER_AREA)
                         self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)
