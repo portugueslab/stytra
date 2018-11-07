@@ -74,7 +74,7 @@ class Experiment(QObject):
     def __init__(
         self,
         app=None,
-        protocols=None,
+        protocol=None,
         default_protocol=None,
         dir_save=None,
         dir_assets="",
@@ -96,7 +96,7 @@ class Experiment(QObject):
         super().__init__()
 
         self.app = app
-        self.protocols = protocols
+        self.protocol = protocol
         self.trigger = scope_triggering
         self.offline = offline
 
@@ -133,12 +133,13 @@ class Experiment(QObject):
 
         # Use the DataCollector object to find the last used protocol,
         #  to restore it
-        self.default_protocol = self.dc.get_last_value("stimulus_protocol_params")
-
-        if default_protocol is not None:
-            self.default_protocol = default_protocol
-        else:
-            self.default_protocol = protocols[0].name
+        # self.protocol = protocol #self.dc.get_last_value(
+            # "stimulus_protocol_params")
+        #
+        # if default_protocol is not None:
+        #     self.protocol = default_protocol
+        # else:
+        #     self.protocol = protocols[0].name
 
         # Conditional, in case metadata are generated and passed from the
         # configuration file:
@@ -158,9 +159,7 @@ class Experiment(QObject):
             params=dict(geometry=Param(None), window_state=Param(None)),
         )
 
-        self.protocol_runner = ProtocolRunner(
-            experiment=self, protocol=self.default_protocol
-        )
+        self.protocol_runner = ProtocolRunner(experiment=self)
 
         # assign signals from protocol_runner to be used externally:
         self.sig_protocol_finished = self.protocol_runner.sig_protocol_finished
@@ -250,7 +249,7 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
-        self.window_main.toolbar_control.combo_prot.setCurrentText(self.default_protocol)
+        self.window_main.toolbar_control.combo_prot.setCurrentText(self.protocol)
         self.window_main.construct_ui()
         self.window_main.show()
 
