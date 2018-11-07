@@ -205,7 +205,7 @@ class TrackingExperiment(CameraExperiment):
         preproc_method_name = tracking_config.get("preprocessing_method", None)
 
         # If centroid or eyes method is used, prefilter by default:
-        if preproc_method_name is None and method_name in ["centroid", "eyes"]:
+        if preproc_method_name is None and method_name in ["tail", "eyes"]:
             preproc_method_name = "prefilter"
 
         preproc_method = get_preprocessing_method(preproc_method_name)
