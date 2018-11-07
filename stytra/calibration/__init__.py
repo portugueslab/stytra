@@ -68,11 +68,19 @@ class Calibrator(ParametrizedQt):
 class CrossCalibrator(Calibrator):
     """ """
 
-    def __init__(self, *args, fixed_length=60, calibration_length="outside", **kwargs):
+    def __init__(
+        self,
+        *args,
+        fixed_length=60,
+        calibration_length="outside",
+        transparent=True,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         self.length_px = 1
         self.length_is_fixed = False
+        self.transparent = transparent
 
         if calibration_length == "outside":
             self.outside = True
@@ -105,7 +113,10 @@ class CrossCalibrator(Calibrator):
 
         """
         p.setPen(QPen(QColor(255, 0, 0)))
-        p.setBrush(QBrush(QColor(0, 0, 0)))
+        if self.transparent:
+            p.setBrush(QBrush(QColor(0, 0, 0, 0)))
+        else:
+            p.setBrush(QBrush(QColor(0, 0, 0, 255)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         l2 = self.length_px / 2
         p.drawLine(w // 2 - l2, h // 2, w // 2 + l2, h // 2)
