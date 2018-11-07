@@ -116,6 +116,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
             else:
                 abs_angle = np.arctan2(disp_x, disp_y)
             angles.append(abs_angle)
+
         # Total curvature as sum of the last 2 angles - sum of the first 2
         angles = list(np.unwrap(np.array(angles)))
         return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[
