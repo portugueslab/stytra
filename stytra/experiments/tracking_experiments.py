@@ -217,8 +217,6 @@ class TrackingExperiment(CameraExperiment):
             tree=self.dc
         )
 
-        # TODO self.data_name is not used, check if necessary!
-        self.data_name = self.tracking_method.data_log_name
         self.frame_dispatchers = [
             FrameDispatcher(
                 in_frame_queue=self.camera.frame_queue,

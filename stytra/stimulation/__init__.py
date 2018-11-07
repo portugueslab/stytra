@@ -269,11 +269,11 @@ class ProtocolRunner(QObject):
         if self.running:
             self.running = False
             self.t_end = datetime.datetime.now()
-            try:
-                self.timer.timeout.disconnect()
-                self.timer.stop()
-            except:  # TODO generic except
-                pass
+            # try:
+            self.timer.timeout.disconnect()
+            self.timer.stop()
+            # except:
+            #     pass
 
     def update_log(self):
         """Append the log appending info from the last stimulus. Add to the

@@ -129,7 +129,6 @@ class Experiment(QObject):
         multiprocessing_logging.install_mp_handler(self.logger)
         self.logger.setLevel("INFO")
 
-        # TODO update to remove possibility of empty folder
         # We will collect data only of a directory for saving is specified:
 
         # Use the DataCollector object to find the last used protocol,
@@ -189,7 +188,7 @@ class Experiment(QObject):
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
-        self.display_framerate_acc = None  # TODO display framerate calculation
+        self.display_framerate_acc = None
 
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)

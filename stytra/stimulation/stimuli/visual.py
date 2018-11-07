@@ -13,10 +13,6 @@ from PyQt5.QtGui import QTransform, QPolygon, QRegion
 from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
-
-# TODO right now Stimulus is not parameterized via HasPyQtGraphParams
-
-
 class VisualStimulus(Stimulus):
     """ Stimulus class to paint programmatically on a canvas.
     For this subclass of Stimulus, their core function (paint()) is

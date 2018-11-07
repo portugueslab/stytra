@@ -10,15 +10,6 @@ class TailTrackingMethod:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # TODO maybe getting default values here:
-        # self.add_params(
-        #     n_segments=dict(value=10, type="int", limits=(2, 50)),
-        #     tail_start=dict(value=(440, 225), visible=False),
-        #     tail_length=dict(value=(-250, 30), visible=False),
-        # )
-        # self.accumulator_headers = ["tail_sum"] + [
-        #     "theta_{:02}".format(i) for i in range(self.params["n_segments"])
-        # ]
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "tail_track"
 
@@ -33,9 +24,6 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
     def __init__(self):
         super().__init__()
-        # self.add_params(
-        #     window_size=dict(value=30, suffix=" pxs", type="float", limits=(2, 100))
-        # )
         self.params = Parametrized(name="tracking/tail_centroids", params=self.detect)
         self.accumulator_headers = ["tail_sum"] + [
             "theta_{:02}".format(i) for i in range(self.params.n_segments)

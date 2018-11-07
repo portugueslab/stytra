@@ -14,7 +14,6 @@ class EyeTrackingMethod:
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # TODO maybe getting default values here:
         self.params = Parametrized(name="tracking/eyes",
                                    params=self.detect)
 

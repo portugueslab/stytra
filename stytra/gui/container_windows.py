@@ -284,8 +284,8 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
 
         super().construct_ui()
         self.experiment.gui_timer.timeout.connect(
-            self.stream_plot.update
-        )  # TODO put in right place
+            self.stream_plot.update)
+        # TODO put in right place
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
         monitoring_dock = QDockWidget("Tracking", self)

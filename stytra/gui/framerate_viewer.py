@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QPoint
-from PyQt5.QtWidgets import QWidget, QApplication  # TODO remove QApp after tested
+from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QColor, QPen
 
 import numpy as np
@@ -50,8 +50,9 @@ class FramerateWidget(QWidget):
         p.drawText(QPoint(w_max - textw, pad), maxst)
 
 
-if __name__ == "__main__":
-    app = QApplication([])
-    w = FramerateWidget()
-    w.show()
-    app.exec_()
+# if __name__ == "__main__":
+#     from PyQt5.QtWidgets import QApplication
+#     app = QApplication([])
+#     w = FramerateWidget()
+#     w.show()
+#     app.exec_()

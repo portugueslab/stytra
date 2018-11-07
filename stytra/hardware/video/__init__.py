@@ -247,7 +247,6 @@ class VideoFileSource(VideoSource):
 
                 if self.control_queue is not None:
                     try:
-                        # TODO make nicer
                         param_dict = self.control_queue.get(timeout=0.0001)
                         for name, value in param_dict.items():
                             if name == "framerate":
