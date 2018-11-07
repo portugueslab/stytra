@@ -249,7 +249,7 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
-        self.window_main.toolbar_control.combo_prot.setCurrentText(self.protocol)
+        # self.window_main.toolbar_control.label_prot.setText(self.protocol)
         self.window_main.construct_ui()
         self.window_main.show()
 

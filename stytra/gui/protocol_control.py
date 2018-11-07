@@ -63,13 +63,6 @@ class ProtocolControlToolbar(QToolBar):
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
 
-        # If a previous protocol was already set in the protocol runner
-        # change the GUI values accordingly:
-        # if protocol_runner.protocol is not None:
-        #     self.combo_prot.setCurrentText(type(protocol_runner.protocol).name)
-        # else:
-        #     self.set_protocol()
-
     def show_stim_params_gui(self):
         """Create and show window to update protocol parameters.
         """
@@ -130,9 +123,3 @@ class ProtocolControlToolbar(QToolBar):
                 )
 
         self.progress_bar.setFormat(time_info)
-
-    def set_protocol(self):
-        """Use value in the dropdown menu to change the protocol.
-        """
-        protocol_name = self.combo_prot.currentText()
-        self.protocol_runner.set_new_protocol(protocol_name)
