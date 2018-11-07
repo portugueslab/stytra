@@ -1,4 +1,3 @@
-
 class Camera:
     """Abstract class for controlling a camera.
 
@@ -30,8 +29,7 @@ class Camera:
 
     """
 
-    def __init__(self, debug=False, downsampling=1, roi=(-1,-1,-1,-1),
-                 **kwargs):
+    def __init__(self, debug=False, downsampling=1, roi=(-1, -1, -1, -1), **kwargs):
         """
         Parameters
         ----------

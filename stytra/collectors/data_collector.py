@@ -70,7 +70,7 @@ class DataCollector(ParameterTree):
         metadata_files = list(self.home_path.glob("*" + self.metadata_fn))
 
         if metadata_files:
-            with open(str(metadata_files[0]), 'r') as f:
+            with open(str(metadata_files[0]), "r") as f:
                 self.last_metadata = json.load(f)
 
         self.log_data_dict = dict()
@@ -180,8 +180,8 @@ class DataCollector(ParameterTree):
         # other kinds of experiments are not lost
         config = prepare_json(self.serialize())
         if self.last_metadata is not None:
-            d = {'/'.join(k): v for k, v in visit_dict(self.last_metadata)}
-            d.update({'/'.join(k): v for k, v in visit_dict(config)})
+            d = {"/".join(k): v for k, v in visit_dict(self.last_metadata)}
+            d.update({"/".join(k): v for k, v in visit_dict(config)})
 
             final_dict = dict()
             [set_nested(final_dict, k.split("/"), d[k]) for k in d.keys()]

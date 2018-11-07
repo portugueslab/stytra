@@ -100,7 +100,7 @@ class CameraViewWidget(QWidget):
         self.layout_control.addWidget(self.captureButton)
 
         self.autorangeCheckBox = QCheckBox()
-        self.autorangeLabel = QLabel('Autoscale image')
+        self.autorangeLabel = QLabel("Autoscale image")
         self.layout_control.addWidget(self.autorangeLabel)
         self.layout_control.addWidget(self.autorangeCheckBox)
 
@@ -158,8 +158,9 @@ class CameraViewWidget(QWidget):
 
         # Once obtained current image, display it:
         if self.current_image is not None:
-            self.image_item.setImage(self.current_image,
-                                     autoLevels=self.autorangeCheckBox.isChecked())
+            self.image_item.setImage(
+                self.current_image, autoLevels=self.autorangeCheckBox.isChecked()
+            )
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""
@@ -344,11 +345,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         if self.eyes:
             self.track_params.params.wnd_dim.changed = True
-            self.track_params.wnd_dim = tuple(
-                [int(p) for p in self.roi_eyes.size()])
+            self.track_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
             self.track_params.params.wnd_pos.changed = True
-            self.track_params.wnd_pos = tuple(
-                [int(p) for p in self.roi_eyes.pos()])
+            self.track_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def update_image(self):
@@ -361,9 +360,14 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
             recent_data = self.experiment.data_acc.stored_data[-50:]
-            dt_list = [(self.experiment.data_acc.starting_time +
-                   datetime.timedelta(0, t[0]) - self.current_frame_time).total_seconds()
-                   for t in recent_data]
+            dt_list = [
+                (
+                    self.experiment.data_acc.starting_time
+                    + datetime.timedelta(0, t[0])
+                    - self.current_frame_time
+                ).total_seconds()
+                for t in recent_data
+            ]
             idx = np.argmin(np.abs(np.array(dt_list)))
 
             retrieved_data = recent_data[idx][1:]
@@ -455,8 +459,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                                 ell.setPen(None)
                             self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
-
-                self.image_item.setImage(im, autoLevels=self.autorangeCheckBox.isChecked())
+                self.image_item.setImage(
+                    im, autoLevels=self.autorangeCheckBox.isChecked()
+                )
                 print(self.image_item.levels)
 
 
@@ -560,7 +565,7 @@ class CameraViewFish(CameraViewCalib):
 
             n_data_per_fish = (
                 len(self.experiment.data_acc.stored_data[-1]) - 2
-            )//n_fish  # the first is time, the last is area
+            ) // n_fish  # the first is time, the last is area
             n_points_tail = n_data_per_fish - 6
             try:
                 retrieved_data = np.array(

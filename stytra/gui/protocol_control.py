@@ -1,6 +1,12 @@
 from PyQt5.QtCore import pyqtSignal, Qt
-from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QComboBox, \
-    QProgressBar, QToolBar, QLabel
+from PyQt5.QtWidgets import (
+    QHBoxLayout,
+    QDockWidget,
+    QComboBox,
+    QProgressBar,
+    QToolBar,
+    QLabel,
+)
 from stytra.stimulation import ProtocolRunner
 import datetime
 
@@ -40,8 +46,7 @@ class ProtocolControlToolbar(QToolBar):
         self.protocol_runner = protocol_runner
 
         # Label with the protocol classes found in the Experiment:
-        self.label_prot = QLabel(
-            text=self.protocol_runner.protocol.name.split('/')[-1])
+        self.label_prot = QLabel(text=self.protocol_runner.protocol.name.split("/")[-1])
         self.addWidget(self.label_prot)
 
         # Window with the protocol parameters:
@@ -108,18 +113,19 @@ class ProtocolControlToolbar(QToolBar):
         rem = ceil(self.protocol_runner.duration - self.protocol_runner.t)
         rem_min = int(floor(rem / 60))
         time_info = "{}/{}s ({}:{} remaining)".format(
-                int(self.protocol_runner.t),
-                int(self.protocol_runner.duration),
-                rem_min,
-                int(rem - rem_min * 60))
+            int(self.protocol_runner.t),
+            int(self.protocol_runner.duration),
+            rem_min,
+            int(rem - rem_min * 60),
+        )
 
         # If experiment started, add expected end time:
         if self.protocol_runner.t_start is not None:
             exp_end_time = self.protocol_runner.t_start + datetime.timedelta(
-                        self.protocol_runner.duration)
-            time_info += " - Ending at {}:{}:{}".format(exp_end_time.hour,
-                                                        exp_end_time.minute,
-                                                        exp_end_time.second
-                )
+                self.protocol_runner.duration
+            )
+            time_info += " - Ending at {}:{}:{}".format(
+                exp_end_time.hour, exp_end_time.minute, exp_end_time.second
+            )
 
         self.progress_bar.setFormat(time_info)

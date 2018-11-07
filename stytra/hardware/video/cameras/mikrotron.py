@@ -20,8 +20,12 @@ class MikrotronCLCamera(Camera):
             print("NI Vision drivers not installed")
 
     def open_camera(self):
-        int_opened = self.imaq.imgInterfaceOpen(self.cam_id, ctypes.byref(self.interface_id))
-        session_opened = self.imaq.imgSessionOpen(self.interface_id, ctypes.byref(self.session_id))
+        int_opened = self.imaq.imgInterfaceOpen(
+            self.cam_id, ctypes.byref(self.interface_id)
+        )
+        session_opened = self.imaq.imgSessionOpen(
+            self.interface_id, ctypes.byref(self.session_id)
+        )
 
         # get dimensions
         # if residual response left, clear it
@@ -30,33 +34,41 @@ class MikrotronCLCamera(Camera):
         response = self._read_response(16)
         _, _, w, h = [int(x, 16) for x in response.split(" ")]
 
-        self.imaq.imgSessionConfigureROI(self.session_id, ctypes.c_uint32(0),
-                                         ctypes.c_uint32(0), ctypes.c_uint32(h),
-                                         ctypes.c_uint32(w));
+        self.imaq.imgSessionConfigureROI(
+            self.session_id,
+            ctypes.c_uint32(0),
+            ctypes.c_uint32(0),
+            ctypes.c_uint32(h),
+            ctypes.c_uint32(w),
+        )
         self.imaq.imgGrabSetup(self.session_id, 1)
 
         self.img_buffer = np.ndarray(shape=(h, w), dtype=ctypes.c_uint8)
-        self.buffer_address = self.img_buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_long))
+        self.buffer_address = self.img_buffer.ctypes.data_as(
+            ctypes.POINTER(ctypes.c_long)
+        )
         return "Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
 
     def _send_command(self, com):
         command = ctypes.c_char_p(bytes(com, "ansi"))
         comlen = ctypes.c_uint32(len(command.value))
         timeout = ctypes.c_uint32(100)
-        return self.imaq.imgSessionSerialWrite(self.session_id, command,
-                                         ctypes.byref(comlen), timeout)
+        return self.imaq.imgSessionSerialWrite(
+            self.session_id, command, ctypes.byref(comlen), timeout
+        )
 
     def _read_response(self, resplen=256):
         response = ctypes.create_string_buffer(256)
         comlen = ctypes.c_uint32(resplen)
         timeout = ctypes.c_uint32(100)
-        self.imaq.imgSessionSerialReadBytes(self.session_id, response,
-                                            ctypes.byref(comlen), timeout)
+        self.imaq.imgSessionSerialReadBytes(
+            self.session_id, response, ctypes.byref(comlen), timeout
+        )
         return response.value.decode("ansi")
 
     def set(self, param, val):
         if param == "exposure":
-            exptime = int(val*1000)
+            exptime = int(val * 1000)
             if exptime != self.exp_current:
                 self._send_command(":t{:06X}".format(exptime))
                 self._read_response()

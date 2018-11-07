@@ -6,6 +6,7 @@ from lightparam import Param, Parametrized
 
 class TailTrackingMethod:
     """General tail tracking method."""
+
     name = "tail"
 
     def __init__(self, *args, **kwargs):
@@ -75,9 +76,10 @@ class CentroidTrackingMethod(TailTrackingMethod):
         tail_length_y, tail_length_x = tail_length
 
         # Calculate tail length:
-        length_tail = np.sqrt(
-            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
-            'image_scale']
+        length_tail = (
+            np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
+            * extraparams["image_scale"]
+        )
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
@@ -85,12 +87,12 @@ class CentroidTrackingMethod(TailTrackingMethod):
         n_segments += 1
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
-        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
+        disp_x = tail_length_x * extraparams["image_scale"] / n_segments
+        disp_y = tail_length_y * extraparams["image_scale"] / n_segments
 
         angles = []
-        start_x *= extraparams['image_scale']
-        start_y *= extraparams['image_scale']
+        start_x *= extraparams["image_scale"]
+        start_y *= extraparams["image_scale"]
 
         halfwin = window_size / 2
         for i in range(1, n_segments):
@@ -107,9 +109,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
         angles = list(np.unwrap(np.array(angles)))
-        return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[
-            :
-        ]
+        return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[:]
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
@@ -164,16 +164,17 @@ class AnglesTrackingMethod(TailTrackingMethod):
         tail_length_y, tail_length_x = tail_length
 
         # Calculate tail length:
-        length_tail = np.sqrt(
-            tail_length_x ** 2 + tail_length_y ** 2) * extraparams[
-            'image_scale']
+        length_tail = (
+            np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
+            * extraparams["image_scale"]
+        )
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * extraparams['image_scale'] / n_segments
-        disp_y = tail_length_y * extraparams['image_scale'] / n_segments
+        disp_x = tail_length_x * extraparams["image_scale"] / n_segments
+        disp_y = tail_length_y * extraparams["image_scale"] / n_segments
 
-        start_x *= extraparams['image_scale']
-        start_y *= extraparams['image_scale']
+        start_x *= extraparams["image_scale"]
+        start_y *= extraparams["image_scale"]
 
         # Use jitted function for the actual calculation:
         angle_list = _tail_trace_core_ls(
@@ -363,9 +364,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
 
 
 @jit(nopython=True)
-def _tail_trace_core_ls(
-    img, start_x, start_y, disp_x, disp_y, num_points, tail_length
-):
+def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y, num_points, tail_length):
     """Tail tracing based on min (or max) detection on arches. Wrapped by
     trace_tail_angular_sweep.
 

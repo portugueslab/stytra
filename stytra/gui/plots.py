@@ -295,7 +295,9 @@ class MultiStreamPlot(QWidget):
         -------
 
         """
-        to_update = np.any(np.abs(old_bounds-new_bounds) > tolerance*np.abs(old_bounds), 1)
+        to_update = np.any(
+            np.abs(old_bounds - new_bounds) > tolerance * np.abs(old_bounds), 1
+        )
         old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
         return old_bounds
 
@@ -327,7 +329,7 @@ class MultiStreamPlot(QWidget):
             data_array = acc.get_last_t(self.time_past)
 
             if len(data_array) > self.n_points_max:
-                data_array = data_array[::len(data_array)//self.n_points_max]
+                data_array = data_array[:: len(data_array) // self.n_points_max]
 
             if len(data_array) > 1:
                 try:
@@ -341,7 +343,9 @@ class MultiStreamPlot(QWidget):
                         b = ~np.isnan(d)
                         if np.any(b):
                             non_nan_data = data_array[b, i]
-                            new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
+                            new_bounds[id, :] = np.percentile(
+                                non_nan_data, (0.5, 99.5), 0
+                            )
 
                     if self.bounds[i_acc] is None:
                         if not self.round_bounds:
@@ -367,19 +371,26 @@ class MultiStreamPlot(QWidget):
                             self.valueLabels[i_stream][3].setText(
                                 "NaN".format(data_array[-1, i_var])
                             )
-                            self.curves[i_stream].setData(
-                                x=[],
-                                y=[],
-                            )
+                            self.curves[i_stream].setData(x=[], y=[])
                         else:
                             if self.round_bounds:
-                                self.valueLabels[i_stream][0].setText("{:7d}".format(lb, prec=self.precision))
-                                self.valueLabels[i_stream][1].setText("{:7d}".format(ub, prec=self.precision))
+                                self.valueLabels[i_stream][0].setText(
+                                    "{:7d}".format(lb, prec=self.precision)
+                                )
+                                self.valueLabels[i_stream][1].setText(
+                                    "{:7d}".format(ub, prec=self.precision)
+                                )
                             else:
-                                self.valueLabels[i_stream][0].setText("{:7.{prec}f}".format(lb, prec=self.precision))
-                                self.valueLabels[i_stream][1].setText("{:7.{prec}f}".format(ub, prec=self.precision))
+                                self.valueLabels[i_stream][0].setText(
+                                    "{:7.{prec}f}".format(lb, prec=self.precision)
+                                )
+                                self.valueLabels[i_stream][1].setText(
+                                    "{:7.{prec}f}".format(ub, prec=self.precision)
+                                )
                             self.valueLabels[i_stream][3].setText(
-                                "{:7.{prec}f}".format(data_array[-1, i_var], prec=self.precision)
+                                "{:7.{prec}f}".format(
+                                    data_array[-1, i_var], prec=self.precision
+                                )
                             )
                             self.curves[i_stream].setData(
                                 x=time_array,

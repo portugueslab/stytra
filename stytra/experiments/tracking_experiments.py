@@ -89,7 +89,9 @@ class CameraExperiment(Experiment):
         self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
-        self.camera.control_queue.put(self.camera_control_params.params.changed_values())
+        self.camera.control_queue.put(
+            self.camera_control_params.params.changed_values()
+        )
         self.camera_control_params.params.acknowledge_changes()
 
     def start_experiment(self):
@@ -212,13 +214,15 @@ class TrackingExperiment(CameraExperiment):
         self.preprocessing_method = preproc_method() if preproc_method else None
         if preproc_method:
             self.preprocessing_params = ParametrizedQt(
-                name="tracking/preprocessing", params=self.preprocessing_method.process,
-                tree=self.dc
+                name="tracking/preprocessing",
+                params=self.preprocessing_method.process,
+                tree=self.dc,
             )
         self.tracking_method = get_tracking_method(method_name)()
         self.tracking_params = ParametrizedQt(
-            name="tracking/"+type(self.tracking_method).name, params=self.tracking_method.detect,
-            tree=self.dc
+            name="tracking/" + type(self.tracking_method).name,
+            params=self.tracking_method.detect,
+            tree=self.dc,
         )
 
         self.frame_dispatchers = [
@@ -354,9 +358,11 @@ class TrackingExperiment(CameraExperiment):
         if save:
             # Save image of the fish:
             self.window_main.camera_display.save_image(
-                name=self.filename_base() + "img.png")
+                name=self.filename_base() + "img.png"
+            )
             self.dc.add_static_data(
-                self.filename_prefix() + "img.png", "tracking/image")
+                self.filename_prefix() + "img.png", "tracking/image"
+            )
 
             # Save log and estimators:
             self.save_log(self.data_acc, "behavior_log")
@@ -508,8 +514,7 @@ class SwimmingRecordingExperiment(CameraExperiment):
         self.signal_recording.clear()
         try:
             recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
-            self.dc.add_static_data(recorded_filename,
-                                    "tracking/recorded_video")
+            self.dc.add_static_data(recorded_filename, "tracking/recorded_video")
 
         except Empty:
             pass

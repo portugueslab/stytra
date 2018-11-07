@@ -1,8 +1,10 @@
 from stytra.hardware.video.cameras.abstract_class import Camera
+
 try:
     from ximea import xiapi
 except ImportError:
     pass
+
 
 class XimeaCamera(Camera):
     """Class for simple control of a Ximea camera.
@@ -39,8 +41,7 @@ class XimeaCamera(Camera):
         # If camera supports hardware downsampling (MQ013MG-ON does,
         # MQ003MG-CM does not):
         if self.cam.get_device_name() == b"MQ013MG-ON":
-            self.cam.set_sensor_feature_selector(
-                "XI_SENSOR_FEATURE_ZEROROT_ENABLE")
+            self.cam.set_sensor_feature_selector("XI_SENSOR_FEATURE_ZEROROT_ENABLE")
             self.cam.set_sensor_feature_value(1)
 
             if self.downsampling > 1:

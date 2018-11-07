@@ -98,12 +98,17 @@ class CameraSource(VideoSource):
 
     """
 
-    camera_class_dict = dict(ximea=XimeaCamera, avt=AvtCamera,
-                             spinnaker=SpinnakerCamera,
-                             mikrotron=MikrotronCLCamera)
+    camera_class_dict = dict(
+        ximea=XimeaCamera,
+        avt=AvtCamera,
+        spinnaker=SpinnakerCamera,
+        mikrotron=MikrotronCLCamera,
+    )
     """ dictionary listing classes used to instantiate camera object."""
 
-    def __init__(self, camera_type, *args, downsampling=1, roi=(-1,-1,-1,-1), **kwargs):
+    def __init__(
+        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1), **kwargs
+    ):
         """ """
         super().__init__(*args, **kwargs)
 
@@ -129,7 +134,7 @@ class CameraSource(VideoSource):
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.message_queue.put("I:"+str(self.cam.open_camera()))
+        self.message_queue.put("I:" + str(self.cam.open_camera()))
         while True:
             # Kill if signal is set:
             self.kill_event.wait(0.0001)
@@ -230,7 +235,7 @@ class VideoFileSource(VideoSource):
                 try:
                     delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
                 except ZeroDivisionError:
-                    delta_t = 1/30
+                    delta_t = 1 / 30
             else:
                 delta_t = 1 / self.framerate
 
@@ -278,4 +283,3 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
-

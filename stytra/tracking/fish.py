@@ -14,16 +14,13 @@ from stytra.tracking.simple_kalman import NewtonianKalman
 
 def _fish_column_names(i_fish, n_segments):
     return [
-               "f{:d}_x".format(i_fish),
-               "f{:d}_vx".format(i_fish),
-               "f{:d}_y".format(i_fish),
-               "f{:d}_vy".format(i_fish),
-               "f{:d}_theta".format(i_fish),
-               "f{:d}_vtheta".format(i_fish),
-           ] + [
-               "f{:d}_theta_{:02d}".format(i_fish, i)
-               for i in range(n_segments)
-           ]
+        "f{:d}_x".format(i_fish),
+        "f{:d}_vx".format(i_fish),
+        "f{:d}_y".format(i_fish),
+        "f{:d}_vy".format(i_fish),
+        "f{:d}_theta".format(i_fish),
+        "f{:d}_vtheta".format(i_fish),
+    ] + ["f{:d}_theta_{:02d}".format(i_fish, i) for i in range(n_segments)]
 
 
 class FishTrackingMethod:
@@ -50,7 +47,7 @@ class FishTrackingMethod:
         self.accumulator_headers = list(
             chain.from_iterable(
                 [
-                    _fish_column_names(i_fish, self.params.n_segments-1)
+                    _fish_column_names(i_fish, self.params.n_segments - 1)
                     for i_fish in range(self.params.n_fish_max)
                 ]
             )
@@ -66,7 +63,7 @@ class FishTrackingMethod:
         # used for booking a spot for one of the potentially tracked fish
         self.idx_book = IndexBooking(self.params.n_fish_max)
         self.recorded = np.full(
-            (self.params.n_fish_max, 3*2 + self.params.n_segments - 1), np.nan
+            (self.params.n_fish_max, 3 * 2 + self.params.n_segments - 1), np.nan
         )
         self.logger = logging.getLogger()
 
@@ -175,7 +172,9 @@ class FishTrackingMethod:
                 and (ftop - border_margin >= 0)
                 and (ftop + fheight + border_margin < frame.shape[0])
             ):
-                message = "W:No object of right area, between {} and {} within the margins".format(*fish_area)
+                message = "W:No object of right area, between {} and {} within the margins".format(
+                    *fish_area
+                )
                 continue
 
             # how much is this region shifted from the upper left corner of the image
@@ -199,9 +198,7 @@ class FishTrackingMethod:
 
             head_coords_up = fish_coords + cent_shift
 
-            theta = _fish_direction_n(
-                bg, head_coords_up, int(round(tail_length / 2))
-            )
+            theta = _fish_direction_n(bg, head_coords_up, int(round(tail_length / 2)))
 
             # find the points of the tail
             points = find_fish_midline(
@@ -354,6 +351,7 @@ def points_to_angles(points):
         angles[i] = np.arctan2(p2[1] - p1[1], p2[0] - p1[0])
     return angles
 
+
 @jit(nopython=True)
 def fish_start(mask, take_min):
     su = 0.
@@ -362,13 +360,12 @@ def fish_start(mask, take_min):
         for j in range(mask.shape[1]):
             if mask[i, j] > take_min:
                 dm = mask[i, j] - take_min
-                ret[1] += dm*i
-                ret[0] += dm*j
+                ret[1] += dm * i
+                ret[0] += dm * j
                 su += dm
 
-
     if su > 0.0:
-        return ret/su
+        return ret / su
     else:
         ret[:] = -1
         return ret
