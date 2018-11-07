@@ -57,16 +57,18 @@ class DataCollector(ParameterTree):
     def __init__(self, *data_tuples_list, folder_path="C:/"):
         """ """
         super().__init__()
-        self.metadata_fn = "config.json"
+        self.metadata_fn = "stytra_last_config.json"
 
         # Check validity of directory:
+        self.home_path = Path.home()
         self.folder_path = Path(folder_path)
         if not self.folder_path.is_dir():
             self.folder_path.mkdir(parents=True)
 
         # Try to find previously saved data_log:
         self.last_metadata = None
-        metadata_files = list(self.folder_path.glob("*" + self.metadata_fn))
+        metadata_files = list(self.home_path.glob("*" + self.metadata_fn))
+
         if metadata_files:
             with open(str(metadata_files[0]), 'r') as f:
                 self.last_metadata = json.load(f)
@@ -186,7 +188,7 @@ class DataCollector(ParameterTree):
         else:
             final_dict = config
 
-        with open(str(self.folder_path / self.metadata_fn), "w") as f:
+        with open(str(self.home_path / self.metadata_fn), "w") as f:
             json.dump(final_dict, f)
 
     def save_json_log(self, output_path):
