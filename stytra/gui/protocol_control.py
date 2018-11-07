@@ -1,9 +1,10 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import QHBoxLayout, QDockWidget, QComboBox, QProgressBar, QToolBar
 from stytra.stimulation import ProtocolRunner
+import datetime
 
 from lightparam.gui import ParameterGui
-from math import floor
+from math import floor, ceil
 
 
 class ProtocolControlToolbar(QToolBar):
@@ -57,7 +58,7 @@ class ProtocolControlToolbar(QToolBar):
         self.addWidget(self.progress_bar)
 
         # Connect events and signals from the ProtocolRunner to update the GUI:
-        self.protocol_runner.sig_protocol_updated.connect(self.update_stim_duration)
+        self.update_progress()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
@@ -106,26 +107,30 @@ class ProtocolControlToolbar(QToolBar):
         else:
             self.toggleStatus.setText("■")
 
-    def update_stim_duration(self):
-        """ Change the displayed durtion of the stimulus
-        """
-        self.progress_bar.setMaximum(int(self.protocol_runner.duration))
-        self.progress_bar.setValue(0)
-
     def update_progress(self):
         """ Update progress bar
         """
+        self.progress_bar.setMaximum(int(self.protocol_runner.duration))
         self.progress_bar.setValue(int(self.protocol_runner.t))
-        rem = self.protocol_runner.duration - self.protocol_runner.t
+
+        rem = ceil(self.protocol_runner.duration - self.protocol_runner.t)
         rem_min = int(floor(rem / 60))
-        self.progress_bar.setFormat(
-            "{}/{}s ({}:{} remaining)".format(
+        time_info = "{}/{}s ({}:{} remaining)".format(
                 int(self.protocol_runner.t),
                 int(self.protocol_runner.duration),
                 rem_min,
-                int(rem - rem_min * 60),
-            )
-        )
+                int(rem - rem_min * 60))
+
+        # If experiment started, add expected end time:
+        if self.protocol_runner.t_start is not None:
+            exp_end_time = self.protocol_runner.t_start + datetime.timedelta(
+                        self.protocol_runner.duration)
+            time_info += " - Ending at {}:{}:{}".format(exp_end_time.hour,
+                                                        exp_end_time.minute,
+                                                        exp_end_time.second
+                )
+
+        self.progress_bar.setFormat(time_info)
 
     def set_protocol(self):
         """Use value in the dropdown menu to change the protocol.
