@@ -352,9 +352,14 @@ class TrackingExperiment(CameraExperiment):
 
         """
         if save:
-            self.save_log(self.data_acc, "behavior_log")
+            # Save image of the fish:
             self.window_main.camera_display.save_image(
-                name=self.filename_base() + "_img.png")
+                name=self.filename_base() + "img.png")
+            self.dc.add_static_data(
+                self.filename_prefix() + "img.png", "tracking/image")
+
+            # Save log and estimators:
+            self.save_log(self.data_acc, "behavior_log")
             try:
                 self.save_log(self.estimator.log, "estimator_log")
             except AttributeError:
