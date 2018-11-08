@@ -126,7 +126,7 @@ class Stytra:
         recursive_update(config, extra_config)
 
         print(config)
-        if config["scope_triggering"] == "zmq":
+        if config.get("scope_triggering", None) == "zmq":
             # Automatically use zmqTrigger if zmq is specified
             from stytra.triggering import ZmqTrigger
 
