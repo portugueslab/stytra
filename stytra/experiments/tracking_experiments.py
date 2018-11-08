@@ -89,6 +89,7 @@ class CameraExperiment(Experiment):
         self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
 
     def send_gui_parameters(self):
+
         self.camera.control_queue.put(
             self.camera_control_params.params.changed_values()
         )

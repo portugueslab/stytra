@@ -4,7 +4,6 @@ implement video saving
 """
 
 import numpy as np
-import glob
 
 from multiprocessing import Queue, Event
 from multiprocessing.queues import Empty, Full
@@ -24,6 +23,8 @@ from stytra.hardware.video.interfaces import (
     CameraControlParameters,
     VideoControlParameters,
 )
+
+from stytra.hardware.video.ring_buffer import RingBuffer
 
 import time
 
@@ -116,8 +117,10 @@ class CameraSource(VideoSource):
         self.downsampling = downsampling
         self.roi = roi
         self.control_params = CameraControlParameters
+        self.replay_fps = 0
         self.cam = None
         self.paused = False
+        self.ring_buffer = None # RingBuffer(600) # TODO make it parameterized
 
     def run(self):
         """
@@ -135,6 +138,7 @@ class CameraSource(VideoSource):
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
         self.message_queue.put("I:" + str(self.cam.open_camera()))
+        prt = None
         while True:
             # Kill if signal is set:
             self.kill_event.wait(0.0001)
@@ -144,26 +148,48 @@ class CameraSource(VideoSource):
             # Try to get new parameters from the control queue:
             message = ""
             if self.control_queue is not None:
-                try:
-                    param_dict = self.control_queue.get(timeout=0.0001)
-                    self.paused = param_dict.get("paused", self.paused)
-                    for param, value in param_dict.items():
-                        message = self.cam.set(param, value)
-                except Empty:
-                    pass
+                while True:
+                    try:
+                        param_dict = self.control_queue.get(timeout=0.0001)
+                        self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
+                        self.paused = param_dict.get("paused", self.paused)
+                        if len(param_dict)>0:
+                            print(param_dict)
+                        for param, value in param_dict.items():
+                            message = self.cam.set(param, value)
+                    except Empty:
+                        break
 
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
+            if self.rotation:
+                arr = np.rot90(arr, self.rotation)
+            if self.ring_buffer is None:
+                self.ring_buffer = RingBuffer(300)
+            self.ring_buffer.put(arr)
+
             self.update_framerate()
-            if arr is not None and not self.paused:
-                # If the queue is full, arrayqueues should print a warning!
-                if self.rotation:
-                    arr = np.rot90(arr, self.rotation)
-                if self.frame_queue.queue.qsize() < self.n_consumers + 1:
-                    self.frame_queue.put(arr)
-                    self.message_queue.put("")
-                else:
-                    self.message_queue.put("W:Dropped frame")
+
+            if self.replay_fps > 0:
+                try:
+                    self.frame_queue.put(self.ring_buffer.get())
+                except ValueError:
+                    pass
+                delta_t = 1/self.replay_fps
+                if prt is not None:
+                    extrat = delta_t - (time.process_time() - prt)
+                    if extrat > 0:
+                        time.sleep(extrat)
+                prt = time.process_time()
+            else:
+                prt = None
+                if arr is not None and not self.paused:
+                    # If the queue is full, arrayqueues should print a warning!
+                    if self.frame_queue.queue.qsize() < self.n_consumers + 1:
+                        self.frame_queue.put(arr)
+                        self.message_queue.put("")
+                    else:
+                        self.message_queue.put("W:Dropped frame")
 
         self.cam.release()
 

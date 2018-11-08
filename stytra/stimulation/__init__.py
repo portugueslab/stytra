@@ -120,21 +120,6 @@ class ProtocolRunner(QObject):
             self.reset()
             self.sig_protocol_updated.emit()
 
-    # def set_new_protocol(self, protocol_name):
-    #     """Set a new protocol from its name. Uses the dictionary of protocols
-    #     generated from the stytra.stimulation.protocols file.
-    #
-    #     Parameters
-    #     ----------
-    #     protocol_name : str
-    #         string with the protocol name.
-    #
-    #
-    #     """
-    #     # ProtocolClass = self.prot_class_dict[protocol_name]
-    #     # protocol = ProtocolClass()
-    #     self._set_new_protocol(protocol)
-
     def update_protocol(self):
         """Update current Protocol (get a new stimulus list if protocol
         exist.
