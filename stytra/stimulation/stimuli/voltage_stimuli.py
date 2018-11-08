@@ -1,7 +1,7 @@
-#try:
-    #import nidaqmx
-#except:
-    #print("No nidamax module found")
+# try:
+# import nidaqmx
+# except:
+# print("No nidamax module found")
 from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus, DynamicStimulus
 from time import sleep
 
@@ -10,9 +10,11 @@ try:
 except ImportError:
     pass
 
+
 class NIVoltageStimulus(Stimulus):
     def __init__(self, *args, dev="Dev1", chan="ao0"):
         import nidaqmx
+
         self.dev = dev
         self.chan = chan
 
@@ -44,7 +46,6 @@ class InterpolatedVoltageStimulus(NIVoltageStimulus, InterpolatedStimulus):
             print(task.read())
 
 
-
 class U3LabJackVoltageStimulus(Stimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,12 +56,16 @@ class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
         self.voltage_out = voltage
         super().__init__(*args, **kwargs)
 
-    def start (self):
-        chan_value = self.device.voltageToDACBits(self.voltage_out, dacNumber=0, is16Bits=False)
+    def start(self):
+        chan_value = self.device.voltageToDACBits(
+            self.voltage_out, dacNumber=0, is16Bits=False
+        )
         self.device.getFeedback(self.chan(chan_value))
 
 
-class InterpolatedU3LabJackVoltageStimulus(InterpolatedStimulus, DynamicStimulus, U3LabJackVoltageStimulus):
+class InterpolatedU3LabJackVoltageStimulus(
+    InterpolatedStimulus, DynamicStimulus, U3LabJackVoltageStimulus
+):
     def __init__(self, *args, **kwargs):
         self.voltage_out = 0
         dynamic_parameters = ["voltage_in_thermo", "voltage_in_peltier", "voltage_out"]
@@ -73,15 +78,14 @@ class InterpolatedU3LabJackVoltageStimulus(InterpolatedStimulus, DynamicStimulus
         super().update()
         device = u3.U3()
         chan = u3.DAC0_8
-        chan_value = device.voltageToDACBits(self.voltage_out, dacNumber=0, is16Bits=False)
+        chan_value = device.voltageToDACBits(
+            self.voltage_out, dacNumber=0, is16Bits=False
+        )
         device.getFeedback(chan(chan_value))
 
         device.configIO(FIOAnalog=15)
         self.voltage_in_thermo = device.getAIN(2, 32)
         self.voltage_in_peltier = device.getAIN(1, 32)
-
-
-
 
 
 if __name__ == "__main__":
@@ -90,6 +94,6 @@ if __name__ == "__main__":
     print("sending pulse")
 
 
-#if __name__=='__main__':
-    #stim = SetVoltageStimulus(dev="Dev2", chan="P07")
-    #stim.start()
+# if __name__=='__main__':
+# stim = SetVoltageStimulus(dev="Dev2", chan="P07")
+# stim.start()

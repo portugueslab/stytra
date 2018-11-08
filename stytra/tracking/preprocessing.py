@@ -13,9 +13,7 @@ from lightparam import Parametrized, Param
 class Prefilter:
     def __init__(self):
         super().__init__()
-        self.params = Parametrized(name="tracking/prefiltering",
-                                   params=self.process)
-
+        self.params = Parametrized(name="tracking/prefiltering", params=self.process)
 
     # We have to rely on class methods here, as Parametrized objects can only
     # live in the main process

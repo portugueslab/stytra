@@ -31,8 +31,7 @@ class AvtCamera(Camera):
         try:
             self.vimba = Vimba()
         except NameError:
-            raise Exception(
-                "The pymba package must be installed to use an AVT camera!")
+            raise Exception("The pymba package must be installed to use an AVT camera!")
 
         self.frame = None
 

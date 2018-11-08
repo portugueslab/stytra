@@ -129,7 +129,8 @@ class Stytra:
         if config["scope_triggering"] == "zmq":
             # Automatically use zmqTrigger if zmq is specified
             from stytra.triggering import ZmqTrigger
-            config['scope_triggering'] = ZmqTrigger(port='5555')
+
+            config["scope_triggering"] = ZmqTrigger(port="5555")
         # else:
         #     class_kwargs['scope_triggering'] = scope_triggering
 

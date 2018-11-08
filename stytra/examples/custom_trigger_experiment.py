@@ -37,8 +37,8 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.period_sec= Param(5.)
-        self.flash_duration=Param(2.)
+        self.period_sec = Param(5.)
+        self.flash_duration = Param(2.)
 
     def get_stim_sequence(self):
         stimuli = [
@@ -52,10 +52,10 @@ class FlashProtocol(Protocol):
 
 if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
+
     # Select a directory:
     app = QApplication([])
-    folder = QFileDialog.getExistingDirectory(caption='Trigger folder',
-                                              directory=None)
+    folder = QFileDialog.getExistingDirectory(caption="Trigger folder", directory=None)
 
     # Instantiate the trigger:
     if folder is not None:
@@ -63,6 +63,4 @@ if __name__ == "__main__":
 
         # Call stytra assigning the triggering. Note that stytra will wait for
         # the trigger only if the "wait for trigger" checkbox is ticked!
-        st = Stytra(app=app,
-                    protocols=[FlashProtocol],
-                    scope_triggering=trigger)
+        st = Stytra(app=app, protocols=[FlashProtocol], scope_triggering=trigger)

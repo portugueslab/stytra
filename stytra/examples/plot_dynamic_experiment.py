@@ -18,8 +18,7 @@ class MixedProtocol(Protocol):
         self.windmill_freq = Param(0.2)
         self.grating_vel = Param(10)
         self.stim_duration = Param(5.)
-        self.wave_shape = Param(value="square",
-                                limits=["square", "sinusoidal"])
+        self.wave_shape = Param(value="square", limits=["square", "sinusoidal"])
         self.n_arms = Param(10)
 
     def get_stim_sequence(self):
@@ -30,10 +29,7 @@ class MixedProtocol(Protocol):
         # Windmill
         STEPS = 0.005
         t = np.arange(0, d, STEPS)
-        theta = (
-            np.sin(2 * np.pi * t * self.windmill_freq)
-            * self.theta_amp
-        )
+        theta = np.sin(2 * np.pi * t * self.windmill_freq) * self.theta_amp
 
         t = [t[0]] + list(t + p) + [(t + 2 * p)[-1]]
         theta = [theta[0]] + list(theta) + [theta[-1]]
@@ -66,5 +62,4 @@ class MixedProtocol(Protocol):
 
 if __name__ == "__main__":
     # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(protocols=[MixedProtocol],
-               stim_plot=True)
+    s = Stytra(protocols=[MixedProtocol], stim_plot=True)

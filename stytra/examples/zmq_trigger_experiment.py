@@ -25,9 +25,7 @@ if __name__ == "__main__":
     # trigger = Crappy2PTrigger(r'C:\Users\lpetrucco\Desktop\dummydir')
     # trigger.start()
     trigger = ZmqTrigger(port="5555")
-    st = Stytra(
-        protocols=[FlashProtocol],
-        trigger=trigger)
+    st = Stytra(protocols=[FlashProtocol], trigger=trigger)
     # trigger.terminate_event.set()
     # print('terminating')
     # trigger.join()

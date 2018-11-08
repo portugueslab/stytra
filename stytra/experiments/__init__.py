@@ -134,7 +134,7 @@ class Experiment(QObject):
         # Use the DataCollector object to find the last used protocol,
         #  to restore it
         # self.protocol = protocol #self.dc.get_last_value(
-            # "stimulus_protocol_params")
+        # "stimulus_protocol_params")
         #
         # if default_protocol is not None:
         #     self.protocol = default_protocol
@@ -192,8 +192,7 @@ class Experiment(QObject):
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.filename_prefix() + name + "." + self.log_format,
-            category + "/" + name,
+            self.filename_prefix() + name + "." + self.log_format, category + "/" + name
         )
 
     def get_new_name(self):
@@ -215,8 +214,7 @@ class Experiment(QObject):
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
-        return os.path.join(
-            self.folder_name, self.filename_prefix())
+        return os.path.join(self.folder_name, self.filename_prefix())
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -344,8 +342,7 @@ class Experiment(QObject):
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
                 self.dc.add_static_data(
-                    self.protocol_runner.t_start,
-                    name="general/t_protocol_start"
+                    self.protocol_runner.t_start, name="general/t_protocol_start"
                 )
                 self.dc.add_static_data(
                     self.protocol_runner.t_end, name="general/t_protocol_end"
@@ -353,7 +350,8 @@ class Experiment(QObject):
 
                 if self.database is not None and self.use_db:
                     db_id = self.database.insert_experiment_data(
-                        self.dc.get_clean_dict(eliminate_df=True, convert_datetime=False
+                        self.dc.get_clean_dict(
+                            eliminate_df=True, convert_datetime=False
                         )
                     )
                 else:
@@ -361,8 +359,9 @@ class Experiment(QObject):
                 self.dc.add_static_data(db_id, name="general/db_index")
 
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
-                self.logger.info("Saved log files under {}".format(
-                    self.filename_base()))
+                self.logger.info(
+                    "Saved log files under {}".format(self.filename_base())
+                )
 
                 # save the stimulus movie if it is generated
                 movie, movie_times = self.window_display.widget_display.get_movie()
@@ -396,8 +395,9 @@ class Experiment(QObject):
                         )
 
             if self.protocol_runner.dynamic_log is not None:
-                self.save_log(self.protocol_runner.dynamic_log, "stimulus_log",
-                              "stimulus")
+                self.save_log(
+                    self.protocol_runner.dynamic_log, "stimulus_log", "stimulus"
+                )
 
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()

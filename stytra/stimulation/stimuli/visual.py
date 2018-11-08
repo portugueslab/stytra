@@ -13,6 +13,7 @@ from PyQt5.QtGui import QTransform, QPolygon, QRegion
 from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
+
 class VisualStimulus(Stimulus):
     """ Stimulus class to paint programmatically on a canvas.
     For this subclass of Stimulus, their core function (paint()) is
@@ -349,7 +350,9 @@ class SeamlessImageStimulus(BackgroundStimulus):
         # Get background image from folder:
         if isinstance(self._background, str):
             self._qbackground = qimage2ndarray.array2qimage(
-                existing_file_background(self._experiment.asset_dir + "/" + self._background)
+                existing_file_background(
+                    self._experiment.asset_dir + "/" + self._background
+                )
             )
         else:
             self._qbackground = qimage2ndarray.array2qimage(self._background)
@@ -410,7 +413,7 @@ class GratingStimulus(BackgroundStimulus):
         elif self.wave_shape == "sine":
             # Define sinusoidally varying weights for the two colors and then
             #  sum them in the pattern
-            w = (np.sin(2 * np.pi * np.linspace(1/l, 1, l)) + 1) / 2
+            w = (np.sin(2 * np.pi * np.linspace(1 / l, 1, l)) + 1) / 2
 
             self._pattern = (
                 w[:, None] * np.array(self.color_1)[None, :]

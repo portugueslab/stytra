@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
     QSplitter,
     QDockWidget,
     QToolButton,
-    QFileDialog
+    QFileDialog,
 )
 from PyQt5.QtGui import QPalette
 
@@ -57,8 +57,11 @@ class StatusMessageLabel(QLabel):
 
     def setMessage(self, text):
         if len(text) == 0:
-            self.setStyleSheet("background-color: {};".format(
-                self.palette().color(QPalette.Button).name()))
+            self.setStyleSheet(
+                "background-color: {};".format(
+                    self.palette().color(QPalette.Button).name()
+                )
+            )
             self.setText("")
             return
         if text[0] == "E":
@@ -66,8 +69,11 @@ class StatusMessageLabel(QLabel):
         elif text[0] == "W":
             self.setStyleSheet("background-color: #d8b02d;")
         else:
-            self.setStyleSheet("background-color: {};".format(
-                self.palette().color(QPalette.Button).name()))
+            self.setStyleSheet(
+                "background-color: {};".format(
+                    self.palette().color(QPalette.Button).name()
+                )
+            )
         self.setText(text[2:])
 
 
@@ -113,8 +119,7 @@ class SimpleExperimentWindow(QMainWindow):
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner,
-                                                      self)
+        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
         self.toolbar_control.setObjectName("toolbar")
 
         # Connect signals from the protocol_control:
@@ -124,8 +129,9 @@ class SimpleExperimentWindow(QMainWindow):
         act_metadata = self.toolbar_control.addAction("Edit metadata")
         act_metadata.triggered.connect(self.show_metadata_gui)
 
-        self.act_folder = self.toolbar_control.addAction("Save in {}".format(
-            self.experiment.base_dir))
+        self.act_folder = self.toolbar_control.addAction(
+            "Save in {}".format(self.experiment.base_dir)
+        )
         self.act_folder.triggered.connect(self.change_folder_gui)
 
         if self.experiment.database is not None:
@@ -153,12 +159,12 @@ class SimpleExperimentWindow(QMainWindow):
         self.metadata_win = None
 
     def change_folder_gui(self):
-        folder = QFileDialog.getExistingDirectory(caption='Trigger folder',
-                                                  directory=self.experiment.base_dir)
+        folder = QFileDialog.getExistingDirectory(
+            caption="Trigger folder", directory=self.experiment.base_dir
+        )
         if folder is not None:
             self.experiment.base_dir = folder
-            self.act_folder.setText("Save in {}".format(
-                self.experiment.base_dir))
+            self.act_folder.setText("Save in {}".format(self.experiment.base_dir))
 
     def show_metadata_gui(self):
         """ """
@@ -199,8 +205,11 @@ class SimpleExperimentWindow(QMainWindow):
 
     def toggle_db(self):
         if self.chk_db.isChecked():
-            self.chk_db.setStyleSheet("background_color: {}; border: none;".format(
-                self.palette().color(QPalette.Button).name()))
+            self.chk_db.setStyleSheet(
+                "background_color: {}; border: none;".format(
+                    self.palette().color(QPalette.Button).name()
+                )
+            )
             self.experiment.use_db = True
         else:
             self.chk_db.setStyleSheet("background_color: #dc322f; border: none;")
@@ -243,7 +252,8 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         )
 
         self.status_camera = QueueStatusMessageLabel(
-            self.experiment, self.experiment.camera.message_queue)
+            self.experiment, self.experiment.camera.message_queue
+        )
 
     def construct_ui(self):
         previous_widget = super().construct_ui()
@@ -296,8 +306,7 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         """ """
 
         super().construct_ui()
-        self.experiment.gui_timer.timeout.connect(
-            self.stream_plot.update)
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
         # TODO put in right place
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
@@ -359,8 +368,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.track_params_wnd = None
 
-        self.status_tracking = QueueStatusMessageLabel(self.experiment,
-                                                       self.experiment.frame_dispatchers[0].message_queue)
+        self.status_tracking = QueueStatusMessageLabel(
+            self.experiment, self.experiment.frame_dispatchers[0].message_queue
+        )
 
     def construct_ui(self):
         """ """

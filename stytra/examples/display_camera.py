@@ -8,6 +8,7 @@ import tempfile
 
 class Nostim(Protocol):
     name = "empty protocol"
+
     def get_stim_sequence(self):
         return [Pause(duration=10)]
 

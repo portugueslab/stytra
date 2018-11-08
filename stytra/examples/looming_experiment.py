@@ -67,8 +67,7 @@ class LoomingProtocol(Protocol):
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(5,
-                                                                       5)))
+            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(5, 5)))
 
         return stimuli
 

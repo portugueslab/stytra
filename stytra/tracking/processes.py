@@ -31,9 +31,7 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(
-        prefilter=Prefilter, bgsub=BackgorundSubtractor
-    )
+    prepmethods = dict(prefilter=Prefilter, bgsub=BackgorundSubtractor)
     return prepmethods.get(name, None)
 
 
@@ -140,10 +138,14 @@ class FrameDispatcher(FrameProcess):
                 processed = frame
 
             if self.tracking_cls is not None:
-                message, output = tracker.detect(processed, **self.processing_parameters)
+                message, output = tracker.detect(
+                    processed, **self.processing_parameters
+                )
 
                 if message == "":
-                    self.message_queue.put("W:No message from tracking function".format(frame_idx))
+                    self.message_queue.put(
+                        "W:No message from tracking function".format(frame_idx)
+                    )
                 else:
                     self.message_queue.put(message)
 
@@ -167,10 +169,13 @@ class FrameDispatcher(FrameProcess):
                         self.send_to_gui(tracker.diagnostic_image)
                     except AttributeError:
                         if processed.shape != frame.shape:
-                            processed = cv2.resize(processed, None,
-                                                   fx=frame.shape[0]/processed.shape[0],
-                                                   fy=frame.shape[1]/processed.shape[1],
-                                                   interpolation=cv2.INTER_AREA)
+                            processed = cv2.resize(
+                                processed,
+                                None,
+                                fx=frame.shape[0] / processed.shape[0],
+                                fy=frame.shape[1] / processed.shape[1],
+                                interpolation=cv2.INTER_AREA,
+                            )
                         self.send_to_gui(processed)
                 else:
                     self.send_to_gui(frame)

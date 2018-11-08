@@ -10,12 +10,12 @@ from lightparam import Parametrized, Param
 
 class EyeTrackingMethod:
     """General eyes tracking method."""
+
     name = "eyes"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.params = Parametrized(name="tracking/eyes",
-                                   params=self.detect)
+        self.params = Parametrized(name="tracking/eyes", params=self.detect)
 
         headers = []
         for i in range(2):
@@ -86,8 +86,14 @@ class EyeTrackingMethod:
             e = (np.nan,) * 10
             message = "eyes not detected!"
         else:
-            e = e[0][0][::-1] + e[0][1][::-1] + (-e[0][2],) + \
-                e[1][0][::-1] + e[1][1][::-1] + (-e[1][2],)
+            e = (
+                e[0][0][::-1]
+                + e[0][1][::-1]
+                + (-e[0][2],)
+                + e[1][0][::-1]
+                + e[1][1][::-1]
+                + (-e[1][2],)
+            )
         return message, np.array(e)
 
 
@@ -178,4 +184,3 @@ def _fit_ellipse(thresholded_image):
     else:
         # Not at least two eyes + maybe dirt found...
         return False
-

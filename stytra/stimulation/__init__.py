@@ -379,7 +379,7 @@ class Protocol(ParametrizedQt):
             assert len(self.__class__.name) > 0
         except AssertionError:
             raise ValueError("Protocol does not have a specified name")
-        super().__init__(name="stimulus/protocol/"+self.__class__.name)
+        super().__init__(name="stimulus/protocol/" + self.__class__.name)
 
         self.pre_pause = Param(0.)
         self.post_pause = Param(0.)
