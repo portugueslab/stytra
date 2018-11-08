@@ -146,7 +146,7 @@ class Stytra:
             base = CameraExperiment
             if "tracking_config" in class_kwargs.keys():
                 base = TrackingExperiment
-                if not class_kwargs["tracking_config"]["embedded"]:
+                if not class_kwargs["tracking_config"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
             if "recording_config" in class_kwargs.keys():
                 base = SwimmingRecordingExperiment
