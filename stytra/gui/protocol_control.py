@@ -122,8 +122,7 @@ class ProtocolControlToolbar(QToolBar):
         # If experiment started, add expected end time:
         if self.protocol_runner.t_start is not None:
             exp_end_time = self.protocol_runner.t_start + datetime.timedelta(
-                self.protocol_runner.duration
-            )
+                seconds=self.protocol_runner.duration)
             time_info += " - Ending at {}:{}:{}".format(
                 exp_end_time.hour, exp_end_time.minute, exp_end_time.second
             )
