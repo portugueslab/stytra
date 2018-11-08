@@ -34,6 +34,7 @@ class AvtCamera(Camera):
             raise Exception("The pymba package must be installed to use an AVT camera!")
 
         self.frame = None
+        self.debug = False
 
     def open_camera(self):
         """ """
