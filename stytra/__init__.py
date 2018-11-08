@@ -115,7 +115,6 @@ class Stytra:
             config = json.load(open(default_config_file))
         else:
             config = dict()
-        print(config)
 
         # Get rest of configuration parameters from the procotol:
         try:
@@ -125,7 +124,6 @@ class Stytra:
 
         recursive_update(config, extra_config)
 
-        print(config)
         if config.get("scope_triggering", None) == "zmq":
             # Automatically use zmqTrigger if zmq is specified
             from stytra.triggering import ZmqTrigger
