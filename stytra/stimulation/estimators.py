@@ -42,7 +42,9 @@ class VigourMotionEstimator(Estimator):
         new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
-        vigor = np.std(np.array(past_tail_motion[:, 1]))
+        vigor = np.nanstd(np.array(past_tail_motion[:, 1]))
+        if np.isnan(vigor):
+            vigor = 0
         self.log.update_list((past_tail_motion[-1, 0], vigor))
         return vigor * self.base_gain
 

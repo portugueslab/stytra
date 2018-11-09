@@ -50,7 +50,8 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         super().__init__(*args, **kwargs)
         self.name = "closed loop 1D"
         self.fish_velocity = 0
-        self.dynamic_parameters = ["vel", "fish_velocity", "gain"]
+        self.dynamic_parameters = ["vel", "base_vel",
+                                   "gain", "lag", "fish_swimming"]
         self.base_vel = base_vel
         self.fish_velocity = 0
         self.vel = base_vel
