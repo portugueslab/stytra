@@ -7,6 +7,14 @@ from lightparam import Param
 
 # Here we present the code used for the replication of the Portugues et al
 # 2011 paper, as presented in [cit. stytra].
+# The protocol defined presents the fish with white and black gratings
+#  moving backward with repect to the fish. When the fish swims they are
+# dragged forward according to the estimated fish velocity, in a closed loop
+# configuration. This is implemented in the ClosedLoop1DGratings class. The
+# gain that converts the tail sdisplacement to grating movements is modified
+# every three grating movements. Gain 1 means normal velocity (around 20 mm/s
+#  maximum in a bout). Gains 0.5 and 1.5 are defined accordingly.
+
 # Running this script on a setup configured according to the stytra
 # configuration should allow for the replication of the same experimental
 # conditions.
@@ -49,7 +57,10 @@ class Portugues2011Protocol(Protocol):
         p = self.inter_stim_pause / 2  #
         v = self.grating_vel
         d = self.grating_duration
+        n_reps = self.protocol_reps
 
+        # Define the sequence of the gain values we will use, and then repeat
+        #  it n_reps times
         gain_values = ([1] * 3 +
                        [self.high_gain] * 3 +
                        [self.low_gain] * 3 +
@@ -62,11 +73,6 @@ class Portugues2011Protocol(Protocol):
         t = [0]
         vel = [0]
         gain = [0]
-        n_reps = self.protocol_reps
-
-        # t.extend(t_base)
-        # vel.extend(vel_base)
-        # gain.extend([0] * 2 + [gain_values[0]] * 2 + [0] * 2)
 
         # Low, medium, high gain:
         for g in gain_values:
