@@ -204,7 +204,8 @@ class Experiment(QObject):
 
     @property
     def folder_name(self):
-        foldername = os.path.join(self.base_dir, self.get_new_name())
+        foldername = os.path.join(self.base_dir, self.protocol.__class__.name,
+                                  self.get_new_name())
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
