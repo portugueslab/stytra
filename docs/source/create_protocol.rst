@@ -5,10 +5,11 @@ Here we see examples of how to create a Protocol in stytra.
 
 Create stimulus sequence
 ------------------------
-In order to design a new experiment, a new Protocol has to be defined. By
-defining the output list of the
-protocol :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>` method, the sequence of the experiment can be
-defined.
+In order to design a new experiment, we need to implement a new Protocol.
+The essential feature of the protocol is the list of stimuli that composes it
+. To create it, we need to define the
+protocol  method :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`.
+This metod will return a list of stimuli that stytra will run.
 
 Example::
 
@@ -30,15 +31,16 @@ Example::
 Parameterise the protocol
 -------------------------
 
-Stytra uses the `Parameter`_ class from pyqtgraph to handle parameterization of its
-classes, including Protocol. For a complete description of Parameters inside
-stytra see :ref:`Parameterisation`.
-In the Protocol, parameters that have to be defined by the user can be defined by the
+Stytra uses a custom `Parameter`_ class from the lightparam library (https://github.com/portugueslab/lightparam) to
+handle parameterization of its
+classes, including the Protocol class.
+For a complete description of Parameters
+inside stytra see :ref:`Parameterisation`.
+A protocol does not necessarily need to be parameterized. This is just
+convenient in case we want the possibility of changing parameters from the
+interface.
 :meth:`Protocol.__init__() <stytra.stimulation.protocols.Protocol.__init__()>`
-with the :meth:`Protocol.set_new_param() <stytra.stimulation.protocols.Protocol.set_new_param()>`
-method.
 
-.. _`Parameter`: http://www.pyqtgraph.org/documentation/parametertree/parameter.html
 
 Example::
 
