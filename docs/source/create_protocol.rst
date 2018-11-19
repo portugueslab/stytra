@@ -31,7 +31,7 @@ Example::
 Parameterise the protocol
 -------------------------
 
-Stytra uses a custom `Parameter`_ class from the lightparam library (https://github.com/portugueslab/lightparam) to
+Stytra uses a custom `Param` class from the `lightparam library <https://github.com/portugueslab/lightparam>`_ to
 handle parameterization of its
 classes, including the Protocol class.
 For a complete description of Parameters
