@@ -8,7 +8,7 @@ stimulus screen on the monitor you are using for the experiment. Then, hit
 the show calibration button and drag around the ROI in the stytra GUI until
 the red rectangle covers the area you want to use for the stimulus and the
 cross is at the center. Finally, specify in the spin box the final size of
-the bottom edge of the calibrator in centimeters.
+the lateral edge of the calibrator in centimeters.
 
 The calibration is saved in the last_stytra_config.json file, so once you
 have done it it maintains the same calibration for all subsequent experiments.

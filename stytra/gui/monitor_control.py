@@ -144,7 +144,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.widget_proj_viewer = ProjectorViewer(display=experiment.window_display)
         self.container_layout.addWidget(self.widget_proj_viewer)
 
-        # self.widget_proj_viewer.sig_dim_changed.connect(self.update_size)
+        self.widget_proj_viewer.sig_dim_changed.connect(self.update_size)
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton("Show calibration")
@@ -165,13 +165,13 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         self.container_layout.addLayout(self.layout_calibrate)
         self.setLayout(self.container_layout)
-    #
-    # def update_size(self, size):
-    #     print(self.calibrator.mm_px)
-    #     self.block_signal = True
-    #     self.calibrator.length_mm = size[1] * self.calibrator.mm_px
-    #     self.block_signal = False
-    #     self.calibrator_len_spin.update_display()
+
+    def update_size(self, size):
+        pass
+        # # print('updating')
+        self.calibrator.set_pixel_scale(size[0], size[1])
+        self.calibrator_len_spin.update_display()
+        # # print(self.calibrator.mm_px)
 
     def toggle_calibration(self):
         """ """
