@@ -67,10 +67,6 @@ class StimulusDisplayWindow(ParametrizedWidget):
         )
         self.widget_display.setMaximumSize(2000, 2000)
 
-        # self.add_params(
-        #     pos=dict(value=(0, 0), visible=False),
-        #     size=dict(value=(400, 400), visible=False),
-        # )
         self.pos = Param((0, 0))
         self.size = Param((400, 400))
 
@@ -81,11 +77,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
     def set_dims(self):
         """ Set monitor dimensions when changed from the control GUI.
         """
-        # print('setting dimensions')
-        # pass
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
-        self.widget_display.calibrator.set_pixel_scale(*self.size)
-        self.widget_display.calibrator.set_physical_scale()
 
 
 class StimDisplayWidget:
