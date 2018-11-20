@@ -30,7 +30,7 @@ class Stytra:
 
     Parameters
     ==========
-        protocols : list(Protocol)
+        protocol : Protocol
             the protocols to be made available from the dropdown
 
         display_config : dict

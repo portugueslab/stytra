@@ -36,7 +36,7 @@ class Experiment(QObject):
     ----------
     app : QApplication()
         Application to run the Experiment QObject.
-    protocols : list of :class:`Protocol <stytra.stimulation.Protocol>` classes
+    protocol : object of :class:`Protocol <stytra.stimulation.Protocol>`
         list of protocols that can be run in this experiment session.
     directory : str
         (optional) Directory where metadata will be saved. If None, nothing
@@ -75,7 +75,6 @@ class Experiment(QObject):
         self,
         app=None,
         protocol=None,
-        default_protocol=None,
         dir_save=None,
         dir_assets="",
         database=None,
@@ -248,7 +247,8 @@ class Experiment(QObject):
             self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
-        # self.window_main.toolbar_control.label_prot.setText(self.protocol)
+
+        self.window_main.status_display.addMessage("Hello hello", persist=-1)
         self.window_main.construct_ui()
         self.window_main.show()
 

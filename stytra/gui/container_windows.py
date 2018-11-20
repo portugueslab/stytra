@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QPalette
 
-from lightparam.gui.collapsible_widget import CollapsibleWidget
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
@@ -27,6 +26,7 @@ from stytra.gui.camera_display import (
     CameraEmbeddedTrackingSelection,
     CameraViewFish,
 )
+from stytra.gui.status_display import StatusMessageDisplay
 
 from lightparam.gui import ParameterGui
 
@@ -47,50 +47,6 @@ class QPlainTextEditLogger(logging.Handler):
             datetime.datetime.now().strftime("[%H:%M:%S]"), self.format(record)
         )
         self.widget.appendPlainText(msg)
-
-
-class StatusMessageLabel(QLabel):
-    """ """
-
-    def __init__(self, *args, debug_on=False, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def setMessage(self, text):
-        if len(text) == 0:
-            self.setStyleSheet(
-                "background-color: {};".format(
-                    self.palette().color(QPalette.Button).name()
-                )
-            )
-            self.setText("")
-            return
-        if text[0] == "E":
-            self.setStyleSheet("background-color: #dc322f;")
-        elif text[0] == "W":
-            self.setStyleSheet("background-color: #d8b02d;")
-        else:
-            self.setStyleSheet(
-                "background-color: {};".format(
-                    self.palette().color(QPalette.Button).name()
-                )
-            )
-        self.setText(text[2:])
-
-
-class QueueStatusMessageLabel(StatusMessageLabel):
-    def __init__(self, experiment, queue: Queue):
-        super().__init__()
-        self.queue = queue
-        experiment.gui_timer.timeout.connect(self.update_message)
-
-    def update_message(self):
-        message = ""
-        while True:
-            try:
-                message = self.queue.get(timeout=0.0001)
-            except Empty:
-                break
-        self.setMessage(message)
 
 
 class SimpleExperimentWindow(QMainWindow):
@@ -149,12 +105,8 @@ class SimpleExperimentWindow(QMainWindow):
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
 
-        if self.experiment.database is not None:
-            self.status_db = StatusMessageLabel()
-            self.statusBar().addWidget(self.status_db)
-
-        self.status_metadata = StatusMessageLabel()
-        self.statusBar().addWidget(self.status_metadata)
+        self.status_display = StatusMessageDisplay()
+        self.statusBar().addWidget(self.status_display)
 
         self.metadata_win = None
 
@@ -251,14 +203,14 @@ class CameraExperimentWindow(SimpleExperimentWindow):
             time_past=5, round_bounds=10, compact=True
         )
 
-        self.status_camera = QueueStatusMessageLabel(
-            self.experiment, self.experiment.camera.message_queue
-        )
+        self.status_display.addMessageQueue(self.experiment.camera.message_queue)
+
 
     def construct_ui(self):
         previous_widget = super().construct_ui()
 
         self.experiment.gui_timer.timeout.connect(self.plot_framerate.update)
+        self.experiment.gui_timer.timeout.connect(self.status_display.refresh)
 
         self.setCentralWidget(previous_widget)
         dockCamera = QDockWidget("Camera", self)
@@ -272,8 +224,6 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
         self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
         self.docks.extend([dockCamera, dockFramerate])
-
-        self.statusBar().insertWidget(0, self.status_camera)
 
         return previous_widget
 
@@ -368,9 +318,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.track_params_wnd = None
 
-        self.status_tracking = QueueStatusMessageLabel(
-            self.experiment, self.experiment.frame_dispatchers[0].message_queue
-        )
+        for fd in self.experiment.frame_dispatchers:
+            self.status_display.addMessageQueue(fd.message_queue)
 
     def construct_ui(self):
         """ """
@@ -384,7 +333,6 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
-        self.statusBar().insertWidget(1, self.status_tracking)
         return previous_widget
 
     def open_tracking_params_tree(self):
