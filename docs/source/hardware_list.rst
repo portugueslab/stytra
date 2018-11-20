@@ -79,7 +79,9 @@ A very cheap version of the behavioural setup can be built by replacing the
 projector with small LED display and the camera with a little objective. The
 dimensions of this setup are quite small and parts can be kept in place with
 a basic custom-made frame that can be laser-cut or even made with cardboard.
-.. image:: ../hardware_list/pictures/parts_full.png
-   :scale: 30%
+
+
+.. image:: ../hardware_list/pictures/low_cost.png
+   :scale: 15%
    :alt: alternate text
    :align: center
