@@ -38,8 +38,15 @@ Installing camera APIs
 xiCam: Ximea
 ............
 
-Download the Ximea SDK, install it with Python support and copy the contents of the relevant directory (python3
+Download the Ximea SDK, install it with Python support and copy the contents
+of the relevant directory (python3)
 
+
+pymba: AVT
+............
+
+Go to the `Allied Vision software webpage <https://www.alliedvision.com/en/products/software.html>`_
+and download and install the Vimba SDK. Then install the python wrapper`pymba <https://github.com/morefigs/pymba>`_.
 
 
 spinnaker: Point Grey / FLIR
