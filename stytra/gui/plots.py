@@ -64,6 +64,16 @@ class StreamingPositionPlot(pg.GraphicsWindow):
             pass
 
 
+class StreamPlotConfig(QWidget):
+    """ Widget for configuring streaming plots
+
+
+    """
+    def __init__(self, sp):
+        self.sp = sp
+        self.setLayout(QVBoxLayout())
+
+
 class MultiStreamPlot(QWidget):
     """Window to plot live data that are accumulated by a DAtaAccumulator
     object.

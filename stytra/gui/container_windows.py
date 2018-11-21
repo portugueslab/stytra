@@ -329,7 +329,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         )  # TODO put in right place
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
-        monitoring_dock = QDockWidget("Tracking", self)
+        monitoring_dock = QDockWidget("Monitoring", self)
+        monitoring_dock.setObjectName("Monitoring")
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
