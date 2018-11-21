@@ -10,8 +10,8 @@ def rot_mat(theta):
 
 
 class Estimator:
-    def __init__(self, data_acc: QueueDataAccumulator):
-        self.data_acc = data_acc
+    def __init__(self, acc_tracking: QueueDataAccumulator):
+        self.acc_tracking = acc_tracking
 
 
 class VigourMotionEstimator(Estimator):
@@ -36,9 +36,9 @@ class VigourMotionEstimator(Estimator):
         """
         vigour_n_samples = max(int(round(self.vigour_window / self.last_dt)), 2)
         n_samples_lag = max(int(round(lag / self.last_dt)), 0)
-        past_tail_motion = self.data_acc.get_last_n(vigour_n_samples + n_samples_lag)[
-            0:vigour_n_samples
-        ]
+        past_tail_motion = self.acc_tracking.get_last_n(
+            vigour_n_samples + n_samples_lag
+        )[0:vigour_n_samples]
         new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
@@ -59,7 +59,7 @@ class PositionEstimator(Estimator):
         past_coords = {
             name: value
             for name, value in zip(
-                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
+                self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
@@ -68,7 +68,7 @@ class PositionEstimator(Estimator):
         past_coords = {
             name: value
             for name, value in zip(
-                self.data_acc.header_list, self.data_acc.get_last_n(1)[0, :]
+                self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
         if self.calibrator.params.cam_to_proj is None or not np.isfinite(

@@ -182,7 +182,9 @@ def interpolate_nan(a):
     finite = np.all(np.isfinite(a), 1)
     if np.sum(finite) < 2:
         return np.nan_to_num(a)
-    f = interp1d(inds[finite], a[finite, :], axis=0, bounds_error=False, fill_value="extrapolate")
+    f = interp1d(
+        inds[finite], a[finite, :], axis=0, bounds_error=False, fill_value="extrapolate"
+    )
     a[~finite, :] = f(inds[~finite])
     return a
 

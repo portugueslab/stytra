@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QSizePolicy,
+    QCheckBox,
+    QGroupBox,
 )
 import pyqtgraph as pg
 import numpy as np
@@ -64,16 +66,6 @@ class StreamingPositionPlot(pg.GraphicsWindow):
             pass
 
 
-class StreamPlotConfig(QWidget):
-    """ Widget for configuring streaming plots
-
-
-    """
-    def __init__(self, sp):
-        self.sp = sp
-        self.setLayout(QVBoxLayout())
-
-
 class MultiStreamPlot(QWidget):
     """Window to plot live data that are accumulated by a DAtaAccumulator
     object.
@@ -114,6 +106,11 @@ class MultiStreamPlot(QWidget):
         if not compact:
             self.control_layout = QHBoxLayout()
             self.control_layout.setContentsMargins(0, 0, 0, 0)
+
+            self.btn_select = QPushButton("Choose variables")
+            self.btn_select.clicked.connect(self.show_select)
+            self.control_layout.addWidget(self.btn_select)
+            self.wnd_config = None
 
             self.btn_freeze = QPushButton()
             self.btn_freeze.setMinimumSize(80, 16)
@@ -445,3 +442,49 @@ class MultiStreamPlot(QWidget):
             self.valueLabels
         ):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
+
+    def show_select(self):
+        self.wnd_config = StreamPlotConfig(self)
+        self.wnd_config.show()
+
+
+class TailStreamPlot(QWidget):
+    def __init__(self):
+        super().__init__()
+
+
+class StreamPlotConfig(QWidget):
+    """ Widget for configuring streaming plots
+    """
+
+    def __init__(self, sp: MultiStreamPlot):
+        super().__init__()
+        self.sp = sp
+        self.setLayout(QVBoxLayout())
+        self.accs = sp.accumulators
+        self.checkboxes = []
+        for ac in sp.accumulators:
+            acccheck = []
+            gb = QGroupBox(ac.name)
+            gb.setLayout(QVBoxLayout())
+            for item in ac.header_list[1:]:
+                chk = QCheckBox(item)
+                if ac.monitored_headers is None:
+                    chk.setChecked(True)
+                elif item in ac.monitored_headers:
+                    chk.setChecked(True)
+
+                chk.stateChanged.connect(self.refresh_plots)
+                acccheck.append(chk)
+                gb.layout().addWidget(chk)
+            self.checkboxes.append(acccheck)
+            self.layout().addWidget(gb)
+
+    def refresh_plots(self):
+        self.sp.remove_streams()
+        for chkboxes, ac in zip(self.checkboxes, self.accs):
+            sel_headers = []
+            for item, chk in zip(ac.header_list[1:], chkboxes):
+                if chk.isChecked():
+                    sel_headers.append(item)
+            self.sp.add_stream(ac, sel_headers)

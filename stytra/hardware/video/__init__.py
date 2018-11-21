@@ -120,7 +120,7 @@ class CameraSource(VideoSource):
         self.replay_fps = 0
         self.cam = None
         self.paused = False
-        self.ring_buffer = None # RingBuffer(600) # TODO make it parameterized
+        self.ring_buffer = None  # RingBuffer(600) # TODO make it parameterized
 
     def run(self):
         """
@@ -153,7 +153,7 @@ class CameraSource(VideoSource):
                         param_dict = self.control_queue.get(timeout=0.0001)
                         self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
                         self.paused = param_dict.get("paused", self.paused)
-                        if len(param_dict)>0:
+                        if len(param_dict) > 0:
                             print(param_dict)
                         for param, value in param_dict.items():
                             message = self.cam.set(param, value)
@@ -175,7 +175,7 @@ class CameraSource(VideoSource):
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
                     pass
-                delta_t = 1/self.replay_fps
+                delta_t = 1 / self.replay_fps
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:

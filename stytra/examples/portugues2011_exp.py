@@ -23,17 +23,12 @@ from lightparam import Param
 class Portugues2011Protocol(Protocol):
     name = "portugues_2011"
     stytra_config = dict(
-        tracking_config=dict(
-            tracking_method="tail",
-            estimator="vigor"
-        ),
+        tracking_config=dict(tracking_method="tail", estimator="vigor"),
         # Replace this example file with the desired camera config, such as
         # camera_config = dict(type="ximea")
         # for a ximea camera, etc. Not needed if the setup already has the
         # stytra_setup_config.json file
-        camera_config=dict(
-            video_file=r"J:\_Shared\stytra\fish_tail_anki.h5"
-        ),
+        camera_config=dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5"),
     )
 
     def __init__(self):
@@ -61,12 +56,14 @@ class Portugues2011Protocol(Protocol):
 
         # Define the sequence of the gain values we will use, and then repeat
         #  it n_reps times
-        gain_values = ([1] * 3 +
-                       [self.high_gain] * 3 +
-                       [self.low_gain] * 3 +
-                       [1] * 3 +
-                       [self.low_gain] * 3 +
-                       [self.high_gain] * 3) * n_reps
+        gain_values = (
+            [1] * 3
+            + [self.high_gain] * 3
+            + [self.low_gain] * 3
+            + [1] * 3
+            + [self.low_gain] * 3
+            + [self.high_gain] * 3
+        ) * n_reps
 
         t_base = [0, p, p, p + d, p + d, 2 * p + d]
         vel_base = [0, 0, -v, -v, 0, 0]
@@ -97,4 +94,3 @@ class Portugues2011Protocol(Protocol):
 
 if __name__ == "__main__":
     Stytra(Portugues2011Protocol())
-

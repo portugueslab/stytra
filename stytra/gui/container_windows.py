@@ -205,7 +205,6 @@ class CameraExperimentWindow(SimpleExperimentWindow):
 
         self.status_display.addMessageQueue(self.experiment.camera.message_queue)
 
-
     def construct_ui(self):
         previous_widget = super().construct_ui()
 

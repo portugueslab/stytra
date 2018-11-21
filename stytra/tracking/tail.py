@@ -29,14 +29,17 @@ class CentroidTrackingMethod(TailTrackingMethod):
         self.accumulator_headers = ["tail_sum"] + [
             "theta_{:02}".format(i) for i in range(self.params.n_segments)
         ]
+        self.resting_angles = None
 
     def detect(
         self,
         im,
         tail_start: Param((0, 0), gui=False),
         tail_length: Param((1, 1), gui=False),
-        n_segments: Param(12),
-        window_size: Param(7),
+        n_segments: Param(12, (1, 50)),
+        n_output_segments: Param(9, (1, 30)),
+        reset_zero: Param(False),
+        window_size: Param(7, (1, 15)),
         **extraparams
     ):
         """Finds the tail for an embedded fish, given the starting point and
@@ -108,7 +111,15 @@ class CentroidTrackingMethod(TailTrackingMethod):
             angles.append(abs_angle)
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
-        angles = list(np.unwrap(np.array(angles)))
+        angles = np.unwrap(np.array(angles))
+
+        if reset_zero:
+            if self.resting_angles is None:
+                self.resting_angles = angles
+            else:
+                self.resting_angles = self.resting_angles * 0.5 + angles * 0.5
+
+        angles = angles - (self.resting_angles or 0)
         return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[:]
 
 

@@ -12,7 +12,10 @@ class ClosedLoop1DProt(Protocol):
 
     stytra_config = dict(
         tracking_config=dict(embedded=True, tracking_method="tail", estimator="vigor"),
-        display_config=dict(full_screen=True),
+        camera_config=dict(
+            video_file=r"J:\_Shared\stytra_resources\videos\fish_bout_left_front_right.h5"
+        ),
+        display_config=dict(full_screen=False),
     )
 
     def __init__(self):

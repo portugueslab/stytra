@@ -203,8 +203,9 @@ class Experiment(QObject):
 
     @property
     def folder_name(self):
-        foldername = os.path.join(self.base_dir, self.protocol.__class__.name,
-                                  self.get_new_name())
+        foldername = os.path.join(
+            self.base_dir, self.protocol.__class__.name, self.get_new_name()
+        )
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
@@ -244,11 +245,9 @@ class Experiment(QObject):
             self.window_main = DynamicStimExperimentWindow(self)
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
             self.gui_timer.start(1000 // 60)
-            self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
 
-        self.window_main.status_display.addMessage("Hello hello", persist=-1)
         self.window_main.construct_ui()
         self.window_main.show()
 
