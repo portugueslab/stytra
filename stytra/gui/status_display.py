@@ -75,7 +75,7 @@ class StatusMessageDisplay(QWidget):
         for msg in self.new_messages:
             self.layout().addWidget(msg)
 
-        for key in self.current_messages.keys():
+        for key in list(self.current_messages.keys()):
             if self.current_messages[key].is_expired(t):
                 self.layout().removeWidget(self.current_messages[key])
                 self.current_messages.pop(key)
