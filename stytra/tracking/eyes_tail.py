@@ -12,7 +12,7 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
     def __init__(self):
         super().__init__()
         headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params["n_segments"])
+            "theta_{:02}".format(i) for i in range(self.params["n_output_segments"])
         ]
         [
             headers.extend(

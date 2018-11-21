@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QCheckBox,
     QVBoxLayout,
-    QSplitter,
     QDockWidget,
     QToolButton,
     QFileDialog,
@@ -19,7 +18,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QPalette
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
-from stytra.gui.plots import StreamingPositionPlot, MultiStreamPlot
+from stytra.gui.plots import MultiStreamPlot, TailStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
     CameraViewWidget,
@@ -295,6 +294,10 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
+        if tail:
+            self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
+            self.monitoring_layout.addWidget(self.tail_widget)
+
         self.layout_track_btns = QHBoxLayout()
         self.layout_track_btns.setContentsMargins(0, 0, 0, 0)
 
@@ -325,7 +328,12 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         previous_widget = super().construct_ui()
         self.experiment.gui_timer.timeout.connect(
             self.stream_plot.update
-        )  # TODO put in right place
+
+        )
+        if self.tail:
+            self.experiment.gui_timer.timeout.connect(
+                self.tail_widget.update
+            )
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
         monitoring_dock = QDockWidget("Monitoring", self)
@@ -366,38 +374,3 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.experiment.tracking_method.get_clean_values,
             open(self.experiment.filename_base() + "tracking_params.json"),
         )
-
-
-class VRExperimentWindow(SimpleExperimentWindow):
-    """ """
-
-    def reconfigure_ui(self):
-        """ """
-        self.main_layout = QSplitter()
-        self.monitoring_widget = QWidget()
-        self.monitoring_layout = QVBoxLayout()
-        self.monitoring_widget.setLayout(self.monitoring_layout)
-
-        self.positionPlot = StreamingPositionPlot(
-            data_accumulator=self.protocol.dynamic_log
-        )
-        self.monitoring_layout.addWidget(self.positionPlot)
-        self.gui_refresh_timer.timeout.connect(self.positionPlot.update)
-
-        self.stream_plot = MultiStreamPlot()
-
-        self.monitoring_layout.addWidget(self.stream_plot)
-        self.gui_refresh_timer.timeout.connect(self.stream_plot.update)
-
-        self.stream_plot.add_stream(
-            self.experiment.data_acc_tailpoints, ["tail_sum", "theta_01"]
-        )
-
-        self.stream_plot.add_stream(
-            self.experiment.estimator.log,
-            ["v_ax", "v_lat", "v_ang", "middle_tail", "indexes_from_past_end"],
-        )
-
-        self.main_layout.addWidget(self.monitoring_widget)
-        self.main_layout.addWidget(self.controls_widget)
-        self.setCentralWidget(self.main_layout)
