@@ -457,21 +457,31 @@ class TailStreamPlot(QWidget):
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
-        self.imgContainer = pg.ImageView()
-        self.imgContainer.view.setAspectLocked(False)
-        self.imgContainer.setLevels(-0.6, 0.6)
-        self.imgContainer.setColorMap(pg.ColorMap(np.array([0, 0.5, 1.0]),
-                                                  np.array([[0.1, 0.7, 0.9],
-                                                            [0.0,0.0,0.0],
-                                                            [0.9, 0.2, 0.0]])))
-        self.layout().addWidget(self.imgContainer)
+
+        self.display_widget = pg.GraphicsLayoutWidget()
+        self.vb_display = pg.ViewBox()
+        self.display_widget.addItem(self.vb_display)
+        self.image_item = pg.ImageItem()
+        self.vb_display.addItem(self.image_item)
+
+        self.image_item.setLevels((-0.6, 0.6))
+        self.image_item.setLookupTable(pg.ColorMap(np.linspace(0, 1, 5),
+                                                  np.array([[0.42107294,0.80737975,0.49219722],
+                                                            [0.23166242,
+                                                             0.39962101,
+                                                             0.32100403],
+                                                            [0.0, 0.0, 0.0],
+                                                            [0.46170494,
+                                                             0.30327584,
+                                                             0.38740225],
+                                                            [0.91677407,0.58427975,0.92293321]])).getLookupTable(alpha=False))
+        self.layout().addWidget(self.display_widget)
 
     def update(self):
         data_array = self.acc.get_last_n(self.n_points)
         if len(data_array) > 0:
-            self.imgContainer.setImage(np.diff(data_array[:, 2:], axis=1).T,
-                                       autoLevels=False, autoHistogramRange=False,
-                                       autoRange=False)
+            self.image_item.setImage(image=np.diff(data_array[:, 2:], axis=1).T,
+                                       autoLevels=False)
 
 
 class StreamPlotConfig(QWidget):
