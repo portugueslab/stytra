@@ -108,14 +108,14 @@ documentation for the :class:`Stytra <stytra.Stytra.get_stim_sequence()>` class.
 Once we have defined the dictionaries, it is sufficient to pass them to the
 stytra class::
 
-   camera_config = dict(type='ximea')
+   camera = dict(type='ximea')
 
-    tracking_config = dict(embedded=True,
-                           tracking_method="centroid",
+    tracking = dict(embedded=True,
+                           method="centroid",
                            estimator="vigor",
-                           preprocessing_method='prefilter')
+                           preprocessing="prefilter")
 
-   st = Stytra(protocols=[FlashProtocol],
+   st = Stytra(protocol=FlashProtocol(),
         camera_config=camera_config,
         tracking_config=tracking_config)
 

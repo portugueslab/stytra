@@ -67,12 +67,4 @@ class ClosedLoop1DProt(Protocol):
 
 
 if __name__ == "__main__":
-    # save_dir = tempfile.mkdtemp()
-
-    # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(protocol=ClosedLoop1DProt())
-    # camera_config=camera_config,
-    # tracking_config=tracking_config,
-    # display_config=display_config,
-    # dir_save=dir_save,
-    # log_format='hdf5'
