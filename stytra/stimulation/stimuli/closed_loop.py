@@ -1,3 +1,6 @@
+from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QBrush, QColor
+
 import numpy as np
 
 from stytra.stimulation.stimuli import (
@@ -171,6 +174,8 @@ class CenteringWrapper(PositionStimulus):
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
         self.active.paint(p, w, h)
 
 

@@ -71,13 +71,13 @@ class PositionEstimator(Estimator):
                 self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
-        if self.calibrator.params.cam_to_proj is None or not np.isfinite(
+        if self.calibrator.cam_to_proj is None or not np.isfinite(
             past_coords["f0_x"]
         ):
             self.log.update_list((past_coords["t"], -1, -1, 0))
             return -1, -1, 0
 
-        projmat = np.array(self.calibrator.params.cam_to_proj)
+        projmat = np.array(self.calibrator.cam_to_proj)
         x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
         theta = np.arctan2(
             *(

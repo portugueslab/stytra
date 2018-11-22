@@ -260,7 +260,7 @@ class TrackingExperiment(CameraExperiment):
 
         est_type = tracking.get("estimator", None)
         if est_type == "position":
-            self.estimator = PositionEstimator(self.acc_tracking, self.calibrator)
+            self.estimator = PositionEstimator(self.acc_tracking, calibrator=self.calibrator)
         elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.acc_tracking)
         elif isclass(est_type) and issubclass(est_type, Estimator):

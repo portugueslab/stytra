@@ -14,7 +14,7 @@ from lightparam import Param
 
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"
-    stytra_config = dict(tracking=dict(method="fish", embedded=False))
+    stytra_config = dict(tracking=dict(method="fish", embedded=False, estimator="position"))
 
     def __init__(self):
         super().__init__()
