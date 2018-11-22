@@ -127,10 +127,11 @@ class CameraExperiment(Experiment):
         -------
 
         """
+        self.gui_timer.stop()
         super().wrap_up(*args, **kwargs)
         self.camera.kill_event.set()
         self.camera.join()
-        self.gui_timer.stop()
+
 
     def excepthook(self, exctype, value, tb):
         """
