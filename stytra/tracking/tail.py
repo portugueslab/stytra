@@ -2,7 +2,7 @@ import numpy as np
 from numba import jit
 import cv2
 from lightparam import Param, Parametrized
-
+from scipy.ndimage.filters import gaussian_filter1d
 
 class TailTrackingMethod:
     """General tail tracking method."""
@@ -30,6 +30,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
             "theta_{:02}".format(i) for i in range(self.params.n_output_segments)
         ]
         self.resting_angles = None
+        self.previous_angles = None
 
     def detect(
         self,
@@ -37,6 +38,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
         tail_start: Param((0, 0), gui=False),
         tail_length: Param((1, 1), gui=False),
         n_segments: Param(12, (1, 50)),
+        tail_filter_width: Param(0.0, (0.0, 10.0)),
+        time_filter_weight: Param(0.0, (0.0, 1.0)),
         n_output_segments: Param(9, (1, 30)),
         reset_zero: Param(False),
         window_size: Param(7, (1, 15)),
@@ -114,6 +117,9 @@ class CentroidTrackingMethod(TailTrackingMethod):
         angles = np.unwrap(angles)
 
         # we do not need to record a large amount of angles
+        if tail_filter_width > 0:
+            angles = gaussian_filter1d(angles, tail_filter_width, mode="nearest")
+
         angles = np.interp(np.linspace(0,1, n_output_segments), np.linspace(0,1, n_segments-1), angles)
         # Interpolate to the desired number of output segments
 
@@ -125,6 +131,11 @@ class CentroidTrackingMethod(TailTrackingMethod):
         else:
             if self.resting_angles is not None:
                 angles = angles - self.resting_angles
+
+        if time_filter_weight > 0 and self.previous_angles is not None:
+            angles = time_filter_weight*self.previous_angles + (1-time_filter_weight)*angles
+
+        self.previous_angles = angles
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
         return message, (angles[-1] + angles[-2] - angles[0] - angles[1], ) + tuple(angles[:])
