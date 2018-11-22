@@ -1,6 +1,6 @@
 from stytra.hardware.video.cameras.abstract_class import Camera
 import ctypes
-
+import numpy as np
 
 class MikrotronCLCamera(Camera):
     def __init__(self, *args, camera_id="img0", **kwargs):
