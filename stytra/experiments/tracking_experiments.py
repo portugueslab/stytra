@@ -53,26 +53,26 @@ class CameraExperiment(Experiment):
 
     """
 
-    def __init__(self, *args, camera_config, camera_queue_mb=100, **kwargs):
+    def __init__(self, *args, camera, camera_queue_mb=100, **kwargs):
         """
         :param video_file: if not using a camera, the video file
         file for the test input
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        if camera_config.get("video_file", None) is None:
+        if camera.get("video_file", None) is None:
             self.camera = CameraSource(
-                camera_config["type"],
-                rotation=camera_config.get("rotation", 0),
-                downsampling=camera_config.get("downsampling", 1),
-                roi=camera_config.get("roi", (-1, -1, -1, -1)),
+                camera["type"],
+                rotation=camera.get("rotation", 0),
+                downsampling=camera.get("downsampling", 1),
+                roi=camera.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
             )
             self.camera_control_params = CameraControlParameters(tree=self.dc)
         else:
             self.camera = VideoFileSource(
-                camera_config["video_file"],
-                rotation=camera_config.get("rotation", 0),
+                camera["video_file"],
+                rotation=camera.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
             self.camera_control_params = VideoControlParameters(tree=self.dc)
@@ -187,7 +187,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking_config, n_tracking_processes=1, **kwargs):
+    def __init__(self, *args, tracking, n_tracking_processes=1, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -204,8 +204,8 @@ class TrackingExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
 
         self.n_dispatchers = n_tracking_processes
-        method_name = tracking_config["tracking_method"]
-        preproc_method_name = tracking_config.get("preprocessing_method", None)
+        method_name = tracking["method"]
+        preproc_method_name = tracking.get("preprocessing", None)
 
         # If centroid or eyes method is used, prefilter by default:
         if preproc_method_name is None and method_name in ["tail", "eyes"]:
@@ -258,14 +258,14 @@ class TrackingExperiment(CameraExperiment):
         for dispatcher in self.frame_dispatchers:
             dispatcher.start()
 
-        est_type = tracking_config.get("estimator", None)
+        est_type = tracking.get("estimator", None)
         if est_type == "position":
             self.estimator = PositionEstimator(self.acc_tracking, self.calibrator)
         elif est_type == "vigor":
             self.estimator = VigourMotionEstimator(self.acc_tracking)
         elif isclass(est_type) and issubclass(est_type, Estimator):
             self.estimator = est_type(
-                self.acc_tracking, **tracking_config.get("estimator_params", {})
+                self.acc_tracking, **tracking.get("estimator_params", {})
             )
         else:
             self.estimator = None

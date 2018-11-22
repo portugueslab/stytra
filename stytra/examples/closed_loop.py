@@ -11,8 +11,8 @@ class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
 
     stytra_config = dict(
-        tracking_config=dict(embedded=True, tracking_method="tail", estimator="vigor"),
-        camera_config=dict(
+        tracking=dict(embedded=True, method="tail", preprocessing="prefilter", estimator="vigor"),
+        camera=dict(
             video_file=r"J:\_Shared\stytra_resources\videos\fish_bout_left_front_right.h5"
         ),
         display_config=dict(full_screen=False),

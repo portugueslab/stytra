@@ -86,7 +86,7 @@ class Experiment(QObject):
         log_format="csv",
         stim_movie_format="h5",
         rec_stim_framerate=None,
-        display_config=None,
+        display=None,
         scope_triggering=None,
         offline=False,
         **kwargs
@@ -166,10 +166,10 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        if display_config is None:
+        if display is None:
             self.display_config = dict(full_screen=False, gl=True)
         else:
-            self.display_config = display_config
+            self.display_config = display
 
         if not self.offline:
             self.window_display = StimulusDisplayWindow(

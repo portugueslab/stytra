@@ -23,12 +23,12 @@ from lightparam import Param
 class Portugues2011Protocol(Protocol):
     name = "portugues_2011"
     stytra_config = dict(
-        tracking_config=dict(tracking_method="tail", estimator="vigor"),
+        tracking=dict(method="tail", estimator="vigor"),
         # Replace this example file with the desired camera config, such as
         # camera_config = dict(type="ximea")
         # for a ximea camera, etc. Not needed if the setup already has the
         # stytra_setup_config.json file
-        camera_config=dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5"),
+        camera=dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5"),
     )
 
     def __init__(self):
