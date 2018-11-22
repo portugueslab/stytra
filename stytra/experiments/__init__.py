@@ -36,7 +36,7 @@ class Experiment(QObject):
     ----------
     app : QApplication()
         Application to run the Experiment QObject.
-    protocols : list of :class:`Protocol <stytra.stimulation.Protocol>` classes
+    protocol : object of :class:`Protocol <stytra.stimulation.Protocol>`
         list of protocols that can be run in this experiment session.
     directory : str
         (optional) Directory where metadata will be saved. If None, nothing
@@ -75,7 +75,6 @@ class Experiment(QObject):
         self,
         app=None,
         protocol=None,
-        default_protocol=None,
         dir_save=None,
         dir_assets="",
         database=None,
@@ -204,7 +203,9 @@ class Experiment(QObject):
 
     @property
     def folder_name(self):
-        foldername = os.path.join(self.base_dir, self.get_new_name())
+        foldername = os.path.join(
+            self.base_dir, self.protocol.__class__.name, self.get_new_name()
+        )
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
@@ -244,10 +245,9 @@ class Experiment(QObject):
             self.window_main = DynamicStimExperimentWindow(self)
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
             self.gui_timer.start(1000 // 60)
-            self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
-        # self.window_main.toolbar_control.label_prot.setText(self.protocol)
+
         self.window_main.construct_ui()
         self.window_main.show()
 

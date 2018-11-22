@@ -17,6 +17,4 @@ if __name__ == "__main__":
     video_file = r"J:\Vilim Stih\fish_recordings\old\20180719_170349.mp4"
     tempdir = tempfile.gettempdir()
 
-    s = Stytra(
-        protocol=Nostim(),
-    )
+    s = Stytra(protocol=Nostim())

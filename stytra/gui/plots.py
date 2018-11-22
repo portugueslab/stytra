@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QSizePolicy,
+    QCheckBox,
+    QGroupBox,
 )
 import pyqtgraph as pg
 import numpy as np
@@ -105,6 +107,11 @@ class MultiStreamPlot(QWidget):
             self.control_layout = QHBoxLayout()
             self.control_layout.setContentsMargins(0, 0, 0, 0)
 
+            self.btn_select = QPushButton("Choose variables")
+            self.btn_select.clicked.connect(self.show_select)
+            self.control_layout.addWidget(self.btn_select)
+            self.wnd_config = None
+
             self.btn_freeze = QPushButton()
             self.btn_freeze.setMinimumSize(80, 16)
             self.btn_freeze.clicked.connect(self.toggle_freeze)
@@ -126,11 +133,11 @@ class MultiStreamPlot(QWidget):
 
             self.layout().addLayout(self.control_layout)
 
-        self.plotContainter = pg.PlotWidget()
-        self.plotContainter.showAxis("left", False)
-        self.plotContainter.plotItem.hideButtons()
+        self.plotContainer = pg.PlotWidget()
+        self.plotContainer.showAxis("left", False)
+        self.plotContainer.plotItem.hideButtons()
 
-        self.layout().addWidget(self.plotContainter)
+        self.layout().addWidget(self.plotContainer)
 
         self.accumulators = []
         self.stream_names = []
@@ -226,7 +233,7 @@ class MultiStreamPlot(QWidget):
             c = pg.PlotCurveItem(
                 x=np.array([0]), y=np.array([i_curve]), connect="finite"
             )
-            self.plotContainter.addItem(c)
+            self.plotContainer.addItem(c)
             self.curves.append(c)
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
@@ -243,10 +250,10 @@ class MultiStreamPlot(QWidget):
             value_label.setFont(font_bold)
             value_label.setPos(0, i_curve + 0.5)
 
-            self.plotContainter.addItem(curve_label)
-            self.plotContainter.addItem(min_label)
-            self.plotContainter.addItem(max_label)
-            self.plotContainter.addItem(value_label)
+            self.plotContainer.addItem(curve_label)
+            self.plotContainer.addItem(min_label)
+            self.plotContainer.addItem(max_label)
+            self.plotContainer.addItem(value_label)
 
             self.valueLabels.append((min_label, max_label, curve_label, value_label))
             i_curve += 1
@@ -255,15 +262,15 @@ class MultiStreamPlot(QWidget):
             curve.setPen(color)
             for label in labels:
                 label.setColor(color)
-        self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
+        self.plotContainer.setYRange(-0.1, len(self.curves) + 0.1)
 
     def remove_streams(self):
         for label_set in self.valueLabels:
             for label in label_set:
-                self.plotContainter.removeItem(label)
+                self.plotContainer.removeItem(label)
         self.valueLabels = []
         for curve in self.curves:
-            self.plotContainter.removeItem(curve)
+            self.plotContainer.removeItem(curve)
         self.curves = []
         self.stream_names = []
         self.header_indexes = []
@@ -304,7 +311,7 @@ class MultiStreamPlot(QWidget):
     def update(self):
         """Function called by external timer to update the plot"""
         if not self.color_set:
-            self.plotContainter.setBackground(self.palette().color(QPalette.Button))
+            self.plotContainer.setBackground(self.palette().color(QPalette.Button))
             self.color_set = True
 
         if self.frozen:
@@ -416,18 +423,18 @@ class MultiStreamPlot(QWidget):
         if self.frozen:
             if not self.compact:
                 self.btn_freeze.setText("Live plot")
-            self.plotContainter.plotItem.vb.setMouseEnabled(x=True, y=True)
+            self.plotContainer.plotItem.vb.setMouseEnabled(x=True, y=True)
         else:
             if not self.compact:
                 self.btn_freeze.setText("Freeze plot")
-            self.plotContainter.plotItem.vb.setMouseEnabled(x=False, y=False)
-            self.plotContainter.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
-            self.plotContainter.setYRange(-0.1, len(self.curves) + 0.1)
+            self.plotContainer.plotItem.vb.setMouseEnabled(x=False, y=False)
+            self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
+            self.plotContainer.setYRange(-0.1, len(self.curves) + 0.1)
 
     def update_zoom(self, time_past=1):
         self.time_past = time_past
-        self.plotContainter.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
-        self.plotContainter.plotItem.vb.setRange(
+        self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
+        self.plotContainer.plotItem.vb.setRange(
             xRange=(-self.time_past * 0.9, self.time_past * 0.05)
         )
         # shift the labels
@@ -435,3 +442,70 @@ class MultiStreamPlot(QWidget):
             self.valueLabels
         ):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
+
+    def show_select(self):
+        self.wnd_config = StreamPlotConfig(self)
+        self.wnd_config.show()
+
+
+class TailStreamPlot(QWidget):
+    def __init__(self, acc, headers, n_points=300):
+        super().__init__()
+        self.acc = acc
+        self.headers = headers
+        self.n_points = n_points
+
+        self.setLayout(QVBoxLayout())
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.imgContainer = pg.ImageView()
+        self.imgContainer.view.setAspectLocked(False)
+        self.imgContainer.setLevels(-0.6, 0.6)
+        self.imgContainer.setColorMap(pg.ColorMap(np.array([0, 0.5, 1.0]),
+                                                  np.array([[0.1, 0.7, 0.9],
+                                                            [0.0,0.0,0.0],
+                                                            [0.9, 0.2, 0.0]])))
+        self.layout().addWidget(self.imgContainer)
+
+    def update(self):
+        data_array = self.acc.get_last_n(self.n_points)
+        if len(data_array) > 0:
+            self.imgContainer.setImage(np.diff(data_array[:, 2:], axis=1).T,
+                                       autoLevels=False, autoHistogramRange=False,
+                                       autoRange=False)
+
+
+class StreamPlotConfig(QWidget):
+    """ Widget for configuring streaming plots
+    """
+
+    def __init__(self, sp: MultiStreamPlot):
+        super().__init__()
+        self.sp = sp
+        self.setLayout(QVBoxLayout())
+        self.accs = sp.accumulators
+        self.checkboxes = []
+        for ac in sp.accumulators:
+            acccheck = []
+            gb = QGroupBox(ac.name)
+            gb.setLayout(QVBoxLayout())
+            for item in ac.header_list[1:]:
+                chk = QCheckBox(item)
+                if ac.monitored_headers is None:
+                    chk.setChecked(True)
+                elif item in ac.monitored_headers:
+                    chk.setChecked(True)
+
+                chk.stateChanged.connect(self.refresh_plots)
+                acccheck.append(chk)
+                gb.layout().addWidget(chk)
+            self.checkboxes.append(acccheck)
+            self.layout().addWidget(gb)
+
+    def refresh_plots(self):
+        self.sp.remove_streams()
+        for chkboxes, ac in zip(self.checkboxes, self.accs):
+            sel_headers = []
+            for item, chk in zip(ac.header_list[1:], chkboxes):
+                if chk.isChecked():
+                    sel_headers.append(item)
+            self.sp.add_stream(ac, sel_headers)

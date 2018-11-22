@@ -56,6 +56,7 @@ Modules
     create_protocol
     running_experiments
     data_saving
+    calibration
     triggering_intro
     swimming_tracking
     image_processing

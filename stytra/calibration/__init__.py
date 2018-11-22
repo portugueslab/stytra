@@ -22,7 +22,7 @@ class Calibrator(ParametrizedQt):
         self.enabled = False
 
         self.mm_px = Param(mm_px)
-        self.length_mm = Param(30., limits=(1, 200))
+        self.length_mm = Param(30., limits=(1, 800))
         self.length_px = Param(None)
         self.cam_to_proj = Param(None)
         self.proj_to_cam = Param(None)
@@ -35,16 +35,26 @@ class Calibrator(ParametrizedQt):
         """ """
         self.enabled = ~self.enabled
 
-    def set_physical_scale(self):
+    def set_physical_scale(self, change):
         """Calculate mm/px from calibrator length"""
-        if self.length_px is not None:
-            self.block_signal = True
-            self.mm_px = self.length_mm / self.length_px
-            self.block_signal = False
+        if change.get("length_mm", None) is not None:
+            if self.length_px is not None:
+                self.block_signal = True
+                self.mm_px = self.length_mm / self.length_px
+                self.block_signal = False
+
+        if change.get("length_px", None) is not None:
+            if self.length_px is not None:
+                self.block_signal = True
+                self.length_mm = self.length_px * self.mm_px
+                self.block_signal = False
 
     def set_pixel_scale(self, w, h):
         """"Set pixel size, need to be called by the projector widget on resizes"""
+        self.block_signal = True
         self.length_px = w
+        self.length_mm = self.length_px * self.mm_px
+        self.block_signal = False
 
     def make_calibration_pattern(self, p, h, w):
         """

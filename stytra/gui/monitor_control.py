@@ -21,6 +21,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
     """
 
+    sig_dim_changed = pyqtSignal(tuple)
+
     def __init__(self, *args, display_size=(1280, 800), display, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -74,7 +76,10 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     def set_param_val(self):
         """ """
         self.setting_param_val = True
-        self.display.size = tuple([int(p) for p in self.roi_box.size()])
+        size = tuple([int(p) for p in self.roi_box.size()])
+        self.display.size = size
+        self.sig_dim_changed.emit(size)
+
         self.display.pos = tuple([int(p) for p in self.roi_box.pos()])
         self.setting_param_val = False
 
@@ -137,8 +142,9 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.container_layout.setContentsMargins(0, 0, 0, 0)
 
         self.widget_proj_viewer = ProjectorViewer(display=experiment.window_display)
-
         self.container_layout.addWidget(self.widget_proj_viewer)
+
+        self.widget_proj_viewer.sig_dim_changed.connect(self.update_size)
 
         self.layout_calibrate = QHBoxLayout()
         self.button_show_calib = QPushButton("Show calibration")
@@ -159,6 +165,13 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         self.container_layout.addLayout(self.layout_calibrate)
         self.setLayout(self.container_layout)
+
+    def update_size(self, size):
+        pass
+        # # print('updating')
+        self.calibrator.set_pixel_scale(size[0], size[1])
+        self.calibrator_len_spin.update_display()
+        # # print(self.calibrator.mm_px)
 
     def toggle_calibration(self):
         """ """

@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(
-        protocols=[ExternalStimulusProtocol],
+        protocol=ExternalStimulusProtocol(),
         camera_config=camera_config,
         tracking_config=tracking_config,
         display_config=display_config,

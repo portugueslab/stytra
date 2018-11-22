@@ -35,6 +35,18 @@ Once you have that, download stytra in a directory and install it via pip by::
 
 Installing camera APIs
 ----------------------
+xiCam: Ximea
+............
+
+Download the Ximea SDK, install it with Python support and copy the contents
+of the relevant directory (python3)
+
+
+pymba: AVT
+............
+
+Go to the `Allied Vision software webpage <https://www.alliedvision.com/en/products/software.html>`_
+and download and install the Vimba SDK. Then install the python wrapper`pymba <https://github.com/morefigs/pymba>`_.
 
 
 spinnaker: Point Grey / FLIR
@@ -50,3 +62,10 @@ Go the the `FLIR support website <https://eu.ptgrey.com/support/downloads?countr
     pip install "path_to_extracted_zip/spinnaker_python-1.15.0.63-cp36-cp36m-win_amd64.whl"
 
 (with the file with appropriate OS and Python version)
+
+
+National Instruments framegrabber with Mikrotron camera
+.......................................................
+
+Install the NI vision SDK. For the Mikrotron MC1362 camera, you can use `this <../hardware_list/MikrotronMC1362.icd>`_
+camera file and set up the 8x8 tap mode in the camera software.

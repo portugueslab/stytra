@@ -24,5 +24,4 @@ class FlashProtocol(Protocol):
 
 if __name__ == "__main__":
     tempdir = tempfile.gettempdir()
-    st = Stytra(protocols=[FlashProtocol], dir_save=tempdir)
-    st.base.close()
+    st = Stytra(protocol=FlashProtocol(), dir_save=tempdir)

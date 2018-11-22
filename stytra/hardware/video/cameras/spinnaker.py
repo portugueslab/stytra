@@ -48,7 +48,7 @@ class SpinnakerCamera(Camera):
         self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
         self.cam.GainAuto.SetValue(PySpin.GainAuto_Off)
         self.cam.AcquisitionFrameRateEnable.SetValue(True)
-        self.cam.AcquisitionFrameRate.SetValue(400)
+        # self.cam.AcquisitionFrameRate.SetValue(400)
 
         self.cam.BeginAcquisition()
         return "Spinnaker API camera successfully opened"
@@ -83,7 +83,6 @@ class SpinnakerCamera(Camera):
 
     def read(self):
         try:
-
             #  Retrieve next received image
             #
             #  *** NOTES ***

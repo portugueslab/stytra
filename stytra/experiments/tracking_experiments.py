@@ -241,17 +241,18 @@ class TrackingExperiment(CameraExperiment):
             for i in range(self.n_dispatchers)
         ]
 
-        self.data_acc = QueueDataAccumulator(
-            self.tracking_output_queue,
+        self.acc_tracking = QueueDataAccumulator(
+            name="tracking",
+            data_queue=self.tracking_output_queue,
             monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
             header_list=self.tracking_method.accumulator_headers,
         )
 
         # Data accumulator is updated with GUI timer:
-        self.gui_timer.timeout.connect(self.data_acc.update_list)
+        self.gui_timer.timeout.connect(self.acc_tracking.update_list)
 
         # Tracking is reset at experiment start:
-        self.protocol_runner.sig_protocol_started.connect(self.data_acc.reset)
+        self.protocol_runner.sig_protocol_started.connect(self.acc_tracking.reset)
 
         # start frame dispatcher process:
         for dispatcher in self.frame_dispatchers:
@@ -259,28 +260,28 @@ class TrackingExperiment(CameraExperiment):
 
         est_type = tracking_config.get("estimator", None)
         if est_type == "position":
-            self.estimator = PositionEstimator(self.data_acc, self.calibrator)
+            self.estimator = PositionEstimator(self.acc_tracking, self.calibrator)
         elif est_type == "vigor":
-            self.estimator = VigourMotionEstimator(self.data_acc)
+            self.estimator = VigourMotionEstimator(self.acc_tracking)
         elif isclass(est_type) and issubclass(est_type, Estimator):
             self.estimator = est_type(
-                self.data_acc, **tracking_config.get("estimator_params", {})
+                self.acc_tracking, **tracking_config.get("estimator_params", {})
             )
         else:
             self.estimator = None
 
-        self.tracking_framerate_acc = QueueSummingAccumulator(
+        self.acc_framerate = QueueSummingAccumulator(
             [fd.framerate_queue for fd in self.frame_dispatchers], ["tracking"]
         )
 
-        self.gui_timer.timeout.connect(self.tracking_framerate_acc.update_list)
+        self.gui_timer.timeout.connect(self.acc_framerate.update_list)
         self.logger.info("Tracking with ", self.n_dispatchers, " processess")
 
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
         """
         self.tracking_method.reset_state()
-        self.data_acc.reset(
+        self.acc_tracking.reset(
             header_list=self.tracking_method.accumulator_headers,
             monitored_headers=self.tracking_method.monitored_headers,
         )
@@ -299,12 +300,12 @@ class TrackingExperiment(CameraExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.plot_framerate.add_stream(self.tracking_framerate_acc)
+        self.window_main.plot_framerate.add_stream(self.acc_framerate)
         self.refresh_plots()
 
     def refresh_plots(self):
         self.window_main.stream_plot.remove_streams()
-        self.window_main.stream_plot.add_stream(self.data_acc)
+        self.window_main.stream_plot.add_stream(self.acc_tracking)
 
         if self.estimator is not None:
             self.window_main.stream_plot.add_stream(self.estimator.log)
@@ -345,7 +346,7 @@ class TrackingExperiment(CameraExperiment):
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
         super().start_protocol()
-        self.data_acc.reset()
+        self.acc_tracking.reset()
         try:
             self.estimator.reset()
             self.estimator.log.reset()
@@ -366,7 +367,7 @@ class TrackingExperiment(CameraExperiment):
             )
 
             # Save log and estimators:
-            self.save_log(self.data_acc, "behavior_log")
+            self.save_log(self.acc_tracking, "behavior_log")
             try:
                 self.save_log(self.estimator.log, "estimator_log")
             except AttributeError:
@@ -391,7 +392,7 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().set_protocol(protocol)
-        self.protocol.sig_protocol_started.connect(self.data_acc.reset)
+        self.protocol.sig_protocol_started.connect(self.acc_tracking.reset)
 
     def wrap_up(self, *args, **kwargs):
         """

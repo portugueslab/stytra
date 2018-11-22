@@ -30,7 +30,7 @@ class Stytra:
 
     Parameters
     ==========
-        protocols : list(Protocol)
+        protocol : Protocol
             the protocols to be made available from the dropdown
 
         display_config : dict
@@ -112,7 +112,7 @@ class Stytra:
         # Check if exist a default config file in the home (user) directory:
         default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():
-            config = json.load(open(default_config_file))
+            config = json.load(open(str(default_config_file)))
         else:
             config = dict()
 

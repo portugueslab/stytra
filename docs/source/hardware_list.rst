@@ -5,9 +5,14 @@ Below we provide a description of the setups in use in the lab together with a
 full list of components that can be
 used to assemble them.
 
-Two configurations are described: the first one is for detailed kinematic
+Two configurations of our setups are described: the first one is for detailed
+kinematic
 tracking of eyes and tail in a fish with head restrained in agarose, the
 second for tracking freely swimming fish in a petri dish.
+
+Finally, we present a cheap version of the behavioural setup that can be
+easily built for about 700 euros, and easily assembled using cardboard,
+laser-cut parts or other custom-made enclosures.
 
 Head-restrained fish setup
 --------------------------
@@ -64,6 +69,19 @@ Head-restrained setup
 Freely-swimming setup
 .....................
 .. csv-table:: Components for freely swimming configuration behavioural setup
-   :file: ../hardware_list/embedded.csv
+   :file:
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
+
+Low-cost behavioural setup
+--------------------------
+A very cheap version of the behavioural setup can be built by replacing the
+projector with small LED display and the camera with a little objective. The
+dimensions of this setup are quite small and parts can be kept in place with
+a basic custom-made frame that can be laser-cut or even made with cardboard.
+
+
+.. image:: ../hardware_list/pictures/low_cost.png
+   :scale: 15%
+   :alt: alternate text
+   :align: center

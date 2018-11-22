@@ -16,7 +16,7 @@ class TailTrackingMethod:
 
     def reset_state(self):
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+            "theta_{:02}".format(i) for i in range(self.params.n_output_segments)
         ]
 
 
@@ -27,16 +27,19 @@ class CentroidTrackingMethod(TailTrackingMethod):
         super().__init__()
         self.params = Parametrized(name="tracking/tail", params=self.detect)
         self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_segments)
+            "theta_{:02}".format(i) for i in range(self.params.n_output_segments)
         ]
+        self.resting_angles = None
 
     def detect(
         self,
         im,
         tail_start: Param((0, 0), gui=False),
         tail_length: Param((1, 1), gui=False),
-        n_segments: Param(12),
-        window_size: Param(7),
+        n_segments: Param(12, (1, 50)),
+        n_output_segments: Param(9, (1, 30)),
+        reset_zero: Param(False),
+        window_size: Param(7, (1, 15)),
         **extraparams
     ):
         """Finds the tail for an embedded fish, given the starting point and
@@ -90,7 +93,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         disp_x = tail_length_x * extraparams["image_scale"] / n_segments
         disp_y = tail_length_y * extraparams["image_scale"] / n_segments
 
-        angles = []
+        angles = np.full(n_segments-1, np.nan)
         start_x *= extraparams["image_scale"]
         start_y *= extraparams["image_scale"]
 
@@ -102,14 +105,71 @@ class CentroidTrackingMethod(TailTrackingMethod):
                 im, start_x, start_y, disp_x, disp_y, halfwin, seg_length
             )
             if start_x < 0:
-                abs_angle = np.nan
+                break
+
+            abs_angle = np.arctan2(disp_x, disp_y)
+            angles[i-1] = abs_angle
+
+        # we want angles to be continuous, this removes potential 2pi discontinuities
+        angles = np.unwrap(angles)
+
+        # we do not need to record a large amount of angles
+        angles = np.interp(np.linspace(0,1, n_output_segments), np.linspace(0,1, n_segments-1), angles)
+        # Interpolate to the desired number of output segments
+
+        if reset_zero:
+            if self.resting_angles is None or len(self.resting_angles) != len(angles):
+                self.resting_angles = angles
             else:
-                abs_angle = np.arctan2(disp_x, disp_y)
-            angles.append(abs_angle)
+                self.resting_angles = self.resting_angles * 0.5 + angles * 0.5
+        else:
+            if self.resting_angles is not None:
+                angles = angles - self.resting_angles
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
-        angles = list(np.unwrap(np.array(angles)))
-        return message, [angles[-1] + angles[-2] - angles[0] - angles[1]] + angles[:]
+        return message, (angles[-1] + angles[-2] - angles[0] - angles[1], ) + tuple(angles[:])
+
+
+@jit(nopython=True, cache=True)
+def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points=20):
+    """Finds a midline for a fish image, with the starting point and direction
+
+    Parameters
+    ----------
+    im :
+        param xm:
+    ym :
+        param angle:
+    r :
+        param m: (Default value = 9)
+    n_points :
+        return: (Default value = 20)
+    xm :
+
+    angle :
+
+    m :
+         (Default value = 3)
+
+    Returns
+    -------
+
+    """
+
+    dx = np.cos(angle) * m
+    dy = np.sin(angle) * m
+
+    points = [(xm, ym, 0)]
+    for i in range(1, n_points):
+        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
+        if xm > 0:
+            points.append((xm, ym, acc))
+        else:
+            return [
+                (-1.0, -1.0, 0.0)
+            ]  # if the tail is not completely tracked, return invalid value
+
+    return points
 
 
 class AnglesTrackingMethod(TailTrackingMethod):
@@ -185,110 +245,6 @@ class AnglesTrackingMethod(TailTrackingMethod):
 
 
 @jit(nopython=True)
-def reduce_to_pi(angle):
-    """Puts an angle or array of angles inside the (-pi, pi) range"""
-    return np.mod(angle + np.pi, 2 * np.pi) - np.pi
-
-
-@jit(nopython=True)
-def find_direction(start, image, seglen):
-    """
-
-    Parameters
-    ----------
-    start :
-        
-    image :
-        
-    seglen :
-        
-
-    Returns
-    -------
-
-    """
-    n_angles = np.ceil(np.pi * 2 * seglen * 2)
-    angles = np.arange(n_angles) * np.pi * 2 / n_angles
-
-    detect_angles = angles
-
-    weighted_vector = np.zeros(2)
-
-    for i in range(detect_angles.shape[0]):
-        coord = (
-            round(start[0] + seglen * np.cos(detect_angles[i])),
-            round(start[1] + seglen * np.sin(detect_angles[i])),
-        )
-        if (
-            (coord[0] > 0)
-            & (coord[0] < image.shape[1])
-            & (coord[1] > 0)
-            & (coord[1] < image.shape[0])
-        ):
-            brg = image[coord[1], coord[0]]
-
-            weighted_vector += brg * np.array(
-                [np.cos(detect_angles[i]), np.sin(detect_angles[i])]
-            )
-
-    return np.arctan2(weighted_vector[1], weighted_vector[0])
-
-
-@jit(nopython=True, cache=True)
-def angle(dx1, dy1, dx2, dy2):
-    """Calculate angle between two segments d1 and d2
-
-    Parameters
-    ----------
-    dx1 :
-        x length for first segment
-    dy1 :
-        y length for first segment
-    dx2 :
-        param dy2: -
-    dy2 :
-        
-
-    Returns
-    -------
-    type
-        angle between -pi and +pi
-
-    """
-    alph1 = np.arctan2(dy1, dx1)
-    alph2 = np.arctan2(dy2, dx2)
-    diff = alph2 - alph1
-    if diff >= np.pi:
-        diff -= 2 * np.pi
-    if diff <= -np.pi:
-        diff += 2 * np.pi
-    return diff
-
-
-def bp_filter_img(img, small_square=3, large_square=50):
-    """Bandpass filter for images.
-
-    Parameters
-    ----------
-    img :
-        input image
-    small_square :
-        small square for low-pass smoothing (Default value = 3)
-    large_square :
-        big square for high pass smoothing (subtraction of background shades) (Default value = 50)
-
-    Returns
-    -------
-    type
-        filtered image
-
-    """
-    img_filt_lower = cv2.boxFilter(img, -1, (large_square, large_square))
-    img_filt_low = cv2.boxFilter(img, -1, (small_square, small_square))
-    return cv2.absdiff(img_filt_low, img_filt_lower)
-
-
-@jit(nopython=True)
 def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     """Find the endpoint of the next tail segment
     by calculating the moments in a look-ahead area
@@ -310,7 +266,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     next_point_dist :
         distance to the next tail point
     halfwin :
-        
+
 
     Returns
     -------
@@ -361,6 +317,15 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     dy = mn_y / a
 
     return xm + dx, ym + dy, dx, dy, acc
+
+
+
+@jit(nopython=True)
+def reduce_to_pi(angle):
+    """Puts an angle or array of angles inside the (-pi, pi) range"""
+    return np.mod(angle + np.pi, 2 * np.pi) - np.pi
+
+
 
 
 @jit(nopython=True)
@@ -444,43 +409,4 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y, num_points, tail_
     return angles
 
 
-@jit(nopython=True, cache=True)
-def find_fish_midline(im, xm, ym, angle, r=9, m=3, n_points=20):
-    """Finds a midline for a fish image, with the starting point and direction
 
-    Parameters
-    ----------
-    im :
-        param xm:
-    ym :
-        param angle:
-    r :
-        param m: (Default value = 9)
-    n_points :
-        return: (Default value = 20)
-    xm :
-        
-    angle :
-        
-    m :
-         (Default value = 3)
-
-    Returns
-    -------
-
-    """
-
-    dx = np.cos(angle) * m
-    dy = np.sin(angle) * m
-
-    points = [(xm, ym, 0)]
-    for i in range(1, n_points):
-        xm, ym, dx, dy, acc = _next_segment(im, xm, ym, dx, dy, r, m)
-        if xm > 0:
-            points.append((xm, ym, acc))
-        else:
-            return [
-                (-1.0, -1.0, 0.0)
-            ]  # if the tail is not completely tracked, return invalid value
-
-    return points

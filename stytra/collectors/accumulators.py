@@ -40,8 +40,11 @@ class Accumulator:
 
     """
 
-    def __init__(self, fps_calc_points=10, header_list=None, monitored_headers=None):
+    def __init__(
+        self, fps_calc_points=10, header_list=None, monitored_headers=None, name=""
+    ):
         """ """
+        self.name = name
         self.stored_data = []
         self.header_list = ["t"] + (header_list if header_list else [])
         self.monitored_headers = (
