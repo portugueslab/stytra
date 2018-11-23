@@ -13,7 +13,7 @@ class ClosedLoop1DProt(Protocol):
     stytra_config = dict(
         tracking=dict(embedded=True, method="tail", preprocessing="prefilter", estimator="vigor"),
         camera=dict(
-            video_file=r"J:\_Shared\stytra_resources\videos\fish_bout_left_front_right.h5"
+            video_file=r"J:\_Shared\stytra_resources\videos\fish_tail_anki.h5",
         ),
         display_config=dict(full_screen=False),
     )

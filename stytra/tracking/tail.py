@@ -130,7 +130,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
                 self.resting_angles = self.resting_angles * 0.5 + angles * 0.5
         else:
             if self.resting_angles is not None:
-                angles = angles - self.resting_angles
+                angles = angles - self.resting_angles + self.resting_angles[0]
 
         if time_filter_weight > 0 and self.previous_angles is not None:
             angles = time_filter_weight*self.previous_angles + (1-time_filter_weight)*angles

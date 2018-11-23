@@ -124,3 +124,21 @@ stytra class::
 .. Note::
    Example note
 
+Using the Stytra interface to start and control the experiment
+______________________________________________________________
+
+Refresh the metadata
+Calibrate the physical dimensions
+
+Freely-swimming tracking
+........................
+
+Calibrate
+Adjust tracking setting
+
+Embedded tail or eye tracking
+.............................
+
+Adjust tail angles monitor
+
+Use the replay function to ensure the tail or the fish are tracked correctly.
