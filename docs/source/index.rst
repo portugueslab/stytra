@@ -6,7 +6,7 @@
 Welcome to Stytra's documentation!
 ==================================
 
-Stytra is a package to build and run behavioural experiments
+Stytra is a package to build and run behavioral experiments
 
 
 Modules
@@ -18,7 +18,7 @@ Modules
 
     :py:mod:`stytra.experiments`
         The controller classes organizing different kinds of experiments
-        (with and without behavioural tracking, closed loop stimulation and with
+        (with and without behavioral tracking, closed loop stimulation and with
         video recording). The classes put together everything required for a
         particular kind of experiment
 

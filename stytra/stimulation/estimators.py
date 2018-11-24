@@ -14,12 +14,12 @@ class Estimator:
         self.acc_tracking = acc_tracking
 
 
-class VigourMotionEstimator(Estimator):
-    def __init__(self, *args, vigour_window=0.050, base_gain=-30, **kwargs):
+class VigorMotionEstimator(Estimator):
+    def __init__(self, *args, vigor_window=0.050, base_gain=-30, **kwargs):
         super().__init__(*args, **kwargs)
-        self.vigour_window = vigour_window
+        self.vigor_window = vigor_window
         self.last_dt = 1 / 500.
-        self.log = EstimatorLog(["vigour"])
+        self.log = EstimatorLog(["vigor"])
         self.base_gain = base_gain
 
     def get_velocity(self, lag=0):
@@ -34,12 +34,12 @@ class VigourMotionEstimator(Estimator):
         -------
 
         """
-        vigour_n_samples = max(int(round(self.vigour_window / self.last_dt)), 2)
+        vigor_n_samples = max(int(round(self.vigor_window / self.last_dt)), 2)
         n_samples_lag = max(int(round(lag / self.last_dt)), 0)
         past_tail_motion = self.acc_tracking.get_last_n(
-            vigour_n_samples + n_samples_lag
-        )[0:vigour_n_samples]
-        new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigour_n_samples
+            vigor_n_samples + n_samples_lag
+        )[0:vigor_n_samples]
+        new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigor_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
         vigor = np.nanstd(np.array(past_tail_motion[:, 1]))

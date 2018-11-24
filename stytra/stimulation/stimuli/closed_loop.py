@@ -26,7 +26,7 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         the velocity of the background when the stimulus is not moving
     gain:
         the closed-loop gain, a gain of 1 approximates
-        the freely-swimming behaviour
+        the freely-swimming behavior
     lag:
         how much extra delay is provided in the closed loop
     shunting: bool

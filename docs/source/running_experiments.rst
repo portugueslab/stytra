@@ -96,10 +96,10 @@ trigger class to scope_triggering::
    st = Stytra(protocols=[FlashProtocol], scope_triggering=NewTrigger())
 
 
-Run an experiment with camera and behaviour tracking
-----------------------------------------------------
+Run an experiment with camera and behavior tracking
+---------------------------------------------------
 
-In the event we want to stream images from a camera and track behaviour
+In the event we want to stream images from a camera and track behavior
 during the experiment, we first need to create the camera and tracking
 configuration dictionary and then pass them to the stytra class. For a complete
 description of the required and optional keys of the dictionary go to the

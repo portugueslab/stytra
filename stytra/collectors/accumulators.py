@@ -10,7 +10,7 @@ class Accumulator:
     """Abstract class for accumulating streams of data.
 
     It is use to save or plot in real time data from stimulus logs or
-    behaviour tracking. Data is stored in a list in the stored_data
+    behavior tracking. Data is stored in a list in the stored_data
     attribute.
 
     Specific methods

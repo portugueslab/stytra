@@ -31,7 +31,7 @@ class EyeTrackingMethod:
 
         self.monitored_headers = ["th_e0", "th_e1"]
         self.accumulator_headers = headers
-        self.data_log_name = "behaviour_eyes_log"
+        self.data_log_name = "behavior_eyes_log"
 
     def detect(
         self,

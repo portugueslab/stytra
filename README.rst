@@ -2,7 +2,7 @@
 Stytra
 ======
 
-A modular package to control stimulation and track behaviour in zebrafish experiments.
+A modular package to control stimulation and track behavior in zebrafish experiments.
 ---------------
 
 .. image:: https://cdn.rawgit.com/portugueslab/stytra/644a23d5/stytra/icons/stytra_logo.svg
