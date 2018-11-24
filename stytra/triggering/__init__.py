@@ -10,11 +10,11 @@ import time
 
 try:
     import zmq
-except ModuleNotFoundError:
+except:
     pass
 try:
     import u3
-except ModuleNotFoundError:
+except:
     pass
 
 

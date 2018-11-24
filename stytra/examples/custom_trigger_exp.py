@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QFileDialog
 
 
 # The simplest way to implement a new trigger is inheriting from the Trigger
-# class and reimplement the check_trigger method with the desired condition. In
+# class and re-implement the check_trigger method with the desired condition. In
 # our case, we'll ask to check for the number of files in a folder. The
 # experiment will start only when a file is added or removed.
 
@@ -55,7 +55,8 @@ if __name__ == "__main__":
 
     # Select a directory:
     app = QApplication([])
-    folder = QFileDialog.getExistingDirectory(caption="Trigger folder", directory=None)
+    folder = QFileDialog.getExistingDirectory(caption="Trigger folder",
+                                              directory=None)
 
     # Instantiate the trigger:
     if folder is not None:
@@ -63,4 +64,4 @@ if __name__ == "__main__":
 
         # Call stytra assigning the triggering. Note that stytra will wait for
         # the trigger only if the "wait for trigger" checkbox is ticked!
-        st = Stytra(app=app, protocols=[FlashProtocol], scope_triggering=trigger)
+        st = Stytra(app=app, protocol=FlashProtocol(), scope_triggering=trigger)

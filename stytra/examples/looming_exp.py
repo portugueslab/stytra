@@ -7,6 +7,18 @@ from stytra.stimulation.stimuli import InterpolatedStimulus, CircleStimulus
 from lightparam import Param
 
 
+# A looming stimulus is an expanding circle. Stimuli which contain
+# some kind of parameter change inherit from InterpolatedStimulus
+# which allows for specifying the values of parameters of the
+# stimulus at certain time points, with the intermediate
+# values interpolated
+
+# Use the 3-argument version of the Python type function to
+# make a temporary class combining two classes
+
+class LoomingStimulus(InterpolatedStimulus, CircleStimulus):
+    name = "looming_stimulus"
+
 # Let's define a simple protocol consisting of looms at random locations,
 # of random durations and maximal sizes
 
@@ -29,27 +41,14 @@ class LoomingProtocol(Protocol):
         # if you are not interested in parametrizing your
         # protocol the the whole __init__ definition
         # can be skipped
-        # TODO figure out how to integrate this with Sphinx
+
         self.n_looms = Param(10)
-        self.max_loom_size = Param(30)
+        self.max_loom_size = Param(300)
         self.max_loom_duration = Param(5)
 
     # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):
         stimuli = []
-
-        # A looming stimulus is an expanding circle. Stimuli which contain
-        # some kind of parameter change inherit from InterpolatedStimulus
-        # which allows for specifying the values of parameters of the
-        # stimulus at certain time points, with the intermediate
-        # values interpolated
-
-        # Use the 3-argument version of the Python type function to
-        # make a temporary class combining two classes
-
-        LoomingStimulus = type(
-            "LoomingStimulus", (InterpolatedStimulus, CircleStimulus), {}
-        )
 
         for i in range(self.n_looms):
             # The radius is only specified at the beginning and at the
@@ -67,11 +66,12 @@ class LoomingProtocol(Protocol):
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(5, 5)))
+            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(150,
+                                                                       150)))
 
         return stimuli
 
 
 if __name__ == "__main__":
-    # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(protocols=[LoomingProtocol])
+    # We make a new instance of Stytra with this protocol as the only option:
+    s = Stytra(protocol=LoomingProtocol())
