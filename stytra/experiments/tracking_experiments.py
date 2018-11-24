@@ -17,7 +17,6 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-
 from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
@@ -35,7 +34,6 @@ from stytra.stimulation.estimators import (
 from inspect import isclass
 
 import sys
-import logging
 
 
 class CameraExperiment(Experiment):

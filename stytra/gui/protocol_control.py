@@ -1,8 +1,6 @@
 from PyQt5.QtCore import pyqtSignal, Qt
 from PyQt5.QtWidgets import (
-    QHBoxLayout,
     QDockWidget,
-    QComboBox,
     QProgressBar,
     QToolBar,
     QLabel,

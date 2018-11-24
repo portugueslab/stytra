@@ -31,9 +31,6 @@ from lightparam.gui import ParameterGui
 
 import json
 
-from multiprocessing import Queue
-from queue import Empty
-
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):

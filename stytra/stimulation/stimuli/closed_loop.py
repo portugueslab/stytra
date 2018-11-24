@@ -117,8 +117,6 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
             else:
                 self.vel = self.base_vel
 
-        #self.vel = min(self.vel, self.max_vel)  # set maximum possible
-        # velocit
 
         self.x += self._dt * self.vel
 

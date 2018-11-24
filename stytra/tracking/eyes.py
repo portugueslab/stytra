@@ -177,9 +177,6 @@ def _fit_ellipse(thresholded_image):
             return e
         else:
             return False
-        # except cv2.error:
-        #     print('unknown error')
-        #     return False
 
     else:
         # Not at least two eyes + maybe dirt found...

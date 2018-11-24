@@ -6,7 +6,7 @@ implement video saving
 import numpy as np
 
 from multiprocessing import Queue, Event
-from multiprocessing.queues import Empty, Full
+from multiprocessing.queues import Empty
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
