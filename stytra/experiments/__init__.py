@@ -86,7 +86,7 @@ class Experiment(QObject):
         log_format="csv",
         stim_movie_format="h5",
         rec_stim_framerate=None,
-        display_config=None,
+        display=None,
         scope_triggering=None,
         offline=False,
         **kwargs
@@ -166,10 +166,10 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        if display_config is None:
+        if display is None:
             self.display_config = dict(full_screen=False, gl=True)
         else:
-            self.display_config = display_config
+            self.display_config = display
 
         if not self.offline:
             self.window_display = StimulusDisplayWindow(
@@ -203,8 +203,9 @@ class Experiment(QObject):
 
     @property
     def folder_name(self):
-        foldername = os.path.join(self.base_dir, self.protocol.__class__.name,
-                                  self.get_new_name())
+        foldername = os.path.join(
+            self.base_dir, self.protocol.__class__.name, self.get_new_name()
+        )
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
@@ -244,11 +245,9 @@ class Experiment(QObject):
             self.window_main = DynamicStimExperimentWindow(self)
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
             self.gui_timer.start(1000 // 60)
-            self.gui_timer.start(1000 // 60)
         else:
             self.window_main = SimpleExperimentWindow(self)
 
-        self.window_main.status_display.addMessage("Hello hello", persist=-1)
         self.window_main.construct_ui()
         self.window_main.show()
 

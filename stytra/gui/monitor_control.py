@@ -20,8 +20,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
     -------
 
     """
-    sig_dim_changed = pyqtSignal(tuple)
 
+    sig_dim_changed = pyqtSignal(tuple)
 
     def __init__(self, *args, display_size=(1280, 800), display, **kwargs):
         super().__init__(*args, **kwargs)

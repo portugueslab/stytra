@@ -142,11 +142,7 @@ class FrameDispatcher(FrameProcess):
                     processed, **self.processing_parameters
                 )
 
-                if message == "":
-                    self.message_queue.put(
-                        "W:No message from tracking function".format(frame_idx)
-                    )
-                else:
+                if len(message) > 0:
                     self.message_queue.put(message)
 
                 # Handle the single output queue

@@ -11,8 +11,11 @@ class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
 
     stytra_config = dict(
-        tracking_config=dict(embedded=True, tracking_method="tail", estimator="vigor"),
-        display_config=dict(full_screen=True),
+        tracking=dict(embedded=True, method="tail", preprocessing="prefilter", estimator="vigor"),
+        camera=dict(
+            video_file=r"J:\_Shared\stytra_resources\videos\fish_tail_anki.h5",
+        ),
+        display_config=dict(full_screen=False),
     )
 
     def __init__(self):
@@ -64,12 +67,4 @@ class ClosedLoop1DProt(Protocol):
 
 
 if __name__ == "__main__":
-    # save_dir = tempfile.mkdtemp()
-
-    # We make a new instance of Stytra with this protocol as the only option
     s = Stytra(protocol=ClosedLoop1DProt())
-    # camera_config=camera_config,
-    # tracking_config=tracking_config,
-    # display_config=display_config,
-    # dir_save=dir_save,
-    # log_format='hdf5'

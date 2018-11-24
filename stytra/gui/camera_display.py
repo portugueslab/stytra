@@ -356,13 +356,13 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Get data from queue(first is timestamp)
 
-        if len(self.experiment.data_acc.stored_data) > 1:
+        if len(self.experiment.acc_tracking.stored_data) > 1:
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
-            recent_data = self.experiment.data_acc.stored_data[-50:]
+            recent_data = self.experiment.acc_tracking.stored_data[-50:]
             dt_list = [
                 (
-                    self.experiment.data_acc.starting_time
+                    self.experiment.acc_tracking.starting_time
                     + datetime.timedelta(0, t[0])
                     - self.current_frame_time
                 ).total_seconds()
@@ -403,7 +403,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             if self.eyes:
                 im = self.current_image
 
-                if len(self.experiment.data_acc.stored_data) > 1:
+                if len(self.experiment.acc_tracking.stored_data) > 1:
                     self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
                     e = retrieved_data[-10:]
                     for i, o in enumerate([0, 5]):
@@ -558,18 +558,18 @@ class CameraViewFish(CameraViewCalib):
     def update_image(self):
         super().update_image()
 
-        if len(self.experiment.data_acc.stored_data) > 1:
+        if len(self.experiment.acc_tracking.stored_data) > 1:
             # figure out in a quick and dirty way if the tail is being tracked
-            last_header_item = self.experiment.data_acc.header_list[-2]
+            last_header_item = self.experiment.acc_tracking.header_list[-2]
             n_fish = int(last_header_item[1]) + 1
 
             n_data_per_fish = (
-                len(self.experiment.data_acc.stored_data[-1]) - 2
+                len(self.experiment.acc_tracking.stored_data[-1]) - 2
             ) // n_fish  # the first is time, the last is area
             n_points_tail = n_data_per_fish - 6
             try:
                 retrieved_data = np.array(
-                    self.experiment.data_acc.stored_data[-1][
+                    self.experiment.acc_tracking.stored_data[-1][
                         1:-1
                     ]  # the -1 if for the diagnostic area
                 ).reshape(n_fish, n_data_per_fish)

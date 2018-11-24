@@ -9,8 +9,12 @@ class RingBuffer:
         self.read_idx = 0
 
     def put(self, item):
-        if self.arr is None or self.arr.shape[1:] != item.shape or self.arr.dtype != item.dtype:
-            self.arr = np.empty((self.length,)+item.shape, item.dtype)
+        if (
+            self.arr is None
+            or self.arr.shape[1:] != item.shape
+            or self.arr.dtype != item.dtype
+        ):
+            self.arr = np.empty((self.length,) + item.shape, item.dtype)
 
         self.arr[self.insert_idx] = item
         self.insert_idx = (self.insert_idx + 1) % self.length
@@ -21,6 +25,3 @@ class RingBuffer:
         old_idx = self.read_idx
         self.read_idx = (self.read_idx + 1) % self.length
         return self.arr[old_idx]
-
-
-

@@ -6,15 +6,19 @@ import colorspacious
 from queue import Empty
 import numpy as np
 
-def _hex_to_rgb(hex):
-    hex = hex.lstrip('#')
-    return tuple(int(hex[i*2:i*2+2], 16) for i in range(3))
 
-color_dict = dict(neutral=(0, 0, 0), warning=(1,0,0), )
+def _hex_to_rgb(hex):
+    hex = hex.lstrip("#")
+    return np.array(tuple(int(hex[i * 2 : i * 2 + 2], 16) for i in range(3)))
+
+
+color_dict = dict(I=(25, 35, 44), P=(25, 35, 44), E=(143, 0, 1), W=(19, 76, 80))
 
 
 class DisplayedMessage(QLabel):
-    def __init__(self, message, persist=0):
+    """A label for status messages which can optionally fade out"""
+
+    def __init__(self, message, persist=0, end_color=(0, 0, 0)):
         super().__init__(message[2:])
         self.type = message[0]
         self.started = datetime.now()
@@ -22,23 +26,34 @@ class DisplayedMessage(QLabel):
             self.persist = -1
         else:
             self.persist = persist
-        self.start_color = np.array((0,0,0))
-        self.neutral_color = np.nan_to_num(_hex_to_rgb(self.palette().color(QPalette.Button).name()))
+        self.start_color = np.array(color_dict[self.type])
+        self.text_start_color = np.array((255,)*3)
+        self.end_color = np.array(end_color)
+
 
     def is_expired(self, t):
-        if self.persist > 0 and (t-self.started).total_seconds()>self.persist:
+        if (t - self.started).total_seconds() > self.persist > 0:
             return True
         return False
 
     def refresh(self):
         self.started = datetime.now()
 
-    def update(self, t):
+    def update_t(self, t):
         if self.persist <= 0:
             return
-        passed = (t-self.started).total_seconds()/self.persist
+        passed = (t - self.started).total_seconds() / self.persist
 
-        color = self.neutral_color*passed + (1-passed)*self.neutral_color
+        color_bg = (self.end_color * passed + (1 - passed) * self.start_color).astype(
+            np.uint8
+        )
+        color_txt = (self.end_color * passed + (1 - passed) * self.text_start_color).astype(
+            np.uint8
+        )
+        self.setStyleSheet(
+            "background-color: rgb({},{},{});"
+            " color: rgb({},{},{});".format(*color_bg, *color_txt)
+        )
 
 
 class StatusMessageDisplay(QWidget):
@@ -52,14 +67,17 @@ class StatusMessageDisplay(QWidget):
     def addMessageQueue(self, queue):
         self.queues.append(queue)
 
-    def addMessage(self, message, persist=5):
+    def addMessage(self, message, persist=3):
+
+        end_color = _hex_to_rgb(self.palette().color(QPalette.Background).name())
+
         if len(message) < 2:
             return
         if message in self.current_messages.keys():
             self.current_messages[message].refresh()
 
         else:
-            self.current_messages[message] = DisplayedMessage(message, persist=persist)
+            self.current_messages[message] = DisplayedMessage(message, persist=persist, end_color=end_color)
             self.new_messages.append(self.current_messages[message])
 
     def refresh(self):
@@ -72,20 +90,16 @@ class StatusMessageDisplay(QWidget):
                     break
 
         t = datetime.now()
-        for msg in self.new_messages:
+        while len(self.new_messages) > 0:
+            msg = self.new_messages.pop()
             self.layout().addWidget(msg)
 
-        for key in self.current_messages.keys():
+
+        all_keys = list(self.current_messages.keys())
+        for key in all_keys:
             if self.current_messages[key].is_expired(t):
-                self.layout().removeWidget(self.current_messages[key])
-                self.current_messages.pop(key)
+                wid = self.current_messages.pop(key)
+                self.layout().removeWidget(wid)
+                wid.deleteLater()
             else:
-                self.current_messages[key].update(t)
-
-
-
-
-
-
-
-
+                self.current_messages[key].update_t(t)
