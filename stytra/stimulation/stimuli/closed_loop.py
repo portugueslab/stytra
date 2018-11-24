@@ -144,6 +144,7 @@ class CalibratingClosedLoop1D(BackgroundStimulus, InterpolatedStimulus,
         *args,
         base_vel=10,
         swimming_threshold=-5,
+        target_vel=-25,
         max_vel=40,
         **kwargs
     ):
@@ -155,7 +156,7 @@ class CalibratingClosedLoop1D(BackgroundStimulus, InterpolatedStimulus,
         self.base_vel = base_vel
         self.fish_vel = 0
         self.vel = base_vel
-        self.target_vel = -15  # target velocity for the calibration
+        self.target_vel = target_vel  # target velocity for the calibration
 
         self.swimming_threshold = swimming_threshold
         self.fish_swimming = False
