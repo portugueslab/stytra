@@ -7,6 +7,8 @@ import deepdish as dd
 import logging
 import tempfile
 import multiprocessing_logging
+import git
+import sys
 
 from PyQt5.QtCore import QObject, QTimer
 from PyQt5.QtWidgets import QMessageBox
@@ -92,6 +94,7 @@ class Experiment(QObject):
         **kwargs
     ):
         """ """
+        self.arguments = locals()
         super().__init__()
 
         self.app = app
@@ -187,6 +190,8 @@ class Experiment(QObject):
         self.gui_timer.setSingleShot(False)
 
         self.display_framerate_acc = None
+
+
 
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
@@ -357,6 +362,15 @@ class Experiment(QObject):
                 else:
                     db_id = -1
                 self.dc.add_static_data(db_id, name="general/db_index")
+
+                # Get program name and version and save to the data_log:
+                repo = git.Repo(search_parent_directories=True)
+                git_hash = repo.head.object.hexsha
+
+                self.dc.add_static_data(dict(git_hash=git_hash,
+                                             name=sys.argv[0],
+                                             arguments=self.arguments),
+                                        name='general/program_version')
 
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
                 self.logger.info(
