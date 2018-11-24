@@ -353,6 +353,8 @@ class MultiStreamPlot(QWidget):
                             new_bounds[id, :] = np.percentile(
                                 non_nan_data, (0.5, 99.5), 0
                             )
+                            if new_bounds[id, 0] == new_bounds[id, 1]:
+                                new_bounds[id, 1] += 1
 
                     if self.bounds[i_acc] is None:
                         if not self.round_bounds:
