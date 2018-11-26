@@ -52,6 +52,8 @@ Modules
     :caption: Contents:
 
     install_guide
+    examples_gallery
+    configuring_computer
     stimulation_intro
     create_protocol
     running_experiments
