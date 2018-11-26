@@ -31,12 +31,12 @@ class LoomingProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        # It is nice for a protocol to be parametrized, so
+        # It is convenient for a protocol to be parametrized, so
         # we name the parameters we might want to change,
         # along with specifying the the default values.
         # This automatically creates a GUI to change them
         # (more elaborate ways of adding parameters are supported,
-        # see the documentation of HasPyQtGraphParams)
+        # see the documentation of lightparam)
 
         # if you are not interested in parametrizing your
         # protocol the the whole __init__ definition

@@ -8,6 +8,22 @@ Welcome to Stytra's documentation!
 
 Stytra is a package to build and run behavioral experiments
 
+..  toctree::
+    :maxdepth: 2
+    :caption: Contents:
+
+    install_guide
+    stimulation_intro
+    create_protocol
+    running_experiments
+    data_saving
+    calibration
+    triggering_intro
+    swimming_tracking
+    image_processing
+    parameters_stytra
+    hardware_list
+
 
 Modules
 -------
@@ -47,23 +63,7 @@ Modules
 
 
 
-..  toctree::
-    :maxdepth: 2
-    :caption: Contents:
 
-    install_guide
-    examples_gallery
-    configuring_computer
-    stimulation_intro
-    create_protocol
-    running_experiments
-    data_saving
-    calibration
-    triggering_intro
-    swimming_tracking
-    image_processing
-    parameters_stytra
-    hardware_list
 
 
 

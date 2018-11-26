@@ -1,7 +1,7 @@
 Installation guide
 ==================
 
-Stytra was developed and tested using Python 3.6 installed as part of the
+Stytra was developed and tested using Python 3.6 and 3.7 installed as part of the
 `Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Other Python versions have not been tested.
 Make sure you have the latest version of Anaconda installed before proceeding
 with the installation. Installation with custom python environments,
@@ -31,6 +31,12 @@ Now, download stytra in a directory and install it via pip by::
 
     pip install path_to_stytra/stytra
 
+If you want to be able to change the stytra code and use the current version of the
+code, install using the -e argument::
+
+
+    pip install -e path_to_stytra/stytra
+
 
 You can test now the installation by running one of the examples in stytra
 example folder! To run a simple looming stimulus experiment, you can
@@ -46,11 +52,11 @@ contact us for support through the `stytra github page <https://github
 
 Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
 :ref:`Configuring a computer for Stytra experiments`.
-In the second case, you might want to have a look at the camera APIs section down there first.
+In the second case, you might want to have a look at the camera APIs section below first.
 
 .. note::
     Stytra might have some problem on quit because of a bug in the current
-    version of pyqtgraph. If you are really annoyed by the error messages
+    version of pyqtgraph (a package we are using for online plotting). If you are really annoyed by the error messages
     when closing the program you can install the develop version of pyqtgraph
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
     Hopefully the problem will be solved with the next pyqtgraph version.
@@ -61,7 +67,7 @@ Installing camera APIs
 xiCam: Ximea
 ............
 
-Download the Ximea SDK, install it with Python support and copy the contents
+Download the `Ximea SDK software pacakge for your operating system <https://www.ximea.com/support/wiki/apis/APIs>`_, install it with Python support and copy the contents
 of the relevant directory (python3)
 
 
@@ -91,5 +97,6 @@ Go the the `FLIR support website <https://eu.ptgrey.com/support/downloads?countr
 National Instruments framegrabber with Mikrotron camera
 .......................................................
 
-Install the NI vision SDK. For the Mikrotron MC1362 camera, you can use `this <../hardware_list/MikrotronMC1362.icd>`_
-camera file and set up the 8x8 tap mode in the camera software.
+Install the NI vision SDK. For the Mikrotron MC1362 camera, you can use `this <www.portugueslab.com/files/MikrotronMC1362.icd>`_
+camera file. The camera file usually needs to be put into C:\Users\Public\Public Documents\National Instruments\NI-IMAQ\Data
+After putting the camera file there, is should be selected for the image acquisition device in NI MAX.
