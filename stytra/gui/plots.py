@@ -310,6 +310,7 @@ class MultiStreamPlot(QWidget):
 
     def update(self):
         """Function called by external timer to update the plot"""
+
         if not self.color_set:
             self.plotContainer.setBackground(self.palette().color(QPalette.Button))
             self.color_set = True
@@ -353,6 +354,8 @@ class MultiStreamPlot(QWidget):
                             new_bounds[id, :] = np.percentile(
                                 non_nan_data, (0.5, 99.5), 0
                             )
+                            if new_bounds[id, 0] == new_bounds[id, 1]:
+                                new_bounds[id, 1] += 1
 
                     if self.bounds[i_acc] is None:
                         if not self.round_bounds:
@@ -478,6 +481,8 @@ class TailStreamPlot(QWidget):
         self.layout().addWidget(self.display_widget)
 
     def update(self):
+        if not self.isVisible():
+            return
         data_array = self.acc.get_last_n(self.n_points)
         if len(data_array) > 0:
             self.image_item.setImage(image=np.diff(data_array[:, 2:], axis=1).T,
