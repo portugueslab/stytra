@@ -219,6 +219,8 @@ class VideoFileSource(VideoSource):
         self.offset = 0
         self.paused = False
         self.old_frame = None
+        self.offset = 0
+
 
     def inner_loop(self):
         pass
@@ -232,9 +234,27 @@ class VideoFileSource(VideoSource):
                 delta_t = 1 / framedata.get("framerate", 30.0)
             else:
                 delta_t = 1 / self.framerate
-            i_frame = 0
+            i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():
+
+                # Try to get new parameters from the control queue:
+                message = ""
+                if self.control_queue is not None:
+                    while True:
+                        try:
+                            param_dict = self.control_queue.get(timeout=0.0001)
+                            for name, value in param_dict.items():
+                                print(param_dict)
+                                if name == "framerate":
+                                    delta_t = 1 / value
+                                elif name == "offset":
+                                    if value != self.offset:
+                                        self.offset = value
+                                elif name == "paused":
+                                    self.paused = value
+                        except Empty:
+                            break
 
                 # we adjust the framerate
                 if prt is not None:
@@ -243,10 +263,11 @@ class VideoFileSource(VideoSource):
                         time.sleep(extrat)
 
                 self.frame_queue.put(frames[i_frame, :, :])
-                i_frame += 1
+                if not self.paused:
+                    i_frame += 1
                 if i_frame == frames.shape[0]:
                     if self.loop:
-                        i_frame = 0
+                        i_frame = self.offset
                     else:
                         break
                 self.update_framerate()
