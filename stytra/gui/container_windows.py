@@ -31,9 +31,6 @@ from lightparam.gui import ParameterGui
 
 import json
 
-from multiprocessing import Queue
-from queue import Empty
-
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
@@ -296,7 +293,6 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         if tail:
             self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
-            self.monitoring_layout.addWidget(self.tail_widget)
 
         self.layout_track_btns = QHBoxLayout()
         self.layout_track_btns.setContentsMargins(0, 0, 0, 0)
@@ -330,16 +326,23 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.stream_plot.update
 
         )
+
+        monitoring_widget = QWidget()
+        monitoring_widget.setLayout(self.monitoring_layout)
+        monitoring_dock = QDockWidget("Monitoring", self)
+        monitoring_dock.setObjectName("dock_monitoring")
+        monitoring_dock.setWidget(monitoring_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+
         if self.tail:
             self.experiment.gui_timer.timeout.connect(
                 self.tail_widget.update
             )
-        monitoring_widget = QWidget()
-        monitoring_widget.setLayout(self.monitoring_layout)
-        monitoring_dock = QDockWidget("Monitoring", self)
-        monitoring_dock.setObjectName("Monitoring")
-        monitoring_dock.setWidget(monitoring_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+            tail_dock = QDockWidget("Tail curvature", self)
+            tail_dock.setObjectName("dock_tail")
+            tail_dock.setWidget(self.tail_widget)
+            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
+
         self.docks.append(monitoring_dock)
         return previous_widget
 

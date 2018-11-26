@@ -28,7 +28,7 @@ class TailEyesTrackingMethod(TailTrackingMethod, EyeTrackingMethod):
         ]
         self.monitored_headers = ["tail_sum", "th_e0", "th_e1"]
         self.accumulator_headers = headers
-        self.data_log_name = "behaviour_tail_eyes_log"
+        self.data_log_name = "behavior_tail_eyes_log"
         self.method_chain = [AnglesTrackingMethod(), EyeTrackingMethod()]
 
     def detect(self, im, **kwargs):

@@ -106,7 +106,6 @@ class Stytra:
         tracking=None,
         recording=None,
         exec=True,
-        # scope_triggering=None,
         **kwargs
     ):
         # Check if exist a default config file in the home (user) directory:
@@ -123,14 +122,13 @@ class Stytra:
             extra_config = dict()
 
         recursive_update(config, extra_config)
+        recursive_update(config, kwargs)  # Use also stytra inputs
 
         if config.get("scope_triggering", None) == "zmq":
             # Automatically use zmqTrigger if zmq is specified
             from stytra.triggering import ZmqTrigger
 
             config["scope_triggering"] = ZmqTrigger(port="5555")
-        # else:
-        #     class_kwargs['scope_triggering'] = scope_triggering
 
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
@@ -150,6 +148,8 @@ class Stytra:
             if "recording" in class_kwargs.keys():
                 base = SwimmingRecordingExperiment
 
+
+        # Stytra logo :)
         app_icon = QIcon()
         for size in [32, 64, 128, 256]:
             app_icon.addFile(
@@ -165,28 +165,3 @@ class Stytra:
         self.exp.start_experiment()
         if exec:
             app.exec_()
-
-
-# if __name__ == "__main__":
-#     import argparse
-#     from pathlib import Path
-#     # default_config_file = Path("~/setup_config.json")
-#     #
-#     # import json
-#     #
-#     # if default_config_file.is_file():
-#     #     config = json.load(open(default_config_file))
-#     # else:
-#     #     config = dict()
-#
-#     # parser = argparse.ArgumentParser(description="Run Stytra")
-#     # parser.add_argument("configuration", type=str, action="store", nargs="?", help="json", default=None)
-#     # args = parser.parse_args()
-#     #
-#     # if args.configuration is not None:
-#     #     try:
-#     #         config.update(json.load(open(args.config)))
-#     #     except OSError as e:
-#     #         print("Config file not valid ", e)
-#
-#     st = Stytra()

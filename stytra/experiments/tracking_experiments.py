@@ -17,7 +17,6 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-
 from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
 from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
@@ -28,14 +27,13 @@ from lightparam.param_qt import ParametrizedQt
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
-    VigourMotionEstimator,
+    VigorMotionEstimator,
     Estimator,
 )
 
 from inspect import isclass
 
 import sys
-import logging
 
 
 class CameraExperiment(Experiment):
@@ -158,7 +156,7 @@ class CameraExperiment(Experiment):
 class TrackingExperiment(CameraExperiment):
     """Abstract class for an experiment which contains tracking.
 
-    This class is the base for any experiment that tracks behaviour (being it
+    This class is the base for any experiment that tracks behavior (being it
     eyes, tail, or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
@@ -263,7 +261,7 @@ class TrackingExperiment(CameraExperiment):
         if est_type == "position":
             self.estimator = PositionEstimator(self.acc_tracking, calibrator=self.calibrator)
         elif est_type == "vigor":
-            self.estimator = VigourMotionEstimator(self.acc_tracking)
+            self.estimator = VigorMotionEstimator(self.acc_tracking)
         elif isclass(est_type) and issubclass(est_type, Estimator):
             self.estimator = est_type(
                 self.acc_tracking, **tracking.get("estimator_params", {})

@@ -38,7 +38,7 @@ setup(
         "Programming Language :: Python :: 3.6",
     ],
     keywords="tracking behavior experiments",
-    description="A modular package to control stimulation and track behaviour in zebrafish experiments.",
+    description="A modular package to control stimulation and track behavior in zebrafish experiments.",
     project_urls={
         "Source": "https://github.com/portugueslab/stytra",
         "Tracker": "https://github.com/portugueslab/stytra/issues",

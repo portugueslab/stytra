@@ -93,7 +93,3 @@ if __name__ == "__main__":
     stim.start()
     print("sending pulse")
 
-
-# if __name__=='__main__':
-# stim = SetVoltageStimulus(dev="Dev2", chan="P07")
-# stim.start()

@@ -12,7 +12,106 @@ from stytra.stimulation.stimuli import (
 )
 
 
-class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
+class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
+    """
+        Vigor-based closed loop stimulus.
+
+        The parameters can change in time if the df_param is supplied which
+        specifies their values in time.
+
+        Parameters
+        ----------
+        base_vel:
+            the velocity of the background when the stimulus is not moving
+        shunting: bool
+            if true, when the fish stops swimming its infulence on the
+            background motion stops, immediately independent of lag
+        swimming_threshold: float
+            the velocity at which the fish is considered to be performing
+            a bout
+        fixed_vel: float
+            if not None, fixed velocity for the stimulus when fish swims
+        """
+
+    def __init__(
+            self,
+            *args,
+            base_vel=10,
+            swimming_threshold=-15,
+            max_fish_vel=40,
+            **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = "general closed loop 1D"
+        self.dynamic_parameters = ["vel", "base_vel", "fish_swimming"]
+        self.base_vel = base_vel  # base grating velocity
+        self.vel = base_vel  # final grating velocity
+
+        self.swimming_threshold = swimming_threshold
+        self.max_fish_vel = max_fish_vel
+
+        self.fish_vel = 0
+        self.fish_swimming = False
+        # For within-bout checks:
+        self.bout_start = None
+        self.bout_stop = None
+
+    def get_fish_vel(self):
+        """ Function that update estimated fish velocty. Change to add lag or
+        shunting.
+        """
+        self.fish_vel = self._experiment.estimator.get_velocity()
+
+    def bout_started(self):
+        """ Function called on bout start.
+        """
+        pass
+
+    def bout_occurring(self):
+        pass
+
+    def bout_ended(self):
+        """ Function called on bout end.
+        """
+        pass
+
+    def update(self):
+        self.get_fish_vel()
+
+        # If estimated velocity greater than threshold
+        # the fish is performing a bout:
+        if self.fish_vel < self.swimming_threshold:
+            self.fish_swimming = True
+
+            if self.bout_start is None:
+                # If here, we are at the beginning of a bout
+                self.bout_start = self._elapsed
+                self.bout_stop = None
+                self.bout_started()
+
+            self.bout_occurring()
+
+        else:  # if not bouting:
+            if self.bout_start is not None:
+                # If here, we are at the end of a bout
+                self.bout_stop = self._elapsed
+
+                self.bout_ended()
+
+                self.bout_start = None
+
+            self.fish_swimming = False
+
+        # Use method for calculating final velocity and update:
+        self.calculate_final_vel()
+        self.x += self._dt * self.vel
+
+        super().update()
+
+    def calculate_final_vel(self):
+        self.vel = self.base_vel - self.fish_vel * int(self.fish_swimming)
+
+
+class CalibratingClosedLoop1D(Basic_CL_1D):
     """
     Vigor-based closed loop stimulus. Velocity is assumend to be calculated
     with the
@@ -24,100 +123,118 @@ class ClosedLoop1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     ----------
     base_vel:
         the velocity of the background when the stimulus is not moving
-    gain:
-        the closed-loop gain, a gain of 1 approximates
-        the freely-swimming behaviour
-    lag:
-        how much extra delay is provided in the closed loop
-    shunting: bool
-        if true, when the fish stops swimming its infulence on the
-        background motion stops, immediately independent of lag
     swimming_threshold: float
         the velocity at which the fish is considered to be performing
         a bout
-    fixed_vel: float
-        if not None, fixed velocity for the stimulus when fish swims
     """
 
     def __init__(
-        self,
-        *args,
-        base_vel=10,
-        gain=1,
-        lag=0,
-        shunting=False,
-        swimming_threshold=0.2 * -30,
-        fixed_vel=None,
-        **kwargs
+            self,
+            target_vel=-25,
+            **kwargs
     ):
-        super().__init__(*args, **kwargs)
-        self.name = "closed loop 1D"
-        self.fish_velocity = 0
-        self.dynamic_parameters = ["vel", "base_vel", "gain", "lag", "fish_swimming"]
-        self.base_vel = base_vel
-        self.fish_velocity = 0
-        self.vel = base_vel
-        self.lag = lag
-        self.gain = gain
-        self.swimming_threshold = swimming_threshold
-        self.fish_swimming = False
-        self.shunting = shunting
-        self.shunted = False
-        self.fixed_velocity = fixed_vel
+        super().__init__(**kwargs)
+        self.name = "calibrating_cl1D"
+        self.dynamic_parameters.extend(["bout_counter",
+                                   "bout_peak_vel", "est_gain"])
+        self.target_vel = target_vel  # target velocity for the calibration
 
-        self.bout_start = None
-        self.bout_stop = None
+        self.est_gain = 0
+        self.bout_counter = 0
+        self.bout_peak_vel = 0
+        self.bout_vel_list = []
 
-        self._past_t = 0
+    def bout_occurring(self):
+        self.bout_peak_vel = min(self.bout_peak_vel, self.fish_vel)
 
-    def update(self):
-        """
-        Here we use fish velocity to change velocity of gratings.
-        """
-        super().update()
+    def bout_ended(self):
+        self.bout_counter += 1
 
-        self.fish_velocity = self._experiment.estimator.get_velocity(lag=self.lag)
+        if self.bout_stop - self.bout_start > 0.1:
 
-        if self.base_vel == 0:
-            self.shunted = False
-            self.fish_swimming = False
+            # Update list with peak velocities and reset current peak vel:
+            self.bout_vel_list.append(self.bout_peak_vel)
 
-        if (
-            self.shunting
-            and self.fish_swimming
-            and self.fish_velocity > self.swimming_threshold
-        ):
-            self.shunted = True
+            # After some number of bouts, update estimator gain:
 
-        # If estimated velocity greater than threshold
-        # the fish is performing a bout
-        if self.fish_velocity < self.swimming_threshold:
-            self.fish_swimming = True
+            if len(self.bout_vel_list) > 10:
+                median_peak_vel = np.median(self.bout_vel_list)
+                self.est_gain = self._experiment.estimator.base_gain * \
+                                (self.target_vel / median_peak_vel)
+                self._experiment.estimator.base_gain = self.est_gain
 
-            if self.bout_start is None:
-                self.bout_start = self._elapsed
-            self.bout_stop = None
-        else:
-            self.bout_start = None
-            if self.bout_start is None:
-                self.bout_start = self._elapsed
+                print("Calibrated! New gain: {}".format(self.est_gain))
 
-            self.fish_swimming = False
+                self.bout_vel_list = []
 
-        if self.fixed_velocity is None:
-            self.vel = int(not self.shunted) * (
-                self.base_vel - self.fish_velocity * self.gain * int(self.fish_swimming)
-            )
-        else:
-            if self.fish_swimming and not self.base_vel == 0:
-                self.vel = self.fixed_velocity
-            else:
-                self.vel = self.base_vel
+            self.bout_peak_vel = 0
 
-        if self.vel is None or self.vel > 50:
-            self.vel = 0
 
-        self.x += self._dt * self.vel
+# class ClosedLoop1D(Basic_CL_1D):
+#
+#     def __init__(
+#         self,
+#         gain=1,
+#         lag=0,
+#         shunting=False,
+#         fixed_vel=None,
+#         **kwargs
+#     ):
+#         super().__init__(**kwargs)
+#         self.name = "closed loop 1D"
+#         self.dynamic_parameters.extend(["gain", "lag"])
+#         self.lag = lag
+#         self.gain = gain
+#         self.shunting = shunting
+#         self.shunted = False
+#         self.fixed_vel = fixed_vel  # fixed forward velocity
+#
+#     def update(self):
+#         """
+#         Here we use fish velocity to change velocity of gratings.
+#         """
+#         super().update()
+#
+#         self.fish_vel = self._experiment.estimator.get_velocity(lag=self.lag)
+#
+#         if self.base_vel == 0:
+#             self.shunted = False
+#             self.fish_swimming = False
+#
+#         if (
+#             self.shunting
+#             and self.fish_swimming
+#             and self.fish_vel > self.swimming_threshold
+#         ):
+#             self.shunted = True
+#
+#         # If estimated velocity greater than threshold
+#         # the fish is performing a bout:
+#         if self.fish_vel < self.swimming_threshold:  # if bouting:
+#             self.fish_swimming = True
+#
+#             if self.bout_start is None:
+#                 self.bout_start = self._elapsed
+#             self.bout_stop = None
+#         else:  # if not bouting:
+#             self.bout_start = None
+#             if self.bout_stop is None:
+#                 self.bout_stop = self._elapsed
+#
+#             self.fish_swimming = False
+#
+#         if self.fixed_vel is None:
+#             self.vel = int(not self.shunted) * (
+#                 self.base_vel - self.fish_vel * self.gain * int(self.fish_swimming)
+#             )
+#         else:
+#             if self.fish_swimming and not self.base_vel == 0:
+#                 self.vel = self.fixed_vel
+#             else:
+#                 self.vel = self.base_vel
+#
+#
+#         self.x += self._dt * self.vel
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):

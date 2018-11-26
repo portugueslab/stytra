@@ -10,11 +10,11 @@ import time
 
 try:
     import zmq
-except ModuleNotFoundError:
+except:
     pass
 try:
     import u3
-except ModuleNotFoundError:
+except:
     pass
 
 
@@ -173,6 +173,4 @@ if __name__ == "__main__":
     port = "5555"
     trigger = ZmqTrigger(port)
     trigger.start()
-    # trig = U3LabJackPulseTrigger(6)
-    # print("before")
-    # trig.start()
+

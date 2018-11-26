@@ -7,7 +7,8 @@ except ImportError:
 
 
 class SpinnakerCamera(Camera):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.system = PySpin.System.GetInstance()
         self.cam = self.system.GetCameras()[0]
         assert isinstance(self.cam, PySpin.CameraPtr)

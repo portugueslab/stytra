@@ -17,6 +17,8 @@ class GratingsProtocol(Protocol):
         self.grating_vel = Param(1.)
         self.grating_duration = Param(5.)
         self.grating_cycle = Param(10)
+        self.grating_angle_deg = Param(0.)
+        self.grating_shape = Param("square", limits=["square", "sine"])
 
     def get_stim_sequence(self):
         stimuli = []
@@ -38,10 +40,10 @@ class GratingsProtocol(Protocol):
         stimuli.append(
             MovingGratingStimulus(
                 df_param=df,
-                grating_angle=0,
+                grating_angle=self.grating_angle_deg * np.pi/180,
                 grating_period=self.grating_cycle,
                 grating_col_2=(0, 0, 255),
-                wave_shape="sine",
+                wave_shape=self.grating_shape,
             )
         )
         return stimuli
@@ -49,4 +51,4 @@ class GratingsProtocol(Protocol):
 
 if __name__ == "__main__":
     # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(protocols=[GratingsProtocol])
+    s = Stytra(protocol=GratingsProtocol())

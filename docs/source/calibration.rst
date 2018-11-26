@@ -1,8 +1,8 @@
 Calibration
 ===========
 
-Simple calibration of a monitor for a visual stimulus
------------------------------------------------------
+Positioning and calibrating the monitor for visual stimuli
+----------------------------------------------------------
 To calibrate the monitor for your experiment, first position the black
 stimulus screen on the monitor you are using for the experiment. Then, hit
 the show calibration button and drag around the ROI in the stytra GUI until
@@ -14,15 +14,15 @@ The calibration is saved in the last_stytra_config.json file, so once you
 have done it it maintains the same calibration for all subsequent experiments.
 
 
-Calibration of a monitor together with a camera
------------------------------------------------
+Calibration of the camera and monitor
+-------------------------------------
 
-To calibrate the camera image to the projected image, the Circle Calibrator
+To calibrate the camera image to the displayed image, the Circle Calibrator
 is used (it is enabled automatically for freely-swimming experiments).
 
-After Sytra starts, turn off the IR illuminationation and remove the IR filter
+After Styra starts, turn off the IR illumination and remove the IR filter
 in front of the camera. Then, click the display calibration pattern button and
-move the display window on the projector so that the 3 dots are visible.
+move the display window on the projector so that the 3 dots are clearly visible.
 Sometimes the camera exposure has to be adjusted as well.
 
 (insert screenshot)

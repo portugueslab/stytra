@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout
 from PyQt5.QtGui import QPalette
 from collections import OrderedDict
 from datetime import datetime
-import colorspacious
 from queue import Empty
 import numpy as np
 

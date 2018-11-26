@@ -18,7 +18,7 @@ class PhototaxisProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.duration = Param(600)
+        self.duration = Param(600, (0, 2400))
         self.center_offset = Param(0, (-100, 100))
         self.brightness = Param(255, (0, 255))
 

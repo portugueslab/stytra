@@ -10,10 +10,8 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QCheckBox,
-    QDockWidget,
     QLabel,
 )
-from pyqtgraph.parametertree import ParameterTree
 from skimage.io import imsave
 from numba import jit
 from math import sin, cos
@@ -586,7 +584,3 @@ class CameraViewFish(CameraViewCalib):
                     self.lines_fish.setData(x=xs, y=ys)
             except ValueError as e:
                 pass
-            # if there is a temporary mismatch between number of segments expected
-            # and sent
-            # except ValueError as e:
-            #     print("Some error ", e)

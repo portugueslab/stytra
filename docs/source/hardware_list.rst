@@ -10,7 +10,7 @@ kinematic
 tracking of eyes and tail in a fish with head restrained in agarose, the
 second for tracking freely swimming fish in a petri dish.
 
-Finally, we present a cheap version of the behavioural setup that can be
+Finally, we present a cheap version of the behavioral setup that can be
 easily built for about 700 euros, and easily assembled using cardboard,
 laser-cut parts or other custom-made enclosures.
 
@@ -60,7 +60,7 @@ supplier pages are provided as well.
 
 Head-restrained setup
 .....................
-.. csv-table:: Components for embedded configuration behavioural setup
+.. csv-table:: Components for embedded configuration behavioral setup
    :file: ../hardware_list/embedded.csv
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
@@ -68,17 +68,18 @@ Head-restrained setup
 
 Freely-swimming setup
 .....................
-.. csv-table:: Components for freely swimming configuration behavioural setup
+.. csv-table:: Components for freely swimming configuration behavioral setup
    :file:
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
 
-Low-cost behavioural setup
+Low-cost behavioral setup
 --------------------------
-A very cheap version of the behavioural setup can be built by replacing the
-projector with small LED display and the camera with a little objective. The
+A very cheap version of the behavioral setup can be built by replacing the
+projector with small LED display and the camera lens with a fixed focal length
+ objective. The
 dimensions of this setup are quite small and parts can be kept in place with
-a basic custom-made frame that can be laser-cut or even made with cardboard.
+a basic custom-made frame that can be laser-cut or even made out of cardboard.
 
 
 .. image:: ../hardware_list/pictures/low_cost.png

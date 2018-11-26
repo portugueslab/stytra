@@ -28,8 +28,8 @@ class DataCollector(ParameterTree):
         - stimulus: info about the stimulation (stimuli log, screen
           dimensions, etc.)
         - imaging: info about the connected microscope, if present
-        - behaviour: info about fish behaviour (tail log...) and parameters for tracking
-        - camera: parameters of the camera for behaviour, if one is present
+        - behavior: info about fish behavior (tail log...) and parameters for tracking
+        - camera: parameters of the camera for behavior, if one is present
 
 
     See documentation of the clean_data_dict() method for a description

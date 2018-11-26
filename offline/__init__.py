@@ -37,7 +37,7 @@ class Metadata(dict):
         metadata = self.source_metadata.copy()
 
         # Temporary workaround:
-        metadata["behaviour"] = metadata.pop("tracking")
+        metadata["behavior"] = metadata.pop("tracking")
 
         super().__init__(**metadata)
 
