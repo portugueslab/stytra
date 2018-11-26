@@ -8,6 +8,7 @@ from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationExc
 from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
 
+import cv2
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows to
@@ -60,8 +61,12 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.calibration_frame = pg.PlotCurveItem(
             brush=(120, 10, 10), pen=(200, 10, 10), fill_level=1
         )
+
+        self.camera_image = pg.ImageItem()
+
         self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
+        self.view_box.addItem(self.camera_image)
 
         self.setting_param_val = False
 
@@ -110,19 +115,29 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         points_cam = np.pad(
             points_cam, ((0, 0), (0, 1)), mode="constant", constant_values=1
         )
-        points_calib = np.pad(
-            calibrator.points, ((0, 0), (0, 1)), mode="constant", constant_values=1
-        )
         points_proj = points_cam @ np.array(calibrator.cam_to_proj).T
         x0, y0 = self.roi_box.pos()
         self.calibration_frame.setData(
             x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0
         )
-        self.calibration_points.setData(
-            x=points_calib[:, 0] + x0, y=points_calib[:, 1] + y0
-        )
+
+        try:
+            points_calib = np.pad(
+                calibrator.points, ((0, 0), (0, 1)), mode="constant", constant_values=1
+            )
+            self.calibration_points.setData(
+                x=points_calib[:, 0] + x0, y=points_calib[:, 1] + y0
+            )
+        except ValueError:
+            pass
+
         if image is not None:
-            pass  # TODO place transformed image
+            tr_im = cv2.warpAffine(image, np.array(calibrator.cam_to_proj), dsize=tuple([int(p) for p in self.roi_box.size()]))
+            self.camera_image.setImage(tr_im)
+            self.camera_image.setRect(QRectF(self.roi_box.pos().x(),
+                                             self.roi_box.pos().y(),
+            self.roi_box.size().x(),
+            self.roi_box.size().y()))
 
 
 class ProjectorAndCalibrationWidget(QWidget):
@@ -175,6 +190,9 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def toggle_calibration(self):
         """ """
+        _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame)
         self.calibrator.toggle()
         if self.calibrator.enabled:
             self.button_show_calib.setText("Hide calibration")

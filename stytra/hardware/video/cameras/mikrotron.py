@@ -42,10 +42,13 @@ class MikrotronCLCamera(Camera):
         self.imaq.imgSessionSerialFlush(self.session_id)
         # get dimensions
         # if residual response left, clear it
-        self._send_command(":d?")
-        response = self._read_response(16)
-        _, _, w, h = [int(x, 16) for x in response.split(" ")]
-        self.imaq.imgSessionSerialFlush(self.session_id)
+        try:
+            self._send_command(":d?")
+            response = self._read_response(16)
+            _, _, w, h = [int(x, 16) for x in response.split(" ")]
+            self.imaq.imgSessionSerialFlush(self.session_id)
+        except ValueError:
+            return "Invalid message received "+response
 
         self.imaq.imgSessionConfigureROI(
             self.session_id,
