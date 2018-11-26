@@ -42,9 +42,9 @@ if you have all dependencies correctly installed. If the feel
 free to contact us for support through the `stytra github page
 <https://github.com/porgugueslab/stytra>`_.
 
-Now you can have a look at the stytra examples gallery, or you can start
-configuring your computer for real experiments. In the second case, you might
- want to have a look at the camera APIs section down there.
+Now you can have a look at the stytra See :ref:`Examples gallery`, or you can start
+:ref:`Configuring a computer for Stytra experiments`.
+In the second case, you might want to have a look at the camera APIs section down there first.
 
 .. note::
     Stytra might have some problem on quit because of a bug in the current
