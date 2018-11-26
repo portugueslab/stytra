@@ -5,7 +5,7 @@ from stytra.stimulation import Protocol
 
 
 class Nostim(Protocol):
-    name = "empty protocol"
+    name = "empty_protocol"
     stytra_config = dict(camera=dict(
         video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5")))
 
