@@ -5,10 +5,8 @@ import pims
 import qimage2ndarray
 import pandas as pd
 
-from PyQt5.QtCore import QPoint, QRect, QPointF
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QBrush, QColor, QPen
-from PyQt5.QtGui import QTransform, QPolygon, QRegion
+from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
+from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
 
 from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
