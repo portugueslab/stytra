@@ -2,6 +2,7 @@ from stytra.hardware.video.cameras.abstract_class import Camera
 import ctypes
 import numpy as np
 
+
 class MikrotronCLCamera(Camera):
     def __init__(self, *args, camera_id="img0", **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,10 +27,21 @@ class MikrotronCLCamera(Camera):
         session_opened = self.imaq.imgSessionOpen(
             self.interface_id, ctypes.byref(self.session_id)
         )
+        self.imaq.imgSessionSerialFlush(self.session_id)
 
+        # set 8x8 tap mode
+        self._send_command(":M5")
+        resp = self._read_response(5)
+
+        self.imaq.imgSessionSerialFlush(self.session_id)
+        # set dimensions
+        if self.roi[0] >= 0:
+            self._send_command(":d{:03X}{:03X}{:03X}{:03X}".format(*self.roi))
+            r = self._read_response(16)
+
+        self.imaq.imgSessionSerialFlush(self.session_id)
         # get dimensions
         # if residual response left, clear it
-        self.imaq.imgSessionSerialFlush(self.session_id)
         self._send_command(":d?")
         response = self._read_response(16)
         _, _, w, h = [int(x, 16) for x in response.split(" ")]
