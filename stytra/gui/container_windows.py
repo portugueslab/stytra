@@ -338,10 +338,10 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.experiment.gui_timer.timeout.connect(
                 self.tail_widget.update
             )
-        tail_dock = QDockWidget("Tail curvature", self)
-        tail_dock.setObjectName("dock_tail")
-        tail_dock.setWidget(self.tail_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
+            tail_dock = QDockWidget("Tail curvature", self)
+            tail_dock.setObjectName("dock_tail")
+            tail_dock.setWidget(self.tail_widget)
+            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
 
         self.docks.append(monitoring_dock)
         return previous_widget
