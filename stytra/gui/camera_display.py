@@ -21,6 +21,11 @@ from math import sin, cos
 from lightparam.gui import ParameterGui
 
 
+class CustomLineROI(pg.PolyLineROI):
+    def segmentClicked(self):
+        pass
+
+
 class CameraViewWidget(QWidget):
     """A widget to show images from a frame source and display the camera controls.
     
@@ -284,7 +289,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Draw ROI for tail selection:
         if tail:
-            self.roi_tail = pg.PolyLineROI(
+            self.roi_tail = CustomLineROI(
                 (
                     self.track_params.tail_start[::-1],
                     (
