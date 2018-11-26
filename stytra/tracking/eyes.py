@@ -84,7 +84,7 @@ class EyeTrackingMethod:
 
         if e is False:
             e = (np.nan,) * 10
-            message = "W: eyes not detected!"
+            message = "E: eyes not detected!"
         else:
             e = (
                 e[0][0][::-1]
