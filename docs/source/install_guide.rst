@@ -39,7 +39,7 @@ code, install using the -e argument::
 
 
 You can test now the installation by running one of the examples in stytra
-example folder! To run a simple looming stimulus experiment, you can try to
+example folder! To run a simple looming stimulus experiment, you can
 type::
 
     python -m stytra.examples.looming_exp
@@ -59,8 +59,7 @@ In the second case, you might want to have a look at the camera APIs section bel
     version of pyqtgraph (a package we are using for online plotting). If you are really annoyed by the error messages
     when closing the program you can install the develop version of pyqtgraph
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
-    The problem will be solved when
-    the new pyqtgraph version is relased.
+    Hopefully the problem will be solved with the next pyqtgraph version.
 
 
 Installing camera APIs
