@@ -4,10 +4,10 @@ Installation guide
 Stytra was developed and tested using Python 3.6 installed as part of the
 `Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Other Python versions have not been tested.
 Make sure you have the latest version of Anaconda installed before proceeding
- with the installation. Installation with custom python environments,
- Miniconda, or in Anaconda virtual environments could be achieved but might
- give dependencies issues. The following instructions have been tested and
- work for an installation in the Anaconda root environment.
+with the installation. Installation with custom python environments,
+Miniconda, or in Anaconda virtual environments could be achieved but might
+give dependencies issues. The following instructions have been tested and
+work for an installation in the Anaconda root environment.
 
 
 Installing stytra
@@ -18,10 +18,6 @@ Installing stytra
     come with
     the Anaconda package. If you are not using Anaconda, make sure you have it
     installed and updated before installing stytra.
-
-Until the lightparam package is registered, install int first
-
-`lightparam <https://github.com/porgugueslab/lightparam>`_
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
@@ -63,7 +59,7 @@ Installing camera APIs
 xiCam: Ximea
 ............
 
-Download the Ximea SDK, install it with Python support and copy the contents
+Download the `Ximea SDK <>`_, install it with Python support and copy the contents
 of the relevant directory (python3)
 
 

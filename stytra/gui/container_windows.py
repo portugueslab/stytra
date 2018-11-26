@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
     QFileDialog,
 )
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QIcon
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import MultiStreamPlot, TailStreamPlot
@@ -27,8 +27,9 @@ from stytra.gui.camera_display import (
 )
 from stytra.gui.status_display import StatusMessageDisplay
 
-from lightparam.gui import ParameterGui
+from lightparam.gui import ParameterGui, pretty_name
 
+import pkg_resources
 import json
 
 
@@ -64,7 +65,7 @@ class SimpleExperimentWindow(QMainWindow):
         super().__init__(**kwargs)
         self.experiment = experiment
 
-        self.setWindowTitle("Stytra")
+        self.setWindowTitle("Stytra | "+pretty_name(type(experiment.protocol).name))
 
         self.docks = []
 
@@ -89,6 +90,7 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.database is not None:
             self.chk_db = QToolButton()
             self.chk_db.setText("Use DB")
+            self.chk_db.setIcon(QIcon(pkg_resources.resource_filename(__name__, "/icons/dbOFF.svg"),))
             self.chk_db.setCheckable(True)
             self.chk_db.setChecked(not self.experiment.use_db)
             self.chk_db.clicked.connect(self.toggle_db)
@@ -108,7 +110,7 @@ class SimpleExperimentWindow(QMainWindow):
 
     def change_folder_gui(self):
         folder = QFileDialog.getExistingDirectory(
-            caption="Trigger folder", directory=self.experiment.base_dir
+            caption="Results folder", directory=self.experiment.base_dir
         )
         if folder is not None:
             self.experiment.base_dir = folder

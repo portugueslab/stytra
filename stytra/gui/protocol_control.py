@@ -3,14 +3,14 @@ from PyQt5.QtWidgets import (
     QDockWidget,
     QProgressBar,
     QToolBar,
-    QLabel,
 )
+from PyQt5.QtGui import QIcon
 from stytra.stimulation import ProtocolRunner
 import datetime
 
 from lightparam.gui import ParameterGui
 from math import floor, ceil
-
+import pkg_resources
 
 class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
@@ -43,15 +43,13 @@ class ProtocolControlToolbar(QToolBar):
         self.main_window = main_window
         self.protocol_runner = protocol_runner
 
-        # Label with the protocol classes found in the Experiment:
-        self.label_prot = QLabel(text=self.protocol_runner.protocol.name.split("/")[-1])
-        self.addWidget(self.label_prot)
+        self.play_icon = QIcon(
+            pkg_resources.resource_filename(__name__, "../icons/play.svg"))
+        self.stop_icon = QIcon(
+            pkg_resources.resource_filename(__name__, "../icons/stop.svg"))
 
-        # Window with the protocol parameters:
-        self.act_edit = self.addAction("Edit protocol parameters")
-        self.act_edit.triggered.connect(self.show_stim_params_gui)
-
-        self.toggleStatus = self.addAction("▶")
+        self.toggleStatus = self.addAction("play")
+        self.toggleStatus.setIcon(self.play_icon)
         self.toggleStatus.triggered.connect(self.toggle_protocol_running)
 
         # Progress bar for monitoring the protocol:
@@ -59,9 +57,16 @@ class ProtocolControlToolbar(QToolBar):
         self.addSeparator()
         self.addWidget(self.progress_bar)
 
+        # Window with the protocol parameters:
+        self.act_edit = self.addAction("Edit protocol parameters")
+        self.act_edit.setIcon(QIcon(pkg_resources.resource_filename(__name__,
+                                                                    "../icons/edit_protocol.svg")))
+        self.act_edit.triggered.connect(self.show_stim_params_gui)
+
         # Connect events and signals from the ProtocolRunner to update the GUI:
         self.update_progress()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
+
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
@@ -69,10 +74,8 @@ class ProtocolControlToolbar(QToolBar):
     def show_stim_params_gui(self):
         """Create and show window to update protocol parameters.
         """
-        self.prot_param_win = QDockWidget("Protocol parameters", self.main_window)
-        self.prot_param_win.setWidget(ParameterGui(self.protocol_runner.protocol))
-        self.main_window.docks.append(self.prot_param_win)
-        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.prot_param_win)
+        self.prot_param_win = ParameterGui(self.protocol_runner.protocol)
+        self.prot_param_win.show()
 
     def toggle_protocol_running(self):
         """Emit the start and stop signals. These can be used in the Experiment
@@ -91,16 +94,17 @@ class ProtocolControlToolbar(QToolBar):
             self.sig_start_protocol.emit()
         else:
             self.sig_stop_protocol.emit()
-            self.toggle_icon()
+
+        self.toggle_icon()
 
     def toggle_icon(self):
         """Change the play/stop icon of the GUI.
         """
-        if self.toggleStatus.text() == "■":
-            self.toggleStatus.setText("▶")
+        if not self.protocol_runner.running:
+            self.toggleStatus.setIcon(self.play_icon)
             self.progress_bar.setValue(0)
         else:
-            self.toggleStatus.setText("■")
+            self.toggleStatus.setIcon(self.stop_icon)
 
     def update_progress(self):
         """ Update progress bar
