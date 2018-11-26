@@ -13,19 +13,21 @@ work for an installation in the Anaconda root environment.
 Installing stytra
 -----------------
 
-.. note::
-    PyQt5 is not listed as an explicit requirement because it should
-    come with
-    the Anaconda package. If you are not using Anaconda, make sure you have it
-    installed and updated before installing stytra.
-
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
 functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv
 
-Once you have that, download stytra in a directory and install it via pip by::
+This should be everything you need to make ready before installing stytra.
+
+.. note::
+    PyQt5 is not listed as an explicit requirement because it should
+    come with
+    the Anaconda package. If you are not using Anaconda, make sure you have it
+    installed and updated before installing stytra!
+
+Now, download stytra in a directory and install it via pip by::
 
     pip install path_to_stytra/stytra
 
@@ -38,17 +40,17 @@ code, install using the -e argument::
 
 You can test now the installation by running one of the examples in stytra
 example folder! To run a simple looming stimulus experiment, you can try to
-run::
+type::
 
     python -m stytra.examples.looming_exp
 
 If the GUI opens correctly and you can press the play button:
 congratulations, installation was successful! If it crashes horribly, check
-if you have all dependencies correctly installed. Feel
-free to contact us for support through the `stytra github page
-<https://github.com/porgugueslab/stytra>`_.
+if you have all dependencies correctly installed. If it still does not work,
+contact us for support through the `stytra github page <https://github
+.com/portugueslab/stytra>`_.
 
-Now you can have a look at the stytra See :ref:`Examples gallery`, or you can start
+Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
 :ref:`Configuring a computer for Stytra experiments`.
 In the second case, you might want to have a look at the camera APIs section below first.
 
@@ -57,8 +59,9 @@ In the second case, you might want to have a look at the camera APIs section bel
     version of pyqtgraph (a package we are using for online plotting).
      If you are really annoyed by the error messages
     when closing the program you can install the develop version of pyqtgraph
-     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_. The problem will be resolved when
-     the new pyqtgraph version will be relased.
+    from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
+    The problem will be solved when
+    the new pyqtgraph version will is relased.
 
 
 Installing camera APIs
@@ -74,7 +77,8 @@ pymba: AVT
 ............
 
 Go to the `Allied Vision software webpage <https://www.alliedvision.com/en/products/software.html>`_
-and download and install the Vimba SDK. Then install the python wrapper`pymba <https://github.com/morefigs/pymba>`_.
+and download and install the Vimba SDK. Then install the python wrapper
+`pymba <https://github.com/morefigs/pymba>`_.
 
 
 spinnaker: Point Grey / FLIR
