@@ -117,6 +117,7 @@ class CameraSource(VideoSource):
         self.downsampling = downsampling
         self.roi = roi
         self.control_params = CameraControlParameters
+        self.replay = False
         self.replay_fps = 0
         self.cam = None
         self.paused = False
@@ -152,9 +153,8 @@ class CameraSource(VideoSource):
                     try:
                         param_dict = self.control_queue.get(timeout=0.0001)
                         self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
+                        self.replay = param_dict.get("replay", self.replay)
                         self.paused = param_dict.get("paused", self.paused)
-                        if len(param_dict) > 0:
-                            print(param_dict)
                         for param, value in param_dict.items():
                             message = self.cam.set(param, value)
                     except Empty:
@@ -170,7 +170,7 @@ class CameraSource(VideoSource):
 
             self.update_framerate()
 
-            if self.replay:
+            if self.replay and self.replay_fps>0:
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
