@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
     QToolButton,
     QFileDialog,
 )
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QIcon
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.plots import MultiStreamPlot, TailStreamPlot
@@ -27,8 +27,9 @@ from stytra.gui.camera_display import (
 )
 from stytra.gui.status_display import StatusMessageDisplay
 
-from lightparam.gui import ParameterGui
+from lightparam.gui import ParameterGui, pretty_name
 
+import pkg_resources
 import json
 
 
@@ -64,7 +65,7 @@ class SimpleExperimentWindow(QMainWindow):
         super().__init__(**kwargs)
         self.experiment = experiment
 
-        self.setWindowTitle("Stytra")
+        self.setWindowTitle("Stytra | "+pretty_name(type(experiment.protocol).name))
 
         self.docks = []
 
@@ -79,6 +80,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
         act_metadata = self.toolbar_control.addAction("Edit metadata")
+        act_metadata.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_fish.svg"),))
         act_metadata.triggered.connect(self.show_metadata_gui)
 
         self.act_folder = self.toolbar_control.addAction(
@@ -89,8 +91,9 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.database is not None:
             self.chk_db = QToolButton()
             self.chk_db.setText("Use DB")
+            self.chk_db.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/dbOFF.svg"),))
             self.chk_db.setCheckable(True)
-            self.chk_db.setChecked(not self.experiment.use_db)
+            self.chk_db.setChecked(self.experiment.use_db)
             self.chk_db.clicked.connect(self.toggle_db)
             self.toggle_db()
             self.toolbar_control.addWidget(self.chk_db)
@@ -108,7 +111,7 @@ class SimpleExperimentWindow(QMainWindow):
 
     def change_folder_gui(self):
         folder = QFileDialog.getExistingDirectory(
-            caption="Trigger folder", directory=self.experiment.base_dir
+            caption="Results folder", directory=self.experiment.base_dir
         )
         if folder is not None:
             self.experiment.base_dir = folder
@@ -198,6 +201,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.plot_framerate = MultiStreamPlot(
             time_past=5, round_bounds=10, compact=True
         )
+        self.plot_framerate.setMaximumHeight(120)
 
         self.status_display.addMessageQueue(self.experiment.camera.message_queue)
 
@@ -294,25 +298,16 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         if tail:
             self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
 
-        self.layout_track_btns = QHBoxLayout()
-        self.layout_track_btns.setContentsMargins(0, 0, 0, 0)
-
         # Tracking params button:
-        self.button_tracking_params = QPushButton(
+        self.button_tracking_params = QToolButton()
+        self.button_tracking_params.setToolTip(
             "Tracking params"
-            if (self.tail or self.eyes or self.fish)
-            else "Movement detection params"
         )
-
+        self.button_tracking_params.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_tracking.svg"),))
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
 
-        self.button_save_tracking_params = QPushButton("Save parameters")
-        self.button_save_tracking_params.clicked.connect(self.save_tracking_params)
-
-        self.layout_track_btns.addWidget(self.button_tracking_params)
-        self.layout_track_btns.addWidget(self.button_save_tracking_params)
-
-        self.monitoring_layout.addLayout(self.layout_track_btns)
+        self.camera_display.layout_control.addStretch(10)
+        self.camera_display.layout_control.addWidget(self.button_tracking_params)
 
         self.track_params_wnd = None
 
@@ -333,6 +328,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setObjectName("dock_monitoring")
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+        self.docks.append(monitoring_dock)
 
         if self.tail:
             self.experiment.gui_timer.timeout.connect(
@@ -341,9 +337,11 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             tail_dock = QDockWidget("Tail curvature", self)
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)
-            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
+            self.docks.append(tail_dock)
+            self.addDockWidget(Qt.NoDockWidgetArea, tail_dock)
+            tail_dock.setVisible(False)
 
-        self.docks.append(monitoring_dock)
+
         return previous_widget
 
     def open_tracking_params_tree(self):
@@ -371,9 +369,3 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
-
-    def save_tracking_params(self):
-        json.dump(
-            self.experiment.tracking_method.get_clean_values,
-            open(self.experiment.filename_base() + "tracking_params.json"),
-        )

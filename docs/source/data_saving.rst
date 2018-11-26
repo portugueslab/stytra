@@ -1,8 +1,15 @@
 Data and metadata saving
 ========================
 
-In addition to the JSON file, the metadata can be saved to a database, such as MongoDB. For this, an appropriate database class has to be created and
-passed to the Stytra class.
+Data saving class in Stytra
+---------------------------
+
+
+Configuring Stytra for updating external database:
+--------------------------------------------------
+In addition to the JSON file, the metadata can be saved to a database, such as MongoDB.
+For this, an appropriate database class has to be created and
+passed to the Stytra class. This example uses PyMongo
 
 Example::
 

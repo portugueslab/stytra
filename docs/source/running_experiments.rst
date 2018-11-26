@@ -50,14 +50,14 @@ experiment, like setting the directory for saving data or making the
 stimulus window full screen. For this reason, there is a number of
 parameters accepted as inputs by the Stytra class.
 Different kinds of Stytra experiments require different configuration parameters
- to initialize the Stytra object. In the next sections we will have a look at how
-  to set up different experiments.
+to initialize the Stytra object. In the next sections we will have a look at how
+to set up different experiments.
 
 For now, let's simply look at which basic parameters can be useful for our
 simple experiment:
  - **dir_save**: directory where the experiment metadata will be saved (str);
  - **log_format**: format for the dynamic logs (for details see the
-:ref:`Data and metadata saving` section)
+   :ref:`Data and metadata saving` section)
  - **dir_assets**: directory where images or movies to be presented are
    located (str).
  - **display_config**: dictionary containing the settings for the stimulus

@@ -26,25 +26,25 @@ class LoomingStimulus(InterpolatedStimulus, CircleStimulus):
 class LoomingProtocol(Protocol):
 
     # We specify the name for the dropdown in the GUI
-    name = "Looming"
+    name = "looming_protocol"
 
     def __init__(self):
         super().__init__()
 
-        # It is nice for a protocol to be parametrized, so
+        # It is convenient for a protocol to be parametrized, so
         # we name the parameters we might want to change,
         # along with specifying the the default values.
         # This automatically creates a GUI to change them
         # (more elaborate ways of adding parameters are supported,
-        # see the documentation of HasPyQtGraphParams)
+        # see the documentation of lightparam)
 
         # if you are not interested in parametrizing your
         # protocol the the whole __init__ definition
         # can be skipped
 
-        self.n_looms = Param(10)
-        self.max_loom_size = Param(300)
-        self.max_loom_duration = Param(5)
+        self.n_looms = Param(10, limits=(0, 1000))
+        self.max_loom_size = Param(60, limits=(0, 100))
+        self.max_loom_duration = Param(5, limits=(0, 100))
 
     # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):
@@ -66,8 +66,8 @@ class LoomingProtocol(Protocol):
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(150,
-                                                                       150)))
+            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(10,
+                                                                       10)))
 
         return stimuli
 

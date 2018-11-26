@@ -8,13 +8,13 @@ from lightparam import Param
 
 
 class GratingsProtocol(Protocol):
-    name = "closed_loop1D_gratings"
+    name = "gratings protocol"
 
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = Param(100.)
-        self.grating_vel = Param(1.)
+        self.inter_stim_pause = Param(5.)
+        self.grating_vel = Param(10.)
         self.grating_duration = Param(5.)
         self.grating_cycle = Param(10)
         self.grating_angle_deg = Param(0.)

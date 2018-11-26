@@ -4,10 +4,10 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.1",
+    version="0.5",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
-    license="MIT",
+    license="GPLv3+",
     packages=find_packages(),
     install_requires=[
         "pyqtgraph>=0.10.0",
@@ -18,16 +18,13 @@ setup(
         "qdarkstyle",
         "qimage2ndarray",
         "deepdish",
-        "param",
         "pims",
         "GitPython",
-        "pymongo",
         "colorspacious",
         "arrayqueues>=1.1.0b0",
         "pillow",
         "scikit-image",
-        "filterpy",
-        "multiprocessing-logging",
+        "lightparam",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -37,7 +34,7 @@ setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
     ],
-    keywords="tracking processing",
+    keywords="tracking behavior experiments",
     description="A modular package to control stimulation and track behavior in zebrafish experiments.",
     project_urls={
         "Source": "https://github.com/portugueslab/stytra",

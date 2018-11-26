@@ -11,7 +11,10 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QCheckBox,
     QLabel,
+QToolButton,
 )
+from PyQt5.QtGui import QIcon
+import pkg_resources
 from skimage.io import imsave
 from numba import jit
 from math import sin, cos
@@ -84,23 +87,41 @@ class CameraViewWidget(QWidget):
         self.layout_control = QHBoxLayout()
         self.layout_control.setContentsMargins(10, 0, 10, 10)
 
-        self.pauseButton = QPushButton("Pause")
-        self.pauseButton.clicked.connect(self.toggle_pause)
-        self.layout_control.addWidget(self.pauseButton)
+        self.icon_pause = QIcon(pkg_resources.resource_filename(__name__, "../icons/pause.svg"),)
+        self.icon_play = QIcon(
+            pkg_resources.resource_filename(__name__, "../icons/play.svg"), )
+        self.btn_pause = QToolButton()
+        self.btn_pause.setIcon(self.icon_pause)
+        self.btn_pause.setToolTip("Pause")
+        self.btn_pause.clicked.connect(self.toggle_pause)
+        self.layout_control.addWidget(self.btn_pause)
+
+        if hasattr(self.experiment.camera_control_params, "replay"):
+            self.btn_rewind = QToolButton()
+            self.btn_rewind.setCheckable(True)
+            self.btn_rewind.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/rewind.svg"),))
+            self.btn_rewind.setToolTip("Rewind")
+            self.btn_rewind.clicked.connect(self.toggle_rewind)
+            self.layout_control.addWidget(self.btn_rewind)
 
         if self.control_queue is not None:
-            self.params_button = QPushButton("Camera params")
-            self.params_button.clicked.connect(self.show_params_gui)
-            self.layout_control.addWidget(self.params_button)
+            self.btn_camera_param = QToolButton()
+            self.btn_camera_param.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_camera.svg"),))
+            self.btn_camera_param.setToolTip("Camera params")
+            self.btn_camera_param.clicked.connect(self.show_params_gui)
+            self.layout_control.addWidget(self.btn_camera_param)
 
-        self.captureButton = QPushButton("Capture frame")
-        self.captureButton.clicked.connect(self.save_image)
-        self.layout_control.addWidget(self.captureButton)
+        self.btn_capture = QToolButton()
+        self.btn_capture.setToolTip("Capture frame")
+        self.btn_capture.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/camera_flash.svg"), ))
+        self.btn_capture.clicked.connect(self.save_image)
+        self.layout_control.addWidget(self.btn_capture)
 
-        self.autorangeCheckBox = QCheckBox()
-        self.autorangeLabel = QLabel("Autoscale image")
-        self.layout_control.addWidget(self.autorangeLabel)
-        self.layout_control.addWidget(self.autorangeCheckBox)
+        self.btn_autorange = QToolButton()
+        self.btn_autorange.setCheckable(True)
+        self.btn_autorange.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/autoscale.svg"), ))
+        self.btn_autorange.setToolTip("Autorange")
+        self.layout_control.addWidget(self.btn_autorange)
 
         self.layout.addLayout(self.layout_control)
         self.current_image = None
@@ -114,11 +135,15 @@ class CameraViewWidget(QWidget):
         if self.experiment.camera.paused:
             self.experiment.camera.paused = False
             self.experiment.camera.control_queue.put(dict(paused=False))
-            self.pauseButton.setText("Pause")
+            self.btn_pause.setIcon(self.icon_pause)
         else:
             self.experiment.camera.paused = True
             self.experiment.camera.control_queue.put(dict(paused=True))
-            self.pauseButton.setText("Start")
+            self.btn_pause.setIcon(self.icon_play)
+
+    def toggle_rewind(self):
+        self.experiment.camera_control_params.replay = not self.experiment.camera_control_params.replay
+
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done
@@ -157,7 +182,7 @@ class CameraViewWidget(QWidget):
         # Once obtained current image, display it:
         if self.current_image is not None:
             self.image_item.setImage(
-                self.current_image, autoLevels=self.autorangeCheckBox.isChecked()
+                self.current_image, autoLevels=self.btn_autorange.isChecked()
             )
 
     def save_image(self, name=None):
@@ -458,9 +483,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
                 self.image_item.setImage(
-                    im, autoLevels=self.autorangeCheckBox.isChecked()
+                    im, autoLevels=self.btn_autorange.isChecked()
                 )
-                print(self.image_item.levels)
 
 
 class CameraViewCalib(CameraViewWidget):

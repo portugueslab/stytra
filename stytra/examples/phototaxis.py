@@ -7,8 +7,6 @@ from stytra.stimulation.stimuli import (
 )
 
 from stytra.stimulation import Protocol
-import pkg_resources
-import tempfile
 from lightparam import Param
 
 

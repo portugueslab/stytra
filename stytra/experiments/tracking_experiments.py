@@ -130,7 +130,6 @@ class CameraExperiment(Experiment):
         self.camera.kill_event.set()
         self.camera.join()
 
-
     def excepthook(self, exctype, value, tb):
         """
 
@@ -311,6 +310,10 @@ class TrackingExperiment(CameraExperiment):
 
             # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
+
+        if self.stim_plot:  # but also if forced:
+            self.window_main.stream_plot.add_stream(
+                self.protocol_runner.dynamic_log)
 
     def send_gui_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative
