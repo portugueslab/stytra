@@ -26,7 +26,7 @@ class LoomingStimulus(InterpolatedStimulus, CircleStimulus):
 class LoomingProtocol(Protocol):
 
     # We specify the name for the dropdown in the GUI
-    name = "Looming"
+    name = "looming_protocol"
 
     def __init__(self):
         super().__init__()

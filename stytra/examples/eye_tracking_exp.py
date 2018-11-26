@@ -1,14 +1,23 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import MovingWindmillStimulus, MovingGratingStimulus
+from stytra.stimulation.stimuli import MovingWindmillStimulus
 from lightparam import Param
 
 
-class MixedProtocol(Protocol):
-    name = "windmill_gratings"
+class WindmillProtocol(Protocol):
+    name = "windmill"
+
+    stytra_config = dict(
+        tracking=dict(embedded=True, method="eyes"),
+        camera=dict(
+            video_file=str(
+                Path(__name__).parent / "assets" / "fish_compressed.h5"),
+        ),
+    )
 
     def __init__(self):
         super().__init__()
@@ -35,31 +44,10 @@ class MixedProtocol(Protocol):
         theta = [theta[0]] + list(theta) + [theta[-1]]
         df = pd.DataFrame(dict(t=t, theta=theta))
         stimuli.append(MovingWindmillStimulus(df_param=df))
-
-        # Gratings
-        v = self.grating_vel
-
-        t_base = [0, p, p, p + d, p + d, 2 * p + d]
-        vel_base = [0, 0, -v, -v, 0, 0]
-        t = []
-        vel = []
-
-        t.extend(t_base)
-        vel.extend(vel_base)
-
-        df = pd.DataFrame(dict(t=t, vel_x=vel))
-        stimuli.append(
-            MovingGratingStimulus(
-                df_param=df,
-                grating_angle=0,
-                grating_period=10,
-                grating_col_1=(255, 0, 0),
-                wave_shape=self.wave_shape,
-            )
-        )
         return stimuli
 
 
 if __name__ == "__main__":
+
     # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(protocols=[MixedProtocol], stim_plot=True)
+    s = Stytra(protocol=WindmillProtocol())
