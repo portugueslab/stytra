@@ -80,6 +80,7 @@ class SimpleExperimentWindow(QMainWindow):
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
         act_metadata = self.toolbar_control.addAction("Edit metadata")
+        act_metadata.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_fish.svg"),))
         act_metadata.triggered.connect(self.show_metadata_gui)
 
         self.act_folder = self.toolbar_control.addAction(
@@ -90,9 +91,9 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.database is not None:
             self.chk_db = QToolButton()
             self.chk_db.setText("Use DB")
-            self.chk_db.setIcon(QIcon(pkg_resources.resource_filename(__name__, "/icons/dbOFF.svg"),))
+            self.chk_db.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/dbOFF.svg"),))
             self.chk_db.setCheckable(True)
-            self.chk_db.setChecked(not self.experiment.use_db)
+            self.chk_db.setChecked(self.experiment.use_db)
             self.chk_db.clicked.connect(self.toggle_db)
             self.toggle_db()
             self.toolbar_control.addWidget(self.chk_db)
