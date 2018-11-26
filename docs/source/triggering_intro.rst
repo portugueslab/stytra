@@ -27,12 +27,12 @@ metadata.
 
 A common framework to build custom software for hardware control is LabView.
 In our laboratory, a LabView program is used to control the scanning from the
- two-photon microscope. Below we report a screenshot of a very simple subVI
- that can be used together with Stytra for triggering the start of the
- stimulation. A ZMQ context is created, and than used to send a json file
- with the information about microscope configuration over the network to the
- ip of the computer running Stytra, identified by its IP. Stytra uses by
- default port 5555 to listen for triggering messages.
+two-photon microscope. Below we report a screenshot of a very simple subVI
+that can be used together with Stytra for triggering the start of the
+stimulation. A ZMQ context is created, and than used to send a json file
+with the information about microscope configuration over the network to the
+ip of the computer running Stytra, identified by its IP. Stytra uses by
+default port 5555 to listen for triggering messages.
 
 .. image:: ../hardware_list/pictures/zmq.png
    :scale: 80%

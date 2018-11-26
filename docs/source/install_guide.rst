@@ -56,12 +56,11 @@ In the second case, you might want to have a look at the camera APIs section bel
 
 .. note::
     Stytra might have some problem on quit because of a bug in the current
-    version of pyqtgraph (a package we are using for online plotting).
-     If you are really annoyed by the error messages
+    version of pyqtgraph (a package we are using for online plotting). If you are really annoyed by the error messages
     when closing the program you can install the develop version of pyqtgraph
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
     The problem will be solved when
-    the new pyqtgraph version will is relased.
+    the new pyqtgraph version is relased.
 
 
 Installing camera APIs
