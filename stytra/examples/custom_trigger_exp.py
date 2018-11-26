@@ -1,5 +1,5 @@
-# Here we see how to implement a simple new type of trigger that check when the
-# number of files in a directory changes for triggering a simple protocol
+# Here we see how to implement a simple new type of trigger that waits the
+# number of files in a directory to change for triggering a simple protocol
 # showing a Flash.
 
 from pathlib import Path

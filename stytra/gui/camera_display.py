@@ -460,7 +460,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 self.image_item.setImage(
                     im, autoLevels=self.autorangeCheckBox.isChecked()
                 )
-                print(self.image_item.levels)
 
 
 class CameraViewCalib(CameraViewWidget):

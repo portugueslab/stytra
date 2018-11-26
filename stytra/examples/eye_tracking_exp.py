@@ -1,14 +1,23 @@
 import numpy as np
 import pandas as pd
+from pathlib import Path
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import MovingWindmillStimulus, MovingGratingStimulus
+from stytra.stimulation.stimuli import MovingWindmillStimulus
 from lightparam import Param
 
 
-class MixedProtocol(Protocol):
-    name = "windmill_gratings"
+class WindmillProtocol(Protocol):
+    name = "windmill"
+
+    stytra_config = dict(
+        tracking=dict(embedded=True, method="eyes"),
+        camera=dict(
+            video_file=str(
+                Path(__name__).parent / "assets" / "fish_compressed.h5"),
+        ),
+    )
 
     def __init__(self):
         super().__init__()
@@ -39,28 +48,6 @@ class MixedProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    # save_dir = tempfile.mkdtemp()
-    # dir_save = r"C:\Users\lpetrucco\Desktop\stytra"
-    # Here you configure the camera input
-    #
-    # camera_config = dict(video_file=r"J:\_Shared\stytra\fish_tail_anki.h5")
-    camera_config = dict(type="ximea")
-
-    tracking_config = dict(
-        embedded=True,
-        tracking_method="eyes",
-        estimator="vigor",
-        preprocessing_method="prefilter",
-    )
-
-    display_config = dict(full_screen=True)
 
     # We make a new instance of Stytra with this protocol as the only option
-    s = Stytra(
-        protocols=[MixedProtocol],
-        camera_config=camera_config,
-        tracking_config=tracking_config,
-        display_config=display_config,
-        # dir_save=dir_save,
-        # log_format='hdf5'
-    )
+    s = Stytra(protocol=WindmillProtocol())

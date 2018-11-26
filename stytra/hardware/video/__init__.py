@@ -245,7 +245,6 @@ class VideoFileSource(VideoSource):
                         try:
                             param_dict = self.control_queue.get(timeout=0.0001)
                             for name, value in param_dict.items():
-                                print(param_dict)
                                 if name == "framerate":
                                     delta_t = 1 / value
                                 elif name == "offset":
