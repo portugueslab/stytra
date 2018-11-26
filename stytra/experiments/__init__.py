@@ -6,7 +6,6 @@ import numpy as np
 import deepdish as dd
 import logging
 import tempfile
-import multiprocessing_logging
 import git
 import sys
 
@@ -128,7 +127,6 @@ class Experiment(QObject):
         self.abort = False
 
         self.logger = logging.getLogger()
-        multiprocessing_logging.install_mp_handler(self.logger)
         self.logger.setLevel("INFO")
 
         # We will collect data only of a directory for saving is specified:

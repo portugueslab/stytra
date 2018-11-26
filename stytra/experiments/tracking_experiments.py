@@ -130,7 +130,6 @@ class CameraExperiment(Experiment):
         self.camera.kill_event.set()
         self.camera.join()
 
-
     def excepthook(self, exctype, value, tb):
         """
 

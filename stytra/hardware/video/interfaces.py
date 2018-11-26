@@ -30,10 +30,15 @@ class CameraControlParameters(ParametrizedQt):
         )
         self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
         self.rolling_buffer_length = Param(
-            1, (1, 2000), desc="Rolling buffer that saves the last items"
+            600, (1, 2000), desc="Rolling buffer that saves the last items"
+        )
+        self.replay = Param(
+           True,
+            desc="Replaying",
+            gui=False
         )
         self.replay_fps = Param(
-            0,
+            15,
             (0, 500),
             desc="If bigger than 0, the rolling buffer will be replayed at the given framerate",
         )
