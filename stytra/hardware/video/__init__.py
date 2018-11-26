@@ -170,7 +170,7 @@ class CameraSource(VideoSource):
 
             self.update_framerate()
 
-            if self.replay_fps > 0:
+            if self.replay:
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -185,9 +185,8 @@ class CameraSource(VideoSource):
                 prt = None
                 if arr is not None and not self.paused:
                     # If the queue is full, arrayqueues should print a warning!
-                    if self.frame_queue.queue.qsize() < self.n_consumers + 1:
+                    if self.frame_queue.queue.qsize() < self.n_consumers + 2:
                         self.frame_queue.put(arr)
-                        self.message_queue.put("")
                     else:
                         self.message_queue.put("W:Dropped frame")
 

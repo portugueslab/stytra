@@ -201,6 +201,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         self.plot_framerate = MultiStreamPlot(
             time_past=5, round_bounds=10, compact=True
         )
+        self.plot_framerate.setMaximumHeight(120)
 
         self.status_display.addMessageQueue(self.experiment.camera.message_queue)
 
@@ -297,25 +298,16 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         if tail:
             self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
 
-        self.layout_track_btns = QHBoxLayout()
-        self.layout_track_btns.setContentsMargins(0, 0, 0, 0)
-
         # Tracking params button:
-        self.button_tracking_params = QPushButton(
+        self.button_tracking_params = QToolButton()
+        self.button_tracking_params.setToolTip(
             "Tracking params"
-            if (self.tail or self.eyes or self.fish)
-            else "Movement detection params"
         )
-
+        self.button_tracking_params.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_tracking.svg"),))
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
 
-        self.button_save_tracking_params = QPushButton("Save parameters")
-        self.button_save_tracking_params.clicked.connect(self.save_tracking_params)
-
-        self.layout_track_btns.addWidget(self.button_tracking_params)
-        self.layout_track_btns.addWidget(self.button_save_tracking_params)
-
-        self.monitoring_layout.addLayout(self.layout_track_btns)
+        self.camera_display.layout_control.addStretch(10)
+        self.camera_display.layout_control.addWidget(self.button_tracking_params)
 
         self.track_params_wnd = None
 
@@ -336,6 +328,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setObjectName("dock_monitoring")
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
+        self.docks.append(monitoring_dock)
 
         if self.tail:
             self.experiment.gui_timer.timeout.connect(
@@ -344,9 +337,11 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             tail_dock = QDockWidget("Tail curvature", self)
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)
-            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
+            self.docks.append(tail_dock)
+            self.addDockWidget(Qt.NoDockWidgetArea, tail_dock)
+            tail_dock.setVisible(False)
 
-        self.docks.append(monitoring_dock)
+
         return previous_widget
 
     def open_tracking_params_tree(self):
@@ -374,9 +369,3 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
-
-    def save_tracking_params(self):
-        json.dump(
-            self.experiment.tracking_method.get_clean_values,
-            open(self.experiment.filename_base() + "tracking_params.json"),
-        )
