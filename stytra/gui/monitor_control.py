@@ -182,11 +182,8 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.setLayout(self.container_layout)
 
     def update_size(self, size):
-        pass
-        # # print('updating')
         self.calibrator.set_pixel_scale(size[0], size[1])
         self.calibrator_len_spin.update_display()
-        # # print(self.calibrator.mm_px)
 
     def toggle_calibration(self):
         """ """

@@ -12,6 +12,7 @@ from lightparam.gui import ParameterGui
 from math import floor, ceil
 import pkg_resources
 
+
 class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
 
@@ -66,7 +67,6 @@ class ProtocolControlToolbar(QToolBar):
         # Connect events and signals from the ProtocolRunner to update the GUI:
         self.update_progress()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
-
 
         self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
