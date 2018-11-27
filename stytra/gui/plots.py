@@ -238,11 +238,7 @@ class MultiStreamPlot(QWidget):
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
 
-            max_label = pg.TextItem("", anchor=(0, 0))
-            max_label.setPos(0, i_curve + 1)
 
-            min_label = pg.TextItem("", anchor=(0, 1))
-            min_label.setPos(0, i_curve)
 
             value_label = pg.TextItem("", anchor=(0, 0.5))
             font_bold = QFont("Sans Serif", 8)
@@ -251,9 +247,17 @@ class MultiStreamPlot(QWidget):
             value_label.setPos(0, i_curve + 0.5)
 
             self.plotContainer.addItem(curve_label)
+
+            self.plotContainer.addItem(value_label)
+
+            max_label = pg.TextItem("", anchor=(0, 0))
+            max_label.setPos(0, i_curve + 1)
+
+            min_label = pg.TextItem("", anchor=(0, 1))
+            min_label.setPos(0, i_curve)
+
             self.plotContainer.addItem(min_label)
             self.plotContainer.addItem(max_label)
-            self.plotContainer.addItem(value_label)
 
             self.valueLabels.append((min_label, max_label, curve_label, value_label))
             i_curve += 1
@@ -384,12 +388,14 @@ class MultiStreamPlot(QWidget):
                             self.curves[i_stream].setData(x=[], y=[])
                         else:
                             if self.round_bounds:
-                                self.valueLabels[i_stream][0].setText(
-                                    "{:7d}".format(lb, prec=self.precision)
-                                )
-                                self.valueLabels[i_stream][1].setText(
-                                    "{:7d}".format(ub, prec=self.precision)
-                                )
+                                pass
+                                # TODO write proper hiding of labels
+                                # self.valueLabels[i_stream][0].setText(
+                                #     "{:7d}".format(lb, prec=self.precision)
+                                # )
+                                # self.valueLabels[i_stream][1].setText(
+                                #     "{:7d}".format(ub, prec=self.precision)
+                                # )
                             else:
                                 self.valueLabels[i_stream][0].setText(
                                     "{:7.{prec}f}".format(lb, prec=self.precision)

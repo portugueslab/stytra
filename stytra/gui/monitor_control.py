@@ -190,9 +190,10 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def toggle_calibration(self):
         """ """
-        _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
-        self.widget_proj_viewer.display_calibration_pattern(
-            self.calibrator, frame.shape, frame)
+        if isinstance(self.calibrator, CircleCalibrator):
+            _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
+            self.widget_proj_viewer.display_calibration_pattern(
+                self.calibrator, frame.shape, frame)
         self.calibrator.toggle()
         if self.calibrator.enabled:
             self.button_show_calib.setText("Hide calibration")
