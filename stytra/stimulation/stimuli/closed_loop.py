@@ -131,24 +131,30 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
     def __init__(
             self,
             target_avg_fish_vel=-15,
-            calibrate_every=10,
+            calibrate_after=5,
             **kwargs
     ):
         super().__init__(**kwargs)
         self.name = "calibrating_cl1D"
-        self.dynamic_parameters.extend(["bout_counter", "fish_vel",
-                                        "est_gain"])
+        self.dynamic_parameters.extend(["est_gain", "median_vig",
+                                        "median_calib"])
         self.target_avg_fish_vel = target_avg_fish_vel  # target velocity for the calibration
 
-        self.est_gain = 0
         self.bout_counter = 0
         self.bout_peak_vel = 0
-        self.calibrate_every = calibrate_every
-        self.bouts_vel_list = []
-        self.bout_vel = []
+        self.calibrate_after = calibrate_after
+        self.bouts_vig_list = []
+        self.bout_vig = []
+        self.median_vel = np.nan
+        self.final_vel = np.nan
+        self.median_calib = np.nan
+        self.est_gain = 0
+
+    def bout_started(self):
+        self.est_gain = self._experiment.estimator.base_gain
 
     def bout_occurring(self):
-        self.bout_vel.append(self.fish_vel)
+        self.bout_vig.append(self.fish_vel/self.est_gain)
 
     def bout_ended(self):
 
@@ -156,23 +162,25 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
             self.bout_counter += 1
 
             # Update list with peak velocities and reset current peak vel:
-            self.bouts_vel_list.append(np.median(self.bout_vel))
+            self.bouts_vig_list.append(np.median(self.bout_vig))
 
             # After some number of bouts, update estimator gain:
-            if len(self.bouts_vel_list) > self.calibrate_every:
-                median_peak_vel = np.median(self.bouts_vel_list)
-                # print(self.bout_vel_list)
-                self.est_gain = self._experiment.estimator.base_gain * \
-                                (self.target_avg_fish_vel / median_peak_vel)
-                self._experiment.logger.info("Calibrated! Avg speed: {}: Old gain: {}; New gain: {}".format(
-                    median_peak_vel, self._experiment.estimator.base_gain, self.est_gain))
+            if len(self.bouts_vig_list) > self.calibrate_after:
+                self.median_vig = np.median(self.bouts_vig_list)
+                self.median_calib = self.median_vig * self.est_gain
+                self.est_gain = self.target_avg_fish_vel / self.median_vig
+
                 self._experiment.estimator.base_gain = self.est_gain
 
 
-                self.bouts_vel_list = []
 
         self.bout_vel = []
 
+    def stop(self):
+        self._experiment.logger.info(
+            "Calibrated! Avg speed: {}: Old gain: {}; New gain: {}".format(
+                self.median_vel, self._experiment.estimator.base_gain,
+                self.est_gain))
 
 # class ClosedLoop1D(Basic_CL_1D):
 #

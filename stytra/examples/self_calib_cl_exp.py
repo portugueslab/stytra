@@ -39,7 +39,7 @@ class ClosedLoop1DProt(Protocol):
         t = [0]
         vel = [0]
 
-        for i in range(5):
+        for i in range(10):
             t.extend(t_base + t[-1])
             vel.extend(vel_base)
 
@@ -56,7 +56,7 @@ class ClosedLoop1DProt(Protocol):
                 grating_col_1=(255, ) * 3,
                 swimming_threshold=-2,
                 target_avg_fish_vel=-15,
-                calibrate_every=10,
+                calibrate_after=10,
             )
         )
         return stimuli

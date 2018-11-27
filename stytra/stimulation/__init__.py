@@ -221,6 +221,7 @@ class ProtocolRunner(QObject):
                     # Update the variable which keeps track when the last
                     # stimulus *should* have ended, in order to avoid
                     # drifting:
+                    self.current_stimulus.stop()
                     self.past_stimuli_elapsed += datetime.timedelta(
                         seconds=float(self.current_stimulus.duration)
                     )
