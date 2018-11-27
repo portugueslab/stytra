@@ -106,6 +106,10 @@ class Stimulus:
         """
         self.real_time_start = datetime.datetime.now()
 
+    def stop(self):
+        """Function called by the ProtocolRunner when a new stimulus is set.
+        """
+        pass
     def initialise_external(self, experiment):
         """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
