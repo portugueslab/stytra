@@ -31,13 +31,13 @@ class MikrotronCLCamera(Camera):
 
         # set 8x8 tap mode
         self._send_command(":M5")
-        resp = self._read_response(16)
+        response = self._read_response(16)
 
         self.imaq.imgSessionSerialFlush(self.session_id)
         # set dimensions
         if self.roi[0] >= 0:
             self._send_command(":d{:03X}{:03X}{:03X}{:03X}".format(*self.roi))
-            r = self._read_response(16)
+            response = self._read_response(16)
 
         self.imaq.imgSessionSerialFlush(self.session_id)
         # get dimensions
@@ -48,7 +48,7 @@ class MikrotronCLCamera(Camera):
             _, _, w, h = [int(x, 16) for x in response.split(" ")]
             self.imaq.imgSessionSerialFlush(self.session_id)
         except ValueError:
-            return "Invalid message received "+response
+            return "E:Invalid message received "+response
 
         self.imaq.imgSessionConfigureROI(
             self.session_id,

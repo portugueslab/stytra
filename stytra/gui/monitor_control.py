@@ -57,16 +57,16 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
             )
         )
 
-        self.calibration_points = pg.ScatterPlotItem(pen=None, brush=(255, 0, 0))
+        self.calibration_points = pg.ScatterPlotItem(pen=(255, 0, 0), brush=None)
         self.calibration_frame = pg.PlotCurveItem(
             brush=(120, 10, 10), pen=(200, 10, 10), fill_level=1
         )
 
         self.camera_image = pg.ImageItem()
 
-        self.view_box.addItem(self.calibration_points)
         self.view_box.addItem(self.calibration_frame)
         self.view_box.addItem(self.camera_image)
+        self.view_box.addItem(self.calibration_points)
 
         self.setting_param_val = False
 
@@ -190,9 +190,10 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def toggle_calibration(self):
         """ """
-        _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
-        self.widget_proj_viewer.display_calibration_pattern(
-            self.calibrator, frame.shape, frame)
+        if isinstance(self.calibrator, CircleCalibrator):
+            _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
+            self.widget_proj_viewer.display_calibration_pattern(
+                self.calibrator, frame.shape, frame)
         self.calibrator.toggle()
         if self.calibrator.enabled:
             self.button_show_calib.setText("Hide calibration")
