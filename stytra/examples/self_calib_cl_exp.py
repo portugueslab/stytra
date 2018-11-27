@@ -22,9 +22,9 @@ class ClosedLoop1DProt(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = 7.5
+        self.inter_stim_pause = 1
         self.grating_vel = 10
-        self.grating_duration = 15
+        self.grating_duration = 5
         self.grating_cycle = 10
 
     def get_stim_sequence(self):
@@ -56,7 +56,7 @@ class ClosedLoop1DProt(Protocol):
                 grating_col_1=(255, ) * 3,
                 swimming_threshold=-2,
                 target_avg_fish_vel=-15,
-                calibrate_every=10,
+                calibrate_after=10,
             )
         )
         return stimuli

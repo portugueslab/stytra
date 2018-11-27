@@ -136,8 +136,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
     ):
         super().__init__(**kwargs)
         self.name = "calibrating_cl1D"
-        self.dynamic_parameters.extend(["est_gain", "median_vig",
-                                        "median_calib"])
+        self.dynamic_parameters.extend(["est_gain", "median_calib"])
         self.target_avg_fish_vel = target_avg_fish_vel  # target velocity for the calibration
 
         self.bout_counter = 0
@@ -172,15 +171,14 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
 
                 self._experiment.estimator.base_gain = self.est_gain
 
-
-
         self.bout_vel = []
 
     def stop(self):
-        self._experiment.logger.info(
-            "Calibrated! Avg speed: {}: Old gain: {}; New gain: {}".format(
-                self.median_vel, self._experiment.estimator.base_gain,
-                self.est_gain))
+        print("here")
+        if len(self.bouts_vig_list) > self.calibrate_after:
+            self._experiment.logger.info(
+                "Calibrated! Median speed achieved: {} with {} bouts".format(
+                    self.median_calib, len(self.bouts_vig_list)))
 
 # class ClosedLoop1D(Basic_CL_1D):
 #

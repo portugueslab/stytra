@@ -209,6 +209,7 @@ class ProtocolRunner(QObject):
 
             # If stimulus time is over:
             if self.current_stimulus._elapsed > self.current_stimulus.duration:
+                self.current_stimulus.stop()
                 self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_log()
 
@@ -221,7 +222,7 @@ class ProtocolRunner(QObject):
                     # Update the variable which keeps track when the last
                     # stimulus *should* have ended, in order to avoid
                     # drifting:
-                    self.current_stimulus.stop()
+
                     self.past_stimuli_elapsed += datetime.timedelta(
                         seconds=float(self.current_stimulus.duration)
                     )
