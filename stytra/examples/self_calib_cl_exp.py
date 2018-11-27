@@ -12,12 +12,7 @@ class ClosedLoop1DProt(Protocol):
     name = "self_calib_cl1D_gratings"
 
     stytra_config = dict(
-        tracking=dict(embedded=True, method="tail", estimator="vigor"),
-        camera=dict(
-            video_file=r"C:\Users\lpetrucco\Desktop\fish_tail_anki.h5",
-            # video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5"),
-        ),
-    )
+        tracking=dict(embedded=True, method="tail", estimator="vigor"))
 
     def __init__(self):
         super().__init__()
@@ -30,7 +25,7 @@ class ClosedLoop1DProt(Protocol):
     def get_stim_sequence(self):
         stimuli = []
         # # gratings
-        p = self.inter_stim_pause / 2
+        p = self.inter_stim_pause
         v = self.grating_vel
         d = self.grating_duration
 
@@ -45,17 +40,17 @@ class ClosedLoop1DProt(Protocol):
 
         df = pd.DataFrame(dict(t=t, base_vel=vel))
 
-        ClosedLoop1DGratings = type("Stim", (CalibratingClosedLoop1D,
+        ClosedLoop1DCalibratingGratings = type("Stim", (CalibratingClosedLoop1D,
                                              GratingStimulus), {})
 
         stimuli.append(
-            ClosedLoop1DGratings(
+            ClosedLoop1DCalibratingGratings(
                 df_param=df,
                 grating_angle=np.pi / 2,
                 grating_period=self.grating_cycle,
                 grating_col_1=(255, ) * 3,
                 swimming_threshold=-2,
-                target_avg_fish_vel=-15,
+                target_avg_fish_vel=-17,
                 calibrate_every=10,
             )
         )
