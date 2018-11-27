@@ -91,7 +91,10 @@ class SimpleExperimentWindow(QMainWindow):
         if self.experiment.database is not None:
             self.chk_db = QToolButton()
             self.chk_db.setText("Use DB")
-            self.chk_db.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/dbOFF.svg"),))
+            self.db_on_icon = QIcon(pkg_resources.resource_filename(__name__, "../icons/dbON.svg"),)
+            self.db_off_icon = QIcon(pkg_resources.resource_filename(__name__,
+                                                                    "../icons/dbOFF.svg"), )
+            self.chk_db.setIcon(self.db_on_icon)
             self.chk_db.setCheckable(True)
             self.chk_db.setChecked(self.experiment.use_db)
             self.chk_db.clicked.connect(self.toggle_db)
@@ -156,14 +159,10 @@ class SimpleExperimentWindow(QMainWindow):
 
     def toggle_db(self):
         if self.chk_db.isChecked():
-            self.chk_db.setStyleSheet(
-                "background_color: {}; border: none;".format(
-                    self.palette().color(QPalette.Button).name()
-                )
-            )
+            self.chk_db.setIcon(self.db_on_icon)
             self.experiment.use_db = True
         else:
-            self.chk_db.setStyleSheet("background_color: #dc322f; border: none;")
+            self.chk_db.setIcon(self.db_off_icon)
             self.experiment.use_db = False
 
     def closeEvent(self, *args, **kwargs):

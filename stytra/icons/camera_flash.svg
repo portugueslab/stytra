@@ -7,7 +7,6 @@
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="64"
@@ -126,10 +125,10 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="22.4"
-     inkscape:cx="50.244332"
+     inkscape:cx="39.306832"
      inkscape:cy="29.675973"
      inkscape:document-units="px"
-     inkscape:current-layer="g6514"
+     inkscape:current-layer="g6454"
      showgrid="true"
      units="px"
      inkscape:pagecheckerboard="false"
@@ -160,7 +159,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -173,18 +172,6 @@
        id="g6454"
        transform="matrix(-0.14151741,-0.27148671,0.27148671,-0.14151741,17.59491,340.09623)"
        style="fill:#ffffff;fill-opacity:1;stroke-width:0.86420757">
-      <g
-         class="st0"
-         id="image"
-         style="display:none;fill:#ffffff;fill-opacity:1;stroke-width:0.86420757">
-        <image
-           id="image6375"
-           transform="matrix(0.06196581,0,0,0.06196581,22,62)"
-           xlink:href="C:\Users\vilim\Downloads\6dpf_fish_with_scale_bar.png"
-           height="468"
-           width="1664"
-           style="display:inline;overflow:visible;fill:#ffffff;fill-opacity:1;stroke-width:0.86420757" />
-      </g>
       <g
          id="Layer_2"
          style="fill:#459bb0;fill-opacity:1;stroke-width:0.86420757"
@@ -235,7 +222,7 @@
                r="12.324591"
                transform="rotate(-4.5939672)" />
             <circle
-               style="opacity:0.341;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.76417696;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+               style="opacity:0.34100001;vector-effect:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.76417696;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
                id="path7912-5"
                cx="66.525978"
                cy="19.22282"
