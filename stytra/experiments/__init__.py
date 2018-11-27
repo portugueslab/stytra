@@ -189,8 +189,6 @@ class Experiment(QObject):
 
         self.display_framerate_acc = None
 
-
-
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
@@ -253,6 +251,7 @@ class Experiment(QObject):
 
         self.window_main.construct_ui()
         self.window_main.show()
+        self.window_display.set_dims()
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen
