@@ -22,6 +22,8 @@ from lightparam.gui import ParameterGui
 
 
 class CustomLineROI(pg.PolyLineROI):
+    """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
+    """
     def segmentClicked(self):
         pass
 

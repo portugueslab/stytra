@@ -15,7 +15,7 @@ class Estimator:
 
 
 class VigorMotionEstimator(Estimator):
-    def __init__(self, *args, vigor_window=0.050, base_gain=-30, **kwargs):
+    def __init__(self, *args, vigor_window=0.050, base_gain=-20, **kwargs):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window
         self.last_dt = 1 / 500.
