@@ -165,7 +165,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
 
                 print("Calibrated! New gain: {}".format(self.est_gain))
 
-                self.bout_vel_list = []
+                # self.bout_vel_list = []
 
             self.bout_peak_vel = 0
 

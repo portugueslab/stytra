@@ -5,14 +5,18 @@ from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import CalibratingClosedLoop1D, GratingStimulus
 from lightparam import Param
+from pathlib import Path
 
 
 class ClosedLoop1DProt(Protocol):
     name = "self_calib_cl1D_gratings"
 
     stytra_config = dict(
-        tracking=dict(embedded=True, method="tail", preprocessing="prefilter", estimator="vigor"),
-        display_config=dict(full_screen=False),
+        tracking=dict(embedded=True, method="tail", estimator="vigor"),
+        camera=dict(
+            video_file=r"C:\Users\lpetrucco\Desktop\fish_tail_anki.h5",
+            # video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5"),
+        ),
     )
 
     def __init__(self):
@@ -49,6 +53,7 @@ class ClosedLoop1DProt(Protocol):
                 grating_angle=np.pi / 2,
                 grating_period=self.grating_cycle,
                 grating_col_1=(255,) * 3,
+                swimming_threshold=-5,
             )
         )
         return stimuli
