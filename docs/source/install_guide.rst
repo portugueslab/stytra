@@ -67,8 +67,10 @@ Installing camera APIs
 xiCam: Ximea
 ............
 
-Download the `Ximea SDK software pacakge for your operating system <https://www.ximea.com/support/wiki/apis/APIs>`_, install it with Python support and copy the contents
-of the relevant directory (python3)
+Download the `Ximea SDK software pacakge for your operating system <https://www.ximea.com/support/wiki/apis/APIs>`_,
+during the installation wizard make sure that you select the python API checkbox.
+After installation, copy the python wrapper API (in the folder where you installed XIMEA, ...\XIMEA\API\Python\v3\ximea) into
+the Python site-packages folder (for anaconda, usually the folder ...\anaconda3\Lib\site-packages)
 
 
 pymba: AVT
@@ -76,7 +78,14 @@ pymba: AVT
 
 Go to the `Allied Vision software webpage <https://www.alliedvision.com/en/products/software.html>`_
 and download and install the Vimba SDK. Then install the python wrapper
-`pymba <https://github.com/morefigs/pymba>`_.
+`pymba <https://github.com/morefigs/pymba>`_. You can install it from source::
+
+    pip install git+https://github.com/morefigs/pymba.git
+
+or, if using 64bit windows, you can grab the installation file from `here<http://www.portugueslab.com/files/pymba-0.1-py3-none-any.whl>`_.
+open the terminal in the folder where you downloaded it and install::
+
+    pip install pymba-0.1-py3-none-any.whl
 
 
 spinnaker: Point Grey / FLIR
@@ -91,7 +100,7 @@ Go the the `FLIR support website <https://eu.ptgrey.com/support/downloads?countr
 2. Install the python module
     pip install "path_to_extracted_zip/spinnaker_python-1.15.0.63-cp36-cp36m-win_amd64.whl"
 
-(with the file with appropriate OS and Python version)
+(with the file with the appropriate OS and Python versions)
 
 
 National Instruments framegrabber with Mikrotron camera
