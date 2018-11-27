@@ -347,13 +347,15 @@ class TrackingExperiment(CameraExperiment):
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
-        super().start_protocol()
         self.acc_tracking.reset()
+        self.gui_timer.stop()
         try:
             self.estimator.reset()
             self.estimator.log.reset()
         except AttributeError:
             pass
+        super().start_protocol()
+        self.gui_timer.start(1000 // 60)
 
     def end_protocol(self, save=True):
         """Save tail position and dynamic parameters and terminate.
