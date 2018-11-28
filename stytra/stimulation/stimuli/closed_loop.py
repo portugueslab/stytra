@@ -2,6 +2,7 @@ from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 
 import numpy as np
+from random import choices
 
 from stytra.stimulation.stimuli import (
     DynamicStimulus,
@@ -37,11 +38,11 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
             self,
             *args,
             base_vel=10,
-            swimming_threshold=-15,
+            swimming_threshold=-2,
             max_fish_vel=40,
             **kwargs):
         super().__init__(*args, **kwargs)
-        self.name = "general closed loop 1D"
+        self.name = "general_cl1D"
         self.dynamic_parameters = ["vel", "base_vel", "fish_swimming"]
         self.base_vel = base_vel  # base grating velocity
         self.vel = base_vel  # final grating velocity
@@ -174,77 +175,163 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.bout_vel = []
 
     def stop(self):
-        print("here")
         if len(self.bouts_vig_list) > self.calibrate_after:
             self._experiment.logger.info(
                 "Calibrated! Median speed achieved: {} with {} bouts".format(
                     self.median_calib, len(self.bouts_vig_list)))
 
-# class ClosedLoop1D(Basic_CL_1D):
-#
-#     def __init__(
-#         self,
-#         gain=1,
-#         lag=0,
-#         shunting=False,
-#         fixed_vel=None,
-#         **kwargs
-#     ):
-#         super().__init__(**kwargs)
-#         self.name = "closed loop 1D"
-#         self.dynamic_parameters.extend(["gain", "lag"])
-#         self.lag = lag
-#         self.gain = gain
-#         self.shunting = shunting
-#         self.shunted = False
-#         self.fixed_vel = fixed_vel  # fixed forward velocity
-#
-#     def update(self):
-#         """
-#         Here we use fish velocity to change velocity of gratings.
-#         """
-#         super().update()
-#
-#         self.fish_vel = self._experiment.estimator.get_velocity(lag=self.lag)
-#
-#         if self.base_vel == 0:
-#             self.shunted = False
-#             self.fish_swimming = False
-#
-#         if (
-#             self.shunting
-#             and self.fish_swimming
-#             and self.fish_vel > self.swimming_threshold
-#         ):
-#             self.shunted = True
-#
-#         # If estimated velocity greater than threshold
-#         # the fish is performing a bout:
-#         if self.fish_vel < self.swimming_threshold:  # if bouting:
-#             self.fish_swimming = True
-#
-#             if self.bout_start is None:
-#                 self.bout_start = self._elapsed
-#             self.bout_stop = None
-#         else:  # if not bouting:
-#             self.bout_start = None
-#             if self.bout_stop is None:
-#                 self.bout_stop = self._elapsed
-#
-#             self.fish_swimming = False
-#
-#         if self.fixed_vel is None:
-#             self.vel = int(not self.shunted) * (
-#                 self.base_vel - self.fish_vel * self.gain * int(self.fish_swimming)
-#             )
-#         else:
-#             if self.fish_swimming and not self.base_vel == 0:
-#                 self.vel = self.fixed_vel
-#             else:
-#                 self.vel = self.base_vel
-#
-#
-#         self.x += self._dt * self.vel
+
+class GainLagClosedLoop1D(Basic_CL_1D):
+
+    def __init__(
+        self,
+        gain=1,
+        lag=0,
+        shunted=False,
+        fixed_vel=None,
+        gain_drop_start=None,
+        gain_drop_end=None,
+        **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.name = "gain_lag_cl1D"
+        self.dynamic_parameters.extend(["gain", "lag"])
+        self.lag = lag
+        self.gain = gain
+        self.shunted = shunted
+        self.fixed_vel = fixed_vel  # fixed forward velocity
+        self.gain_drop_start = gain_drop_start
+        self.gain_drop_end = gain_drop_end
+
+    def get_fish_vel(self):
+        """ Function that update estimated fish velocty. Change to add lag or
+        shunting.
+        """
+        super(GainLagClosedLoop1D, self).get_fish_vel()
+        self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
+
+    def bout_started(self):
+        """ Function called on bout start.
+        """
+        pass
+
+    def bout_occurring(self):
+        pass
+
+    def bout_ended(self):
+        """ Function called on bout end.
+        """
+        pass
+
+    def calculate_final_vel(self):
+        subtract_to_base = self.gain * self.lag_vel
+
+        if self.gain_drop_start is not None and self.bout_start is not None:
+            t = self._elapsed - self.bout_start
+            if self.gain_drop_start < t < self.gain_drop_end:
+                subtract_to_base = 0
+
+        # Apply fish is swimming threshold, depending if shunted or not.
+        if self.lag == 0 or self.shunted:
+            subtract_to_base *= int(self.fish_swimming)
+        else:
+            subtract_to_base *= int(self.lag_vel < self.swimming_threshold)
+
+        self.vel = self.base_vel - subtract_to_base
+
+
+class AcuteClosedLoop1D(GainLagClosedLoop1D):
+
+    def __init__(
+            self,
+            conditions_list=None,
+            **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.name = "acute_cl1D"
+
+        self.base_conditions = self.get_state()
+        self.conditions_list = conditions_list
+        self.acute_cond_weights = [c.get("w", 1/len(conditions_list))
+                                   for c in conditions_list]
+
+        self.current_condition = None
+
+    def bout_started(self):
+        """ Function called on bout start.
+        """
+        # reset to baseline values:
+        if self.current_condition is not None:
+            for k in self.current_condition["change_to"].keys():
+                self.__setattr__(k, self.base_conditions[k])
+
+        # chose one condition:
+        self.current_condition = choices(self.conditions_list,
+                                         self.acute_cond_weights)[0]
+
+        for k, v in self.current_condition["change_to"].items():
+            # print("setting: {} gain and {} lag".format(self.gain, self.lag))
+            self.__setattr__(k, v)
+            # print("set: {} gain and {} lag".format(self.gain, self.lag))
+
+        # refresh lag if it was changed:
+        self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
+
+
+    def update(self):
+        """ Function called on bout end.
+        """
+        super().update()
+
+
+
+
+    # def update(self):
+    #     """
+    #     Here we use fish velocity to change velocity of gratings.
+    #     """
+    #     super().update()
+    #
+    #     self.fish_vel = self._experiment.estimator.get_velocity(lag=self.lag)
+    #
+    #     if self.base_vel == 0:
+    #         self.shunted = False
+    #         self.fish_swimming = False
+    #
+    #     if (
+    #         self.shunting
+    #         and self.fish_swimming
+    #         and self.fish_vel > self.swimming_threshold
+    #     ):
+    #         self.shunted = True
+    #
+    #     # If estimated velocity greater than threshold
+    #     # the fish is performing a bout:
+    #     if self.fish_vel < self.swimming_threshold:  # if bouting:
+    #         self.fish_swimming = True
+    #
+    #         if self.bout_start is None:
+    #             self.bout_start = self._elapsed
+    #         self.bout_stop = None
+    #     else:  # if not bouting:
+    #         self.bout_start = None
+    #         if self.bout_stop is None:
+    #             self.bout_stop = self._elapsed
+    #
+    #         self.fish_swimming = False
+    #
+    #     if self.fixed_vel is None:
+    #         self.vel = int(not self.shunted) * (
+    #             self.base_vel - self.fish_vel * self.gain * int(self.fish_swimming)
+    #         )
+    #     else:
+    #         if self.fish_swimming and not self.base_vel == 0:
+    #             self.vel = self.fixed_vel
+    #         else:
+    #             self.vel = self.base_vel
+    #
+    #
+    #     self.x += self._dt * self.vel
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
@@ -305,8 +392,3 @@ class CenteringWrapper(PositionStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
         self.active.paint(p, w, h)
 
-
-class TrackingStimulus(CircleStimulus):
-    def update(self):
-        self.x, self.y, _ = self._experiment.estimator.get_position()
-        super().update()
