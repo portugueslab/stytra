@@ -232,12 +232,16 @@ class Experiment(QObject):
         self.make_window()
 
         self.show_stimulus_screen(self.display_config["full_screen"])
+        self.window_display.set_dims()
+
         if self.display_config.get("window_size", None) is not None:
             self.window_display.size = self.display_config["window_size"]
             self.window_display.set_dims()
 
         if self.trigger is not None:
             self.trigger.start()
+
+
 
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
@@ -251,7 +255,6 @@ class Experiment(QObject):
 
         self.window_main.construct_ui()
         self.window_main.show()
-        self.window_display.set_dims()
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen
