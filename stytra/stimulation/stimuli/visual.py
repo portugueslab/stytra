@@ -507,6 +507,7 @@ class RadialSineStimulus(InterpolatedStimulus, VisualStimulus):
         self.phase = 0
         self.period = period
         self.image = None
+        self.name = "radial_sine_centering"
 
     def paint(self, p, w, h):
         x, y = (
