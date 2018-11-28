@@ -111,16 +111,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         cw = camera_resolution[0]
         ch = camera_resolution[1]
         points_cam = np.array([[0, 0], [0, cw], [ch, cw], [ch, 0], [0, 0]])
-
-        points_cam = np.pad(
-            points_cam, ((0, 0), (0, 1)), mode="constant", constant_values=1
-        )
-        points_proj = points_cam @ np.array(calibrator.cam_to_proj).T
         x0, y0 = self.roi_box.pos()
-        self.calibration_frame.setData(
-            x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0
-        )
-
+        
         try:
             points_calib = np.pad(
                 calibrator.points, ((0, 0), (0, 1)), mode="constant", constant_values=1
@@ -131,13 +123,26 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         except ValueError:
             pass
 
-        if image is not None:
-            tr_im = cv2.warpAffine(image, np.array(calibrator.cam_to_proj), dsize=tuple([int(p) for p in self.roi_box.size()]))
-            self.camera_image.setImage(tr_im)
-            self.camera_image.setRect(QRectF(self.roi_box.pos().x(),
-                                             self.roi_box.pos().y(),
-            self.roi_box.size().x(),
-            self.roi_box.size().y()))
+        try:
+            if calibrator.cam_to_proj is not None:
+                points_cam = np.pad(
+                    points_cam, ((0, 0), (0, 1)), mode="constant", constant_values=1
+                )
+                points_proj = points_cam @ np.array(calibrator.cam_to_proj).T
+                
+                self.calibration_frame.setData(
+                    x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0)
+
+            if image is not None:
+                tr_im = cv2.warpAffine(image, np.array(calibrator.cam_to_proj), dsize=tuple([int(p) for p in self.roi_box.size()]))
+                self.camera_image.setImage(tr_im)
+                self.camera_image.setRect(QRectF(self.roi_box.pos().x(),
+                                                self.roi_box.pos().y(),
+                self.roi_box.size().x(),
+                self.roi_box.size().y()))
+
+        except ValueError:
+            pass
 
 
 class ProjectorAndCalibrationWidget(QWidget):

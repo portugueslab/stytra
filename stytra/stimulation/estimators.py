@@ -45,7 +45,9 @@ class VigorMotionEstimator(Estimator):
         vigor = np.nanstd(np.array(past_tail_motion[:, 1]))
         if np.isnan(vigor):
             vigor = 0
-        self.log.update_list((past_tail_motion[-1, 0], vigor))
+
+        if self.log.get_last_n(1)[0, 0] < past_tail_motion[-1, 0]:
+            self.log.update_list((past_tail_motion[-1, 0], vigor))
         return vigor * self.base_gain
 
 
