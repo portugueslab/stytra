@@ -121,7 +121,8 @@ class CameraSource(VideoSource):
         self.replay_fps = 0
         self.cam = None
         self.paused = False
-        self.ring_buffer = None  # RingBuffer(600) # TODO make it parameterized
+        self.ring_buffer_length = 600
+        self.ring_buffer = None
 
     def run(self):
         """
@@ -155,6 +156,7 @@ class CameraSource(VideoSource):
                         self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
                         self.replay = param_dict.get("replay", self.replay)
                         self.paused = param_dict.get("paused", self.paused)
+                        self.ring_buffer_length = param_dict.get("ring_buffer_length", self.ring_buffer_length)
                         for param, value in param_dict.items():
                             message = self.cam.set(param, value)
                     except Empty:
@@ -164,13 +166,12 @@ class CameraSource(VideoSource):
             arr = self.cam.read()
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
-            if self.ring_buffer is None:
-                self.ring_buffer = RingBuffer(300)
-            self.ring_buffer.put(arr)
+            if self.ring_buffer is None or self.ring_buffer_length != self.ring_buffer.length:
+                self.ring_buffer = RingBuffer(self.ring_buffer_length)
 
             self.update_framerate()
 
-            if self.replay and self.replay_fps>0:
+            if self.replay and self.replay_fps > 0:
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -182,6 +183,7 @@ class CameraSource(VideoSource):
                         time.sleep(extrat)
                 prt = time.process_time()
             else:
+                self.ring_buffer.put(arr)
                 prt = None
                 if arr is not None and not self.paused:
                     # If the queue is full, arrayqueues should print a warning!

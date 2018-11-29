@@ -87,11 +87,13 @@ class MultiStreamPlot(QWidget):
         compact=False,
         n_points_max=500,
         precision=None,
+        experiment=None,
         *args,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
 
+        self.experiment = experiment
         self.time_past = time_past
         self.compact = compact
         self.n_points_max = n_points_max
@@ -441,6 +443,13 @@ class MultiStreamPlot(QWidget):
             self.plotContainer.setYRange(-0.1, len(self.curves) + 0.1)
 
     def update_zoom(self, time_past=1):
+        # we use the current zoom level and the framerate to determine the rolling buffer length
+        if self.experiment is not None:
+            try:
+                self.experiment.camera_control_params.ring_buffer_length = int(round(time_past*self.experiment.camera_framerate_acc.stored_data[-1][1]))
+            except IndexError:
+                pass
+
         self.time_past = time_past
         self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
         self.plotContainer.plotItem.vb.setRange(
