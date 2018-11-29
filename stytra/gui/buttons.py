@@ -11,9 +11,8 @@ class IconButton(QToolButton):
                                                                    "../icons/"+icon_name+".svg"))
         self.setIcon(self.icon)
         self.setToolTip(action_name)
+        self.setFixedSize(QSize(60, 60))
         self.setIconSize(QSize(48, 48))
-        self.setFixedSize(QSize(54, 54))
-
 
 class ToggleIconButton(QToolButton):
     def __init__(self, *args, icon_on="", icon_off=None, action_on="", action_off="", on=False, **kwargs):
@@ -32,8 +31,8 @@ class ToggleIconButton(QToolButton):
         self.setIcon(self.icon_on if on else self.icon_off)
         self.on = on
         self.setToolTip(action_on)
+        self.setFixedSize(QSize(60, 60))
         self.setIconSize(QSize(48, 48))
-        self.setFixedSize(QSize(54, 54))
         self.toggled.connect(self.flip_icon)
 
     def flip_icon(self, tg):
