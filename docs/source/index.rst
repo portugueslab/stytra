@@ -24,6 +24,7 @@ Stytra is a package to build and run behavioral experiments
     parameters_stytra
     hardware_list
     interface
+    tail_tracking
 
 
 Modules
@@ -60,10 +61,6 @@ Modules
 
     :py:mod:`stytra.tracking`
         Fish, eye and tail tracking functions together with appropriate interfaces
-
-
-
-
 
 
 

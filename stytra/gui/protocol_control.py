@@ -13,6 +13,7 @@ import pkg_resources
 
 from stytra.gui.buttons import IconButton, ToggleIconButton
 
+
 class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
 
