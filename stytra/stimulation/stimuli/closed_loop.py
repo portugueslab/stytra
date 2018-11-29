@@ -195,7 +195,8 @@ class GainLagClosedLoop1D(Basic_CL_1D):
     ):
         super().__init__(**kwargs)
         self.name = "gain_lag_cl1D"
-        self.dynamic_parameters.extend(["gain", "lag"])
+        self.dynamic_parameters.extend(["gain", "lag", "gain_drop_start",
+                                        "gain_drop_end", "shunted"])
         self.lag = lag
         self.gain = gain
         self.shunted = shunted
