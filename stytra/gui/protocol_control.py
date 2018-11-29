@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtWidgets import (
     QProgressBar,
     QToolBar,
@@ -41,6 +41,7 @@ class ProtocolControlToolbar(QToolBar):
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
+        self.setIconSize(QSize(32,32))
         self.main_window = main_window
         self.protocol_runner = protocol_runner
 
