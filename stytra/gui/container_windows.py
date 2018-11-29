@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QWidget,
     QHBoxLayout,
-    QPushButton,
     QPlainTextEdit,
     QMainWindow,
     QCheckBox,
@@ -25,12 +24,14 @@ from stytra.gui.camera_display import (
     CameraEmbeddedTrackingSelection,
     CameraViewFish,
 )
+from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 
 from lightparam.gui import ParameterGui, pretty_name
 
-import pkg_resources
 import json
+
+
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -79,9 +80,9 @@ class SimpleExperimentWindow(QMainWindow):
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
-        act_metadata = self.toolbar_control.addAction("Edit metadata")
-        act_metadata.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_fish.svg"),))
-        act_metadata.triggered.connect(self.show_metadata_gui)
+        self.btn_metadata = IconButton(icon_name="edit_fish", action_name="Edit metadata")
+        self.btn_metadata.clicked.connect(self.show_metadata_gui)
+        self.toolbar_control.addWidget(self.btn_metadata)
 
         self.act_folder = self.toolbar_control.addAction(
             "Save in {}".format(self.experiment.base_dir)
@@ -89,16 +90,8 @@ class SimpleExperimentWindow(QMainWindow):
         self.act_folder.triggered.connect(self.change_folder_gui)
 
         if self.experiment.database is not None:
-            self.chk_db = QToolButton()
-            self.chk_db.setText("Use DB")
-            self.db_on_icon = QIcon(pkg_resources.resource_filename(__name__, "../icons/dbON.svg"),)
-            self.db_off_icon = QIcon(pkg_resources.resource_filename(__name__,
-                                                                    "../icons/dbOFF.svg"), )
-            self.chk_db.setIcon(self.db_on_icon)
-            self.chk_db.setCheckable(True)
-            self.chk_db.setChecked(self.experiment.use_db)
-            self.chk_db.clicked.connect(self.toggle_db)
-            self.toggle_db()
+            self.chk_db = ToggleIconButton(action_on="Use DB", icon_on="dbON", icon_off="dbOFF", on=self.experiment.use_db)
+            self.chk_db.toggled.connect(self.toggle_db)
             self.toolbar_control.addWidget(self.chk_db)
 
         if experiment.trigger is not None:
@@ -157,12 +150,10 @@ class SimpleExperimentWindow(QMainWindow):
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
 
-    def toggle_db(self):
+    def toggle_db(self, tg):
         if self.chk_db.isChecked():
-            self.chk_db.setIcon(self.db_on_icon)
             self.experiment.use_db = True
         else:
-            self.chk_db.setIcon(self.db_off_icon)
             self.experiment.use_db = False
 
     def closeEvent(self, *args, **kwargs):
@@ -298,11 +289,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
 
         # Tracking params button:
-        self.button_tracking_params = QToolButton()
-        self.button_tracking_params.setToolTip(
-            "Tracking params"
-        )
-        self.button_tracking_params.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_tracking.svg"),))
+        self.button_tracking_params = IconButton(icon_name="edit_tracking", action_name="Change tracking parameters")
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
 
         self.camera_display.layout_control.addStretch(10)

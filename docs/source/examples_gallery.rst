@@ -37,8 +37,9 @@ Try to run this code or type in the command prompt::
 
 This will open two windows: one is the main control GUI to run the experiments,
 the second is the screen used to display the visual stimuli. In a real experiment, you want
-to make sure this second window is displayed to the animal.
+to make sure this second window is presented to the animal.
 
+For an introduction to the functionalities of the interface, see :ref:`Stytra user interface`.
 To start the experiment, just press the play button: a flash will appear on the screen after 4 seconds.
 
 
@@ -58,6 +59,7 @@ For a complete description of Params inside stytra see :ref:`Parameterisation`.
    :linenos:
 .. Note::
 
-Parameters in Protocol param are the ones that can be changed from the GUI, but
+Note that Parameters in Protocol param are the ones that can be changed from the GUI, but
 all stimulus attributes will be saved in the final log, both parameterized and unparameterized ones!
+You don't need to worry about parameters get lost.
 

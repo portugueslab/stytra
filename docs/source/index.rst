@@ -23,6 +23,7 @@ Stytra is a package to build and run behavioral experiments
     image_processing
     parameters_stytra
     hardware_list
+    interface
 
 
 Modules
