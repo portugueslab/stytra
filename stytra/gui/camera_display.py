@@ -7,10 +7,7 @@ from PyQt5.QtCore import QRectF, QPointF, QTimer
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QPushButton,
     QHBoxLayout,
-    QCheckBox,
-    QLabel,
 QToolButton,
 )
 from PyQt5.QtGui import QIcon
@@ -20,6 +17,7 @@ from numba import jit
 from math import sin, cos
 from lightparam.gui import ParameterGui
 
+from stytra.gui.buttons import IconButton, ToggleIconButton
 
 class CustomLineROI(pg.PolyLineROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
@@ -94,40 +92,25 @@ class CameraViewWidget(QWidget):
         self.layout_control = QHBoxLayout()
         self.layout_control.setContentsMargins(10, 0, 10, 10)
 
-        self.icon_pause = QIcon(pkg_resources.resource_filename(__name__, "../icons/pause.svg"),)
-        self.icon_play = QIcon(
-            pkg_resources.resource_filename(__name__, "../icons/play.svg"), )
-        self.btn_pause = QToolButton()
-        self.btn_pause.setIcon(self.icon_pause)
-        self.btn_pause.setToolTip("Pause")
-        self.btn_pause.clicked.connect(self.toggle_pause)
+        self.btn_pause = ToggleIconButton(icon_on="play", icon_off="pause", action_on="Pause", on=False)
+        self.btn_pause.toggled.connect(self.toggle_pause)
         self.layout_control.addWidget(self.btn_pause)
 
         if hasattr(self.experiment.camera_control_params, "replay"):
-            self.btn_rewind = QToolButton()
-            self.btn_rewind.setCheckable(True)
-            self.btn_rewind.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/rewind.svg"),))
-            self.btn_rewind.setToolTip("Rewind")
+            self.btn_rewind = ToggleIconButton(icon_off="rewind", icon_on="rewind", action_on="Rewind", on=False)
             self.btn_rewind.clicked.connect(self.toggle_rewind)
             self.layout_control.addWidget(self.btn_rewind)
 
         if self.control_queue is not None:
-            self.btn_camera_param = QToolButton()
-            self.btn_camera_param.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/edit_camera.svg"),))
-            self.btn_camera_param.setToolTip("Camera params")
+            self.btn_camera_param = IconButton(icon_name="edit_camera", action_name="Configure camera")
             self.btn_camera_param.clicked.connect(self.show_params_gui)
             self.layout_control.addWidget(self.btn_camera_param)
 
-        self.btn_capture = QToolButton()
-        self.btn_capture.setToolTip("Capture frame")
-        self.btn_capture.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/camera_flash.svg"), ))
+        self.btn_capture = IconButton(icon_name="camera_flash", action_name="Capture frame")
         self.btn_capture.clicked.connect(self.save_image)
         self.layout_control.addWidget(self.btn_capture)
 
-        self.btn_autorange = QToolButton()
-        self.btn_autorange.setCheckable(True)
-        self.btn_autorange.setIcon(QIcon(pkg_resources.resource_filename(__name__, "../icons/autoscale.svg"), ))
-        self.btn_autorange.setToolTip("Autorange")
+        self.btn_autorange = ToggleIconButton(icon_off="autoscale", icon_on="autoscaleOFF", action_on="Autoscale")
         self.layout_control.addWidget(self.btn_autorange)
 
         self.layout.addLayout(self.layout_control)
@@ -142,15 +125,12 @@ class CameraViewWidget(QWidget):
         if self.experiment.camera.paused:
             self.experiment.camera.paused = False
             self.experiment.camera.control_queue.put(dict(paused=False))
-            self.btn_pause.setIcon(self.icon_pause)
         else:
             self.experiment.camera.paused = True
             self.experiment.camera.control_queue.put(dict(paused=True))
-            self.btn_pause.setIcon(self.icon_play)
 
     def toggle_rewind(self):
         self.experiment.camera_control_params.replay = not self.experiment.camera_control_params.replay
-
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done
