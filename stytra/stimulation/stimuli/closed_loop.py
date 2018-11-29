@@ -211,19 +211,6 @@ class GainLagClosedLoop1D(Basic_CL_1D):
         super(GainLagClosedLoop1D, self).get_fish_vel()
         self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
 
-    def bout_started(self):
-        """ Function called on bout start.
-        """
-        pass
-
-    def bout_occurring(self):
-        pass
-
-    def bout_ended(self):
-        """ Function called on bout end.
-        """
-        pass
-
     def calculate_final_vel(self):
         subtract_to_base = self.gain * self.lag_vel
 
@@ -277,62 +264,6 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
 
         # refresh lag if it was changed:
         self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
-
-
-    def update(self):
-        """ Function called on bout end.
-        """
-        super().update()
-
-
-
-
-    # def update(self):
-    #     """
-    #     Here we use fish velocity to change velocity of gratings.
-    #     """
-    #     super().update()
-    #
-    #     self.fish_vel = self._experiment.estimator.get_velocity(lag=self.lag)
-    #
-    #     if self.base_vel == 0:
-    #         self.shunted = False
-    #         self.fish_swimming = False
-    #
-    #     if (
-    #         self.shunting
-    #         and self.fish_swimming
-    #         and self.fish_vel > self.swimming_threshold
-    #     ):
-    #         self.shunted = True
-    #
-    #     # If estimated velocity greater than threshold
-    #     # the fish is performing a bout:
-    #     if self.fish_vel < self.swimming_threshold:  # if bouting:
-    #         self.fish_swimming = True
-    #
-    #         if self.bout_start is None:
-    #             self.bout_start = self._elapsed
-    #         self.bout_stop = None
-    #     else:  # if not bouting:
-    #         self.bout_start = None
-    #         if self.bout_stop is None:
-    #             self.bout_stop = self._elapsed
-    #
-    #         self.fish_swimming = False
-    #
-    #     if self.fixed_vel is None:
-    #         self.vel = int(not self.shunted) * (
-    #             self.base_vel - self.fish_vel * self.gain * int(self.fish_swimming)
-    #         )
-    #     else:
-    #         if self.fish_swimming and not self.base_vel == 0:
-    #             self.vel = self.fixed_vel
-    #         else:
-    #             self.vel = self.base_vel
-    #
-    #
-    #     self.x += self._dt * self.vel
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
