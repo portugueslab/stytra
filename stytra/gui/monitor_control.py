@@ -183,6 +183,7 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
 
+        self.layout_calibrate.setContentsMargins(12, 0, 12, 12)
         self.container_layout.addLayout(self.layout_calibrate)
         self.setLayout(self.container_layout)
 

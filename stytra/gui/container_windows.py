@@ -235,8 +235,7 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        time_past = 30
-        self.stream_plot = MultiStreamPlot(time_past=time_past)
+        self.stream_plot = MultiStreamPlot()
         self.monitoring_layout.addWidget(self.stream_plot)
 
         super().__init__(*args, **kwargs)
@@ -281,7 +280,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
-        self.stream_plot = MultiStreamPlot()
+        self.stream_plot = MultiStreamPlot(experiment=self.experiment)
 
         self.monitoring_layout.addWidget(self.stream_plot)
 

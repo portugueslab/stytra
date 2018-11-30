@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtWidgets import (
     QProgressBar,
     QToolBar,
@@ -12,6 +12,7 @@ from math import floor, ceil
 import pkg_resources
 
 from stytra.gui.buttons import IconButton, ToggleIconButton
+
 
 class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
@@ -41,12 +42,13 @@ class ProtocolControlToolbar(QToolBar):
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
+        self.setIconSize(QSize(32,32))
         self.main_window = main_window
         self.protocol_runner = protocol_runner
 
         self.toggleStatus = ToggleIconButton(icon_off="play", icon_on="stop",
                                              action_on="play", on=False)
-        self.toggleStatus.toggled.connect(self.toggle_protocol_running)
+        self.toggleStatus.clicked.connect(self.toggle_protocol_running)
         self.addWidget(self.toggleStatus)
 
         # Progress bar for monitoring the protocol:
@@ -63,7 +65,6 @@ class ProtocolControlToolbar(QToolBar):
         self.update_progress()
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
-        self.protocol_runner.sig_protocol_started.connect(self.toggle_icon)
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
 
     def show_stim_params_gui(self):
@@ -92,7 +93,6 @@ class ProtocolControlToolbar(QToolBar):
             self.sig_stop_protocol.emit()
 
     def toggle_icon(self):
-        self.toggleStatus.setChecked(self.protocol_runner.running)
         self.toggleStatus.flip_icon(self.protocol_runner.running)
 
     def update_progress(self):

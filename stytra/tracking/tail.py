@@ -4,6 +4,7 @@ import cv2
 from lightparam import Param, Parametrized
 from scipy.ndimage.filters import gaussian_filter1d
 
+
 class TailTrackingMethod:
     """General tail tracking method."""
 
