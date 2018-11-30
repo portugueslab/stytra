@@ -313,6 +313,12 @@ class CenteringWrapper(PositionStimulus):
         self.stimulus.initialise_external(experiment)
         self.centering.initialise_external(experiment)
 
+    def get_state(self):
+        return self.stimulus.get_state()
+
+    def get_dynamic_state(self):
+        return super().get_dynamic_state().update(self.stimulus.get_dyanmic_state())
+
     def update(self):
         y, x, theta = self._experiment.estimator.get_position()
         if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
