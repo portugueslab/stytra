@@ -66,8 +66,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
             pass
 
 
-PlotTuple = namedtuple("PlotTuple", ["curve", "curve_label", "min_label", "max_label",  "value_label"],
-                       defaults=(None, None, None, None, None))
+PlotTuple = namedtuple("PlotTuple", ["curve", "curve_label", "min_label", "max_label",  "value_label"])
 
 
 class MultiStreamPlot(QWidget):

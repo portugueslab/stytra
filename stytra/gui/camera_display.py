@@ -56,7 +56,7 @@ class CameraViewWidget(QWidget):
             self.gui_timer = QTimer()
             self.gui_timer.setSingleShot(False)
 
-        self.control_params = self.experiment.camera_control_params
+        self.control_params = self.experiment.camera_state
 
         # Create the layout for the camera view:
         self.camera_display_widget = pg.GraphicsLayoutWidget()
@@ -96,7 +96,7 @@ class CameraViewWidget(QWidget):
         self.btn_pause.toggled.connect(self.toggle_pause)
         self.layout_control.addWidget(self.btn_pause)
 
-        if hasattr(self.experiment.camera_control_params, "replay"):
+        if hasattr(self.experiment.camera_state, "replay"):
             self.btn_rewind = ToggleIconButton(icon_off="rewind", icon_on="rewind", action_on="Rewind", on=False)
             self.btn_rewind.clicked.connect(self.toggle_rewind)
             self.layout_control.addWidget(self.btn_rewind)

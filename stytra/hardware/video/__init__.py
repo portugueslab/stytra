@@ -75,6 +75,7 @@ class VideoSource(FrameProcess):
         self.frame_queue = IndexedArrayQueue(max_mbytes=max_mbytes_queue)
         self.kill_event = Event()
         self.n_consumers = 1
+        self.state = None
 
 
 class CameraSource(VideoSource):
@@ -119,8 +120,20 @@ class CameraSource(VideoSource):
         self.downsampling = downsampling
         self.roi = roi
 
-        self.state = CameraControlParameters()
+        self.state = None
         self.ring_buffer = None
+
+    def retrieve_params(self, messages):
+        while True:
+            try:
+                param_dict = self.control_queue.get(timeout=0.0001)
+                print(param_dict)
+                self.state.params.values = param_dict
+                print(self.state.params.values)
+                for param, value in param_dict.items():
+                    messages.append(self.cam.set(param, value))
+            except Empty:
+                break
 
     def run(self):
         """
@@ -132,6 +145,8 @@ class CameraSource(VideoSource):
 
 
         """
+        if self.state is None:
+            self.state = CameraControlParameters()
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
@@ -146,17 +161,9 @@ class CameraSource(VideoSource):
                 break
 
             # Try to get new parameters from the control queue:
-            message = ""
+            messages = []
             if self.control_queue is not None:
-                while True:
-                    try:
-                        param_dict = self.control_queue.get(timeout=0.0001)
-                        self.state.values = param_dict
-                        for param, value in param_dict.items():
-                            message = self.cam.set(param, value)
-                    except Empty:
-                        break
-
+                self.retrieve_params(messages)
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             if self.rotation:
@@ -187,7 +194,9 @@ class CameraSource(VideoSource):
                     if self.frame_queue.queue.qsize() < self.n_consumers + 2:
                         self.frame_queue.put(arr)
                     else:
-                        self.message_queue.put("W:Dropped frame")
+                        messages.append("W:Dropped frame")
+            for m in messages:
+                self.message_queue.put(m)
 
         self.cam.release()
 
@@ -208,12 +217,11 @@ class VideoFileSource(VideoSource):
 
     """
 
-    def __init__(self, source_file=None, loop=True, framerate=None, **kwargs):
+    def __init__(self, source_file=None, loop=True, **kwargs):
         super().__init__(**kwargs)
         self.source_file = source_file
         self.loop = loop
-        self.framerate = framerate
-        self.control_params = VideoControlParameters
+        self.state = None
         self.offset = 0
         self.paused = False
         self.old_frame = None
@@ -223,15 +231,20 @@ class VideoFileSource(VideoSource):
     def inner_loop(self):
         pass
 
-    def run(self):
+    def update_params(self):
+        while True:
+            try:
+                param_dict = self.control_queue.get(timeout=0.0001)
+                self.state.params.values = param_dict
+            except Empty:
+                break
 
+    def run(self):
+        if self.state is None:
+            self.state = VideoControlParameters()
         if self.source_file.endswith("h5"):
             framedata = dd.io.load(self.source_file)
             frames = framedata["video"]
-            if self.framerate is None:
-                delta_t = 1 / framedata.get("framerate", 30.0)
-            else:
-                delta_t = 1 / self.framerate
             i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():
@@ -239,28 +252,17 @@ class VideoFileSource(VideoSource):
                 # Try to get new parameters from the control queue:
                 message = ""
                 if self.control_queue is not None:
-                    while True:
-                        try:
-                            param_dict = self.control_queue.get(timeout=0.0001)
-                            for name, value in param_dict.items():
-                                if name == "framerate":
-                                    delta_t = 1 / value
-                                elif name == "offset":
-                                    if value != self.offset:
-                                        self.offset = value
-                                elif name == "paused":
-                                    self.paused = value
-                        except Empty:
-                            break
+                    self.update_params()
 
                 # we adjust the framerate
+                delta_t = 1/  self.state.framerate
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
                         time.sleep(extrat)
 
                 self.frame_queue.put(frames[i_frame, :, :])
-                if not self.paused:
+                if not self.state.paused:
                     i_frame += 1
                 if i_frame == frames.shape[0]:
                     if self.loop:
