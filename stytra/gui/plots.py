@@ -16,7 +16,7 @@ import numpy as np
 import datetime
 from stytra.collectors import Accumulator
 import colorspacious
-
+from collections import namedtuple
 
 class StreamingPositionPlot(pg.GraphicsWindow):
     """Plot that displays the virtual position of the fish"""
@@ -64,6 +64,10 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
         except (IndexError, TypeError):
             pass
+
+
+PlotTuple = namedtuple("PlotTuple", ["curve", "curve_label", "min_label", "max_label",  "value_label"],
+                       defaults=(None, None, None, None, None))
 
 
 class MultiStreamPlot(QWidget):
@@ -147,12 +151,9 @@ class MultiStreamPlot(QWidget):
         self.layout().addWidget(self.plotContainer)
 
         self.accumulators = []
-        self.stream_names = []
         self.header_indexes = []
 
-        self.curves = []
-        self.curvePoints = []
-        self.valueLabels = []
+        self.stream_items = []
         self.stream_scales = []
 
         self.bounds = []
@@ -161,6 +162,7 @@ class MultiStreamPlot(QWidget):
         self.colors = []
 
         self.frozen = True
+        self.bounds_visible = None
 
         # trick to set color on update
         self.color_set = False
@@ -228,24 +230,20 @@ class MultiStreamPlot(QWidget):
                 header_items = accumulator.monitored_headers
             else:
                 header_items = accumulator.header_list[1:]  # first column is always t
-        self.colors = self.get_colors(len(self.curves) + len(header_items))
+        self.colors = self.get_colors(len(self.stream_items) + len(header_items))
         self.accumulators.append(accumulator)
-        self.stream_names.append(header_items)
         self.header_indexes.append(
             [accumulator.header_list.index(dv) for dv in header_items]
         )
         self.bounds.append(None)
-        i_curve = len(self.curves)
+        i_curve = len(self.stream_items)
+
         for header_item in header_items:
             c = pg.PlotCurveItem(
                 x=np.array([0]), y=np.array([i_curve]), connect="finite"
             )
-            self.plotContainer.addItem(c)
-            self.curves.append(c)
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
-
-
 
             value_label = pg.TextItem("", anchor=(0, 0.5))
             font_bold = QFont("Sans Serif", 8)
@@ -253,37 +251,31 @@ class MultiStreamPlot(QWidget):
             value_label.setFont(font_bold)
             value_label.setPos(0, i_curve + 0.5)
 
-            self.plotContainer.addItem(curve_label)
-
-            self.plotContainer.addItem(value_label)
-
             max_label = pg.TextItem("", anchor=(0, 0))
             max_label.setPos(0, i_curve + 1)
 
             min_label = pg.TextItem("", anchor=(0, 1))
             min_label.setPos(0, i_curve)
 
-            self.plotContainer.addItem(min_label)
-            self.plotContainer.addItem(max_label)
+            self.stream_items.append(PlotTuple(c, curve_label, min_label, max_label, value_label))
 
-            self.valueLabels.append((min_label, max_label, curve_label, value_label))
             i_curve += 1
 
-        for curve, color, labels in zip(self.curves, self.colors, self.valueLabels):
-            curve.setPen(color)
-            for label in labels:
-                label.setColor(color)
-        self.plotContainer.setYRange(-0.1, len(self.curves) + 0.1)
+        for sitems, color in zip(self.stream_items, self.colors):
+            for itm in sitems:
+                self.plotContainer.addItem(itm)
+                if isinstance(itm, pg.PlotCurveItem):
+                    itm.setPen(color)
+                else:
+                    itm.setColor(color)
+        self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
 
     def remove_streams(self):
-        for label_set in self.valueLabels:
-            for label in label_set:
-                self.plotContainer.removeItem(label)
-        self.valueLabels = []
-        for curve in self.curves:
-            self.plotContainer.removeItem(curve)
-        self.curves = []
-        self.stream_names = []
+        for itmset in self.stream_items:
+            for itm in itmset:
+                self.plotContainer.removeItem(itm)
+        self.stream_items = []
+
         self.header_indexes = []
         self.accumulators = []
         self.bounds = []
@@ -319,6 +311,21 @@ class MultiStreamPlot(QWidget):
         old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
         return old_bounds
 
+    def _set_labels(self, labels, values=None, precision=3):
+        if values is None:
+            txts = ["-", "-", "NaN"]
+        else:
+            fmt = "{:7.{prec}f}"
+            txts = [fmt.format(x, prec=precision) for x in values]
+
+        if not self.bounds_visible:
+            txts[0] = ""
+            txts[1] = ""
+
+        for lbl, txt in zip([labels.min_label, labels.max_label, labels.value_label], txts):
+            if lbl is not None:
+                lbl.setText(txt)
+
     def update(self):
         """Function called by external timer to update the plot"""
 
@@ -329,7 +336,7 @@ class MultiStreamPlot(QWidget):
         if self.frozen:
             return None
 
-        self.start = datetime.datetime.now()
+        current_time = datetime.datetime.now()
 
         i_stream = 0
         for i_acc, (acc, indexes) in enumerate(
@@ -339,7 +346,7 @@ class MultiStreamPlot(QWidget):
             # try:
             # difference from data accumulator time and now in seconds:
             try:
-                delta_t = (acc.starting_time - self.start).total_seconds()
+                delta_t = (acc.starting_time - current_time).total_seconds()
             except (TypeError, IndexError):
                 delta_t = 0
 
@@ -347,95 +354,69 @@ class MultiStreamPlot(QWidget):
 
             data_array = acc.get_last_t(self.time_past)
 
+            # downsampling if there are too many points
             if len(data_array) > self.n_points_max:
                 data_array = data_array[:: len(data_array) // self.n_points_max]
 
-            if len(data_array) > 1:
-                try:
-                    time_array = delta_t + data_array[:, 0]
+            # if this accumulator does not have enough data to plot, skip it
+            if data_array.shape[0] <= 1:
+                for _ in indexes:
+                    self._set_labels(self.stream_items[i_stream])
+                    self.stream_items[i_stream].curve.setData(x=[], y=[])
+                    i_stream += 1
+                continue
 
-                    # loop to handle nan values in a single column
-                    new_bounds = np.zeros((len(indexes), 2))
-                    for id, i in enumerate(indexes):
-                        # Exclude nans from calculation of percentile boundaries:
-                        d = data_array[:, i]
-                        try:
-                            b = ~np.isnan(d)
-                            if np.any(b):
-                                non_nan_data = data_array[b, i]
-                                new_bounds[id, :] = np.percentile(
-                                    non_nan_data, (0.5, 99.5), 0
-                                )
-                                if new_bounds[id, 0] == new_bounds[id, 1]:
-                                    new_bounds[id, 1] += 1
-                        except TypeError:
-                            pass
+            try:
+                time_array = delta_t + data_array[:, 0]
 
-                    if self.bounds[i_acc] is None:
-                        if not self.round_bounds:
-                            self.bounds[i_acc] = new_bounds
-                        else:
-                            self.bounds[i_acc] = self._round_bounds(new_bounds)
+                # loop to handle nan values in a single column
+                new_bounds = np.zeros((len(indexes), 2))
+
+                for id, i in enumerate(indexes):
+                    # Exclude nans from calculation of percentile boundaries:
+                    d = data_array[:, i]
+                    if d.dtype != np.float64:
+                        continue
+                    b = ~np.isnan(d)
+                    if np.any(b):
+                        non_nan_data = data_array[b, i]
+                        new_bounds[id, :] = np.percentile(
+                            non_nan_data, (0.5, 99.5), 0
+                        )
+                        # if the bounds are the same, set arbitrary ones
+                        if new_bounds[id, 0] == new_bounds[id, 1]:
+                            new_bounds[id, 1] += 1
+
+                if self.bounds[i_acc] is None:
+                    if not self.round_bounds:
+                        self.bounds[i_acc] = new_bounds
                     else:
-                        if not self.round_bounds:
-                            self.bounds[i_acc] = (
-                                self.bounds_update * new_bounds
-                                + (1 - self.bounds_update) * self.bounds[i_acc]
-                            )
-                        else:
-                            self.bounds[i_acc] = self._update_round_bounds(
-                                self.bounds[i_acc], new_bounds
-                            )
+                        self.bounds[i_acc] = self._round_bounds(new_bounds)
+                else:
+                    if not self.round_bounds:
+                        self.bounds[i_acc] = (
+                            self.bounds_update * new_bounds
+                            + (1 - self.bounds_update) * self.bounds[i_acc]
+                        )
+                    else:
+                        self.bounds[i_acc] = self._update_round_bounds(
+                            self.bounds[i_acc], new_bounds
+                        )
 
-                    for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
-                        scale = ub - lb
-                        if scale < 0.00001:
-                            self.valueLabels[i_stream][0].setText("-".format(lb))
-                            self.valueLabels[i_stream][1].setText("-".format(ub))
-                            self.valueLabels[i_stream][3].setText(
-                                "NaN".format(data_array[-1, i_var])
-                            )
-                            self.curves[i_stream].setData(x=[], y=[])
-                        else:
-                            if self.round_bounds:
-                                pass
-                                # TODO write proper hiding of labels
-                                # self.valueLabels[i_stream][0].setText(
-                                #     "{:7d}".format(lb, prec=self.precision)
-                                # )
-                                # self.valueLabels[i_stream][1].setText(
-                                #     "{:7d}".format(ub, prec=self.precision)
-                                # )
-                            else:
-                                self.valueLabels[i_stream][0].setText(
-                                    "{:7.{prec}f}".format(lb, prec=self.precision)
-                                )
-                                self.valueLabels[i_stream][1].setText(
-                                    "{:7.{prec}f}".format(ub, prec=self.precision)
-                                )
-                            self.valueLabels[i_stream][3].setText(
-                                "{:7.{prec}f}".format(
-                                    data_array[-1, i_var], prec=self.precision
-                                )
-                            )
-                            self.curves[i_stream].setData(
-                                x=time_array,
-                                y=i_stream + ((data_array[:, i_var] - lb) / scale),
-                            )
-                        i_stream += 1
-                except IndexError:
-                    pass
+                for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
+                    scale = ub - lb
+                    if scale < 0.00001:
+                        self.stream_items[i_stream].curve.setData(x=[], y=[])
+                    else:
 
-            else:
-                try:
-                    for _ in indexes:
-                        self.valueLabels[i_stream][0].setText("")
-                        self.valueLabels[i_stream][1].setText("")
-                        self.valueLabels[i_stream][3].setText("")
-                        self.curves[i_stream].setData(x=[], y=[])
-                        i_stream += 1
-                except TypeError:
-                    pass
+                        self.stream_items[i_stream].curve.setData(
+                            x=time_array,
+                            y=i_stream + ((data_array[:, i_var] - lb) / scale),
+                        )
+                    self._set_labels(self.stream_items[i_stream], values=(lb, ub, data_array[-1, i_var]))
+                    i_stream += 1
+            except IndexError:
+                pass
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
@@ -448,7 +429,7 @@ class MultiStreamPlot(QWidget):
                 self.btn_freeze.setText("Freeze plot")
             self.plotContainer.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
-            self.plotContainer.setYRange(-0.1, len(self.curves) + 0.1)
+            self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
 
     def update_zoom(self, time_past=1):
         # we use the current zoom level and the framerate to determine the rolling buffer length
@@ -465,7 +446,7 @@ class MultiStreamPlot(QWidget):
         )
         # shift the labels
         for (i_curve, (min_label, max_label, curve_label, value_label)) in enumerate(
-            self.valueLabels
+            self.stream_items
         ):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
 
