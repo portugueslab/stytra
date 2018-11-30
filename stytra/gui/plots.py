@@ -415,7 +415,7 @@ class MultiStreamPlot(QWidget):
                                 y=i_stream + ((data_array[:, i_var] - lb) / scale),
                             )
                         i_stream += 1
-                except IndexError:
+                except (IndexError, TypeError):
                     pass
 
             else:
