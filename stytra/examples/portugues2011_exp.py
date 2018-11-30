@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import ClosedLoop1D, GratingStimulus
+from stytra.stimulation.stimuli import GainLagClosedLoop1D, GratingStimulus
 from lightparam import Param
+from pathlib import Path
 
 # Here we present the code used for the replication of the Portugues et al
 # 2011 paper, as presented in [cit. stytra].
@@ -24,7 +25,11 @@ class Portugues2011Protocol(Protocol):
     name = "portugues_2011"
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
-        # Replace this example file with the desired camera config, such as
+        camera=dict(
+            video_file=str(
+                Path(__name__).parent / "assets" / "fish_compressed.h5")),
+
+            # Replace this example file with the desired camera config, such as
         # camera_config = dict(type="ximea")
         # for a ximea camera, etc. Not needed if the setup already has the
         # # stytra_setup_config.json file
@@ -81,7 +86,7 @@ class Portugues2011Protocol(Protocol):
 
         df = pd.DataFrame(dict(t=t, base_vel=vel, gain=gain))
 
-        ClosedLoop1DGratings = type("Stim", (ClosedLoop1D, GratingStimulus), {})
+        ClosedLoop1DGratings = type("Stim", (GainLagClosedLoop1D, GratingStimulus), {})
 
         stimuli.append(
             ClosedLoop1DGratings(

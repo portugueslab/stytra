@@ -2,7 +2,11 @@ from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 
 import numpy as np
-from random import choices
+
+try:
+    from random import choices
+except ImportError:
+    pass
 
 from stytra.stimulation.stimuli import (
     DynamicStimulus,
