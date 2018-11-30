@@ -176,6 +176,7 @@ class CameraSource(VideoSource):
             if self.state.paused:
                 self.frame_queue.put(self.ring_buffer.get_most_recent())
             elif self.state.replay and self.state.replay_fps > 0:
+                self.ring_buffer.replay_limits = self.state.replay_limits
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -226,7 +227,6 @@ class VideoFileSource(VideoSource):
         self.paused = False
         self.old_frame = None
         self.offset = 0
-
 
     def inner_loop(self):
         pass
@@ -373,4 +373,4 @@ class CameraControlParameters(ParametrizedQt):
             (0, 500),
             desc="If bigger than 0, the rolling buffer will be replayed at the given framerate",
         )
-        self.replay_limits = Param((0,0), gui=False)
+        self.replay_limits = Param((0, 600), gui=False)

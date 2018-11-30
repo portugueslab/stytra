@@ -18,6 +18,7 @@ from stytra.collectors import Accumulator
 import colorspacious
 from collections import namedtuple
 
+
 class StreamingPositionPlot(pg.GraphicsWindow):
     """Plot that displays the virtual position of the fish"""
 
@@ -146,6 +147,10 @@ class MultiStreamPlot(QWidget):
                                            movable=True, hoverPen=(230, 30, 0))
         self.replay_right = pg.InfiniteLine(-1, pen=(220, 220, 220),
                                            movable=True, hoverPen=(230, 30, 0))
+        self.replay_right.sigDragged.connect(self.update_replay_limits)
+        self.replay_left.sigDragged.connect(self.update_replay_limits)
+        self.plotContainer.addItem(self.replay_left)
+        self.plotContainer.addItem(self.replay_right)
 
         self.layout().addWidget(self.plotContainer)
 
@@ -335,6 +340,12 @@ class MultiStreamPlot(QWidget):
         if self.frozen:
             return None
 
+        try:
+            if self.experiment.camera_state.paused:
+                return None
+        except AttributeError:
+            pass
+
         current_time = datetime.datetime.now()
 
         i_stream = 0
@@ -434,7 +445,7 @@ class MultiStreamPlot(QWidget):
         # we use the current zoom level and the framerate to determine the rolling buffer length
         if self.experiment is not None:
             try:
-                self.experiment.camera_control_params.ring_buffer_length = int(round(time_past*self.experiment.camera_framerate_acc.stored_data[-1][1]))
+                self.experiment.camera_state.ring_buffer_length = int(round(time_past*self.experiment.camera_framerate_acc.stored_data[-1][1]))
             except IndexError:
                 pass
 
@@ -448,6 +459,21 @@ class MultiStreamPlot(QWidget):
             self.stream_items
         ):
             curve_label.setPos(-self.time_past * 0.9, i_curve)
+
+    def update_replay_limits(self):
+        if self.experiment is not None:
+            try:
+                cam_fps =self.experiment.camera_framerate_acc.stored_data[-1][1]
+                left_lim =  int(round(self.replay_left.getXPos() * cam_fps))
+                right_lim = int(round(self.replay_right.getXPos() * cam_fps))
+                final_lim = (max(0, min(left_lim, right_lim)),
+                             min(self.experiment.camera_state.ring_buffer_length,
+                                 max(left_lim, right_lim)))
+
+                self.experiment.camera_state.replay_limits = final_lim
+            except AttributeError:
+                pass
+
 
     def show_select(self):
         self.wnd_config = StreamPlotConfig(self)

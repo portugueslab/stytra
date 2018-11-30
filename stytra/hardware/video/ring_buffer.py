@@ -7,6 +7,7 @@ class RingBuffer:
         self.arr = None
         self.insert_idx = 0
         self.read_idx = 0
+        self.replay_limits = (0, self.length)
 
     def put(self, item):
         if (
@@ -23,8 +24,9 @@ class RingBuffer:
         if self.arr is None:
             raise ValueError("Trying to get an item from an empty buffer")
         old_idx = self.read_idx
-        self.read_idx = (self.read_idx + 1) % self.length
-        return self.arr[old_idx]
+        self.read_idx = (self.read_idx + 1) % (self.replay_limits[1]-
+                                               self.replay_limits[0])
+        return self.arr[self.replay_limits[0], old_idx]
 
     def get_most_recent(self):
         return self.arr[(self.insert_idx-1) % self.length]
