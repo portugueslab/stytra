@@ -17,7 +17,7 @@ class GratingsProtocol(Protocol):
         self.grating_vel = Param(10.)
         self.grating_duration = Param(5.)
         self.grating_cycle = Param(10)
-        self.grating_angle_deg = Param(0.)
+        self.grating_angle_deg = Param(90.)
         self.grating_shape = Param("square", limits=["square", "sine"])
 
     def get_stim_sequence(self):
@@ -42,7 +42,7 @@ class GratingsProtocol(Protocol):
                 df_param=df,
                 grating_angle=self.grating_angle_deg * np.pi/180,
                 grating_period=self.grating_cycle,
-                grating_col_2=(0, 0, 255),
+                grating_col_2=(0, 0, 0),
                 wave_shape=self.grating_shape,
             )
         )
