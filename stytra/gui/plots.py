@@ -359,14 +359,17 @@ class MultiStreamPlot(QWidget):
                     for id, i in enumerate(indexes):
                         # Exclude nans from calculation of percentile boundaries:
                         d = data_array[:, i]
-                        b = ~np.isnan(d)
-                        if np.any(b):
-                            non_nan_data = data_array[b, i]
-                            new_bounds[id, :] = np.percentile(
-                                non_nan_data, (0.5, 99.5), 0
-                            )
-                            if new_bounds[id, 0] == new_bounds[id, 1]:
-                                new_bounds[id, 1] += 1
+                        try:
+                            b = ~np.isnan(d)
+                            if np.any(b):
+                                non_nan_data = data_array[b, i]
+                                new_bounds[id, :] = np.percentile(
+                                    non_nan_data, (0.5, 99.5), 0
+                                )
+                                if new_bounds[id, 0] == new_bounds[id, 1]:
+                                    new_bounds[id, 1] += 1
+                        except TypeError:
+                            pass
 
                     if self.bounds[i_acc] is None:
                         if not self.round_bounds:
