@@ -6,7 +6,11 @@ implement video saving
 import numpy as np
 
 from multiprocessing import Queue, Event
-from multiprocessing.queues import Empty
+from queue import Empty
+
+from lightparam import Param
+from lightparam.param_qt import ParametrizedQt
+
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
@@ -19,10 +23,6 @@ from stytra.hardware.video.cameras import (
 )
 
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import (
-    CameraControlParameters,
-    VideoControlParameters,
-)
 
 from stytra.hardware.video.ring_buffer import RingBuffer
 
@@ -113,15 +113,13 @@ class CameraSource(VideoSource):
         """ """
         super().__init__(*args, **kwargs)
 
+        self.cam = None
+
         self.camera_type = camera_type
         self.downsampling = downsampling
         self.roi = roi
-        self.control_params = CameraControlParameters
-        self.replay = False
-        self.replay_fps = 0
-        self.cam = None
-        self.paused = False
-        self.ring_buffer_length = 600
+
+        self.state = CameraControlParameters()
         self.ring_buffer = None
 
     def run(self):
@@ -153,10 +151,7 @@ class CameraSource(VideoSource):
                 while True:
                     try:
                         param_dict = self.control_queue.get(timeout=0.0001)
-                        self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
-                        self.replay = param_dict.get("replay", self.replay)
-                        self.paused = param_dict.get("paused", self.paused)
-                        self.ring_buffer_length = param_dict.get("ring_buffer_length", self.ring_buffer_length)
+                        self.state.values = param_dict
                         for param, value in param_dict.items():
                             message = self.cam.set(param, value)
                     except Empty:
@@ -166,17 +161,19 @@ class CameraSource(VideoSource):
             arr = self.cam.read()
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
-            if self.ring_buffer is None or self.ring_buffer_length != self.ring_buffer.length:
-                self.ring_buffer = RingBuffer(self.ring_buffer_length)
+            if self.ring_buffer is None or self.state.ring_buffer_length != self.state.ring_buffer.length:
+                self.ring_buffer = RingBuffer(self.state.ring_buffer_length)
 
             self.update_framerate()
 
-            if self.replay and self.replay_fps > 0:
+            if self.state.paused:
+                self.frame_queue.put(self.ring_buffer.get_most_recent())
+            elif self.state.replay and self.state.replay_fps > 0:
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
                     pass
-                delta_t = 1 / self.replay_fps
+                delta_t = 1 / self.state.replay_fps
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
@@ -185,7 +182,7 @@ class CameraSource(VideoSource):
             else:
                 self.ring_buffer.put(arr)
                 prt = None
-                if arr is not None and not self.paused:
+                if arr is not None and not self.state.paused:
                     # If the queue is full, arrayqueues should print a warning!
                     if self.frame_queue.queue.qsize() < self.n_consumers + 2:
                         self.frame_queue.put(arr)
@@ -330,3 +327,48 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
+
+
+class VideoControlParameters(ParametrizedQt):
+    def __init__(self, **kwargs):
+        super().__init__(name="video_params", **kwargs)
+        self.framerate = Param(150., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
+        self.offset = Param(50)
+        self.paused = Param(False)
+
+
+class CameraControlParameters(ParametrizedQt):
+    """HasPyQtGraphParams class for controlling the camera params.
+    Ideally, methods to automatically set dynamic boundaries on frame rate and
+    exposure time can be implemented. Currently not implemented.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(name="camera_params", **kwargs)
+        self.exposure = Param(1., limits=(0.1, 50), unit="ms", desc="Exposure (ms)")
+        self.framerate = Param(
+            150., limits=(10, 700), unit=" Hz", desc="Framerate (Hz)"
+        )
+        self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
+        self.ring_buffer_length = Param(
+            600, (1, 2000), desc="Rolling buffer that saves the last items",
+            gui=False
+        )
+        self.replay = Param(
+           True,
+            desc="Replaying",
+            gui=False
+        )
+        self.replay_fps = Param(
+            15,
+            (0, 500),
+            desc="If bigger than 0, the rolling buffer will be replayed at the given framerate",
+        )
+        self.replay_limits = Param((0,0), gui=False)

@@ -25,3 +25,6 @@ class RingBuffer:
         old_idx = self.read_idx
         self.read_idx = (self.read_idx + 1) % self.length
         return self.arr[old_idx]
+
+    def get_most_recent(self):
+        return self.arr[(self.insert_idx-1) % self.length]

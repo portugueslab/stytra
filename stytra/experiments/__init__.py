@@ -130,17 +130,6 @@ class Experiment(QObject):
         self.logger.setLevel("INFO")
 
         # We will collect data only of a directory for saving is specified:
-
-        # Use the DataCollector object to find the last used protocol,
-        #  to restore it
-        # self.protocol = protocol #self.dc.get_last_value(
-        # "stimulus_protocol_params")
-        #
-        # if default_protocol is not None:
-        #     self.protocol = default_protocol
-        # else:
-        #     self.protocol = protocols[0].name
-
         # Conditional, in case metadata are generated and passed from the
         # configuration file:
         if metadata_general is None:

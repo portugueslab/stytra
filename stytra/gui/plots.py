@@ -139,6 +139,11 @@ class MultiStreamPlot(QWidget):
         self.plotContainer.showAxis("left", False)
         self.plotContainer.plotItem.hideButtons()
 
+        self.replay_left = pg.InfiniteLine(-1, pen=(220, 220, 220),
+                                           movable=True, hoverPen=(230, 30, 0))
+        self.replay_right = pg.InfiniteLine(-1, pen=(220, 220, 220),
+                                           movable=True, hoverPen=(230, 30, 0))
+
         self.layout().addWidget(self.plotContainer)
 
         self.accumulators = []
