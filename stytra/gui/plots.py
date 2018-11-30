@@ -342,84 +342,87 @@ class MultiStreamPlot(QWidget):
 
             data_array = acc.get_last_t(self.time_past)
 
+            # downsampling if there are too many points
             if len(data_array) > self.n_points_max:
                 data_array = data_array[:: len(data_array) // self.n_points_max]
 
-            if len(data_array) > 1:
-                try:
-                    time_array = delta_t + data_array[:, 0]
+            # if this accumulator does not have enough data to plot, skip it
+            if data_array.shape[0] <= 1:
+                continue
 
-                    # loop to handle nan values in a single column
-                    new_bounds = np.zeros((len(indexes), 2))
-                    for id, i in enumerate(indexes):
-                        # Exclude nans from calculation of percentile boundaries:
-                        d = data_array[:, i]
-                        try:
-                            b = ~np.isnan(d)
-                            if np.any(b):
-                                non_nan_data = data_array[b, i]
-                                new_bounds[id, :] = np.percentile(
-                                    non_nan_data, (0.5, 99.5), 0
-                                )
-                                if new_bounds[id, 0] == new_bounds[id, 1]:
-                                    new_bounds[id, 1] += 1
-                        except TypeError:
-                            pass
+            try:
+                time_array = delta_t + data_array[:, 0]
 
-                    if self.bounds[i_acc] is None:
-                        if not self.round_bounds:
-                            self.bounds[i_acc] = new_bounds
-                        else:
-                            self.bounds[i_acc] = self._round_bounds(new_bounds)
+                # loop to handle nan values in a single column
+                new_bounds = np.zeros((len(indexes), 2))
+
+                for id, i in enumerate(indexes):
+                    # Exclude nans from calculation of percentile boundaries:
+                    d = data_array[:, i]
+                    b = ~np.isnan(d)
+                    if np.any(b):
+                        non_nan_data = data_array[b, i]
+                        new_bounds[id, :] = np.percentile(
+                            non_nan_data, (0.5, 99.5), 0
+                        )
+                        # if the bounds are the same, set arbitrary ones
+                        if new_bounds[id, 0] == new_bounds[id, 1]:
+                            new_bounds[id, 1] += 1
+
+                if self.bounds[i_acc] is None:
+                    if not self.round_bounds:
+                        self.bounds[i_acc] = new_bounds
                     else:
-                        if not self.round_bounds:
-                            self.bounds[i_acc] = (
-                                self.bounds_update * new_bounds
-                                + (1 - self.bounds_update) * self.bounds[i_acc]
-                            )
-                        else:
-                            self.bounds[i_acc] = self._update_round_bounds(
-                                self.bounds[i_acc], new_bounds
-                            )
+                        self.bounds[i_acc] = self._round_bounds(new_bounds)
+                else:
+                    if not self.round_bounds:
+                        self.bounds[i_acc] = (
+                            self.bounds_update * new_bounds
+                            + (1 - self.bounds_update) * self.bounds[i_acc]
+                        )
+                    else:
+                        self.bounds[i_acc] = self._update_round_bounds(
+                            self.bounds[i_acc], new_bounds
+                        )
 
-                    for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
-                        scale = ub - lb
-                        if scale < 0.00001:
-                            self.valueLabels[i_stream][0].setText("-".format(lb))
-                            self.valueLabels[i_stream][1].setText("-".format(ub))
-                            self.valueLabels[i_stream][3].setText(
-                                "NaN".format(data_array[-1, i_var])
-                            )
-                            self.curves[i_stream].setData(x=[], y=[])
+                for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
+                    scale = ub - lb
+                    if scale < 0.00001:
+                        self.valueLabels[i_stream][0].setText("-".format(lb))
+                        self.valueLabels[i_stream][1].setText("-".format(ub))
+                        self.valueLabels[i_stream][3].setText(
+                            "NaN".format(data_array[-1, i_var])
+                        )
+                        self.curves[i_stream].setData(x=[], y=[])
+                    else:
+                        if self.round_bounds:
+                            pass
+                            # TODO write proper hiding of labels
+                            # self.valueLabels[i_stream][0].setText(
+                            #     "{:7d}".format(lb, prec=self.precision)
+                            # )
+                            # self.valueLabels[i_stream][1].setText(
+                            #     "{:7d}".format(ub, prec=self.precision)
+                            # )
                         else:
-                            if self.round_bounds:
-                                pass
-                                # TODO write proper hiding of labels
-                                # self.valueLabels[i_stream][0].setText(
-                                #     "{:7d}".format(lb, prec=self.precision)
-                                # )
-                                # self.valueLabels[i_stream][1].setText(
-                                #     "{:7d}".format(ub, prec=self.precision)
-                                # )
-                            else:
-                                self.valueLabels[i_stream][0].setText(
-                                    "{:7.{prec}f}".format(lb, prec=self.precision)
-                                )
-                                self.valueLabels[i_stream][1].setText(
-                                    "{:7.{prec}f}".format(ub, prec=self.precision)
-                                )
-                            self.valueLabels[i_stream][3].setText(
-                                "{:7.{prec}f}".format(
-                                    data_array[-1, i_var], prec=self.precision
-                                )
+                            self.valueLabels[i_stream][0].setText(
+                                "{:7.{prec}f}".format(lb, prec=self.precision)
                             )
-                            self.curves[i_stream].setData(
-                                x=time_array,
-                                y=i_stream + ((data_array[:, i_var] - lb) / scale),
+                            self.valueLabels[i_stream][1].setText(
+                                "{:7.{prec}f}".format(ub, prec=self.precision)
                             )
-                        i_stream += 1
-                except IndexError:
-                    pass
+                        self.valueLabels[i_stream][3].setText(
+                            "{:7.{prec}f}".format(
+                                data_array[-1, i_var], prec=self.precision
+                            )
+                        )
+                        self.curves[i_stream].setData(
+                            x=time_array,
+                            y=i_stream + ((data_array[:, i_var] - lb) / scale),
+                        )
+                    i_stream += 1
+            except IndexError:
+                pass
 
             else:
                 try:
