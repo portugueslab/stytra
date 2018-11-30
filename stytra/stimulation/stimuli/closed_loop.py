@@ -304,10 +304,17 @@ class CenteringWrapper(PositionStimulus):
         self.stimulus = stimulus
         self.active = self.stimulus
         self.centering = centering
+        self._centering_on = False
+        self.dynamic_parameters.append("centering_on")
         self.xc = 320
         self.yc = 240
         self.duration = self.stimulus.duration
-        self.dynamic_parameters.extend(stimulus.dynamic_parameters)
+        self.stimulus_dynamic = False
+        try:
+            self.dynamic_parameters.extend(stimulus.dynamic_parameters)
+            self.stimulus_dynamic = True
+        except AttributeError:
+            self.stimulus_dynamic = False
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
@@ -317,15 +324,25 @@ class CenteringWrapper(PositionStimulus):
     def get_state(self):
         return self.stimulus.get_state()
 
+    def start(self):
+        super().start()
+        self.stimulus.start()
+        self.centering.start()
+
     def get_dynamic_state(self):
-        return super().get_dynamic_state().update(self.stimulus.get_dyanmic_state())
+        state = super().get_dynamic_state()
+        if self.stimulus_dynamic:
+            state.update(self.stimulus.get_dyanmic_state())
+        return state
 
     def update(self):
         y, x, theta = self._experiment.estimator.get_position()
         if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
             self.active = self.centering
+            self._centering_on = True
         else:
             self.active = self.stimulus
+            self._centering_on = False
         self.active._elapsed = self._elapsed
         self.active.update()
 
