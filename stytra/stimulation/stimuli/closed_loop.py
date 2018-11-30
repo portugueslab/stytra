@@ -307,6 +307,7 @@ class CenteringWrapper(PositionStimulus):
         self.xc = 320
         self.yc = 240
         self.duration = self.stimulus.duration
+        self.dynamic_parameters.extend(stimulus.dynamic_parameters)
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
