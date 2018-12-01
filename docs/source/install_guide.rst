@@ -1,7 +1,7 @@
 Installation guide
 ==================
 
-Stytra was developed and tested using Python 3.6 and 3.7 installed as part of the
+Stytra was developed and tested using Python 3.7 installed as part of the
 `Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Other Python versions have not been tested.
 Make sure you have the latest version of Anaconda installed before proceeding
 with the installation. Installation with custom python environments,

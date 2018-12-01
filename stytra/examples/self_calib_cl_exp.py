@@ -15,7 +15,7 @@ class ClosedLoop1DProt(Protocol):
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
             # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
-            # video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5"),
+            video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5"),
         ),
     )
 

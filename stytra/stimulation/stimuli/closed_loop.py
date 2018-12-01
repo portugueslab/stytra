@@ -57,8 +57,8 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.fish_vel = 0
         self.fish_swimming = False
         # For within-bout checks:
-        self.bout_start = None
-        self.bout_stop = None
+        self.bout_start = np.nan
+        self.bout_stop = np.nan
 
     def get_fish_vel(self):
         """ Function that update estimated fish velocty. Change to add lag or
@@ -87,22 +87,22 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         if self.fish_vel < self.swimming_threshold:
             self.fish_swimming = True
 
-            if self.bout_start is None:
+            if np.isnan(self.bout_start):
                 # If here, we are at the beginning of a bout
                 self.bout_start = self._elapsed
-                self.bout_stop = None
+                self.bout_stop = np.nan
                 self.bout_started()
 
             self.bout_occurring()
 
         else:  # if not bouting:
-            if self.bout_start is not None:
+            if not np.isnan(self.bout_start):
                 # If here, we are at the end of a bout
                 self.bout_stop = self._elapsed
 
                 self.bout_ended()
 
-                self.bout_start = None
+                self.bout_start = np.nan
 
             self.fish_swimming = False
 
@@ -192,9 +192,9 @@ class GainLagClosedLoop1D(Basic_CL_1D):
         gain=1,
         lag=0,
         shunted=False,
-        fixed_vel=None,
-        gain_drop_start=None,
-        gain_drop_end=None,
+        fixed_vel=np.nan,
+        gain_drop_start=np.nan,
+        gain_drop_end=np.nan,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -218,7 +218,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
     def calculate_final_vel(self):
         subtract_to_base = self.gain * self.lag_vel
 
-        if self.gain_drop_start is not None and self.bout_start is not None:
+        if not np.nan(self.gain_drop_start) and not np.nan(self.bout_start):
             t = self._elapsed - self.bout_start
             if self.gain_drop_start < t < self.gain_drop_end:
                 subtract_to_base = 0
