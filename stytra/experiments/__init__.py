@@ -9,7 +9,7 @@ import tempfile
 import git
 import sys
 
-from PyQt5.QtCore import QObject, QTimer
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QMessageBox
 
 from stytra.calibration import CrossCalibrator
@@ -21,6 +21,8 @@ from stytra.gui.container_windows import (
     SimpleExperimentWindow,
     DynamicStimExperimentWindow,
 )
+
+import imageio
 
 try:
     import av
@@ -71,6 +73,8 @@ class Experiment(QObject):
     log_format : str
         one of "csv", "feather", "hdf5" (pytables-based) or "json"
     """
+
+    sig_data_saved = pyqtSignal()
 
     def __init__(
         self,
@@ -128,18 +132,6 @@ class Experiment(QObject):
 
         self.logger = logging.getLogger()
         self.logger.setLevel("INFO")
-
-        # We will collect data only of a directory for saving is specified:
-
-        # Use the DataCollector object to find the last used protocol,
-        #  to restore it
-        # self.protocol = protocol #self.dc.get_last_value(
-        # "stimulus_protocol_params")
-        #
-        # if default_protocol is not None:
-        #     self.protocol = default_protocol
-        # else:
-        #     self.protocol = protocols[0].name
 
         # Conditional, in case metadata are generated and passed from the
         # configuration file:
@@ -362,14 +354,16 @@ class Experiment(QObject):
                 self.dc.add_static_data(db_id, name="general/db_index")
 
                 # Get program name and version and save to the data_log:
-                repo = git.Repo(sys.argv[0],
-                                search_parent_directories=True)
-                git_hash = repo.head.object.hexsha
-
-                self.dc.add_static_data(dict(git_hash=git_hash,
-                                             name=sys.argv[0],
-                                             arguments=self.arguments),
-                                        name='general/program_version')
+                try:
+                    repo = git.Repo(sys.argv[0],
+                                    search_parent_directories=True)
+                    git_hash = repo.head.object.hexsha
+                    self.dc.add_static_data(dict(git_hash=git_hash,
+                                                 name=sys.argv[0],
+                                                 arguments=self.arguments),
+                                            name='general/program_version')
+                except git.InvalidGitRepositoryError:
+                    self.logger.info("Invalid git repository")
 
                 self.dc.save(self.filename_base() + "metadata.json")  # save data_log
                 self.logger.info(
@@ -389,19 +383,12 @@ class Experiment(QObject):
                             compression="blosc",
                         )
                     elif self.stim_movie_format == "mp4":
-                        container = av.open(
-                            self.filename_base() + "stim_movie.mp4", mode="w"
-                        )
-                        stream = container.add_stream("mpeg4", rate=30)
-                        stream.height, stream.width = movie[0].shape[:2]
-                        stream.pix_fmt = "yuv420p"
-                        for frame in movie:
-                            vidframe = av.VideoFrame.from_ndarray(
-                                np.ascontiguousarray(frame.astype(np.uint8)), "rgb24"
-                            )
-                            packet = stream.encode(vidframe)
-                            container.mux(packet)
-                        container.close()
+                        imageio.mimwrite(self.filename_base() + "stim_movie.mp4",
+                                         movie, fps=30, quality=None,
+                                         ffmpeg_params=[
+                                             "-pix_fmt","yuv420p","-profile:v",
+                        "baseline", "-level","3"
+                                         ])
                     else:
                         raise Exception(
                             "Tried to write the stimulus video into an unsupported format"
@@ -414,6 +401,8 @@ class Experiment(QObject):
 
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()
+
+        self.sig_data_saved.emit()
 
         if self.loop_protocol and self.protocol_runner.completed:
             self.protocol_runner.reset()
@@ -437,7 +426,7 @@ class Experiment(QObject):
         """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
-            if self.protocol_runner.protocol is not None:
+            if self.protocol_runner.protocol is not None and self.protocol_runner.running:
                 self.end_protocol(save=False)
         if self.trigger is not None:
             self.trigger.kill_event.set()

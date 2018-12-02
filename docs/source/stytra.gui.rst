@@ -4,6 +4,14 @@ stytra.gui package
 Submodules
 ----------
 
+stytra.gui.buttons module
+-------------------------
+
+.. automodule:: stytra.gui.buttons
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.gui.camera\_display module
 ---------------------------------
 
@@ -20,10 +28,10 @@ stytra.gui.container\_windows module
     :undoc-members:
     :show-inheritance:
 
-stytra.gui.extra\_widgets module
---------------------------------
+stytra.gui.framerate\_viewer module
+-----------------------------------
 
-.. automodule:: stytra.gui.extra_widgets
+.. automodule:: stytra.gui.framerate_viewer
     :members:
     :undoc-members:
     :show-inheritance:
@@ -32,14 +40,6 @@ stytra.gui.monitor\_control module
 ----------------------------------
 
 .. automodule:: stytra.gui.monitor_control
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra.gui.parameter\_widgets module
-------------------------------------
-
-.. automodule:: stytra.gui.parameter_widgets
     :members:
     :undoc-members:
     :show-inheritance:
@@ -56,6 +56,14 @@ stytra.gui.protocol\_control module
 -----------------------------------
 
 .. automodule:: stytra.gui.protocol_control
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.gui.status\_display module
+---------------------------------
+
+.. automodule:: stytra.gui.status_display
     :members:
     :undoc-members:
     :show-inheritance:

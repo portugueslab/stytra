@@ -14,11 +14,13 @@ from stytra.stimulation.stimuli import (
 
 from stytra.stimulation import Protocol
 
+from time import sleep
 from stytra import Stytra
 
 import shutil
 
 from os import path
+from pathlib import Path
 
 
 class RadialSine(Protocol):
@@ -29,7 +31,7 @@ class RadialSine(Protocol):
     name = "radial_sine"
 
     def get_stim_sequence(self):
-        return [RadialSineStimulus(duration=5, period=10, velocity=15)]
+        return [RadialSineStimulus(duration=2, period=10, velocity=5)]
 
 
 class FullFieldProtocol(Protocol):
@@ -68,7 +70,7 @@ class GratingProtocol(Protocol):
         Stim = type(
             "stim", (InterpolatedStimulus, GratingStimulus), dict(theta=np.pi / 4)
         )
-        return [Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_y=[10, 10])))]
+        return [Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_x=[10, 10])))]
 
 
 class SeamlessImageProtocol(Protocol):
@@ -89,7 +91,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         self.test_dir = tempfile.mkdtemp()
         self.stopped = False
         self.protocols = []
-        self.i_protocol = 0
+        self.protocol_name = ""
         self.exp = None
 
     def tearDown(self):
@@ -101,23 +103,18 @@ class GenerateStimuliMovie(unittest.TestCase):
             + "/docs/source/_static/"
         )
         shutil.copy(
-            self.exp.folder_name + "/{:03d}_stim_movie.mp4".format(self.i_protocol),
+            next(Path(self.exp.folder_name).glob("*stim_movie.mp4")),
             output_folder
             + "stim_movie_"
-            + self.protocols[self.i_protocol].name
+            + self.protocol_name
             + ".mp4",
         )
-        self.i_protocol += 1
-        if self.i_protocol == len(self.protocols):
-            self.exp.wrap_up()
-        else:
-            self.exp.window_main.widget_control.combo_prot.setCurrentText(
-                self.protocols[self.i_protocol].name
-            )
-            self.exp.start_protocol()
+        sleep(0.1)
+        self.exp.wrap_up()
 
     def test_stimulus_rendering(self):
-        asset_dir = pkg_resources.resource_filename(__name__, "/test_assets/")
+        asset_dir = pkg_resources.resource_filename(__name__, "/assets")
+        print(asset_dir)
 
         self.protocols = [
             RadialSine,
@@ -127,18 +124,20 @@ class GenerateStimuliMovie(unittest.TestCase):
             SeamlessImageProtocol,
         ]
 
-        s = Stytra(
-            protocols=self.protocols,
-            dir_assets=asset_dir,
-            dir_save=self.test_dir,
-            stim_movie_format="mp4",
-            rec_stim_every=30,
-            exec=False,
-        )
+        for protocol in self.protocols:
+            self.protocol_name = protocol.name
 
-        self.exp = s.exp
-        self.exp.calibrator.mm_px = 30 / 400
-        s.exp.window_main.widget_control.combo_prot.setCurrentText("protocol_stim")
-        s.exp.protocol_runner.sig_protocol_finished.connect(self.waitend)
-        s.exp.start_protocol()
-        s.exp.app.exec_()
+            s = Stytra(
+                protocol=protocol(),
+                dir_assets=asset_dir,
+                dir_save=self.test_dir,
+                stim_movie_format="mp4",
+                rec_stim_framerate=30,
+                exec=False,
+            )
+
+            self.exp = s.exp
+            self.exp.calibrator.mm_px = 30 / 400
+            s.exp.sig_data_saved.connect(self.waitend)
+            s.exp.start_protocol()
+            s.exp.app.exec_()

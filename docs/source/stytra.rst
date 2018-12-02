@@ -6,7 +6,6 @@ Subpackages
 
 .. toctree::
 
-    stytra.bouter
     stytra.calibration
     stytra.collectors
     stytra.examples
