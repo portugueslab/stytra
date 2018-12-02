@@ -109,8 +109,11 @@ to the interface an online plot:
    :language: python
 
 
-Stimulation and tracking: adding a camera
------------------------------------------
+Stimulation and tracking:
+-------------------------
+
+Add a camera to a protocol
+..........................
 
 We often need to have frames streamed from a file or a camera. In the following
 example we comment on how to achieve this when defining a protocol:
@@ -139,6 +142,19 @@ displays a rotating windmill) to add tracking of the eyes as well:
 Now a window with the fish image an a ROI to control tail position will appear,
 and the tail will be tracked! See relative documentation for instructions on
 how to adjust tracking parameters.
+
+Closed-loop experiments
+-----------------------
+
+Stytra allows to easily define close-loop experiments where quantities
+tracked from the image are dynamically used to update some stimulus variable.
+In the example below we create a wait full-screen stimulus that turn red when
+the fish is swimming above a certain threshold (estimated with the vigour
+method).
+
+.. literalinclude:: ../../stytra/examples/custom_visual_exp.py
+   :language: python
+
 
 
 
