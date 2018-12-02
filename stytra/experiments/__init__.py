@@ -364,7 +364,8 @@ class Experiment(QObject):
                 self.dc.add_static_data(db_id, name="general/db_index")
 
                 # Get program name and version and save to the data_log:
-                repo = git.Repo(search_parent_directories=True)
+                repo = git.Repo(sys.argv[0],
+                                search_parent_directories=True)
                 git_hash = repo.head.object.hexsha
 
                 self.dc.add_static_data(dict(git_hash=git_hash,
