@@ -29,7 +29,6 @@ In stytra.examples.most_basic_example.py we define a very simple experiment:
 
 .. literalinclude:: ../../stytra/examples/most_basic_exp.py
    :language: python
-   :linenos:
 
 Try to run this code or type in the command prompt::
 
@@ -45,7 +44,7 @@ To start the experiment, just press the play button: a flash will appear on the 
 
 
 Parameterise the protocol
--------------------------
+.........................
 Sometimes, we want to control a protocol parameters from the interface. To do this, we can define
 protocol class attributes as Param. This will allow us to open a mask to control stimulus
 parameters within the Stytra GUI.
@@ -56,8 +55,6 @@ For a complete description of Params inside stytra see :ref:`Parameterisation`.
 
 .. literalinclude:: ../../stytra/examples/flash_exp.py
    :language: python
-   :linenos:
-.. Note::
 
 Note that Parameters in Protocol param are the ones that can be changed from the GUI, but
 all stimulus attributes will be saved in the final log, both parameterized and unparameterized ones!
@@ -81,8 +78,6 @@ stimulus, making it a looming object:
 
 .. literalinclude:: ../../stytra/examples/looming_exp.py
    :language: python
-   :linenos:
-.. Note::
 
 
 Use velocities instead of quantities
@@ -98,8 +93,6 @@ with `vel_x`.
 
 .. literalinclude:: ../../stytra/examples/gratings_exp.py
    :language: python
-   :linenos:
-.. Note::
 
 You can look in the code of the windmill_exp.py example to see how to use
 the dataframe to specify a more complex motion - in this case, a rotation with
@@ -114,8 +107,6 @@ to the interface an online plot:
 
 .. literalinclude:: ../../stytra/examples/plot_dynamic_exp.py
    :language: python
-   :linenos:
-.. Note::
 
 
 Stimulation and tracking: adding a camera
@@ -126,8 +117,35 @@ example we comment on how to achieve this when defining a protocol:
 
 .. literalinclude:: ../../stytra/examples/display_camera_exp.py
    :language: python
-   :linenos:
-.. Note::
+
+Note however that usually the camera settings are always the same on the
+computer that controls a setup, therefore the camera settings are defined in
+the user config file and generally not required at the protocol level.
+See :ref:`Configuring a computer for Stytra experiments` for more info.
+
+Add tracking to a defined protocol
+..................................
+
+To add tail or eye tracking to a protocol, it is enough to change the
+`stytra_config` attribute to contain a tracking argument as well. See the
+experiment documentation for a description of the available tracking methods.
+
+In this example, we redefine the previously defined windmill protocol (which
+displays a rotating windmill) to add tracking of the eyes as well:
+
+.. literalinclude:: ../../stytra/examples/tail_tracking_exp.py
+   :language: python
+
+Now a window with the fish image an a ROI to control tail position will appear,
+and the tail will be tracked! See relative documentation for instructions on
+how to adjust tracking parameters.
+
+
+
+
+
+
+
 
 
 

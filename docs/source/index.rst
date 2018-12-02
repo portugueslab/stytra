@@ -13,9 +13,11 @@ Stytra is a package to build and run behavioral experiments
     :caption: Contents:
 
     install_guide
+    examples_gallery
     stimulation_intro
     create_protocol
     running_experiments
+    configuring_computer
     data_saving
     calibration
     triggering_intro

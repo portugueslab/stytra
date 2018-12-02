@@ -37,6 +37,7 @@ class EyeTrackingMethod:
         self,
         im,
         wnd_pos: Param((0, 0), gui=False),
+        threshold: Param(100, limits=(1, 254)),
         wnd_dim: Param((100, 100), gui=False),
         **extraparams
     ):
@@ -72,8 +73,8 @@ class EyeTrackingMethod:
 
         cropped = _pad(
             im[
-                wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
-                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
+                wnd_pos[1]: wnd_pos[1] + wnd_dim[1],
+                wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
             ].copy(),
             padding=PAD,
             val=255,
@@ -160,9 +161,13 @@ def _fit_ellipse(thresholded_image):
         When eyes were found, the two ellipses, otherwise False
 
     """
+    print("contours")
+    print(thresholded_image.shape)
+    print(thresholded_image.max())
     _, contours, hierarchy = cv2.findContours(
         thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
+    print(sum(thresholded_image))
 
     if len(contours) >= 2:
 
