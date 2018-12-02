@@ -79,7 +79,52 @@ class
 In this example, we use a dataframe for changing the diameter of a circle
 stimulus, making it a looming object:
 
-.. literalinclude:: ../../stytra/examples/flash_exp.py
+.. literalinclude:: ../../stytra/examples/looming_exp.py
+   :language: python
+   :linenos:
+.. Note::
+
+
+Use velocities instead of quantities
+....................................
+
+For every quantity we can specify the velocity at which it changes instead of
+the value itself. This can be done premitting `vel_` to the quantity name
+in the DataFrame.
+In the next example, we use this syntax to create moving gratings. What is
+dynamically updated is the
+position `x` of the gratings, but with the dictionary we specify its velocity
+with `vel_x`.
+
+.. literalinclude:: ../../stytra/examples/gratings_exp.py
+   :language: python
+   :linenos:
+.. Note::
+
+You can look in the code of the windmill_exp.py example to see how to use
+the dataframe to specify a more complex motion - in this case, a rotation with
+sinusoidal velocity.
+
+Visualise with stim_plot parameter
+..................................
+
+If you want to monitor in real time the changes in your experiment
+parameters, you can pass the stim_plot argument to the call to stytra to add
+to the interface an online plot:
+
+.. literalinclude:: ../../stytra/examples/plot_dynamic_exp.py
+   :language: python
+   :linenos:
+.. Note::
+
+
+Stimulation and tracking: adding a camera
+-----------------------------------------
+
+We often need to have frames streamed from a file or a camera. In the following
+example we comment on how to achieve this when defining a protocol:
+
+.. literalinclude:: ../../stytra/examples/display_camera_exp.py
    :language: python
    :linenos:
 .. Note::

@@ -241,8 +241,6 @@ class Experiment(QObject):
         if self.trigger is not None:
             self.trigger.start()
 
-
-
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
         """

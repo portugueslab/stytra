@@ -45,6 +45,8 @@ class LoomingProtocol(Protocol):
         self.n_looms = Param(10, limits=(0, 1000))
         self.max_loom_size = Param(60, limits=(0, 100))
         self.max_loom_duration = Param(5, limits=(0, 100))
+        self.x_pos_pix = Param(100, limits=(0, 2000))
+        self.y_pos_pix = Param(100, limits=(0, 2000))
 
     # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):
@@ -66,8 +68,9 @@ class LoomingProtocol(Protocol):
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df, origin=(10,
-                                                                       10)))
+            stimuli.append(LoomingStimulus(df_param=radius_df,
+                                           origin=(self.x_pos_pix,
+                                                   self.y_pos_pix)))
 
         return stimuli
 

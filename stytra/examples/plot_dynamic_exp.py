@@ -2,6 +2,6 @@ from stytra import Stytra
 
 
 if __name__ == "__main__":
-    from stytra.examples.eye_tracking_exp import WindmillProtocol
+    from stytra.examples.gratings_exp import GratingsProtocol
     # We make a new instance of Stytra with this protocol as the only option:
-    s = Stytra(protocol=WindmillProtocol(), stim_plot=True)
+    s = Stytra(protocol=GratingsProtocol(), stim_plot=True)

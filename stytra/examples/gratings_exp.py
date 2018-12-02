@@ -8,45 +8,33 @@ from lightparam import Param
 
 
 class GratingsProtocol(Protocol):
-    name = "gratings protocol"
+    name = "gratings_protocol"
 
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = Param(5.)
-        self.grating_vel = Param(10.)
-        self.grating_duration = Param(5.)
-        self.grating_cycle = Param(10)
-        self.grating_angle_deg = Param(90.)
+        self.t_pre = Param(5.)  # time of still gratings before they move
+        self.t_move = Param(5.)  # time of gratings movement
+        self.grating_vel = Param(-10.)  # gratings velocity
+        self.grating_period = Param(10)  # grating spatial period
+        self.grating_angle_deg = Param(90.)  # grating orientation
         self.grating_shape = Param("square", limits=["square", "sine"])
 
     def get_stim_sequence(self):
-        stimuli = []
-        # # gratings
-        p = self.inter_stim_pause / 2
-        v = self.grating_vel
-        d = self.grating_duration
+        # Use six points to specify the velocity step to be interpolated:
+        t = [0, self.t_pre,
+             self.t_pre, self.t_pre + self.t_move,
+             self.t_pre + self.t_move, 2 * self.t_pre + self.t_move]
 
-        t_base = [0, p, p, p + d, p + d, 2 * p + d]
-        vel_base = [0, 0, -v, -v, 0, 0]
-        t = []
-        vel = []
-
-        t.extend(t_base)
-        vel.extend(vel_base)
+        vel = [0, 0, self.grating_vel, self.grating_vel, 0, 0]
 
         df = pd.DataFrame(dict(t=t, vel_x=vel))
 
-        stimuli.append(
-            MovingGratingStimulus(
+        return [MovingGratingStimulus(
                 df_param=df,
                 grating_angle=self.grating_angle_deg * np.pi/180,
-                grating_period=self.grating_cycle,
-                grating_col_2=(0, 0, 0),
-                wave_shape=self.grating_shape,
-            )
-        )
-        return stimuli
+                grating_period=self.grating_period,
+                wave_shape=self.grating_shape)]
 
 
 if __name__ == "__main__":
