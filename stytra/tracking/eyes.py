@@ -151,9 +151,13 @@ def _fit_ellipse(thresholded_image):
         When eyes were found, the two ellipses, otherwise False
 
     """
+    print("contours")
+    print(thresholded_image.shape)
+    print(thresholded_image.max())
     _, contours, hierarchy = cv2.findContours(
         thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
+    print(sum(thresholded_image))
 
     if len(contours) >= 2:
 
