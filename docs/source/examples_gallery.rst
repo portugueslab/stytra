@@ -63,3 +63,28 @@ Note that Parameters in Protocol param are the ones that can be changed from the
 all stimulus attributes will be saved in the final log, both parameterized and unparameterized ones!
 You don't need to worry about parameters get lost.
 
+
+Define dynamic stimuli
+----------------------
+Many stimuli may have some quantities, such as velocity for gratings or
+angular velocity for windmills, that have to change over time. To define these
+kind of stimuli Stytra use a convenient syntax: a param_df pandas DataFrame
+with the specification of the desired parameter value at specific timepoints.
+The value at all the other timepoints will be linearly interpolated from the
+DataFrame. The dataframe has to contain a `t` column with the time, and one
+column for each quantity that has to change over time (`x`, `theta`, etc.).
+This stimulus behaviour is handled by the :class:`Stimulus <stytra.stimulation.stimuli.DynamiStimulus>`
+class
+
+In this example, we use a dataframe for changing the diameter of a circle
+stimulus, making it a looming object:
+
+.. literalinclude:: ../../stytra/examples/flash_exp.py
+   :language: python
+   :linenos:
+.. Note::
+
+
+
+
+
