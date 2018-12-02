@@ -12,9 +12,8 @@ class Nostim(Protocol):
     # In this particular case, we add a stream of frames from one example
     # movie saved in stytra assets.
     stytra_config = dict(camera=dict(
-        video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5")))
-    #  For a streaming from real cameras connected to the computer,
-    # specify camera type, e.g.:
+        video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")))
+    #  For a streaming from real cameras connected to the computer, specify camera type, e.g.:
     # stytra_config = dict(camera=dict(type="ximea"))
 
     def get_stim_sequence(self):

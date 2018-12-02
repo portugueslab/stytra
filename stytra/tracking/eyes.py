@@ -37,6 +37,7 @@ class EyeTrackingMethod:
         self,
         im,
         wnd_pos: Param((0, 0), gui=False),
+        threshold: Param(100, limits=(1, 254)),
         wnd_dim: Param((100, 100), gui=False),
         **extraparams
     ):
@@ -52,16 +53,6 @@ class EyeTrackingMethod:
             dimension of the window on the eyes (w, h);
         threshold :
             threshold for ellipse fitting (int).
-        wnd_pos :
-
-        wnd_dim :
-
-        image_scale :
-
-        filter_size :
-
-        color_invert :
-
 
         Returns
         -------
@@ -72,8 +63,8 @@ class EyeTrackingMethod:
 
         cropped = _pad(
             im[
-                wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
-                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
+                wnd_pos[1]: wnd_pos[1] + wnd_dim[1],
+                wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
             ].copy(),
             padding=PAD,
             val=255,
