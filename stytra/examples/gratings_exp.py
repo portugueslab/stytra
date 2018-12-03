@@ -5,10 +5,19 @@ from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import MovingGratingStimulus
 from lightparam import Param
+from pathlib import Path
 
 
 class GratingsProtocol(Protocol):
     name = "gratings_protocol"
+
+    stytra_config = dict(
+        camera=dict(
+            # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
+            video_file=str(Path(__file__).parent / "assets" /
+                           "fish_compressed.h5"),
+        ),
+    )
 
     def __init__(self):
         super().__init__()

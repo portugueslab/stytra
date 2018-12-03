@@ -433,6 +433,44 @@ class GratingStimulus(BackgroundStimulus):
         p.drawImage(point, self._qbackground)
 
 
+class PaintGratingStimulus(BackgroundStimulus):
+    """ Class for moving a grating pattern.
+    """
+    def __init__(self, *args,
+                 grating_angle=0,
+                 grating_period=10,
+                 wave_shape=None,
+                 grating_col_1=(255, 255, 255),
+                 grating_col_2=None,
+                 **kwargs):
+        """
+        :param grating_angle: fixed angle for the stripes
+        :param grating_period: spatial period of the gratings (unit?)
+        :param grating_color: color for the non-black stripes (int tuple)
+        """
+        super().__init__(*args, **kwargs)
+        self.theta = grating_angle
+        self.grating_period = grating_period
+        self.color = grating_col_1
+        self.name = 'moving_gratings'
+
+    def get_unit_dims(self, w, h):
+        """
+        """
+        return self.grating_period / max(self._experiment.calibrator.mm_px, 0.0001), max(w, h)
+
+    def draw_block(self, p, point, w, h):
+        """ Function for drawing the gratings programmatically.
+        """
+        p.setPen(Qt.NoPen)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setBrush(QBrush(QColor(*self.color)))
+        p.drawRect(point.x(), point.y(),
+                   int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
+                   w)
+
+
+
 class HalfFieldStimulus(PositionStimulus):
     """ For phototaxis
 
@@ -551,7 +589,7 @@ class FishOverlayStimulus(PositionStimulus):
         )
 
 
-class MovingGratingStimulus(GratingStimulus, InterpolatedStimulus):
+class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters = ["vel_x"]

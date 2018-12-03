@@ -148,7 +148,7 @@ class CameraViewWidget(QWidget):
         -------
 
         """
-
+        # a = datetime.datetime.now()
         first = True
         while True:
             try:
@@ -166,11 +166,18 @@ class CameraViewWidget(QWidget):
             except Empty:
                 break
 
+        # a = datetime.datetime.now()
         # Once obtained current image, display it:
-        if self.current_image is not None:
-            self.image_item.setImage(
-                self.current_image, autoLevels=self.btn_autorange.isChecked()
-            )
+        if self.isVisible():
+            print("refreshing")
+            if self.current_image is not None:
+                self.image_item.setImage(
+                    self.current_image, autoLevels=self.btn_autorange.isChecked()
+                )
+        #
+        # print("setting image: {}".format((datetime.datetime.now() -
+        #                            a).total_seconds()))
+
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""

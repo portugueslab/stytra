@@ -15,7 +15,8 @@ class ClosedLoop1DProt(Protocol):
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
             # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
-            video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5"),
+            video_file=str(Path(__file__).parent / "assets" /
+                           "fish_compressed.h5"),
         ),
     )
 
@@ -45,7 +46,7 @@ class ClosedLoop1DProt(Protocol):
 
         df = pd.DataFrame(dict(t=t, base_vel=vel))
 
-        ClosedLoop1DGratings = type("Stim", (AcuteClosedLoop1D,
+        ClosedLoop1DGratings = type("Stim", (CalibratingClosedLoop1D,
                                              GratingStimulus), {})
 
         openloop = dict(w=1, change_to=dict(gain=0))
@@ -64,7 +65,7 @@ class ClosedLoop1DProt(Protocol):
                 df_param=df,
                 grating_angle=np.pi / 2,
                 grating_period=self.grating_cycle,
-                conditions_list=conditions
+                #conditions_list=conditions
                 # gain_drop=(0.05, 0.25)
             )
         )

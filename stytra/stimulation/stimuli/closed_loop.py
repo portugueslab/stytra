@@ -6,7 +6,7 @@ import numpy as np
 try:
     from random import choices
 except ImportError:
-    pass
+    print("Cannot import choiches!")
 
 from stytra.stimulation.stimuli import (
     DynamicStimulus,
@@ -15,7 +15,6 @@ from stytra.stimulation.stimuli import (
     PositionStimulus,
     InterpolatedStimulus,
 )
-
 
 class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     """
@@ -218,7 +217,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
     def calculate_final_vel(self):
         subtract_to_base = self.gain * self.lag_vel
 
-        if not np.nan(self.gain_drop_start) and not np.nan(self.bout_start):
+        if not np.isnan(self.gain_drop_start) and not np.isnan(self.bout_start):
             t = self._elapsed - self.bout_start
             if self.gain_drop_start < t < self.gain_drop_end:
                 subtract_to_base = 0
