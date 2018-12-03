@@ -275,7 +275,7 @@ class ProtocolRunner(QObject):
                 ).total_seconds(),
                 t_stop=(t_stim_stop - self.t_start).total_seconds(),
             )
-        except TypeError:  # if time is None stimulus was not run
+        except TypeError as e:  # if time is None stimulus was not run
             new_dict = dict()
             logging.getLogger().info("Stimulus times incorrect, state not saved")
         self.log.append(new_dict)
