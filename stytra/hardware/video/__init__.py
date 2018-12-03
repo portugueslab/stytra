@@ -6,7 +6,11 @@ implement video saving
 import numpy as np
 
 from multiprocessing import Queue, Event
-from multiprocessing.queues import Empty
+from queue import Empty
+
+from lightparam import Param
+from lightparam.param_qt import ParametrizedQt
+
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
@@ -19,10 +23,6 @@ from stytra.hardware.video.cameras import (
 )
 
 from stytra.hardware.video.write import VideoWriter
-from stytra.hardware.video.interfaces import (
-    CameraControlParameters,
-    VideoControlParameters,
-)
 
 from stytra.hardware.video.ring_buffer import RingBuffer
 
@@ -75,6 +75,7 @@ class VideoSource(FrameProcess):
         self.frame_queue = IndexedArrayQueue(max_mbytes=max_mbytes_queue)
         self.kill_event = Event()
         self.n_consumers = 1
+        self.state = None
 
 
 class CameraSource(VideoSource):
@@ -113,16 +114,24 @@ class CameraSource(VideoSource):
         """ """
         super().__init__(*args, **kwargs)
 
+        self.cam = None
+
         self.camera_type = camera_type
         self.downsampling = downsampling
         self.roi = roi
-        self.control_params = CameraControlParameters
-        self.replay = False
-        self.replay_fps = 0
-        self.cam = None
-        self.paused = False
-        self.ring_buffer_length = 600
+
+        self.state = None
         self.ring_buffer = None
+
+    def retrieve_params(self, messages):
+        while True:
+            try:
+                param_dict = self.control_queue.get(timeout=0.0001)
+                self.state.params.values = param_dict
+                for param, value in param_dict.items():
+                    messages.append(self.cam.set(param, value))
+            except Empty:
+                break
 
     def run(self):
         """
@@ -134,6 +143,8 @@ class CameraSource(VideoSource):
 
 
         """
+        if self.state is None:
+            self.state = CameraControlParameters()
         try:
             CameraClass = self.camera_class_dict[self.camera_type]
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
@@ -146,51 +157,55 @@ class CameraSource(VideoSource):
             self.kill_event.wait(0.0001)
             if self.kill_event.is_set():
                 break
-
             # Try to get new parameters from the control queue:
-            message = ""
+            messages = []
             if self.control_queue is not None:
-                while True:
-                    try:
-                        param_dict = self.control_queue.get(timeout=0.0001)
-                        self.replay_fps = param_dict.get("replay_fps", self.replay_fps)
-                        self.replay = param_dict.get("replay", self.replay)
-                        self.paused = param_dict.get("paused", self.paused)
-                        self.ring_buffer_length = param_dict.get("ring_buffer_length", self.ring_buffer_length)
-                        for param, value in param_dict.items():
-                            message = self.cam.set(param, value)
-                    except Empty:
-                        break
-
+                self.retrieve_params(messages)
             # Grab the new frame, and put it in the queue if valid:
             arr = self.cam.read()
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
-            if self.ring_buffer is None or self.ring_buffer_length != self.ring_buffer.length:
-                self.ring_buffer = RingBuffer(self.ring_buffer_length)
 
-            self.update_framerate()
+            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            if self.ring_buffer is None or res_len != self.ring_buffer.length:
+                self.ring_buffer = RingBuffer(res_len)
 
-            if self.replay and self.replay_fps > 0:
+            if self.state.paused:
+                self.message_queue.put("I: ring_buffer_size:" + str(self.ring_buffer.length))
+                self.frame_queue.put(self.ring_buffer.get_most_recent())
+
+                prt = None
+            elif self.state.replay and self.state.replay_fps > 0:
+                messages.append("I:Replaying between {} and {} of {}".format(*self.state.replay_limits,
+                                                                             self.ring_buffer.length))
+                old_fps = self.current_framerate
+                self.ring_buffer.replay_limits = (int(round(self.state.replay_limits[0]*old_fps)),
+                                                  int(round(self.state.replay_limits[1] * old_fps)))
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
                     pass
-                delta_t = 1 / self.replay_fps
+                delta_t = 1 / self.state.replay_fps
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
                         time.sleep(extrat)
                 prt = time.process_time()
             else:
-                self.ring_buffer.put(arr)
                 prt = None
-                if arr is not None and not self.paused:
+                if arr is not None:
+                    try:
+                        self.ring_buffer.put(arr)
+                    except AttributeError:
+                        pass
                     # If the queue is full, arrayqueues should print a warning!
                     if self.frame_queue.queue.qsize() < self.n_consumers + 2:
                         self.frame_queue.put(arr)
                     else:
-                        self.message_queue.put("W:Dropped frame")
+                        messages.append("W:Dropped frame")
+                    self.update_framerate()
+            for m in messages:
+                self.message_queue.put(m)
 
         self.cam.release()
 
@@ -211,30 +226,33 @@ class VideoFileSource(VideoSource):
 
     """
 
-    def __init__(self, source_file=None, loop=True, framerate=None, **kwargs):
+    def __init__(self, source_file=None, loop=True, **kwargs):
         super().__init__(**kwargs)
         self.source_file = source_file
         self.loop = loop
-        self.framerate = framerate
-        self.control_params = VideoControlParameters
+        self.state = None
         self.offset = 0
         self.paused = False
         self.old_frame = None
         self.offset = 0
 
-
     def inner_loop(self):
         pass
 
-    def run(self):
+    def update_params(self):
+        while True:
+            try:
+                param_dict = self.control_queue.get(timeout=0.0001)
+                self.state.params.values = param_dict
+            except Empty:
+                break
 
+    def run(self):
+        if self.state is None:
+            self.state = VideoControlParameters()
         if self.source_file.endswith("h5"):
             framedata = dd.io.load(self.source_file)
             frames = framedata["video"]
-            if self.framerate is None:
-                delta_t = 1 / framedata.get("framerate", 30.0)
-            else:
-                delta_t = 1 / self.framerate
             i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():
@@ -242,28 +260,17 @@ class VideoFileSource(VideoSource):
                 # Try to get new parameters from the control queue:
                 message = ""
                 if self.control_queue is not None:
-                    while True:
-                        try:
-                            param_dict = self.control_queue.get(timeout=0.0001)
-                            for name, value in param_dict.items():
-                                if name == "framerate":
-                                    delta_t = 1 / value
-                                elif name == "offset":
-                                    if value != self.offset:
-                                        self.offset = value
-                                elif name == "paused":
-                                    self.paused = value
-                        except Empty:
-                            break
+                    self.update_params()
 
                 # we adjust the framerate
+                delta_t = 1/  self.state.framerate
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
                         time.sleep(extrat)
 
                 self.frame_queue.put(frames[i_frame, :, :])
-                if not self.paused:
+                if not self.state.paused:
                     i_frame += 1
                 if i_frame == frames.shape[0]:
                     if self.loop:
@@ -330,3 +337,49 @@ class VideoFileSource(VideoSource):
                 self.old_frame = frame
                 self.update_framerate()
             return
+
+
+class VideoControlParameters(ParametrizedQt):
+    def __init__(self, **kwargs):
+        super().__init__(name="video_params", **kwargs)
+        self.framerate = Param(150., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
+        self.offset = Param(50)
+        self.paused = Param(False)
+
+
+class CameraControlParameters(ParametrizedQt):
+    """HasPyQtGraphParams class for controlling the camera params.
+    Ideally, methods to automatically set dynamic boundaries on frame rate and
+    exposure time can be implemented. Currently not implemented.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(name="camera_params", **kwargs)
+        self.exposure = Param(1., limits=(0.1, 50), unit="ms", desc="Exposure (ms)")
+        self.framerate = Param(
+            150., limits=(10, 700), unit=" Hz", desc="Framerate (Hz)"
+        )
+        self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
+        self.ring_buffer_length = Param(
+            300, (1, 2000), desc="Rolling buffer that saves the last items",
+            gui=False
+        )
+        self.paused = Param(False)
+        self.replay = Param(
+           True,
+            desc="Replaying",
+            gui=False
+        )
+        self.replay_fps = Param(
+            15,
+            (0, 500),
+            desc="If bigger than 0, the rolling buffer will be replayed at the given framerate",
+        )
+        self.replay_limits = Param((0, 600), gui=False)

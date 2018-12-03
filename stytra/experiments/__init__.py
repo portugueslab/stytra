@@ -133,6 +133,7 @@ class Experiment(QObject):
         self.logger = logging.getLogger()
         self.logger.setLevel("INFO")
 
+        # We will collect data only of a directory for saving is specified:
         # Conditional, in case metadata are generated and passed from the
         # configuration file:
         if metadata_general is None:

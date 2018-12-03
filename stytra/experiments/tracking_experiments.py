@@ -66,14 +66,14 @@ class CameraExperiment(Experiment):
                 roi=camera.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_control_params = CameraControlParameters(tree=self.dc)
+            self.camera_state = CameraControlParameters()
         else:
             self.camera = VideoFileSource(
                 camera["video_file"],
                 rotation=camera.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_control_params = VideoControlParameters(tree=self.dc)
+            self.camera_state = VideoControlParameters()
 
         self.camera_framerate_acc = QueueDataAccumulator(
             self.camera.framerate_queue, ["camera"]
@@ -89,9 +89,9 @@ class CameraExperiment(Experiment):
     def send_gui_parameters(self):
 
         self.camera.control_queue.put(
-            self.camera_control_params.params.changed_values()
+            self.camera_state.params.changed_values()
         )
-        self.camera_control_params.params.acknowledge_changes()
+        self.camera_state.params.acknowledge_changes()
 
     def start_experiment(self):
         """ """

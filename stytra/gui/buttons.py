@@ -4,6 +4,10 @@ from PyQt5.QtGui import QPalette, QIcon
 import pkg_resources
 
 
+def get_icon(icon_name):
+    return QIcon(pkg_resources.resource_filename(__name__, "../icons/" + icon_name+".svg"))
+
+
 class IconButton(QToolButton):
     def __init__(self, *args, icon_name="", action_name="", **kwargs):
         super().__init__(*args, **kwargs)
@@ -12,16 +16,15 @@ class IconButton(QToolButton):
         self.setIcon(self.icon)
         self.setToolTip(action_name)
         self.setFixedSize(QSize(48, 48))
-        self.setIconSize(QSize(32,32))
+        self.setIconSize(QSize(32, 32))
+
 
 class ToggleIconButton(QToolButton):
     def __init__(self, *args, icon_on="", icon_off=None, action_on="", action_off=None, on=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.icon_on = QIcon(pkg_resources.resource_filename(__name__,
-                                                                   "../icons/" + icon_on+".svg"))
+        self.icon_on = get_icon(icon_on)
         if icon_off is not None:
-            self.icon_off = QIcon(pkg_resources.resource_filename(__name__,
-                                                             "../icons/" + icon_off + ".svg"))
+            self.icon_off = get_icon(icon_off)
         else:
             self.icon_off = self.icon_on
 

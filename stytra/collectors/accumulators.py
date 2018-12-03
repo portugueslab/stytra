@@ -212,13 +212,15 @@ class QueueDataAccumulator(QObject, Accumulator):
 
     """
 
-    def __init__(self, data_queue, header_list=None, **kwargs):
+    def __init__(self, data_queue, header_list=None, experiment=None, **kwargs):
         """ """
         super().__init__(**kwargs)
 
         # Store externally the starting time make us free to keep
         # only time differences in milliseconds in the list (faster)
         self.starting_time = None
+
+        self.experiment = experiment
 
         self.data_queue = data_queue
         self.stored_data = []

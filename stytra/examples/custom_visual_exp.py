@@ -17,7 +17,6 @@ class NewStimulus(VisualStimulus):
     def update(self):
         fish_vel = self._experiment.estimator.get_velocity()
         # change color if speed of the fish is higher than threshold:
-        print(fish_vel)
         if fish_vel < -5:
             self.color = (255, 0, 0)
         else:

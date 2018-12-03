@@ -177,7 +177,6 @@ class ProtocolRunner(QObject):
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
         self.timer.start()  # start the timer
-        self.dynamic_log.starting_time = self.t_start  # save starting time
         self.dynamic_log.reset()  # reset the log
         self.log = []
         self.past_stimuli_elapsed = datetime.datetime.now()
