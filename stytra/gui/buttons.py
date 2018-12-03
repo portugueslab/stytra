@@ -12,7 +12,7 @@ class IconButton(QToolButton):
         self.setIcon(self.icon)
         self.setToolTip(action_name)
         self.setFixedSize(QSize(48, 48))
-        self.setIconSize(QSize(32,32))
+        self.setIconSize(QSize(32, 32))
 
 class ToggleIconButton(QToolButton):
     def __init__(self, *args, icon_on="", icon_off=None, action_on="", action_off=None, on=False, **kwargs):

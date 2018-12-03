@@ -165,7 +165,6 @@ class CameraViewWidget(QWidget):
 
             except Empty:
                 break
-
         # Once obtained current image, display it:
         if self.current_image is not None:
             self.image_item.setImage(
