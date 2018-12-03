@@ -8,7 +8,7 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.period_sec = 5.
+        self.period_sec = 3.
         self.flash_duration = 2.
 
     def get_stim_sequence(self):
