@@ -25,10 +25,11 @@ To create it, we need to define the
 This method returns a list of :class:`Stimulus <stytra.stimulation.stimuli.Stimulus>` objects
 which will be presented in succession to the animal.
 
-In stytra.examples.most_basic_example.py we define a very simple experiment:
+In stytra.examples.most_basic_exp.py we define a very simple experiment:
 
 .. literalinclude:: ../../stytra/examples/most_basic_exp.py
    :language: python
+   :caption:
 
 Try to run this code or type in the command prompt::
 
@@ -51,10 +52,9 @@ parameters within the Stytra GUI.
 
 For a complete description of Params inside stytra see :ref:`Parameterisation`.
 
-:meth:`Protocol.__init__() <stytra.stimulation.protocols.Protocol.__init__()>`
-
 .. literalinclude:: ../../stytra/examples/flash_exp.py
    :language: python
+   :caption:
 
 Note that Parameters in Protocol param are the ones that can be changed from the GUI, but
 all stimulus attributes will be saved in the final log, both parameterized and unparameterized ones!
@@ -78,6 +78,7 @@ stimulus, making it a looming object:
 
 .. literalinclude:: ../../stytra/examples/looming_exp.py
    :language: python
+   :caption:
 
 
 Use velocities instead of quantities
@@ -93,6 +94,7 @@ with `vel_x`.
 
 .. literalinclude:: ../../stytra/examples/gratings_exp.py
    :language: python
+   :caption:
 
 You can look in the code of the windmill_exp.py example to see how to use
 the dataframe to specify a more complex motion - in this case, a rotation with
@@ -107,10 +109,11 @@ to the interface an online plot:
 
 .. literalinclude:: ../../stytra/examples/plot_dynamic_exp.py
    :language: python
+   :caption:
 
 
-Stimulation and tracking:
--------------------------
+Stimulation and tracking
+------------------------
 
 Add a camera to a protocol
 ..........................
@@ -120,6 +123,7 @@ example we comment on how to achieve this when defining a protocol:
 
 .. literalinclude:: ../../stytra/examples/display_camera_exp.py
    :language: python
+   :caption:
 
 Note however that usually the camera settings are always the same on the
 computer that controls a setup, therefore the camera settings are defined in
@@ -138,6 +142,7 @@ displays a rotating windmill) to add tracking of the eyes as well:
 
 .. literalinclude:: ../../stytra/examples/tail_tracking_exp.py
    :language: python
+   :caption:
 
 Now a window with the fish image an a ROI to control tail position will appear,
 and the tail will be tracked! See relative documentation for instructions on
@@ -154,6 +159,7 @@ method).
 
 .. literalinclude:: ../../stytra/examples/custom_visual_exp.py
    :language: python
+   :caption:
 
 
 
