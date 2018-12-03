@@ -123,6 +123,10 @@ class MultiStreamPlot(QWidget):
             self.btn_freeze.clicked.connect(self.toggle_freeze)
             self.control_layout.addWidget(self.btn_freeze)
 
+            self.btn_tail = QPushButton("Show tail curvature")
+            self.btn_tail.clicked.connect(self.show_curvature)
+            self.control_layout.addWidget(self.btn_tail)
+
             self.lbl_zoom = QLabel("Plot past ")
             self.spn_zoom = QDoubleSpinBox()
             self.spn_zoom.setValue(time_past)
@@ -428,6 +432,10 @@ class MultiStreamPlot(QWidget):
                     i_stream += 1
             except IndexError:
                 pass
+
+    def show_curvature(self):
+        if self.experiment.window_main.tail:
+            self.experiment.window_main.docks[-1].setVisible(True)
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
