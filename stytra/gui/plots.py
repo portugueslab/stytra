@@ -439,10 +439,12 @@ class MultiStreamPlot(QWidget):
             xRange=(-self.time_past * 0.9, self.time_past * 0.05)
         )
         # shift the labels
-        for (i_curve, (min_label, max_label, curve_label, value_label)) in enumerate(
+        for (i_curve, stream_item) in enumerate(
             self.stream_items
         ):
-            curve_label.setPos(-self.time_past * 0.9, i_curve)
+            for item in stream_item:
+                if isinstance(item, pg.TextItem):
+                    item.setPos(-self.time_past * 0.9, i_curve)
 
     def show_select(self):
         self.wnd_config = StreamPlotConfig(self)

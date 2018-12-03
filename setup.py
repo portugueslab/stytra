@@ -13,7 +13,6 @@ setup(
         "pyqtgraph>=0.10.0",
         "numpy",
         "numba",
-        "matplotlib",
         "pandas",
         "qdarkstyle",
         "qimage2ndarray",
@@ -25,6 +24,7 @@ setup(
         "pillow",
         "scikit-image",
         "lightparam",
+        "imageio"
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",

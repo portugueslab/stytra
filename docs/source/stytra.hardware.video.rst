@@ -1,21 +1,28 @@
 stytra.hardware.video package
 =============================
 
+Subpackages
+-----------
+
+.. toctree::
+
+    stytra.hardware.video.cameras
+
 Submodules
 ----------
-
-stytra.hardware.video.cameras module
-------------------------------------
-
-.. automodule:: stytra.hardware.video.cameras
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 stytra.hardware.video.interfaces module
 ---------------------------------------
 
 .. automodule:: stytra.hardware.video.interfaces
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.hardware.video.ring\_buffer module
+-----------------------------------------
+
+.. automodule:: stytra.hardware.video.ring_buffer
     :members:
     :undoc-members:
     :show-inheritance:

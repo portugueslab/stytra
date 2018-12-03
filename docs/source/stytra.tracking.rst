@@ -4,14 +4,6 @@ stytra.tracking package
 Submodules
 ----------
 
-stytra.tracking.diagnostics module
-----------------------------------
-
-.. automodule:: stytra.tracking.diagnostics
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.tracking.eyes module
 ---------------------------
 
@@ -36,14 +28,6 @@ stytra.tracking.fish module
     :undoc-members:
     :show-inheritance:
 
-stytra.tracking.movement module
--------------------------------
-
-.. automodule:: stytra.tracking.movement
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.tracking.preprocessing module
 ------------------------------------
 
@@ -56,6 +40,14 @@ stytra.tracking.processes module
 --------------------------------
 
 .. automodule:: stytra.tracking.processes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.tracking.simple\_kalman module
+-------------------------------------
+
+.. automodule:: stytra.tracking.simple_kalman
     :members:
     :undoc-members:
     :show-inheritance:
