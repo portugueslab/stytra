@@ -169,7 +169,6 @@ class CameraViewWidget(QWidget):
         # a = datetime.datetime.now()
         # Once obtained current image, display it:
         if self.isVisible():
-            print("refreshing")
             if self.current_image is not None:
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
