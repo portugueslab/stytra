@@ -85,7 +85,7 @@ class MultiStreamPlot(QWidget):
 
     def __init__(
         self,
-        time_past=10,
+        time_past=5,
         bounds_update=0.1,
         round_bounds=None,
         compact=False,
@@ -173,6 +173,7 @@ class MultiStreamPlot(QWidget):
 
         self.toggle_freeze()
         self.update_zoom(time_past)
+        self.update_buflen(time_past)
 
     @staticmethod
     def get_colors(n_colors=1, lightness=50, saturation=50, shift=0):
@@ -441,13 +442,16 @@ class MultiStreamPlot(QWidget):
             self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
 
-    def update_zoom(self, time_past=1):
-        # we use the current zoom level and the framerate to determine the rolling buffer length
+    def update_buflen(self, time_past):
         if self.experiment is not None:
             try:
-                self.experiment.camera_state.ring_buffer_length = int(round(time_past*self.experiment.camera_framerate_acc.stored_data[-1][1]))
+                self.experiment.camera_state.ring_buffer_length = time_past
             except IndexError:
                 pass
+
+    def update_zoom(self, time_past=1):
+        # we use the current zoom level and the framerate to determine the rolling buffer length
+        self.update_buflen(time_past)
 
         self.time_past = time_past
         self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
@@ -455,25 +459,21 @@ class MultiStreamPlot(QWidget):
             xRange=(-self.time_past * 0.9, self.time_past * 0.05)
         )
         # shift the labels
-        for (i_curve, (min_label, max_label, curve_label, value_label)) in enumerate(
+        for (i_curve, items) in enumerate(
             self.stream_items
         ):
-            curve_label.setPos(-self.time_past * 0.9, i_curve)
+            items.curve_label.setPos(-self.time_past * 0.9, i_curve)
 
     def update_replay_limits(self):
         if self.experiment is not None:
             try:
-                cam_fps =self.experiment.camera_framerate_acc.stored_data[-1][1]
-                left_lim =  int(round(self.replay_left.getXPos() * cam_fps))
-                right_lim = int(round(self.replay_right.getXPos() * cam_fps))
-                final_lim = (max(0, min(left_lim, right_lim)),
-                             min(self.experiment.camera_state.ring_buffer_length,
-                                 max(left_lim, right_lim)))
+                left_lim = self.replay_left.getXPos()
+                right_lim = self.replay_right.getXPos()
 
-                self.experiment.camera_state.replay_limits = final_lim
+                self.experiment.camera_state.replay_limits = (min(left_lim, right_lim),
+                                                              max(left_lim, right_lim))
             except AttributeError:
                 pass
-
 
     def show_select(self):
         self.wnd_config = StreamPlotConfig(self)
@@ -515,7 +515,7 @@ class TailStreamPlot(QWidget):
         data_array = self.acc.get_last_n(self.n_points)
         if len(data_array) > 0:
             self.image_item.setImage(image=np.diff(data_array[:, 2:], axis=1).T,
-                                       autoLevels=False)
+                                     autoLevels=False)
 
 
 class StreamPlotConfig(QWidget):

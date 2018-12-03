@@ -24,7 +24,7 @@ setup(
         "arrayqueues>=1.1.0b0",
         "pillow",
         "scikit-image",
-        "lightparam",
+        "lightparam>=0.3",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
