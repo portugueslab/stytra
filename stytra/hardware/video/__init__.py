@@ -127,9 +127,7 @@ class CameraSource(VideoSource):
         while True:
             try:
                 param_dict = self.control_queue.get(timeout=0.0001)
-                print(param_dict)
                 self.state.params.values = param_dict
-                print(self.state.params.values)
                 for param, value in param_dict.items():
                     messages.append(self.cam.set(param, value))
             except Empty:
@@ -159,7 +157,6 @@ class CameraSource(VideoSource):
             self.kill_event.wait(0.0001)
             if self.kill_event.is_set():
                 break
-
             # Try to get new parameters from the control queue:
             messages = []
             if self.control_queue is not None:
@@ -168,15 +165,22 @@ class CameraSource(VideoSource):
             arr = self.cam.read()
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
-            if self.ring_buffer is None or self.state.ring_buffer_length != self.state.ring_buffer.length:
-                self.ring_buffer = RingBuffer(self.state.ring_buffer_length)
 
-            self.update_framerate()
+            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            if self.ring_buffer is None or res_len != self.ring_buffer.length:
+                self.ring_buffer = RingBuffer(res_len)
 
             if self.state.paused:
+                self.message_queue.put("I: ring_buffer_size:" + str(self.ring_buffer.length))
                 self.frame_queue.put(self.ring_buffer.get_most_recent())
+
+                prt = None
             elif self.state.replay and self.state.replay_fps > 0:
-                self.ring_buffer.replay_limits = self.state.replay_limits
+                messages.append("I:Replaying between {} and {} of {}".format(*self.state.replay_limits,
+                                                                             self.ring_buffer.length))
+                old_fps = self.current_framerate
+                self.ring_buffer.replay_limits = (int(round(self.state.replay_limits[0]*old_fps)),
+                                                  int(round(self.state.replay_limits[1] * old_fps)))
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -188,14 +192,18 @@ class CameraSource(VideoSource):
                         time.sleep(extrat)
                 prt = time.process_time()
             else:
-                self.ring_buffer.put(arr)
                 prt = None
-                if arr is not None and not self.state.paused:
+                if arr is not None:
+                    try:
+                        self.ring_buffer.put(arr)
+                    except AttributeError:
+                        pass
                     # If the queue is full, arrayqueues should print a warning!
                     if self.frame_queue.queue.qsize() < self.n_consumers + 2:
                         self.frame_queue.put(arr)
                     else:
                         messages.append("W:Dropped frame")
+                    self.update_framerate()
             for m in messages:
                 self.message_queue.put(m)
 
@@ -360,9 +368,10 @@ class CameraControlParameters(ParametrizedQt):
         )
         self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
         self.ring_buffer_length = Param(
-            600, (1, 2000), desc="Rolling buffer that saves the last items",
+            300, (1, 2000), desc="Rolling buffer that saves the last items",
             gui=False
         )
+        self.paused = Param(False)
         self.replay = Param(
            True,
             desc="Replaying",

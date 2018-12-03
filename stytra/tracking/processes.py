@@ -132,9 +132,12 @@ class FrameDispatcher(FrameProcess):
                 continue
 
             # If a processing function is specified, apply it:
-            if self.preprocessing_cls is not None:
-                processed = preprocessor.process(frame, **self.processing_parameters)
-            else:
+            try:
+                if self.preprocessing_cls is not None:
+                    processed = preprocessor.process(frame, **self.processing_parameters)
+                else:
+                    processed = frame
+            except cv2.error:
                 processed = frame
 
             if self.tracking_cls is not None:

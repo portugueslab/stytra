@@ -8,16 +8,14 @@ from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-QToolButton,
 )
-from PyQt5.QtGui import QIcon
-import pkg_resources
+
 from skimage.io import imsave
 from numba import jit
 from math import sin, cos
-from lightparam.gui import ParameterGui
+from lightparam.gui import ParameterGui, ControlToggleIcon
 
-from stytra.gui.buttons import IconButton, ToggleIconButton
+from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
 class CustomLineROI(pg.PolyLineROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
@@ -92,13 +90,17 @@ class CameraViewWidget(QWidget):
         self.layout_control = QHBoxLayout()
         self.layout_control.setContentsMargins(10, 0, 10, 10)
 
-        self.btn_pause = ToggleIconButton(icon_on="play", icon_off="pause", action_on="Pause", on=False)
-        self.btn_pause.toggled.connect(self.toggle_pause)
+        self.btn_pause = ControlToggleIcon(self.experiment.camera_state, "paused",
+                                           icon_on=get_icon("play"), icon_off=get_icon("pause"),
+                                           action_off="Pause", action_on="Play")
         self.layout_control.addWidget(self.btn_pause)
 
         if hasattr(self.experiment.camera_state, "replay"):
-            self.btn_rewind = ToggleIconButton(icon_off="rewind", icon_on="rewind", action_on="Rewind", on=False)
-            self.btn_rewind.clicked.connect(self.toggle_rewind)
+            self.experiment.camera_state.replay = False
+
+            self.btn_rewind = ControlToggleIcon(self.experiment.camera_state, "replay",
+                                                icon_on=get_icon("rewind"),
+                                                action_off="Resume", action_on="Replay")
             self.layout_control.addWidget(self.btn_rewind)
 
         if self.control_queue is not None:
@@ -121,16 +123,6 @@ class CameraViewWidget(QWidget):
 
         self.param_widget = None
 
-    def toggle_pause(self):
-        if self.experiment.camera.paused:
-            self.experiment.camera.paused = False
-            self.experiment.camera.control_queue.put(dict(paused=False))
-        else:
-            self.experiment.camera.paused = True
-            self.experiment.camera.control_queue.put(dict(paused=True))
-
-    def toggle_rewind(self):
-        self.experiment.camera_control_params.replay = not self.experiment.camera_control_params.replay
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done
