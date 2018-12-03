@@ -97,6 +97,7 @@ class CameraViewWidget(QWidget):
         self.layout_control.addWidget(self.btn_pause)
 
         if hasattr(self.experiment.camera_state, "replay"):
+            self.experiment.camera_state.replay = False
             self.btn_rewind = ToggleIconButton(icon_off="rewind", icon_on="rewind", action_on="Rewind", on=False)
             self.btn_rewind.clicked.connect(self.toggle_rewind)
             self.layout_control.addWidget(self.btn_rewind)
@@ -130,7 +131,7 @@ class CameraViewWidget(QWidget):
             self.experiment.camera.control_queue.put(dict(paused=True))
 
     def toggle_rewind(self):
-        self.experiment.camera_control_params.replay = not self.experiment.camera_control_params.replay
+        self.experiment.camera_state.replay = not self.experiment.camera.state.replay
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done

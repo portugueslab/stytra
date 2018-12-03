@@ -70,7 +70,7 @@ class StatusMessageDisplay(QWidget):
 
         end_color = _hex_to_rgb(self.palette().color(QPalette.Background).name())
 
-        if len(message) < 2:
+        if not message or len(message) < 2:
             return
         if message in self.current_messages.keys():
             self.current_messages[message].refresh()

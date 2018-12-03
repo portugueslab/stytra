@@ -127,9 +127,7 @@ class CameraSource(VideoSource):
         while True:
             try:
                 param_dict = self.control_queue.get(timeout=0.0001)
-                print(param_dict)
                 self.state.params.values = param_dict
-                print(self.state.params.values)
                 for param, value in param_dict.items():
                     messages.append(self.cam.set(param, value))
             except Empty:
@@ -168,7 +166,7 @@ class CameraSource(VideoSource):
             arr = self.cam.read()
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
-            if self.ring_buffer is None or self.state.ring_buffer_length != self.state.ring_buffer.length:
+            if self.ring_buffer is None or self.state.ring_buffer_length != self.ring_buffer.length:
                 self.ring_buffer = RingBuffer(self.state.ring_buffer_length)
 
             self.update_framerate()
@@ -363,6 +361,7 @@ class CameraControlParameters(ParametrizedQt):
             600, (1, 2000), desc="Rolling buffer that saves the last items",
             gui=False
         )
+        self.paused = Param(False)
         self.replay = Param(
            True,
             desc="Replaying",
