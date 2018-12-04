@@ -17,7 +17,8 @@ class WindmillProtocol(Protocol):
         self.windmill_freq = Param(0.2)
         self.grating_vel = Param(10)
         self.stim_duration = Param(5.)
-        self.wave_shape = Param(value="square", limits=["square", "sinusoidal"])
+        self.wave_shape = Param(value="square", limits=["square",
+                                                        "sinusoidal"])
         self.n_arms = Param(10)
 
     def get_stim_sequence(self):
