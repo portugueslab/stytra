@@ -102,8 +102,8 @@ class TailStreamPlot(QWidget):
 
 @jit(nopython=True)
 def extract_segments_above_thresh(
-    vel, threshold=0.1, min_duration=5, pad_before=5, pad_after=5,
-        skip_nan=False, in_bout = False
+    vel, threshold=0.1, min_duration=5, pad_before=3, pad_after=20,
+        skip_nan=True, in_bout = False
 ):
     """ Useful for extracing bouts from velocity or vigor, streaming version
 
@@ -174,7 +174,7 @@ class BoutPlot(QWidget, Parametrized):
         self.bouts = deque()
         self.i_fish = i_fish
         self.processed_index = 0
-        self.velocity_threshold = Param(10)
+        self.velocity_threshold = Param(10.0)
         self.in_bout = False
         self.n_bouts = n_bouts
         self.old_coords = None
@@ -192,24 +192,30 @@ class BoutPlot(QWidget, Parametrized):
         self.layout().addWidget(self.display_widget)
         self.vb_display = pg.ViewBox()
         self.vb_display.setAspectLocked(True, 1)
+        self.vb_display.setRange(xRange=[-1,5], disableAutoRange=True)
         self.vb_display.invertY(True)
         self.display_widget.addItem(self.vb_display)
 
-        self.bout_curves = [pg.PlotCurveItem() for _ in range(self.n_bouts)]
+        self.bout_curves = [pg.PlotCurveItem(connect="finite") for _ in range(self.n_bouts)]
+        self.colors = np.zeros(self.n_bouts)
+        self.decay_constant = 0.99
         for c in self.bout_curves:
             self.vb_display.addItem(c)
 
     def update(self):
         if not self.isVisible():
+            self.vmax = 0
             return
 
         current_index = len(self.acc.stored_data)
-        if current_index == 0 or self.processed_index == current_index:
+        if current_index == 0 or current_index < self.processed_index + 2:
             return
 
         # Pull the new data from the accumulator
         new_coords = np.array(self.acc.stored_data[self.processed_index:
                                                    current_index])
+        self.processed_index = current_index
+
         ix, iy, ith = (
         self.acc.header_dict["f{:d}_{}".format(self.i_fish, var)]
         for var in ["x", "y", "theta"])
@@ -222,19 +228,35 @@ class BoutPlot(QWidget, Parametrized):
             new_coords = np.concatenate([self.old_coords, new_coords], 0)
 
         vel = np.sum(np.diff(new_coords[:, :2], axis=0)**2, axis=1)
-        self.lbl_vmax.setText("max velocity sq {:.1f}".format(np.nanmax(vel)))
-        bout_starts_ends, self.in_bout, start = extract_segments_above_thresh(
+
+        self.vmax = max(self.vmax, np.nanmax(vel))
+        self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
+        bout_starts_ends, now_in_bout, start = extract_segments_above_thresh(
             vel,
             self.velocity_threshold, in_bout=self.in_bout)
 
-        if self.in_bout:
+        if len(bout_starts_ends) == 0 or self.in_bout:
             self.old_coords = new_coords[start:, :]
         else:
             self.old_coords = None
 
+        self.in_bout = now_in_bout
+
+        self.colors *= self.decay_constant
+
         for bs, be in bout_starts_ends:
             nb = normalise_bout(new_coords[bs:be, :])
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
+            self.colors[self.i_curve] = 255
             self.i_curve = (self.i_curve+1) % self.n_bouts
+
+        o_curve = (self.i_curve + 1) % self.n_bouts
+        while o_curve != self.i_curve:
+            col = int(self.colors[o_curve])
+            if col < 10:
+                self.bout_curves[o_curve].setData(x=[], y=[])
+            else:
+                self.bout_curves[o_curve].setPen((col, col, col))
+            o_curve = (o_curve + 1) % self.n_bouts
 
 
