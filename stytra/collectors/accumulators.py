@@ -179,7 +179,8 @@ class Accumulator:
         """
         outpath = path + "." + format
         if format == "csv":
-            self.get_dataframe().to_csv(outpath, sep=";")
+            # replace True and False in csv files:
+            self.get_dataframe().replace({True: 1, False: 0}).to_csv(outpath, sep=";")
         elif format == "feather":
             self.get_dataframe().to_feather(outpath)
         elif format == "hdf5":

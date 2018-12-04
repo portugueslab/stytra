@@ -18,6 +18,7 @@ class ClosedLoop1DProt(Protocol):
             video_file=str(Path(__file__).parent / "assets" /
                            "fish_compressed.h5"),
         ),
+        log_format="csv"
     )
 
     def __init__(self):
