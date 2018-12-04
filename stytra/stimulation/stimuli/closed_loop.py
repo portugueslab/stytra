@@ -291,7 +291,7 @@ class FishTrackingStimulus(PositionStimulus):
         super().update()
 
 
-class CenteringWrapper(PositionStimulus):
+class CenteringWrapper(DynamicStimulus):
     """ A meta-stimulus which turns on centering if the fish
     veers too much towrds the edge
 
@@ -299,21 +299,23 @@ class CenteringWrapper(PositionStimulus):
 
     def __init__(self, stimulus, centering, margin=200, **kwargs):
         super().__init__(**kwargs)
+        self.name = "centering"
         self.margin = margin ** 2
         self.stimulus = stimulus
         self.active = self.stimulus
         self.centering = centering
-        self._centering_on = False
+        self.centering_on = False
         self.dynamic_parameters.append("centering_on")
         self.xc = 320
         self.yc = 240
         self.duration = self.stimulus.duration
         self.stimulus_dynamic = False
-        try:
-            self.dynamic_parameters.extend(stimulus.dynamic_parameters)
-            self.stimulus_dynamic = True
-        except AttributeError:
-            self.stimulus_dynamic = False
+        self.stimulus_dynamic = hasattr(stimulus, "dynamic_parameters")
+
+    @property
+    def dynamic_parameter_names(self):
+        return super().dynamic_parameter_names + \
+               self.stimulus.dynamic_parameter_names
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
@@ -331,17 +333,18 @@ class CenteringWrapper(PositionStimulus):
     def get_dynamic_state(self):
         state = super().get_dynamic_state()
         if self.stimulus_dynamic:
-            state.update(self.stimulus.get_dyanmic_state())
+            state.update(self.stimulus.get_dynamic_state())
         return state
 
     def update(self):
+        super().update()
         y, x, theta = self._experiment.estimator.get_position()
         if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
             self.active = self.centering
-            self._centering_on = True
+            self.centering_on = True
         else:
             self.active = self.stimulus
-            self._centering_on = False
+            self.centering_on = False
         self.active._elapsed = self._elapsed
         self.active.update()
 

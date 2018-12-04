@@ -1,7 +1,7 @@
 Examples gallery
 ================
 
-You don't need to get acquainted with the full complexity of stytra to start
+You don't need to get acquainted with the full feature set of stytra to start
 running experiments. We provide a number of example protocols that you
 can use to get inspiration for your own ones! In this section, we introduce
 general ideas on stytra and we use the examples to illustrate them.
@@ -19,7 +19,7 @@ and we assign it to a :class:`Stytra <stytra.Stytra>` object. Running this scrip
 a Stytra GUI that enable us to control and run that protocol.
 
 How do we create a protocol?
-The essential feature of the protocol is the list of stimuli that composes it.
+The essential ingredient of protocols is the list of stimuli that will be displayed.
 To create it, we need to define the
 :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>` method.
 This method returns a list of :class:`Stimulus <stytra.stimulation.stimuli.Stimulus>` objects
@@ -64,13 +64,13 @@ You don't need to worry about parameters get lost.
 Define dynamic stimuli
 ----------------------
 Many stimuli may have some quantities, such as velocity for gratings or
-angular velocity for windmills, that have to change over time. To define these
-kind of stimuli Stytra use a convenient syntax: a param_df pandas DataFrame
+angular velocity for windmills, that change over time. To define these
+kind of stimuli Stytra use a convenient syntax: a param_df `pandas<https://pandas.pydata.org>`_ DataFrame
 with the specification of the desired parameter value at specific timepoints.
 The value at all the other timepoints will be linearly interpolated from the
 DataFrame. The dataframe has to contain a `t` column with the time, and one
 column for each quantity that has to change over time (`x`, `theta`, etc.).
-This stimulus behaviour is handled by the :class:`Stimulus <stytra.stimulation.stimuli.DynamiStimulus>`
+This stimulus behaviour is handled by the :class:`Stimulus <stytra.stimulation.stimuli.InterpolatedStimulus>`
 class
 
 In this example, we use a dataframe for changing the diameter of a circle

@@ -202,11 +202,11 @@ class TrackingExperiment(CameraExperiment):
         super().__init__(*args, **kwargs)
 
         self.n_dispatchers = n_tracking_processes
-        method_name = tracking["method"]
+        self.tracking_method_name = tracking["method"]
         preproc_method_name = tracking.get("preprocessing", None)
 
         # If centroid or eyes method is used, prefilter by default:
-        if preproc_method_name is None and method_name in ["tail", "eyes"]:
+        if preproc_method_name is None and self.tracking_method_name in ["tail", "eyes"]:
             preproc_method_name = "prefilter"
 
         preproc_method = get_preprocessing_method(preproc_method_name)
@@ -217,7 +217,7 @@ class TrackingExperiment(CameraExperiment):
                 params=self.preprocessing_method.process,
                 tree=self.dc,
             )
-        self.tracking_method = get_tracking_method(method_name)()
+        self.tracking_method = get_tracking_method(self.tracking_method_name)()
         self.tracking_params = ParametrizedQt(
             name="tracking/" + type(self.tracking_method).name,
             params=self.tracking_method.detect,
@@ -229,7 +229,7 @@ class TrackingExperiment(CameraExperiment):
                 in_frame_queue=self.camera.frame_queue,
                 finished_signal=self.camera.kill_event,
                 preprocessing_class=preproc_method_name,
-                processing_class=method_name,
+                processing_class=self.tracking_method_name,
                 processing_parameter_queue=self.processing_params_queue,
                 output_queue=self.tracking_output_queue,
                 processing_counter=self.processing_counter,

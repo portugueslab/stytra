@@ -80,7 +80,13 @@ class PositionEstimator(Estimator):
             return -1, -1, 0
 
         projmat = np.array(self.calibrator.cam_to_proj)
+        if projmat.shape != (2, 3):
+            projmat = np.array([[1.0, 0.0, 0.0],
+                                [0.0, 1.0, 0.0]])
+
         x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
+
+
         theta = np.arctan2(
             *(
                 projmat[:, :2]

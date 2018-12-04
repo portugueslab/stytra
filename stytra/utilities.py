@@ -3,6 +3,8 @@ import time
 from collections import OrderedDict
 from multiprocessing import Process, Queue
 from datetime import datetime
+
+from numba import jit
 from scipy.interpolate import interp1d
 
 import numpy as np
@@ -230,3 +232,9 @@ def recursive_update(d, u):
         else:
             d[k] = v
     return d
+
+
+@jit(nopython=True)
+def reduce_to_pi(angle):
+    """Puts an angle or array of angles inside the (-pi, pi) range"""
+    return np.mod(angle + np.pi, 2 * np.pi) - np.pi

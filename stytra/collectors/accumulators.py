@@ -335,8 +335,7 @@ class DynamicLog(Accumulator):
         dynamic_params = []
         for stimulus in stimuli:
             try:
-                for p in stimulus.dynamic_parameters:
-                    new_param = stimulus.name + "_" + p
+                for new_param in stimulus.dynamic_parameter_names:
                     if not new_param in dynamic_params:
                         dynamic_params.append(new_param)
             except AttributeError:

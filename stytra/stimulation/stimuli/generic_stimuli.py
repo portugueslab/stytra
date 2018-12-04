@@ -157,6 +157,10 @@ class DynamicStimulus(Stimulus):
         else:
             self.dynamic_parameters = dynamic_parameters
 
+    @property
+    def dynamic_parameter_names(self):
+        return [self.name + "_" + param for param in self.dynamic_parameters]
+
     def get_dynamic_state(self):
         """ """
         state_dict = {

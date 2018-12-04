@@ -1,71 +1,12 @@
-from PyQt5.QtGui import QPalette, QFont
-from PyQt5.QtWidgets import (
-    QDoubleSpinBox,
-    QLabel,
-    QPushButton,
-    QHBoxLayout,
-    QSpacerItem,
-    QWidget,
-    QVBoxLayout,
-    QSizePolicy,
-    QCheckBox,
-    QGroupBox,
-)
-import pyqtgraph as pg
-import numpy as np
 import datetime
-from stytra.collectors import Accumulator
-import colorspacious
 from collections import namedtuple
 
-
-class StreamingPositionPlot(pg.GraphicsWindow):
-    """Plot that displays the virtual position of the fish"""
-
-    def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
-        super().__init__(*args, **kwargs)
-        assert isinstance(data_accumulator, Accumulator)
-        self.positionPlot = self.addPlot()
-        self.positionPlot.setAspectLocked(True)
-        self.curve = self.positionPlot.plot()
-
-        self.n_points = n_points
-        self.start = datetime.datetime.now()
-        self.data_accumulator = data_accumulator
-        self.ind_x = self.data_accumulator.header_list.index("x")
-        self.ind_y = self.data_accumulator.header_list.index("y")
-
-    def update(self):
-        """ """
-        try:
-            data_array = self.data_accumulator.get_last_n(self.n_points)
-            velocity = np.r_[
-                np.clip(
-                    np.diff(data_array[:, self.ind_x]) ** 2
-                    + np.diff(data_array[:, self.ind_y]) ** 2,
-                    0,
-                    30,
-                )
-                / 30,
-                [0],
-            ]
-            self.curve.setData(
-                x=data_array[:, self.ind_x],
-                y=data_array[:, self.ind_y],
-                color=np.stack(
-                    [
-                        0.5 + 0.5 * velocity,
-                        0.2 + 0.8 * velocity,
-                        velocity,
-                        np.ones_like(velocity),
-                    ],
-                    1,
-                ),
-            )
-
-        except (IndexError, TypeError):
-            pass
-
+import colorspacious
+import numpy as np
+import pyqtgraph as pg
+from PyQt5.QtGui import QFont, QPalette
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+    QLabel, QDoubleSpinBox, QSpacerItem, QSizePolicy, QGroupBox, QCheckBox
 
 PlotTuple = namedtuple("PlotTuple", ["curve", "curve_label", "min_label", "max_label",  "value_label"])
 
@@ -123,9 +64,17 @@ class MultiStreamPlot(QWidget):
             self.btn_freeze.clicked.connect(self.toggle_freeze)
             self.control_layout.addWidget(self.btn_freeze)
 
-            self.btn_tail = QPushButton("Show tail curvature")
-            self.btn_tail.clicked.connect(self.show_curvature)
-            self.control_layout.addWidget(self.btn_tail)
+            try:
+                tm = self.experiment.tracking_method_name
+                if tm == "tail" or tm == "fish":
+                    self.btn_extra = QPushButton("Show tail curvature" if
+                                                 tm == "tail"
+                                                 else "Show last bouts")
+
+                    self.btn_extra.clicked.connect(self.show_extra_plot)
+                    self.control_layout.addWidget(self.btn_extra)
+            except AttributeError:
+                pass
 
             self.lbl_zoom = QLabel("Plot past ")
             self.spn_zoom = QDoubleSpinBox()
@@ -157,6 +106,8 @@ class MultiStreamPlot(QWidget):
         self.plotContainer.addItem(self.replay_right)
 
         self.layout().addWidget(self.plotContainer)
+
+        self.active_plots = []
 
         self.accumulators = []
         self.header_indexes = []
@@ -433,9 +384,9 @@ class MultiStreamPlot(QWidget):
             except IndexError:
                 pass
 
-    def show_curvature(self):
-        if self.experiment.window_main.tail:
-            self.experiment.window_main.docks[-1].setVisible(True)
+    def show_extra_plot(self):
+        print("Showing extra plot")
+        self.experiment.window_main.docks[-1].setVisible(True) # TODO the docks should be a dictionary
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
@@ -486,44 +437,6 @@ class MultiStreamPlot(QWidget):
     def show_select(self):
         self.wnd_config = StreamPlotConfig(self)
         self.wnd_config.show()
-
-
-class TailStreamPlot(QWidget):
-    def __init__(self, acc, headers, n_points=300):
-        super().__init__()
-        self.acc = acc
-        self.headers = headers
-        self.n_points = n_points
-
-        self.setLayout(QVBoxLayout())
-        self.layout().setContentsMargins(0, 0, 0, 0)
-
-        self.display_widget = pg.GraphicsLayoutWidget()
-        self.vb_display = pg.ViewBox()
-        self.display_widget.addItem(self.vb_display)
-        self.image_item = pg.ImageItem()
-        self.vb_display.addItem(self.image_item)
-
-        self.image_item.setLevels((-0.6, 0.6))
-        self.image_item.setLookupTable(pg.ColorMap(np.linspace(0, 1, 5),
-                                                  np.array([[0.42107294,0.80737975,0.49219722],
-                                                            [0.23166242,
-                                                             0.39962101,
-                                                             0.32100403],
-                                                            [0.0, 0.0, 0.0],
-                                                            [0.46170494,
-                                                             0.30327584,
-                                                             0.38740225],
-                                                            [0.91677407,0.58427975,0.92293321]])).getLookupTable(alpha=False))
-        self.layout().addWidget(self.display_widget)
-
-    def update(self):
-        if not self.isVisible():
-            return
-        data_array = self.acc.get_last_n(self.n_points)
-        if len(data_array) > 0:
-            self.image_item.setImage(image=np.diff(data_array[:, 2:], axis=1).T,
-                                     autoLevels=False)
 
 
 class StreamPlotConfig(QWidget):

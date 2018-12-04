@@ -11,13 +11,12 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QVBoxLayout,
     QDockWidget,
-    QToolButton,
     QFileDialog,
 )
-from PyQt5.QtGui import QPalette, QIcon
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
-from stytra.gui.plots import MultiStreamPlot, TailStreamPlot
+from stytra.gui.fishplots import TailStreamPlot, BoutPlot
+from stytra.gui.multiscope import MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
     CameraViewWidget,
@@ -28,10 +27,6 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 
 from lightparam.gui import ParameterGui, pretty_name
-
-import json
-
-
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -287,6 +282,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         if tail:
             self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
 
+        if fish:
+            self.bout_widget = BoutPlot(self.experiment.acc_tracking)
+
         # Tracking params button:
         self.button_tracking_params = IconButton(icon_name="edit_tracking", action_name="Change tracking parameters")
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
@@ -323,9 +321,19 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)
             self.docks.append(tail_dock)
-            self.addDockWidget(Qt.NoDockWidgetArea, tail_dock)
+            self.addDockWidget(Qt.AllDockWidgetAreas, tail_dock)
             tail_dock.setVisible(False)
 
+        if self.fish:
+            self.experiment.gui_timer.timeout.connect(
+                self.bout_widget.update
+            )
+            bout_dock = QDockWidget("Last bouts", self)
+            bout_dock.setObjectName("dock_bouts")
+            bout_dock.setWidget(self.bout_widget)
+            self.docks.append(bout_dock)
+            self.addDockWidget(Qt.AllDockWidgetAreas, bout_dock)
+            bout_dock.setVisible(False)
 
         return previous_widget
 

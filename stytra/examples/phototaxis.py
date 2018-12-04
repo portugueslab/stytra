@@ -9,16 +9,18 @@ from stytra.stimulation.stimuli import (
 
 from stytra.stimulation import Protocol
 from lightparam import Param
+from pathlib import Path
 
 
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"
-    stytra_config = dict(tracking=dict(method="fish", embedded=False, estimator="position"))
+    stytra_config = dict(tracking=dict(method="fish", embedded=False, estimator="position"),
+                         camera=dict(video_file=str(Path(__name__).parent / "assets" / "fish_free_compressed.h5")))
 
     def __init__(self):
         super().__init__()
         self.n_trials = Param(120, (0, 2400))
-        self.stim_on_duration = Param(10,(0, 30))
+        self.stim_on_duration = Param(10, (0, 30))
         self.stim_off_duration = Param(10, (0, 30))
         self.center_offset = Param(0, (-100, 100))
         self.brightness = Param(255, (0, 255))

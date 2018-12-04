@@ -1,8 +1,8 @@
 import numpy as np
 from numba import jit
-import cv2
 from lightparam import Param, Parametrized
 from scipy.ndimage.filters import gaussian_filter1d
+from stytra.utilities import reduce_to_pi
 
 
 class TailTrackingMethod:
@@ -329,15 +329,6 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     dy = mn_y / a
 
     return xm + dx, ym + dy, dx, dy, acc
-
-
-
-@jit(nopython=True)
-def reduce_to_pi(angle):
-    """Puts an angle or array of angles inside the (-pi, pi) range"""
-    return np.mod(angle + np.pi, 2 * np.pi) - np.pi
-
-
 
 
 @jit(nopython=True)
