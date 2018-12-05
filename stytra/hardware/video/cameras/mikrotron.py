@@ -63,7 +63,9 @@ class MikrotronCLCamera(Camera):
         self.buffer_address = self.img_buffer.ctypes.data_as(
             ctypes.POINTER(ctypes.c_long)
         )
-        return "Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
+        if self.buffer_address is None:
+            return "E:Error in opening Mikrotron camera! Restart the program"
+        return "I:Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
 
     def _send_command(self, com):
         command = ctypes.c_char_p(bytes(com, "ansi"))
