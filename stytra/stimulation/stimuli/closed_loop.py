@@ -297,12 +297,15 @@ class CenteringWrapper(DynamicStimulus):
 
     """
 
-    def __init__(self, stimulus, centering, margin=200, **kwargs):
+    def __init__(self, stimulus, centering, margin=200, pause_stimulus=False, **kwargs):
         super().__init__(**kwargs)
         self.name = "centering"
         self.margin = margin ** 2
         self.stimulus = stimulus
         self.active = self.stimulus
+        self._elapsed_difference = 0
+        self._elapsed_when_centering_started = 0
+        self.pause_stimulus = pause_stimulus
         self.centering = centering
         self.centering_on = False
         self.dynamic_parameters.append("centering_on")
@@ -311,6 +314,7 @@ class CenteringWrapper(DynamicStimulus):
         self.duration = self.stimulus.duration
         self.stimulus_dynamic = False
         self.stimulus_dynamic = hasattr(stimulus, "dynamic_parameters")
+        self._was_centering = False
 
     @property
     def dynamic_parameter_names(self):
@@ -348,8 +352,18 @@ class CenteringWrapper(DynamicStimulus):
         else:
             self.active = self.stimulus
             self.centering_on = False
-        self.active._elapsed = self._elapsed
+
+        if self.pause_stimulus:
+            if not self._was_centering and self.centering_on:
+                self._elapsed_when_centering_started = self._elapsed
+            if not self.centering_on and self._was_centering:
+                dif = self._elapsed - self._elapsed_when_centering_started
+                self._elapsed_difference += dif
+                self.duration += dif
+
+        self.active._elapsed = self._elapsed + self._elapsed_difference
         self.active.update()
+        self._was_centering = self.centering_on
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
