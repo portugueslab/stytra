@@ -314,8 +314,11 @@ class CenteringWrapper(DynamicStimulus):
 
     @property
     def dynamic_parameter_names(self):
-        return super().dynamic_parameter_names + \
-               self.stimulus.dynamic_parameter_names
+        if self.stimulus_dynamic:
+            return super().dynamic_parameter_names + \
+                   self.stimulus.dynamic_parameter_names
+        else:
+            return super().dynamic_parameter_names
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
