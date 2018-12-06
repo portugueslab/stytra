@@ -534,24 +534,32 @@ class HalfFieldStimulus(PositionStimulus):
         p.drawPolygon(poly)
 
 
-class RadialSineStimulus(InterpolatedStimulus, VisualStimulus):
+class RadialSineStimulus(VisualStimulus):
     """ Stimulus which makes the fish move to the center of the dish
 
     """
 
     def __init__(self, period=8, velocity=5, duration=1, **kwargs):
-        param_df = pd.DataFrame(dict(t=[0, duration], phase=[0, duration * velocity]))
-        super().__init__(df_param=param_df, **kwargs)
+        super().__init__(**kwargs)
         self.phase = 0
+        self.velocity = velocity
+        self.duration = duration
         self.period = period
+        self.phase = 0
         self.image = None
         self.name = "radial_sine_centering"
+        self._dt = 0
+        self._past_t = 0
+
+    def update(self):
+        self._dt = self._elapsed - self._past_t
+        self._past_t = self._elapsed
+        self.phase += self._dt * self.velocity
 
     def paint(self, p, w, h):
         x, y = (
             (np.arange(d) - d / 2) * self._experiment.calibrator.mm_px for d in (w, h)
         )
-
         self.image = np.round(
             np.sin(
                 np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))

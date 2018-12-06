@@ -307,14 +307,15 @@ class CenteringWrapper(DynamicStimulus):
         self._elapsed_when_centering_started = 0
         self.pause_stimulus = pause_stimulus
         self.centering = centering
-        self.centering_on = False
+        self.on = False
         self.dynamic_parameters.append("centering_on")
         self.xc = 320
         self.yc = 240
         self.duration = self.stimulus.duration
         self.stimulus_dynamic = False
         self.stimulus_dynamic = hasattr(stimulus, "dynamic_parameters")
-        self._was_centering = False
+        self._dt = 0
+        self._past_t = 0
 
     @property
     def dynamic_parameter_names(self):
@@ -345,25 +346,24 @@ class CenteringWrapper(DynamicStimulus):
 
     def update(self):
         super().update()
+
+        self._dt = self._elapsed - self._past_t
+        self._past_t = self._elapsed
+
         y, x, theta = self._experiment.estimator.get_position()
         if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
             self.active = self.centering
-            self.centering_on = True
+            self.on = True
+            self.duration += self._dt
+            self.active.duration += self._dt
+            self._elapsed_difference += self._dt
+            self.active._elapsed = self._elapsed
         else:
             self.active = self.stimulus
-            self.centering_on = False
+            self.active._elapsed = self._elapsed - self._elapsed_difference
+            self.on = False
 
-        if self.pause_stimulus:
-            if not self._was_centering and self.centering_on:
-                self._elapsed_when_centering_started = self._elapsed
-            if not self.centering_on and self._was_centering:
-                dif = self._elapsed - self._elapsed_when_centering_started
-                self._elapsed_difference += dif
-                self.duration += dif
-
-        self.active._elapsed = self._elapsed + self._elapsed_difference
         self.active.update()
-        self._was_centering = self.centering_on
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
