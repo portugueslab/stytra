@@ -298,7 +298,7 @@ class CenteringWrapper(DynamicStimulus):
     """
 
     def __init__(self, stimulus, centering, margin=200, pause_stimulus=False,
-                 reset_phase=False,
+                 reset_phase=0,
                  **kwargs):
         super().__init__(**kwargs)
         self.name = "centering"
@@ -366,10 +366,12 @@ class CenteringWrapper(DynamicStimulus):
             self.active._elapsed = self._elapsed
         else:
             self.active = self.stimulus
-            if self.reset_phase and self._was_centering:
-                self.active._elapsed = self.active.phase_times[self.active.current_phase]
+            if self.reset_phase > 0 and self._was_centering:
+                phase_reset = max(
+                    self.active.current_phase - (self.reset_phase - 1), 0)
+                self.active._elapsed = self.active.phase_times[phase_reset]
                 time_added = self._elapsed - self._elapsed_difference -\
-                                 self.active.phase_times[self.active.current_phase]
+                                 self.active.phase_times[phase_reset]
                 self.duration += time_added
                 self._elapsed_difference += time_added
             else:
