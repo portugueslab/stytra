@@ -196,6 +196,8 @@ class InterpolatedStimulus(Stimulus):
         super().__init__(*args, **kwargs)
         self.df_param = df_param
         self.duration = float(df_param.t.iat[-1])
+        self.phase_times = np.unique(df_param.t)
+        self.current_phase = 0
         self._past_t = 0
         self._dt = 1 / 60.
 
@@ -205,6 +207,9 @@ class InterpolatedStimulus(Stimulus):
         # difference before previous display
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
+
+        if self._elapsed > self.phase_times[self.current_phase+1]:
+            self.current_phase += 1
 
         for col in self.df_param.columns:
             if col != "t":

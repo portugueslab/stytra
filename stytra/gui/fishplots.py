@@ -15,6 +15,8 @@ from collections import deque
 from lightparam import Param, Parametrized
 from lightparam.gui import ControlSpin
 
+from scipy.ndimage.filters import gaussian_filter1d
+
 class StreamingPositionPlot(pg.GraphicsWindow):
     """Plot that displays the virtual position of the fish"""
 
@@ -102,8 +104,8 @@ class TailStreamPlot(QWidget):
 
 @jit(nopython=True)
 def extract_segments_above_thresh(
-    vel, threshold=0.1, min_duration=5, pad_before=3, pad_after=20,
-        skip_nan=True, in_bout = False
+    vel, threshold=0.1, min_duration=10, pad_before=15, pad_after=30,
+        skip_nan=True, in_bout = False, pre_start=0, start=0,
 ):
     """ Useful for extracing bouts from velocity or vigor, streaming version
 
@@ -116,8 +118,8 @@ def extract_segments_above_thresh(
     """
     bouts = []
     in_bout = in_bout
-    start = 0
-    i = pad_before + 1 if not in_bout else 1
+    start = start
+    i = max(pre_start, pad_before + 1)
     bout_ended = pad_before
     while i < vel.shape[0] - pad_after:
         if np.isnan(vel[i]):
@@ -168,17 +170,19 @@ def normalise_bout(coord):
 
 
 class BoutPlot(QWidget, Parametrized):
-    def __init__(self, acc: QueueDataAccumulator, i_fish=0, n_bouts=10):
+    def __init__(self, acc: QueueDataAccumulator, i_fish=0,
+                 n_bouts=10, n_save_max=300):
         super().__init__()
         self.acc = acc
         self.bouts = deque()
         self.i_fish = i_fish
         self.processed_index = 0
-        self.velocity_threshold = Param(10.0)
+        self.velocity_threshold = Param(0.2)
         self.in_bout = False
         self.n_bouts = n_bouts
         self.old_coords = None
         self.i_curve = 0
+        self.n_save_max = n_save_max
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
@@ -192,13 +196,19 @@ class BoutPlot(QWidget, Parametrized):
         self.layout().addWidget(self.display_widget)
         self.vb_display = pg.ViewBox()
         self.vb_display.setAspectLocked(True, 1)
-        self.vb_display.setRange(xRange=[-1,5], disableAutoRange=True)
+        self.vb_display.setRange(xRange=[-1, 5], disableAutoRange=True)
         self.vb_display.invertY(True)
         self.display_widget.addItem(self.vb_display)
 
         self.bout_curves = [pg.PlotCurveItem(connect="finite") for _ in range(self.n_bouts)]
+
+        # temporary, remove
+        # self.hline = pg.InfiniteLine(angle=0)
+        # self.vb_display.addItem(self.hline)
+
         self.colors = np.zeros(self.n_bouts)
         self.decay_constant = 0.99
+        self.prev_bout_start = 0
         for c in self.bout_curves:
             self.vb_display.addItem(c)
 
@@ -211,8 +221,9 @@ class BoutPlot(QWidget, Parametrized):
         if current_index == 0 or current_index < self.processed_index + 2:
             return
 
+
         # Pull the new data from the accumulator
-        new_coords = np.array(self.acc.stored_data[self.processed_index:
+        new_coords = np.array(self.acc.stored_data[max(self.processed_index, current_index-self.n_save_max):
                                                    current_index])
         self.processed_index = current_index
 
@@ -225,26 +236,38 @@ class BoutPlot(QWidget, Parametrized):
         # if in the previous refresh we ended up inside a bout, there are still
         # coordinates left to process
         if self.old_coords is not None:
+            pre_start = len(self.old_coords)-1
             new_coords = np.concatenate([self.old_coords, new_coords], 0)
-
-        vel = np.sum(np.diff(new_coords[:, :2], axis=0)**2, axis=1)
-
-        self.vmax = max(self.vmax, np.nanmax(vel))
-        self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
-        bout_starts_ends, now_in_bout, start = extract_segments_above_thresh(
-            vel,
-            self.velocity_threshold, in_bout=self.in_bout)
-
-        if len(bout_starts_ends) == 0 or self.in_bout:
-            self.old_coords = new_coords[start:, :]
         else:
-            self.old_coords = None
+            pre_start = 0
 
-        self.in_bout = now_in_bout
+        vel = gaussian_filter1d(np.sum(np.diff(new_coords[:, :2], axis=0)**2, axis=1),2)
+
+        # TEMP, remove
+        # self.bout_curves[0].setData(y=vel)
+        # self.hline.setValue(self.velocity_threshold)
+
+        self.vmax = np.nanmax(vel)
+        self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
+
+        if self.velocity_threshold > 0:
+            bout_starts_ends, self.in_bout, start = extract_segments_above_thresh(
+                vel,
+                self.velocity_threshold, in_bout=self.in_bout, pre_start=pre_start,start=self.prev_bout_start)
+        else:
+            bout_starts_ends = []
+
+        print(pre_start, len(new_coords), self.in_bout)
+
+        self.old_coords = new_coords[-self.n_save_max:, :]
+        lendif = max(new_coords.shape[1]-self.n_save_max,0)
+        if self.in_bout:
+            self.prev_bout_start = start-lendif
 
         self.colors *= self.decay_constant
 
         for bs, be in bout_starts_ends:
+            print(bs, be)
             nb = normalise_bout(new_coords[bs:be, :])
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
             self.colors[self.i_curve] = 255

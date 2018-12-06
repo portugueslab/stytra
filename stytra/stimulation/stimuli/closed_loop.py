@@ -11,10 +11,10 @@ except ImportError:
 from stytra.stimulation.stimuli import (
     DynamicStimulus,
     BackgroundStimulus,
-    CircleStimulus,
     PositionStimulus,
     InterpolatedStimulus,
 )
+
 
 class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     """
@@ -297,7 +297,9 @@ class CenteringWrapper(DynamicStimulus):
 
     """
 
-    def __init__(self, stimulus, centering, margin=200, pause_stimulus=False, **kwargs):
+    def __init__(self, stimulus, centering, margin=200, pause_stimulus=False,
+                 reset_phase=False,
+                 **kwargs):
         super().__init__(**kwargs)
         self.name = "centering"
         self.margin = margin ** 2
@@ -307,15 +309,19 @@ class CenteringWrapper(DynamicStimulus):
         self._elapsed_when_centering_started = 0
         self.pause_stimulus = pause_stimulus
         self.centering = centering
+        self.reset_phase = reset_phase
+
         self.on = False
         self.dynamic_parameters.append("centering_on")
         self.xc = 320
         self.yc = 240
+
         self.duration = self.stimulus.duration
         self.stimulus_dynamic = False
         self.stimulus_dynamic = hasattr(stimulus, "dynamic_parameters")
         self._dt = 0
         self._past_t = 0
+        self._was_centering = False
 
     @property
     def dynamic_parameter_names(self):
@@ -360,9 +366,16 @@ class CenteringWrapper(DynamicStimulus):
             self.active._elapsed = self._elapsed
         else:
             self.active = self.stimulus
-            self.active._elapsed = self._elapsed - self._elapsed_difference
+            if self.reset_phase and self._was_centering:
+                self.active._elapsed = self.active.phase_times[self.active.current_phase]
+                self.duration += self._elapsed - self._elapsed_difference -\
+                                 self.active.phase_times[self.active.current_phase]
+            else:
+                self.active._elapsed = self._elapsed - self._elapsed_difference
+
             self.on = False
 
+        self._was_centering = self.on
         self.active.update()
 
     def paint(self, p, w, h):
