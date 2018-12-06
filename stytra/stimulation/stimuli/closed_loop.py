@@ -368,8 +368,10 @@ class CenteringWrapper(DynamicStimulus):
             self.active = self.stimulus
             if self.reset_phase and self._was_centering:
                 self.active._elapsed = self.active.phase_times[self.active.current_phase]
-                self.duration += self._elapsed - self._elapsed_difference -\
+                time_added = self._elapsed - self._elapsed_difference -\
                                  self.active.phase_times[self.active.current_phase]
+                self.duration += time_added
+                self._elapsed_difference += time_added
             else:
                 self.active._elapsed = self._elapsed - self._elapsed_difference
 
