@@ -2,7 +2,7 @@ import numpy as np
 import datetime
 
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
-
+from stytra.utilities import reduce_to_pi
 
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
@@ -52,10 +52,25 @@ class VigorMotionEstimator(Estimator):
 
 
 class PositionEstimator(Estimator):
-    def __init__(self, *args, calibrator, **kwargs):
+    def __init__(self, *args, calibrator, change_thresholds=None, **kwargs):
+        """ Uses the projector-to-camera calibration to give fish position in
+        scree coordinates. If change_thresholds are set, update only the fish
+        position after there is a big enough change (which prevents small
+        oscillations due to tracking)
+
+        :param args:
+        :param calibrator:
+        :param change_thresholds: a 3-tuple of thresholds, in px and radians
+        :param kwargs:
+        """
         super().__init__(*args, **kwargs)
         self.calibrator = calibrator
         self.log = EstimatorLog(["x", "y", "theta"])
+        self.last_location = None
+        self.change_thresholds = None
+        if change_thresholds is not None:
+            self.change_thresholds = np.array(change_thresholds)
+        self.past_values = None
 
     def get_camera_position(self):
         past_coords = {
@@ -86,7 +101,6 @@ class PositionEstimator(Estimator):
 
         x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
 
-
         theta = np.arctan2(
             *(
                 projmat[:, :2]
@@ -95,8 +109,24 @@ class PositionEstimator(Estimator):
                 )[::-1]
             )
         )
-        self.log.update_list((past_coords["t"], y, x, theta))
-        return y, x, theta
+
+        c_values = np.array((y, x, theta))
+
+        if self.change_thresholds is not None:
+
+            if self.past_values is None:
+                self.past_values = np.array(c_values)
+            else:
+                deltas = c_values-self.past_values
+                deltas[2] = reduce_to_pi(deltas[2])
+                sel = np.abs(deltas) > self.change_thresholds
+                self.past_values[sel] = c_values[sel]
+                c_values = self.past_values
+
+        c_values = tuple(c_values)
+        self.log.update_list((past_coords["t"],)+c_values)
+
+        return c_values
 
 
 class SimulatedLocationEstimator:
