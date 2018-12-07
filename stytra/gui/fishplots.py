@@ -114,8 +114,9 @@ def extract_segments_above_thresh(
     pad_after=30,
     skip_nan=True,
     in_bout=False,
-    pre_start=0,
+    bout_ended=-1,
     start=0,
+    prev_bout_start=0,
 ):
     """ Useful for extracing bouts from velocity or vigor, streaming version
 
@@ -127,27 +128,30 @@ def extract_segments_above_thresh(
     :return:
     """
     bouts = []
-    in_bout = in_bout
-    start = start
-    i = max(pre_start, pad_before + 1)
-    bout_ended = pad_before
-    while i < vel.shape[0] - pad_after:
-        if np.isnan(vel[i]):
+    i = max(start - 1, pad_before + 1)
+
+    while i < vel.shape[0]:
+        if i == bout_ended:
+            bouts.append((prev_bout_start, i))
+            in_bout = False
+            bout_ended = -1
+
+        elif np.isnan(vel[i]):
             if in_bout and skip_nan:
                 in_bout = False
 
         elif i > bout_ended and vel[i - 1] < threshold < vel[i] and not in_bout:
             in_bout = True
-            start = i - pad_before
+            prev_bout_start = i - pad_before
+            bout_ended = -1
 
         elif vel[i - 1] > threshold > vel[i] and in_bout:
             in_bout = False
-            if i - start > min_duration:
-                bouts.append((start, i + pad_after))
+            if i - prev_bout_start > min_duration:
                 bout_ended = i + pad_after
 
         i += 1
-    return bouts, in_bout, start
+    return bouts, in_bout, prev_bout_start, bout_ended
 
 
 def rot_mat(theta):
@@ -219,6 +223,8 @@ class BoutPlot(QWidget, Parametrized):
         self.colors = np.zeros(self.n_bouts)
         self.decay_constant = 0.99
         self.prev_bout_start = 0
+        self.bout_ended = -1
+
         for c in self.bout_curves:
             self.vb_display.addItem(c)
 
@@ -251,7 +257,7 @@ class BoutPlot(QWidget, Parametrized):
         # if in the previous refresh we ended up inside a bout, there are still
         # coordinates left to process
         if self.old_coords is not None:
-            pre_start = len(self.old_coords) - 1
+            pre_start = len(self.old_coords) - 5
             new_coords = np.concatenate([self.old_coords, new_coords], 0)
         else:
             pre_start = 0
@@ -262,33 +268,46 @@ class BoutPlot(QWidget, Parametrized):
 
         # TEMP, remove
         # self.bout_curves[0].setData(y=vel)
-        # self.hline.setValue(self.velocity_threshold)
 
         self.vmax = np.nanmax(vel)
         self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
 
+        print(
+            self.in_bout,
+            self.prev_bout_start,
+            self.bout_ended,
+            "before",
+            vel[pre_start],
+            vel[-1],
+        )
+
         if self.velocity_threshold > 0:
-            bout_starts_ends, self.in_bout, start = extract_segments_above_thresh(
+            bout_starts_ends, self.in_bout, current_bout_start, self.bout_ended = extract_segments_above_thresh(
                 vel,
                 self.velocity_threshold,
                 in_bout=self.in_bout,
-                pre_start=pre_start,
-                start=self.prev_bout_start,
+                start=pre_start,
+                prev_bout_start=self.prev_bout_start,
+                bout_ended=self.bout_ended,
             )
         else:
             bout_starts_ends = []
 
-        print(pre_start, len(new_coords), self.in_bout)
+        print(self.in_bout, current_bout_start, self.bout_ended)
 
         self.old_coords = new_coords[-self.n_save_max :, :]
         lendif = max(new_coords.shape[1] - self.n_save_max, 0)
         if self.in_bout:
-            self.prev_bout_start = start - lendif
+            self.prev_bout_start = current_bout_start - lendif
+        else:
+            self.prev_bout_start = 0
+
+        if self.bout_ended != -1:
+            self.bout_ended = self.bout_ended - lendif
 
         self.colors *= self.decay_constant
 
         for bs, be in bout_starts_ends:
-            print(bs, be)
             nb = normalise_bout(new_coords[bs:be, :])
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
             self.colors[self.i_curve] = 255
