@@ -606,7 +606,7 @@ class FishOverlayStimulus(PositionStimulus):
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ["vel_x"]
+        self.dynamic_parameters.append("vel_x")
 
 
 def z_func_windmill(x, y, arms):
@@ -682,7 +682,7 @@ class WindmillStimulus(BackgroundStimulus):
 class MovingWindmillStimulus(WindmillStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ["theta"]
+        self.dynamic_parameters.append("theta")
 
 
 class HighResWindmillStimulus(BackgroundStimulus):
@@ -751,7 +751,7 @@ class HighResWindmillStimulus(BackgroundStimulus):
 class HighResMovingWindmillStimulus(HighResWindmillStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters = ["theta"]
+        self.dynamic_parameters.append("theta")
 
 
 class CircleStimulus(VisualStimulus, DynamicStimulus):

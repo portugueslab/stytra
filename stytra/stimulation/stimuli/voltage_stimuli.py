@@ -68,8 +68,8 @@ class InterpolatedU3LabJackVoltageStimulus(
 ):
     def __init__(self, *args, **kwargs):
         self.voltage_out = 0
-        dynamic_parameters = ["voltage_in_thermo", "voltage_in_peltier", "voltage_out"]
-        super().__init__(*args, dynamic_parameters=dynamic_parameters, **kwargs)
+        new_dynamic_params = ["voltage_in_thermo", "voltage_in_peltier", "voltage_out"]
+        super().__init__(*args, dynamic_parameters=new_dynamic_params, **kwargs)
 
         self.voltage_in_thermo = 0
         self.voltage_in_peltier = 0

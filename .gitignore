@@ -92,6 +92,6 @@ ENV/
 .ropeproject
 
 
-stytra/examples/folder\.txt
+docs/source/_static
 
 \.pytest_cache/

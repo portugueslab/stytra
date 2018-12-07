@@ -46,7 +46,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
             **kwargs):
         super().__init__(*args, **kwargs)
         self.name = "general_cl1D"
-        self.dynamic_parameters = ["vel", "base_vel", "fish_swimming"]
+        self.dynamic_parameters.extend(["vel", "base_vel", "fish_swimming"])
         self.base_vel = base_vel  # base grating velocity
         self.vel = base_vel  # final grating velocity
 
