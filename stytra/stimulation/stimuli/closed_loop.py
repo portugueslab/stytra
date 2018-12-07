@@ -269,7 +269,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
         self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
 
 
-class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
+class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus):
     """ A stimulus which is always kept perpendicular to the fish
 
     """

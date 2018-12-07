@@ -18,6 +18,7 @@ from time import sleep
 from stytra import Stytra
 
 import shutil
+import stytra
 
 from os import path
 from pathlib import Path
@@ -68,9 +69,9 @@ class GratingProtocol(Protocol):
 
     def get_stim_sequence(self):
         Stim = type(
-            "stim", (InterpolatedStimulus, GratingStimulus), dict(theta=np.pi / 4)
+            "stim", (InterpolatedStimulus, GratingStimulus), dict()
         )
-        return [Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_x=[10, 10])))]
+        return [Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_x=[10, 10], theta=np.pi / 4)))]
 
 
 class SeamlessImageProtocol(Protocol):
@@ -98,8 +99,9 @@ class GenerateStimuliMovie(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def waitend(self):
+        print("At the end")
         output_folder = (
-            path.dirname(path.dirname(pkg_resources.resource_filename(__name__, "")))
+            path.dirname(pkg_resources.resource_filename(stytra.__name__, ""))
             + "/docs/source/_static/"
         )
         shutil.copy(
@@ -109,7 +111,7 @@ class GenerateStimuliMovie(unittest.TestCase):
             + self.protocol_name
             + ".mp4",
         )
-        sleep(0.1)
+        sleep(0.5)
         self.exp.wrap_up()
 
     def test_stimulus_rendering(self):
@@ -117,14 +119,14 @@ class GenerateStimuliMovie(unittest.TestCase):
         print(asset_dir)
 
         self.protocols = [
+            GratingProtocol,
             RadialSine,
             FullFieldProtocol,
             OKRProtocol,
-            GratingProtocol,
             SeamlessImageProtocol,
         ]
 
-        for protocol in self.protocols:
+        for protocol in self.protocols[-1:]:
             self.protocol_name = protocol.name
 
             s = Stytra(
@@ -133,6 +135,7 @@ class GenerateStimuliMovie(unittest.TestCase):
                 dir_save=self.test_dir,
                 stim_movie_format="mp4",
                 rec_stim_framerate=30,
+                display=dict(window_size=(400, 400), full_screen=False),
                 exec=False,
             )
 
@@ -141,3 +144,5 @@ class GenerateStimuliMovie(unittest.TestCase):
             s.exp.sig_data_saved.connect(self.waitend)
             s.exp.start_protocol()
             s.exp.app.exec_()
+        self.tearDown()
+

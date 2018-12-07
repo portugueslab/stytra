@@ -170,7 +170,7 @@ class DynamicStimulus(Stimulus):
         return state_dict
 
 
-class InterpolatedStimulus(Stimulus):
+class InterpolatedStimulus(DynamicStimulus):
     """Stimulus that interpolates its internal parameters with a data frame
 
     Parameters
@@ -194,6 +194,7 @@ class InterpolatedStimulus(Stimulus):
     def __init__(self, *args, df_param, **kwargs):
         """"""
         super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append("current_phase")
         self.df_param = df_param
         self.duration = float(df_param.t.iat[-1])
         self.phase_times = np.unique(df_param.t)

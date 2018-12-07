@@ -246,7 +246,7 @@ class BackgroundStimulus(PositionStimulus):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        self.clip(p, w, h)
+        #self.clip(p, w, h)
 
         imw, imh = self.get_unit_dims(w, h)
 
@@ -264,9 +264,14 @@ class BackgroundStimulus(PositionStimulus):
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.get_rot_transform(w, h))
 
-        nw = int(np.ceil(w / (imw * 2)))
-        nh = int(np.ceil(h / (imh * 2)))
-        for idx, idy in product(range(-nw - 1, nw + 1), range(-nh - 1, nh + 1)):
+        # calculate the rotated rectangle which encloses the display rectangle
+        new_h = np.abs(np.sin(self.theta))*w+np.abs(np.cos(self.theta))*h
+        new_w = np.abs(np.cos(self.theta))*w+np.abs(np.sin(self.theta))*h
+
+        n_w = int(np.ceil(new_w / (imw * 2)))
+        n_h = int(np.ceil(new_h / (imh * 2)))
+
+        for idx, idy in product(range(-n_w - 1, n_w + 1), range(-n_h - 1, n_h + 1)):
             self.draw_block(p, QPointF(idx * imw + dx, idy * imh + dy), w, h)
 
     def draw_block(self, p, point, w, h):
@@ -439,7 +444,6 @@ class PaintGratingStimulus(BackgroundStimulus):
     def __init__(self, *args,
                  grating_angle=0,
                  grating_period=10,
-                 wave_shape=None,
                  grating_col_1=(255, 255, 255),
                  grating_col_2=None,
                  **kwargs):
@@ -453,11 +457,13 @@ class PaintGratingStimulus(BackgroundStimulus):
         self.grating_period = grating_period
         self.color = grating_col_1
         self.name = 'moving_gratings'
+        self.barheight = 100
 
     def get_unit_dims(self, w, h):
         """
         """
-        return self.grating_period / max(self._experiment.calibrator.mm_px, 0.0001), max(w, h)
+        return (int(self.grating_period / (max(self._experiment.calibrator.mm_px,
+                                              0.0001))), self.barheight)
 
     def draw_block(self, p, point, w, h):
         """ Function for drawing the gratings programmatically.
@@ -467,7 +473,7 @@ class PaintGratingStimulus(BackgroundStimulus):
         p.setBrush(QBrush(QColor(*self.color)))
         p.drawRect(point.x(), point.y(),
                    int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
-                   w)
+                   self.barheight)
 
 
 
