@@ -15,8 +15,9 @@ class ImagingCLProtocol(Protocol):
         # desired camera config, such as
         # camera_config = dict(type="ximea")
         # for a ximea camera, etc.
-        camera=dict(video_file=str(
-                Path(__name__).parent / "assets" / "fish_compressed.h5")),
+        camera=dict(
+            video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5")
+        ),
         # Triggering: trigger from devices not supporting zmq messages
         # require changing this with other triggering options:
         trigger="zmq",
@@ -45,7 +46,7 @@ class ImagingCLProtocol(Protocol):
 
         # Define the sequence of the gain values we will use, and then repeat
         #  it n_reps times
-        gain_values = [0, 0, 1, 1]*self.protocol_reps
+        gain_values = [0, 0, 1, 1] * self.protocol_reps
 
         t_base = [0, p, p, p + d, p + d, 2 * p + d]
         vel_base = [0, 0, -v, -v, 0, 0]

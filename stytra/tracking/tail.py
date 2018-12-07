@@ -97,7 +97,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         disp_x = tail_length_x * extraparams["image_scale"] / n_segments
         disp_y = tail_length_y * extraparams["image_scale"] / n_segments
 
-        angles = np.full(n_segments-1, np.nan)
+        angles = np.full(n_segments - 1, np.nan)
         start_x *= extraparams["image_scale"]
         start_y *= extraparams["image_scale"]
 
@@ -112,7 +112,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
                 break
 
             abs_angle = np.arctan2(disp_x, disp_y)
-            angles[i-1] = abs_angle
+            angles[i - 1] = abs_angle
 
         # we want angles to be continuous, this removes potential 2pi discontinuities
         angles = np.unwrap(angles)
@@ -121,7 +121,11 @@ class CentroidTrackingMethod(TailTrackingMethod):
         if tail_filter_width > 0:
             angles = gaussian_filter1d(angles, tail_filter_width, mode="nearest")
 
-        angles = np.interp(np.linspace(0,1, n_output_segments), np.linspace(0,1, n_segments-1), angles)
+        angles = np.interp(
+            np.linspace(0, 1, n_output_segments),
+            np.linspace(0, 1, n_segments - 1),
+            angles,
+        )
         # Interpolate to the desired number of output segments
 
         if reset_zero:
@@ -134,12 +138,18 @@ class CentroidTrackingMethod(TailTrackingMethod):
                 angles = angles - self.resting_angles + self.resting_angles[0]
 
         if time_filter_weight > 0 and self.previous_angles is not None:
-            angles = time_filter_weight*self.previous_angles + (1-time_filter_weight)*angles
+            angles = (
+                time_filter_weight * self.previous_angles
+                + (1 - time_filter_weight) * angles
+            )
 
         self.previous_angles = angles
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
-        return message, (angles[-1] + angles[-2] - angles[0] - angles[1], ) + tuple(angles[:])
+        return (
+            message,
+            (angles[-1] + angles[-2] - angles[0] - angles[1],) + tuple(angles[:]),
+        )
 
 
 @jit(nopython=True, cache=True)
@@ -410,6 +420,3 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y, num_points, tail_
 
     angles[0] = tail_sum
     return angles
-
-
-

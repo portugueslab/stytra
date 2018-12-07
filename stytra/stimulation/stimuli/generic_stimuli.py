@@ -209,7 +209,10 @@ class InterpolatedStimulus(DynamicStimulus):
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
 
-        if self.current_phase < len(self.phase_times)-1 and self._elapsed > self.phase_times[self.current_phase+1]:
+        if (
+            self.current_phase < len(self.phase_times) - 1
+            and self._elapsed > self.phase_times[self.current_phase + 1]
+        ):
             self.current_phase += 1
 
         for col in self.df_param.columns:

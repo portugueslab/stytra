@@ -61,7 +61,7 @@ class SimpleExperimentWindow(QMainWindow):
         super().__init__(**kwargs)
         self.experiment = experiment
 
-        self.setWindowTitle("Stytra | "+pretty_name(type(experiment.protocol).name))
+        self.setWindowTitle("Stytra | " + pretty_name(type(experiment.protocol).name))
 
         self.docks = []
 
@@ -75,7 +75,9 @@ class SimpleExperimentWindow(QMainWindow):
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
-        self.btn_metadata = IconButton(icon_name="edit_fish", action_name="Edit metadata")
+        self.btn_metadata = IconButton(
+            icon_name="edit_fish", action_name="Edit metadata"
+        )
         self.btn_metadata.clicked.connect(self.show_metadata_gui)
         self.toolbar_control.addWidget(self.btn_metadata)
 
@@ -85,7 +87,12 @@ class SimpleExperimentWindow(QMainWindow):
         self.act_folder.triggered.connect(self.change_folder_gui)
 
         if self.experiment.database is not None:
-            self.chk_db = ToggleIconButton(action_on="Use DB", icon_on="dbON", icon_off="dbOFF", on=self.experiment.use_db)
+            self.chk_db = ToggleIconButton(
+                action_on="Use DB",
+                icon_on="dbON",
+                icon_off="dbOFF",
+                on=self.experiment.use_db,
+            )
             self.chk_db.toggled.connect(self.toggle_db)
             self.toolbar_control.addWidget(self.chk_db)
 
@@ -286,7 +293,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.bout_widget = BoutPlot(self.experiment.acc_tracking)
 
         # Tracking params button:
-        self.button_tracking_params = IconButton(icon_name="edit_tracking", action_name="Change tracking parameters")
+        self.button_tracking_params = IconButton(
+            icon_name="edit_tracking", action_name="Change tracking parameters"
+        )
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
 
         self.camera_display.layout_control.addStretch(10)
@@ -300,10 +309,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
     def construct_ui(self):
         """ """
         previous_widget = super().construct_ui()
-        self.experiment.gui_timer.timeout.connect(
-            self.stream_plot.update
-
-        )
+        self.experiment.gui_timer.timeout.connect(self.stream_plot.update)
 
         monitoring_widget = QWidget()
         monitoring_widget.setLayout(self.monitoring_layout)
@@ -314,9 +320,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.docks.append(monitoring_dock)
 
         if self.tail:
-            self.experiment.gui_timer.timeout.connect(
-                self.tail_widget.update
-            )
+            self.experiment.gui_timer.timeout.connect(self.tail_widget.update)
             tail_dock = QDockWidget("Tail curvature", self)
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)
@@ -325,9 +329,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             tail_dock.setVisible(False)
 
         if self.fish:
-            self.experiment.gui_timer.timeout.connect(
-                self.bout_widget.update
-            )
+            self.experiment.gui_timer.timeout.connect(self.bout_widget.update)
             bout_dock = QDockWidget("Last bouts", self)
             bout_dock.setObjectName("dock_bouts")
             bout_dock.setWidget(self.bout_widget)

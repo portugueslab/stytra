@@ -4,6 +4,7 @@ import datetime
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
 from stytra.utilities import reduce_to_pi
 
+
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
@@ -88,16 +89,13 @@ class PositionEstimator(Estimator):
                 self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
-        if self.calibrator.cam_to_proj is None or not np.isfinite(
-            past_coords["f0_x"]
-        ):
+        if self.calibrator.cam_to_proj is None or not np.isfinite(past_coords["f0_x"]):
             self.log.update_list((past_coords["t"], -1, -1, 0))
             return -1, -1, 0
 
         projmat = np.array(self.calibrator.cam_to_proj)
         if projmat.shape != (2, 3):
-            projmat = np.array([[1.0, 0.0, 0.0],
-                                [0.0, 1.0, 0.0]])
+            projmat = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
         x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
 
@@ -117,14 +115,14 @@ class PositionEstimator(Estimator):
             if self.past_values is None:
                 self.past_values = np.array(c_values)
             else:
-                deltas = c_values-self.past_values
+                deltas = c_values - self.past_values
                 deltas[2] = reduce_to_pi(deltas[2])
                 sel = np.abs(deltas) > self.change_thresholds
                 self.past_values[sel] = c_values[sel]
                 c_values = self.past_values
 
         c_values = tuple(c_values)
-        self.log.update_list((past_coords["t"],)+c_values)
+        self.log.update_list((past_coords["t"],) + c_values)
 
         return c_values
 

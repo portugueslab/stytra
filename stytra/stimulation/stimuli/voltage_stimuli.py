@@ -92,4 +92,3 @@ if __name__ == "__main__":
     stim = SetU3LabJackVoltageStimulus()
     stim.start()
     print("sending pulse")
-

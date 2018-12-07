@@ -48,7 +48,7 @@ class MikrotronCLCamera(Camera):
             _, _, w, h = [int(x, 16) for x in response.split(" ")]
             self.imaq.imgSessionSerialFlush(self.session_id)
         except ValueError:
-            return "E:Invalid message received "+response
+            return "E:Invalid message received " + response
 
         self.imaq.imgSessionConfigureROI(
             self.session_id,

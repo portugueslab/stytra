@@ -1,8 +1,5 @@
 from PyQt5.QtCore import pyqtSignal, QSize
-from PyQt5.QtWidgets import (
-    QProgressBar,
-    QToolBar,
-)
+from PyQt5.QtWidgets import QProgressBar, QToolBar
 from PyQt5.QtGui import QIcon
 from stytra.stimulation import ProtocolRunner
 import datetime
@@ -42,12 +39,13 @@ class ProtocolControlToolbar(QToolBar):
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
-        self.setIconSize(QSize(32,32))
+        self.setIconSize(QSize(32, 32))
         self.main_window = main_window
         self.protocol_runner = protocol_runner
 
-        self.toggleStatus = ToggleIconButton(icon_off="play", icon_on="stop",
-                                             action_on="play", on=False)
+        self.toggleStatus = ToggleIconButton(
+            icon_off="play", icon_on="stop", action_on="play", on=False
+        )
         self.toggleStatus.clicked.connect(self.toggle_protocol_running)
         self.addWidget(self.toggleStatus)
 
@@ -57,7 +55,9 @@ class ProtocolControlToolbar(QToolBar):
         self.addWidget(self.progress_bar)
 
         # Window with the protocol parameters:
-        self.act_edit = IconButton(action_name="Edit protocol parameters", icon_name="edit_protocol")
+        self.act_edit = IconButton(
+            action_name="Edit protocol parameters", icon_name="edit_protocol"
+        )
         self.act_edit.clicked.connect(self.show_stim_params_gui)
         self.addWidget(self.act_edit)
 

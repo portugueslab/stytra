@@ -63,8 +63,8 @@ class EyeTrackingMethod:
 
         cropped = _pad(
             im[
-                wnd_pos[1]: wnd_pos[1] + wnd_dim[1],
-                wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
+                wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
+                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
             ].copy(),
             padding=PAD,
             val=255,

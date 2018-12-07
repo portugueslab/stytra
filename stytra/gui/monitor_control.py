@@ -10,6 +10,7 @@ from lightparam.gui import ControlSpin
 
 import cv2
 
+
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows to
     set the stimulus display window
@@ -112,7 +113,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         ch = camera_resolution[1]
         points_cam = np.array([[0, 0], [0, cw], [ch, cw], [ch, 0], [0, 0]])
         x0, y0 = self.roi_box.pos()
-        
+
         try:
             points_calib = np.pad(
                 calibrator.points, ((0, 0), (0, 1)), mode="constant", constant_values=1
@@ -129,17 +130,26 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                     points_cam, ((0, 0), (0, 1)), mode="constant", constant_values=1
                 )
                 points_proj = points_cam @ np.array(calibrator.cam_to_proj).T
-                
+
                 self.calibration_frame.setData(
-                    x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0)
+                    x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0
+                )
 
             if image is not None:
-                tr_im = cv2.warpAffine(image, np.array(calibrator.cam_to_proj), dsize=tuple([int(p) for p in self.roi_box.size()]))
+                tr_im = cv2.warpAffine(
+                    image,
+                    np.array(calibrator.cam_to_proj),
+                    dsize=tuple([int(p) for p in self.roi_box.size()]),
+                )
                 self.camera_image.setImage(tr_im)
-                self.camera_image.setRect(QRectF(self.roi_box.pos().x(),
-                                                self.roi_box.pos().y(),
-                self.roi_box.size().x(),
-                self.roi_box.size().y()))
+                self.camera_image.setRect(
+                    QRectF(
+                        self.roi_box.pos().x(),
+                        self.roi_box.pos().y(),
+                        self.roi_box.size().x(),
+                        self.roi_box.size().y(),
+                    )
+                )
 
         except ValueError:
             pass
@@ -196,7 +206,8 @@ class ProjectorAndCalibrationWidget(QWidget):
         if isinstance(self.calibrator, CircleCalibrator):
             _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
             self.widget_proj_viewer.display_calibration_pattern(
-                self.calibrator, frame.shape, frame)
+                self.calibrator, frame.shape, frame
+            )
         self.calibrator.toggle()
         if self.calibrator.enabled:
             self.button_show_calib.setText("Hide calibration")

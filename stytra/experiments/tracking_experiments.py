@@ -88,9 +88,7 @@ class CameraExperiment(Experiment):
 
     def send_gui_parameters(self):
 
-        self.camera.control_queue.put(
-            self.camera_state.params.changed_values()
-        )
+        self.camera.control_queue.put(self.camera_state.params.changed_values())
         self.camera_state.params.acknowledge_changes()
 
     def start_experiment(self):
@@ -207,7 +205,10 @@ class TrackingExperiment(CameraExperiment):
         preproc_method_name = tracking.get("preprocessing", None)
 
         # If centroid or eyes method is used, prefilter by default:
-        if preproc_method_name is None and self.tracking_method_name in ["tail", "eyes"]:
+        if preproc_method_name is None and self.tracking_method_name in [
+            "tail",
+            "eyes",
+        ]:
             preproc_method_name = "prefilter"
 
         preproc_method = get_preprocessing_method(preproc_method_name)
@@ -259,7 +260,9 @@ class TrackingExperiment(CameraExperiment):
 
         est_type = tracking.get("estimator", None)
         if est_type == "position":
-            self.estimator = PositionEstimator(self.acc_tracking, calibrator=self.calibrator)
+            self.estimator = PositionEstimator(
+                self.acc_tracking, calibrator=self.calibrator
+            )
         elif est_type == "vigor":
             self.estimator = VigorMotionEstimator(self.acc_tracking)
         elif isclass(est_type) and issubclass(est_type, Estimator):
@@ -314,8 +317,7 @@ class TrackingExperiment(CameraExperiment):
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
 
         if self.stim_plot:  # but also if forced:
-            self.window_main.stream_plot.add_stream(
-                self.protocol_runner.dynamic_log)
+            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
 
     def send_gui_parameters(self):
         """Called upon gui timeout, put tracking parameters in the relative

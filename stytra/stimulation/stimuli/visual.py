@@ -246,7 +246,7 @@ class BackgroundStimulus(PositionStimulus):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        #self.clip(p, w, h)
+        # self.clip(p, w, h)
 
         imw, imh = self.get_unit_dims(w, h)
 
@@ -265,8 +265,8 @@ class BackgroundStimulus(PositionStimulus):
         p.setTransform(self.get_rot_transform(w, h))
 
         # calculate the rotated rectangle which encloses the display rectangle
-        new_h = np.abs(np.sin(self.theta))*w+np.abs(np.cos(self.theta))*h
-        new_w = np.abs(np.cos(self.theta))*w+np.abs(np.sin(self.theta))*h
+        new_h = np.abs(np.sin(self.theta)) * w + np.abs(np.cos(self.theta)) * h
+        new_w = np.abs(np.cos(self.theta)) * w + np.abs(np.sin(self.theta)) * h
 
         n_w = int(np.ceil(new_w / (imw * 2)))
         n_h = int(np.ceil(new_h / (imh * 2)))
@@ -441,12 +441,16 @@ class GratingStimulus(BackgroundStimulus):
 class PaintGratingStimulus(BackgroundStimulus):
     """ Class for moving a grating pattern.
     """
-    def __init__(self, *args,
-                 grating_angle=0,
-                 grating_period=10,
-                 grating_col_1=(255, 255, 255),
-                 grating_col_2=None,
-                 **kwargs):
+
+    def __init__(
+        self,
+        *args,
+        grating_angle=0,
+        grating_period=10,
+        grating_col_1=(255, 255, 255),
+        grating_col_2=None,
+        **kwargs
+    ):
         """
         :param grating_angle: fixed angle for the stripes
         :param grating_period: spatial period of the gratings (unit?)
@@ -456,14 +460,16 @@ class PaintGratingStimulus(BackgroundStimulus):
         self.theta = grating_angle
         self.grating_period = grating_period
         self.color = grating_col_1
-        self.name = 'moving_gratings'
+        self.name = "moving_gratings"
         self.barheight = 100
 
     def get_unit_dims(self, w, h):
         """
         """
-        return (int(self.grating_period / (max(self._experiment.calibrator.mm_px,
-                                              0.0001))), self.barheight)
+        return (
+            int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
+            self.barheight,
+        )
 
     def draw_block(self, p, point, w, h):
         """ Function for drawing the gratings programmatically.
@@ -471,10 +477,15 @@ class PaintGratingStimulus(BackgroundStimulus):
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.color)))
-        p.drawRect(point.x(), point.y(),
-                   int(self.grating_period / (2 * max(self._experiment.calibrator.mm_px, 0.0001))),
-                   self.barheight)
-
+        p.drawRect(
+            point.x(),
+            point.y(),
+            int(
+                self.grating_period
+                / (2 * max(self._experiment.calibrator.mm_px, 0.0001))
+            ),
+            self.barheight,
+        )
 
 
 class HalfFieldStimulus(PositionStimulus):

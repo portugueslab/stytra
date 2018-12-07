@@ -14,9 +14,8 @@ class GratingsProtocol(Protocol):
     stytra_config = dict(
         camera=dict(
             # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
-            video_file=str(Path(__file__).parent / "assets" /
-                           "fish_compressed.h5"),
-        ),
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
+        )
     )
 
     def __init__(self):
@@ -31,19 +30,27 @@ class GratingsProtocol(Protocol):
 
     def get_stim_sequence(self):
         # Use six points to specify the velocity step to be interpolated:
-        t = [0, self.t_pre,
-             self.t_pre, self.t_pre + self.t_move,
-             self.t_pre + self.t_move, 2 * self.t_pre + self.t_move]
+        t = [
+            0,
+            self.t_pre,
+            self.t_pre,
+            self.t_pre + self.t_move,
+            self.t_pre + self.t_move,
+            2 * self.t_pre + self.t_move,
+        ]
 
         vel = [0, 0, self.grating_vel, self.grating_vel, 0, 0]
 
         df = pd.DataFrame(dict(t=t, vel_x=vel))
 
-        return [MovingGratingStimulus(
+        return [
+            MovingGratingStimulus(
                 df_param=df,
-                grating_angle=self.grating_angle_deg * np.pi/180,
+                grating_angle=self.grating_angle_deg * np.pi / 180,
                 grating_period=self.grating_period,
-                wave_shape=self.grating_shape)]
+                wave_shape=self.grating_shape,
+            )
+        ]
 
 
 if __name__ == "__main__":

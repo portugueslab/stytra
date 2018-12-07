@@ -3,7 +3,12 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import CalibratingClosedLoop1D, GainLagClosedLoop1D, GratingStimulus, AcuteClosedLoop1D
+from stytra.stimulation.stimuli import (
+    CalibratingClosedLoop1D,
+    GainLagClosedLoop1D,
+    GratingStimulus,
+    AcuteClosedLoop1D,
+)
 from lightparam import Param
 from pathlib import Path
 
@@ -15,10 +20,9 @@ class ClosedLoop1DProt(Protocol):
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
             # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
-            video_file=str(Path(__file__).parent / "assets" /
-                           "fish_compressed.h5"),
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
         ),
-        log_format="csv"
+        log_format="csv",
     )
 
     def __init__(self):
@@ -47,8 +51,9 @@ class ClosedLoop1DProt(Protocol):
 
         df = pd.DataFrame(dict(t=t, base_vel=vel))
 
-        ClosedLoop1DGratings = type("Stim", (CalibratingClosedLoop1D,
-                                             GratingStimulus), {})
+        ClosedLoop1DGratings = type(
+            "Stim", (CalibratingClosedLoop1D, GratingStimulus), {}
+        )
 
         openloop = dict(w=1, change_to=dict(gain=0))
         normal = dict(w=1, change_to=dict(gain=1))
@@ -57,8 +62,9 @@ class ClosedLoop1DProt(Protocol):
         drop_d = 0.1
         drops = []
         for s in [0.1, 0.25, 0.4]:
-            drops.append(dict(w=1, change_to=dict(gain_drop_start=s,
-                                         gain_drop_end=s+drop_d)))
+            drops.append(
+                dict(w=1, change_to=dict(gain_drop_start=s, gain_drop_end=s + drop_d))
+            )
 
         conditions = [openloop, normal, gain, lag] + drops
         stimuli.append(
@@ -66,7 +72,7 @@ class ClosedLoop1DProt(Protocol):
                 df_param=df,
                 grating_angle=np.pi / 2,
                 grating_period=self.grating_cycle,
-                #conditions_list=conditions
+                # conditions_list=conditions
                 # gain_drop=(0.05, 0.25)
             )
         )

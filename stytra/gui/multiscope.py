@@ -5,10 +5,22 @@ import colorspacious
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtGui import QFont, QPalette
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
-    QLabel, QDoubleSpinBox, QSpacerItem, QSizePolicy, QGroupBox, QCheckBox
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QDoubleSpinBox,
+    QSpacerItem,
+    QSizePolicy,
+    QGroupBox,
+    QCheckBox,
+)
 
-PlotTuple = namedtuple("PlotTuple", ["curve", "curve_label", "min_label", "max_label",  "value_label"])
+PlotTuple = namedtuple(
+    "PlotTuple", ["curve", "curve_label", "min_label", "max_label", "value_label"]
+)
 
 
 class MultiStreamPlot(QWidget):
@@ -67,9 +79,9 @@ class MultiStreamPlot(QWidget):
             try:
                 tm = self.experiment.tracking_method_name
                 if tm == "tail" or tm == "fish":
-                    self.btn_extra = QPushButton("Show tail curvature" if
-                                                 tm == "tail"
-                                                 else "Show last bouts")
+                    self.btn_extra = QPushButton(
+                        "Show tail curvature" if tm == "tail" else "Show last bouts"
+                    )
 
                     self.btn_extra.clicked.connect(self.show_extra_plot)
                     self.control_layout.addWidget(self.btn_extra)
@@ -96,10 +108,12 @@ class MultiStreamPlot(QWidget):
         self.plotContainer.showAxis("left", False)
         self.plotContainer.plotItem.hideButtons()
 
-        self.replay_left = pg.InfiniteLine(-1, pen=(220, 220, 220),
-                                           movable=True, hoverPen=(230, 30, 0))
-        self.replay_right = pg.InfiniteLine(-1, pen=(220, 220, 220),
-                                           movable=True, hoverPen=(230, 30, 0))
+        self.replay_left = pg.InfiniteLine(
+            -1, pen=(220, 220, 220), movable=True, hoverPen=(230, 30, 0)
+        )
+        self.replay_right = pg.InfiniteLine(
+            -1, pen=(220, 220, 220), movable=True, hoverPen=(230, 30, 0)
+        )
         self.replay_right.sigDragged.connect(self.update_replay_limits)
         self.replay_left.sigDragged.connect(self.update_replay_limits)
         self.plotContainer.addItem(self.replay_left)
@@ -217,7 +231,9 @@ class MultiStreamPlot(QWidget):
             min_label = pg.TextItem("", anchor=(0, 1))
             min_label.setPos(0, i_curve)
 
-            self.stream_items.append(PlotTuple(c, curve_label, min_label, max_label, value_label))
+            self.stream_items.append(
+                PlotTuple(c, curve_label, min_label, max_label, value_label)
+            )
 
             i_curve += 1
 
@@ -282,7 +298,9 @@ class MultiStreamPlot(QWidget):
             txts[0] = ""
             txts[1] = ""
 
-        for lbl, txt in zip([labels.min_label, labels.max_label, labels.value_label], txts):
+        for lbl, txt in zip(
+            [labels.min_label, labels.max_label, labels.value_label], txts
+        ):
             if lbl is not None:
                 lbl.setText(txt)
 
@@ -346,9 +364,7 @@ class MultiStreamPlot(QWidget):
                     b = ~np.isnan(d)
                     if np.any(b):
                         non_nan_data = data_array[b, i]
-                        new_bounds[id, :] = np.percentile(
-                            non_nan_data, (0.5, 99.5), 0
-                        )
+                        new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
                         # if the bounds are the same, set arbitrary ones
                         if new_bounds[id, 0] == new_bounds[id, 1]:
                             new_bounds[id, 1] += 1
@@ -379,14 +395,19 @@ class MultiStreamPlot(QWidget):
                             x=time_array,
                             y=i_stream + ((data_array[:, i_var] - lb) / scale),
                         )
-                    self._set_labels(self.stream_items[i_stream], values=(lb, ub, data_array[-1, i_var]))
+                    self._set_labels(
+                        self.stream_items[i_stream],
+                        values=(lb, ub, data_array[-1, i_var]),
+                    )
                     i_stream += 1
             except IndexError:
                 pass
 
     def show_extra_plot(self):
         print("Showing extra plot")
-        self.experiment.window_main.docks[-1].setVisible(True) # TODO the docks should be a dictionary
+        self.experiment.window_main.docks[-1].setVisible(
+            True
+        )  # TODO the docks should be a dictionary
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
@@ -418,9 +439,7 @@ class MultiStreamPlot(QWidget):
             xRange=(-self.time_past * 0.9, self.time_past * 0.05)
         )
         # shift the labels
-        for (i_curve, items) in enumerate(
-            self.stream_items
-        ):
+        for (i_curve, items) in enumerate(self.stream_items):
             items.curve_label.setPos(-self.time_past * 0.9, i_curve)
 
     def update_replay_limits(self):
@@ -429,8 +448,10 @@ class MultiStreamPlot(QWidget):
                 left_lim = self.replay_left.getXPos()
                 right_lim = self.replay_right.getXPos()
 
-                self.experiment.camera_state.replay_limits = (min(left_lim, right_lim),
-                                                              max(left_lim, right_lim))
+                self.experiment.camera_state.replay_limits = (
+                    min(left_lim, right_lim),
+                    max(left_lim, right_lim),
+                )
             except AttributeError:
                 pass
 

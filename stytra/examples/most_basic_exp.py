@@ -9,8 +9,10 @@ class FlashProtocol(Protocol):
         # This is the method we need to write to create a new stimulus list.
         # In this case, the protocol is simply a 1 second flash on the entire screen
         # after a pause of 4 seconds:
-        stimuli = [Pause(duration=4.),
-            FullFieldVisualStimulus(duration=1., color=(255, 255, 255))]
+        stimuli = [
+            Pause(duration=4.),
+            FullFieldVisualStimulus(duration=1., color=(255, 255, 255)),
+        ]
         return stimuli
 
 

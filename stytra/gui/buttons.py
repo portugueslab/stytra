@@ -5,14 +5,17 @@ import pkg_resources
 
 
 def get_icon(icon_name):
-    return QIcon(pkg_resources.resource_filename(__name__, "../icons/" + icon_name+".svg"))
+    return QIcon(
+        pkg_resources.resource_filename(__name__, "../icons/" + icon_name + ".svg")
+    )
 
 
 class IconButton(QToolButton):
     def __init__(self, *args, icon_name="", action_name="", **kwargs):
         super().__init__(*args, **kwargs)
-        self.icon = QIcon(pkg_resources.resource_filename(__name__,
-                                                                   "../icons/"+icon_name+".svg"))
+        self.icon = QIcon(
+            pkg_resources.resource_filename(__name__, "../icons/" + icon_name + ".svg")
+        )
         self.setIcon(self.icon)
         self.setToolTip(action_name)
         self.setFixedSize(QSize(48, 48))
@@ -20,7 +23,16 @@ class IconButton(QToolButton):
 
 
 class ToggleIconButton(QToolButton):
-    def __init__(self, *args, icon_on="", icon_off=None, action_on="", action_off=None, on=False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        icon_on="",
+        icon_off=None,
+        action_on="",
+        action_off=None,
+        on=False,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.icon_on = get_icon(icon_on)
         if icon_off is not None:
@@ -49,4 +61,3 @@ class ToggleIconButton(QToolButton):
             self.on = True
             self.setChecked(True)
         self.setToolTip(self.action_on if self.on else self.action_off)
-

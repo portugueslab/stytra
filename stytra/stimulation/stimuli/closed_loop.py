@@ -38,12 +38,8 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         """
 
     def __init__(
-            self,
-            *args,
-            base_vel=10,
-            swimming_threshold=-2,
-            max_fish_vel=40,
-            **kwargs):
+        self, *args, base_vel=10, swimming_threshold=-2, max_fish_vel=40, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.name = "general_cl1D"
         self.dynamic_parameters.extend(["vel", "base_vel", "fish_swimming"])
@@ -132,16 +128,13 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         a bout
     """
 
-    def __init__(
-            self,
-            target_avg_fish_vel=-15,
-            calibrate_after=5,
-            **kwargs
-    ):
+    def __init__(self, target_avg_fish_vel=-15, calibrate_after=5, **kwargs):
         super().__init__(**kwargs)
         self.name = "calibrating_cl1D"
         self.dynamic_parameters.extend(["est_gain", "median_calib"])
-        self.target_avg_fish_vel = target_avg_fish_vel  # target velocity for the calibration
+        self.target_avg_fish_vel = (
+            target_avg_fish_vel
+        )  # target velocity for the calibration
 
         self.bout_counter = 0
         self.bout_peak_vel = 0
@@ -157,7 +150,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.est_gain = self._experiment.estimator.base_gain
 
     def bout_occurring(self):
-        self.bout_vig.append(self.fish_vel/self.est_gain)
+        self.bout_vig.append(self.fish_vel / self.est_gain)
 
     def bout_ended(self):
 
@@ -181,11 +174,12 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         if len(self.bouts_vig_list) > self.calibrate_after:
             self._experiment.logger.info(
                 "Calibrated! Median speed achieved: {} with {} bouts".format(
-                    self.median_calib, len(self.bouts_vig_list)))
+                    self.median_calib, len(self.bouts_vig_list)
+                )
+            )
 
 
 class GainLagClosedLoop1D(Basic_CL_1D):
-
     def __init__(
         self,
         gain=1,
@@ -198,8 +192,9 @@ class GainLagClosedLoop1D(Basic_CL_1D):
     ):
         super().__init__(**kwargs)
         self.name = "gain_lag_cl1D"
-        self.dynamic_parameters.extend(["gain", "lag", "gain_drop_start",
-                                        "gain_drop_end", "shunted"])
+        self.dynamic_parameters.extend(
+            ["gain", "lag", "gain_drop_start", "gain_drop_end", "shunted"]
+        )
         self.lag = lag
         self.gain = gain
         self.shunted = shunted
@@ -232,19 +227,15 @@ class GainLagClosedLoop1D(Basic_CL_1D):
 
 
 class AcuteClosedLoop1D(GainLagClosedLoop1D):
-
-    def __init__(
-            self,
-            conditions_list=None,
-            **kwargs
-    ):
+    def __init__(self, conditions_list=None, **kwargs):
         super().__init__(**kwargs)
         self.name = "acute_cl1D"
 
         self.base_conditions = self.get_state()
         self.conditions_list = conditions_list
-        self.acute_cond_weights = [c.get("w", 1/len(conditions_list))
-                                   for c in conditions_list]
+        self.acute_cond_weights = [
+            c.get("w", 1 / len(conditions_list)) for c in conditions_list
+        ]
 
         self.current_condition = None
 
@@ -257,8 +248,9 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
                 self.__setattr__(k, self.base_conditions[k])
 
         # chose one condition:
-        self.current_condition = choices(self.conditions_list,
-                                         self.acute_cond_weights)[0]
+        self.current_condition = choices(self.conditions_list, self.acute_cond_weights)[
+            0
+        ]
 
         for k, v in self.current_condition["change_to"].items():
             # print("setting: {} gain and {} lag".format(self.gain, self.lag))
@@ -297,9 +289,15 @@ class CenteringWrapper(DynamicStimulus):
 
     """
 
-    def __init__(self, stimulus, centering, margin=200, pause_stimulus=False,
-                 reset_phase=0,
-                 **kwargs):
+    def __init__(
+        self,
+        stimulus,
+        centering,
+        margin=200,
+        pause_stimulus=False,
+        reset_phase=0,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.name = "centering"
         self.margin = margin ** 2
@@ -326,8 +324,9 @@ class CenteringWrapper(DynamicStimulus):
     @property
     def dynamic_parameter_names(self):
         if self.stimulus_dynamic:
-            return super().dynamic_parameter_names + \
-                   self.stimulus.dynamic_parameter_names
+            return (
+                super().dynamic_parameter_names + self.stimulus.dynamic_parameter_names
+            )
         else:
             return super().dynamic_parameter_names
 
@@ -367,11 +366,13 @@ class CenteringWrapper(DynamicStimulus):
         else:
             self.active = self.stimulus
             if self.reset_phase > 0 and self._was_centering:
-                phase_reset = max(
-                    self.active.current_phase - (self.reset_phase - 1), 0)
+                phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
-                time_added = self._elapsed - self._elapsed_difference -\
-                                 self.active.phase_times[phase_reset]
+                time_added = (
+                    self._elapsed
+                    - self._elapsed_difference
+                    - self.active.phase_times[phase_reset]
+                )
                 self.duration += time_added
                 self._elapsed_difference += time_added
             else:
@@ -387,4 +388,3 @@ class CenteringWrapper(DynamicStimulus):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
         self.active.paint(p, w, h)
-

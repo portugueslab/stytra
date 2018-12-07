@@ -26,9 +26,8 @@ class DisplayedMessage(QLabel):
         else:
             self.persist = persist
         self.start_color = np.array(color_dict[self.type])
-        self.text_start_color = np.array((255,)*3)
+        self.text_start_color = np.array((255,) * 3)
         self.end_color = np.array(end_color)
-
 
     def is_expired(self, t):
         if (t - self.started).total_seconds() > self.persist > 0:
@@ -46,9 +45,9 @@ class DisplayedMessage(QLabel):
         color_bg = (self.end_color * passed + (1 - passed) * self.start_color).astype(
             np.uint8
         )
-        color_txt = (self.end_color * passed + (1 - passed) * self.text_start_color).astype(
-            np.uint8
-        )
+        color_txt = (
+            self.end_color * passed + (1 - passed) * self.text_start_color
+        ).astype(np.uint8)
         self.setStyleSheet(
             "background-color: rgb({},{},{});"
             " color: rgb({},{},{});".format(*color_bg, *color_txt)
@@ -76,7 +75,9 @@ class StatusMessageDisplay(QWidget):
             self.current_messages[message].refresh()
 
         else:
-            self.current_messages[message] = DisplayedMessage(message, persist=persist, end_color=end_color)
+            self.current_messages[message] = DisplayedMessage(
+                message, persist=persist, end_color=end_color
+            )
             self.new_messages.append(self.current_messages[message])
 
     def refresh(self):
@@ -92,7 +93,6 @@ class StatusMessageDisplay(QWidget):
         while len(self.new_messages) > 0:
             msg = self.new_messages.pop()
             self.layout().addWidget(msg)
-
 
         all_keys = list(self.current_messages.keys())
         for key in all_keys:

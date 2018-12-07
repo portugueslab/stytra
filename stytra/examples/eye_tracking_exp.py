@@ -11,8 +11,9 @@ class TrackingWindmillProtocol(WindmillProtocol):
     stytra_config = dict(
         tracking=dict(embedded=True, method="eyes"),
         camera=dict(
-            video_file=str(
-                Path(__file__).parent / "assets" / "fish_compressed.h5")))
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
+        ),
+    )
 
 
 if __name__ == "__main__":

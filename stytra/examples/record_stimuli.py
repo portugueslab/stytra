@@ -68,10 +68,10 @@ class GratingProtocol(Protocol):
     name = "grating"
 
     def get_stim_sequence(self):
-        Stim = type(
-            "stim", (InterpolatedStimulus, GratingStimulus), dict()
-        )
-        return [Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_x=[10, 10], theta=np.pi / 4)))]
+        Stim = type("stim", (InterpolatedStimulus, GratingStimulus), dict())
+        return [
+            Stim(df_param=pd.DataFrame(dict(t=[0, 2], vel_x=[10, 10], theta=np.pi / 4)))
+        ]
 
 
 class SeamlessImageProtocol(Protocol):
@@ -106,10 +106,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         )
         shutil.copy(
             next(Path(self.exp.folder_name).glob("*stim_movie.mp4")),
-            output_folder
-            + "stim_movie_"
-            + self.protocol_name
-            + ".mp4",
+            output_folder + "stim_movie_" + self.protocol_name + ".mp4",
         )
         sleep(0.5)
         self.exp.wrap_up()
@@ -145,4 +142,3 @@ class GenerateStimuliMovie(unittest.TestCase):
             s.exp.start_protocol()
             s.exp.app.exec_()
         self.tearDown()
-

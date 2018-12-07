@@ -28,8 +28,10 @@ class CustomProtocol(Protocol):
 
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
-        camera=dict(video_file=str(
-                Path(__file__).parent / "assets" / "fish_compressed.h5")))
+        camera=dict(
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
+        ),
+    )
 
     def get_stim_sequence(self):
         return [NewStimulus(duration=10)]

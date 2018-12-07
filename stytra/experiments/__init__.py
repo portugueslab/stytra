@@ -147,9 +147,7 @@ class Experiment(QObject):
             self.metadata_animal = metadata_animal(tree=self.dc)
 
         self.gui_params = Parametrized(
-            "gui",
-            tree=self.dc,
-            params=dict(geometry=Param(""), window_state=Param("")),
+            "gui", tree=self.dc, params=dict(geometry=Param(""), window_state=Param(""))
         )
 
         self.protocol_runner = ProtocolRunner(experiment=self)
@@ -236,8 +234,12 @@ class Experiment(QObject):
 
     def restore_window_state(self):
         if self.gui_params.window_state:
-            self.window_main.restoreState(QByteArray.fromHex(bytes(self.gui_params.window_state, 'ascii')))
-            self.window_main.restoreGeometry(QByteArray.fromHex(bytes(self.gui_params.geometry, 'ascii')))
+            self.window_main.restoreState(
+                QByteArray.fromHex(bytes(self.gui_params.window_state, "ascii"))
+            )
+            self.window_main.restoreGeometry(
+                QByteArray.fromHex(bytes(self.gui_params.geometry, "ascii"))
+            )
 
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
@@ -252,7 +254,6 @@ class Experiment(QObject):
         self.window_main.construct_ui()
         self.window_main.show()
         self.window_main.restoreState()
-
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen
@@ -363,13 +364,16 @@ class Experiment(QObject):
 
                 # Get program name and version and save to the data_log:
                 try:
-                    repo = git.Repo(sys.argv[0],
-                                    search_parent_directories=True)
+                    repo = git.Repo(sys.argv[0], search_parent_directories=True)
                     git_hash = repo.head.object.hexsha
-                    self.dc.add_static_data(dict(git_hash=git_hash,
-                                                 name=sys.argv[0],
-                                                 arguments=self.arguments),
-                                            name='general/program_version')
+                    self.dc.add_static_data(
+                        dict(
+                            git_hash=git_hash,
+                            name=sys.argv[0],
+                            arguments=self.arguments,
+                        ),
+                        name="general/program_version",
+                    )
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
 
@@ -391,12 +395,20 @@ class Experiment(QObject):
                             compression="blosc",
                         )
                     elif self.stim_movie_format == "mp4":
-                        imageio.mimwrite(self.filename_base() + "stim_movie.mp4",
-                                         movie, fps=30, quality=None,
-                                         ffmpeg_params=[
-                                             "-pix_fmt","yuv420p","-profile:v",
-                        "baseline", "-level","3"
-                                         ])
+                        imageio.mimwrite(
+                            self.filename_base() + "stim_movie.mp4",
+                            movie,
+                            fps=30,
+                            quality=None,
+                            ffmpeg_params=[
+                                "-pix_fmt",
+                                "yuv420p",
+                                "-profile:v",
+                                "baseline",
+                                "-level",
+                                "3",
+                            ],
+                        )
                     else:
                         raise Exception(
                             "Tried to write the stimulus video into an unsupported format"
@@ -434,18 +446,20 @@ class Experiment(QObject):
         """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
-            if self.protocol_runner.protocol is not None and self.protocol_runner.running:
+            if (
+                self.protocol_runner.protocol is not None
+                and self.protocol_runner.running
+            ):
                 self.end_protocol(save=False)
         if self.trigger is not None:
             self.trigger.kill_event.set()
             # self.trigger.join()
             self.trigger.terminate()
 
-
         st = self.window_main.saveState()
         geom = self.window_main.saveGeometry()
-        self.gui_params.window_state = bytes(st.toHex()).decode('ascii')
-        self.gui_params.geometry = bytes(geom.toHex()).decode('ascii')
+        self.gui_params.window_state = bytes(st.toHex()).decode("ascii")
+        self.gui_params.geometry = bytes(geom.toHex()).decode("ascii")
         self.dc.save_config_file()
         self.app.closeAllWindows()
 

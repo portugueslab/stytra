@@ -26,10 +26,9 @@ class Portugues2011Protocol(Protocol):
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
         camera=dict(
-            video_file=str(
-                Path(__name__).parent / "assets" / "fish_compressed.h5")),
-
-            # Replace this example file with the desired camera config, such as
+            video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5")
+        ),
+        # Replace this example file with the desired camera config, such as
         # camera_config = dict(type="ximea")
         # for a ximea camera, etc. Not needed if the setup already has the
         # # stytra_setup_config.json file

@@ -55,8 +55,7 @@ if __name__ == "__main__":
 
     # Select a directory:
     app = QApplication([])
-    folder = QFileDialog.getExistingDirectory(caption="Trigger folder",
-                                              directory=None)
+    folder = QFileDialog.getExistingDirectory(caption="Trigger folder", directory=None)
 
     # Instantiate the trigger:
     if folder is not None:

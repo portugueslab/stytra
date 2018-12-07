@@ -166,21 +166,28 @@ class CameraSource(VideoSource):
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
 
-            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            res_len = int(round(self.state.framerate * self.state.ring_buffer_length))
             if self.ring_buffer is None or res_len != self.ring_buffer.length:
                 self.ring_buffer = RingBuffer(res_len)
 
             if self.state.paused:
-                self.message_queue.put("I: ring_buffer_size:" + str(self.ring_buffer.length))
+                self.message_queue.put(
+                    "I: ring_buffer_size:" + str(self.ring_buffer.length)
+                )
                 self.frame_queue.put(self.ring_buffer.get_most_recent())
 
                 prt = None
             elif self.state.replay and self.state.replay_fps > 0:
-                messages.append("I:Replaying between {} and {} of {}".format(*self.state.replay_limits,
-                                                                             self.ring_buffer.length))
+                messages.append(
+                    "I:Replaying between {} and {} of {}".format(
+                        *self.state.replay_limits, self.ring_buffer.length
+                    )
+                )
                 old_fps = self.current_framerate
-                self.ring_buffer.replay_limits = (int(round(self.state.replay_limits[0]*old_fps)),
-                                                  int(round(self.state.replay_limits[1] * old_fps)))
+                self.ring_buffer.replay_limits = (
+                    int(round(self.state.replay_limits[0] * old_fps)),
+                    int(round(self.state.replay_limits[1] * old_fps)),
+                )
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -263,7 +270,7 @@ class VideoFileSource(VideoSource):
                     self.update_params()
 
                 # we adjust the framerate
-                delta_t = 1/  self.state.framerate
+                delta_t = 1 / self.state.framerate
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
@@ -368,15 +375,10 @@ class CameraControlParameters(ParametrizedQt):
         )
         self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
         self.ring_buffer_length = Param(
-            300, (1, 2000), desc="Rolling buffer that saves the last items",
-            gui=False
+            300, (1, 2000), desc="Rolling buffer that saves the last items", gui=False
         )
         self.paused = Param(False)
-        self.replay = Param(
-           True,
-            desc="Replaying",
-            gui=False
-        )
+        self.replay = Param(True, desc="Replaying", gui=False)
         self.replay_fps = Param(
             15,
             (0, 500),

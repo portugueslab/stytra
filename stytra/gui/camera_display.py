@@ -4,11 +4,7 @@ from queue import Empty
 import numpy as np
 import pyqtgraph as pg
 from PyQt5.QtCore import QRectF, QPointF, QTimer
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 
 from skimage.io import imsave
 from numba import jit
@@ -17,9 +13,11 @@ from lightparam.gui import ParameterGui, ControlToggleIcon
 
 from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
+
 class CustomLineROI(pg.PolyLineROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
     """
+
     def segmentClicked(self):
         pass
 
@@ -90,29 +88,44 @@ class CameraViewWidget(QWidget):
         self.layout_control = QHBoxLayout()
         self.layout_control.setContentsMargins(10, 0, 10, 10)
 
-        self.btn_pause = ControlToggleIcon(self.experiment.camera_state, "paused",
-                                           icon_on=get_icon("play"), icon_off=get_icon("pause"),
-                                           action_off="Pause", action_on="Play")
+        self.btn_pause = ControlToggleIcon(
+            self.experiment.camera_state,
+            "paused",
+            icon_on=get_icon("play"),
+            icon_off=get_icon("pause"),
+            action_off="Pause",
+            action_on="Play",
+        )
         self.layout_control.addWidget(self.btn_pause)
 
         if hasattr(self.experiment.camera_state, "replay"):
             self.experiment.camera_state.replay = False
 
-            self.btn_rewind = ControlToggleIcon(self.experiment.camera_state, "replay",
-                                                icon_on=get_icon("rewind"),
-                                                action_off="Resume", action_on="Replay")
+            self.btn_rewind = ControlToggleIcon(
+                self.experiment.camera_state,
+                "replay",
+                icon_on=get_icon("rewind"),
+                action_off="Resume",
+                action_on="Replay",
+            )
             self.layout_control.addWidget(self.btn_rewind)
 
         if self.control_queue is not None:
-            self.btn_camera_param = IconButton(icon_name="edit_camera", action_name="Configure camera")
+            self.btn_camera_param = IconButton(
+                icon_name="edit_camera", action_name="Configure camera"
+            )
             self.btn_camera_param.clicked.connect(self.show_params_gui)
             self.layout_control.addWidget(self.btn_camera_param)
 
-        self.btn_capture = IconButton(icon_name="camera_flash", action_name="Capture frame")
+        self.btn_capture = IconButton(
+            icon_name="camera_flash", action_name="Capture frame"
+        )
         self.btn_capture.clicked.connect(self.save_image)
         self.layout_control.addWidget(self.btn_capture)
 
-        self.btn_autorange = ToggleIconButton(icon_off="autoscale", icon_on="autoscaleOFF", action_on="Autoscale")
+        self.btn_autorange = ToggleIconButton(
+            icon_off="autoscale", icon_on="autoscaleOFF", action_on="Autoscale"
+        )
         self.layout_control.addWidget(self.btn_autorange)
 
         self.layout.addLayout(self.layout_control)
@@ -122,7 +135,6 @@ class CameraViewWidget(QWidget):
         self.current_frame_time = None
 
         self.param_widget = None
-
 
     def update_image(self):
         """Update displayed frame while emptying frame source queue. This is done
@@ -164,7 +176,6 @@ class CameraViewWidget(QWidget):
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
                 )
-
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""
@@ -462,9 +473,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                                 ell.setPen(None)
                             self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
-                self.image_item.setImage(
-                    im, autoLevels=self.btn_autorange.isChecked()
-                )
+                self.image_item.setImage(im, autoLevels=self.btn_autorange.isChecked())
 
 
 class CameraViewCalib(CameraViewWidget):

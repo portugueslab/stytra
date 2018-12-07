@@ -16,8 +16,10 @@ from lightparam import Param
 # Use the 3-argument version of the Python type function to
 # make a temporary class combining two classes
 
+
 class LoomingStimulus(InterpolatedStimulus, CircleStimulus):
     name = "looming_stimulus"
+
 
 # Let's define a simple protocol consisting of looms at random locations,
 # of random durations and maximal sizes
@@ -68,9 +70,11 @@ class LoomingProtocol(Protocol):
             # We construct looming stimuli with the radius change specification
             # and a random point of origin within the projection area
             # (specified in fractions from 0 to 1 for each dimension)
-            stimuli.append(LoomingStimulus(df_param=radius_df,
-                                           origin=(self.x_pos_pix,
-                                                   self.y_pos_pix)))
+            stimuli.append(
+                LoomingStimulus(
+                    df_param=radius_df, origin=(self.x_pos_pix, self.y_pos_pix)
+                )
+            )
 
         return stimuli
 

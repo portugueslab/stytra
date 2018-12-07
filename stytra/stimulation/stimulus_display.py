@@ -36,7 +36,12 @@ class StimulusDisplayWindow(ParametrizedWidget):
     """
 
     def __init__(
-        self, protocol_runner, calibrator, record_stim_framerate=None, gl=False, **kwargs
+        self,
+        protocol_runner,
+        calibrator,
+        record_stim_framerate=None,
+        gl=False,
+        **kwargs
     ):
         """
         :param protocol_runner: ProtocolRunner object that handles the stim

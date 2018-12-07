@@ -100,14 +100,7 @@ class Stytra:
 
     """
 
-    def __init__(
-        self,
-        camera=None,
-        tracking=None,
-        recording=None,
-        exec=True,
-        **kwargs
-    ):
+    def __init__(self, camera=None, tracking=None, recording=None, exec=True, **kwargs):
         # Check if exist a default config file in the home (user) directory:
         default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():
@@ -147,7 +140,6 @@ class Stytra:
                     class_kwargs["calibrator"] = CircleCalibrator()
             if "recording" in class_kwargs.keys():
                 base = SwimmingRecordingExperiment
-
 
         # Stytra logo :)
         app_icon = QIcon()

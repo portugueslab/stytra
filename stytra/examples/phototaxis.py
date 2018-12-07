@@ -14,8 +14,12 @@ from pathlib import Path
 
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"
-    stytra_config = dict(tracking=dict(method="fish", embedded=False, estimator="position"),
-                         camera=dict(video_file=str(Path(__name__).parent / "assets" / "fish_free_compressed.h5")))
+    stytra_config = dict(
+        tracking=dict(method="fish", embedded=False, estimator="position"),
+        camera=dict(
+            video_file=str(Path(__name__).parent / "assets" / "fish_free_compressed.h5")
+        ),
+    )
 
     def __init__(self):
         super().__init__()
@@ -30,17 +34,21 @@ class PhototaxisProtocol(Protocol):
         stimuli = []
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
         for i in range(self.n_trials):
-            stimuli.append(CenteringWrapper(
-                stim(
-                    duration=self.stim_on_duration,
-                    color=(self.brightness,) * 3,
-                    center_dist=self.center_offset,
-                ),
-                centering,
+            stimuli.append(
+                CenteringWrapper(
+                    stim(
+                        duration=self.stim_on_duration,
+                        color=(self.brightness,) * 3,
+                        center_dist=self.center_offset,
+                    ),
+                    centering,
+                )
             )
+            stimuli.append(
+                FullFieldVisualStimulus(
+                    color=(self.brightness,) * 3, duration=self.stim_off_duration
+                )
             )
-            stimuli.append(FullFieldVisualStimulus(color=(self.brightness,) * 3,
-                                                   duration=self.stim_off_duration,))
 
         return stimuli
 

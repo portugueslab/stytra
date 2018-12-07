@@ -1,8 +1,4 @@
-from PyQt5.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QLabel,
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 import pyqtgraph as pg
 import numpy as np
 import datetime
@@ -16,6 +12,7 @@ from lightparam import Param, Parametrized
 from lightparam.gui import ControlSpin
 
 from scipy.ndimage.filters import gaussian_filter1d
+
 
 class StreamingPositionPlot(pg.GraphicsWindow):
     """Plot that displays the virtual position of the fish"""
@@ -82,16 +79,20 @@ class TailStreamPlot(QWidget):
         self.vb_display.addItem(self.image_item)
 
         self.image_item.setLevels((-0.6, 0.6))
-        self.image_item.setLookupTable(pg.ColorMap(np.linspace(0, 1, 5),
-                                                  np.array([[0.42107294,0.80737975,0.49219722],
-                                                            [0.23166242,
-                                                             0.39962101,
-                                                             0.32100403],
-                                                            [0.0, 0.0, 0.0],
-                                                            [0.46170494,
-                                                             0.30327584,
-                                                             0.38740225],
-                                                            [0.91677407,0.58427975,0.92293321]])).getLookupTable(alpha=False))
+        self.image_item.setLookupTable(
+            pg.ColorMap(
+                np.linspace(0, 1, 5),
+                np.array(
+                    [
+                        [0.42107294, 0.80737975, 0.49219722],
+                        [0.23166242, 0.39962101, 0.32100403],
+                        [0.0, 0.0, 0.0],
+                        [0.46170494, 0.30327584, 0.38740225],
+                        [0.91677407, 0.58427975, 0.92293321],
+                    ]
+                ),
+            ).getLookupTable(alpha=False)
+        )
         self.layout().addWidget(self.display_widget)
 
     def update(self):
@@ -99,13 +100,22 @@ class TailStreamPlot(QWidget):
             return
         data_array = self.acc.get_last_n(self.n_points)
         if len(data_array) > 0:
-            self.image_item.setImage(image=np.diff(data_array[:, 2:], axis=1).T,
-                                     autoLevels=False)
+            self.image_item.setImage(
+                image=np.diff(data_array[:, 2:], axis=1).T, autoLevels=False
+            )
+
 
 @jit(nopython=True)
 def extract_segments_above_thresh(
-    vel, threshold=0.1, min_duration=10, pad_before=15, pad_after=30,
-        skip_nan=True, in_bout = False, pre_start=0, start=0,
+    vel,
+    threshold=0.1,
+    min_duration=10,
+    pad_before=15,
+    pad_after=30,
+    skip_nan=True,
+    in_bout=False,
+    pre_start=0,
+    start=0,
 ):
     """ Useful for extracing bouts from velocity or vigor, streaming version
 
@@ -147,8 +157,7 @@ def rot_mat(theta):
 
 def angle_mean(angles, axis=1):
     """Correct calculation of a mean of an array of angles"""
-    return np.arctan2(np.sum(np.sin(angles)),
-                      np.sum(np.cos(angles)))
+    return np.arctan2(np.sum(np.sin(angles)), np.sum(np.cos(angles)))
 
 
 def normalise_bout(coord):
@@ -170,8 +179,7 @@ def normalise_bout(coord):
 
 
 class BoutPlot(QWidget, Parametrized):
-    def __init__(self, acc: QueueDataAccumulator, i_fish=0,
-                 n_bouts=10, n_save_max=300):
+    def __init__(self, acc: QueueDataAccumulator, i_fish=0, n_bouts=10, n_save_max=300):
         super().__init__()
         self.acc = acc
         self.bouts = deque()
@@ -200,7 +208,9 @@ class BoutPlot(QWidget, Parametrized):
         self.vb_display.invertY(True)
         self.display_widget.addItem(self.vb_display)
 
-        self.bout_curves = [pg.PlotCurveItem(connect="finite") for _ in range(self.n_bouts)]
+        self.bout_curves = [
+            pg.PlotCurveItem(connect="finite") for _ in range(self.n_bouts)
+        ]
 
         # temporary, remove
         # self.hline = pg.InfiniteLine(angle=0)
@@ -221,27 +231,34 @@ class BoutPlot(QWidget, Parametrized):
         if current_index == 0 or current_index < self.processed_index + 2:
             return
 
-
         # Pull the new data from the accumulator
-        new_coords = np.array(self.acc.stored_data[max(self.processed_index, current_index-self.n_save_max):
-                                                   current_index])
+        new_coords = np.array(
+            self.acc.stored_data[
+                max(
+                    self.processed_index, current_index - self.n_save_max
+                ) : current_index
+            ]
+        )
         self.processed_index = current_index
 
         ix, iy, ith = (
-        self.acc.header_dict["f{:d}_{}".format(self.i_fish, var)]
-        for var in ["x", "y", "theta"])
+            self.acc.header_dict["f{:d}_{}".format(self.i_fish, var)]
+            for var in ["x", "y", "theta"]
+        )
 
         new_coords = new_coords[:, [ix, iy, ith]]
 
         # if in the previous refresh we ended up inside a bout, there are still
         # coordinates left to process
         if self.old_coords is not None:
-            pre_start = len(self.old_coords)-1
+            pre_start = len(self.old_coords) - 1
             new_coords = np.concatenate([self.old_coords, new_coords], 0)
         else:
             pre_start = 0
 
-        vel = gaussian_filter1d(np.sum(np.diff(new_coords[:, :2], axis=0)**2, axis=1),2)
+        vel = gaussian_filter1d(
+            np.sum(np.diff(new_coords[:, :2], axis=0) ** 2, axis=1), 2
+        )
 
         # TEMP, remove
         # self.bout_curves[0].setData(y=vel)
@@ -253,16 +270,20 @@ class BoutPlot(QWidget, Parametrized):
         if self.velocity_threshold > 0:
             bout_starts_ends, self.in_bout, start = extract_segments_above_thresh(
                 vel,
-                self.velocity_threshold, in_bout=self.in_bout, pre_start=pre_start,start=self.prev_bout_start)
+                self.velocity_threshold,
+                in_bout=self.in_bout,
+                pre_start=pre_start,
+                start=self.prev_bout_start,
+            )
         else:
             bout_starts_ends = []
 
         print(pre_start, len(new_coords), self.in_bout)
 
-        self.old_coords = new_coords[-self.n_save_max:, :]
-        lendif = max(new_coords.shape[1]-self.n_save_max,0)
+        self.old_coords = new_coords[-self.n_save_max :, :]
+        lendif = max(new_coords.shape[1] - self.n_save_max, 0)
         if self.in_bout:
-            self.prev_bout_start = start-lendif
+            self.prev_bout_start = start - lendif
 
         self.colors *= self.decay_constant
 
@@ -271,7 +292,7 @@ class BoutPlot(QWidget, Parametrized):
             nb = normalise_bout(new_coords[bs:be, :])
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
             self.colors[self.i_curve] = 255
-            self.i_curve = (self.i_curve+1) % self.n_bouts
+            self.i_curve = (self.i_curve + 1) % self.n_bouts
 
         o_curve = (self.i_curve + 1) % self.n_bouts
         while o_curve != self.i_curve:
@@ -281,5 +302,3 @@ class BoutPlot(QWidget, Parametrized):
             else:
                 self.bout_curves[o_curve].setPen((col, col, col))
             o_curve = (o_curve + 1) % self.n_bouts
-
-
