@@ -9,7 +9,7 @@ import tempfile
 import git
 import sys
 
-from PyQt5.QtCore import QObject, QTimer, pyqtSignal
+from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtWidgets import QMessageBox
 
 from stytra.calibration import CrossCalibrator
@@ -149,7 +149,7 @@ class Experiment(QObject):
         self.gui_params = Parametrized(
             "gui",
             tree=self.dc,
-            params=dict(geometry=Param(None), window_state=Param(None)),
+            params=dict(geometry=Param(""), window_state=Param("")),
         )
 
         self.protocol_runner = ProtocolRunner(experiment=self)
@@ -234,6 +234,11 @@ class Experiment(QObject):
         if self.trigger is not None:
             self.trigger.start()
 
+    def restore_window_state(self):
+        if self.gui_params.window_state:
+            self.window_main.restoreState(QByteArray.fromHex(bytes(self.gui_params.window_state, 'ascii')))
+            self.window_main.restoreGeometry(QByteArray.fromHex(bytes(self.gui_params.geometry, 'ascii')))
+
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
         """
@@ -246,6 +251,8 @@ class Experiment(QObject):
 
         self.window_main.construct_ui()
         self.window_main.show()
+        self.window_main.restoreState()
+
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen
@@ -434,8 +441,11 @@ class Experiment(QObject):
             # self.trigger.join()
             self.trigger.terminate()
 
-        self.gui_params.window_state = self.window_main.saveState()
-        self.gui_params.geometry = self.window_main.saveGeometry()
+
+        st = self.window_main.saveState()
+        geom = self.window_main.saveGeometry()
+        self.gui_params.window_state = bytes(st.toHex()).decode('ascii')
+        self.gui_params.geometry = bytes(geom.toHex()).decode('ascii')
         self.dc.save_config_file()
         self.app.closeAllWindows()
 

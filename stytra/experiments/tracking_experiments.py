@@ -103,6 +103,7 @@ class CameraExperiment(Experiment):
         self.window_main = CameraExperimentWindow(experiment=self)
         self.window_main.construct_ui()
         self.window_main.show()
+        self.restore_window_state()
         self.initialize_plots()
 
     def go_live(self):
@@ -295,6 +296,7 @@ class TrackingExperiment(CameraExperiment):
         self.window_main.construct_ui()
         self.initialize_plots()
         self.window_main.show()
+        self.restore_window_state()
 
     def initialize_plots(self):
         super().initialize_plots()
@@ -412,9 +414,10 @@ class TrackingExperiment(CameraExperiment):
         -------
 
         """
+        self.camera.kill_event.set()
         for dispatcher in self.frame_dispatchers:
-            dispatcher.finished_signal.set()
             dispatcher.terminate()
+
         super().wrap_up(*args, **kwargs)
 
     def excepthook(self, exctype, value, tb):
