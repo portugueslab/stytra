@@ -62,6 +62,7 @@ def find_bouts_online(
     n_without_crossing=5,
     pad_after=5,
     min_bout_len=1,
+    pad_before=5,
 ):
     """ Online bout detection
 
@@ -87,6 +88,8 @@ def find_bouts_online(
             pad_after=pad_after,
             min_bout_len=min_bout_len,
         )
+        if state.state != 1 and next_state.state == 1:
+            bout_coords = bout_coords[-pad_after:]
         if next_state.state > 0:
             bout_coords.append(coords[i, :])
         if state.state == 2 and next_state.state == 0:
