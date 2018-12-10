@@ -4,7 +4,7 @@ import numpy as np
 import datetime
 from stytra.collectors import Accumulator
 from stytra.collectors import QueueDataAccumulator
-from numba import jit
+from stytra.tracking.online_bouts import find_bouts_online, BoutState
 from stytra.utilities import reduce_to_pi
 
 from collections import deque
@@ -105,55 +105,6 @@ class TailStreamPlot(QWidget):
             )
 
 
-@jit(nopython=True)
-def extract_segments_above_thresh(
-    vel,
-    threshold=0.1,
-    min_duration=10,
-    pad_before=15,
-    pad_after=30,
-    skip_nan=True,
-    in_bout=False,
-    bout_ended=-1,
-    start=0,
-    prev_bout_start=0,
-):
-    """ Useful for extracing bouts from velocity or vigor, streaming version
-
-    :param vel:
-    :param threshold:
-    :param min_duration:
-    :param pad_before:
-    :param pad_after:
-    :return:
-    """
-    bouts = []
-    i = max(start - 1, pad_before + 1)
-
-    while i < vel.shape[0]:
-        if i == bout_ended:
-            bouts.append((prev_bout_start, i))
-            in_bout = False
-            bout_ended = -1
-
-        elif np.isnan(vel[i]):
-            if in_bout and skip_nan:
-                in_bout = False
-
-        elif i > bout_ended and vel[i - 1] < threshold < vel[i] and not in_bout:
-            in_bout = True
-            prev_bout_start = i - pad_before
-            bout_ended = -1
-
-        elif vel[i - 1] > threshold > vel[i] and in_bout:
-            in_bout = False
-            if i - prev_bout_start > min_duration:
-                bout_ended = i + pad_after
-
-        i += 1
-    return bouts, in_bout, prev_bout_start, bout_ended
-
-
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
@@ -190,7 +141,6 @@ class BoutPlot(QWidget, Parametrized):
         self.i_fish = i_fish
         self.processed_index = 0
         self.velocity_threshold = Param(0.2)
-        self.in_bout = False
         self.n_bouts = n_bouts
         self.old_coords = None
         self.i_curve = 0
@@ -222,8 +172,9 @@ class BoutPlot(QWidget, Parametrized):
 
         self.colors = np.zeros(self.n_bouts)
         self.decay_constant = 0.99
-        self.prev_bout_start = 0
-        self.bout_ended = -1
+
+        self.bout_coords = None
+        self.bout_state = BoutState(0, 0.0, 0, 0, 0)
 
         for c in self.bout_curves:
             self.vb_display.addItem(c)
@@ -257,67 +208,49 @@ class BoutPlot(QWidget, Parametrized):
         # if in the previous refresh we ended up inside a bout, there are still
         # coordinates left to process
         if self.old_coords is not None:
-            pre_start = len(self.old_coords) - 5
+            pre_start = len(self.old_coords)
             new_coords = np.concatenate([self.old_coords, new_coords], 0)
         else:
             pre_start = 0
 
-        vel = gaussian_filter1d(
-            np.sum(np.diff(new_coords[:, :2], axis=0) ** 2, axis=1), 2
-        )
-
-        # TEMP, remove
-        # self.bout_curves[0].setData(y=vel)
+        vel = np.sum(np.diff(new_coords[:, :2], axis=0) ** 2, axis=1)
 
         self.vmax = np.nanmax(vel)
         self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
 
-        print(
-            self.in_bout,
-            self.prev_bout_start,
-            self.bout_ended,
-            "before",
-            vel[pre_start],
-            vel[-1],
-        )
+        if self.bout_coords is None:
+            self.bout_coords = [new_coords[0,:]]
 
+        new_bout = None
         if self.velocity_threshold > 0:
-            bout_starts_ends, self.in_bout, current_bout_start, self.bout_ended = extract_segments_above_thresh(
+            self.bout_coords, bout_finished, self.bout_state = find_bouts_online(
                 vel,
-                self.velocity_threshold,
-                in_bout=self.in_bout,
-                start=pre_start,
-                prev_bout_start=self.prev_bout_start,
-                bout_ended=self.bout_ended,
+                new_coords,
+                self.bout_state,
+                bout_coords=self.bout_coords,
+                shift=pre_start,
+                threshold=self.velocity_threshold,
+                pad_after=5,
+                pad_before=4,
+                min_bout_len=5,
             )
-        else:
-            bout_starts_ends = []
+            if bout_finished:
+                new_bout = self.bout_coords
+                self.bout_coords = [new_coords[0, :]]
 
-        print(self.in_bout, current_bout_start, self.bout_ended)
-
-        self.old_coords = new_coords[-self.n_save_max :, :]
-        lendif = max(new_coords.shape[1] - self.n_save_max, 0)
-        if self.in_bout:
-            self.prev_bout_start = current_bout_start - lendif
-        else:
-            self.prev_bout_start = 0
-
-        if self.bout_ended != -1:
-            self.bout_ended = self.bout_ended - lendif
+        self.old_coords = new_coords[-self.n_save_max:, :]
 
         self.colors *= self.decay_constant
 
-        for bs, be in bout_starts_ends:
-            nb = normalise_bout(new_coords[bs:be, :])
+        if new_bout and len(new_bout)>2:
+            nb = normalise_bout(np.array(new_bout[1:]))
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
             self.colors[self.i_curve] = 255
             self.i_curve = (self.i_curve + 1) % self.n_bouts
 
-        o_curve = (self.i_curve + 1) % self.n_bouts
-        while o_curve != self.i_curve:
-            col = int(self.colors[o_curve])
+        for i_c, (curve, color) in enumerate(zip(self.bout_curves, self.colors)):
+            col = int(color)
             if col < 10:
-                self.bout_curves[o_curve].setData(x=[], y=[])
+                curve.setData(x=[], y=[])
             else:
-                self.bout_curves[o_curve].setPen((col, col, col))
-            o_curve = (o_curve + 1) % self.n_bouts
+                curve.setPen((col, col, col))

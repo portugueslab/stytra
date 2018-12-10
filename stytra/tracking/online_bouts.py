@@ -23,14 +23,13 @@ def _process_input(
 
     """
     state, prev_vel, i_inbout, i_below, n_after = prev
-    bout_state = 0
     if state == 0:
         if prev_vel < threshold < vel:
             state = 1
-            bout_state = 1
             i_inbout = 1
     elif state == 1:
-        i_inbout += 1
+        i_inbout = i_inbout + 1
+        i_below = 0
         if prev_vel > threshold > vel:
             state = 2
     elif state == 2:
@@ -43,13 +42,11 @@ def _process_input(
         else:
             i_inbout += 1
             i_below += 1
-            if prev_vel > threshold > vel:
-                state = 2
     elif state == 3:
-        n_after -= 1
+        n_after = n_after-1
         if n_after == 0:
             state = 0
-    return BoutState(state, vel, i_inbout, i_below, n_after), bout_state
+    return BoutState(state, vel, i_inbout, i_below, n_after)
 
 
 @jit(nopython=True)
@@ -58,6 +55,7 @@ def find_bouts_online(
     coords,
     initial_state,
     bout_coords,
+    shift=0,
     threshold=1,
     n_without_crossing=5,
     pad_after=5,
@@ -79,9 +77,10 @@ def find_bouts_online(
     """
     state = initial_state
     bout_finished = False
-    for i, v in enumerate(velocities):
-        next_state, status = _process_input(
-            v,
+
+    for i in range(shift, len(velocities)):
+        next_state = _process_input(
+            velocities[i],
             state,
             threshold=threshold,
             n_without_crossing=n_without_crossing,
@@ -89,12 +88,13 @@ def find_bouts_online(
             min_bout_len=min_bout_len,
         )
         if state.state != 1 and next_state.state == 1:
-            bout_coords = bout_coords[-pad_after:]
+            for j in range(i-pad_before, i):
+                bout_coords.append(coords[j, :])
         if next_state.state > 0:
             bout_coords.append(coords[i, :])
         if state.state == 2 and next_state.state == 0:
-            bout_coords = [np.zeros_like(coords[0])]
+            bout_coords.clear()
         if state.state == 3 and next_state.state == 0:
             bout_finished = True
         state = next_state
-    return bout_coords, bout_finished
+    return bout_coords, bout_finished, state
