@@ -417,10 +417,15 @@ class TrackingExperiment(CameraExperiment):
 
         """
         self.camera.kill_event.set()
+
+        for q in [self.camera.frame_queue, self.frame_dispatchers[0].gui_queue]:
+            q.clear()
+
         for dispatcher in self.frame_dispatchers:
-            dispatcher.terminate()
+            dispatcher.join()
 
         super().wrap_up(*args, **kwargs)
+
 
     def excepthook(self, exctype, value, tb):
         """
@@ -441,9 +446,9 @@ class TrackingExperiment(CameraExperiment):
         traceback.print_tb(tb)
         print("{0}: {1}".format(exctype, value))
         self.finished_sig.set()
-        self.camera.terminate()
+        self.camera.join()
         for dispatcher in self.frame_dispatchers:
-            dispatcher.terminate()
+            dispatcher.join()
 
 
 class SwimmingRecordingExperiment(CameraExperiment):
@@ -514,8 +519,8 @@ class SwimmingRecordingExperiment(CameraExperiment):
 
         """
         super().wrap_up(*args, **kwargs)
-        self.frame_dispatcher.terminate()
-        self.frame_recorder.terminate()
+        self.frame_dispatcher.join()
+        self.frame_recorder.join()
 
     def end_protocol(self, save=True):
         """Save tail position and dynamic parameters. Reset what is necessary

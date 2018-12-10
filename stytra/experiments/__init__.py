@@ -453,8 +453,7 @@ class Experiment(QObject):
                 self.end_protocol(save=False)
         if self.trigger is not None:
             self.trigger.kill_event.set()
-            # self.trigger.join()
-            self.trigger.terminate()
+            self.trigger.join()
 
         st = self.window_main.saveState()
         geom = self.window_main.saveGeometry()
@@ -482,4 +481,4 @@ class Experiment(QObject):
         traceback.print_tb(tb)
         print("{0}: {1}".format(exctype, value))
         self.trigger.kill_event.set()
-        self.trigger.terminate()
+        self.trigger.join()

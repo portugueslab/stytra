@@ -64,7 +64,6 @@ class TestExperimentClass(unittest.TestCase):
 
         exp.wrap_up()
 
-        configfile = dd.io.load(glob.glob(self.test_dir + "/config.h5")[0])
 
         data = []
         for path in sorted(glob.glob(self.test_dir + "/*/*.json")):
