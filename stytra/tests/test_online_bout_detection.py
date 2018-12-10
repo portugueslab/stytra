@@ -14,5 +14,6 @@ def test_online_bout_det():
         [coords[0]],
         threshold=1,
         pad_after=1,
+        pad_before=0,
     )
     assert len(k) == 11

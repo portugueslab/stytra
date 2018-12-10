@@ -253,7 +253,6 @@ class Experiment(QObject):
 
         self.window_main.construct_ui()
         self.window_main.show()
-        self.window_main.restoreState()
 
     def show_stimulus_screen(self, full_screen=True):
         """Open window to display the visual stimulus and make it full-screen

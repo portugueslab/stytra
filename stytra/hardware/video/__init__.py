@@ -349,7 +349,7 @@ class VideoFileSource(VideoSource):
 class VideoControlParameters(ParametrizedQt):
     def __init__(self, **kwargs):
         super().__init__(name="video_params", **kwargs)
-        self.framerate = Param(150., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
+        self.framerate = Param(20., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
         self.offset = Param(50)
         self.paused = Param(False)
 
