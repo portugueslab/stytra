@@ -35,6 +35,7 @@ class VisualStimulus(Stimulus):
         super().__init__(*args, **kwargs)
         self.clip_mask = clip_mask
 
+
     def paint(self, p, w, h):
         """Paint function. Called by the StimulusDisplayWindow update method.
 
@@ -70,7 +71,12 @@ class VisualStimulus(Stimulus):
 
         """
         if self.clip_mask is not None:
-            if isinstance(self.clip_mask[0], tuple):
+            if isinstance(self.clip_mask, float):  # circle
+                a = QRegion(w/2-self.clip_mask*w, h/2-self.clip_mask*h,
+                            self.clip_mask*w*2, self.clip_mask*h*2,
+                            type=QRegion.Ellipse)
+                p.setClipRegion(a)
+            elif isinstance(self.clip_mask[0], tuple):
                 points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_mask]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
@@ -80,6 +86,38 @@ class VisualStimulus(Stimulus):
                     self.clip_mask[2] * w,
                     self.clip_mask[3] * h,
                 )
+
+
+class StimulusCombiner(VisualStimulus):
+    def __init__(self, stim_list):
+        super().__init__()
+        self.stim_list = stim_list
+
+        self.duration = max([s.duration for s in stim_list])
+
+        # [s.__init__() for s in stim_list]
+
+    def start(self):
+        for s in self.stim_list:
+            s.start()
+
+    def stop(self):
+        for s in self.stim_list:
+            s.stop()
+
+    def paint(self, p, w, h):
+        for s in self.stim_list:
+            s.paint(p, w, h)
+            # p.end()
+
+    def update(self):
+        for s in self.stim_list:
+            s.update()
+            s._elapsed = self._elapsed
+
+    def initialise_external(self, experiment):
+        for s in self.stim_list:
+            s.initialise_external(experiment)
 
 
 class FullFieldVisualStimulus(VisualStimulus):
@@ -242,11 +280,12 @@ class BackgroundStimulus(PositionStimulus):
         else:
             mm_px = 1
 
+        self.clip(p, w, h)
+
         # draw the black background
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-        # self.clip(p, w, h)
 
         imw, imh = self.get_unit_dims(w, h)
 
@@ -273,6 +312,9 @@ class BackgroundStimulus(PositionStimulus):
 
         for idx, idy in product(range(-n_w - 1, n_w + 1), range(-n_h - 1, n_h + 1)):
             self.draw_block(p, QPointF(idx * imw + dx, idy * imh + dy), w, h)
+        # p.setTransform(QTransform)
+        p.resetTransform()
+        # self.clip(p,w,h)
 
     def draw_block(self, p, point, w, h):
         """ Has to be defined in each child of the class, defines what

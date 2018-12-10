@@ -234,3 +234,4 @@ class InterpolatedStimulus(DynamicStimulus):
                     col,
                     np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                 )
+
