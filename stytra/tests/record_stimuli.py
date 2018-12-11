@@ -112,7 +112,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         self.exp.wrap_up()
 
     def test_stimulus_rendering(self):
-        asset_dir = pkg_resources.resource_filename(__name__, "/assets")
+        asset_dir = pkg_resources.resource_filename(__name__, "/test_assets")
         print(asset_dir)
 
         self.protocols = [

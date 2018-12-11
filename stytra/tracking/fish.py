@@ -149,7 +149,7 @@ class FishTrackingMethod:
         # to find fish
         new_fish = []
 
-        message = "W:No object of right area, between {} and {}".format(*fish_area)
+        message = "W:No object of right area, between {:.0f} and {:.0f}".format(*fish_area)
 
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
@@ -172,7 +172,7 @@ class FishTrackingMethod:
                 and (ftop - border_margin >= 0)
                 and (ftop + fheight + border_margin < frame.shape[0])
             ):
-                message = "W:No object of right area, between {} and {} within the margins".format(
+                message = "W:An object of right area found outside margins".format(
                     *fish_area
                 )
                 continue
@@ -193,7 +193,7 @@ class FishTrackingMethod:
 
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
-                message = "W:No appropriate tail start position fiybd"
+                message = "W:No appropriate tail start position found"
                 continue
 
             head_coords_up = fish_coords + cent_shift
@@ -232,7 +232,6 @@ class FishTrackingMethod:
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
             else:
-                message = "I:Trying to add new fish"
                 if not np.all(self.idx_book.full):
                     new_fish.append(
                         Fish(
@@ -242,8 +241,9 @@ class FishTrackingMethod:
                             pos_std=pos_uncertainty,
                         )
                     )
+                    message = "I:Added new fish"
                 else:
-                    message = "E:overbooked"
+                    message = "E:More fish than n_fish max"
 
         current_fish = []
 

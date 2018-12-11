@@ -27,27 +27,31 @@ This should be everything you need to make ready before installing stytra.
     the Anaconda package. If you are not using Anaconda, make sure you have it
     installed and updated before installing stytra!
 
-Now, download stytra in a directory and install it via pip by::
+The simplest way to install Stytra is with pip::
+    pip install stytra
+
+On the other hand, if you want to modify the internals of stytra or use the
+unreleased features, clone or download stytra from github and install it with::
 
     pip install path_to_stytra/stytra
 
-If you want to be able to change the stytra code and use the current version of the
-code, install using the -e argument::
+If you want to be able to change the stytra code and use the changed version,
+install using the -e argument::
 
 
     pip install -e path_to_stytra/stytra
 
 
-You can test now the installation by running one of the examples in stytra
+You can the installation by running one of the examples in stytra
 example folder! To run a simple looming stimulus experiment, you can
 type::
 
     python -m stytra.examples.looming_exp
 
-If the GUI opens correctly and you can press the play button:
-congratulations, installation was successful! If it crashes horribly, check
+If the GUI opens correctly and pressing the play button starts the stimulus:
+congratulations, installation was successful! If it crashes, check
 if you have all dependencies correctly installed. If it still does not work,
-contact us for support through the `stytra github page <https://github
+open an issue on the `Stytra github page <https://github
 .com/portugueslab/stytra>`_.
 
 Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
@@ -55,11 +59,12 @@ Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
 In the second case, you might want to have a look at the camera APIs section below first.
 
 .. note::
-    Stytra might have some problem on quit because of a bug in the current
-    version of pyqtgraph (a package we are using for online plotting). If you are really annoyed by the error messages
+    Stytra might raise an error after quitting because of a bug in the current
+    version of pyqtgraph (a package we are using for online plotting).
+    If you are annoyed by the error messages
     when closing the program you can install the develop version of pyqtgraph
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
-    Hopefully the problem will be solved with the next pyqtgraph version.
+    The problem will be resolved once the next pyqtgraph version is released.
 
 
 Installing camera APIs
@@ -82,7 +87,7 @@ and download and install the Vimba SDK. Then install the python wrapper
 
     pip install git+https://github.com/morefigs/pymba.git
 
-or, if using 64bit windows, you can grab the installation file from `here<http://www.portugueslab.com/files/pymba-0.1-py3-none-any.whl>`_.
+or, if using 64bit windows, you can grab the installation file from `here <http://www.portugueslab.com/files/pymba-0.1-py3-none-any.whl>`_.
 open the terminal in the folder where you downloaded it and install::
 
     pip install pymba-0.1-py3-none-any.whl

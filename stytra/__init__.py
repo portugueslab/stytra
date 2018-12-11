@@ -33,14 +33,14 @@ class Stytra:
         protocol : Protocol
             the protocols to be made available from the dropdown
 
-        display_config : dict
+        display : dict
             full_screen : bool
                 displays the stimulus full screen on the secondary monitor, otherwise
                 it is in a window
             window_size : tuple(int, int)
                 optional specification of the size of the stimulus display area
 
-        camera_config : dict
+        camera : dict
             video_file : str
                 or
             type: str
@@ -48,6 +48,7 @@ class Stytra:
                 "ximea" (with the official API)
                 "avt" (With the Pymba API)
                 "spinnaker" (PointGray/FLIR)
+                "mikrotron" (via NI Vision C API)
 
             rotation: int
                 how many times to rotate the camera image by 90 degrees to get the
@@ -56,16 +57,16 @@ class Stytra:
             downsampling: int
                 how many times to downsample the image (for some ximea cameras)
 
-        tracking_config : dict
+        tracking : dict
             preprocessing_method: str, optional
                "prefilter" or "bgsub"
-            tracking_method: str
-                one of "centroid", "tail_angles", "eyes", "fish"
+            method: str
+                one of "tail", "eyes" or "fish"
             estimator: str or class
                 for closed-loop experiments: either "vigor" for embedded experiments
-                    or "position" for freely-swimming ones. A custom estimator can be supplied
+                    or "position" for freely-swimming ones. A custom estimator can be supplied.
 
-        recording_config : bool
+        recording : bool
             for video-recording experiments
 
         embedded : bool
@@ -83,11 +84,11 @@ class Stytra:
             subclass of AnimalMetadata adding information from a specific lab
             (species, genetic lines, pharmacological treatments etc.)
 
-        metdata_general : class
+        metadata_general : class
             subclass of GeneralMetadata, containing lab-specific information
             (setup names, experimenter names...)
 
-        record_stim_every: int
+        record_stim_framerate: int
             if non-0 recodrds the displayed stimuli into an array which is
             saved alongside the other data.
 
@@ -96,7 +97,8 @@ class Stytra:
             to imaging acquisition
 
         n_tracking_processes : int
-            number of tracking processes to be used
+            number of tracking processes to be used. Using more than 1 can improve performance
+            but also cause issues in state-dependent tracking functions.
 
     """
 

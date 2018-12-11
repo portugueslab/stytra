@@ -127,6 +127,10 @@ class CameraExperiment(Experiment):
         self.gui_timer.stop()
         super().wrap_up(*args, **kwargs)
         self.camera.kill_event.set()
+
+        for q in [self.camera.frame_queue]:
+            q.clear()
+
         self.camera.join()
 
     def excepthook(self, exctype, value, tb):

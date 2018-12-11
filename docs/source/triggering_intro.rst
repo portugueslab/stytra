@@ -1,5 +1,5 @@
-Triggering a trytra protocol
-============================
+Triggering a Stytra protocol
+=============================
 
 Stytra is designed to be used in setups where the presentation of stimuli to
 the  animal needs to be synchronized with an acquisition program running on a
@@ -18,8 +18,8 @@ ZeroMQ
 ......
 Stytra employs the ZeroMQ library to synchronize the beginning
 of the experiment through a message coming from the acquisition computer over
-the local network. ZeroMQ is supported in a number of programming and scripting
-languages, including LabView, and the exchange of the synchronizing message
+the local network. ZeroMQ is supported in a number of programming
+languages and environments including LabView, and the exchange of the synchronizing message
 can easily be added to custom-made or open-source software. The messages
 can also be used to communicate to Stytra data such as the microscope
 configuration that will be logged together with the rest of experiment

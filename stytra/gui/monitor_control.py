@@ -12,8 +12,8 @@ import cv2
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
-    """Widget that displays the whole projector screen and allows to
-    set the stimulus display window
+    """Widget that displays the whole projector screen and allows
+     configuring the stimulus display window
 
     Parameters
     ----------

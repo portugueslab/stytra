@@ -77,8 +77,7 @@ Low-cost behavioral setup
 --------------------------
 A very cheap version of the behavioral setup can be built by replacing the
 projector with small LED display and the camera lens with a fixed focal length
- objective. The
-dimensions of this setup are quite small and parts can be kept in place with
+objective. The dimensions of this setup are quite small and parts can be kept in place with
 a basic custom-made frame that can be laser-cut or even made out of cardboard.
 
 

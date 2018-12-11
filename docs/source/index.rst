@@ -6,7 +6,8 @@
 Welcome to Stytra's documentation!
 ==================================
 
-Stytra is a package to build and run behavioral experiments
+Stytra is a package to build and run behavioral experiments.
+
 
 ..  toctree::
     :maxdepth: 2
@@ -16,13 +17,11 @@ Stytra is a package to build and run behavioral experiments
     examples_gallery
     stimulation_intro
     create_protocol
-    running_experiments
     configuring_computer
     data_saving
     calibration
     triggering_intro
     swimming_tracking
-    image_processing
     parameters_stytra
     hardware_list
     interface
