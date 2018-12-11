@@ -13,9 +13,9 @@ from PyQt5.QtWidgets import (
     QLabel,
     QDoubleSpinBox,
     QSpacerItem,
-    QSizePolicy,
     QGroupBox,
     QCheckBox,
+    QSizePolicy,
 )
 
 PlotTuple = namedtuple(
@@ -467,25 +467,22 @@ class StreamPlotConfig(QWidget):
     def __init__(self, sp: MultiStreamPlot):
         super().__init__()
         self.sp = sp
-        self.setLayout(QVBoxLayout())
+        self.main_layout = QVBoxLayout()
+        self.setLayout(self.main_layout)
         self.accs = sp.accumulators
         self.checkboxes = []
-        for ac in sp.accumulators:
+        for ac, hd_idxs in zip(sp.accumulators, sp.header_indexes):
             acccheck = []
             gb = QGroupBox(ac.name)
             gb.setLayout(QVBoxLayout())
-            for item in ac.header_list[1:]:
+            for i_it, item in enumerate(ac.header_list[1:]):
                 chk = QCheckBox(item)
-                if ac.monitored_headers is None:
-                    chk.setChecked(True)
-                elif item in ac.monitored_headers:
-                    chk.setChecked(True)
-
+                chk.setChecked((i_it+1) in hd_idxs)
                 chk.stateChanged.connect(self.refresh_plots)
                 acccheck.append(chk)
                 gb.layout().addWidget(chk)
             self.checkboxes.append(acccheck)
-            self.layout().addWidget(gb)
+            self.main_layout.addWidget(gb)
 
     def refresh_plots(self):
         self.sp.remove_streams()
