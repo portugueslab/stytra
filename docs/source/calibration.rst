@@ -1,3 +1,10 @@
+.. raw:: html
+
+    <style> .red {color:red} </style>
+
+.. role:: red
+
+.. _calibration:
 Calibration
 ===========
 
@@ -20,13 +27,16 @@ Calibration of the camera and monitor
 To calibrate the camera image to the displayed image, the Circle Calibrator
 is used (it is enabled automatically for freely-swimming experiments).
 
+.. image:: ../screenshots/calibration.png
+   :scale: 30%
+   :alt: freely-swimming tracking screenshot
+   :align: center
+
 After Styra starts, turn off the IR illumination and remove the IR filter
-in front of the camera. Then, click the display calibration pattern button and
+in front of the camera. Then, click the display calibration pattern button (:red:`a`) and
 move the display window on the projector so that the 3 dots are clearly visible.
-Sometimes the camera exposure has to be adjusted as well.
+Sometimes the camera exposure has to be adjusted as well (:red:`b`).
 
-(insert screenshot)
-
-Then, click calibrate and verify that the location of the camera image
+Then, click calibrate (:red:c`) and verify that the location of the camera image
 in the projected image makes sense. If not, try adjusting camera settings and
 calibrating again.

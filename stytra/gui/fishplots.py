@@ -63,6 +63,9 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class TailStreamPlot(QWidget):
+    """ Displayes the curvature of the tail in time using a heatmap
+
+    """
     def __init__(self, acc, headers, n_points=300):
         super().__init__()
         self.acc = acc
@@ -134,6 +137,10 @@ def normalise_bout(coord):
 
 
 class BoutPlot(QWidget, Parametrized):
+    """ Plots the last few bouts in normalized coordinates, with fish facing
+    to the right.
+
+    """
     def __init__(self, acc: QueueDataAccumulator, i_fish=0, n_bouts=10, n_save_max=300):
         super().__init__()
         self.acc = acc

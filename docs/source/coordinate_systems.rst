@@ -1,11 +1,6 @@
 A note on coordinate systems in Stytra
 ======================================
 
-
-Stimulation/projection
-----------------------
-
-For images, (i=0, j=0) is the upper right corner
-For QPainter (x=0, y=0) is also the upper right corner
-
-For the camera display ()
+Stytra follows the common convention for displaying images on screens: the x axis increases to the right
+and the y axis increases downward, with (0,0) being the upper right corner.
+For the recorded coordinates, the same holds. The angles correspondingly increase clockwise.

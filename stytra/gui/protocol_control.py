@@ -14,12 +14,11 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 class ProtocolControlToolbar(QToolBar):
     """GUI for controlling a ProtocolRunner.
 
-    This class implements:
+    This class implements the toolbar for controlling the protocol:
 
-        - selection box of the Protocol to be run;
-        - window for controlling Protocol parameters;
         - toggle button for starting/stopping the Protocol;
         - progress bar to display progression of the Protocol.
+        - a button and  window for controlling Protocol parameters;
 
      Parameters
     ----------

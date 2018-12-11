@@ -1,4 +1,4 @@
-Triggering a trytra protocol
+Triggering a Strytra protocol
 ============================
 
 Stytra is designed to be used in setups where the presentation of stimuli to

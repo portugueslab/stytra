@@ -32,7 +32,7 @@ Full-field luminance
 
 .. literalinclude:: ../../stytra/examples/record_stimuli.py
    :language: python
-   :lines: 45-49
+   :lines: 45-50
 
 Gratings
 ........
@@ -44,7 +44,7 @@ Gratings
 
 .. literalinclude:: ../../stytra/examples/record_stimuli.py
    :language: python
-   :lines: 70-73
+   :lines: 70-74
 
 OKR inducing rotating windmill stimulus
 .......................................
@@ -56,7 +56,7 @@ OKR inducing rotating windmill stimulus
 
 .. literalinclude:: ../../stytra/examples/record_stimuli.py
    :language: python
-   :lines: 60-63
+   :lines: 60-64
 
 Seamlessly-tiled image
 ......................
@@ -68,7 +68,7 @@ Seamlessly-tiled image
 
 .. literalinclude:: ../../stytra/examples/record_stimuli.py
    :language: python
-   :lines: 80-86
+   :lines: 80-87
 
 
 Radial sine (freely-swimming fish centering stimulus)
@@ -81,4 +81,4 @@ Radial sine (freely-swimming fish centering stimulus)
 
 .. literalinclude:: ../../stytra/examples/record_stimuli.py
    :language: python
-   :lines: 34
+   :lines: 34-36
