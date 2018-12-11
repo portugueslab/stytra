@@ -221,7 +221,6 @@ class CameraSelection(CameraViewWidget):
         # Get the tracking parameters from the experiment class and connect
         # their change signal to update ROI position:
         self.track_params = self.experiment.tracking_params
-        # self.track_params.sigTreeStateChanged.connect(self.set_pos_from_tree)
 
     def initialise_roi(self, roi):
         """ROI is initialised separately, so it can first be defined in the

@@ -66,14 +66,14 @@ class CameraExperiment(Experiment):
                 roi=camera.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_state = CameraControlParameters()
+            self.camera_state = CameraControlParameters(tree=self.dc)
         else:
             self.camera = VideoFileSource(
                 camera["video_file"],
                 rotation=camera.get("rotation", 0),
                 max_mbytes_queue=camera_queue_mb,
             )
-            self.camera_state = VideoControlParameters()
+            self.camera_state = VideoControlParameters(tree=self.dc)
 
         self.camera_framerate_acc = QueueDataAccumulator(
             self.camera.framerate_queue, ["camera"]
