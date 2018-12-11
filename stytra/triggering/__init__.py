@@ -81,7 +81,6 @@ class Trigger(Process):
         if start_event has to be set. Once it has been set, we wait an
         arbitrary time (0.1 s now) and then we clear it to be set again.
         """
-
         TIME_START_EVENT_ON = 0.1
         while True:
             self.kill_event.wait(0.0001)
@@ -119,6 +118,7 @@ class ZmqTrigger(Trigger):
 
         """
         self.port = port
+        self.scope_config = {}
         super().__init__()
 
     def check_trigger(self):
@@ -126,15 +126,21 @@ class ZmqTrigger(Trigger):
         string. Add to the queue_trigger_params Queue the received dictionary,
         so that the experiment class can store it with the rest of the data.
         """
-        self.lightsheet_config = self.zmq_socket.recv_json()
-        self.queue_trigger_params.put(self.lightsheet_config)
-        self.zmq_socket.send_json("received")
-
-        return True
+        # self.scope_config = self.zmq_socket.recv_json()
+        poller = zmq.Poller()
+        poller.register(self.zmq_socket, zmq.POLLIN)
+        if poller.poll(5):  # 10s timeout in milliseconds
+            self.scope_config = self.zmq_socket.recv_json()
+            self.queue_trigger_params.put(self.scope_config)
+            self.zmq_socket.send_json("received")
+            return True
+        else:
+            return False
 
     def run(self):
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.REP)
+        self.zmq_socket.setsockopt(zmq.LINGER, 0)
         self.zmq_socket.bind("tcp://*:{}".format(self.port))
         self.zmq_socket.setsockopt(zmq.RCVTIMEO, -1)
 
