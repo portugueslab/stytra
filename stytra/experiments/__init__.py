@@ -230,6 +230,7 @@ class Experiment(QObject):
             self.window_display.set_dims()
 
         if self.trigger is not None:
+            print("start")
             self.trigger.start()
 
     def restore_window_state(self):
@@ -450,9 +451,12 @@ class Experiment(QObject):
                 and self.protocol_runner.running
             ):
                 self.end_protocol(save=False)
+
         if self.trigger is not None:
             self.trigger.kill_event.set()
+            print("killed")
             self.trigger.join()
+            print("joined")
 
         st = self.window_main.saveState()
         geom = self.window_main.saveGeometry()
