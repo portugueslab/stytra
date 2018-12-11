@@ -1,21 +1,12 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus, StimulusCombiner, MovingGratingStimulus, \
-    HighResMovingWindmillStimulus, HighResWindmillStimulus
-from lightparam import Param
+from stytra.stimulation.stimuli.visual import StimulusCombiner, MovingGratingStimulus, \
+    HighResMovingWindmillStimulus
 import pandas as pd
 import numpy as np
-from PyQt5.QtGui import QRegion
+
 
 class CombinedProtocol(Protocol):
     name = "combined_protocol"  # every protocol must have a name.
-
-    def __init__(self):
-        super().__init__()
-        # Here we define these attributes as Param s. This will automatically
-        #  build a control for them and make them modifiable live from the
-        # interface.
-        # self.period_sec = Param(10., limits=(0.2, None))
-        # self.flash_duration = 5#Param(5., limits=(0., None))
 
     def get_stim_sequence(self):
         # This is the
@@ -35,9 +26,6 @@ class CombinedProtocol(Protocol):
             grating_angle=45,
             clip_mask=[0, 0.5, 1, 0.5])
 
-        # s_b = FullFieldVisualStimulus(
-        #     duration=7, color=(255, 0, 0), clip_mask=[0, 0., 1, 0.5])
-        #
         p = 1
         d = 5
 
@@ -50,7 +38,7 @@ class CombinedProtocol(Protocol):
         theta = [theta[0]] + list(theta) + [theta[-1]]
         df = pd.DataFrame(dict(t=t, theta=theta))
 
-        s_c = HighResMovingWindmillStimulus(df_param=df, clip_mask=0.3) #[0.5, 0., 0.5, 0.5])
+        s_c = HighResMovingWindmillStimulus(df_param=df, clip_mask=0.3)
 
         stimuli = [StimulusCombiner([s_a, s_b, s_c])]
         return stimuli

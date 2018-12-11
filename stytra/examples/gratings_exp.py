@@ -11,13 +11,6 @@ from pathlib import Path
 class GratingsProtocol(Protocol):
     name = "gratings_protocol"
 
-    stytra_config = dict(
-        camera=dict(
-            # video_file=r"C:\Users\lpetrucco\Desktop\testfish800Hz.mp4",
-            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
-        )
-    )
-
     def __init__(self):
         super().__init__()
 
@@ -26,7 +19,6 @@ class GratingsProtocol(Protocol):
         self.grating_vel = Param(-10.)  # gratings velocity
         self.grating_period = Param(10)  # grating spatial period
         self.grating_angle_deg = Param(90.)  # grating orientation
-        self.grating_shape = Param("square", limits=["square", "sine"])
 
     def get_stim_sequence(self):
         # Use six points to specify the velocity step to be interpolated:
@@ -48,7 +40,6 @@ class GratingsProtocol(Protocol):
                 df_param=df,
                 grating_angle=self.grating_angle_deg * np.pi / 180,
                 grating_period=self.grating_period,
-                wave_shape=self.grating_shape,
             )
         ]
 
