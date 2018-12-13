@@ -30,18 +30,6 @@ This should be everything you need to make ready before installing stytra.
 The simplest way to install Stytra is with pip::
     pip install stytra
 
-On the other hand, if you want to modify the internals of stytra or use the
-unreleased features, clone or download stytra from github and install it with::
-
-    pip install path_to_stytra/stytra
-
-If you want to be able to change the stytra code and use the changed version,
-install using the -e argument::
-
-
-    pip install -e path_to_stytra/stytra
-
-
 You can the installation by running one of the examples in stytra
 example folder! To run a simple looming stimulus experiment, you can
 type::
@@ -53,6 +41,22 @@ congratulations, installation was successful! If it crashes, check
 if you have all dependencies correctly installed. If it still does not work,
 open an issue on the `Stytra github page <https://github
 .com/portugueslab/stytra>`_.
+
+Editable installation
+.....................
+
+On the other hand, if you want to modify the internals of stytra or use the
+unreleased features, clone or download stytra from `github <https://github.com/portugueslab/stytra>`_ and install it with::
+
+    pip install path_to_stytra/stytra
+
+If you want to be able to change the stytra code and use the changed version,
+install using the -e argument::
+
+
+    pip install -e path_to_stytra/stytra
+
+
 
 Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
 :ref:`Configuring a computer for Stytra experiments`.
