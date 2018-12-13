@@ -1,6 +1,5 @@
 from collections import namedtuple
 from numba import jit
-import numpy as np
 
 BoutState = namedtuple("BoutState", "state vel i_inbout i_below n_after")
 

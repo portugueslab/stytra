@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 import pyqtgraph as pg
 import numpy as np
 import datetime
@@ -9,7 +9,7 @@ from stytra.utilities import reduce_to_pi
 
 from collections import deque
 from lightparam import Param, Parametrized
-from lightparam.gui import ControlSpin
+from lightparam.gui import ParameterGui
 
 from scipy.ndimage.filters import gaussian_filter1d
 
@@ -136,18 +136,26 @@ def normalise_bout(coord):
     return coord
 
 
-class BoutPlot(QWidget, Parametrized):
+class BoutPlot(QWidget):
     """ Plots the last few bouts in normalized coordinates, with fish facing
     to the right.
 
     """
-    def __init__(self, acc: QueueDataAccumulator, i_fish=0, n_bouts=10, n_save_max=300):
+    def __init__(self, acc: QueueDataAccumulator, i_fish=0,
+                 n_bouts=10, n_save_max=300):
         super().__init__()
         self.acc = acc
         self.bouts = deque()
         self.i_fish = i_fish
         self.processed_index = 0
-        self.velocity_threshold = Param(0.2)
+        self.detection_params = Parametrized(params=
+                                             dict(
+                                                 threshold=Param(0.2, (0.01, 5.0)),
+                                                 n_without_crossing=Param(5,(0,10)),
+                                                 pad_before=Param(5, (0, 20)),
+                                                 pad_after=Param(5, (0, 20)),
+                                                 min_bout_len=Param(1, (1, 30)),
+                                             ))
         self.n_bouts = n_bouts
         self.old_coords = None
         self.i_curve = 0
@@ -155,7 +163,10 @@ class BoutPlot(QWidget, Parametrized):
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().addWidget(ControlSpin(self, "velocity_threshold"))
+        self.btn_editparam = QPushButton("Detection parameters")
+        self.btn_editparam.clicked.connect(self.edit_params)
+        self.layout().addWidget(self.btn_editparam)
+        self.wnd_params = None
 
         self.vmax = 0
         self.lbl_vmax = QLabel()
@@ -173,10 +184,6 @@ class BoutPlot(QWidget, Parametrized):
             pg.PlotCurveItem(connect="finite") for _ in range(self.n_bouts)
         ]
 
-        # temporary, remove
-        # self.hline = pg.InfiniteLine(angle=0)
-        # self.vb_display.addItem(self.hline)
-
         self.colors = np.zeros(self.n_bouts)
         self.decay_constant = 0.99
 
@@ -186,9 +193,12 @@ class BoutPlot(QWidget, Parametrized):
         for c in self.bout_curves:
             self.vb_display.addItem(c)
 
+    def edit_params(self):
+        self.wnd_params = ParameterGui(self.detection_params)
+        self.wnd_params.show()
+
     def update(self):
         if not self.isVisible():
-            self.vmax = 0
             return
 
         current_index = len(self.acc.stored_data)
@@ -229,17 +239,14 @@ class BoutPlot(QWidget, Parametrized):
             self.bout_coords = [new_coords[0,:]]
 
         new_bout = None
-        if self.velocity_threshold > 0:
+        if self.detection_params.threshold > 0:
             self.bout_coords, bout_finished, self.bout_state = find_bouts_online(
                 vel,
                 new_coords,
                 self.bout_state,
                 bout_coords=self.bout_coords,
                 shift=pre_start,
-                threshold=self.velocity_threshold,
-                pad_after=5,
-                pad_before=4,
-                min_bout_len=5,
+                **self.detection_params.params.values,
             )
             if bout_finished:
                 new_bout = self.bout_coords

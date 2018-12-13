@@ -64,7 +64,7 @@ Define dynamic stimuli
 ----------------------
 Many stimuli may have quantities, such as velocity for gratings or
 angular velocity for windmills, that change over time. To define these
-kind of stimuli Stytra use a convenient syntax: a param_df `pandas<https://pandas.pydata.org>`_ DataFrame
+kind of stimuli Stytra use a convenient syntax: a param_df `pandas <https://pandas.pydata.org>`_ DataFrame
 with the specification of the desired parameter value at specific timepoints.
 The value at all the other timepoints will be linearly interpolated from the
 DataFrame. The dataframe has to contain a `t` column with the time, and one
