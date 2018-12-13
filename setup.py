@@ -24,7 +24,7 @@ setup(
         "pillow",
         "scikit-image",
         "imageio",
-        "lightparam>=0.35",
+        "lightparam>=0.3.5",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
