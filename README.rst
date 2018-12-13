@@ -40,6 +40,7 @@ This should be everything you need to make ready before installing stytra.
     installed and updated before installing stytra!
 
 The simplest way to install Stytra is with pip::
+
     pip install stytra
 
 On the other hand, if you want to modify the internals of stytra or use the
