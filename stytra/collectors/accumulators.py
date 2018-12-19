@@ -80,6 +80,7 @@ class Accumulator:
             self.monitored_headers = monitored_headers
         self.stored_data = []
         self.starting_time = None
+        self._header_dict = None
 
     def check_start(self):
         """ """

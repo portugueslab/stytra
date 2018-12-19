@@ -40,4 +40,5 @@ setup(
         "Source": "https://github.com/portugueslab/stytra",
         "Tracker": "https://github.com/portugueslab/stytra/issues",
     },
+    include_package_data=True,
 )
