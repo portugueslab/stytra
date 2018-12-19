@@ -283,7 +283,7 @@ class FishTrackingStimulus(PositionStimulus):
         super().update()
 
 
-class CenteringWrapper(DynamicStimulus):
+class ConditionalWrapper(DynamicStimulus):
     """ A meta-stimulus which turns on centering if the fish
     veers too much towrds the edge
 
@@ -291,32 +291,27 @@ class CenteringWrapper(DynamicStimulus):
 
     def __init__(
         self,
-        stimulus,
-        centering,
-        margin=200,
+        stim_true,
+        stim_false,
         pause_stimulus=False,
         reset_phase=0,
         **kwargs
     ):
         super().__init__(**kwargs)
-        self.name = "centering"
-        self.margin = margin ** 2
-        self.stimulus = stimulus
-        self.active = self.stimulus
+        self.name = "conditional"
+        self.stim_false = stim_false
+        self.stim_true = stim_true
+        self.active = self.stim_true
         self._elapsed_difference = 0
         self._elapsed_when_centering_started = 0
         self.pause_stimulus = pause_stimulus
-        self.centering = centering
         self.reset_phase = reset_phase
 
         self.on = False
         self.dynamic_parameters.append("centering_on")
-        self.xc = 320
-        self.yc = 240
 
-        self.duration = self.stimulus.duration
-        self.stimulus_dynamic = False
-        self.stimulus_dynamic = hasattr(stimulus, "dynamic_parameters")
+        self.duration = self.stim_true.duration
+        self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
         self._dt = 0
         self._past_t = 0
         self._was_centering = False
@@ -325,29 +320,32 @@ class CenteringWrapper(DynamicStimulus):
     def dynamic_parameter_names(self):
         if self.stimulus_dynamic:
             return (
-                super().dynamic_parameter_names + self.stimulus.dynamic_parameter_names
+                super().dynamic_parameter_names + self.stim_true.dynamic_parameter_names
             )
         else:
             return super().dynamic_parameter_names
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        self.stimulus.initialise_external(experiment)
-        self.centering.initialise_external(experiment)
+        self.stim_true.initialise_external(experiment)
+        self.stim_false.initialise_external(experiment)
 
     def get_state(self):
-        return self.stimulus.get_state()
+        return self.stim_true.get_state()
 
     def start(self):
         super().start()
-        self.stimulus.start()
-        self.centering.start()
+        self.stim_true.start()
+        self.stim_false.start()
 
     def get_dynamic_state(self):
         state = super().get_dynamic_state()
         if self.stimulus_dynamic:
-            state.update(self.stimulus.get_dynamic_state())
+            state.update(self.stim_true.get_dynamic_state())
         return state
+
+    def check_condition(self):
+        return True
 
     def update(self):
         super().update()
@@ -355,16 +353,15 @@ class CenteringWrapper(DynamicStimulus):
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
 
-        y, x, theta = self._experiment.estimator.get_position()
-        if x < 0 or ((x - self.xc) ** 2 + (y - self.yc) ** 2) > self.margin:
-            self.active = self.centering
+        if self.check_condition():
+            self.active = self.stim_false
             self.on = True
             self.duration += self._dt
             self.active.duration += self._dt
             self._elapsed_difference += self._dt
             self.active._elapsed = self._elapsed
         else:
-            self.active = self.stimulus
+            self.active = self.stim_true
             if self.reset_phase > 0 and self._was_centering:
                 phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
@@ -384,7 +381,23 @@ class CenteringWrapper(DynamicStimulus):
         self.active.update()
 
     def paint(self, p, w, h):
-        self.xc, self.yc = w / 2, h / 2
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
         self.active.paint(p, w, h)
+
+
+class CenteringWrapper(ConditionalWrapper):
+    def __init__(self, *args, margin=200, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = "centering"
+        self.margin = margin ** 2
+        self.xc = 320
+        self.yc = 240
+
+    def check_condition(self):
+        y, x, theta = self._experiment.estimator.get_position()
+        return x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin
+
+    def paint(self, p, w, h):
+        self.xc, self.yc = w / 2, h / 2
+        super().paint(p, w, h)
