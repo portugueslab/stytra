@@ -1,3 +1,5 @@
+import multiprocessing as mp
+
 from stytra.experiments import Experiment
 from stytra.experiments.tracking_experiments import (
     CameraExperiment,
@@ -11,7 +13,7 @@ from stytra.utilities import recursive_update
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
 
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QIcon
 
@@ -104,6 +106,7 @@ class Stytra:
 
     def __init__(self, camera=None, tracking=None, recording=None, exec=True, **kwargs):
         # Check if exist a default config file in the home (user) directory:
+        mp.set_start_method("spawn", force=True)
         default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():
             config = json.load(open(str(default_config_file)))
@@ -127,7 +130,8 @@ class Stytra:
 
         app = QApplication([])
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-
+        if app.devicePixelRatio() > 1:
+            app.setAttribute(Qt.AA_UseHighDpiPixmaps)
         class_kwargs = dict(app=app)
         class_kwargs.update(kwargs)
         class_kwargs.update(config)

@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.7.1",
+    version="0.7.2",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
     license="GPLv3+",
@@ -27,7 +27,7 @@ setup(
         "lightparam>=0.3.5",
     ],
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         # Pick your license as you wish (should match "license" above)
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
