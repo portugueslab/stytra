@@ -17,6 +17,7 @@ setup(
         "qdarkstyle",
         "qimage2ndarray",
         "deepdish",
+        "anytree",
         "pims",
         "GitPython",
         "colorspacious",
