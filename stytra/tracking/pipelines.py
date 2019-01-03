@@ -14,11 +14,15 @@ class PipelineNode(NodeMixin):
     def setup(self):
         self._params = Parametrized(params=self._process)
 
+    @property
+    def output_type_changed(self):
+        return False
+
     def process(self, *inputs):
         return self._process(*inputs, **self._params.params.values)
 
-    def process(self, *inputs, **kwargs):
-        return None
+    def _process(self, *inputs, **kwargs):
+        return [], None
 
 
 class ImageToImageNode(PipelineNode):
@@ -31,20 +35,27 @@ class ImageToImageNode(PipelineNode):
 
 
 class SourceNode(ImageToImageNode):
-    def __init__(self, *args, camera_queue, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name = "source"
-        self.camera_queue = camera_queue
 
-    def process(self):
-        return self.camera_queue.get(timeout=0.001)
+    def _process(self):
+        return [], None
+
+
+class CameraSourceNode(ImageToImageNode):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _process(self):
+        return [], self.camera_queue.get(timeout=0.001)
 
 
 class ImageToDataNode(PipelineNode):
     def __init__(self, *args, **kwargs):
         super().__init__()
         self.name = "testnode"
-        self._ouput_type = None
+        self._output_type = None
         self._params = None
         self._output_type_changed = False
 
@@ -76,19 +87,26 @@ class Pipeline:
         for node in PreOrderIter(self.root):
             node.setup()
 
-    def recursive_run(self, node: NodeMixin, *input_data):
+    def recursive_run(self, node: PipelineNode, *input_data):
+        output = node.process(*input_data)
         if isinstance(node, ImageToDataNode):
-            return node.process(*input_data)
-        else:
-            outputs = tuple(self.recursive_run(child, *input_data)
-                       for child in node.children)
-            if self._output_type is None or node.output_type_changed:
-                self._output_type = namedtuple("o",
-                                               chain.from_iterable(k._fields
-                                                                   for k in outputs))
+            return output
+
+        child_outputs = tuple(self.recursive_run(child, output[1])
+                   for child in node.children)
+        if self._output_type is None or node.output_type_changed:
+            self._output_type = namedtuple("o",
+                                           chain.from_iterable(
+                                               map(lambda x:x[1]._fields,
+                                                    child_outputs)))
+        # collect all diagnostic messages and return a named tuple collecting
+        # all the outputs
+        return (output[0]+list(chain.from_iterable(map(lambda x:x[0], child_outputs))),
+                self._output_type(*(chain.from_iterable(
+                    map(lambda x:x[1], child_outputs)))))
 
     def run(self):
-        recursive_run(self.root)
+        return self.recursive_run(self.root)
 
 
 
