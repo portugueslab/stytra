@@ -27,8 +27,8 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         self.n_points = n_points
         self.start = datetime.datetime.now()
         self.data_accumulator = data_accumulator
-        self.ind_x = self.data_accumulator.header_list.index("x")
-        self.ind_y = self.data_accumulator.header_list.index("y")
+        self.ind_x = self.data_accumulator.columns.index("x")
+        self.ind_y = self.data_accumulator.columns.index("y")
 
     def update(self):
         """ """

@@ -3,15 +3,16 @@ from numba import jit
 from lightparam import Param, Parametrized
 from scipy.ndimage.filters import gaussian_filter1d
 from stytra.utilities import reduce_to_pi
+from stytra.tracking.pipelines import ImageToDataNode
 
 
-class TailTrackingMethod:
+class TailTrackingMethod(ImageToDataNode):
     """General tail tracking method."""
 
     name = "tail"
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__("tail_tracking", *args, **kwargs)
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "tail_track"
 
@@ -33,7 +34,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         self.resting_angles = None
         self.previous_angles = None
 
-    def detect(
+    def _process(
         self,
         im,
         tail_start: Param((100, 100), gui=False),

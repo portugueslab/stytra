@@ -80,6 +80,7 @@ class Pipeline:
         self.display_overlay = None
         self.display_handles = None
         self.root = SourceNode()
+        self.diagnostic_image = None
         self.selected_output = None
         self._output_type = None
         self.all_params = dict()

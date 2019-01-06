@@ -4,6 +4,7 @@ import numpy as np
 from queue import Empty
 import pandas as pd
 import json
+from _collections import namedtuple
 
 
 class Accumulator:
@@ -18,13 +19,12 @@ class Accumulator:
     Queue or a DynamicStimulus attribute) are defined in subclasses of the
     Accumulator.
 
-    Data that end up in the stored_data list must be tuples where the first
+    Data that end up in the stored_data list must be NamedTuples where the first
     element is a timestamp.
     Therefore, stored_data of an Accumulator that is fed 2 values will be
     something like
     [(t_0, x_0, y_0), (t_0, x_0, y_0), ...]
 
-    Headers from the n data points must be assigned to the header_list list.
 
     Data can be retrieved from the Accumulator as a pandas DataFrame with the
     :meth:`get_dataframe() <Accumulator.get_dataframe()>` method.
@@ -41,12 +41,12 @@ class Accumulator:
     """
 
     def __init__(
-        self, fps_calc_points=10, header_list=None, monitored_headers=None, name=""
+        self, fps_calc_points=10, monitored_headers=None, name=""
     ):
         """ """
         self.name = name
         self.stored_data = []
-        self.header_list = ["t"] + (header_list if header_list else [])
+        self.times = []
         self.monitored_headers = (
             monitored_headers
         )  # headers which are included in the stream plot
@@ -54,31 +54,48 @@ class Accumulator:
         self.fps_calc_points = fps_calc_points
         self._header_dict = None
 
+    def __getitem__(self, item):
+        if isinstance(item, tuple):
+            return np.array(getattr(k, item[1]) for k in self.stored_data[item[0]])
+
+        if isinstance(item, str):
+            return np.array(getattr(k, item[1]) for k in self.stored_data)
+
+    @property
+    def t(self):
+        return np.array(self.times)
+
+    @property
+    def columns(self):
+        try:
+            return self.stored_data[-1]._fields
+        except IndexError:
+            raise ValueError("Accumulator empty, data types not known")
+
     @property
     def header_dict(self):
         """  for each header name gives the column
         """
         if self._header_dict is None:
-            self._header_dict = {hn: i for i, hn in enumerate(self.header_list)}
+            self._header_dict = {hn: i for i, hn in enumerate(self.columns)}
         return self._header_dict
 
-    def reset(self, header_list=None, monitored_headers=None):
+    def reset(self, monitored_headers=None):
         """Reset accumulator and assign a new headers list.
 
         Parameters
         ----------
-        header_list : list of str
-             List with the headers Default value = None)
+        monitored_headers : list of str
+             List with the headers displayed by default Default value = None)
 
         Returns
         -------
 
         """
-        if header_list is not None:
-            self.header_list = ["t"] + header_list
         if monitored_headers is not None:
             self.monitored_headers = monitored_headers
         self.stored_data = []
+        self.times = []
         self.starting_time = None
         self._header_dict = None
 
@@ -86,11 +103,6 @@ class Accumulator:
         """ """
         if self.starting_time is None:
             self.starting_time = datetime.datetime.now()
-
-    def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers.
-        """
-        return pd.DataFrame(self.get_last_n(), columns=self.header_list)
 
     def get_fps(self):
         """ """
@@ -122,23 +134,13 @@ class Accumulator:
         else:
             last_n = len(self.stored_data)
 
-        if len(self.stored_data) == 0:
-            return np.zeros(len(self.header_list)).reshape(1, len(self.header_list))
-        else:
-            data_list = self.stored_data[-max(last_n, 1) :]
+        if last_n == 0:
+            return None
 
-            # The length of the tuple in the accumulator may change. Here we
-            # make sure we take only the elements that have the same
-            # dimension as the last one.
-            n_take = 1
-            if len(data_list) > 2:
-                for d in data_list[-2:0:-1]:
-                    if len(d) == len(data_list[-1]):
-                        n_take += 1
-                    else:
-                        break
-            obar = np.array(data_list[-n_take:])
-            return obar
+        df = pd.DataFrame.from_records(self.stored_data[-last_n:],
+                                       columns=self.stored_data[-1]._fields)
+        df["t"] = np.array(self.times[-last_n:])
+        return df
 
     def get_last_t(self, t):
         """
@@ -164,6 +166,11 @@ class Accumulator:
         except OverflowError:
             return self.get_last_n(1)
 
+    def get_dataframe(self):
+        """Returns pandas DataFrame with data and headers.
+        """
+        return self.get_last_n(len(self.stored_data))
+
     def save(self, path, format="csv"):
         """ Saves the content of the accumulator in a tabular format.
         Choose CSV for widest compatibility, HDF if using Python only,
@@ -179,15 +186,16 @@ class Accumulator:
 
         """
         outpath = path + "." + format
+        df = self.get_dataframe()
         if format == "csv":
             # replace True and False in csv files:
-            self.get_dataframe().replace({True: 1, False: 0}).to_csv(outpath, sep=";")
+            df.replace({True: 1, False: 0}).to_csv(outpath, sep=";")
         elif format == "feather":
-            self.get_dataframe().to_feather(outpath)
+            df.to_feather(outpath)
         elif format == "hdf5":
-            self.get_dataframe().to_hdf(outpath, "/data", complib="blosc", complevel=5)
+            df.to_hdf(outpath, "/data", complib="blosc", complevel=5)
         elif format == "json":
-            json.dump(self.get_dataframe().to_dict(), open(outpath, "w"))
+            json.dump(df.to_dict(), open(outpath, "w"))
         else:
             raise (NotImplementedError(format + " is not an implemented log foramt"))
 
@@ -225,11 +233,10 @@ class QueueDataAccumulator(QObject, Accumulator):
         self.experiment = experiment
 
         self.data_queue = data_queue
-        self.stored_data = []
 
         # First data column will always be time:
         if header_list:
-            self.header_list.extend(header_list)
+            self.columns.extend(header_list)
 
     def update_list(self):
         """Upon calling put all available data into a list.
@@ -247,50 +254,10 @@ class QueueDataAccumulator(QObject, Accumulator):
                 t_ms = (t - self.starting_time).total_seconds()
 
                 # append:
-                l = (t_ms,) + tuple(data)
-                self.stored_data.append(l)
-            except Empty:
-                break
-
-
-class QueueSummingAccumulator(QObject, Accumulator):
-    def __init__(self, data_queues, header_list=None, **kwargs):
-        """ Accumulator using for summing inputs, current use
-        for summing framerates of multiple dispatchers"""
-        super().__init__(**kwargs)
-
-        # Store externally the starting time make us free to keep
-        # only time differences in milliseconds in the list (faster)
-        self.starting_time = None
-
-        self.data_queues = data_queues
-        self.stored_data = []
-
-        # First data column will always be time:
-        if header_list:
-            self.header_list.extend(header_list)
-
-    def update_list(self):
-        """Upon calling put all available data into a list.
-        """
-        while True:
-            try:
-                # Get data from queue:
-                d_s = 0
-                for q in self.data_queues:
-                    t, data = q.get(timeout=0.00001)
-                    d_s += data[0]
-
-                # If we are at the starting time:
-                if len(self.stored_data) == 0:
-                    self.starting_time = t
-
-                # Time in ms (for having np and not datetime objects)
-                t_ms = (t - self.starting_time).total_seconds()
-
-                # append:
-                l = (t_ms, d_s)
-                self.stored_data.append(l)
+                self.times.append(t_ms)
+                if type(data) != type(self.stored_data[-1]):
+                    self.reset()
+                self.stored_data.append(data)
             except Empty:
                 break
 
@@ -309,6 +276,7 @@ class DynamicLog(Accumulator):
     def __init__(self, stimuli):
         """ """
         self.dict_header = None
+        self._tupletype = None
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
 
@@ -326,11 +294,10 @@ class DynamicLog(Accumulator):
         -------
 
         """
-        data_list = [time] + [np.nan] * (len(self.header_list) - 1)
-        for key, val in data.items():
-            data_list[self.dict_header[key]] = val
         self.check_start()
-        self.stored_data.append(tuple(data_list))
+        self.times.append(time)
+        self.stored_data.append(self._tupletype(*(data.get(f, np.nan)
+                                                  for f in self._tupletype.fields)))
 
     def update_stimuli(self, stimuli):
         dynamic_params = []
@@ -341,17 +308,17 @@ class DynamicLog(Accumulator):
                         dynamic_params.append(new_param)
             except AttributeError:
                 pass
-        self.header_list = ["t"] + dynamic_params
+        self._tupletype = namedtuple("s", dynamic_params)
         self.dict_header = {k: i for i, k in enumerate(self.header_list)}
         self.stored_data = []
 
 
+# TODO update for namedtuples
 class EstimatorLog(Accumulator):
     """ """
 
     def __init__(self, headers):
         super().__init__()
-        self.header_list = ("t",) + tuple(headers)
         self.stored_data = []
 
     def update_list(self, data):

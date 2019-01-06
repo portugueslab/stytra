@@ -113,15 +113,7 @@ class FrameDispatcher(FrameProcess):
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue
-            if self.processing_parameter_queue is not None:
-                try:
-                    # Read all parameters from the queue:
-                    self.processing_parameters.update(
-                        **self.processing_parameter_queue.get(timeout=0.0001)
-                    )
-
-                except Empty:
-                    pass
+            self.update_params()
 
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
@@ -132,54 +124,27 @@ class FrameDispatcher(FrameProcess):
                 continue
 
             # If a processing function is specified, apply it:
-            try:
-                if self.preprocessing_cls is not None:
-                    processed = preprocessor.process(
-                        frame, **self.processing_parameters
-                    )
-                else:
-                    processed = frame
-            except cv2.error:
-                processed = frame
 
-            if self.tracking_cls is not None:
-                message, output = tracker.detect(
-                    processed, **self.processing_parameters
-                )
+            messages, output = self.pipeline.run(frame)
 
-                if len(message) > 0:
-                    self.message_queue.put(message)
+            for msg in messages:
+                self.message_queue.put(msg)
 
-                # Handle the single output queue
-                while (
-                    self.processing_counter.value != frame_idx - 1
-                    and not self.finished_signal.is_set()
-                ):
-                    sleep(0.00001)
-                with self.processing_counter.get_lock():
-                    self.processing_counter.value = frame_idx
-                self.output_queue.put((datetime.now(), output))
+            # Handle the single output queue
+            while (
+                self.processing_counter.value != frame_idx - 1
+                and not self.finished_signal.is_set()
+            ):
+                sleep(0.00001)
+            with self.processing_counter.get_lock():
+                self.processing_counter.value = frame_idx
+            self.output_queue.put((time, output))
 
             # calculate the frame rate
             self.update_framerate()
 
             # put current frame into the GUI queue
-            if self.gui_dispatcher:
-                if self.processing_parameters.get("display_processed", "raw") != "raw":
-                    try:
-                        self.send_to_gui(tracker.diagnostic_image)
-                    except AttributeError:
-                        if processed.shape != frame.shape:
-                            processed = cv2.resize(
-                                processed,
-                                None,
-                                fx=frame.shape[0] / processed.shape[0],
-                                fy=frame.shape[1] / processed.shape[1],
-                                interpolation=cv2.INTER_AREA,
-                            )
-                        self.send_to_gui(processed)
-                else:
-                    self.send_to_gui(frame)
+            self.send_to_gui(self.pipeline.diagnostic_image or frame)
 
         return
 

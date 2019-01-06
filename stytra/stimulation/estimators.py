@@ -79,7 +79,7 @@ class PositionEstimator(Estimator):
         past_coords = {
             name: value
             for name, value in zip(
-                self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
+                self.acc_tracking.columns, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
@@ -93,7 +93,7 @@ class PositionEstimator(Estimator):
         past_coords = {
             name: value
             for name, value in zip(
-                self.acc_tracking.header_list, self.acc_tracking.get_last_n(1)[0, :]
+                self.acc_tracking.columns, self.acc_tracking.get_last_n(1)[0, :]
             )
         }
         if self.calibrator.cam_to_proj is None or not np.isfinite(past_coords["f0_x"]):
