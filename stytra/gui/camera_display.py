@@ -212,7 +212,7 @@ class CameraSelection(CameraViewWidget):
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
         self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
-        self.track_params = self.experiment.tracking_method.params
+        self.tail_params = self.experiment.tracking_method.params
 
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
@@ -220,7 +220,7 @@ class CameraSelection(CameraViewWidget):
 
         # Get the tracking parameters from the experiment class and connect
         # their change signal to update ROI position:
-        self.track_params = self.experiment.tracking_params
+        self.tail_params = self.experiment.tracking_params
 
     def initialise_roi(self, roi):
         """ROI is initialised separately, so it can first be defined in the
@@ -265,6 +265,8 @@ class CameraSelection(CameraViewWidget):
         pass
 
 
+
+
 class CameraEmbeddedTrackingSelection(CameraSelection):
     def __init__(self, tail=False, eyes=False, **kwargs):
         """ """
@@ -274,14 +276,15 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         # Draw ROI for tail selection:
         if tail:
+            self.tail_params = self.experiment.pipeline.tailtrack._params
             self.roi_tail = CustomLineROI(
                 (
-                    self.track_params.tail_start[::-1],
+                    self.tail_params.tail_start[::-1],
                     (
-                        self.track_params.tail_start[1]
-                        + self.track_params.tail_length[1],
-                        self.track_params.tail_start[0]
-                        + self.track_params.tail_length[0],
+                        self.tail_params.tail_start[1]
+                        +self.tail_paramss.tail_length[1],
+                        self.tail_params.tail_start[0]
+                        + self.tail_params.tail_length[0],
                     ),
                 ),
                 pen=dict(color=(40, 5, 200), width=3),
@@ -300,9 +303,10 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
         self.pre_th = [0, 0]
         if eyes:
+            self.eye_params = self.experiment.pipeline.eyetrack._params
             self.roi_eyes = pg.ROI(
-                pos=self.track_params.wnd_pos,
-                size=self.track_params.wnd_dim,
+                pos=self.eye_params.wnd_pos,
+                size=self.eye_params.wnd_dim,
                 pen=dict(color=(5, 40, 200), width=3),
             )
 
@@ -332,18 +336,18 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         if not self.setting_param_val:
             if self.tail:
                 p1, p2 = self.roi_tail.getHandles()
-                p1.setPos(QPointF(*self.track_params.tail_start[::-1]))
+                p1.setPos(QPointF(*self.tail_params.tail_start[::-1]))
                 p2.setPos(
                     QPointF(
-                        self.track_params.tail_start[1]
-                        + self.track_params.tail_length[1],
-                        self.track_params.tail_start[0]
-                        + self.track_params.tail_length[0],
+                        self.tail_params.tail_start[1]
+                        + self.tail_params.tail_length[1],
+                        self.tail_params.tail_start[0]
+                        + self.tail_params.tail_length[0],
                     )
                 )
             if self.eyes:
-                self.roi_eyes.setPos(self.track_params.wnd_pos, finish=False)
-                self.roi_eyes.setSize(self.track_params.wnd_dim)
+                self.roi_eyes.setPos(self.tail_params.wnd_pos, finish=False)
+                self.roi_eyes.setSize(self.tail_params.wnd_dim)
 
     def set_pos_from_roi(self):
         """Go to parent for definition."""
@@ -351,16 +355,16 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         if self.tail:
             p1, p2 = self.roi_tail.getHandles()
             # with self.track_params.treeChangeBlocker():
-            self.track_params.tail_start = (p1.y(), p1.x())
-            self.track_params.params.tail_start.changed = True
-            self.track_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
-            self.track_params.params.tail_length.changed = True
+            self.tail_params.tail_start = (p1.y(), p1.x())
+            self.tail_params.params.tail_start.changed = True
+            self.tail_params.tail_length = (p2.y() - p1.y(), p2.x() - p1.x())
+            self.tail_params.params.tail_length.changed = True
 
         if self.eyes:
-            self.track_params.params.wnd_dim.changed = True
-            self.track_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
-            self.track_params.params.wnd_pos.changed = True
-            self.track_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
+            self.tail_params.params.wnd_dim.changed = True
+            self.tail_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
+            self.tail_params.params.wnd_pos.changed = True
+            self.tail_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def update_image(self):
@@ -372,32 +376,18 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         if len(self.experiment.acc_tracking.stored_data) > 1:
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
-            recent_data = self.experiment.acc_tracking.stored_data[-50:]
-            dt_list = [
-                (
-                    self.experiment.acc_tracking.starting_time
-                    + datetime.timedelta(0, t[0])
-                    - self.current_frame_time
-                ).total_seconds()
-                for t in recent_data
-            ]
-            idx = np.argmin(np.abs(np.array(dt_list)))
-
-            retrieved_data = recent_data[idx][1:]
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
             # Check for data to be displayed:
             if self.tail:
                 # Retrieve tail angles from tail (if there are eyes, last 5*2
                 # points describe the ellipses):
-                if self.eyes:
-                    angles = retrieved_data[1 : -int(self.eyes) * 10]
-                else:
-                    angles = retrieved_data[1:]
+
+                angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
+                          for i in range(self.tail_params.n_output_segments)]
 
                 # Get tail position and length from the parameters:
-                start_x = self.track_params.tail_start[0]
-                start_y = self.track_params.tail_start[1]
-                tail_len_x = self.track_params.tail_length[0]
-                tail_len_y = self.track_params.tail_length[1]
+                start_x, start_y = self.tail_params.tail_start
+                tail_len_x, tail_len_y = self.tail_params.tail_length
                 tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
 
                 # Get segment length:
@@ -413,6 +403,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 points = np.array(points)
                 self.curve_tail.setData(x=points[:, 1], y=points[:, 0])
 
+            # TODO refactor with namedtuples and rotation matrices.
             if self.eyes:
                 im = self.current_image
 
@@ -426,7 +417,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             ):
                                 ell.setPen(col, width=3)
 
-                            pos = self.track_params.wnd_pos
+                            pos = self.tail_params.wnd_pos
 
                             # This long annoying part take care of the calculation
                             # of rotation and translation for the ROI starting from
@@ -474,6 +465,12 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 self.image_item.setImage(im, autoLevels=self.btn_autorange.isChecked())
 
+
+# TODO separate eyes and tail display, and then merge for both instead
+# of having a merged class with both
+class TailTrackingSelection(CameraEmbeddedTrackingSelection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,tail=True, **kwargs)
 
 class CameraViewCalib(CameraViewWidget):
     """ """

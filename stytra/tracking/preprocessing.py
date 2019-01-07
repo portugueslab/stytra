@@ -8,16 +8,13 @@ import cv2
 import numpy as np
 from numba import vectorize, uint8, float32
 from lightparam import Parametrized, Param
+from stytra.tracking.pipelines import ImageToImageNode
 
+class Prefilter(ImageToImageNode):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, name="filtering", **kwargs)
 
-class Prefilter:
-    def __init__(self):
-        super().__init__()
-        self.params = Parametrized(name="tracking/prefiltering", params=self.process)
-
-    # We have to rely on class methods here, as Parametrized objects can only
-    # live in the main process
-    def process(
+    def _process(
         self,
         im,
         image_scale: Param(1.0, (0.05, 1.0)),
@@ -72,11 +69,10 @@ def negdif(xf, y):
         return 0
 
 
-class BackgorundSubtractor:
+class BackgorundSubtractor(ImageToImageNode):
     def __init__(self):
         super().__init__()
         self.background_image = None
-        self.i = 0
 
     def process(
         self, im, learning_rate=0.001, learn_every=1, reset=False, **extraparams

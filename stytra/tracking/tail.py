@@ -4,6 +4,7 @@ from lightparam import Param, Parametrized
 from scipy.ndimage.filters import gaussian_filter1d
 from stytra.utilities import reduce_to_pi
 from stytra.tracking.pipelines import ImageToDataNode
+from collections import namedtuple
 
 
 class TailTrackingMethod(ImageToDataNode):
@@ -15,22 +16,19 @@ class TailTrackingMethod(ImageToDataNode):
         super().__init__("tail_tracking", *args, **kwargs)
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "tail_track"
+        self._output_type = None
 
     def reset_state(self):
-        self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_output_segments)
-        ]
+        self._output_type = namedtuple("t", ["tail_sum"] + [
+            "theta_{:02}".format(i) for i in range(self._params.n_output_segments)
+        ])
 
 
 class CentroidTrackingMethod(TailTrackingMethod):
     """Center-of-mass method to find consecutive segments."""
 
-    def __init__(self):
-        super().__init__()
-        self.params = Parametrized(name="tracking/tail", params=self.detect)
-        self.accumulator_headers = ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self.params.n_output_segments)
-        ]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.resting_angles = None
         self.previous_angles = None
 
@@ -149,7 +147,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
         # Total curvature as sum of the last 2 angles - sum of the first 2
         return (
             message,
-            (angles[-1] + angles[-2] - angles[0] - angles[1],) + tuple(angles[:]),
+            self._output_type(angles[-1] + angles[-2] - angles[0] - angles[1],
+                              *angles),
         )
 
 

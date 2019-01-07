@@ -11,7 +11,6 @@ from stytra.gui.container_windows import (
 from stytra.hardware.video import (
     CameraControlParameters,
     VideoControlParameters,
-    VideoWriter,
     VideoFileSource,
     CameraSource,
 )
@@ -20,9 +19,10 @@ from stytra.hardware.video import (
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
-from stytra.tracking.tail import TailTrackingMethod
-from stytra.tracking.eyes import EyeTrackingMethod
-from stytra.tracking.fish import FishTrackingMethod
+from stytra.experiments.fish_pipelines import pipeline_dict
+# TODO implement Pipelines for the other two methods
+# from stytra.tracking.eyes import EyeTrackingMethod
+# from stytra.tracking.fish import FishTrackingMethod
 from lightparam.param_qt import ParametrizedQt
 
 from stytra.stimulation.estimators import (
@@ -200,51 +200,26 @@ class TrackingExperiment(CameraExperiment):
 
         self.processing_params_queue = Queue()
         self.tracking_output_queue = Queue()
-        self.processing_counter = Value("i", -1)
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.tracking_method_name = tracking["method"]
-        preproc_method_name = tracking.get("preprocessing", None)
-
-        # If centroid or eyes method is used, prefilter by default:
-        if preproc_method_name is None and self.tracking_method_name in [
-            "tail",
-            "eyes",
-        ]:
-            preproc_method_name = "prefilter"
-
-        preproc_method = get_preprocessing_method(preproc_method_name)
-        self.preprocessing_method = preproc_method() if preproc_method else None
-        if preproc_method:
-            self.preprocessing_params = ParametrizedQt(
-                name="tracking/preprocessing",
-                params=self.preprocessing_method.process,
-                tree=self.dc,
-            )
-        self.tracking_method = get_tracking_method(self.tracking_method_name)()
-        self.tracking_params = ParametrizedQt(
-            name="tracking/" + type(self.tracking_method).name,
-            params=self.tracking_method.detect,
-            tree=self.dc,
-        )
+        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking
 
         self.frame_dispatcher = FrameDispatcher(
                 in_frame_queue=self.camera.frame_queue,
                 finished_signal=self.camera.kill_event,
-                pipeline=self.pipeline,
+                pipeline=self.pipeline_cls,
                 processing_parameter_queue=self.processing_params_queue,
                 output_queue=self.tracking_output_queue,
-                processing_counter=self.processing_counter,
                 gui_dispatcher=True,
                 gui_framerate=20,
             )
 
+        self.pipeline = self.pipeline_cls()
+
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
-            data_queue=self.tracking_output_queue,
-            monitored_headers=getattr(self.tracking_method, "monitored_headers", None),
-            header_list=self.tracking_method.accumulator_headers,
+            data_queue=self.tracking_output_queue
         )
 
         # Data accumulator is updated with GUI timer:
@@ -275,7 +250,6 @@ class TrackingExperiment(CameraExperiment):
         )
 
         self.gui_timer.timeout.connect(self.acc_framerate.update_list)
-        self.logger.info("Tracking with ", self.n_dispatchers, " processess")
 
     def refresh_accumulator_headers(self):
         """ Refreshes the data accumulators if something changed
@@ -288,12 +262,7 @@ class TrackingExperiment(CameraExperiment):
         self.refresh_plots()
 
     def make_window(self):
-        tail = isinstance(self.tracking_method, TailTrackingMethod)
-        eyes = isinstance(self.tracking_method, EyeTrackingMethod)
-        fish = isinstance(self.tracking_method, FishTrackingMethod)
-        self.window_main = TrackingExperimentWindow(
-            experiment=self, tail=tail, eyes=eyes, fish=fish
-        )
+        self.window_main = TrackingExperimentWindow(experiment=self)
         self.window_main.construct_ui()
         self.initialize_plots()
         self.window_main.show()

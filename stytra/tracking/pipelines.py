@@ -47,17 +47,8 @@ class SourceNode(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__("source", *args, **kwargs)
 
-    def _process(self, **kwargs):
-        return [], None
-
-
-class CameraSourceNode(SourceNode):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def _process(self):
-        return [], self.camera_queue.get(timeout=0.001)
+    def _process(self, input, **kwargs):
+        return [], input
 
 
 class ImageToDataNode(PipelineNode):
@@ -83,6 +74,7 @@ class Pipeline:
     def __init__(self):
         self.display_overlay = None
         self.display_handles = None
+        self.extra_widget = None
         self.root = SourceNode()
         self.selected_output = None
         self._output_type = None
@@ -102,14 +94,14 @@ class Pipeline:
                 self.all_params[node.strpath] = node._params
                 self.node_dict[node.strpath] = node
             diag_images.extend((node.strpath+"/"+imname for imname in node.diagnostic_image_options))
-        self.all_params["diagnostic_image"] = Parametrized(params=dict(image=Param("unprocessed",
+        self.all_params["diagnostics"] = Parametrized(params=dict(image=Param("unprocessed",
                                                                                    ["unprocessed"]+diag_images)))
     @property
     def diagnostic_image(self):
-        imname = self.all_params["diagnostic_image"].image
+        imname = self.all_params["diagnostics"].image
         if imname == "unprocessed":
             return None
-        # if we are setting the diagnostig image to one from the nodes,
+        # if we are setting the diagnostic image to one from the nodes,
         # navigate to the node and select the proper diagnostic image
         return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
 
@@ -119,7 +111,7 @@ class Pipeline:
     def deserialize_params(self, rec_params):
         for item, vals in rec_params.items():
             self.all_params[item].params.values = vals
-        imname = self.all_params["diagnostic_image"].image
+        imname = self.all_params["diagnostics"].image
         if imname != "unprocessed":
             self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]
 
@@ -144,8 +136,8 @@ class Pipeline:
                 self._output_type(*(chain.from_iterable(
                     map(lambda x: x.data, child_outputs)))))
 
-    def run(self):
-        return self.recursive_run(self.root)
+    def run(self, input):
+        return self.recursive_run(self.root, input)
 
 
 

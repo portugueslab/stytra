@@ -23,7 +23,6 @@ import json
 
 from pathlib import Path
 
-
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified

@@ -5,7 +5,7 @@ from queue import Empty
 import pandas as pd
 import json
 from collections import namedtuple
-
+from bisect import bisect_right
 
 class Accumulator:
     """Abstract class for accumulating streams of data.
@@ -64,6 +64,23 @@ class Accumulator:
     @property
     def t(self):
         return np.array(self.times)
+
+    def values_at_abs_time(self, time):
+        """ Finds the values in the accumulator closest to the datetime time
+
+        Parameters
+        ----------
+        time : datetime
+            time to search for
+
+        Returns
+        -------
+        namedtuple of values
+
+        """
+        find_time = (time - self.starting_time)
+        i = bisect_right(self.times, find_time).total_seconds()
+        return self.stored_data[i]
 
     @property
     def columns(self):
@@ -222,7 +239,7 @@ class QueueDataAccumulator(QObject, Accumulator):
 
     """
 
-    def __init__(self, data_queue, header_list=None, experiment=None, **kwargs):
+    def __init__(self, data_queue, experiment=None, **kwargs):
         """ """
         super().__init__(**kwargs)
 
@@ -234,9 +251,7 @@ class QueueDataAccumulator(QObject, Accumulator):
 
         self.data_queue = data_queue
 
-        # First data column will always be time:
-        if header_list:
-            self.columns.extend(header_list)
+
 
     def update_list(self):
         """Upon calling put all available data into a list.
@@ -276,7 +291,6 @@ class DynamicLog(Accumulator):
 
     def __init__(self, stimuli):
         """ """
-        self.dict_header = None
         self._tupletype = None
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
@@ -310,7 +324,6 @@ class DynamicLog(Accumulator):
             except AttributeError:
                 pass
         self._tupletype = namedtuple("s", dynamic_params)
-        self.dict_header = {k: i for i, k in enumerate(self.header_list)}
         self.stored_data = []
 
 

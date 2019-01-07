@@ -99,7 +99,7 @@ class FrameDispatcher(FrameProcess):
     def retrieve_params(self):
         while True:
             try:
-                param_dict = self.control_queue.get(timeout=0.0001)
+                param_dict = self.processing_parameter_queue.get(timeout=0.0001)
                 self.pipeline.deserialize_params(param_dict)
             except Empty:
                 break

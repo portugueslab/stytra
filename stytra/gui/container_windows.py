@@ -178,16 +178,12 @@ class SimpleExperimentWindow(QMainWindow):
 class CameraExperimentWindow(SimpleExperimentWindow):
     """ """
 
-    def __init__(self, fish=False, tail=False, eyes=False, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        if fish:
-            self.camera_display = CameraViewFish(experiment=kwargs["experiment"])
-        elif tail or eyes:
-            self.camera_display = CameraEmbeddedTrackingSelection(
-                experiment=kwargs["experiment"], tail=tail, eyes=eyes
-            )
-        else:
+        try:
+            self.camera_display = self.experiment.pipeline.display_overlay(experiment=self.experiment)
+        except AttributeError:
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
         self.plot_framerate = MultiStreamPlot(
@@ -269,14 +265,11 @@ class TrackingExperimentWindow(CameraExperimentWindow):
     """
 
     def __init__(
-        self, tracking=True, tail=False, eyes=False, fish=False, *args, **kwargs
+        self, tracking=True, *args, **kwargs
     ):
-        super().__init__(*args, tail=tail, eyes=eyes, fish=fish, **kwargs)
+        super().__init__(*args,  **kwargs)
         # TODO refactor movement detection
         self.tracking = tracking
-        self.tail = tail
-        self.eyes = eyes
-        self.fish = fish
 
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
@@ -286,11 +279,10 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.monitoring_layout.addWidget(self.stream_plot)
 
-        if tail:
-            self.tail_widget = TailStreamPlot(self.experiment.acc_tracking, [])
-
-        if fish:
-            self.bout_widget = BoutPlot(self.experiment.acc_tracking)
+        self.extra_widget = (self.experiment.pipeline.extra_widget(
+            self.experiment.acc_tracking)
+                             if self.experiment.pipeline.extra_widget is not None
+                             else None)
 
         # Tracking params button:
         self.button_tracking_params = IconButton(
@@ -303,8 +295,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
 
         self.track_params_wnd = None
 
-        for fd in self.experiment.frame_dispatchers:
-            self.status_display.addMessageQueue(fd.message_queue)
+        self.status_display.addMessageQueue(self.experiment.frame_dispatcher.message_queue)
 
     def construct_ui(self):
         """ """
@@ -319,8 +310,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
 
-        if self.tail:
-            self.experiment.gui_timer.timeout.connect(self.tail_widget.update)
+        if self.extra_widget:
+            self.experiment.gui_timer.timeout.connect(self.extra_widget.update)
+
             tail_dock = QDockWidget("Tail curvature", self)
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)

@@ -66,10 +66,10 @@ class TailStreamPlot(QWidget):
     """ Displayes the curvature of the tail in time using a heatmap
 
     """
-    def __init__(self, acc, headers, n_points=300):
+    def __init__(self, acc, n_points=300):
         super().__init__()
         self.acc = acc
-        self.headers = headers
+        self.headers = None
         self.n_points = n_points
 
         self.setLayout(QVBoxLayout())
