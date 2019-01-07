@@ -17,8 +17,8 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-from stytra.collectors import QueueDataAccumulator, QueueSummingAccumulator
-from stytra.tracking.processes import FrameDispatcher, MovingFrameDispatcher
+from stytra.collectors import QueueDataAccumulator
+from stytra.tracking.processes import FrameDispatcher
 from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
 from stytra.tracking.tail import TailTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
@@ -188,7 +188,7 @@ class TrackingExperiment(CameraExperiment):
 
     """
 
-    def __init__(self, *args, tracking, n_tracking_processes=1, **kwargs):
+    def __init__(self, *args, tracking, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -204,7 +204,6 @@ class TrackingExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.n_dispatchers = n_tracking_processes
         self.tracking_method_name = tracking["method"]
         preproc_method_name = tracking.get("preprocessing", None)
 
@@ -230,20 +229,16 @@ class TrackingExperiment(CameraExperiment):
             tree=self.dc,
         )
 
-        self.frame_dispatchers = [
-            FrameDispatcher(
+        self.frame_dispatcher = FrameDispatcher(
                 in_frame_queue=self.camera.frame_queue,
                 finished_signal=self.camera.kill_event,
-                preprocessing_class=preproc_method_name,
-                processing_class=self.tracking_method_name,
+                pipeline=self.pipeline,
                 processing_parameter_queue=self.processing_params_queue,
                 output_queue=self.tracking_output_queue,
                 processing_counter=self.processing_counter,
-                gui_dispatcher=(i == 0),  # only the first process dispatches to the GUI
+                gui_dispatcher=True,
                 gui_framerate=20,
             )
-            for i in range(self.n_dispatchers)
-        ]
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
@@ -259,8 +254,7 @@ class TrackingExperiment(CameraExperiment):
         self.protocol_runner.sig_protocol_started.connect(self.acc_tracking.reset)
 
         # start frame dispatcher process:
-        for dispatcher in self.frame_dispatchers:
-            dispatcher.start()
+        self.frame_dispatcher.start()
 
         est_type = tracking.get("estimator", None)
         if est_type == "position":
@@ -276,8 +270,8 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
-        self.acc_framerate = QueueSummingAccumulator(
-            [fd.framerate_queue for fd in self.frame_dispatchers], ["tracking"]
+        self.acc_framerate = QueueDataAccumulator(
+            self.frame_dispatcher, ["tracking"]
         )
 
         self.gui_timer.timeout.connect(self.acc_framerate.update_list)
@@ -453,94 +447,3 @@ class TrackingExperiment(CameraExperiment):
         self.camera.join()
         for dispatcher in self.frame_dispatchers:
             dispatcher.join()
-
-
-class SwimmingRecordingExperiment(CameraExperiment):
-    """Experiment where the fish is recorded while it is moving"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, camera_queue_mb=500, **kwargs)
-        self.logger.info("Motion recording experiment")
-        self.processing_params_queue = Queue()
-        self.signal_recording = Event()
-        self.signal_start_recording = Event()
-        self.finished_signal = Event()
-
-        self.frame_dispatcher = MovingFrameDispatcher(
-            in_frame_queue=self.camera.frame_queue,
-            finished_signal=self.camera.kill_event,
-            signal_recording=self.signal_recording,
-            signal_start_recording=self.signal_start_recording,
-            processing_parameter_queue=self.processing_params_queue,
-            gui_framerate=20,
-        )
-
-        self.frame_recorder = VideoWriter(
-            self.folder_name, self.frame_dispatcher.save_queue, self.finished_signal
-        )
-
-        self.motion_acc = QueueDataAccumulator(
-            self.frame_dispatcher.diagnostic_queue,
-            header_list=self.frame_dispatcher.diagnostic_params,
-        )
-        self.frametime_acc = QueueDataAccumulator(
-            self.frame_dispatcher.framestart_queue, header_list=["i_frame"]
-        )
-
-        self.motion_detection_params = MovementDetectionParameters()
-        self.gui_timer.timeout.connect(self.send_params)
-        self.gui_timer.timeout.connect(self.motion_acc.update_list)
-        self.gui_timer.timeout.connect(self.frametime_acc.update_list)
-
-    def make_window(self):
-        """ """
-        self.window_main = TrackingExperimentWindow(
-            experiment=self, tail=False, eyes=False
-        )
-        self.window_main.stream_plot.add_stream(self.motion_acc)
-        self.window_main.show()
-
-    def go_live(self):
-        """ """
-        super().go_live()
-        self.frame_dispatcher.start()
-        self.frame_recorder.start()
-
-    def send_params(self):
-        """ """
-        self.processing_params_queue.put(
-            self.motion_detection_params.get_clean_values()
-        )
-
-    def start_protocol(self):
-        """ """
-        self.signal_start_recording.set()
-        self.signal_recording.set()
-        super().start_protocol()
-
-    def wrap_up(self, *args, **kwargs):
-        """ Ends all the processes in the application
-
-        """
-        super().wrap_up(*args, **kwargs)
-        self.frame_dispatcher.join()
-        self.frame_recorder.join()
-
-    def end_protocol(self, save=True):
-        """Save tail position and dynamic parameters. Reset what is necessary
-
-        """
-        self.frame_recorder.reset_signal.set()
-        self.signal_recording.clear()
-        try:
-            recorded_filename = self.frame_recorder.filename_queue.get(timeout=0.01)
-            self.dc.add_static_data(recorded_filename, "tracking/recorded_video")
-
-        except Empty:
-            pass
-
-        if save:
-            self.save_log(self.frametime_acc, "frametimes")
-
-        self.frametime_acc.reset()
-        super().end_protocol(save)

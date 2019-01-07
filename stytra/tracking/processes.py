@@ -51,8 +51,7 @@ class FrameDispatcher(FrameProcess):
         self,
         in_frame_queue,
         finished_signal: Event = None,
-        processing_class=None,
-        preprocessing_class=None,
+        pipeline=None,
         processing_parameter_queue=None,
         output_queue=None,
         processing_counter: Value = None,
@@ -74,13 +73,11 @@ class FrameDispatcher(FrameProcess):
         self.processing_counter = processing_counter
 
         self.finished_signal = finished_signal
-        self.i = 0
         self.gui_framerate = gui_framerate
         self.gui_dispatcher = gui_dispatcher
-        self.preprocessing_cls = get_preprocessing_method(preprocessing_class)
+        self.pipeline_cls = pipeline
+        self.pipeline = None
 
-        self.processing_parameters = None
-        self.tracking_cls = get_tracking_method(processing_class)
         self.processing_parameter_queue = processing_parameter_queue
 
     def process_internal(self, frame):
@@ -99,25 +96,26 @@ class FrameDispatcher(FrameProcess):
 
         """
 
+    def retrieve_params(self):
+        while True:
+            try:
+                param_dict = self.control_queue.get(timeout=0.0001)
+                self.pipeline.deserialize_params(param_dict)
+            except Empty:
+                break
+
     def run(self):
         """Loop where the tracking function runs."""
 
-        tracker = self.tracking_cls()
-        self.processing_parameters = tracker.params.params.values
-        preprocessor = (
-            self.preprocessing_cls() if self.preprocessing_cls is not None else None
-        )
-        if preprocessor is not None:
-            self.processing_parameters.update(preprocessor.params.params.values)
+        self.pipeline = self.pipeline_cls()
 
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue
-            self.update_params()
+            self.retrieve_params()
 
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
-            frame = None
             try:
                 time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
             except Empty:
@@ -209,141 +207,3 @@ def _compare_to_previous(current, previous):
             for j in range(current.shape[1]):
                 n_dif[k] += np.bitwise_xor(current[i, j], previous[k, i, j]) // 255
     return n_dif
-
-
-class MovingFrameDispatcher(FrameDispatcher):
-    """ """
-
-    def __init__(
-        self,
-        *args,
-        signal_recording: Event,
-        signal_start_recording: Event,
-        output_queue_mb=1000,
-        **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-        self.save_queue = ArrayQueue(max_mbytes=output_queue_mb)
-        self.framestart_queue = Queue()
-        self.diagnostic_queue = Queue()
-
-        self.processing_parameters = MovementDetectionParameters().get_clean_values()
-
-        self.signal_recording = signal_recording
-        self.signal_start_recording = signal_start_recording
-        self.mem_use = 0
-
-        self.diagnostic_params = [
-            "n_pixels_difference",
-            "recording_state",
-            "n_images_in_buffer",
-        ]
-
-    def run(self):
-        """ """
-        t, frame_0 = self.frame_queue.get(timeout=10)
-        n_previous_compare = 3
-
-        image_crop = slice(
-            self.processing_parameters["frame_margin"],
-            -self.processing_parameters["frame_margin"],
-        )
-
-        previous_ims = np.zeros(
-            (n_previous_compare,) + frame_0[image_crop].shape, dtype=np.uint8
-        )
-
-        image_buffer = deque()
-        record_counter = 0
-
-        i_frame = 0
-        recording_state = False
-
-        i_recorded = 0
-
-        while not self.finished_signal.is_set():
-
-            # Gets the processing parameters from their queue
-            if self.processing_parameter_queue is not None:
-                try:
-                    self.processing_parameters = self.processing_parameter_queue.get(
-                        timeout=0.00001
-                    )
-                except Empty:
-                    pass
-
-            try:
-                if self.signal_start_recording.is_set():
-                    i_recorded = 0
-                    image_buffer.clear()
-                    self.signal_start_recording.clear()
-
-                current_time, current_frame = self.frame_queue.get(timeout=0.001)
-                # process frames as they come, threshold them to roughly
-                # find the fish (e.g. eyes)
-                _, current_frame_thresh = cv2.threshold(
-                    cv2.boxFilter(current_frame[image_crop], -1, (3, 3)),
-                    self.processing_parameters["fish_threshold"],
-                    255,
-                    cv2.THRESH_BINARY,
-                )
-                # compare the thresholded frame to the previous ones,
-                # if there are enough differences
-                # because the fish moves, start recording to file
-                if i_frame >= n_previous_compare:
-                    difsum = _compare_to_previous(current_frame_thresh, previous_ims)
-
-                    # put the difference in the diagnostic queue so that
-                    # the threshold can be set correctly
-
-                    if np.all(
-                        difsum > self.processing_parameters["motion_threshold_n_pix"]
-                    ):
-                        record_counter = self.processing_parameters["n_next_save"]
-
-                    if record_counter > 0:
-                        if self.signal_recording.is_set() and self.mem_use < 0.9:
-                            if not recording_state:
-                                while image_buffer:
-                                    time, im = image_buffer.popleft()
-                                    self.save_queue.put(im)
-                                    self.framestart_queue.put((time, (i_recorded,)))
-                                    i_recorded += 1
-                            self.save_queue.put(current_frame)
-                            self.framestart_queue.put((current_time, (i_recorded,)))
-                            i_recorded += 1
-                        recording_state = True
-                        record_counter -= 1
-                    else:
-                        recording_state = False
-                        image_buffer.append((current_time, current_frame))
-                        if (
-                            len(image_buffer)
-                            > self.processing_parameters["n_previous_save"]
-                        ):
-                            image_buffer.popleft()
-
-                    self.diagnostic_queue.put(
-                        (
-                            current_time,
-                            (
-                                difsum[i_frame % n_previous_compare],
-                                recording_state,
-                                len(image_buffer),
-                            ),
-                        )
-                    )
-
-                i_frame += 1
-
-                previous_ims[i_frame % n_previous_compare, :, :] = current_frame_thresh
-
-                # calculate the framerate and send frame to gui
-                self.update_framerate()
-                if self.processing_parameters["show_thresholded"]:
-                    self.send_to_gui(current_frame_thresh)
-                else:
-                    self.send_to_gui(current_frame)
-
-            except Empty:
-                pass

@@ -1,6 +1,7 @@
 from multiprocessing import Queue
 from collections import namedtuple
 
+
 class NamedTupleQueue:
     def __init__(self, *args, **kwargs):
         self.q = Queue()

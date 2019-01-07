@@ -4,7 +4,6 @@ from stytra.experiments import Experiment
 from stytra.experiments.tracking_experiments import (
     CameraExperiment,
     TrackingExperiment,
-    SwimmingRecordingExperiment,
 )
 from stytra.calibration import CircleCalibrator
 from stytra.utilities import recursive_update
@@ -144,8 +143,6 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
-            if "recording" in class_kwargs.keys():
-                base = SwimmingRecordingExperiment
 
         # Stytra logo :)
         app_icon = QIcon()

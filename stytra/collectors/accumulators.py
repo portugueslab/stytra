@@ -4,7 +4,7 @@ import numpy as np
 from queue import Empty
 import pandas as pd
 import json
-from _collections import namedtuple
+from collections import namedtuple
 
 
 class Accumulator:
@@ -253,10 +253,11 @@ class QueueDataAccumulator(QObject, Accumulator):
                 # Time in ms (for having np and not datetime objects)
                 t_ms = (t - self.starting_time).total_seconds()
 
-                # append:
-                self.times.append(t_ms)
                 if type(data) != type(self.stored_data[-1]):
                     self.reset()
+
+                # append:
+                self.times.append(t_ms)
                 self.stored_data.append(data)
             except Empty:
                 break
