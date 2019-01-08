@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from lightparam import ParameterTree, set_nested, visit_dict
-from stytra.utilities import prepare_json
+from stytra.utilities import prepare_json, recursive_update
 
 
 class DataCollector(ParameterTree):
@@ -54,7 +54,8 @@ class DataCollector(ParameterTree):
 
     """
 
-    def __init__(self, *data_tuples_list, folder_path="C:/"):
+    def __init__(self, *data_tuples_list, extra_settings=None,
+                 folder_path="C:/"):
         """ """
         super().__init__()
         self.metadata_fn = "stytra_last_config.json"
@@ -66,12 +67,12 @@ class DataCollector(ParameterTree):
             self.folder_path.mkdir(parents=True)
 
         # Try to find previously saved data_log:
-        self.last_metadata = None
+        self.last_metadata = extra_settings or dict()
         metadata_files = list(self.home_path.glob("*" + self.metadata_fn))
 
         if metadata_files:
             with open(str(metadata_files[0]), "r") as f:
-                self.last_metadata = json.load(f)
+                recursive_update(self.last_metadata, json.load(f))
 
         self.log_data_dict = dict()
         self.params_metadata = None

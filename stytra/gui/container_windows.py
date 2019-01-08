@@ -325,7 +325,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             tail_dock.setObjectName("dock_tail")
             tail_dock.setWidget(self.tail_widget)
             self.docks.append(tail_dock)
-            self.addDockWidget(Qt.AllDockWidgetAreas, tail_dock)
+            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
             tail_dock.setVisible(False)
 
         if self.fish:
@@ -334,7 +334,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             bout_dock.setObjectName("dock_bouts")
             bout_dock.setWidget(self.bout_widget)
             self.docks.append(bout_dock)
-            self.addDockWidget(Qt.AllDockWidgetAreas, bout_dock)
+            self.addDockWidget(Qt.RightDockWidgetArea, bout_dock)
             bout_dock.setVisible(False)
 
         return previous_widget

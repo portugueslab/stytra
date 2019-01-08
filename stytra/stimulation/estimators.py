@@ -53,7 +53,8 @@ class VigorMotionEstimator(Estimator):
 
 
 class PositionEstimator(Estimator):
-    def __init__(self, *args, calibrator, change_thresholds=None, **kwargs):
+    def __init__(self, *args, calibrator, change_thresholds=None,
+                 velocity_window=10, **kwargs):
         """ Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
@@ -72,6 +73,7 @@ class PositionEstimator(Estimator):
         if change_thresholds is not None:
             self.change_thresholds = np.array(change_thresholds)
         self.past_values = None
+        self.velocity_window = velocity_window
 
     def get_camera_position(self):
         past_coords = {
@@ -81,6 +83,11 @@ class PositionEstimator(Estimator):
             )
         }
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
+
+    def get_velocity(self):
+        vel = np.diff(self.acc_tracking.get_last_n(self.velocity_window)[:, [self.acc_tracking.header_dict["f0_x"],
+                                                                             self.acc_tracking.header_dict["f0_y"]]], 0)
+        return np.sqrt(np.sum(vel**2))
 
     def get_position(self):
         past_coords = {

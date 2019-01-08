@@ -89,9 +89,9 @@ class FishTrackingMethod:
             desc="How many frames does the fish persist for if it is not detected",
         ),
         prediction_uncertainty: Param(0.1, (0.0, 10.0, 0.0001)),
-        fish_area: Param((100, 400), (1, 4000)),
-        border_margin: Param(40, (0, 100)),
-        tail_length: Param(50.5, (1.0, 200.0)),
+        fish_area: Param((200, 1200), (1, 4000)),
+        border_margin: Param(5, (0, 100)),
+        tail_length: Param(60.0, (1.0, 200.0)),
         tail_track_window: Param(3, (3, 70)),
         display_processed: Param(
             "raw",

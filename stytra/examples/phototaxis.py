@@ -17,7 +17,7 @@ class PhototaxisProtocol(Protocol):
     stytra_config = dict(
         tracking=dict(method="fish", embedded=False, estimator="position"),
         camera=dict(
-            video_file=str(Path(__name__).parent / "assets" / "fish_free_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_free_compressed.h5")
         ),
     )
 
@@ -36,12 +36,12 @@ class PhototaxisProtocol(Protocol):
         for i in range(self.n_trials):
             stimuli.append(
                 CenteringWrapper(
-                    stim(
+                    stim_true=stim(
                         duration=self.stim_on_duration,
                         color=(self.brightness,) * 3,
                         center_dist=self.center_offset,
                     ),
-                    centering,
+                    stim_false=centering,
                 )
             )
             stimuli.append(

@@ -14,7 +14,7 @@ class ClosedLoop1DProt(Protocol):
     stytra_config = dict(
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
-            video_file=str(Path(__name__).parent / "assets" / "fish_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
         ),
     )
 

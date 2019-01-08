@@ -1,0 +1,4 @@
+include README.rst
+include stytra/icons/*
+include stytra/tests/test_assets/*
+include stytra/examples/assets/*
