@@ -214,7 +214,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
 
         if not np.isnan(self.gain_drop_start) and not np.isnan(self.bout_start):
             t = self._elapsed - self.bout_start
-            if self.gain_drop_start < t < self.gain_drop_end:
+            if self.gain_drop_start <= t < self.gain_drop_end:
                 subtract_to_base = 0
 
         # Apply fish is swimming threshold, depending if shunted or not.
