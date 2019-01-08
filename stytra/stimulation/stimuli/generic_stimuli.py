@@ -237,7 +237,8 @@ class InterpolatedStimulus(DynamicStimulus):
 
 
 class TriggerStimulus(DynamicStimulus):
-    """ A class that uses the Experiment trigger to trigger a sequence of stimuli.
+    """ A class that uses the Experiment trigger to trigger a sequence
+    of stimuli.
 
     """
 
@@ -250,10 +251,11 @@ class TriggerStimulus(DynamicStimulus):
         self.duration = 0
 
     def start(self):
+        # At the beginning we set this to infinity:
         self.duration = np.inf
 
     def update(self):
+        # If trigger is set, make it end:
         if self._experiment.trigger.start_event.is_set():
             self.duration = self._elapsed
-        else:
-            self.duration = self._elapsed + 1
+
