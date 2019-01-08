@@ -15,7 +15,7 @@ from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 
-from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor
+from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor
 from time import sleep
 
 
@@ -31,7 +31,7 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter, bgsub=BackgorundSubtractor)
+    prepmethods = dict(prefilter=Prefilter, bgsub=BackgroundSubtractor)
     return prepmethods.get(name, None)
 
 
