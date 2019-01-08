@@ -24,9 +24,7 @@ class CustomLineROI(pg.PolyLineROI):
 
 class CameraViewWidget(QWidget):
     """A widget to show images from a frame source and display the camera controls.
-    
-    ***It does not implement a frame dispatcher by itself so it may lag behind
-    the camera at high frame rates!***
+
 
     Parameters
     ----------
@@ -470,7 +468,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 # of having a merged class with both
 class TailTrackingSelection(CameraEmbeddedTrackingSelection):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args,tail=True, **kwargs)
+        super().__init__(*args, tail=True, **kwargs)
+
 
 class CameraViewCalib(CameraViewWidget):
     """ """

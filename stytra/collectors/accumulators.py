@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QObject
+from PyQt5.QtCore import QObject, pyqtSignal
 import datetime
 import numpy as np
 from queue import Empty
@@ -7,7 +7,8 @@ import json
 from collections import namedtuple
 from bisect import bisect_right
 
-class Accumulator:
+
+class Accumulator(QObject):
     """Abstract class for accumulating streams of data.
 
     It is use to save or plot in real time data from stimulus logs or
@@ -40,9 +41,15 @@ class Accumulator:
 
     """
 
+    """Emitted every change of stimulation, with the index of the new
+        stimulus."""
+    sig_acc_reset = pyqtSignal()
+    sig_acc_init = pyqtSignal()
+
     def __init__(
         self, fps_calc_points=10, monitored_headers=None, name=""
     ):
+        super().__init__()
         """ """
         self.name = name
         self.stored_data = []
@@ -85,7 +92,7 @@ class Accumulator:
     @property
     def columns(self):
         try:
-            return self.stored_data[-1]._fields
+            return ("t",) + self.stored_data[-1]._fields
         except IndexError:
             raise ValueError("Accumulator empty, data types not known")
 
@@ -109,6 +116,7 @@ class Accumulator:
         -------
 
         """
+        self.sig_acc_reset.emit()
         if monitored_headers is not None:
             self.monitored_headers = monitored_headers
         self.stored_data = []
@@ -180,7 +188,7 @@ class Accumulator:
         try:
             n = int(self.get_fps() * t)
             return self.get_last_n(n)
-        except OverflowError:
+        except (OverflowError, ValueError):
             return self.get_last_n(1)
 
     def get_dataframe(self):
@@ -217,7 +225,7 @@ class Accumulator:
             raise (NotImplementedError(format + " is not an implemented log foramt"))
 
 
-class QueueDataAccumulator(QObject, Accumulator):
+class QueueDataAccumulator(Accumulator):
     """General class for retrieving data from a Queue.
 
     The QueueDataAccumulator takes as input a multiprocessing.Queue object
@@ -239,19 +247,14 @@ class QueueDataAccumulator(QObject, Accumulator):
 
     """
 
-    def __init__(self, data_queue, experiment=None, **kwargs):
+    def __init__(self, data_queue, **kwargs):
         """ """
         super().__init__(**kwargs)
 
         # Store externally the starting time make us free to keep
         # only time differences in milliseconds in the list (faster)
         self.starting_time = None
-
-        self.experiment = experiment
-
         self.data_queue = data_queue
-
-
 
     def update_list(self):
         """Upon calling put all available data into a list.
@@ -261,6 +264,11 @@ class QueueDataAccumulator(QObject, Accumulator):
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
 
+                newtype = False
+                if len(self.stored_data) == 0 or type(data) != type(self.stored_data[-1]):
+                    self.reset()
+                    newtype = True
+
                 # If we are at the starting time:
                 if len(self.stored_data) == 0:
                     self.starting_time = t
@@ -268,12 +276,13 @@ class QueueDataAccumulator(QObject, Accumulator):
                 # Time in ms (for having np and not datetime objects)
                 t_ms = (t - self.starting_time).total_seconds()
 
-                if type(data) != type(self.stored_data[-1]):
-                    self.reset()
-
                 # append:
                 self.times.append(t_ms)
                 self.stored_data.append(data)
+
+                # if the data type changed, emit a signal
+                if newtype:
+                    self.sig_acc_init.emit()
             except Empty:
                 break
 

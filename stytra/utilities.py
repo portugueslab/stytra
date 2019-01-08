@@ -2,6 +2,7 @@ import datetime
 import time
 from collections import OrderedDict
 from multiprocessing import Process, Queue
+from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from datetime import datetime
 
 from numba import jit
@@ -15,6 +16,7 @@ from pathlib import Path
 
 import collections
 
+from collections import namedtuple
 
 class Database:
     """ """
@@ -36,6 +38,9 @@ class Database:
 
         """
         pass
+
+
+FpsTuple = namedtuple("Fps", "fps")
 
 
 class FrameProcess(Process):
@@ -65,7 +70,7 @@ class FrameProcess(Process):
         self.current_time = datetime.now()
         self.starting_time = datetime.now()
 
-        self.framerate_queue = Queue()
+        self.framerate_queue = NamedTupleQueue()
         self.message_queue = Queue()
 
     def update_framerate(self):
@@ -81,7 +86,7 @@ class FrameProcess(Process):
                     )
                 except ZeroDivisionError:
                     self.current_framerate = 0
-                self.framerate_queue.put((self.current_time, (self.current_framerate,)))
+                self.framerate_queue.put(self.current_time, FpsTuple(self.current_framerate))
 
             self.previous_time_fps = self.current_time
         # Reset i after every n frames

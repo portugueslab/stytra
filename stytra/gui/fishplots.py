@@ -20,6 +20,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
     def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
         super().__init__(*args, **kwargs)
         assert isinstance(data_accumulator, Accumulator)
+        self.title = "position"
         self.positionPlot = self.addPlot()
         self.positionPlot.setAspectLocked(True)
         self.curve = self.positionPlot.plot()
@@ -68,6 +69,7 @@ class TailStreamPlot(QWidget):
     """
     def __init__(self, acc, n_points=300):
         super().__init__()
+        self.title = "Tail curvature"
         self.acc = acc
         self.headers = None
         self.n_points = n_points
@@ -144,6 +146,7 @@ class BoutPlot(QWidget):
     def __init__(self, acc: QueueDataAccumulator, i_fish=0,
                  n_bouts=10, n_save_max=300):
         super().__init__()
+        self.title = "Bout shape"
         self.acc = acc
         self.bouts = deque()
         self.i_fish = i_fish

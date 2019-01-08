@@ -18,7 +18,7 @@ from stytra.hardware.video import (
 # imports for tracking
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher
-from stytra.tracking.processes import get_tracking_method, get_preprocessing_method
+from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
 # TODO implement Pipelines for the other two methods
 # from stytra.tracking.eyes import EyeTrackingMethod
@@ -76,7 +76,7 @@ class CameraExperiment(Experiment):
             self.camera_state = VideoControlParameters(tree=self.dc)
 
         self.camera_framerate_acc = QueueDataAccumulator(
-            self.camera.framerate_queue, ["camera"]
+            self.camera.framerate_queue, name="camera"
         )
 
         # New parameters are sent with GUI timer:
@@ -199,7 +199,7 @@ class TrackingExperiment(CameraExperiment):
         """
 
         self.processing_params_queue = Queue()
-        self.tracking_output_queue = Queue()
+        self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
@@ -221,6 +221,7 @@ class TrackingExperiment(CameraExperiment):
             name="tracking",
             data_queue=self.tracking_output_queue
         )
+        self.acc_tracking.sig_acc_init.connect(self.refresh_plots)
 
         # Data accumulator is updated with GUI timer:
         self.gui_timer.timeout.connect(self.acc_tracking.update_list)
@@ -246,7 +247,7 @@ class TrackingExperiment(CameraExperiment):
             self.estimator = None
 
         self.acc_framerate = QueueDataAccumulator(
-            self.frame_dispatcher, ["tracking"]
+            self.frame_dispatcher.framerate_queue, name="tracking"
         )
 
         self.gui_timer.timeout.connect(self.acc_framerate.update_list)
@@ -256,8 +257,7 @@ class TrackingExperiment(CameraExperiment):
         """
         self.tracking_method.reset_state()
         self.acc_tracking.reset(
-            header_list=self.tracking_method.accumulator_headers,
-            monitored_headers=self.tracking_method.monitored_headers,
+            monitored_headers=self.pipeline.tracking.monitored_headers,
         )
         self.refresh_plots()
 
@@ -298,23 +298,7 @@ class TrackingExperiment(CameraExperiment):
 
         """
         super().send_gui_parameters()
-        changed = self.tracking_params.params.changed_values()
-
-        if "n_segments" in changed.keys() or "n_fish_max" in changed.keys():
-            self.refresh_accumulator_headers()
-
-        for i in range(self.n_dispatchers):
-            self.processing_params_queue.put(
-                {
-                    **changed,
-                    **(
-                        self.preprocessing_params.params.values
-                        if self.preprocessing_method is not None
-                        else {}
-                    ),
-                }
-            )
-        self.tracking_params.params.acknowledge_changes()
+        self.processing_params_queue.put(self.pipeline.serialize_changed_params())
 
     def start_protocol(self):
         """Reset data accumulator when starting the protocol."""
@@ -385,11 +369,10 @@ class TrackingExperiment(CameraExperiment):
         """
         self.camera.kill_event.set()
 
-        for q in [self.camera.frame_queue, self.frame_dispatchers[0].gui_queue]:
+        for q in [self.camera.frame_queue, self.frame_dispatcher.gui_queue]:
             q.clear()
 
-        for dispatcher in self.frame_dispatchers:
-            dispatcher.join()
+        self.frame_dispatcher.join()
 
         super().wrap_up(*args, **kwargs)
 
@@ -414,5 +397,4 @@ class TrackingExperiment(CameraExperiment):
         print("{0}: {1}".format(exctype, value))
         self.finished_sig.set()
         self.camera.join()
-        for dispatcher in self.frame_dispatchers:
-            dispatcher.join()
+        self.frame_dispatcher.join()

@@ -1,5 +1,6 @@
 import datetime
 from collections import namedtuple
+from stytra.collectors.accumulators import Accumulator
 
 import colorspacious
 import numpy as np
@@ -43,6 +44,7 @@ class MultiStreamPlot(QWidget):
         round_bounds=None,
         compact=False,
         n_points_max=500,
+        accumulators=None,
         precision=None,
         experiment=None,
         *args,
@@ -123,7 +125,7 @@ class MultiStreamPlot(QWidget):
 
         self.active_plots = []
 
-        self.accumulators = []
+        self.accumulators = accumulators or []
         self.header_indexes = []
 
         self.stream_items = []
@@ -184,7 +186,7 @@ class MultiStreamPlot(QWidget):
             * 255
         )
 
-    def add_stream(self, accumulator, header_items=None):
+    def add_stream(self, accumulator: Accumulator, header_items=None):
         """Adds a data collector stream to the plot:
 
         Parameters
@@ -199,16 +201,20 @@ class MultiStreamPlot(QWidget):
         -------
 
         """
-        if header_items is None:
-            if accumulator.monitored_headers is not None:
-                header_items = accumulator.monitored_headers
-            else:
-                header_items = accumulator.header_list[1:]  # first column is always t
-        self.colors = self.get_colors(len(self.stream_items) + len(header_items))
-        self.accumulators.append(accumulator)
-        self.header_indexes.append(
-            [accumulator.header_list.index(dv) for dv in header_items]
-        )
+        try:
+            if header_items is None:
+                if accumulator.monitored_headers is not None:
+                    header_items = accumulator.monitored_headers
+                else:
+                    header_items = accumulator.columns  # first column is always t
+            self.colors = self.get_colors(len(self.stream_items) + len(header_items))
+            self.accumulators.append(accumulator)
+            acccols = accumulator.columns
+            self.header_indexes.append(
+                [acccols.index(dv) for dv in header_items]
+            )
+        except ValueError:
+            return
         self.bounds.append(None)
         i_curve = len(self.stream_items)
 
@@ -338,17 +344,18 @@ class MultiStreamPlot(QWidget):
 
             data_array = acc.get_last_t(self.time_past)
 
-            # downsampling if there are too many points
-            if len(data_array) > self.n_points_max:
-                data_array = data_array[:: len(data_array) // self.n_points_max]
-
             # if this accumulator does not have enough data to plot, skip it
-            if data_array.shape[0] <= 1:
+            if data_array is None or data_array.shape[0] <= 1:
                 for _ in indexes:
                     self._set_labels(self.stream_items[i_stream])
                     self.stream_items[i_stream].curve.setData(x=[], y=[])
                     i_stream += 1
                 continue
+
+            # downsampling if there are too many points
+            if len(data_array) > self.n_points_max:
+                data_array = data_array[
+                             :: len(data_array) // self.n_points_max]
 
             try:
                 time_array = delta_t + data_array[:, 0]

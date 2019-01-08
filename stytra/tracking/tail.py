@@ -3,7 +3,7 @@ from numba import jit
 from lightparam import Param, Parametrized
 from scipy.ndimage.filters import gaussian_filter1d
 from stytra.utilities import reduce_to_pi
-from stytra.tracking.pipelines import ImageToDataNode
+from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
 
 
@@ -18,9 +18,14 @@ class TailTrackingMethod(ImageToDataNode):
         self.data_log_name = "tail_track"
         self._output_type = None
 
+    def changed(self, vals):
+        if "n_output_segments" in vals.keys():
+            self.reset_state()
+
     def reset_state(self):
         self._output_type = namedtuple("t", ["tail_sum"] + [
-            "theta_{:02}".format(i) for i in range(self._params.n_output_segments)
+            "theta_{:02}".format(i)
+            for i in range(self._params.n_output_segments)
         ])
 
 
@@ -77,14 +82,16 @@ class CentroidTrackingMethod(TailTrackingMethod):
             list of cumulative sum + list of angles
 
         """
-        message = ""
+        messages = []
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
+
+        scale = im.shape[0]
 
         # Calculate tail length:
         length_tail = (
             np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
-            * extraparams["image_scale"]
+            * scale
         )
 
         # Segment length from tail length and n of segments:
@@ -93,12 +100,12 @@ class CentroidTrackingMethod(TailTrackingMethod):
         n_segments += 1
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * extraparams["image_scale"] / n_segments
-        disp_y = tail_length_y * extraparams["image_scale"] / n_segments
+        disp_x = tail_length_x * scale / n_segments
+        disp_y = tail_length_y * scale / n_segments
 
         angles = np.full(n_segments - 1, np.nan)
-        start_x *= extraparams["image_scale"]
-        start_y *= extraparams["image_scale"]
+        start_x *= scale
+        start_y *= scale
 
         halfwin = window_size / 2
         for i in range(1, n_segments):
@@ -108,6 +115,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
                 im, start_x, start_y, disp_x, disp_y, halfwin, seg_length
             )
             if start_x < 0:
+                messages.append("W:segment {} not detected".format(i))
                 break
 
             abs_angle = np.arctan2(disp_x, disp_y)
@@ -144,9 +152,12 @@ class CentroidTrackingMethod(TailTrackingMethod):
 
         self.previous_angles = angles
 
+        if self._output_type is None:
+            self.reset_state()
+
         # Total curvature as sum of the last 2 angles - sum of the first 2
-        return (
-            message,
+        return NodeOutput(
+            messages,
             self._output_type(angles[-1] + angles[-2] - angles[0] - angles[1],
                               *angles),
         )
@@ -245,18 +256,20 @@ class AnglesTrackingMethod(TailTrackingMethod):
         start_y, start_x = tail_start
         tail_length_y, tail_length_x = tail_length
 
+        scale = im.shape[0]
+
         # Calculate tail length:
         length_tail = (
             np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
-            * extraparams["image_scale"]
+            * scale
         )
 
         # Initial displacements in x and y:
-        disp_x = tail_length_x * extraparams["image_scale"] / n_segments
-        disp_y = tail_length_y * extraparams["image_scale"] / n_segments
+        disp_x = tail_length_x * scale / n_segments
+        disp_y = tail_length_y * scale / n_segments
 
-        start_x *= extraparams["image_scale"]
-        start_y *= extraparams["image_scale"]
+        start_x *= scale
+        start_y *= scale
 
         # Use jitted function for the actual calculation:
         angle_list = _tail_trace_core_ls(

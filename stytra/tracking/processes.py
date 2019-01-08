@@ -70,6 +70,7 @@ class FrameDispatcher(FrameProcess):
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
+        self.processing_parameter_queue = processing_parameter_queue
         self.processing_counter = processing_counter
 
         self.finished_signal = finished_signal
@@ -78,7 +79,9 @@ class FrameDispatcher(FrameProcess):
         self.pipeline_cls = pipeline
         self.pipeline = None
 
-        self.processing_parameter_queue = processing_parameter_queue
+        self.i = 0
+
+
 
     def process_internal(self, frame):
         """Apply processing function to current frame with
@@ -108,6 +111,7 @@ class FrameDispatcher(FrameProcess):
         """Loop where the tracking function runs."""
 
         self.pipeline = self.pipeline_cls()
+        self.pipeline.setup()
 
         while not self.finished_signal.is_set():
 
@@ -128,15 +132,7 @@ class FrameDispatcher(FrameProcess):
             for msg in messages:
                 self.message_queue.put(msg)
 
-            # Handle the single output queue
-            while (
-                self.processing_counter.value != frame_idx - 1
-                and not self.finished_signal.is_set()
-            ):
-                sleep(0.00001)
-            with self.processing_counter.get_lock():
-                self.processing_counter.value = frame_idx
-            self.output_queue.put((time, output))
+            self.output_queue.put(time, output)
 
             # calculate the frame rate
             self.update_framerate()

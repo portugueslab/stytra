@@ -7,8 +7,9 @@ import cv2
 
 import numpy as np
 from numba import vectorize, uint8, float32
-from lightparam import Parametrized, Param
-from stytra.tracking.pipelines import ImageToImageNode
+from lightparam import Param
+from stytra.tracking.pipelines import ImageToImageNode, NodeOutput
+
 
 class Prefilter(ImageToImageNode):
     def __init__(self, *args, **kwargs):
@@ -44,7 +45,7 @@ class Prefilter(ImageToImageNode):
         if clip > 0:
             im = np.maximum(im, clip) - clip
 
-        return im
+        return NodeOutput([], im)
 
 
 @vectorize([uint8(float32, uint8)])

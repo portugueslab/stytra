@@ -16,6 +16,9 @@ class PipelineNode(Node):
         self.diagnostic_image = None
         self.set_diagnostic = None
 
+    def changed(self, vals):
+        pass
+
     def setup(self):
         self._params = Parametrized(params=self._process)
 
@@ -28,7 +31,12 @@ class PipelineNode(Node):
         return self.separator.join([""] + [str(node.name) for node in self.path])
 
     def process(self, *inputs) -> NodeOutput:
-        return self._process(*inputs, set_diagnostic=self.set_diagnostic, **self._params.params.values)
+        out = self._process(*inputs, set_diagnostic=self.set_diagnostic, **self._params.params.values)
+        try:
+            assert isinstance(out, NodeOutput)
+        except AssertionError:
+            raise TypeError("Output type of "+self.name+" is wrong, "+str(type(out)))
+        return out
 
     def _process(self, *inputs, set_diagnostic=None, **kwargs) -> NodeOutput:
         return NodeOutput([], None)
@@ -48,7 +56,7 @@ class SourceNode(ImageToImageNode):
         super().__init__("source", *args, **kwargs)
 
     def _process(self, input, **kwargs):
-        return [], input
+        return NodeOutput([], input)
 
 
 class ImageToDataNode(PipelineNode):
@@ -105,12 +113,19 @@ class Pipeline:
         # navigate to the node and select the proper diagnostic image
         return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
 
+    def serialize_changed_params(self):
+        chg = {n: p.params.changed_values() for n, p in self.all_params.items()}
+        for p in self.all_params.values():
+            p.acknowledge_changes()
+        return chg
+
     def serialize_params(self):
         return {n: p.params.values for n, p in self.all_params.items()}
 
     def deserialize_params(self, rec_params):
         for item, vals in rec_params.items():
             self.all_params[item].params.values = vals
+            self.node_dict[item].changed(vals)
         imname = self.all_params["diagnostics"].image
         if imname != "unprocessed":
             self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]
@@ -120,7 +135,7 @@ class Pipeline:
         if isinstance(node, ImageToDataNode):
             return output
 
-        child_outputs = tuple(self.recursive_run(child, output[1])
+        child_outputs = tuple(self.recursive_run(child, output.data)
                    for child in node.children)
         if self._output_type is None or node.output_type_changed:
             self._output_type = namedtuple("o",
@@ -132,7 +147,8 @@ class Pipeline:
 
         # first element of the tuple concatenates all lists of diagnostic messages
         # second element makes a named tuple with fields from all the child named tuples
-        return (output[0]+list(chain.from_iterable(map(lambda x: x.messages, child_outputs))),
+        return NodeOutput(output.messages+list(chain.from_iterable(map(lambda x: x.messages,
+                                                             child_outputs))),
                 self._output_type(*(chain.from_iterable(
                     map(lambda x: x.data, child_outputs)))))
 

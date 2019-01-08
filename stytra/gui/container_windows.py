@@ -313,21 +313,13 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         if self.extra_widget:
             self.experiment.gui_timer.timeout.connect(self.extra_widget.update)
 
-            tail_dock = QDockWidget("Tail curvature", self)
-            tail_dock.setObjectName("dock_tail")
-            tail_dock.setWidget(self.tail_widget)
-            self.docks.append(tail_dock)
-            self.addDockWidget(Qt.RightDockWidgetArea, tail_dock)
-            tail_dock.setVisible(False)
+            dock_extra = QDockWidget(self.extra_widget.title, self)
+            dock_extra.setObjectName("dock_extra")
+            dock_extra.setWidget(self.extra_widget)
+            self.docks.append(dock_extra)
+            self.addDockWidget(Qt.RightDockWidgetArea, dock_extra)
+            dock_extra.setVisible(False)
 
-        if self.fish:
-            self.experiment.gui_timer.timeout.connect(self.bout_widget.update)
-            bout_dock = QDockWidget("Last bouts", self)
-            bout_dock.setObjectName("dock_bouts")
-            bout_dock.setWidget(self.bout_widget)
-            self.docks.append(bout_dock)
-            self.addDockWidget(Qt.RightDockWidgetArea, bout_dock)
-            bout_dock.setVisible(False)
 
         return previous_widget
 
