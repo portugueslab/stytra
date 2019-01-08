@@ -308,7 +308,7 @@ class ConditionalWrapper(DynamicStimulus):
         self.reset_phase = reset_phase
 
         self.on = False
-        self.dynamic_parameters.append("centering_on")
+        self.dynamic_parameters.append("on")
 
         self.duration = self.stim_true.duration
         self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
