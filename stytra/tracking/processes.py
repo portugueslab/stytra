@@ -82,7 +82,6 @@ class FrameDispatcher(FrameProcess):
         self.i = 0
 
 
-
     def process_internal(self, frame):
         """Apply processing function to current frame with
         self.processing_parameters as additional inputs.

@@ -158,6 +158,7 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     qr = self.frame_queue.get(timeout=0.0001)
+                    print("got a frame")
                     self.current_image = qr[-1]
                     self.current_frame_time = qr[0]
                     # first = False
@@ -382,7 +383,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
                           for i in range(self.tail_params.n_output_segments)]
-
+                print("angles ", angles)
                 # Get tail position and length from the parameters:
                 start_x, start_y = self.tail_params.tail_start
                 tail_len_x, tail_len_y = self.tail_params.tail_length

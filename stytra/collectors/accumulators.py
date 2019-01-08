@@ -263,7 +263,6 @@ class QueueDataAccumulator(Accumulator):
             try:
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
-
                 newtype = False
                 if len(self.stored_data) == 0 or type(data) != type(self.stored_data[-1]):
                     self.reset()
