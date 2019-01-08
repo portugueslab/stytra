@@ -291,7 +291,7 @@ class FishTrackingStimulus(PositionStimulus):
 
 class ConditionalWrapper(DynamicStimulus):
     """ A meta-stimulus which turns on centering if the fish
-    veers too much towrds the edge
+    veers too much towards the edge.
 
     """
 
