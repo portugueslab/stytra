@@ -15,7 +15,6 @@ from PyQt5.QtWidgets import (
 )
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
-from stytra.gui.fishplots import TailStreamPlot, BoutPlot
 from stytra.gui.multiscope import MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
@@ -27,6 +26,7 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 
 from lightparam.gui import ParameterGui, pretty_name, ControlCombo
+
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):

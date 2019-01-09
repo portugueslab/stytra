@@ -216,7 +216,7 @@ class TrackingExperiment(CameraExperiment):
             )
 
         self.pipeline = self.pipeline_cls()
-        self.pipeline.setup()
+        self.pipeline.setup(tree=self.dc)
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",

@@ -320,7 +320,7 @@ class DynamicLog(Accumulator):
         self.check_start()
         self.times.append(time)
         self.stored_data.append(self._tupletype(*(data.get(f, np.nan)
-                                                  for f in self._tupletype.fields)))
+                                                  for f in self._tupletype._fields)))
 
     def update_stimuli(self, stimuli):
         dynamic_params = []
@@ -343,7 +343,7 @@ class EstimatorLog(Accumulator):
         super().__init__()
         self.stored_data = []
 
-    def update_list(self, data):
+    def update_list(self, t, data):
         """
 
         Parameters
@@ -356,4 +356,5 @@ class EstimatorLog(Accumulator):
 
         """
         self.check_start()
+        self.times.append(t)
         self.stored_data.append(data)

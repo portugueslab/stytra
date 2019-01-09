@@ -172,10 +172,15 @@ class CameraViewWidget(QWidget):
         # Once obtained current image, display it:
         if self.isVisible():
             if self.current_image is not None:
-                self.scale = self.current_image.shape[0]
+                if self.current_image.shape[0] != self.scale:
+                    self.scale = self.current_image.shape[0]
+                    self.scale_changed()
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
                 )
+
+    def scale_changed(self):
+        pass
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""
@@ -318,8 +323,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             if self.tail:
                 p1, p2 = self.roi_tail.getHandles()
                 np1, np2 = self.tail_points()
-                p1.setPos(QPointF(np1))
-                p2.setPos(QPointF(np2))
+                p1.setPos(QPointF(*np1))
+                p2.setPos(QPointF(*np2))
             if self.eyes:
                 self.roi_eyes.setPos(self.tail_params.wnd_pos, finish=False)
                 self.roi_eyes.setSize(self.tail_params.wnd_dim)
@@ -353,6 +358,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.tail_params.params.wnd_pos.changed = True
             self.tail_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
+
+    def scale_changed(self):
+        self.set_pos_from_tree()
 
     def retrieve_image(self):
         """Go to parent for definition."""

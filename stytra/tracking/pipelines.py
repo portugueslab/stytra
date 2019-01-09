@@ -20,7 +20,7 @@ class PipelineNode(Node):
         pass
 
     def setup(self):
-        self._params = Parametrized(params=self._process)
+        self._params = Parametrized(params=self._process, name="tracking+"+self.name)
 
     @property
     def output_type_changed(self):
@@ -90,7 +90,7 @@ class Pipeline:
         self._param_finder = Resolver()
         self.node_dict = dict()
 
-    def setup(self):
+    def setup(self, tree=None):
         """ Due to multiprocessing limitations, the setup is
         run separately from the constructor
 
@@ -100,10 +100,15 @@ class Pipeline:
             node.setup()
             if node._params is not None:
                 self.all_params[node.strpath] = node._params
+                if tree is not None:
+                    tree.add(node._params)
                 self.node_dict[node.strpath] = node
             diag_images.extend((node.strpath+"/"+imname for imname in node.diagnostic_image_options))
-        self.all_params["diagnostics"] = Parametrized(params=dict(image=Param("unprocessed",
-                                                                                   ["unprocessed"]+diag_images)))
+        self.all_params["diagnostics"] = Parametrized(name="tracking/diagnostics",
+                                                      params=dict(image=Param("unprocessed",
+                                                                                   ["unprocessed"]+diag_images)),
+                                                      tree=tree)
+
     @property
     def diagnostic_image(self):
         imname = self.all_params["diagnostics"].image

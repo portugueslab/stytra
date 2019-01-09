@@ -37,18 +37,22 @@ class VigorMotionEstimator(Estimator):
         """
         vigor_n_samples = max(int(round(self.vigor_window / self.last_dt)), 2)
         n_samples_lag = max(int(round(lag / self.last_dt)), 0)
+        if not self.acc_tracking.stored_data:
+            return 0
         past_tail_motion = self.acc_tracking.get_last_n(
             vigor_n_samples + n_samples_lag
         )[0:vigor_n_samples]
-        new_dt = (past_tail_motion[-1, 0] - past_tail_motion[0, 0]) / vigor_n_samples
+        end_t = past_tail_motion.t.iloc[-1]
+        start_t = past_tail_motion.t.iloc[ 0]
+        new_dt = (end_t-start_t) / vigor_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
-        vigor = np.nanstd(np.array(past_tail_motion[:, 1]))
+        vigor = np.nanstd(np.array(past_tail_motion.tail_sum))
         if np.isnan(vigor):
             vigor = 0
 
-        if self.log.get_last_n(1)[0, 0] < past_tail_motion[-1, 0]:
-            self.log.update_list((past_tail_motion[-1, 0], vigor))
+        if len(self.log.times) == 0 or self.log.times[-1] < end_t:
+            self.log.update_list(end_t, vigor)
         return vigor * self.base_gain
 
 
