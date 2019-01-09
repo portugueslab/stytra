@@ -116,6 +116,7 @@ class StimulusCombiner(VisualStimulus):
             s._elapsed = self._elapsed
 
     def initialise_external(self, experiment):
+        super().initialise_external(experiment)
         for s in self.stim_list:
             s.initialise_external(experiment)
 
