@@ -136,7 +136,8 @@ class FrameDispatcher(FrameProcess):
             self.update_framerate()
 
             # put current frame into the GUI queue
-            self.send_to_gui(time, self.pipeline.diagnostic_image or frame)
+            self.send_to_gui(time, self.pipeline.diagnostic_image
+            if self.pipeline.diagnostic_image is not None else frame)
 
         return
 

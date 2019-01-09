@@ -26,8 +26,7 @@ from stytra.gui.camera_display import (
 from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 
-from lightparam.gui import ParameterGui, pretty_name
-
+from lightparam.gui import ParameterGui, pretty_name, ControlCombo
 
 class QPlainTextEditLogger(logging.Handler):
     def __init__(self):
@@ -286,6 +285,11 @@ class TrackingExperimentWindow(CameraExperimentWindow):
                              if self.experiment.pipeline.extra_widget is not None
                              else None)
 
+        # Display dropdown
+        self.drop_display = ControlCombo(
+            self.experiment.pipeline.all_params["diagnostics"],
+        "image")
+
         # Tracking params button:
         self.button_tracking_params = IconButton(
             icon_name="edit_tracking", action_name="Change tracking parameters"
@@ -293,6 +297,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.button_tracking_params.clicked.connect(self.open_tracking_params_tree)
 
         self.camera_display.layout_control.addStretch(10)
+        self.camera_display.layout_control.addWidget(self.drop_display)
         self.camera_display.layout_control.addWidget(self.button_tracking_params)
 
         self.track_params_wnd = None
@@ -331,6 +336,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "pipeline"):
             for paramsname, paramspar in self.experiment.pipeline.all_params.items():
+                if paramsname == "diagnostics":
+                    continue
                 self.track_params_wnd.layout().addWidget(QLabel(paramsname))
                 self.track_params_wnd.layout().addWidget(
                     ParameterGui(paramspar)

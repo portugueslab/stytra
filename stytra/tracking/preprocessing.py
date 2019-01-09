@@ -14,6 +14,7 @@ from stytra.tracking.pipelines import ImageToImageNode, NodeOutput
 class Prefilter(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="filtering", **kwargs)
+        self.diagnostic_image_options = ["filtered"]
 
     def _process(
         self,
@@ -44,6 +45,9 @@ class Prefilter(ImageToImageNode):
             im = 255 - im
         if clip > 0:
             im = np.maximum(im, clip) - clip
+
+        if self.set_diagnostic == "filtered":
+            self.diagnostic_image = im
 
         return NodeOutput([], im)
 
