@@ -182,11 +182,10 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         super().__init__(*args, **kwargs)
 
         self.camera_display = None
-        try:
+        if hasattr(self.experiment, "pipeline"):
             self.camera_display = self.experiment.pipeline.display_overlay(
                 experiment=self.experiment)
-        except AttributeError as e:
-            print(e)
+        else:
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
         self.plot_framerate = MultiStreamPlot(

@@ -126,7 +126,7 @@ class MultiStreamPlot(QWidget):
         self.active_plots = []
 
         self.accumulators = accumulators or []
-        self.header_indexes = []
+        self.selected_columns = []
 
         self.stream_items = []
         self.stream_scales = []
@@ -209,9 +209,8 @@ class MultiStreamPlot(QWidget):
                     header_items = accumulator.columns  # first column is always t
             self.colors = self.get_colors(len(self.stream_items) + len(header_items))
             self.accumulators.append(accumulator)
-            acccols = accumulator.columns
-            self.header_indexes.append(
-                [acccols.index(dv) for dv in header_items]
+            self.selected_columns.append(
+                header_items
             )
         except ValueError:
             return
@@ -258,7 +257,7 @@ class MultiStreamPlot(QWidget):
                 self.plotContainer.removeItem(itm)
         self.stream_items = []
 
-        self.header_indexes = []
+        self.selected_columns = []
         self.accumulators = []
         self.bounds = []
 
@@ -329,8 +328,8 @@ class MultiStreamPlot(QWidget):
         current_time = datetime.datetime.now()
 
         i_stream = 0
-        for i_acc, (acc, indexes) in enumerate(
-            zip(self.accumulators, self.header_indexes)
+        for i_acc, (acc, sel_cols) in enumerate(
+            zip(self.accumulators, self.selected_columns)
         ):
 
             # try:
@@ -346,7 +345,7 @@ class MultiStreamPlot(QWidget):
 
             # if this accumulator does not have enough data to plot, skip it
             if data_array is None or data_array.shape[0] <= 1:
-                for _ in indexes:
+                for _ in sel_cols:
                     self._set_labels(self.stream_items[i_stream])
                     self.stream_items[i_stream].curve.setData(x=[], y=[])
                     i_stream += 1
@@ -358,19 +357,19 @@ class MultiStreamPlot(QWidget):
                              :: len(data_array) // self.n_points_max]
 
             try:
-                time_array = delta_t + data_array[:, 0]
+                time_array = delta_t + data_array.t.values
 
                 # loop to handle nan values in a single column
-                new_bounds = np.zeros((len(indexes), 2))
+                new_bounds = np.zeros((len(sel_cols), 2))
 
-                for id, i in enumerate(indexes):
+                for id, col in enumerate(sel_cols):
                     # Exclude nans from calculation of percentile boundaries:
-                    d = data_array[:, i]
+                    d = data_array[col]
                     if d.dtype != np.float64:
                         continue
                     b = ~np.isnan(d)
                     if np.any(b):
-                        non_nan_data = data_array[b, i]
+                        non_nan_data = data_array[col][b]
                         new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
                         # if the bounds are the same, set arbitrary ones
                         if new_bounds[id, 0] == new_bounds[id, 1]:
@@ -392,19 +391,18 @@ class MultiStreamPlot(QWidget):
                             self.bounds[i_acc], new_bounds
                         )
 
-                for i_var, (lb, ub) in zip(indexes, self.bounds[i_acc]):
+                for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
                     scale = ub - lb
                     if scale < 0.00001:
                         self.stream_items[i_stream].curve.setData(x=[], y=[])
                     else:
-
                         self.stream_items[i_stream].curve.setData(
                             x=time_array,
-                            y=i_stream + ((data_array[:, i_var] - lb) / scale),
+                            y=i_stream + ((data_array[col].values - lb) / scale),
                         )
                     self._set_labels(
                         self.stream_items[i_stream],
-                        values=(lb, ub, data_array[-1, i_var]),
+                        values=(lb, ub, data_array[col].values[-1]),
                     )
                     i_stream += 1
             except IndexError:
@@ -478,7 +476,7 @@ class StreamPlotConfig(QWidget):
         self.setLayout(self.main_layout)
         self.accs = sp.accumulators
         self.checkboxes = []
-        for ac, hd_idxs in zip(sp.accumulators, sp.header_indexes):
+        for ac, hd_idxs in zip(sp.accumulators, sp.selected_columns):
             acccheck = []
             gb = QGroupBox(ac.name)
             gb.setLayout(QVBoxLayout())
