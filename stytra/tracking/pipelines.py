@@ -63,6 +63,7 @@ class ImageToDataNode(PipelineNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = "testnode"
+        self.monitored_headers = []
         self._output_type = None
         self._params = None
         self._output_type_changed = False
@@ -89,6 +90,13 @@ class Pipeline:
         self.all_params = dict()
         self._param_finder = Resolver()
         self.node_dict = dict()
+
+    @property
+    def headers_to_plot(self):
+        hds = []
+        for node in self.node_dict.values():
+            if isinstance(node, ImageToDataNode):
+                hds.extend(node.monitored_headers)
 
     def setup(self, tree=None):
         """ Due to multiprocessing limitations, the setup is

@@ -3,7 +3,7 @@ import datetime
 
 from stytra.collectors import EstimatorLog, QueueDataAccumulator
 from stytra.utilities import reduce_to_pi
-
+from collections import namedtuple
 
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
@@ -22,6 +22,7 @@ class VigorMotionEstimator(Estimator):
         self.last_dt = 1 / 500.
         self.log = EstimatorLog(["vigor"])
         self.base_gain = base_gain
+        self._output_type = namedtuple("s", "vigor")
 
     def get_velocity(self, lag=0):
         """
@@ -52,7 +53,7 @@ class VigorMotionEstimator(Estimator):
             vigor = 0
 
         if len(self.log.times) == 0 or self.log.times[-1] < end_t:
-            self.log.update_list(end_t, vigor)
+            self.log.update_list(end_t, self._output_type(vigor))
         return vigor * self.base_gain
 
 

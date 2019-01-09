@@ -18,6 +18,7 @@ from stytra.hardware.video import (
 # imports for tracking
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.processes import FrameDispatcher
+from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
 # TODO implement Pipelines for the other two methods
@@ -216,11 +217,13 @@ class TrackingExperiment(CameraExperiment):
             )
 
         self.pipeline = self.pipeline_cls()
+        assert isinstance(self.pipeline, Pipeline)
         self.pipeline.setup(tree=self.dc)
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
-            data_queue=self.tracking_output_queue
+            data_queue=self.tracking_output_queue,
+            monitored_headers=self.pipeline.headers_to_plot
         )
         self.acc_tracking.sig_acc_init.connect(self.refresh_plots)
 

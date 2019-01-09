@@ -54,7 +54,7 @@ class Accumulator(QObject):
         self.name = name
         self.stored_data = []
         self.times = []
-        self.monitored_headers = (
+        self.plot_columns = (
             monitored_headers
         )  # headers which are included in the stream plot
         self.starting_time = None
@@ -118,7 +118,7 @@ class Accumulator(QObject):
         """
         self.sig_acc_reset.emit()
         if monitored_headers is not None:
-            self.monitored_headers = monitored_headers
+            self.plot_columns = monitored_headers
         self.stored_data = []
         self.times = []
         self.starting_time = None
@@ -299,11 +299,16 @@ class DynamicLog(Accumulator):
 
     def __init__(self, stimuli):
         """ """
+        self.name = "stimulus_params"
         self._tupletype = None
         super().__init__()
         # it is assumed the first dynamic stimulus has all the fields
 
         self.update_stimuli(stimuli)
+
+    @property
+    def columns(self):
+        return self._tupletype._fields
 
     def update_list(self, time, data):
         """
@@ -339,7 +344,7 @@ class DynamicLog(Accumulator):
 class EstimatorLog(Accumulator):
     """ """
 
-    def __init__(self, headers):
+    def __init__(self):
         super().__init__()
         self.stored_data = []
 

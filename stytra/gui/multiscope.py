@@ -116,10 +116,9 @@ class MultiStreamPlot(QWidget):
         self.replay_right = pg.InfiniteLine(
             -1, pen=(220, 220, 220), movable=True, hoverPen=(230, 30, 0)
         )
-        self.replay_right.sigDragged.connect(self.update_replay_limits)
-        self.replay_left.sigDragged.connect(self.update_replay_limits)
-        self.plotContainer.addItem(self.replay_left)
-        self.plotContainer.addItem(self.replay_right)
+
+        for rep_line in [self.replay_left, self.replay_right]:
+            rep_line.sigDragged.connect(self.update_replay_limits)
 
         self.layout().addWidget(self.plotContainer)
 
@@ -203,10 +202,10 @@ class MultiStreamPlot(QWidget):
         """
         try:
             if header_items is None:
-                if accumulator.monitored_headers is not None:
-                    header_items = accumulator.monitored_headers
+                if accumulator.plot_columns is not None:
+                    header_items = accumulator.plot_columns
                 else:
-                    header_items = accumulator.columns  # first column is always t
+                    header_items = accumulator.columns[1:]  # first column is always t
             self.colors = self.get_colors(len(self.stream_items) + len(header_items))
             self.accumulators.append(accumulator)
             self.selected_columns.append(
@@ -420,9 +419,15 @@ class MultiStreamPlot(QWidget):
             if not self.compact:
                 self.btn_freeze.setText("Live plot")
             self.plotContainer.plotItem.vb.setMouseEnabled(x=True, y=True)
+            for rep_line in [self.replay_left, self.replay_right]:
+                self.plotContainer.addItem(rep_line)
+
         else:
             if not self.compact:
                 self.btn_freeze.setText("Freeze plot")
+            for rep_line in [self.replay_left, self.replay_right]:
+                self.plotContainer.removeItem(rep_line)
+
             self.plotContainer.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
@@ -476,13 +481,13 @@ class StreamPlotConfig(QWidget):
         self.setLayout(self.main_layout)
         self.accs = sp.accumulators
         self.checkboxes = []
-        for ac, hd_idxs in zip(sp.accumulators, sp.selected_columns):
+        for ac, sel_col in zip(sp.accumulators, sp.selected_columns):
             acccheck = []
             gb = QGroupBox(ac.name)
             gb.setLayout(QVBoxLayout())
-            for i_it, item in enumerate(ac.header_list[1:]):
+            for i_it, item in enumerate(ac.columns[1:]):
                 chk = QCheckBox(item)
-                chk.setChecked((i_it+1) in hd_idxs)
+                chk.setChecked(item in sel_col)
                 chk.stateChanged.connect(self.refresh_plots)
                 acccheck.append(chk)
                 gb.layout().addWidget(chk)
@@ -493,7 +498,7 @@ class StreamPlotConfig(QWidget):
         self.sp.remove_streams()
         for chkboxes, ac in zip(self.checkboxes, self.accs):
             sel_headers = []
-            for item, chk in zip(ac.header_list[1:], chkboxes):
+            for item, chk in zip(ac.columns[1:], chkboxes):
                 if chk.isChecked():
                     sel_headers.append(item)
             self.sp.add_stream(ac, sel_headers)
