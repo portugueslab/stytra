@@ -85,9 +85,9 @@ class Accumulator(QObject):
         namedtuple of values
 
         """
-        find_time = (time - self.starting_time)
-        i = bisect_right(self.times, find_time).total_seconds()
-        return self.stored_data[i]
+        find_time = (time - self.starting_time).total_seconds()
+        i = bisect_right(self.times, find_time)
+        return self.stored_data[i-1]
 
     @property
     def columns(self):
@@ -263,7 +263,6 @@ class QueueDataAccumulator(Accumulator):
             try:
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
-
                 newtype = False
                 if len(self.stored_data) == 0 or type(data) != type(self.stored_data[-1]):
                     self.reset()

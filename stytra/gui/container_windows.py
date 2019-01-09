@@ -181,9 +181,12 @@ class CameraExperimentWindow(SimpleExperimentWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.camera_display = None
         try:
-            self.camera_display = self.experiment.pipeline.display_overlay(experiment=self.experiment)
-        except AttributeError:
+            self.camera_display = self.experiment.pipeline.display_overlay(
+                experiment=self.experiment)
+        except AttributeError as e:
+            print(e)
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
         self.plot_framerate = MultiStreamPlot(
@@ -327,24 +330,13 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         """ """
         self.track_params_wnd = QWidget()
         self.track_params_wnd.setLayout(QVBoxLayout())
-        if hasattr(self.experiment, "tracking_method"):
-            self.track_params_wnd.layout().addWidget(QLabel("Tracking method"))
-            self.track_params_wnd.layout().addWidget(
-                ParameterGui(self.experiment.tracking_method.params)
-            )
-        if (
-            hasattr(self.experiment, "preprocessing_method")
-            and self.experiment.preprocessing_method is not None
-        ):
-            self.track_params_wnd.layout().addWidget(QLabel("Preprocessing method"))
-            self.track_params_wnd.layout().addWidget(
-                ParameterGui(self.experiment.preprocessing_method.params)
-            )
-        if hasattr(self.experiment, "motion_detection_params"):
-            self.track_params_wnd.layout().addWidget(QLabel("Motion detection"))
-            self.track_params_wnd.layout().addWidget(
-                ParameterGui(self.experiment.motion_detection_params)
-            )
+        if hasattr(self.experiment, "pipeline"):
+            for paramsname, paramspar in self.experiment.pipeline.all_params.items():
+                self.track_params_wnd.layout().addWidget(QLabel(paramsname))
+                self.track_params_wnd.layout().addWidget(
+                    ParameterGui(paramspar)
+                )
+
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()

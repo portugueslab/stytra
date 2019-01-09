@@ -204,7 +204,7 @@ class ProjectorAndCalibrationWidget(QWidget):
     def toggle_calibration(self):
         """ """
         if isinstance(self.calibrator, CircleCalibrator):
-            _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
+            _, frame = self.experiment.frame_dispatcher.gui_queue.get()
             self.widget_proj_viewer.display_calibration_pattern(
                 self.calibrator, frame.shape, frame
             )
@@ -218,7 +218,7 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def calibrate(self):
         """ """
-        _, frame = self.experiment.frame_dispatchers[0].gui_queue.get()
+        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
         try:
             self.calibrator.find_transform_matrix(frame)
             self.widget_proj_viewer.display_calibration_pattern(

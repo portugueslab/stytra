@@ -116,7 +116,7 @@ class Pipeline:
     def serialize_changed_params(self):
         chg = {n: p.params.changed_values() for n, p in self.all_params.items()}
         for p in self.all_params.values():
-            p.acknowledge_changes()
+            p.params.acknowledge_changes()
         return chg
 
     def serialize_params(self):
@@ -125,7 +125,8 @@ class Pipeline:
     def deserialize_params(self, rec_params):
         for item, vals in rec_params.items():
             self.all_params[item].params.values = vals
-            self.node_dict[item].changed(vals)
+            if item != "diagnostics":
+                self.node_dict[item].changed(vals)
         imname = self.all_params["diagnostics"].image
         if imname != "unprocessed":
             self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]

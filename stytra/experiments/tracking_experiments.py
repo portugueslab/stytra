@@ -216,6 +216,7 @@ class TrackingExperiment(CameraExperiment):
             )
 
         self.pipeline = self.pipeline_cls()
+        self.pipeline.setup()
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
@@ -375,7 +376,6 @@ class TrackingExperiment(CameraExperiment):
         self.frame_dispatcher.join()
 
         super().wrap_up(*args, **kwargs)
-
 
     def excepthook(self, exctype, value, tb):
         """

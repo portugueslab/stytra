@@ -3,7 +3,7 @@ import numpy as np
 from numba import jit
 
 from stytra.tracking.tail import find_fish_midline
-from stytra.tracking.preprocessing import BackgorundSubtractor
+from stytra.tracking.preprocessing import BackgroundSubtractor
 
 from itertools import chain
 
@@ -31,7 +31,7 @@ class FishTrackingMethod:
         self.accumulator_headers = None
         self.monitored_headers = None
         self.data_log_name = "fish_track"
-        self.bg_subtractor = BackgorundSubtractor()
+        self.bg_subtractor = BackgroundSubtractor()
         self.track_state = None
         self.bg_im = None
         self.previous_fish = []
@@ -57,7 +57,7 @@ class FishTrackingMethod:
             + ["f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)]
             + ["biggest_area"]
         )
-        self.bg_subtractor = BackgorundSubtractor()
+        self.bg_subtractor = BackgroundSubtractor()
         self.previous_fish = []
 
         # used for booking a spot for one of the potentially tracked fish

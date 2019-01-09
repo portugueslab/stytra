@@ -70,7 +70,7 @@ def negdif(xf, y):
         return 0
 
 
-class BackgorundSubtractor(ImageToImageNode):
+class BackgroundSubtractor(ImageToImageNode):
     def __init__(self):
         super().__init__()
         self.background_image = None

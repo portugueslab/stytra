@@ -15,7 +15,7 @@ from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes_tail import TailEyesTrackingMethod
 
-from stytra.tracking.preprocessing import Prefilter, BackgorundSubtractor
+from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor
 from time import sleep
 
 
@@ -31,7 +31,7 @@ def get_tracking_method(name):
 
 
 def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter, bgsub=BackgorundSubtractor)
+    prepmethods = dict(prefilter=Prefilter, bgsub=BackgroundSubtractor)
     return prepmethods.get(name, None)
 
 
@@ -80,8 +80,6 @@ class FrameDispatcher(FrameProcess):
         self.pipeline = None
 
         self.i = 0
-
-
 
     def process_internal(self, frame):
         """Apply processing function to current frame with
@@ -138,18 +136,18 @@ class FrameDispatcher(FrameProcess):
             self.update_framerate()
 
             # put current frame into the GUI queue
-            self.send_to_gui(self.pipeline.diagnostic_image or frame)
+            self.send_to_gui(time, self.pipeline.diagnostic_image or frame)
 
         return
 
-    def send_to_gui(self, frame):
+    def send_to_gui(self, frametime, frame):
         """ Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.current_framerate:
             every_x = max(int(self.current_framerate / self.gui_framerate), 1)
         else:
             every_x = 1
         if self.i == 0:
-            self.gui_queue.put(frame)
+            self.gui_queue.put(frame, timestamp=frametime)
         self.i = (self.i + 1) % every_x
 
 
