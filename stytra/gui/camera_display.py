@@ -14,7 +14,7 @@ from lightparam.gui import ParameterGui, ControlToggleIcon
 from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
 
-class CustomLineROI(pg.PolyLineROI):
+class SingleLineROI(pg.PolyLineROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
     """
 
@@ -45,7 +45,7 @@ class CameraViewWidget(QWidget):
         self.experiment = experiment
         if experiment is not None:
             self.camera = experiment.camera
-            experiment.gui_timer.timeout.connect(self.update_image)
+            experiment.gui_timer.timeout.connect(self.retrieve_image)
         else:
             self.gui_timer = QTimer()
             self.gui_timer.setSingleShot(False)
@@ -69,8 +69,8 @@ class CameraViewWidget(QWidget):
         self.camera_display_widget.addItem(self.display_area)
 
         # Queue of frames coming from the camera
-        if hasattr(experiment, "frame_dispatchers"):
-            self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
+        if hasattr(experiment, "frame_dispatcher"):
+            self.frame_queue = self.experiment.frame_dispatcher.gui_queue
         else:
             self.frame_queue = self.camera.frame_queue
 
@@ -134,7 +134,7 @@ class CameraViewWidget(QWidget):
 
         self.param_widget = None
 
-    def update_image(self):
+    def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
         
@@ -158,14 +158,12 @@ class CameraViewWidget(QWidget):
                 # recent one added to the queue, as a queue is FILO:
                 if first:
                     qr = self.frame_queue.get(timeout=0.0001)
-                    print("got a frame")
                     self.current_image = qr[-1]
                     self.current_frame_time = qr[0]
                     # first = False
                 else:
                     # Else, get to free the queue:
                     _, _ = self.frame_queue.get(timeout=0.001)
-
             except Empty:
                 break
 
@@ -210,16 +208,12 @@ class CameraSelection(CameraViewWidget):
         super().__init__(**kwargs)
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
-        self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
-        self.tail_params = self.experiment.tracking_method.params
+        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
 
         # Redefine the source of the displayed images to be the FrameProcessor
         # output queue:
-        self.frame_queue = self.experiment.frame_dispatchers[0].gui_queue
+        self.frame_queue = self.experiment.frame_dispatcher.gui_queue
 
-        # Get the tracking parameters from the experiment class and connect
-        # their change signal to update ROI position:
-        self.tail_params = self.experiment.tracking_params
 
     def initialise_roi(self, roi):
         """ROI is initialised separately, so it can first be defined in the
@@ -264,8 +258,6 @@ class CameraSelection(CameraViewWidget):
         pass
 
 
-
-
 class CameraEmbeddedTrackingSelection(CameraSelection):
     def __init__(self, tail=False, eyes=False, **kwargs):
         """ """
@@ -276,12 +268,12 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         # Draw ROI for tail selection:
         if tail:
             self.tail_params = self.experiment.pipeline.tailtrack._params
-            self.roi_tail = CustomLineROI(
+            self.roi_tail = SingleLineROI(
                 (
                     self.tail_params.tail_start[::-1],
                     (
                         self.tail_params.tail_start[1]
-                        +self.tail_paramss.tail_length[1],
+                        +self.tail_params.tail_length[1],
                         self.tail_params.tail_start[0]
                         + self.tail_params.tail_length[0],
                     ),
@@ -366,12 +358,11 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.tail_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
-    def update_image(self):
+    def retrieve_image(self):
         """Go to parent for definition."""
-        super().update_image()
+        super().retrieve_image()
 
         # Get data from queue(first is timestamp)
-
         if len(self.experiment.acc_tracking.stored_data) > 1:
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
@@ -383,7 +374,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
                           for i in range(self.tail_params.n_output_segments)]
-                print("angles ", angles)
                 # Get tail position and length from the parameters:
                 start_x, start_y = self.tail_params.tail_start
                 tail_len_x, tail_len_y = self.tail_params.tail_length
@@ -461,8 +451,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             for ell in self.curves_eyes:
                                 ell.setPen(None)
                             self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
-
-                self.image_item.setImage(im, autoLevels=self.btn_autorange.isChecked())
 
 
 # TODO separate eyes and tail display, and then merge for both instead
@@ -562,8 +550,8 @@ class CameraViewFish(CameraViewCalib):
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
 
-    def update_image(self):
-        super().update_image()
+    def retrieve_image(self):
+        super().retrieve_image()
 
         if len(self.experiment.acc_tracking.stored_data) > 1:
             # figure out in a quick and dirty way if the tail is being tracked

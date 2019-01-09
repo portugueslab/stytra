@@ -85,9 +85,9 @@ class Accumulator(QObject):
         namedtuple of values
 
         """
-        find_time = (time - self.starting_time)
-        i = bisect_right(self.times, find_time).total_seconds()
-        return self.stored_data[i]
+        find_time = (time - self.starting_time).total_seconds()
+        i = bisect_right(self.times, find_time)
+        return self.stored_data[i-1]
 
     @property
     def columns(self):

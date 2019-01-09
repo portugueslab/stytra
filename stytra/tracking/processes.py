@@ -81,7 +81,6 @@ class FrameDispatcher(FrameProcess):
 
         self.i = 0
 
-
     def process_internal(self, frame):
         """Apply processing function to current frame with
         self.processing_parameters as additional inputs.
@@ -137,18 +136,18 @@ class FrameDispatcher(FrameProcess):
             self.update_framerate()
 
             # put current frame into the GUI queue
-            self.send_to_gui(self.pipeline.diagnostic_image or frame)
+            self.send_to_gui(time, self.pipeline.diagnostic_image or frame)
 
         return
 
-    def send_to_gui(self, frame):
+    def send_to_gui(self, frametime, frame):
         """ Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.current_framerate:
             every_x = max(int(self.current_framerate / self.gui_framerate), 1)
         else:
             every_x = 1
         if self.i == 0:
-            self.gui_queue.put(frame)
+            self.gui_queue.put(frame, timestamp=frametime)
         self.i = (self.i + 1) % every_x
 
 
