@@ -338,12 +338,10 @@ class MultiStreamPlot(QWidget):
             except (TypeError, IndexError):
                 delta_t = 0
 
-            # TODO improve so that not the full list is acquired
-
-            data_array = acc.get_last_t(self.time_past)
+            data_frame = acc.get_last_t(self.time_past)
 
             # if this accumulator does not have enough data to plot, skip it
-            if data_array is None or data_array.shape[0] <= 1:
+            if data_frame is None or data_frame.shape[0] <= 1:
                 for _ in sel_cols:
                     self._set_labels(self.stream_items[i_stream])
                     self.stream_items[i_stream].curve.setData(x=[], y=[])
@@ -351,24 +349,24 @@ class MultiStreamPlot(QWidget):
                 continue
 
             # downsampling if there are too many points
-            if len(data_array) > self.n_points_max:
-                data_array = data_array[
-                             :: len(data_array) // self.n_points_max]
+            if len(data_frame) > self.n_points_max:
+                data_frame = data_frame[
+                             :: len(data_frame) // self.n_points_max]
 
             try:
-                time_array = delta_t + data_array.t.values
+                time_array = delta_t + data_frame.t.values
 
                 # loop to handle nan values in a single column
                 new_bounds = np.zeros((len(sel_cols), 2))
 
                 for id, col in enumerate(sel_cols):
                     # Exclude nans from calculation of percentile boundaries:
-                    d = data_array[col]
+                    d = data_frame[col]
                     if d.dtype != np.float64:
                         continue
                     b = ~np.isnan(d)
                     if np.any(b):
-                        non_nan_data = data_array[col][b]
+                        non_nan_data = data_frame[col][b]
                         new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
                         # if the bounds are the same, set arbitrary ones
                         if new_bounds[id, 0] == new_bounds[id, 1]:
@@ -397,11 +395,11 @@ class MultiStreamPlot(QWidget):
                     else:
                         self.stream_items[i_stream].curve.setData(
                             x=time_array,
-                            y=i_stream + ((data_array[col].values - lb) / scale),
+                            y=i_stream + ((data_frame[col].values - lb) / scale),
                         )
                     self._set_labels(
                         self.stream_items[i_stream],
-                        values=(lb, ub, data_array[col].values[-1]),
+                        values=(lb, ub, data_frame[col].values[-1]),
                     )
                     i_stream += 1
             except IndexError:

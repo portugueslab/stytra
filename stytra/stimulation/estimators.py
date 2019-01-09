@@ -20,7 +20,7 @@ class VigorMotionEstimator(Estimator):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window
         self.last_dt = 1 / 500.
-        self.log = EstimatorLog(["vigor"])
+        self.log = EstimatorLog()
         self.base_gain = base_gain
         self._output_type = namedtuple("s", "vigor")
 

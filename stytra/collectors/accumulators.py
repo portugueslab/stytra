@@ -54,9 +54,7 @@ class Accumulator(QObject):
         self.name = name
         self.stored_data = []
         self.times = []
-        self.plot_columns = (
-            monitored_headers
-        )  # headers which are included in the stream plot
+        self.plot_columns = monitored_headers
         self.starting_time = None
         self.fps_calc_points = fps_calc_points
         self._header_dict = None

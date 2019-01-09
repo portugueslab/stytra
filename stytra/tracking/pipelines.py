@@ -97,6 +97,7 @@ class Pipeline:
         for node in self.node_dict.values():
             if isinstance(node, ImageToDataNode):
                 hds.extend(node.monitored_headers)
+        return hds
 
     def setup(self, tree=None):
         """ Due to multiprocessing limitations, the setup is
