@@ -361,7 +361,7 @@ class MultiStreamPlot(QWidget):
 
                 for id, col in enumerate(sel_cols):
                     # Exclude nans from calculation of percentile boundaries:
-                    d = data_frame[col]
+                    d = data_frame[col].values
                     if d.dtype != np.float64:
                         continue
                     b = ~np.isnan(d)

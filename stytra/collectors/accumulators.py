@@ -130,8 +130,8 @@ class Accumulator(QObject):
     def get_fps(self):
         """ """
         try:
-            last_t = self.stored_data[-1][0]
-            t_minus_dif = self.stored_data[-self.fps_calc_points][0]
+            last_t = self.times[-1]
+            t_minus_dif = self.times[-self.fps_calc_points]
             return self.fps_calc_points / (last_t - t_minus_dif)
         except (IndexError, ValueError, ZeroDivisionError, OverflowError):
             return 0.0

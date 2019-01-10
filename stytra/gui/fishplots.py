@@ -64,7 +64,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class TailStreamPlot(QWidget):
-    """ Displayes the curvature of the tail in time using a heatmap
+    """ Displays the curvature of the tail in time using a heatmap
 
     """
     def __init__(self, acc, n_points=300):

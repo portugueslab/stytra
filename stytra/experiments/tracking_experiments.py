@@ -304,8 +304,14 @@ class TrackingExperiment(CameraExperiment):
         self.processing_params_queue.put(self.pipeline.serialize_changed_params())
 
     def start_protocol(self):
-        """Reset data accumulator when starting the protocol."""
+        # Freeze the plots so the plotting does not interfere with
+        # stimulus display
+        if not self.window_main.stream_plot.frozen:
+            self.window_main.stream_plot.toggle_freeze()
+
+        # Reset data accumulator when starting the protocol.
         self.acc_tracking.reset()
+
         self.gui_timer.stop()
         try:
             self.estimator.reset()
