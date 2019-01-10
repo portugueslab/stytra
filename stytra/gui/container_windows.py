@@ -336,9 +336,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "pipeline"):
             for paramsname, paramspar in self.experiment.pipeline.all_params.items():
-                if paramsname == "diagnostics":
+                if paramsname == "diagnostics" or len(paramspar.params.items())==0:
                     continue
-                self.track_params_wnd.layout().addWidget(QLabel(paramsname))
+                self.track_params_wnd.layout().addWidget(QLabel(paramsname.replace("/","→")))
                 self.track_params_wnd.layout().addWidget(
                     ParameterGui(paramspar)
                 )

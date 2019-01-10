@@ -10,10 +10,8 @@ from collections import namedtuple
 class TailTrackingMethod(ImageToDataNode):
     """General tail tracking method."""
 
-    name = "tail"
-
     def __init__(self, *args, **kwargs):
-        super().__init__("tail_tracking", *args, **kwargs)
+        super().__init__(*args, name="tail_tracking", **kwargs)
         self.monitored_headers = ["tail_sum"]
         self.data_log_name = "tail_track"
         self._output_type = None

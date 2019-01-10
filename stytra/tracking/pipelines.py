@@ -55,14 +55,13 @@ class SourceNode(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__("source", *args, **kwargs)
 
-    def _process(self, input, **kwargs):
-        return NodeOutput([], input)
+    def _process(self, *input, **kwargs):
+        return NodeOutput([], *input)
 
 
 class ImageToDataNode(PipelineNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name = "testnode"
         self.monitored_headers = []
         self._output_type = None
         self._params = None
