@@ -21,10 +21,6 @@ from stytra.tracking.processes import FrameDispatcher
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
-# TODO implement Pipelines for the other two methods
-# from stytra.tracking.eyes import EyeTrackingMethod
-# from stytra.tracking.fish import FishTrackingMethod
-from lightparam.param_qt import ParametrizedQt
 
 from stytra.stimulation.estimators import (
     PositionEstimator,
@@ -250,6 +246,9 @@ class TrackingExperiment(CameraExperiment):
         else:
             self.estimator = None
 
+        if self.estimator is not None:
+            self.estimator.log.sig_acc_init.connect(self.refresh_plots)
+
         self.acc_framerate = QueueDataAccumulator(
             self.frame_dispatcher.framerate_queue, name="tracking"
         )
@@ -381,19 +380,8 @@ class TrackingExperiment(CameraExperiment):
         super().wrap_up(*args, **kwargs)
 
     def excepthook(self, exctype, value, tb):
-        """
-
-        Parameters
-        ----------
-        exctype :
-            
-        value :
-            
-        tb :
-            
-
-        Returns
-        -------
+        """ If an exception happens in the main loop, close all the
+        processes so nothing is left hanging.
 
         """
         traceback.print_tb(tb)

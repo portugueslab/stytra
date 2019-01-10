@@ -73,13 +73,14 @@ class PositionEstimator(Estimator):
         """
         super().__init__(*args, **kwargs)
         self.calibrator = calibrator
-        self.log = EstimatorLog(["x", "y", "theta"])
+        self.log = EstimatorLog()
         self.last_location = None
         self.change_thresholds = None
         if change_thresholds is not None:
             self.change_thresholds = np.array(change_thresholds)
         self.past_values = None
         self.velocity_window = velocity_window
+        self._output_type = namedtuple("f", ["x", "y", "theta"])
 
     def get_camera_position(self):
         past_coords = {
@@ -134,8 +135,8 @@ class PositionEstimator(Estimator):
                 self.past_values[sel] = c_values[sel]
                 c_values = self.past_values
 
-        c_values = tuple(c_values)
-        self.log.update_list((past_coords["t"],) + c_values)
+        logout = self._output_type(*c_values)
+        self.log.update_list(past_coords["t"], logout)
 
         return c_values
 

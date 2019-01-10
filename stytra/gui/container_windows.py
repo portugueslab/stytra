@@ -18,9 +18,7 @@ from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.multiscope import MultiStreamPlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
-    CameraViewWidget,
-    CameraEmbeddedTrackingSelection,
-    CameraViewFish,
+    CameraViewWidget
 )
 from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
@@ -326,7 +324,6 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.docks.append(dock_extra)
             self.addDockWidget(Qt.RightDockWidgetArea, dock_extra)
             dock_extra.setVisible(False)
-
 
         return previous_widget
 

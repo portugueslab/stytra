@@ -31,7 +31,7 @@ class PipelineNode(Node):
         return self.separator.join([""] + [str(node.name) for node in self.path])
 
     def process(self, *inputs) -> NodeOutput:
-        out = self._process(*inputs, set_diagnostic=self.set_diagnostic, **self._params.params.values)
+        out = self._process(*inputs, **self._params.params.values)
         try:
             assert isinstance(out, NodeOutput)
         except AssertionError:
@@ -140,9 +140,13 @@ class Pipeline:
             self.all_params[item].params.values = vals
             if item != "diagnostics":
                 self.node_dict[item].changed(vals)
-        imname = self.all_params["diagnostics"].image
-        if imname != "unprocessed":
-            self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]
+        if "diagnostics" in rec_params.keys():
+            imname = self.all_params["diagnostics"].image
+            if imname == "unprocessed":
+                for node in self.node_dict.values():
+                    node.set_diagnostic = None
+            else:
+                self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]
 
     def recursive_run(self, node: PipelineNode, *input_data):
         output = node.process(*input_data)

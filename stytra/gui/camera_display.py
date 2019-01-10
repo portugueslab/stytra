@@ -344,7 +344,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         self.setting_param_val = True
         if self.tail:
             p1, p2 = self.roi_tail.getHandles()
-            # with self.track_params.treeChangeBlocker():
             self.tail_params.tail_start = (p1.y()/self.scale,
                                            p1.x()/self.scale)
             self.tail_params.params.tail_start.changed = True
@@ -397,7 +396,6 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
             # TODO refactor with namedtuples and rotation matrices.
             if self.eyes:
-                im = self.current_image
 
                 if len(self.experiment.acc_tracking.stored_data) > 1:
                     self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
@@ -552,35 +550,38 @@ class CameraViewFish(CameraViewCalib):
         )
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
+        self.tracking_params = self.experiment.pipeline.fishtrack._params
 
     def retrieve_image(self):
         super().retrieve_image()
 
-        if len(self.experiment.acc_tracking.stored_data) > 1:
-            # figure out in a quick and dirty way if the tail is being tracked
-            last_header_item = self.experiment.acc_tracking.header_list[-2]
-            n_fish = int(last_header_item[1]) + 1
+        if len(self.experiment.acc_tracking.stored_data) == 0:
+            return
 
-            n_data_per_fish = (
-                len(self.experiment.acc_tracking.stored_data[-1]) - 2
-            ) // n_fish  # the first is time, the last is area
-            n_points_tail = n_data_per_fish - 6
-            try:
-                retrieved_data = np.array(
-                    self.experiment.acc_tracking.stored_data[-1][
-                        1:-1
-                    ]  # the -1 if for the diagnostic area
-                ).reshape(n_fish, n_data_per_fish)
-                valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
-                self.points_fish.setData(
-                    y=retrieved_data[valid, 2], x=retrieved_data[valid, 0]
+        current_data = self.experiment.acc_tracking.values_at_abs_time(
+            self.current_frame_time)
+
+        last_header_item = self.experiment.acc_tracking.columns[-2]
+        n_fish = int(last_header_item[1]) + 1
+
+        n_data_per_fish = (
+            len(current_data) - 1
+        ) // n_fish  # the first is time, the last is area
+        n_points_tail = n_data_per_fish - 6
+        try:
+            retrieved_data = np.array(
+                current_data[0 : -1]  # the -1 if for the diagnostic area
+            ).reshape(n_fish, n_data_per_fish)
+            valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
+            self.points_fish.setData(
+                y=retrieved_data[valid, 2], x=retrieved_data[valid, 0]
+            )
+            if n_points_tail:
+                tail_len = (
+                    self.tracking_params.tail_length
+                    / self.tracking_params.n_segments
                 )
-                if n_points_tail:
-                    tail_len = (
-                        self.experiment.tracking_method.params.tail_length
-                        / self.experiment.tracking_method.params.n_segments
-                    )
-                    ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
-                    self.lines_fish.setData(x=xs, y=ys)
-            except ValueError as e:
-                pass
+                ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
+                self.lines_fish.setData(x=xs, y=ys)
+        except ValueError as e:
+            pass

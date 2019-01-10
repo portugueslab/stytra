@@ -10,6 +10,8 @@ from itertools import chain
 import logging
 from lightparam import Param, Parametrized
 from stytra.tracking.simple_kalman import NewtonianKalman
+from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
+from collections import namedtuple
 
 
 def _fish_column_names(i_fish, n_segments):
@@ -23,13 +25,11 @@ def _fish_column_names(i_fish, n_segments):
     ] + ["f{:d}_theta_{:02d}".format(i_fish, i) for i in range(n_segments)]
 
 
-class FishTrackingMethod:
-    name = "fish"
-
-    def __init__(self):
-        super().__init__()
+class FishTrackingMethod(ImageToDataNode):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, name="fish_tracking", **kwargs)
         self.accumulator_headers = None
-        self.monitored_headers = None
+        self.monitored_headers = ["biggest_area", "f0_theta"]
         self.data_log_name = "fish_track"
         self.bg_subtractor = BackgroundSubtractor()
         self.track_state = None
@@ -38,36 +38,37 @@ class FishTrackingMethod:
         self.idx_book = None
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.recorded = None
-        self.diagnostic_image = None
-        self.logger = logging.getLogger()
-        self.params = Parametrized(name="tracking/fish", params=self.detect)
-        self.reset_state()
+        self.diagnostic_image_options = [
+                "background difference",
+                "thresholded background difference",
+                "fish detection",
+                "thresholded for eye and swim bladder",
+            ]
+
+    def changed(self, vals):
+        if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]):
+            self.reset_state()
 
     def reset_state(self):
-        self.accumulator_headers = list(
+        self._output_type = namedtuple("t",  list(
             chain.from_iterable(
                 [
-                    _fish_column_names(i_fish, self.params.n_segments - 1)
-                    for i_fish in range(self.params.n_fish_max)
+                    _fish_column_names(i_fish, self._params.n_segments - 1)
+                    for i_fish in range(self._params.n_fish_max)
                 ]
             )
-        ) + ["biggest_area"]
-        self.monitored_headers = (
-            ["f{:d}_x".format(i_fish) for i_fish in range(self.params.n_fish_max)]
-            + ["f{:d}_theta".format(i_fish) for i_fish in range(self.params.n_fish_max)]
-            + ["biggest_area"]
-        )
+        ) + ["biggest_area"])
+
         self.bg_subtractor = BackgroundSubtractor()
         self.previous_fish = []
 
         # used for booking a spot for one of the potentially tracked fish
-        self.idx_book = IndexBooking(self.params.n_fish_max)
+        self.idx_book = IndexBooking(self._params.n_fish_max)
         self.recorded = np.full(
-            (self.params.n_fish_max, 3 * 2 + self.params.n_segments - 1), np.nan
+            (self._params.n_fish_max, 3 * 2 + self._params.n_segments - 1), np.nan
         )
-        self.logger = logging.getLogger()
 
-    def detect(
+    def _process(
         self,
         frame,
         reset: Param(False),
@@ -92,31 +93,8 @@ class FishTrackingMethod:
         fish_area: Param((200, 1200), (1, 4000)),
         border_margin: Param(5, (0, 100)),
         tail_length: Param(60.0, (1.0, 200.0)),
-        tail_track_window: Param(3, (3, 70)),
-        display_processed: Param(
-            "raw",
-            [
-                "raw",
-                "background difference",
-                "thresholded background difference",
-                "fish detection",
-                "thresholded for eye and swim bladder",
-            ],
-        ),
+        tail_track_window: Param(3, (3, 70))
     ):
-
-        # if the parameters affecting the dimensions of the result changed,
-        # reset everything
-        if (
-            reset
-            or n_fish_max != self.params.n_fish_max
-            or n_segments != self.params.n_segments
-            or bg_downsample != self.params.bg_downsample
-        ):
-            self.params.params.bg_downsample.value = bg_downsample
-            self.params.params.n_segments.value = n_segments
-            self.params.params.n_fish_max.value = n_fish_max
-            self.reset_state()
 
         # update the previously-detected fish using the Kalman filter
         for pfish in self.previous_fish:
@@ -149,13 +127,15 @@ class FishTrackingMethod:
         # to find fish
         new_fish = []
 
-        message = "W:No object of right area, between {:.0f} and {:.0f}".format(*fish_area)
+        messages = []
 
+        nofish = True
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < fish_area[1]:
                 continue
 
+            # find the bounding box of the fish in the original image coordinates
             ftop, fleft, fheight, fwidth = (
                 int(round(row[x] * bg_downsample))
                 for x in [
@@ -172,9 +152,7 @@ class FishTrackingMethod:
                 and (ftop - border_margin >= 0)
                 and (ftop + fheight + border_margin < frame.shape[0])
             ):
-                message = "W:An object of right area found outside margins".format(
-                    *fish_area
-                )
+                messages.append("W:An object of right area found outside margins")
                 continue
 
             # how much is this region shifted from the upper left corner of the image
@@ -193,7 +171,7 @@ class FishTrackingMethod:
 
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
-                message = "W:No appropriate tail start position found"
+                messages.append("W:No appropriate tail start position found")
                 continue
 
             head_coords_up = fish_coords + cent_shift
@@ -213,7 +191,7 @@ class FishTrackingMethod:
             # convert to angles
             angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
             if len(angles) == 0:
-                message = "W:Tail not completely detectable"
+                messages.append("W:Tail not completely detectable")
                 continue
 
             # also, make the angles continuous
@@ -222,12 +200,13 @@ class FishTrackingMethod:
             # put the data together for one fish
             fish_coords = np.concatenate([np.array(points[0][:2]), angles])
 
+            nofish = False
             # check if this is a new fish, or it is an update of
             # a fish detected previously
             for past_fish in self.previous_fish:
                 if past_fish.is_close(fish_coords) and past_fish.i_not_updated < 0:
                     past_fish.update(fish_coords)
-                    message = "I:Updated previous fish"
+                    messages.append("I:Updated previous fish "+str(past_fish.i_ar))
                     break
             # the else executes if no past fish is close, so a new fish
             # has to be instantiated for this measurement
@@ -241,10 +220,13 @@ class FishTrackingMethod:
                             pos_std=pos_uncertainty,
                         )
                     )
-                    message = "I:Added new fish"
+                    messages.append("I:Added new fish "+ str(new_fish[-1].i_ar))
                 else:
-                    message = "E:More fish than n_fish max"
+                    messages.append("E:More fish than n_fish max")
 
+        if nofish:
+            messages.append("W:No object of right area, between {:.0f} and {:.0f}".format(
+                *fish_area))
         current_fish = []
 
         # remove fish not detected in two subsequent frames
@@ -264,18 +246,22 @@ class FishTrackingMethod:
             self.recorded[pf.i_ar, :] = pf.serialize()
 
         # if a debugging image is to be shown, set it
-        if display_processed == "background difference":
+        if self.set_diagnostic == "background difference":
             self.diagnostic_image = bg
-        elif display_processed == "thresholded background difference":
+        elif self.set_diagnostic == "thresholded background difference":
             self.diagnostic_image = bg_thresh
-        elif display_processed == "fish detection":
+        elif self.set_diagnostic == "fish detection":
             fishdet = bg.copy()
             fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
-        elif display_processed == "thresholded for eye and swim bladder":
+        elif self.set_diagnostic == "thresholded for eye and swim bladder":
             self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
 
-        return message, tuple(self.recorded.flatten()) + (max_area * 1.0,)
+        if self._output_type is None:
+            self.reset_state()
+
+        return NodeOutput(messages,
+                          self._output_type(*self.recorded.flatten(), max_area * 1.0))
 
 
 class IndexBooking:

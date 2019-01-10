@@ -23,7 +23,6 @@ class Prefilter(ImageToImageNode):
         filter_size: Param(0, (0, 15)),
         color_invert: Param(False),
         clip: Param(0, (0, 255)),
-        display_processed: Param("raw", ["raw", "filtered"]) = "raw",
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
@@ -74,17 +73,17 @@ def negdif(xf, y):
         return 0
 
 
-class BackgroundSubtractor(ImageToImageNode):
+class BackgroundSubtractor:
     def __init__(self):
         super().__init__()
         self.background_image = None
+        self.i = 0
 
     def process(
         self, im, learning_rate=0.001, learn_every=1, reset=False, **extraparams
     ):
         if reset:
             self.background_image = None
-
         if self.background_image is None:
             self.background_image = im.astype(np.float32)
         elif self.i == 0:

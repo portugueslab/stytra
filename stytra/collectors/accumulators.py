@@ -361,3 +361,5 @@ class EstimatorLog(Accumulator):
         self.check_start()
         self.times.append(t)
         self.stored_data.append(data)
+        if len(self.stored_data) == 1:
+            self.sig_acc_init.emit()
