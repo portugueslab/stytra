@@ -171,10 +171,12 @@ class StimDisplayWidget:
         the displayed image and, if required, grab a picture of the current
         widget state for recording the stimulus movie. """
         self.update()
+        current_time = datetime.now()
+
         # Grab frame if recording is enabled.
         if self.starting_time is None:
-            self.starting_time = datetime.now()
-            self.last_time = self.starting_time
+            self.starting_time = current_time
+
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
@@ -185,10 +187,10 @@ class StimDisplayWidget:
                 arr = qimage2ndarray.rgb_view(img)  # Convert to np array
                 self.movie.append(arr.copy())
                 self.movie_timestamps.append(
-                    (datetime.now() - self.starting_time).total_seconds()
+                    (current_time - self.starting_time).total_seconds()
                 )
 
-                self.last_time = now
+        self.last_time = now
 
     def get_movie(self):
         """Finalize stimulus movie.

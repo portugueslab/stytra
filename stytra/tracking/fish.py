@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from numba import jit
+from numba import jit, jitclass, int64, float64
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking.preprocessing import BackgroundSubtractor
@@ -9,7 +9,7 @@ from itertools import chain
 
 import logging
 from lightparam import Param, Parametrized
-from stytra.tracking.simple_kalman import NewtonianKalman
+from stytra.tracking.simple_kalman import predict_inplace, update_inplace
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
 
@@ -28,22 +28,17 @@ def _fish_column_names(i_fish, n_segments):
 class FishTrackingMethod(ImageToDataNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="fish_tracking", **kwargs)
-        self.accumulator_headers = None
         self.monitored_headers = ["biggest_area", "f0_theta"]
-        self.data_log_name = "fish_track"
-        self.bg_subtractor = BackgroundSubtractor()
-        self.track_state = None
-        self.bg_im = None
-        self.previous_fish = []
-        self.idx_book = None
-        self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
-        self.recorded = None
         self.diagnostic_image_options = [
-                "background difference",
-                "thresholded background difference",
-                "fish detection",
-                "thresholded for eye and swim bladder",
-            ]
+            "background difference",
+            "thresholded background difference",
+            "fish detection",
+            "thresholded for eye and swim bladder",
+        ]
+
+        self.bg_subtractor = BackgroundSubtractor()
+        self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
+        self.fishes = None
 
     def changed(self, vals):
         if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]):
@@ -60,13 +55,13 @@ class FishTrackingMethod(ImageToDataNode):
         ) + ["biggest_area"])
 
         self.bg_subtractor = BackgroundSubtractor()
-        self.previous_fish = []
 
         # used for booking a spot for one of the potentially tracked fish
-        self.idx_book = IndexBooking(self._params.n_fish_max)
-        self.recorded = np.full(
-            (self._params.n_fish_max, 3 * 2 + self._params.n_segments - 1), np.nan
-        )
+        self.fishes = Fishes(self._params.n_fish_max, n_segments=self._params.n_segments - 1,
+                             pos_std=self._params.pos_uncertainty,
+                             pred_coef = self._params.prediction_uncertainty,
+                             angle_std= np.pi / 10,
+                             persist_fish_for = self._params.persist_fish_for)
 
     def _process(
         self,
@@ -97,8 +92,7 @@ class FishTrackingMethod(ImageToDataNode):
     ):
 
         # update the previously-detected fish using the Kalman filter
-        for pfish in self.previous_fish:
-            pfish.predict()
+        self.fishes.predict()
 
         area_scale = bg_downsample * bg_downsample
         border_margin = border_margin // bg_downsample
@@ -125,7 +119,6 @@ class FishTrackingMethod(ImageToDataNode):
 
         # iterate through all the regions different from the background and try
         # to find fish
-        new_fish = []
 
         messages = []
 
@@ -203,47 +196,18 @@ class FishTrackingMethod(ImageToDataNode):
             nofish = False
             # check if this is a new fish, or it is an update of
             # a fish detected previously
-            for past_fish in self.previous_fish:
-                if past_fish.is_close(fish_coords) and past_fish.i_not_updated < 0:
-                    past_fish.update(fish_coords)
-                    messages.append("I:Updated previous fish "+str(past_fish.i_ar))
-                    break
-            # the else executes if no past fish is close, so a new fish
-            # has to be instantiated for this measurement
+            if self.fishes.update(fish_coords):
+                messages.append(
+                    "I:Updated previous fish")
+            elif self.fishes.add_fish(fish_coords):
+                messages.append("I:Added new fish")
             else:
-                if not np.all(self.idx_book.full):
-                    new_fish.append(
-                        Fish(
-                            fish_coords,
-                            self.idx_book,
-                            pred_coef=prediction_uncertainty,
-                            pos_std=pos_uncertainty,
-                        )
-                    )
-                    messages.append("I:Added new fish "+ str(new_fish[-1].i_ar))
-                else:
-                    messages.append("E:More fish than n_fish max")
+                messages.append("E:More fish than n_fish max")
 
         if nofish:
             messages.append("W:No object of right area, between {:.0f} and {:.0f}".format(
                 *fish_area))
-        current_fish = []
 
-        # remove fish not detected in two subsequent frames
-        for pf in self.previous_fish:
-            if pf.i_not_updated < -persist_fish_for:
-                self.idx_book.full[pf.i_ar] = False
-                self.recorded[pf.i_ar, :] = np.nan
-            else:
-                current_fish.append(pf)
-
-        # add the new fish to the previously updated fish
-        current_fish.extend(new_fish)
-        self.previous_fish = current_fish
-
-        # serialize the fish data for queue communication
-        for pf in self.previous_fish:
-            self.recorded[pf.i_ar, :] = pf.serialize()
 
         # if a debugging image is to be shown, set it
         if self.set_diagnostic == "background difference":
@@ -261,72 +225,93 @@ class FishTrackingMethod(ImageToDataNode):
             self.reset_state()
 
         return NodeOutput(messages,
-                          self._output_type(*self.recorded.flatten(), max_area * 1.0))
+                          self._output_type(*self.fishes.coords.flatten(),
+                                            max_area * 1.0))
 
 
-class IndexBooking:
-    """ Class that keeps track of which array columns
-    are free to put in fish data
+spec = [
+    ("n_fish", int64),
+    ("coords", float64[:, :]),
+    ("i_not_updated", int64[:]),
+    ("F", float64[:, :]),
+    ("uncertainties", float64[:]),
+    ("Q", float64[:, :]),
+    ("Ps", float64[:, :, :, :]),
+    ("def_P", float64[:, :, :]),
+    ("persist_fish_for", int64)
+]
 
-    """
-
-    def __init__(self, n_max=3):
-        self.full = np.zeros(n_max, dtype=np.bool)
-
-    def get_next(self):
-        i_next = np.argmin(self.full)
-        self.full[i_next] = True
-        return i_next
-
-
-class Fish:
-    """ Class for Kalman-filtered tracking of individual fish
-
-    """
-
-    def __init__(
-        self, initial_state, idx_book, pos_std=1.0, angle_std=np.pi / 10, pred_coef=1
-    ):
-        self.i_not_updated = 0
-        self.i_ar = idx_book.get_next()
-
+@jitclass(spec)
+class Fishes(object):
+    def __init__(self, n_fish_max, pos_std, angle_std, n_segments,
+                 pred_coef, persist_fish_for):
+        self.n_fish = n_fish_max
+        self.coords = np.full((n_fish_max, 6+n_segments), np.nan)
+        self.uncertainties = np.array((pos_std, angle_std, angle_std))
+        self.def_P = np.zeros((3, 2, 2))
+        for i, uc in enumerate(self.uncertainties):
+            self.def_P[i, 0, 0] = uc
+            self.def_P[i, 1, 1] = uc
+        self.i_not_updated = np.zeros(n_fish_max, dtype=np.int64)
+        self.Ps = np.zeros((n_fish_max, 3, 2, 2))
+        self.F = np.array([[1.0, 1.0], [0.0, 1.0]])
         dt = 0.02
-        # the position will be Kalman-filtered
-        self.filters = [
-            NewtonianKalman(x0, stdev, dt, pred_coef)
-            for x0, stdev in zip(initial_state[:3], [pos_std, pos_std, angle_std])
-        ]
-
-        self.unfiltered = initial_state[3:]
+        self.Q = np.array([[0.25 * dt ** 4, 0.5 * dt ** 3],
+                           [0.5 * dt ** 3, dt ** 2]]) * pred_coef
+        self.persist_fish_for = persist_fish_for
 
     def predict(self):
-        for f in self.filters:
-            f.predict()
-        self.i_not_updated -= 1
+        for i_fish in range(self.n_fish):
+            if not np.isnan(self.coords[i_fish, 0]):
+                for i_coord in range(0, 6, 2):
+                    predict_inplace(self.coords[i_fish, i_coord:i_coord+2],
+                                    self.Ps[i_fish, i_coord//2], self.F, self.Q)
+                self.i_not_updated[i_fish] += 1
+                if self.i_not_updated[i_fish] > self.persist_fish_for:
+                    self.coords[i_fish, :] = np.nan
 
-    def update(self, new_fish_state):
-        for i, (f, s) in enumerate(zip(self.filters, new_fish_state[:3])):
-            # Angle needs to be updated specially:
-            if i == 2:
-                s = _minimal_angle_dif(f.x[0], s)
-            f.update(s)
-        self.unfiltered[:] = new_fish_state[3:]
-        self.i_not_updated = 0
+    def update(self, new_fish):
+        for i_fish in range(self.n_fish):
+            if not np.isnan(self.coords[i_fish, 0]):
+                if self.is_close(new_fish, i_fish) and self.i_not_updated[i_fish] != 0:
+                    # update position with Kalman filtering
+                    for i_coord in range(0, 3):
+                        # if it is the angle find the modulo 2pi closest
+                        nc = new_fish[i_coord]
+                        if i_coord == 2:
+                            nc = _minimal_angle_dif(self.coords[i_fish, 4], nc)
+                        update_inplace(nc,
+                                       self.coords[i_fish, i_coord*2:i_coord*2+2],
+                                       self.Ps[i_fish, i_coord],
+                                       self.uncertainties[i_coord])
+                    # update tail angles
+                    self.coords[i_fish, 6:] = new_fish[3:]
+                    self.i_not_updated[i_fish] = 0
+                    return True
 
-    def serialize(self):
-        return np.concatenate([f.x.flatten() for f in self.filters] + [self.unfiltered])
+    def add_fish(self, new_fish):
+        for i_fish in range(self.n_fish):
+            if np.isnan(self.coords[i_fish, 0]):
+                self.coords[i_fish, 0:6:2] = new_fish[:3]
+                self.coords[i_fish, 1:6:2] = 0.0
+                self.coords[i_fish, 6:] = new_fish[3:]
+                self.Ps[i_fish] = self.def_P
+                self.i_not_updated[i_fish] = 0
+                return True
+        return False
 
-    def is_close(self, new_fish, n_px=15, d_theta=np.pi / 2):
+    def is_close(self, new_fish, i_fish):
         """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
-        dists = np.array(
-            [(new_fish[i] - f.x[0]) for i, f in enumerate(self.filters[:2])]
-        )
+        n_px = 15
+        d_theta = np.pi / 2
+        dists = new_fish[:2] - self.coords[i_fish, 0:4:2]
         dtheta = np.abs(
-            np.mod(new_fish[2] - self.filters[2].x[0] + np.pi, np.pi * 2) - np.pi
+            np.mod(new_fish[2] - self.coords[i_fish, 4] + np.pi, np.pi * 2) - np.pi
         )
+
         return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 

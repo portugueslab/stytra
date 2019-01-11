@@ -80,15 +80,17 @@ class ImageToDataNode(PipelineNode):
 
 class Pipeline:
     def __init__(self):
-        self.display_overlay = None
-        self.display_handles = None
-        self.extra_widget = None
         self.root = SourceNode()
+
+        self.display_overlay = None
+        self.extra_widget = None
+
         self.selected_output = None
         self._output_type = None
         self.all_params = dict()
         self._param_finder = Resolver()
         self.node_dict = dict()
+
 
     @property
     def headers_to_plot(self):
