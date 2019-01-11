@@ -185,6 +185,11 @@ class MultiStreamPlot(QWidget):
             * 255
         )
 
+    def refresh_streams(self):
+        for accumulator, sel_columns in self.accumulators:
+            pass
+
+
     def add_stream(self, accumulator: Accumulator, header_items=None):
         """Adds a data collector stream to the plot:
 

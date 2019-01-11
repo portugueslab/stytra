@@ -73,7 +73,8 @@ class CameraExperiment(Experiment):
             self.camera_state = VideoControlParameters(tree=self.dc)
 
         self.camera_framerate_acc = QueueDataAccumulator(
-            self.camera.framerate_queue, name="camera"
+            self.camera.framerate_queue, name="camera",
+            monitored_headers=["fps"]
         )
 
         # New parameters are sent with GUI timer:
@@ -250,7 +251,8 @@ class TrackingExperiment(CameraExperiment):
             self.estimator.log.sig_acc_init.connect(self.refresh_plots)
 
         self.acc_framerate = QueueDataAccumulator(
-            self.frame_dispatcher.framerate_queue, name="tracking"
+            self.frame_dispatcher.framerate_queue, name="tracking",
+            monitored_headers=["fps"]
         )
 
         self.gui_timer.timeout.connect(self.acc_framerate.update_list)

@@ -97,27 +97,22 @@ class PositionEstimator(Estimator):
         return np.sqrt(np.sum(vel**2))
 
     def get_position(self):
-        past_coords = {
-            name: value
-            for name, value in zip(
-                self.acc_tracking.columns, self.acc_tracking.get_last_n(1)[0, :]
-            )
-        }
-        if self.calibrator.cam_to_proj is None or not np.isfinite(past_coords["f0_x"]):
-            self.log.update_list((past_coords["t"], -1, -1, 0))
-            return -1, -1, 0
-
+        if len(self.acc_tracking.stored_data)==0 or  self.calibrator.cam_to_proj is None or not np.isfinite(self.acc_tracking.stored_data[-1].f0_x):
+            o = self._output_type(-1, -1, 0)
+            return o
+        past_coords = self.acc_tracking.stored_data[-1]
+        t = self.acc_tracking.times[-1]
         projmat = np.array(self.calibrator.cam_to_proj)
         if projmat.shape != (2, 3):
             projmat = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-        x, y = projmat @ np.array([past_coords["f0_x"], past_coords["f0_y"], 1.0])
+        x, y = projmat @ np.array([past_coords.f0_x, past_coords.f0_y, 1.0])
 
         theta = np.arctan2(
             *(
                 projmat[:, :2]
                 @ np.array(
-                    [np.cos(past_coords["f0_theta"]), np.sin(past_coords["f0_theta"])]
+                    [np.cos(past_coords.f0_theta), np.sin(past_coords.f0_theta)]
                 )[::-1]
             )
         )
@@ -136,7 +131,7 @@ class PositionEstimator(Estimator):
                 c_values = self.past_values
 
         logout = self._output_type(*c_values)
-        self.log.update_list(past_coords["t"], logout)
+        self.log.update_list(t, logout)
 
         return c_values
 
