@@ -150,7 +150,7 @@ class CameraSource(VideoSource):
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.message_queue.put("I:" + str(self.cam.open_camera()))
+        self.message_queue.put(str(self.cam.open_camera()))
         prt = None
         while True:
             # Kill if signal is set:

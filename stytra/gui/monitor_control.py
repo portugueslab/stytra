@@ -135,10 +135,10 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
                     x=points_proj[:, 0] + x0, y=points_proj[:, 1] + y0
                 )
 
-            if image is not None:
+            if image is not None and calibrator.cam_to_proj is not None:
                 tr_im = cv2.warpAffine(
                     image,
-                    np.array(calibrator.cam_to_proj),
+                    np.array(calibrator.cam_to_proj).astype(np.float64),
                     dsize=tuple([int(p) for p in self.roi_box.size()]),
                 )
                 self.camera_image.setImage(tr_im)
