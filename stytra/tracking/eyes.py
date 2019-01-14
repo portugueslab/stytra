@@ -6,9 +6,10 @@ import numpy as np
 from skimage.filters import threshold_local
 import cv2
 from lightparam import Parametrized, Param
+from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 
 
-class EyeTrackingMethod:
+class EyeTrackingMethod(ImageToDataNode):
     """General eyes tracking method."""
 
     name = "eyes"
@@ -33,7 +34,7 @@ class EyeTrackingMethod:
         self.accumulator_headers = headers
         self.data_log_name = "behavior_eyes_log"
 
-    def detect(
+    def _process(
         self,
         im,
         wnd_pos: Param((0, 0), gui=False),
@@ -85,7 +86,10 @@ class EyeTrackingMethod:
                 + e[1][1][::-1]
                 + (-e[1][2],)
             )
-        return message, np.array(e)
+        return NodeOutput(
+            message,
+            self._output_type(np.array(e)),
+        )
 
 
 def _pad(im, padding=0, val=0):
