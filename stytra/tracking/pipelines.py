@@ -65,7 +65,7 @@ class ImageToDataNode(PipelineNode):
         self.monitored_headers = []
         self._output_type = None
         self._params = None
-        self._output_type_changed = False
+        self._output_type_changed = True  # Has to be true to initialize the class
 
     @property
     def output_type_changed(self):
@@ -116,7 +116,7 @@ class Pipeline:
             diag_images.extend((node.strpath+"/"+imname for imname in node.diagnostic_image_options))
         self.all_params["diagnostics"] = Parametrized(name="tracking/diagnostics",
                                                       params=dict(image=Param("unprocessed",
-                                                                                   ["unprocessed"]+diag_images)),
+                                                                              ["unprocessed"]+diag_images)),
                                                       tree=tree)
 
     @property

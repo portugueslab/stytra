@@ -57,9 +57,9 @@ class CentroidTrackingMethod(TailTrackingMethod):
         im :
             image to process
         tail_start :
-            starting point (x, y) (Default value = (0)
+            starting point (x, y) (Default value = 0)
         tail_length :
-            tail length (x, y) (Default value = (1)
+            tail length (x, y) (Default value = 1)
         n_segments :
             number of desired segments (Default value = 12)
         window_size :

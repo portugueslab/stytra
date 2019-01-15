@@ -461,6 +461,11 @@ class TailTrackingSelection(CameraEmbeddedTrackingSelection):
         super().__init__(*args, tail=True, **kwargs)
 
 
+class EyeTrackingSelection(CameraEmbeddedTrackingSelection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, eyes=True, **kwargs)
+
+
 class CameraViewCalib(CameraViewWidget):
     """ """
 

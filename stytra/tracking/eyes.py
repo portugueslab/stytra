@@ -7,6 +7,7 @@ from skimage.filters import threshold_local
 import cv2
 from lightparam import Parametrized, Param
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
+from collections import namedtuple
 
 
 class EyeTrackingMethod(ImageToDataNode):
@@ -14,9 +15,8 @@ class EyeTrackingMethod(ImageToDataNode):
 
     name = "eyes"
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.params = Parametrized(name="tracking/eyes", params=self.detect)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args,  name="eyes_tracking", **kwargs)
 
         headers = []
         for i in range(2):
@@ -29,10 +29,11 @@ class EyeTrackingMethod(ImageToDataNode):
                     "th_e{}".format(i),
                 ]
             )
+        self._output_type = namedtuple("t", headers)
 
         self.monitored_headers = ["th_e0", "th_e1"]
-        self.accumulator_headers = headers
-        self.data_log_name = "behavior_eyes_log"
+
+        self.data_log_name = "eye_track"
 
     def _process(
         self,
@@ -86,9 +87,10 @@ class EyeTrackingMethod(ImageToDataNode):
                 + e[1][1][::-1]
                 + (-e[1][2],)
             )
+        print(self._output_type._fields)
         return NodeOutput(
-            message,
-            self._output_type(np.array(e)),
+            [message, ],
+            self._output_type(*e),
         )
 
 
