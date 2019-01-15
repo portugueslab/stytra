@@ -15,6 +15,7 @@ class PipelineNode(Node):
         self.diagnostic_image_options = []
         self.diagnostic_image = None
         self.set_diagnostic = None
+        self._output_type = None
 
     def changed(self, vals):
         pass
@@ -63,7 +64,6 @@ class ImageToDataNode(PipelineNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.monitored_headers = []
-        self._output_type = None
         self._params = None
         self._output_type_changed = True  # Has to be true to initialize the class
 
@@ -161,8 +161,8 @@ class Pipeline:
 
         child_outputs = tuple(self.recursive_run(child, output.data)
                    for child in node.children)
-        if self._output_type is None or node.output_type_changed:
-            self._output_type = namedtuple("o",
+        if node._output_type is None or node.output_type_changed:
+            node._output_type = namedtuple("o",
                                            chain.from_iterable(
                                                map(lambda x:x.data._fields,
                                                     child_outputs)))
@@ -173,7 +173,7 @@ class Pipeline:
         # second element makes a named tuple with fields from all the child named tuples
         return NodeOutput(output.messages+list(chain.from_iterable(map(lambda x: x.messages,
                                                              child_outputs))),
-                self._output_type(*(chain.from_iterable(
+                node._output_type(*(chain.from_iterable(
                     map(lambda x: x.data, child_outputs)))))
 
     def run(self, input):

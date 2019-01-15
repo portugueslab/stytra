@@ -5,7 +5,7 @@ from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.gui.fishplots import TailStreamPlot, BoutPlot
 from stytra.gui.camera_display import TailTrackingSelection, \
-    CameraViewFish, EyeTrackingSelection
+    CameraViewFish, EyeTrackingSelection, EyeTailTrackingSelection
 
 
 class TailTrackingPipeline(Pipeline):
@@ -33,10 +33,20 @@ class EyeTrackingPipeline(Pipeline):
         self.display_overlay = EyeTrackingSelection
 
 
+class EyeTailTrackingPipeline(Pipeline):
+    def __init__(self):
+        super().__init__()
+        self.filter = Prefilter(parent=self.root)
+        self.tailtrack = CentroidTrackingMethod(parent=self.filter)
+
+        self.eyetrack = EyeTrackingMethod(parent=self.root)
+        self.display_overlay = EyeTailTrackingSelection
+
 
 pipeline_dict = dict(tail=TailTrackingPipeline,
                      fish=FishTrackingPipeline,
-                     eyes=EyeTrackingPipeline)
+                     eyes=EyeTrackingPipeline,
+                     eyes_tail=EyeTailTrackingPipeline)
 
 
 
