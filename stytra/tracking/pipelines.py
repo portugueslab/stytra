@@ -151,7 +151,8 @@ class Pipeline:
                 for node in self.node_dict.values():
                     node.set_diagnostic = None
             else:
-                self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic = imname.split("/")[-1]
+                self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
+                    = imname.split("/")[-1]
 
     def recursive_run(self, node: PipelineNode, *input_data):
         output = node.process(*input_data)

@@ -326,8 +326,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 p1.setPos(QPointF(*np1))
                 p2.setPos(QPointF(*np2))
             if self.eyes:
-                self.roi_eyes.setPos(self.tail_params.wnd_pos, finish=False)
-                self.roi_eyes.setSize(self.tail_params.wnd_dim)
+                self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
+                self.roi_eyes.setSize(self.eye_params.wnd_dim)
 
     def tail_points(self):
         tsy, tsx = (t * self.scale for t in self.tail_params.tail_start)
@@ -352,10 +352,10 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.tail_params.params.tail_length.changed = True
 
         if self.eyes:
-            self.tail_params.params.wnd_dim.changed = True
-            self.tail_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
-            self.tail_params.params.wnd_pos.changed = True
-            self.tail_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
+            self.eye_params.params.wnd_dim.changed = True
+            self.eye_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
+            self.eye_params.params.wnd_pos.changed = True
+            self.eye_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def scale_changed(self):
@@ -407,7 +407,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             ):
                                 ell.setPen(col, width=3)
 
-                            pos = self.tail_params.wnd_pos
+                            pos = self.eye_params.wnd_pos
 
                             # This long annoying part take care of the calculation
                             # of rotation and translation for the ROI starting from

@@ -35,6 +35,10 @@ class EyeTrackingMethod(ImageToDataNode):
 
         self.data_log_name = "eye_track"
 
+        self.diagnostic_image_options = [
+            "thresholded",
+        ]
+
     def _process(
         self,
         im,
@@ -64,16 +68,19 @@ class EyeTrackingMethod(ImageToDataNode):
         PAD = 0
 
         cropped = _pad(
-            im[
+            (im[
                 wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
                 wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
-            ].copy(),
+            ] < threshold).view(dtype=np.uint8).copy(),
             padding=PAD,
             val=255,
         )
 
         # try:
         e = _fit_ellipse(cropped)
+
+        if self.set_diagnostic == "thresholded":
+            self.diagnostic_image = (im < threshold).view(dtype=np.uint8)
 
         if e is False:
             e = (np.nan,) * 10
@@ -87,10 +94,9 @@ class EyeTrackingMethod(ImageToDataNode):
                 + e[1][1][::-1]
                 + (-e[1][2],)
             )
-        print(self._output_type._fields)
         return NodeOutput(
             [message, ],
-            self._output_type(*e),
+            self._output_type(*e)
         )
 
 
