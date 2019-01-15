@@ -41,7 +41,8 @@ class FishTrackingMethod(ImageToDataNode):
         self.fishes = None
 
     def changed(self, vals):
-        if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]):
+        if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]) or \
+           vals.get("reset", False):
             self.reset_state()
 
     def reset_state(self):
@@ -53,6 +54,7 @@ class FishTrackingMethod(ImageToDataNode):
                 ]
             )
         ) + ["biggest_area"])
+        self._output_type_changed = True
 
         self.bg_subtractor = BackgroundSubtractor()
 
@@ -67,7 +69,7 @@ class FishTrackingMethod(ImageToDataNode):
         self,
         frame,
         reset: Param(False),
-        n_fish_max: Param(1, (1, 10)),
+        n_fish_max: Param(1, (1, 50)),
         n_segments: Param(10, (2, 30)),
         bg_downsample: Param(1, (1, 8)),
         bg_learning_rate: Param(0.04, (0.0, 1.0)),

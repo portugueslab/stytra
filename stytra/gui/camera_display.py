@@ -326,8 +326,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                 p1.setPos(QPointF(*np1))
                 p2.setPos(QPointF(*np2))
             if self.eyes:
-                self.roi_eyes.setPos(self.tail_params.wnd_pos, finish=False)
-                self.roi_eyes.setSize(self.tail_params.wnd_dim)
+                self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
+                self.roi_eyes.setSize(self.eye_params.wnd_dim)
 
     def tail_points(self):
         tsy, tsx = (t * self.scale for t in self.tail_params.tail_start)
@@ -352,10 +352,10 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             self.tail_params.params.tail_length.changed = True
 
         if self.eyes:
-            self.tail_params.params.wnd_dim.changed = True
-            self.tail_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
-            self.tail_params.params.wnd_pos.changed = True
-            self.tail_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
+            self.eye_params.params.wnd_dim.changed = True
+            self.eye_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
+            self.eye_params.params.wnd_pos.changed = True
+            self.eye_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def scale_changed(self):
@@ -407,7 +407,7 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             ):
                                 ell.setPen(col, width=3)
 
-                            pos = self.tail_params.wnd_pos
+                            pos = self.eye_params.wnd_pos
 
                             # This long annoying part take care of the calculation
                             # of rotation and translation for the ROI starting from
@@ -459,6 +459,15 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 class TailTrackingSelection(CameraEmbeddedTrackingSelection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, tail=True, **kwargs)
+
+
+class EyeTrackingSelection(CameraEmbeddedTrackingSelection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, eyes=True, **kwargs)
+
+class EyeTailTrackingSelection(CameraEmbeddedTrackingSelection):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, eyes=True, tail=True, **kwargs)
 
 
 class CameraViewCalib(CameraViewWidget):
@@ -561,16 +570,15 @@ class CameraViewFish(CameraViewCalib):
         current_data = self.experiment.acc_tracking.values_at_abs_time(
             self.current_frame_time)
 
-        last_header_item = self.experiment.acc_tracking.columns[-2]
-        n_fish = int(last_header_item[1]) + 1
+        n_fish = self.tracking_params.n_fish_max
 
         n_data_per_fish = (
             len(current_data) - 1
         ) // n_fish  # the first is time, the last is area
-        n_points_tail = n_data_per_fish - 6
+        n_points_tail = self.tracking_params.n_segments
         try:
             retrieved_data = np.array(
-                current_data[0 : -1]  # the -1 if for the diagnostic area
+                current_data[: -1]  # the -1 if for the diagnostic area
             ).reshape(n_fish, n_data_per_fish)
             valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
             self.points_fish.setData(
