@@ -566,16 +566,15 @@ class CameraViewFish(CameraViewCalib):
         current_data = self.experiment.acc_tracking.values_at_abs_time(
             self.current_frame_time)
 
-        last_header_item = self.experiment.acc_tracking.columns[-2]
-        n_fish = int(last_header_item[1]) + 1
+        n_fish = self.tracking_params.n_fish_max
 
         n_data_per_fish = (
             len(current_data) - 1
         ) // n_fish  # the first is time, the last is area
-        n_points_tail = n_data_per_fish - 6
+        n_points_tail = self.tracking_params.n_segments
         try:
             retrieved_data = np.array(
-                current_data[0 : -1]  # the -1 if for the diagnostic area
+                current_data[: -1]  # the -1 if for the diagnostic area
             ).reshape(n_fish, n_data_per_fish)
             valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
             self.points_fish.setData(

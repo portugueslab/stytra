@@ -69,7 +69,10 @@ class ImageToDataNode(PipelineNode):
 
     @property
     def output_type_changed(self):
-        return self._output_type_changed
+        if self._output_type_changed:
+            self._output_type_changed = False
+            return True
+        return False
 
     def _process(self):
         # Node processing code

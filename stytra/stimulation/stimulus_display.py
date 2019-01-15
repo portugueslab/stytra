@@ -190,7 +190,7 @@ class StimDisplayWidget:
                     (current_time - self.starting_time).total_seconds()
                 )
 
-        self.last_time = now
+        self.last_time = current_time
 
     def get_movie(self):
         """Finalize stimulus movie.
