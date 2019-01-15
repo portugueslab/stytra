@@ -15,12 +15,7 @@ from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import deepdish as dd
 
-from stytra.hardware.video.cameras import (
-    XimeaCamera,
-    AvtCamera,
-    SpinnakerCamera,
-    MikrotronCLCamera,
-)
+from stytra.hardware.video.cameras import camera_class_dict
 
 from stytra.hardware.video.write import VideoWriter
 
@@ -100,12 +95,6 @@ class CameraSource(VideoSource):
 
     """
 
-    camera_class_dict = dict(
-        ximea=XimeaCamera,
-        avt=AvtCamera,
-        spinnaker=SpinnakerCamera,
-        mikrotron=MikrotronCLCamera,
-    )
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(
@@ -146,7 +135,7 @@ class CameraSource(VideoSource):
         if self.state is None:
             self.state = CameraControlParameters()
         try:
-            CameraClass = self.camera_class_dict[self.camera_type]
+            CameraClass = camera_class_dict[self.camera_type]
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
