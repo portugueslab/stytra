@@ -18,9 +18,9 @@ class TailTrackingMethod(ImageToDataNode):
 
     def changed(self, vals):
         if "n_output_segments" in vals.keys():
-            self.reset_state()
+            self.reset()
 
-    def reset_state(self):
+    def reset(self):
         self._output_type = namedtuple("t", ["tail_sum"] + [
             "theta_{:02}".format(i)
             for i in range(self._params.n_output_segments)
@@ -152,7 +152,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         self.previous_angles = angles
 
         if self._output_type is None:
-            self.reset_state()
+            self.reset()
 
         # Total curvature as sum of the last 2 angles - sum of the first 2
         return NodeOutput(

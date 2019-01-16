@@ -17,6 +17,9 @@ class PipelineNode(Node):
         self.set_diagnostic = None
         self._output_type = None
 
+    def reset(self):
+        pass
+
     def changed(self, vals):
         pass
 
@@ -94,7 +97,6 @@ class Pipeline:
         self._param_finder = Resolver()
         self.node_dict = dict()
 
-
     @property
     def headers_to_plot(self):
         hds = []
@@ -121,6 +123,10 @@ class Pipeline:
                                                       params=dict(image=Param("unprocessed",
                                                                               ["unprocessed"]+diag_images)),
                                                       tree=tree)
+        self.all_params["reset"] = Parametrized(name="tracking/reset",
+                                                params=dict(reset=Param(False,
+                                                                        gui="button")),
+                                                tree=tree)
 
     @property
     def diagnostic_image(self):
@@ -143,7 +149,7 @@ class Pipeline:
     def deserialize_params(self, rec_params):
         for item, vals in rec_params.items():
             self.all_params[item].params.values = vals
-            if item != "diagnostics":
+            if item != "diagnostics" and item != "reset":
                 self.node_dict[item].changed(vals)
         if "diagnostics" in rec_params.keys():
             imname = self.all_params["diagnostics"].image
@@ -153,6 +159,10 @@ class Pipeline:
             else:
                 self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
                     = imname.split("/")[-1]
+        # reset group always exists, checks if there are actual changes (the second and)
+        if "reset" in rec_params.keys() and "reset" in rec_params["reset"].keys():
+            for node in self.node_dict.values():
+                node.reset()
 
     def recursive_run(self, node: PipelineNode, *input_data):
         output = node.process(*input_data)

@@ -17,7 +17,7 @@ from stytra.hardware.video import (
 
 # imports for tracking
 from stytra.collectors import QueueDataAccumulator
-from stytra.tracking.processes import FrameDispatcher
+from stytra.tracking.tracking_process import TrackingProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
@@ -203,7 +203,7 @@ class TrackingExperiment(CameraExperiment):
 
         self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking
 
-        self.frame_dispatcher = FrameDispatcher(
+        self.frame_dispatcher = TrackingProcess(
                 in_frame_queue=self.camera.frame_queue,
                 finished_signal=self.camera.kill_event,
                 pipeline=self.pipeline_cls,

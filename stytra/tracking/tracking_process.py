@@ -1,41 +1,11 @@
-from collections import deque
-from datetime import datetime
 from queue import Empty
-from multiprocessing import Queue, Event, Value
-
-import cv2
-import numpy as np
-from numba import jit
+from multiprocessing import Event, Value
 
 from stytra.utilities import FrameProcess
-from arrayqueues.shared_arrays import ArrayQueue, TimestampedArrayQueue
-
-from stytra.tracking.tail import CentroidTrackingMethod, AnglesTrackingMethod
-from stytra.tracking.eyes import EyeTrackingMethod
-from stytra.tracking.fish import FishTrackingMethod
-from stytra.tracking.eyes_tail import TailEyesTrackingMethod
-
-from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor
-from time import sleep
+from arrayqueues.shared_arrays import TimestampedArrayQueue
 
 
-def get_tracking_method(name):
-    tracking_methods_list = dict(
-        tail=CentroidTrackingMethod,
-        angle_sweep=AnglesTrackingMethod,
-        eyes=EyeTrackingMethod,
-        eyes_tail=TailEyesTrackingMethod,
-        fish=FishTrackingMethod,
-    )
-    return tracking_methods_list.get(name, None)
-
-
-def get_preprocessing_method(name):
-    prepmethods = dict(prefilter=Prefilter, bgsub=BackgroundSubtractor)
-    return prepmethods.get(name, None)
-
-
-class FrameDispatcher(FrameProcess):
+class TrackingProcess(FrameProcess):
     """A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
 
@@ -150,55 +120,3 @@ class FrameDispatcher(FrameProcess):
         if self.i == 0:
             self.gui_queue.put(frame, timestamp=frametime)
         self.i = (self.i + 1) % every_x
-
-
-@jit(nopython=True)
-def update_bg(bg, current, alpha):
-    """
-
-    Parameters
-    ----------
-    bg :
-        
-    current :
-        
-    alpha :
-        
-
-    Returns
-    -------
-
-    """
-    am = 1 - alpha
-    dif = np.empty_like(current)
-    for i in range(current.shape[0]):
-        for j in range(current.shape[1]):
-            bg[i, j] = bg[i, j] * am + current[i, j] * alpha
-            if bg[i, j] > current[i, j]:
-                dif[i, j] = bg[i, j] - current[i, j]
-            else:
-                dif[i, j] = current[i, j] - bg[i, j]
-    return dif
-
-
-@jit(nopython=True)
-def _compare_to_previous(current, previous):
-    """
-
-    Parameters
-    ----------
-    current :
-        
-    previous :
-        
-
-    Returns
-    -------
-
-    """
-    n_dif = np.zeros(previous.shape[0], dtype=np.uint32)
-    for k in range(previous.shape[0]):
-        for i in range(current.shape[0]):
-            for j in range(current.shape[1]):
-                n_dif[k] += np.bitwise_xor(current[i, j], previous[k, i, j]) // 255
-    return n_dif
