@@ -47,15 +47,15 @@ class Accumulator(QObject):
     sig_acc_init = pyqtSignal()
 
     def __init__(
-        self, fps_calc_points=10, monitored_headers=None, name=""
+        self, experiment, fps_calc_points=10, monitored_headers=None, name=""
     ):
         super().__init__()
         """ """
+        self.exp = experiment
         self.name = name
         self.stored_data = []
         self.times = []
         self.plot_columns = monitored_headers
-        self.starting_time = None
         self.fps_calc_points = fps_calc_points
         self._header_dict = None
 
@@ -83,7 +83,7 @@ class Accumulator(QObject):
         namedtuple of values
 
         """
-        find_time = (time - self.starting_time).total_seconds()
+        find_time = (time - self.exp.t0).total_seconds()
         i = bisect_right(self.times, find_time)
         return self.stored_data[i-1]
 
@@ -119,13 +119,7 @@ class Accumulator(QObject):
             self.plot_columns = monitored_headers
         self.stored_data = []
         self.times = []
-        self.starting_time = None
         self._header_dict = None
-
-    def check_start(self):
-        """ """
-        if self.starting_time is None:
-            self.starting_time = datetime.datetime.now()
 
     def get_fps(self):
         """ """
@@ -210,6 +204,9 @@ class Accumulator(QObject):
         """
         outpath = path + "." + format
         df = self.get_dataframe()
+        if df is None:
+            return
+
         if format == "csv":
             # replace True and False in csv files:
             df.replace({True: 1, False: 0}).to_csv(outpath, sep=";")
@@ -266,15 +263,11 @@ class QueueDataAccumulator(Accumulator):
                     self.reset()
                     newtype = True
 
-                # If we are at the starting time:
-                if len(self.stored_data) == 0:
-                    self.starting_time = t
-
                 # Time in ms (for having np and not datetime objects)
-                t_ms = (t - self.starting_time).total_seconds()
+                t_s = (t - self.exp.t0).total_seconds()
 
                 # append:
-                self.times.append(t_ms)
+                self.times.append(t_s)
                 self.stored_data.append(data)
 
                 # if the data type changed, emit a signal
@@ -295,11 +288,11 @@ class DynamicLog(Accumulator):
 
     """
 
-    def __init__(self, stimuli):
+    def __init__(self, stimuli, **kwargs):
         """ """
         self.name = "stimulus_params"
         self._tupletype = None
-        super().__init__()
+        super().__init__(**kwargs)
         # it is assumed the first dynamic stimulus has all the fields
 
         self.update_stimuli(stimuli)
@@ -320,7 +313,6 @@ class DynamicLog(Accumulator):
         -------
 
         """
-        self.check_start()
         self.times.append(time)
         self.stored_data.append(self._tupletype(*(data.get(f, np.nan)
                                                   for f in self._tupletype._fields)))
@@ -342,8 +334,8 @@ class DynamicLog(Accumulator):
 class EstimatorLog(Accumulator):
     """ """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.stored_data = []
 
     def update_list(self, t, data):
@@ -358,7 +350,6 @@ class EstimatorLog(Accumulator):
         -------
 
         """
-        self.check_start()
         self.times.append(t)
         self.stored_data.append(data)
         if len(self.stored_data) == 1:

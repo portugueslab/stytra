@@ -186,6 +186,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
         self.plot_framerate = MultiStreamPlot(
+            experiment=self.experiment,
             time_past=5, round_bounds=10, compact=True
         )
         self.plot_framerate.setMaximumHeight(120)
@@ -232,7 +233,7 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot()
+        self.stream_plot = MultiStreamPlot(experiment=self)
         self.monitoring_layout.addWidget(self.stream_plot)
 
         super().__init__(*args, **kwargs)

@@ -58,7 +58,7 @@ class CameraViewWidget(QWidget):
         # Display area for showing the camera image:
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.display_area.setRange(
-            QRectF(0, 0, 640, 640), update=True, disableAutoRange=True
+            QRectF(0, 0, 20, 20), update=True, disableAutoRange=True
         )
         self.scale = 640
 
@@ -180,7 +180,11 @@ class CameraViewWidget(QWidget):
                 )
 
     def scale_changed(self):
-        pass
+        self.display_area.setRange(
+            QRectF(0, 0, self.current_image.shape[1],
+                   self.current_image.shape[0]),
+            update=True, disableAutoRange=True
+        )
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""
@@ -364,6 +368,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
     def retrieve_image(self):
         """Go to parent for definition."""
         super().retrieve_image()
+
+        if self.current_image is None:
+            return
 
         # Get data from queue(first is timestamp)
         if len(self.experiment.acc_tracking.stored_data) > 1:
@@ -564,7 +571,8 @@ class CameraViewFish(CameraViewCalib):
     def retrieve_image(self):
         super().retrieve_image()
 
-        if len(self.experiment.acc_tracking.stored_data) == 0:
+        if len(self.experiment.acc_tracking.stored_data) == 0 or \
+                self.current_image is None:
             return
 
         current_data = self.experiment.acc_tracking.values_at_abs_time(

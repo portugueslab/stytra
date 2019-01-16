@@ -16,7 +16,7 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-from stytra.collectors import QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator, EstimatorLog
 from stytra.tracking.tracking_process import TrackingProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
@@ -72,20 +72,24 @@ class CameraExperiment(Experiment):
             )
             self.camera_state = VideoControlParameters(tree=self.dc)
 
-        self.camera_framerate_acc = QueueDataAccumulator(
+        self.acc_camera_framerate = QueueDataAccumulator(
             self.camera.framerate_queue, name="camera",
+            experiment=self,
             monitored_headers=["fps"]
         )
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
-        self.gui_timer.timeout.connect(self.camera_framerate_acc.update_list)
+        self.gui_timer.timeout.connect(self.acc_camera_framerate.update_list)
+
+    def reset(self):
+        super().reset()
+        self.acc_camera_framerate.reset()
 
     def initialize_plots(self):
-        self.window_main.plot_framerate.add_stream(self.camera_framerate_acc)
+        self.window_main.plot_framerate.add_stream(self.acc_camera_framerate)
 
     def send_gui_parameters(self):
-
         self.camera.control_queue.put(self.camera_state.params.changed_values())
         self.camera_state.params.acknowledge_changes()
 
@@ -219,6 +223,7 @@ class TrackingExperiment(CameraExperiment):
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
+            experiment=self,
             data_queue=self.tracking_output_queue,
             monitored_headers=self.pipeline.headers_to_plot
         )
@@ -235,36 +240,37 @@ class TrackingExperiment(CameraExperiment):
 
         est_type = tracking.get("estimator", None)
         if est_type == "position":
-            self.estimator = PositionEstimator(
-                self.acc_tracking, calibrator=self.calibrator
-            )
+            est = PositionEstimator
         elif est_type == "vigor":
-            self.estimator = VigorMotionEstimator(self.acc_tracking)
+            est = VigorMotionEstimator
         elif isclass(est_type) and issubclass(est_type, Estimator):
-            self.estimator = est_type(
-                self.acc_tracking, **tracking.get("estimator_params", {})
-            )
+            est = est_type
+        else:
+            est = None
+
+        if est is not None:
+            self.estimator_log = EstimatorLog(experiment=self)
+            self.estimator = est(self.acc_tracking,
+                                 experiment=self,
+                                 **tracking.get("estimator_params", {}))
+            self.estimator_log.sig_acc_init.connect(self.refresh_plots)
         else:
             self.estimator = None
 
-        if self.estimator is not None:
-            self.estimator.log.sig_acc_init.connect(self.refresh_plots)
-
-        self.acc_framerate = QueueDataAccumulator(
+        self.acc_tracking_framerate = QueueDataAccumulator(
             self.frame_dispatcher.framerate_queue, name="tracking",
+            experiment=self,
             monitored_headers=["fps"]
         )
 
-        self.gui_timer.timeout.connect(self.acc_framerate.update_list)
+        self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
-    def refresh_accumulator_headers(self):
-        """ Refreshes the data accumulators if something changed
-        """
-        self.tracking_method.reset_state()
-        self.acc_tracking.reset(
-            monitored_headers=self.pipeline.tracking.monitored_headers,
-        )
-        self.refresh_plots()
+    def reset(self):
+        super().reset()
+        self.acc_tracking_framerate.reset()
+        self.acc_tracking.reset()
+        if self.estimator is not None:
+            self.estimator_log.reset()
 
     def make_window(self):
         self.window_main = TrackingExperimentWindow(experiment=self)
@@ -275,15 +281,14 @@ class TrackingExperiment(CameraExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.plot_framerate.add_stream(self.acc_framerate)
+        self.window_main.plot_framerate.add_stream(self.acc_tracking_framerate)
         self.refresh_plots()
 
     def refresh_plots(self):
         self.window_main.stream_plot.remove_streams()
         self.window_main.stream_plot.add_stream(self.acc_tracking)
-
         if self.estimator is not None:
-            self.window_main.stream_plot.add_stream(self.estimator.log)
+            self.window_main.stream_plot.add_stream(self.estimator_log)
 
             # We display the stimulus log only if we have vigor estimator, meaning 1D closed-loop experiments
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
@@ -312,42 +317,32 @@ class TrackingExperiment(CameraExperiment):
             self.window_main.stream_plot.toggle_freeze()
 
         # Reset data accumulator when starting the protocol.
-        self.acc_tracking.reset()
-
         self.gui_timer.stop()
-        try:
+
+        if self.estimator is not None:
             self.estimator.reset()
-            self.estimator.log.reset()
-        except AttributeError:
-            pass
+
         super().start_protocol()
         self.gui_timer.start(1000 // 60)
 
-    def end_protocol(self, save=True):
+    def save_data(self):
         """Save tail position and dynamic parameters and terminate.
 
         """
-        if save:
-            # Save image of the fish:
-            self.window_main.camera_display.save_image(
-                name=self.filename_base() + "img.png"
-            )
-            self.dc.add_static_data(
-                self.filename_prefix() + "img.png", "tracking/image"
-            )
+        super().save_data()
+        self.window_main.camera_display.save_image(
+            name=self.filename_base() + "img.png"
+        )
+        self.dc.add_static_data(
+            self.filename_prefix() + "img.png", "tracking/image"
+        )
 
-            # Save log and estimators:
-            self.save_log(self.acc_tracking, "behavior_log")
-            try:
-                self.save_log(self.estimator.log, "estimator_log")
-            except AttributeError:
-                pass
+        # Save log and estimators:
+        self.save_log(self.acc_tracking, "behavior_log")
         try:
-            self.estimator.log.reset()
+            self.save_log(self.estimator.log, "estimator_log")
         except AttributeError:
             pass
-
-        super().end_protocol(save)
 
     def set_protocol(self, protocol):
         """Connect new protocol start to resetting of the data accumulator.

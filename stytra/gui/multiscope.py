@@ -189,7 +189,6 @@ class MultiStreamPlot(QWidget):
         for accumulator, sel_columns in self.accumulators:
             pass
 
-
     def add_stream(self, accumulator: Accumulator, header_items=None):
         """Adds a data collector stream to the plot:
 
@@ -338,11 +337,7 @@ class MultiStreamPlot(QWidget):
 
             # try:
             # difference from data accumulator time and now in seconds:
-            try:
-                delta_t = (acc.starting_time - current_time).total_seconds()
-            except (TypeError, IndexError):
-                delta_t = 0
-
+            delta_t = (self.experiment.t0 - current_time).total_seconds()
             data_frame = acc.get_last_t(self.time_past)
 
             # if this accumulator does not have enough data to plot, skip it
@@ -358,57 +353,55 @@ class MultiStreamPlot(QWidget):
                 data_frame = data_frame[
                              :: len(data_frame) // self.n_points_max]
 
-            try:
-                time_array = delta_t + data_frame.t.values
+            time_array = delta_t + data_frame.t.values
 
-                # loop to handle nan values in a single column
-                new_bounds = np.zeros((len(sel_cols), 2))
+            # loop to handle nan values in a single column
+            new_bounds = np.zeros((len(sel_cols), 2))
 
-                for id, col in enumerate(sel_cols):
-                    # Exclude nans from calculation of percentile boundaries:
-                    d = data_frame[col].values
-                    if d.dtype != np.float64:
-                        continue
-                    b = ~np.isnan(d)
-                    if np.any(b):
-                        non_nan_data = data_frame[col][b]
-                        new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
-                        # if the bounds are the same, set arbitrary ones
-                        if new_bounds[id, 0] == new_bounds[id, 1]:
-                            new_bounds[id, 1] += 1
+            for id, col in enumerate(sel_cols):
+                # Exclude nans from calculation of percentile boundaries:
+                d = data_frame[col].values
+                if d.dtype != np.float64:
+                    continue
+                b = ~np.isnan(d)
+                if np.any(b):
+                    non_nan_data = data_frame[col][b]
+                    new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
+                    # if the bounds are the same, set arbitrary ones
+                    if new_bounds[id, 0] == new_bounds[id, 1]:
+                        new_bounds[id, 1] += 1
 
-                if self.bounds[i_acc] is None:
-                    if not self.round_bounds:
-                        self.bounds[i_acc] = new_bounds
-                    else:
-                        self.bounds[i_acc] = self._round_bounds(new_bounds)
+            if self.bounds[i_acc] is None:
+                if not self.round_bounds:
+                    self.bounds[i_acc] = new_bounds
                 else:
-                    if not self.round_bounds:
-                        self.bounds[i_acc] = (
-                            self.bounds_update * new_bounds
-                            + (1 - self.bounds_update) * self.bounds[i_acc]
-                        )
-                    else:
-                        self.bounds[i_acc] = self._update_round_bounds(
-                            self.bounds[i_acc], new_bounds
-                        )
-
-                for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
-                    scale = ub - lb
-                    if scale < 0.00001:
-                        self.stream_items[i_stream].curve.setData(x=[], y=[])
-                    else:
-                        self.stream_items[i_stream].curve.setData(
-                            x=time_array,
-                            y=i_stream + ((data_frame[col].values - lb) / scale),
-                        )
-                    self._set_labels(
-                        self.stream_items[i_stream],
-                        values=(lb, ub, data_frame[col].values[-1]),
+                    self.bounds[i_acc] = self._round_bounds(new_bounds)
+            else:
+                if not self.round_bounds:
+                    self.bounds[i_acc] = (
+                        self.bounds_update * new_bounds
+                        + (1 - self.bounds_update) * self.bounds[i_acc]
                     )
-                    i_stream += 1
-            except IndexError:
-                pass
+                else:
+                    self.bounds[i_acc] = self._update_round_bounds(
+                        self.bounds[i_acc], new_bounds
+                    )
+
+            for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
+                scale = ub - lb
+                if scale < 0.00001:
+                    self.stream_items[i_stream].curve.setData(x=[], y=[])
+                else:
+                    self.stream_items[i_stream].curve.setData(
+                        x=time_array,
+                        y=i_stream + ((data_frame[col].values - lb) / scale),
+                    )
+                self._set_labels(
+                    self.stream_items[i_stream],
+                    values=(lb, ub, data_frame[col].values[-1]),
+                )
+                i_stream += 1
+
 
     def show_extra_plot(self):
         print("Showing extra plot")

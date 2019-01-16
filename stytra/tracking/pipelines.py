@@ -157,8 +157,11 @@ class Pipeline:
                 for node in self.node_dict.values():
                     node.set_diagnostic = None
             else:
-                self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
-                    = imname.split("/")[-1]
+                try:
+                    self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
+                        = imname.split("/")[-1]
+                except KeyError:  # this can happen on reloading if the pipeline is changed
+                    self.all_params["diagnostics"].image = "unprocessed"
         # reset group always exists, checks if there are actual changes (the second and)
         if "reset" in rec_params.keys() and "reset" in rec_params["reset"].keys():
             for node in self.node_dict.values():

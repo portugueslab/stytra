@@ -91,7 +91,10 @@ class FishTrackingMethod(ImageToDataNode):
     ):
 
         # update the previously-detected fish using the Kalman filter
-        self.fishes.predict()
+        if self.fishes is None:
+            self.reset()
+        else:
+            self.fishes.predict()
 
         area_scale = bg_downsample * bg_downsample
         border_margin = border_margin // bg_downsample

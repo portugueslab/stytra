@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 import pyqtgraph as pg
 import numpy as np
-import datetime
 from stytra.collectors import Accumulator
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.online_bouts import find_bouts_online, BoutState
@@ -26,7 +25,6 @@ class StreamingPositionPlot(pg.GraphicsWindow):
         self.curve = self.positionPlot.plot()
 
         self.n_points = n_points
-        self.start = datetime.datetime.now()
         self.data_accumulator = data_accumulator
         self.ind_x = self.data_accumulator.columns.index("x")
         self.ind_y = self.data_accumulator.columns.index("y")
