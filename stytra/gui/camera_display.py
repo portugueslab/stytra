@@ -419,9 +419,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
                 if len(self.experiment.acc_tracking.stored_data) > 1:
                     self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
-                    e = retrieved_data[-10:]
+                    checkifnan = getattr(retrieved_data, "th_e0")
                     for i, o in enumerate([0, 5]):
-                        if e[0] == e[0]:
+                        if checkifnan == checkifnan:
                             for ell, col in zip(
                                 self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
                             ):
@@ -435,9 +435,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                             # Some geometry is required because pyqtgraph rotation
                             # happens around lower corner and not
                             # around center.
-                            th = -e[o + 4]  # eye angle from tracked ellipse
-                            c_x = int(e[o + 2] / 2)  # ellipse center x and y
-                            c_y = int(e[o + 3] / 2)
+                            th = -getattr(retrieved_data, "th_e{}".format(i))  # eye angle from tracked ellipse
+                            c_x = int(getattr(retrieved_data, "dim_x_e{}".format(i)) / 2)  # ellipse center x and y
+                            c_y = int(getattr(retrieved_data, "dim_y_e{}".format(i)) / 2)
 
                             if c_x != 0 and c_y != 0:
                                 th_conv = th * (np.pi / 180)  # in radiants now
@@ -460,8 +460,10 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
                                 # for the box position, for the ellipse dimensions and
                                 # for the rotation around corner instead of center.
                                 self.curves_eyes[i].setPos(
-                                    e[o + 1] + pos[0] - c_x + (c_x - center_after[1]),
-                                    e[o + 0] + pos[1] - c_y + (c_y - center_after[0]),
+                                    getattr(retrieved_data, "pos_y_e{}".format(i))
+                                    + pos[0] - c_x + (c_x - center_after[1]),
+                                    getattr(retrieved_data, "pos_x_e{}".format(i))
+                                    + pos[1] - c_y + (c_y - center_after[0]),
                                 )
                                 self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
 
