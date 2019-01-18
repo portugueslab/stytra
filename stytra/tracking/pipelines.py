@@ -129,7 +129,10 @@ class Pipeline:
             return None
         # if we are setting the diagnostic image to one from the nodes,
         # navigate to the node and select the proper diagnostic image
-        return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
+        try:
+            return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
+        except KeyError:
+            return None
 
     def serialize_changed_params(self):
         chg = {n: p.params.changed_values() for n, p in self.all_params.items()}
@@ -151,8 +154,11 @@ class Pipeline:
                 for node in self.node_dict.values():
                     node.set_diagnostic = None
             else:
-                self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
-                    = imname.split("/")[-1]
+                try:
+                    self.node_dict["/".join(imname.split("/")[:-1])].set_diagnostic \
+                        = imname.split("/")[-1]
+                except KeyError:
+                    pass
 
     def recursive_run(self, node: PipelineNode, *input_data):
         output = node.process(*input_data)
