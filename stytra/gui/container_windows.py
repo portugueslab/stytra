@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 )
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
-from stytra.gui.multiscope import MultiStreamPlot
+from stytra.gui.multiscope import MultiStreamPlot, FrameratePlot
 from stytra.gui.protocol_control import ProtocolControlToolbar
 from stytra.gui.camera_display import (
     CameraViewWidget
@@ -102,6 +102,12 @@ class SimpleExperimentWindow(QMainWindow):
         self.status_display = StatusMessageDisplay()
         self.statusBar().addWidget(self.status_display)
 
+        self.plot_framerate = FrameratePlot(
+            experiment=self.experiment,
+            round_bounds=10,
+            time_past=5, compact=True
+        )
+
         self.metadata_win = None
 
     def change_folder_gui(self):
@@ -139,12 +145,23 @@ class SimpleExperimentWindow(QMainWindow):
         self.docks.append(log_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, log_dock)
 
+        dockFramerate = QDockWidget("Frame rates", self)
+        dockFramerate.setWidget(self.plot_framerate)
+        dockFramerate.setObjectName("dock_framerates")
+        self.addDockWidget(Qt.RightDockWidgetArea, dockFramerate)
+        self.docks.append(dockFramerate)
+
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
+        self.experiment.gui_timer.timeout.connect(
+                self.plot_framerate.update)
+
         self.toolbar_control.setObjectName("toolbar_control")
         self.setCentralWidget(None)
-        return None
+
+        self.experiment.gui_timer.timeout.connect(
+                self.plot_framerate.update)
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
@@ -185,34 +202,26 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         else:
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
-        self.plot_framerate = MultiStreamPlot(
-            experiment=self.experiment,
-            time_past=5, round_bounds=10, compact=True
-        )
         self.plot_framerate.setMaximumHeight(120)
 
         self.status_display.addMessageQueue(self.experiment.camera.message_queue)
 
     def construct_ui(self):
-        previous_widget = super().construct_ui()
+        super().construct_ui()
 
-        self.experiment.gui_timer.timeout.connect(self.plot_framerate.update)
+        # moving the framerate dock
+        self.removeDockWidget(self.docks[-1])
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.docks[-1])
+
         self.experiment.gui_timer.timeout.connect(self.status_display.refresh)
 
-        self.setCentralWidget(previous_widget)
         dockCamera = QDockWidget("Camera", self)
         dockCamera.setWidget(self.camera_display)
         dockCamera.setObjectName("dock_camera")
 
-        dockFramerate = QDockWidget("Frame rates", self)
-        dockFramerate.setWidget(self.plot_framerate)
-        dockFramerate.setObjectName("dock_framerates")
-
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
-        self.addDockWidget(Qt.LeftDockWidgetArea, dockFramerate)
-        self.docks.extend([dockCamera, dockFramerate])
 
-        return previous_widget
+        self.docks.extend([dockCamera])
 
 
 class DynamicStimExperimentWindow(SimpleExperimentWindow):

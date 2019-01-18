@@ -3,7 +3,8 @@ from copy import deepcopy
 
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
-from stytra.collectors.accumulators import DynamicLog
+from stytra.collectors.accumulators import DynamicLog, StimulusFramerateLog
+from stytra.utilities import FramerateRecorder
 from lightparam.param_qt import ParametrizedQt, Param
 
 import logging
@@ -97,6 +98,9 @@ class ProtocolRunner(QObject):
         self.log = []
         self.log_print = log_print
         self.running = False
+
+        self.framerate_rec = FramerateRecorder()
+        self.framerate_rec_acc = StimulusFramerateLog(experiment=self.experiment)
 
     def _set_new_protocol(self, protocol):
         """Set new Protocol.
@@ -234,6 +238,10 @@ class ProtocolRunner(QObject):
             if isinstance(self.current_stimulus, DynamicStimulus):
                 self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_dynamic_log()  # update dynamic log for stimulus
+
+            self.framerate_rec.update_framerate()
+            if self.framerate_rec.i_fps == self.framerate_rec.n_fps_frames - 1:
+                self.framerate_rec_acc.update_list(self.framerate_rec.current_framerate)
 
     def stop(self):
         """Stop the stimulation sequence. Update log and stop timer.

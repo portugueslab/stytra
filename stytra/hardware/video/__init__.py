@@ -64,7 +64,7 @@ class VideoSource(FrameProcess):
 
     def __init__(self, rotation=False, max_mbytes_queue=100, n_consumers=1):
         """ """
-        super().__init__()
+        super().__init__(name="camera")
         self.rotation = rotation
         self.control_queue = Queue()
         self.frame_queue = IndexedArrayQueue(max_mbytes=max_mbytes_queue)

@@ -308,7 +308,7 @@ class ConditionalWrapper(DynamicStimulus):
         self.reset_phase = reset_phase
 
         self.on = False
-        self.dynamic_parameters.append("centering_on")
+        self.dynamic_parameters.append("on")
 
         self.duration = self.stim_true.duration
         self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
@@ -325,6 +325,12 @@ class ConditionalWrapper(DynamicStimulus):
         else:
             return super().dynamic_parameter_names
 
+    def get_dynamic_state(self):
+        state = super().get_dynamic_state()
+        if self.stimulus_dynamic:
+            state.update(self.stim_true.get_dynamic_state())
+        return state
+
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
         self.stim_true.initialise_external(experiment)
@@ -337,12 +343,6 @@ class ConditionalWrapper(DynamicStimulus):
         super().start()
         self.stim_true.start()
         self.stim_false.start()
-
-    def get_dynamic_state(self):
-        state = super().get_dynamic_state()
-        if self.stimulus_dynamic:
-            state.update(self.stim_true.get_dynamic_state())
-        return state
 
     def check_condition(self):
         return True

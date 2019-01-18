@@ -330,6 +330,20 @@ class DynamicLog(Accumulator):
         self.stored_data = []
 
 
+class StimulusFramerateLog(Accumulator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = "display_fps"
+        self.plot_columns = ["stim_fps"]
+        self._data_type = namedtuple("sfps", "stim_fps")
+
+    def update_list(self, fps):
+        self.stored_data.append(self._data_type(fps))
+        self.times.append((datetime.datetime.now() - self.exp.t0).total_seconds())
+        if len(self.stored_data) == 1:
+            self.sig_acc_init.emit()
+
+
 # TODO update for namedtuples
 class EstimatorLog(Accumulator):
     """ """

@@ -35,7 +35,7 @@ class TrackingProcess(FrameProcess):
         :param processing_parameter_queue: queue for function&parameters
         :param gui_framerate: framerate of the display GUI
         """
-        super().__init__(**kwargs)
+        super().__init__(name="tracking", **kwargs)
 
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
@@ -113,8 +113,8 @@ class TrackingProcess(FrameProcess):
 
     def send_to_gui(self, frametime, frame):
         """ Sends the current frame to the GUI queue at the appropriate framerate"""
-        if self.current_framerate:
-            every_x = max(int(self.current_framerate / self.gui_framerate), 1)
+        if self.framerate_rec.current_framerate:
+            every_x = max(int(self.framerate_rec.current_framerate / self.gui_framerate), 1)
         else:
             every_x = 1
         if self.i == 0:

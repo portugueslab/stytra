@@ -187,9 +187,11 @@ class Experiment(QObject):
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.filename_prefix() + name + "." + self.log_format, category + "/" + name
-        )
+            self.filename_prefix() + name + "." + self.log_format, category + "/" + name)
 
+    def initialize_plots(self):
+        self.window_main.plot_framerate.add_stream(self.protocol_runner.framerate_rec_acc,
+                                                   )
     @property
     def folder_name(self):
         foldername = os.path.join(
@@ -218,6 +220,8 @@ class Experiment(QObject):
         self.t0 = datetime.datetime.now()
         if self.protocol_runner.dynamic_log is not None:
             self.protocol_runner.dynamic_log.reset()
+
+        self.protocol_runner.framerate_rec_acc.reset()
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -426,7 +430,6 @@ class Experiment(QObject):
                 )
 
             self.sig_data_saved.emit()
-
 
     def end_protocol(self, save=True):
         """Function called at Protocol end. Reset Protocol and save

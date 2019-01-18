@@ -41,7 +41,6 @@ class MultiStreamPlot(QWidget):
         self,
         time_past=5,
         bounds_update=0.1,
-        round_bounds=None,
         compact=False,
         n_points_max=500,
         accumulators=None,
@@ -59,8 +58,6 @@ class MultiStreamPlot(QWidget):
 
         self.setLayout(QVBoxLayout())
         self.layout().setContentsMargins(0, 0, 0, 0)
-
-        self.round_bounds = round_bounds
 
         self.precision = precision or 3
 
@@ -264,37 +261,6 @@ class MultiStreamPlot(QWidget):
         self.accumulators = []
         self.bounds = []
 
-    def _round_bounds(self, bounds):
-        rounded = np.stack(
-            [
-                np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
-                np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds,
-            ],
-            1,
-        )
-        if self.round_bounds >= 1:
-            return rounded.astype(np.int32)
-        else:
-            return rounded
-
-    def _update_round_bounds(self, old_bounds, new_bounds, tolerance=0.1):
-        """ If bounds are exceeed by tolerance
-
-        Parameters
-        ----------
-        old_bounds
-        new_bounds
-
-        Returns
-        -------
-
-        """
-        to_update = np.any(
-            np.abs(old_bounds - new_bounds) > tolerance * np.abs(old_bounds), 1
-        )
-        old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
-        return old_bounds
-
     def _set_labels(self, labels, values=None, precision=3):
         if values is None:
             txts = ["-", "-", "NaN"]
@@ -311,6 +277,15 @@ class MultiStreamPlot(QWidget):
         ):
             if lbl is not None:
                 lbl.setText(txt)
+
+    def update_bounds(self, i_acc, new_bounds):
+        if self.bounds[i_acc] is None:
+            self.bounds[i_acc] = new_bounds
+        else:
+            self.bounds[i_acc] = (
+                    self.bounds_update * new_bounds
+                    + (1 - self.bounds_update) * self.bounds[i_acc]
+            )
 
     def update(self):
         """Function called by external timer to update the plot"""
@@ -371,21 +346,7 @@ class MultiStreamPlot(QWidget):
                     if new_bounds[id, 0] == new_bounds[id, 1]:
                         new_bounds[id, 1] += 1
 
-            if self.bounds[i_acc] is None:
-                if not self.round_bounds:
-                    self.bounds[i_acc] = new_bounds
-                else:
-                    self.bounds[i_acc] = self._round_bounds(new_bounds)
-            else:
-                if not self.round_bounds:
-                    self.bounds[i_acc] = (
-                        self.bounds_update * new_bounds
-                        + (1 - self.bounds_update) * self.bounds[i_acc]
-                    )
-                else:
-                    self.bounds[i_acc] = self._update_round_bounds(
-                        self.bounds[i_acc], new_bounds
-                    )
+            self.update_bounds(i_acc, new_bounds)
 
             for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
                 scale = ub - lb
@@ -402,9 +363,7 @@ class MultiStreamPlot(QWidget):
                 )
                 i_stream += 1
 
-
     def show_extra_plot(self):
-        print("Showing extra plot")
         self.experiment.window_main.docks[-1].setVisible(
             True
         )  # TODO the docks should be a dictionary
@@ -432,7 +391,7 @@ class MultiStreamPlot(QWidget):
         if self.experiment is not None:
             try:
                 self.experiment.camera_state.ring_buffer_length = time_past
-            except IndexError:
+            except (IndexError, AttributeError):
                 pass
 
     def update_zoom(self, time_past=1):
@@ -498,3 +457,57 @@ class StreamPlotConfig(QWidget):
                 if chk.isChecked():
                     sel_headers.append(item)
             self.sp.add_stream(ac, sel_headers)
+
+
+class FrameratePlot(MultiStreamPlot):
+    def __init__(self, *args, round_bounds=0.1, framerate_limits=None,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+        self.framerate_limits = framerate_limits or dict()
+        self.round_bounds = round_bounds
+
+    def update(self):
+        super().update()
+        for acc in self.accumulators:
+            lim = self.framerate_limits.get(acc.name, None)
+            if lim is not None and len(acc.stored_data) > 0 and acc.stored_data[-1][0] < lim:
+                print("BAD ", acc.name)
+
+    def _round_bounds(self, bounds):
+        rounded = np.stack(
+            [
+                np.floor(bounds[:, 0] / self.round_bounds) * self.round_bounds,
+                np.ceil(bounds[:, 1] / self.round_bounds) * self.round_bounds,
+            ],
+            1,
+        )
+        if self.round_bounds >= 1:
+            return rounded.astype(np.int32)
+        else:
+            return rounded
+
+    def _update_round_bounds(self, old_bounds, new_bounds, tolerance=0.1):
+        """ If bounds are exceeed by tolerance
+
+        Parameters
+        ----------
+        old_bounds
+        new_bounds
+
+        Returns
+        -------
+
+        """
+        to_update = np.any(
+            np.abs(old_bounds - new_bounds) > tolerance * np.abs(old_bounds), 1
+        )
+        old_bounds[to_update, :] = self._round_bounds(new_bounds[to_update, :])
+        return old_bounds
+
+    def update_bounds(self, i_acc, new_bounds):
+        if self.bounds[i_acc] is None:
+            self.bounds[i_acc] = self._round_bounds(new_bounds)
+        else:
+            self.bounds[i_acc] = self._update_round_bounds(
+                self.bounds[i_acc], new_bounds
+            )
