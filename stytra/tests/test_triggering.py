@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from time import sleep
 
-from stytra.experiments import Experiment
+from stytra.experiments import VisualExperiment
 from PyQt5.QtWidgets import QApplication
 from stytra.stimulation import Protocol, Pause
 from stytra.triggering import Trigger
@@ -45,7 +45,7 @@ class TestExperimentClass(unittest.TestCase):
 
         trigger = DummyTrigger()
         app = QApplication([])
-        exp = Experiment(
+        exp = VisualExperiment(
             app=app,
             protocols=[TestProtocol],
             dir_save=self.test_dir,

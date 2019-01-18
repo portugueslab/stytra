@@ -3,7 +3,7 @@ import traceback
 from multiprocessing import Queue, Event, Value, set_start_method
 from queue import Empty
 
-from stytra.experiments import Experiment
+from stytra.experiments import VisualExperiment
 from stytra.gui.container_windows import (
     CameraExperimentWindow,
     TrackingExperimentWindow,
@@ -33,7 +33,7 @@ from inspect import isclass
 import sys
 
 
-class CameraExperiment(Experiment):
+class CameraVisualExperiment(VisualExperiment):
     """General class for Experiment that need to handle a camera.
     It implements a view of frames from the camera in the control GUI, and the
     respective parameters.
@@ -157,7 +157,7 @@ class CameraExperiment(Experiment):
         self.camera.join()
 
 
-class TrackingExperiment(CameraExperiment):
+class TrackingExperiment(CameraVisualExperiment):
     """Abstract class for an experiment which contains tracking.
 
     This class is the base for any experiment that tracks behavior (being it

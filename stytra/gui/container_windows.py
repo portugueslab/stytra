@@ -39,7 +39,7 @@ class QPlainTextEditLogger(logging.Handler):
         self.widget.appendPlainText(msg)
 
 
-class SimpleExperimentWindow(QMainWindow):
+class ExperimentWindow(QMainWindow):
     """Window for controlling a simple experiment including only a monitor
     the relative controls and the buttons for data_log and protocol control.
 
@@ -58,18 +58,21 @@ class SimpleExperimentWindow(QMainWindow):
         super().__init__(**kwargs)
         self.experiment = experiment
 
-        self.setWindowTitle("Stytra | " + pretty_name(type(experiment.protocol).name))
+        self.setWindowTitle(
+            "Stytra | " + pretty_name(type(experiment.protocol).name))
 
         self.docks = []
 
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
-        if not self.experiment.offline:
-            self.widget_projection = ProjectorAndCalibrationWidget(experiment)
-        self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
+        # if not self.experiment.offline:
+        #     self.widget_projection = ProjectorAndCalibrationWidget(experiment)
+        self.toolbar_control = ProtocolControlToolbar(
+            experiment.protocol_runner, self)
         self.toolbar_control.setObjectName("toolbar")
 
         # Connect signals from the protocol_control:
-        self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
+        self.toolbar_control.sig_start_protocol.connect(
+            experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
         self.btn_metadata = IconButton(
@@ -110,13 +113,15 @@ class SimpleExperimentWindow(QMainWindow):
         )
         if folder is not None:
             self.experiment.base_dir = folder
-            self.act_folder.setText("Save in {}".format(self.experiment.base_dir))
+            self.act_folder.setText(
+                "Save in {}".format(self.experiment.base_dir))
 
     def show_metadata_gui(self):
         """ """
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
-        self.metadata_win.layout().addWidget(ParameterGui(self.experiment.metadata))
+        self.metadata_win.layout().addWidget(
+            ParameterGui(self.experiment.metadata))
         self.metadata_win.layout().addWidget(
             ParameterGui(self.experiment.metadata_animal)
         )
@@ -125,13 +130,6 @@ class SimpleExperimentWindow(QMainWindow):
     def construct_ui(self):
         """ """
         self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
-
-        if not self.experiment.offline:
-            proj_dock = QDockWidget("Projector configuration", self)
-            proj_dock.setWidget(self.widget_projection)
-            proj_dock.setObjectName("dock_projector")
-            self.docks.append(proj_dock)
-            self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
 
         log_dock = QDockWidget("Log", self)
         log_dock.setObjectName("dock_log")
@@ -161,9 +159,9 @@ class SimpleExperimentWindow(QMainWindow):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -172,7 +170,39 @@ class SimpleExperimentWindow(QMainWindow):
         self.experiment.wrap_up()
 
 
-class CameraExperimentWindow(SimpleExperimentWindow):
+class VisualExperimentWindow(ExperimentWindow):
+    """Window for controlling a simple experiment including only a monitor
+    the relative controls and the buttons for data_log and protocol control.
+
+    Parameters
+    ----------
+    experiment : `Experiment <stytra.experiments.Experiment>` object
+        experiment for which the window is built.
+
+    Returns
+    -------
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        """ """
+        super().__init__(*args, **kwargs)
+        if not self.experiment.offline:
+            self.widget_projection = ProjectorAndCalibrationWidget(self.experiment)
+
+    def construct_ui(self):
+        """ """
+        super().construct_ui()
+
+        if not self.experiment.offline:
+            proj_dock = QDockWidget("Projector configuration", self)
+            proj_dock.setWidget(self.widget_projection)
+            proj_dock.setObjectName("dock_projector")
+            self.docks.append(proj_dock)
+            self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
+
+
+class CameraExperimentWindow(VisualExperimentWindow):
     """ """
 
     def __init__(self, *args, **kwargs):
@@ -215,7 +245,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
         return previous_widget
 
 
-class DynamicStimExperimentWindow(SimpleExperimentWindow):
+class DynamicStimExperimentWindow(VisualExperimentWindow):
     """Window for plotting a dynamically varying stimulus.
 
     Parameters
