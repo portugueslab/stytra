@@ -462,7 +462,6 @@ class VisualExperiment(Experiment):
         super().__init__(*args, **kwargs)
         self.dc.add(self.calibrator)
 
-        print(display)
         if display is None:
             self.display_config = dict(full_screen=False, gl=True)
         else:
