@@ -61,7 +61,7 @@ class CameraViewWidget(QWidget):
         # Display area for showing the camera image:
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.display_area.setRange(
-            QRectF(0, 0, 20, 20), update=True, disableAutoRange=True
+            QRectF(0, 0, 640, 480), update=True, disableAutoRange=True
         )
         self.scale = 640
 
@@ -178,6 +178,11 @@ class CameraViewWidget(QWidget):
                 if self.current_image.shape[0] != self.scale:
                     self.scale = self.current_image.shape[0]
                     self.scale_changed()
+                    self.display_area.setRange(
+                        QRectF(0, 0, self.current_image.shape[1],
+                               self.current_image.shape[0]), update=True,
+                        disableAutoRange=True
+                    )
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
                 )
