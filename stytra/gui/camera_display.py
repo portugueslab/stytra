@@ -176,10 +176,8 @@ class CameraViewWidget(QWidget):
         if self.isVisible():
             if self.current_image is not None:
                 if self.current_image.shape[0] != self.scale:
-                    print("old scale:", self.scale)
                     self.scale = self.current_image.shape[0]
                     self.scale_changed()
-                    print("new scale:", self.scale)
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
                 )
@@ -330,20 +328,14 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
     def set_pos_from_tree(self):
         """Go to parent for definition."""
-        print("setting from tree")
         if not self.setting_param_val:
-            print("here")
             if self.tail:
                 self.roi_tail.prepareGeometryChange()
                 p1, p2 = self.roi_tail.getHandles()
                 np1, np2 = self.tail_points()
-                print(np1, np2)
                 p1.setPos(QPointF(*np1))
                 p2.setPos(QPointF(*np2))
 
-                print("new")
-                p1, p2 = self.roi_tail.getHandles()
-                print((p1.x(), p1.y()), (p2.x(), p2.y()))
                 self.roi_tail.update()
             if self.eyes:
                 self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
@@ -361,14 +353,9 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
 
     def set_pos_from_roi(self):
         """Go to parent for definition."""
-        print("setting from ROI")
-        p1, p2 = self.roi_tail.getHandles()
-        print((p1.x(), p1.y()), (p2.x(), p2.y()))
         self.setting_param_val = True
         if self.tail:
-            print("changing in set from ROI")
             p1, p2 = self.roi_tail.getHandles()
-            print((p1.x(), p1.y()), (p2.x(), p2.y()))
             self.tail_params.tail_start = (p1.y()/self.scale,
                                            p1.x()/self.scale)
             self.tail_params.params.tail_start.changed = True
