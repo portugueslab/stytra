@@ -205,7 +205,7 @@ class TrackingExperiment(CameraExperiment):
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
 
-        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking
+        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
 
         self.frame_dispatcher = TrackingProcess(
                 in_frame_queue=self.camera.frame_queue,

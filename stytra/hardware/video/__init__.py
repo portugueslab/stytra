@@ -281,13 +281,10 @@ class VideoFileSource(VideoSource):
             cap = cv2.VideoCapture(self.source_file)
             ret = True
 
-            if self.framerate is None:
-                try:
-                    delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
-                except ZeroDivisionError:
-                    delta_t = 1 / 30
-            else:
-                delta_t = 1 / self.framerate
+            try:
+                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
+            except ZeroDivisionError:
+                delta_t = 1 / 30
 
             prt = None
             while ret and not self.kill_event.is_set():
