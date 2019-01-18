@@ -95,7 +95,6 @@ class FrameProcess(Process):
     def update_framerate(self):
         if self.fps_tuple is None:
             self.fps_tuple = namedtuple("fpp", "fps")
-            print(self.fps_tuple._fields)
         self.framerate_rec.update_framerate()
         if self.framerate_rec.i_fps == self.framerate_rec.n_fps_frames-1:
             self.framerate_queue.put(self.framerate_rec.current_time,

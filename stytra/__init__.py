@@ -1,8 +1,8 @@
 import multiprocessing as mp
 
-from stytra.experiments import Experiment
+from stytra.experiments import VisualExperiment
 from stytra.experiments.tracking_experiments import (
-    CameraExperiment,
+    CameraVisualExperiment,
     TrackingExperiment,
 )
 from stytra.calibration import CircleCalibrator
@@ -134,10 +134,10 @@ class Stytra:
         class_kwargs.update(kwargs)
         class_kwargs.update(config)
 
-        base = Experiment
+        base = VisualExperiment
 
         if "camera" in class_kwargs.keys():
-            base = CameraExperiment
+            base = CameraVisualExperiment
             if "tracking" in class_kwargs.keys():
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):

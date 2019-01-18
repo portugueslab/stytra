@@ -18,7 +18,8 @@ from stytra.stimulation import ProtocolRunner
 from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation.stimulus_display import StimulusDisplayWindow
 from stytra.gui.container_windows import (
-    SimpleExperimentWindow,
+    ExperimentWindow,
+    VisualExperimentWindow,
     DynamicStimExperimentWindow,
 )
 
@@ -77,24 +78,19 @@ class Experiment(QObject):
     sig_data_saved = pyqtSignal()
 
     def __init__(
-        self,
-        app=None,
-        protocol=None,
-        dir_save=None,
-        dir_assets="",
-        database=None,
-        metadata_general=None,
-        metadata_animal=None,
-        calibrator=None,
-        stim_plot=False,
-        loop_protocol=False,
-        log_format="csv",
-        stim_movie_format="h5",
-        rec_stim_framerate=None,
-        display=None,
-        scope_triggering=None,
-        offline=False,
-        **kwargs
+            self,
+            app=None,
+            protocol=None,
+            dir_save=None,
+            dir_assets="",
+            database=None,
+            metadata_general=None,
+            metadata_animal=None,
+            loop_protocol=False,
+            log_format="csv",
+            scope_triggering=None,
+            offline=False,
+            **kwargs
     ):
         """ """
         self.arguments = locals()
@@ -113,18 +109,9 @@ class Experiment(QObject):
         self.database = database
         self.use_db = True if database else False
         self.log_format = log_format
-        self.stim_movie_format = stim_movie_format
-        self.stim_plot = stim_plot
         self.loop_protocol = loop_protocol
 
         self.dc = DataCollector(folder_path=self.base_dir)
-
-        if calibrator is None:
-            self.calibrator = CrossCalibrator()
-        else:
-            self.calibrator = calibrator
-
-        self.dc.add(self.calibrator)
 
         self.window_main = None
         self.scope_config = None
@@ -146,8 +133,10 @@ class Experiment(QObject):
         else:
             self.metadata_animal = metadata_animal(tree=self.dc)
 
+        # This is done to save GUI configuration:
         self.gui_params = Parametrized(
-            "gui", tree=self.dc, params=dict(geometry=Param(""), window_state=Param(""))
+            "gui", tree=self.dc,
+            params=dict(geometry=Param(""), window_state=Param(""))
         )
 
         self.protocol_runner = ProtocolRunner(experiment=self)
@@ -158,36 +147,23 @@ class Experiment(QObject):
 
         self.protocol_runner.sig_protocol_finished.connect(self.end_protocol)
 
-        if display is None:
-            self.display_config = dict(full_screen=False, gl=True)
-        else:
-            self.display_config = display
-
-        if not self.offline:
-            self.window_display = StimulusDisplayWindow(
-                self.protocol_runner,
-                self.calibrator,
-                gl=self.display_config.get("gl", True),
-                record_stim_framerate=rec_stim_framerate,
-            )
-
         self.i_run = 0
         self.current_timestamp = datetime.datetime.now()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
-        self.display_framerate_acc = None
-
         self.t0 = datetime.datetime.now()
 
-        self.fish_id = None
+        self.animal_id = None
         self.session_id = None
 
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
-            self.filename_prefix() + name + "." + self.log_format, category + "/" + name)
+            self.filename_prefix() + name + "." + self.log_format,
+            category + "/" + name
+        )
 
     def initialize_plots(self):
         self.window_main.plot_framerate.add_stream(self.protocol_runner.framerate_rec_acc,
@@ -195,17 +171,16 @@ class Experiment(QObject):
     @property
     def folder_name(self):
         foldername = os.path.join(
-            self.base_dir, self.protocol.__class__.name, self.fish_id
+            self.base_dir, self.protocol.__class__.name, self.animal_id
         )
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
 
     def set_id(self):
-        self.fish_id = (
-                self.current_timestamp.strftime("%y%m%d")
-                + "_f"
-                + str(self.metadata_animal.id)
+        self.animal_id = (
+            self.current_timestamp.strftime("%y%m%d")
+            + str(self.metadata_animal.id)
         )
         self.session_id = self.current_timestamp.strftime("%H%M%S")
 
@@ -236,15 +211,7 @@ class Experiment(QObject):
         self.dc.restore_from_saved()
         self.make_window()
 
-        self.show_stimulus_screen(self.display_config["full_screen"])
-        self.window_display.set_dims()
-
-        if self.display_config.get("window_size", None) is not None:
-            self.window_display.size = self.display_config["window_size"]
-            self.window_display.set_dims()
-
         if self.trigger is not None:
-            print("start")
             self.trigger.start()
 
     def restore_window_state(self):
@@ -259,38 +226,10 @@ class Experiment(QObject):
     def make_window(self):
         """Make experiment GUI, defined in children depending on experiments.
         """
-        if self.stim_plot:
-            self.window_main = DynamicStimExperimentWindow(self)
-            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
-            self.gui_timer.start(1000 // 60)
-        else:
-            self.window_main = SimpleExperimentWindow(self)
+        self.window_main = ExperimentWindow(self)
 
         self.window_main.construct_ui()
         self.window_main.show()
-
-    def show_stimulus_screen(self, full_screen=True):
-        """Open window to display the visual stimulus and make it full-screen
-        if necessary.
-
-        Parameters
-        ----------
-        full_screen :
-             (Default value = True)
-
-        Returns
-        -------
-
-        """
-        if self.offline:
-            return None
-        self.window_display.show()
-        if full_screen:
-            try:
-                self.window_display.windowHandle().setScreen(self.app.screens()[1])
-                self.window_display.showFullScreen()
-            except IndexError:
-                print("Second screen not available")
 
     def start_protocol(self):
         """Start the protocol from the ProtocolRunner. Before that, send a
@@ -305,7 +244,6 @@ class Experiment(QObject):
 
         """
         self.abort = False
-        self.window_display.widget_display.reset()
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
             self.logger.info("Waiting for trigger signal...")
             msg = QMessageBox()
@@ -315,8 +253,8 @@ class Experiment(QObject):
             msg.show()
             while True and not self.abort:
                 if (
-                    self.trigger.start_event.is_set()
-                    and not self.protocol_runner.running
+                            self.trigger.start_event.is_set()
+                        and not self.protocol_runner.running
                 ):
                     msg.close()
                     self.reset()
@@ -348,7 +286,8 @@ class Experiment(QObject):
     def save_data(self):
         if self.base_dir is not None:
             if self.dc is not None:
-                self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
+                self.dc.add_static_data(self.protocol_runner.log,
+                                        name="stimulus/log")
                 self.dc.add_static_data(
                     self.t0, name="general/t_protocol_start"
                 )
@@ -356,7 +295,7 @@ class Experiment(QObject):
                     self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
                 self.dc.add_static_data(
-                    self.fish_id, name="general/fish_id"
+                    self.animal_id, name="general/fish_id"
                 )
                 self.dc.add_static_data(
                     self.session_id, name="general/session_id"
@@ -387,42 +326,11 @@ class Experiment(QObject):
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
 
-                self.dc.save(self.filename_base() + "metadata.json")  # save data_log
+                self.dc.save(
+                    self.filename_base() + "metadata.json")  # save data_log
                 self.logger.info(
                     "Saved log files under {}".format(self.filename_base())
                 )
-
-                # save the stimulus movie if it is generated
-                movie, movie_times = self.window_display.widget_display.get_movie()
-                if movie is not None:
-                    if self.stim_movie_format == "h5":
-                        movie_dict = dict(
-                            movie=np.stack(movie, 0), movie_times=movie_times
-                        )
-                        dd.io.save(
-                            self.filename_base() + "stim_movie.h5",
-                            movie_dict,
-                            compression="blosc",
-                        )
-                    elif self.stim_movie_format == "mp4":
-                        imageio.mimwrite(
-                            self.filename_base() + "stim_movie.mp4",
-                            movie,
-                            fps=30,
-                            quality=None,
-                            ffmpeg_params=[
-                                "-pix_fmt",
-                                "yuv420p",
-                                "-profile:v",
-                                "baseline",
-                                "-level",
-                                "3",
-                            ],
-                        )
-                    else:
-                        raise Exception(
-                            "Tried to write the stimulus video into an unsupported format"
-                        )
 
             if self.protocol_runner.dynamic_log is not None:
                 self.save_log(
@@ -467,9 +375,9 @@ class Experiment(QObject):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -477,17 +385,13 @@ class Experiment(QObject):
         """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
-            if (
-                self.protocol_runner.protocol is not None
-                and self.protocol_runner.running
-            ):
+            if (self.protocol_runner.protocol is not None
+                and self.protocol_runner.running):
                 self.end_protocol(save=False)
 
         if self.trigger is not None:
             self.trigger.kill_event.set()
-            print("killed")
             self.trigger.join()
-            print("joined")
 
         st = self.window_main.saveState()
         geom = self.window_main.saveGeometry()
@@ -516,3 +420,184 @@ class Experiment(QObject):
         print("{0}: {1}".format(exctype, value))
         self.trigger.kill_event.set()
         self.trigger.join()
+
+
+class VisualExperiment(Experiment):
+    """General class that runs an experiment.
+
+    Parameters
+    ----------
+    calibrator : :class:`Calibrator <stytra.calibration.Calibrator>` object
+        (optional) Calibrator object to calibrate the stimulus display. If
+        not set, a CrossCalibrator will be used.
+    display_config: dict
+        (optional) Dictionary with specifications for the display. Possible
+        key values are "full_screen" and "window_size".
+        gl_display : bool (False)
+    rec_stim_framerate : int
+        (optional) Set to record a movie of the displayed visual stimulus. It
+        specifies every how many frames one will be saved (set to 1 to
+        record) all displayed frames. The final movie will be saved in the
+        directory in an .h5 file.
+    offline : bool
+        if stytra is used in offline analysis, stimulus is not displayed
+    """
+
+    sig_data_saved = pyqtSignal()
+
+    def __init__(
+        self, *args,
+        calibrator=None,
+        stim_plot=False,
+        stim_movie_format="h5",
+        rec_stim_framerate=None,
+        display=None,
+        **kwargs
+    ):
+        """ """
+        if calibrator is None:
+            self.calibrator = CrossCalibrator()
+        else:
+            self.calibrator = calibrator
+        self.stim_movie_format = stim_movie_format
+        self.stim_plot = stim_plot
+
+        super().__init__(*args, **kwargs)
+        self.dc.add(self.calibrator)
+
+        if display is None:
+            self.display_config = dict(full_screen=False, gl=True)
+        else:
+            self.display_config = display
+
+        if not self.offline:
+            self.window_display = StimulusDisplayWindow(
+                self.protocol_runner,
+                self.calibrator,
+                gl=self.display_config.get("gl", True),
+                record_stim_framerate=rec_stim_framerate,
+            )
+
+        self.display_framerate_acc = None
+
+    def save_log(self, log, name, category="tracking"):
+        log.save(self.filename_base() + name, self.log_format)
+        self.dc.add_static_data(
+            self.filename_prefix() + name + "." + self.log_format, category + "/" + name
+        )
+
+    def start_experiment(self):
+        """Start the experiment creating GUI and initialising metadata.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        """
+        super().start_experiment()
+
+        if self.display_config.get("window_size", None) is not None:
+            self.window_display.size = self.display_config["window_size"]
+            self.window_display.set_dims()
+
+        self.show_stimulus_screen( self.display_config["full_screen"])
+
+    def restore_window_state(self):
+        if self.gui_params.window_state:
+            self.window_main.restoreState(
+                QByteArray.fromHex(bytes(self.gui_params.window_state, "ascii"))
+            )
+            self.window_main.restoreGeometry(
+                QByteArray.fromHex(bytes(self.gui_params.geometry, "ascii"))
+            )
+
+    def make_window(self):
+        """Make experiment GUI, defined in children depending on experiments.
+        """
+        if self.stim_plot:
+            self.window_main = DynamicStimExperimentWindow(self)
+            self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)
+            self.gui_timer.start(1000 // 60)
+        else:
+            self.window_main = VisualExperimentWindow(self)
+
+        self.window_main.construct_ui()
+        self.window_main.show()
+
+
+    def start_protocol(self):
+        """Start the protocol from the ProtocolRunner. Before that, send a
+        a notification and if required communicate with the microscope to
+        synchronize and read configuration.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+
+        """
+        self.window_display.widget_display.reset()
+        super().start_protocol()
+
+    def save_data(self):
+        if self.base_dir is not None:
+            if self.dc is not None:
+                # save the stimulus movie if it is generated
+                movie, movie_times = self.window_display.widget_display.get_movie()
+                if movie is not None:
+                    if self.stim_movie_format == "h5":
+                        movie_dict = dict(
+                            movie=np.stack(movie, 0), movie_times=movie_times
+                        )
+                        dd.io.save(
+                            self.filename_base() + "stim_movie.h5",
+                            movie_dict,
+                            compression="blosc",
+                        )
+                    elif self.stim_movie_format == "mp4":
+                        imageio.mimwrite(
+                            self.filename_base() + "stim_movie.mp4",
+                            movie,
+                            fps=30,
+                            quality=None,
+                            ffmpeg_params=[
+                                "-pix_fmt",
+                                "yuv420p",
+                                "-profile:v",
+                                "baseline",
+                                "-level",
+                                "3",
+                            ],
+                        )
+                    else:
+                        raise Exception(
+                            "Tried to write the stimulus video into an unsupported format"
+                        )
+        super().save_data()
+
+    def show_stimulus_screen(self, full_screen=False):
+        """Open window to display the visual stimulus and make it full-screen
+        if necessary.
+
+        Parameters
+        ----------
+        full_screen :
+             (Default value = True)
+
+        Returns
+        -------
+
+        """
+        if self.offline:
+            return None
+        self.window_display.show()
+        if full_screen:
+            try:
+                self.window_display.windowHandle().setScreen(
+                    self.app.screens()[1])
+                self.window_display.showFullScreen()
+            except IndexError:
+                print("Second screen not available")

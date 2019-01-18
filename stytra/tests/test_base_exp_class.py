@@ -6,7 +6,7 @@ import glob
 import deepdish as dd
 import json
 
-from stytra.experiments import Experiment
+from stytra.experiments import VisualExperiment
 from PyQt5.QtWidgets import QApplication
 from stytra.stimulation import Protocol, Pause
 from stytra.stimulation.stimuli import FullFieldVisualStimulus
@@ -47,7 +47,7 @@ class TestExperimentClass(unittest.TestCase):
                 return stimuli
 
         app = QApplication([])
-        exp = Experiment(
+        exp = VisualExperiment(
             app=app, protocols=[TestProtocol0, TestProtocol1], dir_save=self.test_dir
         )
         exp.start_experiment()
