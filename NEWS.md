@@ -4,6 +4,7 @@
 - flexible tracking pipeline specification using the Pipeline class  
 - OpenCV cameras supported, along with exposure and framerate adjustments
 - combined tail and eye tracking works well
+- stimulus display framerate is also shown
 
 ## Fixes
 - all time-delta calculations are based on a single time-point
