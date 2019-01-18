@@ -135,7 +135,10 @@ class Pipeline:
             return None
         # if we are setting the diagnostic image to one from the nodes,
         # navigate to the node and select the proper diagnostic image
-        return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
+        try:
+            return self.node_dict["/".join(imname.split("/")[:-1])].diagnostic_image
+        except KeyError:
+            return None
 
     def serialize_changed_params(self):
         chg = {n: p.params.changed_values() for n, p in self.all_params.items()}

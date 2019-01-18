@@ -48,11 +48,3 @@ class FramerateWidget(QWidget):
         maxst = str(max_bound)
         textw = fm.width(maxst)
         p.drawText(QPoint(w_max - textw, pad), maxst)
-
-
-# if __name__ == "__main__":
-#     from PyQt5.QtWidgets import QApplication
-#     app = QApplication([])
-#     w = FramerateWidget()
-#     w.show()
-#     app.exec_()

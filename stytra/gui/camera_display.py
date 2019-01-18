@@ -14,9 +14,12 @@ from lightparam.gui import ParameterGui, ControlToggleIcon
 from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
 
-class SingleLineROI(pg.PolyLineROI):
+class SingleLineROI(pg.LineSegmentROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.translatable = False
 
     def segmentClicked(self):
         pass
@@ -58,7 +61,7 @@ class CameraViewWidget(QWidget):
         # Display area for showing the camera image:
         self.display_area = pg.ViewBox(lockAspect=1, invertY=False)
         self.display_area.setRange(
-            QRectF(0, 0, 20, 20), update=True, disableAutoRange=True
+            QRectF(0, 0, 640, 480), update=True, disableAutoRange=True
         )
         self.scale = 640
 
@@ -175,6 +178,11 @@ class CameraViewWidget(QWidget):
                 if self.current_image.shape[0] != self.scale:
                     self.scale = self.current_image.shape[0]
                     self.scale_changed()
+                    self.display_area.setRange(
+                        QRectF(0, 0, self.current_image.shape[1],
+                               self.current_image.shape[0]), update=True,
+                        disableAutoRange=True
+                    )
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
                 )
@@ -185,6 +193,7 @@ class CameraViewWidget(QWidget):
                    self.current_image.shape[0]),
             update=True, disableAutoRange=True
         )
+
 
     def save_image(self, name=None):
         """Save a frame to the current directory."""
@@ -281,7 +290,8 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             )
 
             # Prepare curve for plotting tracked tail position:
-            self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
+            self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
+                                                        width=3))
             self.display_area.addItem(self.curve_tail)
 
             self.initialise_roi(self.roi_tail)
@@ -325,10 +335,13 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         """Go to parent for definition."""
         if not self.setting_param_val:
             if self.tail:
+                self.roi_tail.prepareGeometryChange()
                 p1, p2 = self.roi_tail.getHandles()
                 np1, np2 = self.tail_points()
                 p1.setPos(QPointF(*np1))
                 p2.setPos(QPointF(*np2))
+
+                self.roi_tail.update()
             if self.eyes:
                 self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
                 self.roi_eyes.setSize(self.eye_params.wnd_dim)
@@ -471,6 +484,7 @@ class TailTrackingSelection(CameraEmbeddedTrackingSelection):
 class EyeTrackingSelection(CameraEmbeddedTrackingSelection):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, eyes=True, **kwargs)
+
 
 class EyeTailTrackingSelection(CameraEmbeddedTrackingSelection):
     def __init__(self, *args, **kwargs):
