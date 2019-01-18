@@ -1,7 +1,7 @@
 import numpy as np
 import datetime
 
-from stytra.collectors import EstimatorLog, QueueDataAccumulator
+from stytra.collectors import QueueDataAccumulator
 from stytra.utilities import reduce_to_pi
 from collections import namedtuple
 
@@ -12,8 +12,13 @@ def rot_mat(theta):
 
 
 class Estimator:
-    def __init__(self, acc_tracking: QueueDataAccumulator):
+    def __init__(self, acc_tracking: QueueDataAccumulator, experiment):
+        self.exp = experiment
+        self.log = experiment.estimator_log
         self.acc_tracking = acc_tracking
+
+    def reset(self):
+        self.log.reset()
 
 
 class VigorMotionEstimator(Estimator):
@@ -21,7 +26,6 @@ class VigorMotionEstimator(Estimator):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window
         self.last_dt = 1 / 500.
-        self.log = EstimatorLog()
         self.base_gain = base_gain
         self._output_type = namedtuple("s", "vigor")
 
@@ -59,7 +63,7 @@ class VigorMotionEstimator(Estimator):
 
 
 class PositionEstimator(Estimator):
-    def __init__(self, *args, calibrator, change_thresholds=None,
+    def __init__(self, *args, change_thresholds=None,
                  velocity_window=10, **kwargs):
         """ Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
@@ -72,14 +76,15 @@ class PositionEstimator(Estimator):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
-        self.calibrator = calibrator
-        self.log = EstimatorLog()
+        self.calibrator = self.exp.calibrator
         self.last_location = None
-        self.change_thresholds = None
+        self.past_values = None
+
+        self.velocity_window = velocity_window
+        self.change_thresholds = change_thresholds
         if change_thresholds is not None:
             self.change_thresholds = np.array(change_thresholds)
-        self.past_values = None
-        self.velocity_window = velocity_window
+
         self._output_type = namedtuple("f", ["x", "y", "theta"])
 
     def get_camera_position(self):
@@ -96,26 +101,36 @@ class PositionEstimator(Estimator):
                                                                              self.acc_tracking.header_dict["f0_y"]]], 0)
         return np.sqrt(np.sum(vel**2))
 
+    def reset(self):
+        super().reset()
+        self.past_values = None
+
     def get_position(self):
-        if len(self.acc_tracking.stored_data)==0 or  self.calibrator.cam_to_proj is None or not np.isfinite(self.acc_tracking.stored_data[-1].f0_x):
+        if len(self.acc_tracking.stored_data) == 0 or not np.isfinite(self.acc_tracking.stored_data[-1].f0_x):
             o = self._output_type(-1, -1, 0)
             return o
+
+
         past_coords = self.acc_tracking.stored_data[-1]
         t = self.acc_tracking.times[-1]
-        projmat = np.array(self.calibrator.cam_to_proj)
-        if projmat.shape != (2, 3):
-            projmat = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-        x, y = projmat @ np.array([past_coords.f0_x, past_coords.f0_y, 1.0])
+        if not self.calibrator.cam_to_proj is None:
+            projmat = np.array(self.calibrator.cam_to_proj)
+            if projmat.shape != (2, 3):
+                projmat = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-        theta = np.arctan2(
-            *(
-                projmat[:, :2]
-                @ np.array(
-                    [np.cos(past_coords.f0_theta), np.sin(past_coords.f0_theta)]
-                )[::-1]
+            x, y = projmat @ np.array([past_coords.f0_x, past_coords.f0_y, 1.0])
+
+            theta = np.arctan2(
+                *(
+                    projmat[:, :2]
+                    @ np.array(
+                        [np.cos(past_coords.f0_theta), np.sin(past_coords.f0_theta)]
+                    )[::-1]
+                )
             )
-        )
+        else:
+            x, y, theta = past_coords.f0_x, past_coords.f0_y, past_coords.f0_theta
 
         c_values = np.array((y, x, theta))
 
@@ -134,36 +149,3 @@ class PositionEstimator(Estimator):
         self.log.update_list(t, logout)
 
         return c_values
-
-
-class SimulatedLocationEstimator:
-    """ """
-
-    def __init__(self, bouts):
-        self.bouts = bouts
-        self.start_t = None
-        self.i_bout = 0
-        self.past_theta = 0
-        self.current_coordinates = np.zeros(2)
-
-    def get_displacements(self):
-        """ """
-        if self.start_t is None:
-            self.start_t = datetime.datetime.now()
-
-        dt = (datetime.datetime.now() - self.start_t).total_seconds()
-        if self.i_bout < len(self.bouts) and dt > self.bouts[self.i_bout].t:
-            this_bout = self.bouts[self.i_bout]
-            delta = rot_mat(self.past_theta) @ np.array([this_bout.dx, this_bout.dy])
-            self.current_coordinates += delta
-            self.past_theta = self.past_theta + this_bout.theta
-            self.i_bout += 1
-
-        return np.r_[self.current_coordinates, self.past_theta]
-
-    def reset(self):
-        """ """
-        self.current_coordinates = np.zeros(2)
-        self.start_t = None
-        self.i_bout = 0
-        self.past_theta = 0

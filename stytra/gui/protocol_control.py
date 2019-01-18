@@ -110,8 +110,8 @@ class ProtocolControlToolbar(QToolBar):
         )
 
         # If experiment started, add expected end time:
-        if self.protocol_runner.t_start is not None:
-            exp_end_time = self.protocol_runner.t_start + datetime.timedelta(
+        if self.protocol_runner.running:
+            exp_end_time = self.protocol_runner.experiment.t0 + datetime.timedelta(
                 seconds=self.protocol_runner.duration
             )
             time_info += " - Ending at {}:{}:{}".format(

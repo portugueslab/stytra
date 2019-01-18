@@ -173,12 +173,16 @@ class Experiment(QObject):
 
         self.i_run = 0
         self.current_timestamp = datetime.datetime.now()
-        self.current_instance = self.get_new_name()
 
         self.gui_timer = QTimer()
         self.gui_timer.setSingleShot(False)
 
         self.display_framerate_acc = None
+
+        self.t0 = datetime.datetime.now()
+
+        self.fish_id = None
+        self.session_id = None
 
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
@@ -186,28 +190,34 @@ class Experiment(QObject):
             self.filename_prefix() + name + "." + self.log_format, category + "/" + name
         )
 
-    def get_new_name(self):
-        return (
-            self.current_timestamp.strftime("%y%m%d")
-            + "_f"
-            + str(self.metadata_animal.id)
-        )
-
     @property
     def folder_name(self):
         foldername = os.path.join(
-            self.base_dir, self.protocol.__class__.name, self.get_new_name()
+            self.base_dir, self.protocol.__class__.name, self.fish_id
         )
         if not os.path.isdir(foldername):
             os.makedirs(foldername)
         return foldername
 
+    def set_id(self):
+        self.fish_id = (
+                self.current_timestamp.strftime("%y%m%d")
+                + "_f"
+                + str(self.metadata_animal.id)
+        )
+        self.session_id = self.current_timestamp.strftime("%H%M%S")
+
     def filename_prefix(self):
-        return self.current_timestamp.strftime("%H%M%S_")
+        return self.session_id + "_"
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         return os.path.join(self.folder_name, self.filename_prefix())
+
+    def reset(self):
+        self.t0 = datetime.datetime.now()
+        if self.protocol_runner.dynamic_log is not None:
+            self.protocol_runner.dynamic_log.reset()
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -305,6 +315,7 @@ class Experiment(QObject):
                     and not self.protocol_runner.running
                 ):
                     msg.close()
+                    self.reset()
                     self.protocol_runner.start()
                     try:
                         self.scope_config = self.trigger.queue_trigger_params.get(
@@ -320,36 +331,31 @@ class Experiment(QObject):
                     break
                 else:
                     self.app.processEvents()
+
+
         else:
+            self.reset()
             self.protocol_runner.start()
 
     def abort_start(self):
         self.logger.info("Aborted")
         self.abort = True
 
-    def end_protocol(self, save=True):
-        """Function called at Protocol end. Reset Protocol and save
-        data_log.
-
-        Parameters
-        ----------
-        save : bool
-             Specify whether to save experiment data (Default value = True).
-
-        Returns
-        -------
-
-        """
-
-        self.protocol_runner.stop()
-        if self.base_dir is not None and save:
+    def save_data(self):
+        if self.base_dir is not None:
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
                 self.dc.add_static_data(
-                    self.protocol_runner.t_start, name="general/t_protocol_start"
+                    self.t0, name="general/t_protocol_start"
                 )
                 self.dc.add_static_data(
                     self.protocol_runner.t_end, name="general/t_protocol_end"
+                )
+                self.dc.add_static_data(
+                    self.fish_id, name="general/fish_id"
+                )
+                self.dc.add_static_data(
+                    self.session_id, name="general/session_id"
                 )
 
                 if self.database is not None and self.use_db:
@@ -419,11 +425,33 @@ class Experiment(QObject):
                     self.protocol_runner.dynamic_log, "stimulus_log", "stimulus"
                 )
 
+            self.sig_data_saved.emit()
+
+
+    def end_protocol(self, save=True):
+        """Function called at Protocol end. Reset Protocol and save
+        data_log.
+
+        Parameters
+        ----------
+        save : bool
+             Specify whether to save experiment data (Default value = True).
+
+        Returns
+        -------
+
+        """
+
+        self.protocol_runner.stop()
+        self.set_id()
+
+        if save:
+            self.save_data()
+
         self.i_run += 1
         self.current_timestamp = datetime.datetime.now()
 
-        self.sig_data_saved.emit()
-
+        self.reset()
         if self.loop_protocol and self.protocol_runner.completed:
             self.protocol_runner.reset()
             self.start_protocol()

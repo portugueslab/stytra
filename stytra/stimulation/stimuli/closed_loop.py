@@ -352,8 +352,7 @@ class ConditionalWrapper(DynamicStimulus):
 
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
-
-        if self.check_condition():
+        if not self.check_condition():
             self.active = self.stim_false
             self.on = True
             self.duration += self._dt
@@ -396,7 +395,7 @@ class CenteringWrapper(ConditionalWrapper):
 
     def check_condition(self):
         y, x, theta = self._experiment.estimator.get_position()
-        return x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin
+        return not (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2

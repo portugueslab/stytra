@@ -23,7 +23,7 @@ from stytra.gui.camera_display import (
 from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 
-from lightparam.gui import ParameterGui, pretty_name, ControlCombo
+from lightparam.gui import ParameterGui, pretty_name, ControlCombo, ControlButton
 
 
 class QPlainTextEditLogger(logging.Handler):
@@ -186,6 +186,7 @@ class CameraExperimentWindow(SimpleExperimentWindow):
             self.camera_display = CameraViewWidget(experiment=kwargs["experiment"])
 
         self.plot_framerate = MultiStreamPlot(
+            experiment=self.experiment,
             time_past=5, round_bounds=10, compact=True
         )
         self.plot_framerate.setMaximumHeight(120)
@@ -232,7 +233,7 @@ class DynamicStimExperimentWindow(SimpleExperimentWindow):
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot()
+        self.stream_plot = MultiStreamPlot(experiment=self)
         self.monitoring_layout.addWidget(self.stream_plot)
 
         super().__init__(*args, **kwargs)
@@ -333,12 +334,17 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setLayout(QVBoxLayout())
         if hasattr(self.experiment, "pipeline"):
             for paramsname, paramspar in self.experiment.pipeline.all_params.items():
-                if paramsname == "diagnostics" or len(paramspar.params.items())==0:
+                if paramsname == "diagnostics" or paramsname == "reset" or \
+                   len(paramspar.params.items()) == 0:
                     continue
                 self.track_params_wnd.layout().addWidget(QLabel(paramsname.replace("/","→")))
                 self.track_params_wnd.layout().addWidget(
                     ParameterGui(paramspar)
                 )
+
+        self.track_params_wnd.layout().addWidget(ControlButton(
+            self.experiment.pipeline.all_params["reset"],
+        "reset"))
 
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 

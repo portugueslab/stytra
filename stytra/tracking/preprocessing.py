@@ -73,19 +73,23 @@ def negdif(xf, y):
         return 0
 
 
-class BackgroundSubtractor:
-    def __init__(self):
-        super().__init__()
+class BackgroundSubtractor(ImageToImageNode):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, name="bgsub", **kwargs)
         self.background_image = None
         self.i = 0
 
-    def process(
-        self, im, learning_rate=0.001, learn_every=1, reset=False, **extraparams
+    def reset(self):
+        self.background_image = None
+
+    def _process(
+        self, im, learning_rate: Param(0.04, (0.0, 1.0)),
+        learn_every: Param(400, (1, 10000))
     ):
-        if reset:
-            self.background_image = None
+        messages = []
         if self.background_image is None:
             self.background_image = im.astype(np.float32)
+            messages.append("I:New backgorund image set")
         elif self.i == 0:
             self.background_image[:, :] = im.astype(np.float32) * np.float32(
                 learning_rate
@@ -93,4 +97,4 @@ class BackgroundSubtractor:
 
         self.i = (self.i + 1) % learn_every
 
-        return negdif(self.background_image, im)
+        return NodeOutput(messages, negdif(self.background_image, im))

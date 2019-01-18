@@ -36,12 +36,12 @@ class PhototaxisProtocol(Protocol):
         for i in range(self.n_trials):
             stimuli.append(
                 CenteringWrapper(
-                    stim_true=stim(
+                    stim_false=stim(
                         duration=self.stim_on_duration,
                         color=(self.brightness,) * 3,
                         center_dist=self.center_offset,
                     ),
-                    stim_false=centering,
+                    stim_true=centering,
                 )
             )
             stimuli.append(

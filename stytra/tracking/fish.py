@@ -7,8 +7,7 @@ from stytra.tracking.preprocessing import BackgroundSubtractor
 
 from itertools import chain
 
-import logging
-from lightparam import Param, Parametrized
+from lightparam import Param
 from stytra.tracking.simple_kalman import predict_inplace, update_inplace
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
@@ -43,9 +42,9 @@ class FishTrackingMethod(ImageToDataNode):
     def changed(self, vals):
         if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]) or \
            vals.get("reset", False):
-            self.reset_state()
+            self.reset()
 
-    def reset_state(self):
+    def reset(self):
         self._output_type = namedtuple("t",  list(
             chain.from_iterable(
                 [
@@ -67,13 +66,11 @@ class FishTrackingMethod(ImageToDataNode):
 
     def _process(
         self,
-        frame,
+        bg,
         reset: Param(False),
         n_fish_max: Param(1, (1, 50)),
         n_segments: Param(10, (2, 30)),
         bg_downsample: Param(1, (1, 8)),
-        bg_learning_rate: Param(0.04, (0.0, 1.0)),
-        bg_learn_every: Param(400, (1, 10000)),
         bg_dif_threshold: Param(25, (0, 255)),
         threshold_eyes: Param(35, (0, 255)),
         pos_uncertainty: Param(
@@ -94,14 +91,15 @@ class FishTrackingMethod(ImageToDataNode):
     ):
 
         # update the previously-detected fish using the Kalman filter
-        self.fishes.predict()
+        if self.fishes is None:
+            self.reset()
+        else:
+            self.fishes.predict()
 
         area_scale = bg_downsample * bg_downsample
         border_margin = border_margin // bg_downsample
 
-        # subtract background
-        bg = self.bg_subtractor.process(frame, bg_learning_rate, bg_learn_every)
-
+        # downsample background
         if bg_downsample > 1:
             bg_small = cv2.resize(bg, None, fx=1 / bg_downsample, fy=1 / bg_downsample)
         else:
@@ -143,9 +141,9 @@ class FishTrackingMethod(ImageToDataNode):
 
             if not (
                 (fleft - border_margin >= 0)
-                and (fleft + fwidth + border_margin < frame.shape[1])
+                and (fleft + fwidth + border_margin < bg.shape[1])
                 and (ftop - border_margin >= 0)
-                and (ftop + fheight + border_margin < frame.shape[0])
+                and (ftop + fheight + border_margin < bg.shape[0])
             ):
                 messages.append("W:An object of right area found outside margins")
                 continue

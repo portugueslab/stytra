@@ -68,13 +68,12 @@ class ProtocolRunner(QObject):
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
     """Emitted when protocol is changed/updated"""
 
-    def __init__(self, experiment=None, log_print=True, protocol=None):
+    def __init__(self, experiment=None, log_print=True):
         """ """
         super().__init__()
 
         self.experiment = experiment
 
-        self.t_start = None
         self.t_end = None
         self.completed = False
         self.t = 0
@@ -134,7 +133,7 @@ class ProtocolRunner(QObject):
                 stimulus.initialise_external(self.experiment)
 
             if self.dynamic_log is None:
-                self.dynamic_log = DynamicLog(self.stimuli)
+                self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
             else:
                 self.dynamic_log.update_stimuli(self.stimuli)  # new stimulus log
 
@@ -147,7 +146,6 @@ class ProtocolRunner(QObject):
         and stimuli timers and elapsed times.
 
         """
-        self.t_start = None
         self.t_end = None
         self.completed = False
         self.t = 0
@@ -170,20 +168,20 @@ class ProtocolRunner(QObject):
         #  to the calibrator that are considered only in initializing the
         # stimulus and not while it is running (e.g., gratings). Consider
         # removing if it slows down significantly the starting event.
-        self.update_protocol()
 
+        self.update_protocol()
+        self.log = []
         self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
-        self.t_start = datetime.datetime.now()  # get starting time
         self.timer.timeout.connect(self.timestep)  # connect timer to update fun
         self.timer.setSingleShot(False)
-        self.timer.start()  # start the timer
-        self.dynamic_log.reset()  # reset the log
-        self.log = []
-        self.past_stimuli_elapsed = datetime.datetime.now()
-        self.current_stimulus.started = datetime.datetime.now()
+
+        self.past_stimuli_elapsed = self.experiment.t0
+        self.current_stimulus.started = self.experiment.t0
         self.sig_protocol_started.emit()
         self.running = True
         self.current_stimulus.start()
+        # start the timer
+        self.timer.start()
 
     def timestep(self):
         """Update displayed stimulus. This function is the core of the
@@ -199,7 +197,7 @@ class ProtocolRunner(QObject):
         """
         if self.running:
             # Get total time from start in seconds:
-            self.t = (datetime.datetime.now() - self.t_start).total_seconds()
+            self.t = (datetime.datetime.now() - self.experiment.t0).total_seconds()
 
             # Calculate elapsed time for current stimulus:
             self.current_stimulus._elapsed = (
@@ -271,9 +269,9 @@ class ProtocolRunner(QObject):
             new_dict = dict(
                 current_stim_dict,
                 t_start=(
-                    current_stim_dict["real_time_start"] - self.t_start
+                    current_stim_dict["real_time_start"] - self.experiment.t0
                 ).total_seconds(),
-                t_stop=(t_stim_stop - self.t_start).total_seconds(),
+                t_stop=(t_stim_stop - self.experiment.t0).total_seconds(),
             )
         except TypeError as e:  # if time is None stimulus was not run
             new_dict = dict()
