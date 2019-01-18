@@ -21,6 +21,7 @@ class Nostim(Protocol):
     # stytra_config = dict(camera=dict(type="ximea"))
 
     def get_stim_sequence(self):
+        print("duh")
         return [Pause(duration=10)]  # protocol does not do anything
 
 
