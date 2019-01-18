@@ -88,14 +88,15 @@ class VisualStimulus(Stimulus):
                 )
 
 
-class StimulusCombiner(VisualStimulus):
+class StimulusCombiner(VisualStimulus, DynamicStimulus):
     def __init__(self, stim_list):
         super().__init__()
         self.stim_list = stim_list
 
         self.duration = max([s.duration for s in stim_list])
 
-        # [s.__init__() for s in stim_list]
+        self.dynamic_parameters = self.dynamic_parameter_names
+
 
     def start(self):
         for s in self.stim_list:
@@ -118,6 +119,25 @@ class StimulusCombiner(VisualStimulus):
     def initialise_external(self, experiment):
         for s in self.stim_list:
             s.initialise_external(experiment)
+
+    @property
+    def dynamic_parameter_names(self):
+        names = []
+        for i, s in enumerate(self.stim_list):
+            if isinstance(s, DynamicStimulus):
+                for n in s.dynamic_parameter_names:
+                    names.append("s{}_{}".format(i, n))
+
+        return names
+
+    def get_dynamic_state(self):
+        state = dict()
+        for i, s in enumerate(self.stim_list):
+            if isinstance(s, DynamicStimulus):
+                d = s.get_dynamic_state()
+                state.update({"s{}_{}".format(i, k): d[k] for k in d.keys()})
+
+        return state
 
 
 class FullFieldVisualStimulus(VisualStimulus):
