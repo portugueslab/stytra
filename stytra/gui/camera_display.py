@@ -194,7 +194,6 @@ class CameraViewWidget(QWidget):
             update=True, disableAutoRange=True
         )
 
-
     def save_image(self, name=None):
         """Save a frame to the current directory."""
         if name is None or not name:
@@ -274,77 +273,89 @@ class CameraSelection(CameraViewWidget):
         pass
 
 
-class CameraEmbeddedTrackingSelection(CameraSelection):
-    def __init__(self, tail=False, eyes=False, **kwargs):
+class TailTrackingSelection(CameraSelection):
+    def __init__(self, **kwargs):
         """ """
-        self.eyes = eyes
-        self.tail = tail
         super().__init__(**kwargs)
 
+
         # Draw ROI for tail selection:
-        if tail:
-            self.tail_params = self.experiment.pipeline.tailtrack._params
-            self.roi_tail = SingleLineROI(
-                self.tail_points(),
-                pen=dict(color=(40, 5, 200), width=3),
-            )
+        self.tail_params = self.experiment.pipeline.tailtrack._params
+        self.roi_tail = SingleLineROI(
+            self.tail_points(),
+            pen=dict(color=(40, 5, 200), width=3),
+        )
 
-            # Prepare curve for plotting tracked tail position:
-            self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
-                                                        width=3))
-            self.display_area.addItem(self.curve_tail)
+        # Prepare curve for plotting tracked tail position:
+        self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
+                                                    width=3))
+        self.display_area.addItem(self.curve_tail)
 
-            self.initialise_roi(self.roi_tail)
-        else:
-            self.roi_tail = None
-            self.curve_tail = None
-
-        # Draw ROI for eyes region selection:
-
-        self.pre_th = [0, 0]
-        if eyes:
-            self.eye_params = self.experiment.pipeline.eyetrack._params
-            self.roi_eyes = pg.ROI(
-                pos=self.eye_params.wnd_pos,
-                size=self.eye_params.wnd_dim,
-                pen=dict(color=(5, 40, 200), width=3),
-            )
-
-            self.roi_eyes.addScaleHandle([0, 0], [1, 1])
-            self.roi_eyes.addScaleHandle([1, 1], [0, 0])
-
-            self.curves_eyes = [
-                pg.EllipseROI(
-                    pos=(0, 0), size=(10, 10), movable=False, pen=dict(color=k, width=3)
-                )
-                for k in [(5, 40, 230), (40, 230, 5)]
-            ]
-
-            for c in self.curves_eyes:
-                self.display_area.addItem(c)
-                [c.removeHandle(h) for h in c.getHandles()]
-
-            self.initialise_roi(self.roi_eyes)
-        else:
-            self.roi_eyes = None
-            self.curves_eyes = None
+        self.initialise_roi(self.roi_tail)
 
         self.setting_param_val = False
 
     def set_pos_from_tree(self):
         """Go to parent for definition."""
-        if not self.setting_param_val:
-            if self.tail:
-                self.roi_tail.prepareGeometryChange()
-                p1, p2 = self.roi_tail.getHandles()
-                np1, np2 = self.tail_points()
-                p1.setPos(QPointF(*np1))
-                p2.setPos(QPointF(*np2))
+        super().set_pos_from_tree()
 
-                self.roi_tail.update()
-            if self.eyes:
-                self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
-                self.roi_eyes.setSize(self.eye_params.wnd_dim)
+        if not self.setting_param_val:
+            self.roi_tail.prepareGeometryChange()
+            p1, p2 = self.roi_tail.getHandles()
+            np1, np2 = self.tail_points()
+            p1.setPos(QPointF(*np1))
+            p2.setPos(QPointF(*np2))
+
+    def set_pos_from_roi(self):
+        """Go to parent for definition."""
+        super().set_pos_from_roi()
+
+        self.setting_param_val = True
+
+        p1, p2 = self.roi_tail.getHandles()
+        self.tail_params.tail_start = (p1.y()/self.scale,
+                                       p1.x()/self.scale)
+        self.tail_params.params.tail_start.changed = True
+        self.tail_params.tail_length = ((p2.y() - p1.y())/self.scale,
+                                        (p2.x() - p1.x())/self.scale)
+        self.tail_params.params.tail_length.changed = True
+
+    def scale_changed(self):
+        self.set_pos_from_tree()
+
+    def retrieve_image(self):
+        """Go to parent for definition."""
+        super().retrieve_image()
+
+        if self.current_image is None:
+            return
+
+        # Get data from queue(first is timestamp)
+        if len(self.experiment.acc_tracking.stored_data) > 1:
+            # To match tracked points and frame displayed looks for matching
+            # timestamps from the two different queues:
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
+            # Check for data to be displayed:
+            # Retrieve tail angles from tail
+
+            angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
+                      for i in range(self.tail_params.n_output_segments)]
+            # Get tail position and length from the parameters:
+            (start_y, start_x), (tail_len_y, tail_len_x) = self.tail_dims()
+            tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+
+            # Get segment length:
+            tail_segment_length = tail_length / (len(angles))
+            points = [np.array([start_x, start_y])]
+
+            # Calculate tail points from angles and position:
+            for angle in angles:
+                points.append(
+                    points[-1]
+                    + tail_segment_length * np.array([np.cos(angle), np.sin(angle)])
+                )
+            points = np.array(points)
+            self.curve_tail.setData(x=points[:, 1], y=points[:, 0])
 
     def tail_points(self):
         tsy, tsx = (t * self.scale for t in self.tail_params.tail_start)
@@ -356,23 +367,55 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
         tly, tlx = (t * self.scale for t in self.tail_params.tail_length)
         return (tsx, tsy), (tlx, tly)
 
+
+class EyeTrackingSelection(CameraSelection):
+    def __init__(self, **kwargs):
+        """ """
+        super().__init__(**kwargs)
+
+        # Draw ROI for eyes region selection:
+        self.pre_th = [0, 0]
+
+        self.eye_params = self.experiment.pipeline.eyetrack._params
+        self.roi_eyes = pg.ROI(
+            pos=self.eye_params.wnd_pos,
+            size=self.eye_params.wnd_dim,
+            pen=dict(color=(5, 40, 200), width=3),
+        )
+
+        self.roi_eyes.addScaleHandle([0, 0], [1, 1])
+        self.roi_eyes.addScaleHandle([1, 1], [0, 0])
+
+        self.curves_eyes = [
+            pg.EllipseROI(
+                pos=(0, 0), size=(10, 10), movable=False, pen=dict(color=k, width=3)
+            )
+            for k in [(5, 40, 230), (40, 230, 5)]
+        ]
+
+        for c in self.curves_eyes:
+            self.display_area.addItem(c)
+            [c.removeHandle(h) for h in c.getHandles()]
+
+        self.initialise_roi(self.roi_eyes)
+
+        self.setting_param_val = False
+
+    def set_pos_from_tree(self):
+        """Go to parent for definition."""
+        super().set_pos_from_tree()
+        if not self.setting_param_val:
+            self.roi_eyes.setPos(self.eye_params.wnd_pos, finish=False)
+            self.roi_eyes.setSize(self.eye_params.wnd_dim)
+
     def set_pos_from_roi(self):
         """Go to parent for definition."""
+        super().set_pos_from_roi()
         self.setting_param_val = True
-        if self.tail:
-            p1, p2 = self.roi_tail.getHandles()
-            self.tail_params.tail_start = (p1.y()/self.scale,
-                                           p1.x()/self.scale)
-            self.tail_params.params.tail_start.changed = True
-            self.tail_params.tail_length = ((p2.y() - p1.y())/self.scale,
-                                            (p2.x() - p1.x())/self.scale)
-            self.tail_params.params.tail_length.changed = True
-
-        if self.eyes:
-            self.eye_params.params.wnd_dim.changed = True
-            self.eye_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
-            self.eye_params.params.wnd_pos.changed = True
-            self.eye_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
+        self.eye_params.params.wnd_dim.changed = True
+        self.eye_params.wnd_dim = tuple([int(p) for p in self.roi_eyes.size()])
+        self.eye_params.params.wnd_pos.changed = True
+        self.eye_params.wnd_pos = tuple([int(p) for p in self.roi_eyes.pos()])
         self.setting_param_val = False
 
     def scale_changed(self):
@@ -391,106 +434,69 @@ class CameraEmbeddedTrackingSelection(CameraSelection):
             # timestamps from the two different queues:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
             # Check for data to be displayed:
-            if self.tail:
-                # Retrieve tail angles from tail (if there are eyes, last 5*2
-                # points describe the ellipses):
 
-                angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
-                          for i in range(self.tail_params.n_output_segments)]
-                # Get tail position and length from the parameters:
-                (start_y, start_x), (tail_len_y, tail_len_x) = self.tail_dims()
-                tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+            if len(self.experiment.acc_tracking.stored_data) > 1:
+                self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
+                checkifnan = getattr(retrieved_data, "th_e0")
+                for i, o in enumerate([0, 5]):
+                    if checkifnan == checkifnan:
+                        for ell, col in zip(
+                            self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
+                        ):
+                            ell.setPen(col, width=3)
 
-                # Get segment length:
-                tail_segment_length = tail_length / (len(angles))
-                points = [np.array([start_x, start_y])]
+                        pos = self.eye_params.wnd_pos
 
-                # Calculate tail points from angles and position:
-                for angle in angles:
-                    points.append(
-                        points[-1]
-                        + tail_segment_length * np.array([np.cos(angle), np.sin(angle)])
-                    )
-                points = np.array(points)
-                self.curve_tail.setData(x=points[:, 1], y=points[:, 0])
+                        # This long annoying part take care of the calculation
+                        # of rotation and translation for the ROI starting from
+                        # ellipse center, axis and rotation.
+                        # Some geometry is required because pyqtgraph rotation
+                        # happens around lower corner and not
+                        # around center.
+                        # Might be improved with matrix transforms
+                        th = -getattr(retrieved_data, "th_e{}".format(i))  # eye angle from tracked ellipse
+                        c_x = int(getattr(retrieved_data, "dim_x_e{}".format(i)) / 2)  # ellipse center x and y
+                        c_y = int(getattr(retrieved_data, "dim_y_e{}".format(i)) / 2)
 
-            # TODO refactor with namedtuples and rotation matrices.
-            if self.eyes:
+                        if c_x != 0 and c_y != 0:
+                            th_conv = th * (np.pi / 180)  # in radiants now
 
-                if len(self.experiment.acc_tracking.stored_data) > 1:
-                    self.roi_eyes.setPen(dict(color=(5, 40, 200), width=3))
-                    checkifnan = getattr(retrieved_data, "th_e0")
-                    for i, o in enumerate([0, 5]):
-                        if checkifnan == checkifnan:
-                            for ell, col in zip(
-                                self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
-                            ):
-                                ell.setPen(col, width=3)
+                            # rotate based on different from previous angle:
+                            self.curves_eyes[i].rotate(th - self.pre_th[i])
 
-                            pos = self.eye_params.wnd_pos
+                            # Angle and rad of center point from left lower corner:
+                            c_th = np.arctan(c_x / c_y)
+                            c_r = np.sqrt(c_x ** 2 + c_y ** 2)
 
-                            # This long annoying part take care of the calculation
-                            # of rotation and translation for the ROI starting from
-                            # ellipse center, axis and rotation.
-                            # Some geometry is required because pyqtgraph rotation
-                            # happens around lower corner and not
-                            # around center.
-                            th = -getattr(retrieved_data, "th_e{}".format(i))  # eye angle from tracked ellipse
-                            c_x = int(getattr(retrieved_data, "dim_x_e{}".format(i)) / 2)  # ellipse center x and y
-                            c_y = int(getattr(retrieved_data, "dim_y_e{}".format(i)) / 2)
+                            # Coords of the center after rotation around left lower
+                            # corner, to be corrected when setting position:
+                            center_after = (
+                                np.sin(c_th + th_conv) * c_r,
+                                np.cos(c_th + th_conv) * c_r,
+                            )
 
-                            if c_x != 0 and c_y != 0:
-                                th_conv = th * (np.pi / 180)  # in radiants now
+                            # Calculate pos for eye ROIs. This require correction
+                            # for the box position, for the ellipse dimensions and
+                            # for the rotation around corner instead of center.
+                            self.curves_eyes[i].setPos(
+                                getattr(retrieved_data, "pos_y_e{}".format(i))
+                                + pos[0] - c_x + (c_x - center_after[1]),
+                                getattr(retrieved_data, "pos_x_e{}".format(i))
+                                + pos[1] - c_y + (c_y - center_after[0]),
+                            )
+                            self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
 
-                                # rotate based on different from previous angle:
-                                self.curves_eyes[i].rotate(th - self.pre_th[i])
+                            self.pre_th[i] = th
 
-                                # Angle and rad of center point from left lower corner:
-                                c_th = np.arctan(c_x / c_y)
-                                c_r = np.sqrt(c_x ** 2 + c_y ** 2)
-
-                                # Coords of the center after rotation around left lower
-                                # corner, to be corrected when setting position:
-                                center_after = (
-                                    np.sin(c_th + th_conv) * c_r,
-                                    np.cos(c_th + th_conv) * c_r,
-                                )
-
-                                # Calculate pos for eye ROIs. This require correction
-                                # for the box position, for the ellipse dimensions and
-                                # for the rotation around corner instead of center.
-                                self.curves_eyes[i].setPos(
-                                    getattr(retrieved_data, "pos_y_e{}".format(i))
-                                    + pos[0] - c_x + (c_x - center_after[1]),
-                                    getattr(retrieved_data, "pos_x_e{}".format(i))
-                                    + pos[1] - c_y + (c_y - center_after[0]),
-                                )
-                                self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
-
-                                self.pre_th[i] = th
-
-                        else:
-                            # No eyes detected:
-                            for ell in self.curves_eyes:
-                                ell.setPen(None)
-                            self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
+                    else:
+                        # No eyes detected:
+                        for ell in self.curves_eyes:
+                            ell.setPen(None)
+                        self.roi_eyes.setPen(dict(color=(230, 40, 5), width=3))
 
 
-# TODO separate eyes and tail display, and then merge for both instead
-# of having a merged class with both
-class TailTrackingSelection(CameraEmbeddedTrackingSelection):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, tail=True, **kwargs)
-
-
-class EyeTrackingSelection(CameraEmbeddedTrackingSelection):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, eyes=True, **kwargs)
-
-
-class EyeTailTrackingSelection(CameraEmbeddedTrackingSelection):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, eyes=True, tail=True, **kwargs)
+class EyeTailTrackingSelection(TailTrackingSelection, EyeTrackingSelection):
+    pass
 
 
 class CameraViewCalib(CameraViewWidget):
