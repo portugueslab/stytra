@@ -453,7 +453,7 @@ class EyeTrackingSelection(CameraSelection):
                         # Some geometry is required because pyqtgraph rotation
                         # happens around lower corner and not
                         # around center.
-                        # Might be improved with matrix transforms
+                        # Might be improved with matrix transforms!
                         th = -getattr(retrieved_data, "th_e{}".format(i))  # eye angle from tracked ellipse
                         c_x = int(getattr(retrieved_data, "dim_x_e{}".format(i)) / 2)  # ellipse center x and y
                         c_y = int(getattr(retrieved_data, "dim_y_e{}".format(i)) / 2)
