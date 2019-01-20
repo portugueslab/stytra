@@ -22,6 +22,7 @@ from stytra.gui.camera_display import (
 )
 from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
+from stytra.gui.framerate_viewer import MultiFrameratesWidget
 
 from lightparam.gui import ParameterGui, pretty_name, ControlCombo, ControlButton
 
@@ -105,11 +106,9 @@ class ExperimentWindow(QMainWindow):
         self.status_display = StatusMessageDisplay()
         self.statusBar().addWidget(self.status_display)
 
-        self.plot_framerate = FrameratePlot(
-            experiment=self.experiment,
-            round_bounds=10,
-            time_past=5, compact=True
-        )
+        self.plot_framerate = MultiFrameratesWidget()
+        self.plot_framerate.add_framerate(
+            self.experiment.protocol_runner.framerate_acc)
 
         self.metadata_win = None
 
@@ -152,8 +151,8 @@ class ExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
-        self.experiment.gui_timer.timeout.connect(
-                self.plot_framerate.update)
+        # self.experiment.gui_timer.timeout.connect(
+        #         self.plot_framerate.update)
 
         self.toolbar_control.setObjectName("toolbar_control")
         self.setCentralWidget(None)

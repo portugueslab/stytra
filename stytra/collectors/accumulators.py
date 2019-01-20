@@ -277,6 +277,53 @@ class QueueDataAccumulator(Accumulator):
                 break
 
 
+class FramerateAccumulator:
+    """A simple accumulator, just for framerates"""
+    def __init__(self, experiment, queue, goal_framerate):
+        self.exp = experiment
+        self.queue = queue
+        self.goal_framerate = goal_framerate
+        self.times = []
+        self.data = []
+
+    def reset(self):
+        self.times = []
+        self.data = []
+
+    def update_list(self):
+        while True:
+            try:
+                # Get data from queue:
+                t, fps = self.queue.get(timeout=0.001)
+
+                # Time in ms (for having np and not datetime objects)
+                t_s = (t - self.exp.t0).total_seconds()
+
+                # append:
+                self.times.append(t_s)
+                self.data.append(fps)
+
+            except Empty:
+                break
+
+
+class FramerateDisplayAccumulator:
+    def __init__(self, experiment, goal_framerate):
+        self.name = "display"
+        self.exp = experiment
+        self.goal_framerate = goal_framerate
+        self.times = []
+        self.data = []
+
+    def reset(self):
+        self.times = []
+        self.data = []
+
+    def update_list(self, fps):
+        self.data.append(fps)
+        self.times.append((datetime.datetime.now() - self.exp.t0).total_seconds())
+
+
 class DynamicLog(Accumulator):
     """Accumulator to save feature of a stimulus, e.g. velocity of gratings
     in a closed-loop experiment.
@@ -328,20 +375,6 @@ class DynamicLog(Accumulator):
                 pass
         self._tupletype = namedtuple("s", dynamic_params)
         self.stored_data = []
-
-
-class StimulusFramerateLog(Accumulator):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.name = "display_fps"
-        self.plot_columns = ["stim_fps"]
-        self._data_type = namedtuple("sfps", "stim_fps")
-
-    def update_list(self, fps):
-        self.stored_data.append(self._data_type(fps))
-        self.times.append((datetime.datetime.now() - self.exp.t0).total_seconds())
-        if len(self.stored_data) == 1:
-            self.sig_acc_init.emit()
 
 
 # TODO update for namedtuples

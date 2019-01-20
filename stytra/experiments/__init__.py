@@ -100,6 +100,7 @@ class Experiment(QObject):
         self.protocol = protocol
         self.trigger = scope_triggering
         self.offline = offline
+        self.framerate_goals = dict(display=30)
 
         self.asset_dir = dir_assets
 
@@ -158,6 +159,8 @@ class Experiment(QObject):
         self.animal_id = None
         self.session_id = None
 
+
+
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
@@ -166,8 +169,8 @@ class Experiment(QObject):
         )
 
     def initialize_plots(self):
-        self.window_main.plot_framerate.add_stream(self.protocol_runner.framerate_rec_acc,
-                                                   )
+        pass
+
     @property
     def folder_name(self):
         foldername = os.path.join(
@@ -196,7 +199,7 @@ class Experiment(QObject):
         if self.protocol_runner.dynamic_log is not None:
             self.protocol_runner.dynamic_log.reset()
 
-        self.protocol_runner.framerate_rec_acc.reset()
+        self.protocol_runner.framerate_acc.reset()
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
