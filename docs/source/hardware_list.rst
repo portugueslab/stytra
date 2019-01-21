@@ -69,7 +69,7 @@ Head-restrained setup
 Freely-swimming setup
 .....................
 .. csv-table:: Components for freely swimming configuration behavioral setup
-   :file:
+   :file: ../hardware_list/freely_swimming.csv
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
 

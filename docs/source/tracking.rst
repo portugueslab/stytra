@@ -1,4 +1,5 @@
 .. _fishtracking:
+
 Configuring tracking of freely-swimming fish
 ============================================
 
@@ -31,6 +32,7 @@ Configuring tracking of freely-swimming fish
 
 
 .. _tailtracking:
+
 Configuring tracking of embedded fish
 =====================================
 
@@ -56,6 +58,7 @@ ensure the whole movement is tracked smoothly
 
 
 .. _replaying:
+
 Replaying the camera feed to refine tracking
 ============================================
 
