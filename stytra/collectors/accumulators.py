@@ -296,7 +296,6 @@ class FramerateAccumulator:
             try:
                 # Get data from queue:
                 t, fps = self.queue.get(timeout=0.001)
-
                 # Time in ms (for having np and not datetime objects)
                 t_s = (t - self.exp.t0).total_seconds()
 
@@ -309,10 +308,10 @@ class FramerateAccumulator:
 
 
 class FramerateDisplayAccumulator:
-    def __init__(self, experiment, goal_framerate):
+    def __init__(self, experiment):
         self.name = "display"
         self.exp = experiment
-        self.goal_framerate = goal_framerate
+        self.goal_framerate = None
         self.times = []
         self.data = []
 

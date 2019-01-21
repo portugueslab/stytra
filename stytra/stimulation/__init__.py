@@ -100,8 +100,7 @@ class ProtocolRunner(QObject):
         self.running = False
 
         self.framerate_rec = FramerateRecorder()
-        self.framerate_acc = FramerateDisplayAccumulator(experiment=self.experiment,
-                                                  goal_framerate=self.experiment.framerate_goals["display"])
+        self.framerate_acc = FramerateDisplayAccumulator(experiment=self.experiment)
 
     def _set_new_protocol(self, protocol):
         """Set new Protocol.

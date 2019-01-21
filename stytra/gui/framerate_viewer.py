@@ -36,6 +36,7 @@ class FramerateWidget(QWidget):
         if len(self.acc.data) > 0:
             self.fps = self.acc.data[-1]
             self.set_fps = self.fps is not None
+        super().update()
 
     def paintEvent(self, e):
         if self.fps is None:
@@ -55,20 +56,25 @@ class FramerateWidget(QWidget):
 
         p.begin(self)
 
-        min_bound = int(np.floor(min(self.fps, self.g_fps)*0.8 / 10)) * 10
-        max_bound = int(np.ceil(max(self.fps, self.g_fps)*1.2 / 10)) * 10
+        min_bound = int(np.floor(min(self.fps,
+                                     self.g_fps
+                                     if self.g_fps is not None
+                                     else self.fps)*0.8 / 10)) * 10
+        max_bound = int(np.ceil(max(self.fps,
+                                    self.g_fps
+                                    if self.g_fps is not None else
+                                    self.fps)*1.2 / 10)) * 10
 
         if max_bound == min_bound:
             max_bound += 1
 
         loc = (self.fps - min_bound) / (max_bound - min_bound)
-        loc_g = (self.g_fps - min_bound) / (max_bound - min_bound)
 
         limit_color = (200, 200, 200)
         goal_color = (80, 80, 80)
 
         indicator_color = (40, 230, 150)
-        if self.fps is not None and self.fps < self.g_fps:
+        if self.fps is not None and self.g_fps is not None and self.fps < self.g_fps:
             indicator_color = (230, 40, 0)
 
         w_min = 0
@@ -81,7 +87,7 @@ class FramerateWidget(QWidget):
             # Draw the indicator line
             p.setPen(QPen(QColor(*indicator_color)))
             w_l = int(w_min + loc * (w_max - w_min))
-            p.drawLine(w_l, h_min - 5, w_l, h_max)
+            p.drawLine(w_l, h_min, w_l, h_max+5)
 
             val_str = "{:.1f}".format(self.fps)
             textw = fm.width(val_str)
@@ -91,10 +97,10 @@ class FramerateWidget(QWidget):
 
         if self.g_fps is not None:
             # Draw the goal line
+            loc_g = (self.g_fps - min_bound) / (max_bound - min_bound)
             p.setPen(QPen(QColor(*goal_color), 3))
             w_l = int(w_min + loc_g * (w_max - w_min))
-            p.drawLine(w_l, h_min - 5, w_l, h_max)
-
+            p.drawLine(w_l, h_min, w_l, h_max)
 
         # Draw the limits
         p.setPen(QPen(QColor(*limit_color)))

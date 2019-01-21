@@ -73,7 +73,7 @@ class CameraVisualExperiment(VisualExperiment):
             self.camera_state = VideoControlParameters(tree=self.dc)
 
         self.acc_camera_framerate = FramerateAccumulator(self,
-            self.camera.framerate_queue, camera.get("framerate_goal", 30), name="camera"  # TODO implement no goal
+            self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None), name="camera"  # TODO implement no goal
         )
 
         # New parameters are sent with GUI timer:
@@ -256,7 +256,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
         self.acc_tracking_framerate = FramerateAccumulator(self,
             self.frame_dispatcher.framerate_queue, name="tracking",
-            goal_framerate=kwargs["camera"].get("framerate_goal", 30)
+            goal_framerate=kwargs["camera"].get("min_framerate", None)
         )
 
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
@@ -319,6 +319,11 @@ class TrackingExperiment(CameraVisualExperiment):
 
         super().start_protocol()
         self.gui_timer.start(1000 // 60)
+
+    def end_protocol(self, save=True):
+        super().end_protocol(save)
+        if self.window_main.stream_plot.frozen:
+            self.window_main.stream_plot.toggle_freeze()
 
     def save_data(self):
         """Save tail position and dynamic parameters and terminate.

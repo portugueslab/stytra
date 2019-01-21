@@ -12,8 +12,10 @@ class ClosedLoop1DProt(Protocol):
     name = "closed_loop1D_gratings"
 
     stytra_config = dict(
+        display=dict(min_framerate=50),
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
+            min_framerate=60,
             video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
         ),
     )

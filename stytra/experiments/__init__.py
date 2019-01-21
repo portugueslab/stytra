@@ -481,6 +481,7 @@ class VisualExperiment(Experiment):
             )
 
         self.display_framerate_acc = None
+        self.protocol_runner.framerate_acc.goal_framerate = self.display_config.get("min_framerate", None)
 
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
@@ -504,7 +505,7 @@ class VisualExperiment(Experiment):
             self.window_display.size = self.display_config["window_size"]
             self.window_display.set_dims()
 
-        self.show_stimulus_screen( self.display_config["full_screen"])
+        self.show_stimulus_screen(self.display_config.get("full_screen", False))
 
     def restore_window_state(self):
         if self.gui_params.window_state:

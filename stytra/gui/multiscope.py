@@ -5,7 +5,7 @@ from stytra.collectors.accumulators import Accumulator
 import colorspacious
 import numpy as np
 import pyqtgraph as pg
-from PyQt5.QtGui import QFont, QPalette
+from PyQt5.QtGui import QFont, QPalette, QColor
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -368,11 +368,18 @@ class MultiStreamPlot(QWidget):
             True
         )
 
+    def _qcolorstring(self, color):
+        colorname = self.palette().color(QPalette.Background).name().lstrip("#")
+        return "rgb({},{},{})".format(*(int(colorname[i * 2: i * 2 + 2], 16)
+                                      for i in range(3)))
+
     def toggle_freeze(self):
         self.frozen = not self.frozen
         if self.frozen:
             if not self.compact:
                 self.btn_freeze.setText("Live plot")
+            self.btn_freeze.setStyleSheet("background-color:rgb(207, 132, 5);")
+            self.plotContainer.setBackground(QColor(69, 78, 86))
             self.plotContainer.plotItem.vb.setMouseEnabled(x=True, y=True)
             for rep_line in [self.replay_left, self.replay_right]:
                 self.plotContainer.addItem(rep_line)
@@ -383,6 +390,11 @@ class MultiStreamPlot(QWidget):
             for rep_line in [self.replay_left, self.replay_right]:
                 self.plotContainer.removeItem(rep_line)
 
+            if self.color_set:
+                self.plotContainer.setBackground(
+                    self.palette().color(QPalette.Button))
+                self.btn_freeze.setStyleSheet("background-color:"+
+                                              self._qcolorstring(QPalette.Mid))
             self.plotContainer.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)

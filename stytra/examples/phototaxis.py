@@ -15,9 +15,11 @@ from pathlib import Path
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"
     stytra_config = dict(
+        display=dict(min_framerate=50),
         tracking=dict(method="fish", embedded=False, estimator="position"),
         camera=dict(
-            video_file=str(Path(__file__).parent / "assets" / "fish_free_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_free_compressed.h5"),
+            min_framerate=100,
         ),
     )
 

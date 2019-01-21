@@ -93,7 +93,7 @@ class FrameProcess(Process):
 
     def update_framerate(self):
         self.framerate_rec.update_framerate()
-        if self.framerate_rec.i_fps == self.framerate_rec.n_fps_frames-1:
+        if self.framerate_rec.i_fps == 0:
             self.framerate_queue.put((self.framerate_rec.current_time,
                                  self.framerate_rec.current_framerate))
 
