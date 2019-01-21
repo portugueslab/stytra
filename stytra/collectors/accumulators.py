@@ -279,7 +279,8 @@ class QueueDataAccumulator(Accumulator):
 
 class FramerateAccumulator:
     """A simple accumulator, just for framerates"""
-    def __init__(self, experiment, queue, goal_framerate):
+    def __init__(self, experiment, queue, goal_framerate, name):
+        self.name = name
         self.exp = experiment
         self.queue = queue
         self.goal_framerate = goal_framerate

@@ -25,10 +25,15 @@ class FramerateWidget(QWidget):
     def __init__(self, acc):
         super().__init__()
         self.acc = acc
+        self.g_fps = self.acc.goal_framerate
+        self.fps = self.g_fps
+        self.set_fps = False
 
-    # def add_framerate_queue(self, framerate_acc):
-    #     self.framerate_accs.append(framerate_acc)
-    #     self.framerate_colors = MultiStreamPlot.get_colors(len(self.framerate_accs))
+    def update(self):
+        self.set_fps = False
+        if len(self.acc.data) > 0:
+            self.fps = self.acc.data[-1]
+            self.set_fps = True
 
     def paintEvent(self, e):
         size = self.size()
@@ -39,38 +44,26 @@ class FramerateWidget(QWidget):
         p = QPainter()
         p.begin(self)
 
-        g_fps = self.acc.goal_framerate
-
-        set_fps = False
-        if len(self.acc.data) > 0:
-            fps = self.acc.data[-1]
-            set_fps = True
-        else:
-            fps = g_fps
-
-        min_bound = int(np.floor(min(fps, g_fps)*0.8 / 10)) * 10
-        max_bound = int(np.ceil(max(fps, g_fps)*1.2 / 10)) * 10
+        min_bound = int(np.floor(min(self.fps, self.g_fps)*0.8 / 10)) * 10
+        max_bound = int(np.ceil(max(self.fps, self.g_fps)*1.2 / 10)) * 10
 
         if max_bound == min_bound:
             max_bound += 1
 
-        loc = (fps - min_bound) / (max_bound - min_bound)
-        loc_g = (g_fps - min_bound) / (max_bound - min_bound)
+        loc = (self.fps - min_bound) / (max_bound - min_bound)
+        loc_g = (self.g_fps - min_bound) / (max_bound - min_bound)
 
         indicator_color = (230, 40, 0)
-        limit_color = (30, 30, 30)
-        goal_color = (30, 30, 120)
+        limit_color = (200, 200, 200)
+        goal_color = (210, 200, 10)
 
         w_min = pad
         w_max = w - pad
-        text_height = 10
+        text_height = 16
         h_max = h - pad
         h_min = text_height + pad
-        p.setPen(QPen(QColor(*limit_color)))
-        p.drawLine(w_min, h_min, w_min, h_max)
-        p.drawLine(w_max, h_min, w_max, h_max)
 
-        if set_fps:
+        if self.set_fps:
             # Draw the indicator line
             p.setPen(QPen(QColor(*indicator_color)))
             w_l = int(w_min + loc * (w_max - w_min))
@@ -81,23 +74,34 @@ class FramerateWidget(QWidget):
         w_l = int(w_min + loc_g * (w_max - w_min))
         p.drawLine(w_l, h_min - 5, w_l, h_max)
 
-        p.drawText(QPoint(w_min, pad), str(min_bound))
+        # Draw the limits
+        p.setPen(QPen(QColor(*limit_color)))
+        p.drawLine(w_min, h_min, w_min, h_max)
+        p.drawLine(w_max, h_min, w_max, h_max)
+
+        p.drawText(QPoint(w_min, text_height), str(min_bound))
         fm = p.fontMetrics()
         maxst = str(max_bound)
         textw = fm.width(maxst)
-        p.drawText(QPoint(w_max - textw, pad), maxst)
+        p.drawText(QPoint(w_max - textw, text_height), maxst)
         p.end()
 
 
 class MultiFrameratesWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.fr_widgets = []
         self.setLayout(QHBoxLayout())
+
+    def update(self):
+        for wid in self.fr_widgets:
+            wid.update()
 
     def add_framerate(self, framerate_acc):
         lbl_name = QLabel(framerate_acc.name)
         fr_disp = FramerateWidget(framerate_acc)
         self.layout().addWidget(lbl_name)
+        self.fr_widgets.append(fr_disp)
         self.layout().addWidget(fr_disp)
 
 

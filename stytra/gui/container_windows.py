@@ -151,14 +151,11 @@ class ExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
-        # self.experiment.gui_timer.timeout.connect(
-        #         self.plot_framerate.update)
+        self.experiment.gui_timer.timeout.connect(
+                self.plot_framerate.update)
 
         self.toolbar_control.setObjectName("toolbar_control")
         self.setCentralWidget(None)
-
-        self.experiment.gui_timer.timeout.connect(
-                self.plot_framerate.update)
 
     def write_log(self, msg):
         self.log_widget.textCursor().appendPlainText(msg)
@@ -247,6 +244,8 @@ class CameraExperimentWindow(VisualExperimentWindow):
         dockCamera = QDockWidget("Camera", self)
         dockCamera.setWidget(self.camera_display)
         dockCamera.setObjectName("dock_camera")
+
+        self.plot_framerate.add_framerate(self.experiment.acc_camera_framerate)
 
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
 
@@ -353,6 +352,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
         self.docks.append(monitoring_dock)
+
+        self.plot_framerate.add_framerate(self.experiment.acc_tracking_framerate)
 
         if self.extra_widget:
             self.experiment.gui_timer.timeout.connect(self.extra_widget.update)

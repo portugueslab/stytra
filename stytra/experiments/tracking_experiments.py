@@ -16,7 +16,7 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-from stytra.collectors import QueueDataAccumulator, EstimatorLog
+from stytra.collectors import QueueDataAccumulator, EstimatorLog, FramerateAccumulator
 from stytra.tracking.tracking_process import TrackingProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
@@ -72,10 +72,8 @@ class CameraVisualExperiment(VisualExperiment):
             )
             self.camera_state = VideoControlParameters(tree=self.dc)
 
-        self.acc_camera_framerate = QueueDataAccumulator(
-            self.camera.framerate_queue, name="camera_fps",
-            monitored_headers=["fps"],
-            experiment=self
+        self.acc_camera_framerate = FramerateAccumulator(self,
+            self.camera.framerate_queue, camera.get("framerate_goal", 30), name="camera"  # TODO implement no goal
         )
 
         # New parameters are sent with GUI timer:
@@ -88,7 +86,6 @@ class CameraVisualExperiment(VisualExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.plot_framerate.add_stream(self.acc_camera_framerate)
 
     def send_gui_parameters(self):
         self.camera.control_queue.put(self.camera_state.params.changed_values())
@@ -109,7 +106,6 @@ class CameraVisualExperiment(VisualExperiment):
 
     def go_live(self):
         """ """
-        self.gui_timer.start(1000 // 60)
         sys.excepthook = self.excepthook
         self.camera.start()
 
@@ -258,10 +254,9 @@ class TrackingExperiment(CameraVisualExperiment):
         else:
             self.estimator = None
 
-        self.acc_tracking_framerate = QueueDataAccumulator(
-            self.frame_dispatcher.framerate_queue, name="tracking_fps",
-            monitored_headers=["fps"],
-            experiment=self
+        self.acc_tracking_framerate = FramerateAccumulator(self,
+            self.frame_dispatcher.framerate_queue, name="tracking",
+            goal_framerate=kwargs["camera"].get("framerate_goal", 30)
         )
 
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
@@ -282,7 +277,6 @@ class TrackingExperiment(CameraVisualExperiment):
 
     def initialize_plots(self):
         super().initialize_plots()
-        self.window_main.plot_framerate.add_stream(self.acc_tracking_framerate)
         self.refresh_plots()
 
     def refresh_plots(self):
