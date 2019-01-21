@@ -19,10 +19,10 @@ class Prefilter(ImageToImageNode):
     def _process(
         self,
         im,
-        image_scale: Param(1.0, (0.05, 1.0)),
-        filter_size: Param(0, (0, 15)),
-        color_invert: Param(False),
-        clip: Param(0, (0, 255)),
+        image_scale: Param(0.5, (0.05, 1.0)),
+        filter_size: Param(2, (0, 15)),
+        color_invert: Param(True),
+        clip: Param(140, (0, 255)),
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image

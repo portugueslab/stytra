@@ -39,8 +39,8 @@ class CentroidTrackingMethod(TailTrackingMethod):
     def _process(
         self,
         im,
-        tail_start: Param((0.0, 0.5), gui=False),
-        tail_length: Param((1.0, 0.5), gui=False),
+        tail_start: Param((0.47, 1.7), gui=False),
+        tail_length: Param((0.07, -1.36), gui=False),
         n_segments: Param(12, (1, 50)),
         tail_filter_width: Param(0.0, (0.0, 10.0)),
         time_filter_weight: Param(0.0, (0.0, 1.0)),

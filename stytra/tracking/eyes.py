@@ -42,9 +42,9 @@ class EyeTrackingMethod(ImageToDataNode):
     def _process(
         self,
         im,
-        wnd_pos: Param((0, 0), gui=False),
-        threshold: Param(100, limits=(1, 254)),
-        wnd_dim: Param((100, 100), gui=False),
+        wnd_pos: Param((129, 20), gui=False),
+        threshold: Param(56, limits=(1, 254)),
+        wnd_dim: Param((14, 22), gui=False),
         **extraparams
     ):
         """
