@@ -275,6 +275,7 @@ class VideoFileSource(VideoSource):
                         break
                 self.update_framerate()
                 prt = time.process_time()
+
         else:
             import cv2
 
@@ -298,20 +299,9 @@ class VideoFileSource(VideoSource):
                 # is quicker than the specified framerate
 
                 if self.control_queue is not None:
-                    try:
-                        param_dict = self.control_queue.get(timeout=0.0001)
-                        for name, value in param_dict.items():
-                            if name == "framerate":
-                                delta_t = 1 / value
-                            elif name == "offset":
-                                if value != self.offset:
-                                    cap.set(cv2.CAP_PROP_POS_FRAMES, value)
-                                    self.offset = value
-                            elif name == "paused":
-                                self.paused = value
-                    except Empty:
-                        pass
+                    self.update_params()
 
+                delta_t = 1 / self.state.framerate
                 if prt is not None:
                     extrat = delta_t - (time.process_time() - prt)
                     if extrat > 0:
@@ -335,7 +325,7 @@ class VideoFileSource(VideoSource):
 class VideoControlParameters(ParametrizedQt):
     def __init__(self, **kwargs):
         super().__init__(name="video_params", **kwargs)
-        self.framerate = Param(20., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
+        self.framerate = Param(100., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
         self.offset = Param(50)
         self.paused = Param(False)
 
