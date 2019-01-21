@@ -278,7 +278,6 @@ class TailTrackingSelection(CameraSelection):
         """ """
         super().__init__(**kwargs)
 
-
         # Draw ROI for tail selection:
         self.tail_params = self.experiment.pipeline.tailtrack._params
         self.roi_tail = SingleLineROI(
