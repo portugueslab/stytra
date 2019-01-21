@@ -108,14 +108,6 @@ stytra.examples.portugues2011\_exp module
     :undoc-members:
     :show-inheritance:
 
-stytra.examples.record\_stimuli module
---------------------------------------
-
-.. automodule:: stytra.examples.record_stimuli
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.examples.self\_calib\_cl\_exp module
 -------------------------------------------
 
@@ -128,14 +120,6 @@ stytra.examples.tail\_tracking\_exp module
 ------------------------------------------
 
 .. automodule:: stytra.examples.tail_tracking_exp
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra.examples.voltage\_experiment module
-------------------------------------------
-
-.. automodule:: stytra.examples.voltage_experiment
     :members:
     :undoc-members:
     :show-inheritance:

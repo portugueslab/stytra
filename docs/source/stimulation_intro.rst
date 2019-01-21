@@ -30,7 +30,7 @@ Full-field luminance
         <video loop src="_static/stim_movie_full_field.mp4"
         width="200px" autoplay controls></video>
 
-.. literalinclude:: ../../stytra/examples/record_stimuli.py
+.. literalinclude:: ../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 45-50
 
@@ -42,7 +42,7 @@ Gratings
         <video loop src="_static/stim_movie_grating.mp4"
         width="200px" autoplay controls></video>
 
-.. literalinclude:: ../../stytra/examples/record_stimuli.py
+.. literalinclude:: ../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 70-74
 
@@ -54,7 +54,7 @@ OKR inducing rotating windmill stimulus
         <video loop src="_static/stim_movie_okr.mp4"
         width="200px" autoplay controls></video>
 
-.. literalinclude:: ../../stytra/examples/record_stimuli.py
+.. literalinclude:: ../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 60-64
 
@@ -66,7 +66,7 @@ Seamlessly-tiled image
         <video loop src="_static/stim_movie_seamless_image.mp4"
         width="200px" autoplay controls></video>
 
-.. literalinclude:: ../../stytra/examples/record_stimuli.py
+.. literalinclude:: ../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 80-87
 
@@ -79,6 +79,6 @@ Radial sine (freely-swimming fish centering stimulus)
         <video loop src="_static/stim_movie_radial_sine.mp4"
         width="200px" autoplay controls></video>
 
-.. literalinclude:: ../../stytra/examples/record_stimuli.py
+.. literalinclude:: ../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 34-36

@@ -12,14 +12,6 @@ stytra.tracking.eyes module
     :undoc-members:
     :show-inheritance:
 
-stytra.tracking.eyes\_tail module
----------------------------------
-
-.. automodule:: stytra.tracking.eyes_tail
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.tracking.fish module
 ---------------------------
 
@@ -32,14 +24,6 @@ stytra.tracking.preprocessing module
 ------------------------------------
 
 .. automodule:: stytra.tracking.preprocessing
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-stytra.tracking.processes module
---------------------------------
-
-.. automodule:: stytra.tracking.processes
     :members:
     :undoc-members:
     :show-inheritance:
