@@ -4,11 +4,12 @@
 - flexible tracking pipeline specification using the Pipeline class  
 - OpenCV cameras supported, along with exposure and framerate adjustments
 - combined tail and eye tracking works well
-- stimulus display framerate is also shown
+- stimulus display framerate is also shown, minimum framerates can be set
 
 ## Fixes
 - all time-delta calculations are based on a single time-point
 defined in the experiment class
+- video file framerate setting works
 
 ## Changes in default behavior
 -  Plotting is now frozen on experiment start, in order not to interfere
@@ -17,7 +18,7 @@ with stimulus display
 ## Known issues
 - If using the current release of PyQtGraph (0.10) Stytra crashes on exit
 this can be resolved by installing the master branch of PyQtGraph
-- On a macOS Experiments with tracking hang after closure and need to be
+- On macOS Experiments with tracking hang after closure and need to be
 forced to close
 
 ## API changes
