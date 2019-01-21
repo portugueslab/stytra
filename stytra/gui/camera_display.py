@@ -297,7 +297,6 @@ class TailTrackingSelection(CameraSelection):
     def set_pos_from_tree(self):
         """Go to parent for definition."""
         super().set_pos_from_tree()
-
         if not self.setting_param_val:
             self.roi_tail.prepareGeometryChange()
             p1, p2 = self.roi_tail.getHandles()
@@ -318,6 +317,8 @@ class TailTrackingSelection(CameraSelection):
         self.tail_params.tail_length = ((p2.y() - p1.y())/self.scale,
                                         (p2.x() - p1.x())/self.scale)
         self.tail_params.params.tail_length.changed = True
+
+        self.setting_param_val = False
 
     def scale_changed(self):
         self.set_pos_from_tree()
@@ -535,6 +536,9 @@ class CameraViewCalib(CameraViewWidget):
                 points_dicts.append(dict(x=xn, y=yn, size=8, brush=(210, 10, 10)))
 
             self.points_calib.setData(points_dicts)
+
+    def set_pos_from_tree(self):
+        pass
 
 
 @jit(nopython=True)

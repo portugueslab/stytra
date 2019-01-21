@@ -1,6 +1,5 @@
-import numpy as np
 import pandas as pd
-
+import numpy as np
 from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import (

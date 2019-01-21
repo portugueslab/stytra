@@ -47,8 +47,8 @@ class LoomingProtocol(Protocol):
         self.n_looms = Param(10, limits=(0, 1000))
         self.max_loom_size = Param(60, limits=(0, 100))
         self.max_loom_duration = Param(5, limits=(0, 100))
-        self.x_pos_pix = Param(100, limits=(0, 2000))
-        self.y_pos_pix = Param(100, limits=(0, 2000))
+        self.x_pos_pix = Param(10, limits=(0, 2000))
+        self.y_pos_pix = Param(10, limits=(0, 2000))
 
     # This is the only function we need to define for a custom protocol
     def get_stim_sequence(self):

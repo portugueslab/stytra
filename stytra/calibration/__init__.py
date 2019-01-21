@@ -17,7 +17,7 @@ class CalibrationException(Exception):
 class Calibrator(ParametrizedQt):
     """ """
 
-    def __init__(self, mm_px=1):
+    def __init__(self, mm_px=0.2):
         super().__init__(name="stimulus/calibration_params")
         self.enabled = False
 
@@ -88,7 +88,7 @@ class CrossCalibrator(Calibrator):
     ):
         super().__init__(*args, **kwargs)
 
-        self.length_px = 1
+        self.length_px = self.length_mm/self.mm_px
         self.length_is_fixed = False
         self.transparent = transparent
 

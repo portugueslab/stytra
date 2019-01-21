@@ -264,16 +264,15 @@ class DynamicStimExperimentWindow(VisualExperimentWindow):
     """
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot(experiment=self)
+        self.stream_plot = MultiStreamPlot(experiment=self.experiment)
         self.monitoring_layout.addWidget(self.stream_plot)
-
-        super().__init__(*args, **kwargs)
 
     def construct_ui(self):
         """ """

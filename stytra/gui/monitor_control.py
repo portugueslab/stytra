@@ -35,8 +35,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.roi_box = pg.ROI(
             maxBounds=QRectF(0, 0, display_size[0], display_size[1]),
-            size=display.size,  # ["size"].value,
-            pos=display.pos,  # roi_params["pos"].value,
+            size=display.size,
+            pos=display.pos,
         )
 
         self.roi_box.addScaleHandle([0, 0], [1, 1])
@@ -73,8 +73,6 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
     def set_roi(self):
         """ """
-        # pass
-        # print('setting roi')
         if not self.setting_param_val:
             self.roi_box.setPos(self.display.pos)
             self.roi_box.setSize(self.display.size)
@@ -189,6 +187,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
+
         self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
 
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
