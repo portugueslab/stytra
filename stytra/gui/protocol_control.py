@@ -1,12 +1,10 @@
 from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtWidgets import QProgressBar, QToolBar
-from PyQt5.QtGui import QIcon
 from stytra.stimulation import ProtocolRunner
 import datetime
 
 from lightparam.gui import ParameterGui
 from math import floor, ceil
-import pkg_resources
 
 from stytra.gui.buttons import IconButton, ToggleIconButton
 
@@ -20,12 +18,14 @@ class ProtocolControlToolbar(QToolBar):
         - progress bar to display progression of the Protocol.
         - a button and  window for controlling Protocol parameters;
 
-     Parameters
+    Parameters
     ----------
     protocol_runner: :class:`ProtocolRunner <stytra.stimulation.ProtocolRunner>` object
         ProtocolRunner that is controlled by the GUI.
 
-    **Signals**
+
+
+    Signals:
     """
 
     sig_start_protocol = pyqtSignal()

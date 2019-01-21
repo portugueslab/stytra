@@ -21,6 +21,7 @@ Stytra is a package to build and run behavioral experiments.
     calibration
     triggering_intro
     parameters_stytra
+    coordinate_systems
     hardware_list
     interface
     pipelines

@@ -11,14 +11,6 @@ Subpackages
 Submodules
 ----------
 
-stytra.hardware.video.interfaces module
----------------------------------------
-
-.. automodule:: stytra.hardware.video.interfaces
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.hardware.video.ring\_buffer module
 -----------------------------------------
 

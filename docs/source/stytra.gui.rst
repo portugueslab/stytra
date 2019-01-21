@@ -44,14 +44,6 @@ stytra.gui.monitor\_control module
     :undoc-members:
     :show-inheritance:
 
-stytra.gui.plots module
------------------------
-
-.. automodule:: stytra.gui.plots
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.gui.protocol\_control module
 -----------------------------------
 
