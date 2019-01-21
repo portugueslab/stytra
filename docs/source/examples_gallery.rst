@@ -168,7 +168,7 @@ method).
 
 
 Freely-swimming experiments
------------------------
+---------------------------
 
 For freely swimming experiments, it is important to calibrate the camera view
 to the displayed image. This is explained in :ref:`calibration`. Then, we can
@@ -183,6 +183,45 @@ Configuring tracking for freely-swimming experiments is explained here :ref:`fis
    :caption:
 
 
+Defining custom Experiment classes
+----------------------------------
+
+New Experiment objects with custom requirements might be needed; for example, if one wants
+to implement more events or controls when the experiment start and finishes, or if custom
+UIs with new plots are desired. In this case, we will have to sublcass the stytra :class:`Experiment <stytra.experiments.Experiment>`
+class. This class already has the minimal structure for running an experimental protocol and
+collect metadata. Using it as a template, we can define a new custom class.
+
+Start an Experiment bypassing the Stytra constructor
+....................................................
+
+First, to use a custom Experiment we need to see how we can start it bypassing the :class:`Stytra <stytra.Stytra>`
+constructor class, which by design deals only with standard Experiment classes. This is very
+simple, and it is described in the example below:
+
+
+.. literalinclude:: ../../stytra/examples/no_stytra_exp.py
+   :language: python
+   :caption:
+
+
+Customise an Experiment
+.......................
+
+To customize an experiment, we need to subclass :class:`Experiment <stytra.experiments.Experiment>`, or the existing subclasses
+:class:`VisualExperiment <stytra.experiments.VisualExperiment>` and
+:class:`TrackingExperiment <stytra.experiments.tracking_experiments.TrackingExperiment>`,
+which deal with experiments with a projector or with tracking
+from a camera, respectively.
+In the example below, we see how to make a very simple subclass, with an additional event
+(a mask waiting for an OK from the user) implemented at protocol onset. For a description
+of how the :class:`Experiment <stytra.experiments.Experiment>` class work, refer to
+its documentation.
+
+
+.. literalinclude:: ../../stytra/examples/custom_exp.py
+   :language: python
+   :caption:
 
 
 

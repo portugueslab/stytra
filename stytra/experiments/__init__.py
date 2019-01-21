@@ -159,8 +159,6 @@ class Experiment(QObject):
         self.animal_id = None
         self.session_id = None
 
-
-
     def save_log(self, log, name, category="tracking"):
         log.save(self.filename_base() + name, self.log_format)
         self.dc.add_static_data(
