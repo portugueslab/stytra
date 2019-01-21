@@ -40,7 +40,7 @@ class Database:
 
 
 class FramerateRecorder:
-    def __init__(self, n_fps_frames=10):
+    def __init__(self, n_fps_frames=5):
         # Set framerate calculation parameters
         self.n_fps_frames = n_fps_frames
         self.i_fps = 0
