@@ -23,7 +23,9 @@ class ProtocolControlToolbar(QToolBar):
     protocol_runner: :class:`ProtocolRunner <stytra.stimulation.ProtocolRunner>` object
         ProtocolRunner that is controlled by the GUI.
 
-    **Signals**
+
+
+    Signals:
     """
 
     sig_start_protocol = pyqtSignal()
