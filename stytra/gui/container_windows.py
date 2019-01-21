@@ -62,7 +62,7 @@ class ExperimentWindow(QMainWindow):
         self.setWindowTitle(
             "Stytra | " + pretty_name(type(experiment.protocol).name))
 
-        self.docks = []
+        self.docks = dict()
 
         # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
         # if not self.experiment.offline:
@@ -132,6 +132,9 @@ class ExperimentWindow(QMainWindow):
         )
         self.metadata_win.show()
 
+    def add_dock(self, item: QDockWidget):
+        self.docks[item.objectName()] = item
+
     def construct_ui(self):
         """ """
         self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
@@ -139,14 +142,14 @@ class ExperimentWindow(QMainWindow):
         log_dock = QDockWidget("Log", self)
         log_dock.setObjectName("dock_log")
         log_dock.setWidget(self.logger.widget)
-        self.docks.append(log_dock)
+        self.add_dock(log_dock)
         self.addDockWidget(Qt.RightDockWidgetArea, log_dock)
 
         dockFramerate = QDockWidget("Frame rates", self)
         dockFramerate.setWidget(self.plot_framerate)
         dockFramerate.setObjectName("dock_framerates")
         self.addDockWidget(Qt.RightDockWidgetArea, dockFramerate)
-        self.docks.append(dockFramerate)
+        self.add_dock(dockFramerate)
 
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
@@ -211,7 +214,7 @@ class VisualExperimentWindow(ExperimentWindow):
             proj_dock = QDockWidget("Projector configuration", self)
             proj_dock.setWidget(self.widget_projection)
             proj_dock.setObjectName("dock_projector")
-            self.docks.append(proj_dock)
+            self.add_dock(proj_dock)
             self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
 
 
@@ -235,10 +238,6 @@ class CameraExperimentWindow(VisualExperimentWindow):
     def construct_ui(self):
         super().construct_ui()
 
-        # moving the framerate dock
-        self.removeDockWidget(self.docks[-1])
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.docks[-1])
-
         self.experiment.gui_timer.timeout.connect(self.status_display.refresh)
 
         dockCamera = QDockWidget("Camera", self)
@@ -249,7 +248,12 @@ class CameraExperimentWindow(VisualExperimentWindow):
 
         self.addDockWidget(Qt.LeftDockWidgetArea, dockCamera)
 
-        self.docks.extend([dockCamera])
+        # moving the framerate dock
+        self.removeDockWidget(self.docks["dock_framerates"])
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.docks["dock_framerates"])
+        self.docks["dock_framerates"].setVisible(True)
+
+        self.add_dock(dockCamera)
 
 
 class DynamicStimExperimentWindow(VisualExperimentWindow):
@@ -284,8 +288,9 @@ class DynamicStimExperimentWindow(VisualExperimentWindow):
         monitoring_widget.setLayout(self.monitoring_layout)
         monitoring_dock = QDockWidget("Tracking", self)
         monitoring_dock.setWidget(monitoring_widget)
+        monitoring_dock.setObjectName("monitoring_dock")
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
-        self.docks.append(monitoring_dock)
+        self.add_dock(monitoring_dock)
 
 
 class TrackingExperimentWindow(CameraExperimentWindow):
@@ -352,7 +357,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         monitoring_dock.setObjectName("dock_monitoring")
         monitoring_dock.setWidget(monitoring_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, monitoring_dock)
-        self.docks.append(monitoring_dock)
+        self.add_dock(monitoring_dock)
 
         self.plot_framerate.add_framerate(self.experiment.acc_tracking_framerate)
 
@@ -362,7 +367,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             dock_extra = QDockWidget(self.extra_widget.title, self)
             dock_extra.setObjectName("dock_extra")
             dock_extra.setWidget(self.extra_widget)
-            self.docks.append(dock_extra)
+            self.add_dock(dock_extra)
             self.addDockWidget(Qt.RightDockWidgetArea, dock_extra)
             dock_extra.setVisible(False)
 

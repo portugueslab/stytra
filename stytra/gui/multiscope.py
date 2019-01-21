@@ -364,9 +364,9 @@ class MultiStreamPlot(QWidget):
                 i_stream += 1
 
     def show_extra_plot(self):
-        self.experiment.window_main.docks[-1].setVisible(
+        self.experiment.window_main.docks["dock_extra"].setVisible(
             True
-        )  # TODO the docks should be a dictionary
+        )
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
