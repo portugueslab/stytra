@@ -97,7 +97,6 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
 
         self.dynamic_parameters = self.dynamic_parameter_names
 
-
     def start(self):
         for s in self.stim_list:
             s.start()
@@ -117,6 +116,7 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
             s._elapsed = self._elapsed
 
     def initialise_external(self, experiment):
+        super().initialise_external(experiment)
         for s in self.stim_list:
             s.initialise_external(experiment)
 

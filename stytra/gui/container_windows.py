@@ -268,16 +268,15 @@ class DynamicStimExperimentWindow(VisualExperimentWindow):
     """
 
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.monitoring_widget = QWidget()
         self.monitoring_layout = QVBoxLayout()
         self.monitoring_widget.setLayout(self.monitoring_layout)
 
         # Stream plot:
-        self.stream_plot = MultiStreamPlot(experiment=self)
+        self.stream_plot = MultiStreamPlot(experiment=self.experiment)
         self.monitoring_layout.addWidget(self.stream_plot)
-
-        super().__init__(*args, **kwargs)
 
     def construct_ui(self):
         """ """
@@ -330,6 +329,8 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.drop_display = ControlCombo(
             self.experiment.pipeline.all_params["diagnostics"],
         "image")
+
+        self.drop_display.control.currentTextChanged.connect(self.camera_display.set_pos_from_tree)
 
         # Tracking params button:
         self.button_tracking_params = IconButton(
