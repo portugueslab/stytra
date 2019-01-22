@@ -60,6 +60,7 @@ class MultiStreamPlot(QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
 
         self.precision = precision or 3
+        self.penwidth = 1
 
         if not compact:
             self.control_layout = QHBoxLayout()
@@ -219,7 +220,7 @@ class MultiStreamPlot(QWidget):
 
         for header_item in header_items:
             c = pg.PlotCurveItem(
-                x=np.array([0]), y=np.array([i_curve]), connect="finite"
+                x=np.array([0]), y=np.array([i_curve]), connect="finite",
             )
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
@@ -246,7 +247,7 @@ class MultiStreamPlot(QWidget):
             for itm in sitems:
                 self.plotContainer.addItem(itm)
                 if isinstance(itm, pg.PlotCurveItem):
-                    itm.setPen(color)
+                    itm.setPen(color, width=self.penwidth)
                 else:
                     itm.setColor(color)
         self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
@@ -448,6 +449,7 @@ class StreamPlotConfig(QWidget):
         self.setLayout(self.main_layout)
         self.accs = sp.accumulators
         self.checkboxes = []
+
         for ac, sel_col in zip(sp.accumulators, sp.selected_columns):
             acccheck = []
             gb = QGroupBox(ac.name)

@@ -346,7 +346,10 @@ class DynamicLog(Accumulator):
 
     @property
     def columns(self):
-        return self._tupletype._fields
+        try:
+            return ("t",) + self._tupletype._fields
+        except IndexError:
+            raise ValueError("Data type not set for stimulus log")
 
     def update_list(self, time, data):
         """

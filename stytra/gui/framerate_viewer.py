@@ -8,25 +8,14 @@ from numba import jit
 
 from datetime import datetime
 
-
-@jit(nopython=True)
-def framerate_limits(framerates, goal_framerate):
-    ll = min(framerates[0], goal_framerate)
-    ul = max(goal_framerate, framerates[0])
-    for i, fr in enumerate(framerates):
-        if fr < ll:
-            ll = fr
-        if fr > ul:
-            ul = fr
-    return ll, ul
-
-
 class FramerateWidget(QWidget):
-    def __init__(self, acc):
+    def __init__(self, acc, inertia=0.95):
         super().__init__()
         self.acc = acc
         self.g_fps = self.acc.goal_framerate
         self.fps = self.g_fps
+        self.fps_inertia = None
+        self.inertia = inertia
         self.set_fps = False
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding,
                                        QSizePolicy.Expanding))
@@ -36,6 +25,10 @@ class FramerateWidget(QWidget):
         if len(self.acc.data) > 0:
             self.fps = self.acc.data[-1]
             self.set_fps = self.fps is not None
+        if self.fps_inertia is None:
+            self.fps_inertia = self.fps
+        else:
+            self.fps_inertia = self.fps_inertia * self.inertia + self.fps * (1 - self.inertia)
         super().update()
 
     def paintEvent(self, e):
@@ -56,14 +49,14 @@ class FramerateWidget(QWidget):
 
         p.begin(self)
 
-        min_bound = int(np.floor(min(self.fps,
+        min_bound = int(np.floor(min(self.fps_inertia,
                                      self.g_fps
                                      if self.g_fps is not None
-                                     else self.fps)*0.8 / 10)) * 10
-        max_bound = int(np.ceil(max(self.fps,
+                                     else self.fps_inertia)*0.8 / 10)) * 10
+        max_bound = int(np.ceil(max(self.fps_inertia,
                                     self.g_fps
                                     if self.g_fps is not None else
-                                    self.fps)*1.2 / 10)) * 10
+                                    self.fps_inertia)*1.2 / 10)) * 10
 
         if max_bound == min_bound:
             max_bound += 1
