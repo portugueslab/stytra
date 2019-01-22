@@ -71,6 +71,8 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         self.setting_param_val = False
 
+        self.set_param_val()
+
     def set_roi(self):
         """ """
         if not self.setting_param_val:
