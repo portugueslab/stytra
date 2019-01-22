@@ -49,7 +49,7 @@ class FramerateWidget(QWidget):
                 return
 
         min_bound = np.floor(lb*0.08)*10
-        max_bound = np.ceil(ub*0.08)*10
+        max_bound = np.ceil(ub*0.12)*10
 
         size = self.size()
         pad = 6
