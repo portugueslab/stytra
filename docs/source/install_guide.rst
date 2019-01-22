@@ -19,13 +19,19 @@ functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv
 
+If you are using Windows, git (used for tracking software versions) might not be
+installed. Git can also be easily installed with conda::
+
+    conda install git
+
+
 This should be everything you need to make ready before installing stytra.
 
 .. note::
     PyQt5 is not listed as an explicit requirement because it should
     come with
     the Anaconda package. If you are not using Anaconda, make sure you have it
-    installed and updated before installing stytra!
+    installed and updated before installing Stytra!
 
 The simplest way to install Stytra is with pip::
     pip install stytra
