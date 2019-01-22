@@ -13,7 +13,7 @@ class FramerateWidget(QWidget):
         super().__init__()
         self.acc = acc
         self.g_fps = self.acc.goal_framerate
-        self.fps = self.g_fps
+        self.fps = None
         self.fps_inertia = None
         self.inertia = inertia
         self.set_fps = False
@@ -32,23 +32,24 @@ class FramerateWidget(QWidget):
         super().update()
 
     def paintEvent(self, e):
-        # Three cases: there is a framerate, there is a goal framerate or there is both
-        if self.fps is None:
+        # Three valid cases: there are both a goal and current framerate
+        # or either of them
+        if self.fps is not None:
             if self.g_fps is not None:
-                self.fps = self.g_fps
-                min_bound = int(np.floor(self.g_fps * 0.08)) * 10
-                max_bound = int(np.ceil(self.g_fps * 0.12)) * 10
+                lb = min(self.fps_inertia, self.g_fps)
+                ub = max(self.fps_inertia, self.g_fps)
             else:
-                return
+                lb = self.fps_inertia
+                ub = self.fps_inertia
         else:
             if self.g_fps is not None:
-                min_bound = int(np.floor(min(self.fps_inertia,
-                                             self.g_fps) * 0.08)) * 10
-                max_bound = int(np.ceil(max(self.fps_inertia,
-                                            self.g_fps) * 0.12)) * 10
+                lb = self.g_fps
+                ub = self.g_fps
             else:
-                min_bound = int(np.floor(self.fps_inertia * 0.08)) * 10
-                max_bound = int(np.ceil(self.fps_inertia * 0.12)) * 10
+                return
+
+        min_bound = np.floor(lb*0.08)*10
+        max_bound = np.ceil(ub*0.08)*10
 
         size = self.size()
         pad = 6
@@ -59,12 +60,9 @@ class FramerateWidget(QWidget):
         p.begin(self)
         fm = p.fontMetrics()
 
-
-
         if max_bound == min_bound:
             max_bound += 1
 
-        loc = (self.fps - min_bound) / (max_bound - min_bound)
 
         limit_color = (200, 200, 200)
         goal_color = (80, 80, 80)
@@ -80,6 +78,7 @@ class FramerateWidget(QWidget):
         h_min = text_height + pad
 
         if self.set_fps and self.fps is not None:
+            loc = (self.fps - min_bound) / (max_bound - min_bound)
             # Draw the indicator line
             p.setPen(QPen(QColor(*indicator_color)))
             w_l = int(w_min + loc * (w_max - w_min))
