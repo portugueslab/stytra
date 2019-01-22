@@ -32,11 +32,23 @@ class FramerateWidget(QWidget):
         super().update()
 
     def paintEvent(self, e):
+        # Three cases: there is a framerate, there is a goal framerate or there is both
         if self.fps is None:
             if self.g_fps is not None:
                 self.fps = self.g_fps
+                min_bound = int(np.floor(self.g_fps * 0.08)) * 10
+                max_bound = int(np.ceil(self.g_fps * 0.12)) * 10
             else:
                 return
+        else:
+            if self.g_fps is not None:
+                min_bound = int(np.floor(min(self.fps_inertia,
+                                             self.g_fps) * 0.08)) * 10
+                max_bound = int(np.ceil(max(self.fps_inertia,
+                                            self.g_fps) * 0.12)) * 10
+            else:
+                min_bound = int(np.floor(self.fps_inertia * 0.08)) * 10
+                max_bound = int(np.ceil(self.fps_inertia * 0.12)) * 10
 
         size = self.size()
         pad = 6
@@ -44,19 +56,10 @@ class FramerateWidget(QWidget):
         h = size.height()
 
         p = QPainter()
-
+        p.begin(self)
         fm = p.fontMetrics()
 
-        p.begin(self)
 
-        min_bound = int(np.floor(min(self.fps_inertia,
-                                     self.g_fps
-                                     if self.g_fps is not None
-                                     else self.fps_inertia)*0.8 / 10)) * 10
-        max_bound = int(np.ceil(max(self.fps_inertia,
-                                    self.g_fps
-                                    if self.g_fps is not None else
-                                    self.fps_inertia)*1.2 / 10)) * 10
 
         if max_bound == min_bound:
             max_bound += 1
