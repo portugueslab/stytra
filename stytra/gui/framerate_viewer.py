@@ -25,10 +25,10 @@ class FramerateWidget(QWidget):
         if len(self.acc.data) > 0:
             self.fps = self.acc.data[-1]
             self.set_fps = self.fps is not None
-        if self.fps_inertia is None:
-            self.fps_inertia = self.fps
-        else:
-            self.fps_inertia = self.fps_inertia * self.inertia + self.fps * (1 - self.inertia)
+            if self.fps_inertia is None:
+                self.fps_inertia = self.fps
+            else:
+                self.fps_inertia = self.fps_inertia * self.inertia + self.fps * (1 - self.inertia)
         super().update()
 
     def paintEvent(self, e):
