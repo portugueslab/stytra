@@ -330,7 +330,9 @@ class TrackingExperimentWindow(CameraExperimentWindow):
             self.experiment.pipeline.all_params["diagnostics"],
         "image")
 
-        self.drop_display.control.currentTextChanged.connect(self.camera_display.set_pos_from_tree)
+        if hasattr(self.camera_display, "set_pos_from_tree"):
+            self.drop_display.control.currentTextChanged.connect(
+                self.camera_display.set_pos_from_tree)
 
         # Tracking params button:
         self.button_tracking_params = IconButton(
