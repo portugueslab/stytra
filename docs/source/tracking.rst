@@ -43,8 +43,8 @@ Configuring tracking of embedded fish
 
 3) Invert the image if the tail is dark with respect to the background
 
-4) Set the display_processed to filtered and adjust clipping until the fish is the only
-   bright thing with respect to the background
+4) Set the camera display to filtered and adjust clipping until the fish is the only
+   bright thing with respect to the background, which has to be completely black.
 
 5) Make the image as small as possible (with image_scale) as long as the tail is mostly more than 3px wide
    and filter it a bit (usually using filter_size=3)

@@ -180,7 +180,7 @@ class Experiment(QObject):
 
     def set_id(self):
         self.animal_id = (
-            self.current_timestamp.strftime("%y%m%d")
+            self.current_timestamp.strftime("%y%m%d") + "_f"
             + str(self.metadata_animal.id)
         )
         self.session_id = self.current_timestamp.strftime("%H%M%S")
