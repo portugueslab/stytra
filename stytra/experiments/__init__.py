@@ -3,11 +3,13 @@ import os
 import traceback
 from queue import Empty
 import numpy as np
+import pandas as pd
 import deepdish as dd
 import logging
 import tempfile
 import git
 import sys
+import types
 
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtWidgets import QMessageBox
@@ -31,6 +33,12 @@ except ImportError:
     pass
 
 from lightparam import Parametrized, Param
+
+
+def imports():
+    for name, val in globals().items():
+        if isinstance(val, types.ModuleType) and hasattr(val, "__version__"):
+            yield val.__name__ + ":" + str(val.__version__)
 
 
 class Experiment(QObject):
@@ -322,8 +330,10 @@ class Experiment(QObject):
                             git_hash=git_hash,
                             name=sys.argv[0],
                             arguments=self.arguments,
+                            dependencies=list(imports())
                         ),
                         name="general/program_version",
+
                     )
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
