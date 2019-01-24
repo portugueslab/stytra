@@ -42,11 +42,7 @@ installed. Git can also be easily installed with conda::
 
 This should be everything you need to make ready before installing stytra.
 
-.. note::
-    PyQt5 is not listed as an explicit requirement because it should
-    come with
-    the Anaconda package. If you are not using Anaconda, make sure you have it
-    installed and updated before installing Stytra!
+ > PyQt5 is not listed as an explicit requirement because it should come with the Anaconda package. If you are not using Anaconda, make sure you have it installed and updated before installing Stytra!
 
 The simplest way to install Stytra is with pip::
 
@@ -63,6 +59,7 @@ congratulations, installation was successful! If it crashes, check
 if you have all dependencies correctly installed. If it still does not work,
 open an issue on the `Stytra github page <https://github
 .com/portugueslab/stytra>`_.
+
 Editable installation
 .....................
 
