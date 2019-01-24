@@ -1,9 +1,13 @@
 Data and metadata saving
 ========================
 
-Data saving class in Stytra
----------------------------
+Data saving classes in Stytra
+-----------------------------
 
+All streaming data (tracking, stimulus state) is collected by subclasses of the :class:`Accumulator <stytra.collectors.accumulators.Accumulator>`
+Accumulators collect named tuples of data and timing of data points. If the data format changes, the accumulator resets.
+
+All other data (animal metadata, configuration information, GUI state etc. is collected inside the Experiment class via tha :class:`DataCollector <stytra.collectors.data_collector.DataCollector>`
 
 Configuring Stytra for updating external database:
 --------------------------------------------------

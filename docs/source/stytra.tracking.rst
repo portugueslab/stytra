@@ -20,6 +20,22 @@ stytra.tracking.fish module
     :undoc-members:
     :show-inheritance:
 
+stytra.tracking.online\_bouts module
+------------------------------------
+
+.. automodule:: stytra.tracking.online_bouts
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.tracking.pipelines module
+--------------------------------
+
+.. automodule:: stytra.tracking.pipelines
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.tracking.preprocessing module
 ------------------------------------
 
@@ -40,6 +56,14 @@ stytra.tracking.tail module
 ---------------------------
 
 .. automodule:: stytra.tracking.tail
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.tracking.tracking\_process module
+----------------------------------------
+
+.. automodule:: stytra.tracking.tracking_process
     :members:
     :undoc-members:
     :show-inheritance:

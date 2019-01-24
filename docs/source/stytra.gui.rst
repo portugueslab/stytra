@@ -28,6 +28,14 @@ stytra.gui.container\_windows module
     :undoc-members:
     :show-inheritance:
 
+stytra.gui.fishplots module
+---------------------------
+
+.. automodule:: stytra.gui.fishplots
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.gui.framerate\_viewer module
 -----------------------------------
 
@@ -40,6 +48,14 @@ stytra.gui.monitor\_control module
 ----------------------------------
 
 .. automodule:: stytra.gui.monitor_control
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.gui.multiscope module
+----------------------------
+
+.. automodule:: stytra.gui.multiscope
     :members:
     :undoc-members:
     :show-inheritance:

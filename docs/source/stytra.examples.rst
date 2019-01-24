@@ -12,6 +12,30 @@ stytra.examples.closed\_loop\_exp module
     :undoc-members:
     :show-inheritance:
 
+stytra.examples.combined\_conditional\_exp module
+-------------------------------------------------
+
+.. automodule:: stytra.examples.combined_conditional_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.examples.combined\_exp module
+------------------------------------
+
+.. automodule:: stytra.examples.combined_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.examples.custom\_exp module
+----------------------------------
+
+.. automodule:: stytra.examples.custom_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.examples.custom\_trigger\_exp module
 -------------------------------------------
 
@@ -32,6 +56,14 @@ stytra.examples.display\_camera\_exp module
 -------------------------------------------
 
 .. automodule:: stytra.examples.display_camera_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.examples.display\_opencv\_cam module
+-------------------------------------------
+
+.. automodule:: stytra.examples.display_opencv_cam
     :members:
     :undoc-members:
     :show-inheritance:
@@ -84,6 +116,14 @@ stytra.examples.most\_basic\_exp module
     :undoc-members:
     :show-inheritance:
 
+stytra.examples.no\_stytra\_exp module
+--------------------------------------
+
+.. automodule:: stytra.examples.no_stytra_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.examples.phototaxis module
 ---------------------------------
 
@@ -112,6 +152,14 @@ stytra.examples.self\_calib\_cl\_exp module
 -------------------------------------------
 
 .. automodule:: stytra.examples.self_calib_cl_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.examples.stimulus\_trigger\_exp module
+---------------------------------------------
+
+.. automodule:: stytra.examples.stimulus_trigger_exp
     :members:
     :undoc-members:
     :show-inheritance:

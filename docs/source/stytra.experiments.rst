@@ -4,6 +4,14 @@ stytra.experiments package
 Submodules
 ----------
 
+stytra.experiments.fish\_pipelines module
+-----------------------------------------
+
+.. automodule:: stytra.experiments.fish_pipelines
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.experiments.tracking\_experiments module
 -----------------------------------------------
 

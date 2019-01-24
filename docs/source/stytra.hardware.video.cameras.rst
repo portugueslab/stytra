@@ -28,6 +28,14 @@ stytra.hardware.video.cameras.mikrotron module
     :undoc-members:
     :show-inheritance:
 
+stytra.hardware.video.cameras.opencv module
+-------------------------------------------
+
+.. automodule:: stytra.hardware.video.cameras.opencv
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.hardware.video.cameras.spinnaker module
 ----------------------------------------------
 

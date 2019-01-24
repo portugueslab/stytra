@@ -33,11 +33,12 @@ is used (it is enabled automatically for freely-swimming experiments).
    :alt: freely-swimming tracking screenshot
    :align: center
 
-After Styra starts, turn off the IR illumination and remove the IR filter
+After Stytra starts, turn off the IR illumination and remove the IR filter
 in front of the camera. Then, click the display calibration pattern button (:red:`a`) and
 move the display window on the projector so that the 3 dots are clearly visible.
-Sometimes the camera exposure has to be adjusted as well (:red:`b`).
+Sometimes the camera exposure has to be adjusted as well (:red:`b`) so that all 3 dots are visible.
+Due to screen or projector framerates, usually setting the camera framerate to 30 and the exposure to 10ms works well.
 
-Then, click calibrate (:red:c`) and verify that the location of the camera image
+Then, click calibrate (:red:`c`) and verify that the location of the camera image
 in the projected image makes sense. If not, try adjusting camera settings and
 calibrating again.

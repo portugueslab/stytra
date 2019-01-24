@@ -20,6 +20,14 @@ stytra.collectors.data\_collector module
     :undoc-members:
     :show-inheritance:
 
+stytra.collectors.namedtuplequeue module
+----------------------------------------
+
+.. automodule:: stytra.collectors.namedtuplequeue
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------
