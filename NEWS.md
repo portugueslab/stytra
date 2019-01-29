@@ -1,3 +1,13 @@
+# 0.8.4
+
+## Fixes
+Centering wrapper now has one
+get_velocity of the fish position estimator should work 
+
+## Changes in default behavior
+entering 
+
+
 # Stytra 0.8
 
 ## New features
@@ -24,3 +34,4 @@ forced to close
 ## API changes
 - Subclassing the estimator does not need to handle the estimator log creation, 
 it is done automatically
+

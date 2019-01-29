@@ -97,8 +97,7 @@ class PositionEstimator(Estimator):
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
 
     def get_velocity(self):
-        vel = np.diff(self.acc_tracking.get_last_n(self.velocity_window)[:, [self.acc_tracking.header_dict["f0_x"],
-                                                                             self.acc_tracking.header_dict["f0_y"]]], 0)
+        vel = np.diff(self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values, 0)
         return np.sqrt(np.sum(vel**2))
 
     def reset(self):

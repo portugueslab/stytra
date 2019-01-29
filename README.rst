@@ -49,7 +49,7 @@ The simplest way to install Stytra is with pip::
     pip install stytra
 
 You can verify the installation by running one of the examples in stytra
-example folder. To run a simple looming stimulus experiment, you can
+examples folder. To run a simple looming stimulus experiment, you can
 type::
 
     python -m stytra.examples.looming_exp

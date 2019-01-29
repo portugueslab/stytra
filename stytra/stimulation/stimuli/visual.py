@@ -358,36 +358,6 @@ class BackgroundStimulus(PositionStimulus):
         pass
 
 
-class MovingConstantVel(BackgroundStimulus):
-    """
-    .. deprecated
-        in favor of the InterpolatedStimulus
-    """
-
-    def __init__(self, *args, vel_x=0, vel_y=0, **kwargs):
-        """
-
-        Parameters
-        ----------
-        args
-        vel_x
-        vel_y
-        kwargs
-        """
-
-        super().__init__(*args, **kwargs)
-        self.vel_x = vel_x
-        self.vel_y = vel_y
-        self._past_t = 0
-
-    def update(self):
-        super().update()
-        dt = self._elapsed - self._past_t
-        self.x += self.vel_x * dt
-        self.y += self.vel_y * dt
-        self._past_t = self._elapsed
-
-
 class SeamlessImageStimulus(BackgroundStimulus):
     """ Displays an image which should tile seamlessly.
 
@@ -679,7 +649,7 @@ class FishOverlayStimulus(PositionStimulus):
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dynamic_parameters.append("vel_x")
+        self.dynamic_parameters.append("x")
 
 
 def z_func_windmill(x, y, arms):
