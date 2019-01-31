@@ -396,7 +396,7 @@ class ConditionalWrapper(DynamicStimulus):
 class CenteringWrapper(ConditionalWrapper):
     def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
         super().__init__(*args, stim_true=stimulus,
-                         stim_false=centering_stimulus or RadialSineStimulus(stimulus.duration),
+                         stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
                          **kwargs)
         self.name = "centering"
         self.margin = margin ** 2
