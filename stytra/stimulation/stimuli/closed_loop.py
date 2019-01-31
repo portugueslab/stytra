@@ -306,18 +306,17 @@ class ConditionalWrapper(DynamicStimulus):
     ):
         super().__init__(**kwargs)
         self.name = "conditional"
-        self.stim_false = stim_false
-        self.stim_true = stim_true
-        self.active = self.stim_true
+        self._stim_false = stim_false
+        self._stim_true = stim_true
+        self.active = self._stim_true
         self._elapsed_difference = 0
         self._elapsed_when_centering_started = 0
-        self.pause_stimulus = pause_stimulus
         self.reset_phase = reset_phase
 
         self.value = False
         self.dynamic_parameters.append("value")
 
-        self.duration = self.stim_true.duration
+        self.duration = self._stim_true.duration
         self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
         self._dt = 0
         self._past_t = 0
@@ -327,7 +326,7 @@ class ConditionalWrapper(DynamicStimulus):
     def dynamic_parameter_names(self):
         if self.stimulus_dynamic:
             return (
-                super().dynamic_parameter_names + self.stim_true.dynamic_parameter_names
+                super().dynamic_parameter_names + self._stim_true.dynamic_parameter_names
             )
         else:
             return super().dynamic_parameter_names
@@ -335,22 +334,24 @@ class ConditionalWrapper(DynamicStimulus):
     def get_dynamic_state(self):
         state = super().get_dynamic_state()
         if self.stimulus_dynamic and self.value:
-            state.update(self.stim_true.get_dynamic_state())
+            state.update(self._stim_true.get_dynamic_state())
         return state
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        self.stim_true.initialise_external(experiment)
-        self.stim_false.initialise_external(experiment)
+        self._stim_true.initialise_external(experiment)
+        self._stim_false.initialise_external(experiment)
 
     def get_state(self):
-        return {"True": self.stim_true.get_state(),
-                "False": self.stim_false.get_state()}
+        state = super().get_state()
+        state.update({"True": self._stim_true.get_state(),
+                "False": self._stim_false.get_state()})
+        return state
 
     def start(self):
         super().start()
-        self.stim_true.start()
-        self.stim_false.start()
+        self._stim_true.start()
+        self._stim_false.start()
 
     def check_condition(self):
         return True
@@ -362,13 +363,13 @@ class ConditionalWrapper(DynamicStimulus):
         self._past_t = self._elapsed
         if not self.check_condition():
             self.value = False
-            self.active = self.stim_false
+            self.active = self._stim_false
             self.duration += self._dt
             self.active.duration += self._dt
             self._elapsed_difference += self._dt
             self.active._elapsed = self._elapsed
         else:
-            self.active = self.stim_true
+            self.active = self._stim_true
             if self.reset_phase > 0 and not self._previous_value:
                 phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
