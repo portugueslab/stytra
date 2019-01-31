@@ -314,14 +314,14 @@ class ConditionalWrapper(DynamicStimulus):
         self.pause_stimulus = pause_stimulus
         self.reset_phase = reset_phase
 
-        self.on = False
-        self.dynamic_parameters.append("on")
+        self.value = False
+        self.dynamic_parameters.append("value")
 
         self.duration = self.stim_true.duration
         self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
         self._dt = 0
         self._past_t = 0
-        self._was_centering = False
+        self._previous_value = False
 
     @property
     def dynamic_parameter_names(self):
@@ -334,7 +334,7 @@ class ConditionalWrapper(DynamicStimulus):
 
     def get_dynamic_state(self):
         state = super().get_dynamic_state()
-        if self.stimulus_dynamic:
+        if self.stimulus_dynamic and self.value:
             state.update(self.stim_true.get_dynamic_state())
         return state
 
@@ -344,7 +344,8 @@ class ConditionalWrapper(DynamicStimulus):
         self.stim_false.initialise_external(experiment)
 
     def get_state(self):
-        return self.stim_true.get_state()
+        return {"True": self.stim_true.get_state(),
+                "False": self.stim_false.get_state()}
 
     def start(self):
         super().start()
@@ -360,15 +361,15 @@ class ConditionalWrapper(DynamicStimulus):
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
         if not self.check_condition():
+            self.value = False
             self.active = self.stim_false
-            self.on = True
             self.duration += self._dt
             self.active.duration += self._dt
             self._elapsed_difference += self._dt
             self.active._elapsed = self._elapsed
         else:
             self.active = self.stim_true
-            if self.reset_phase > 0 and self._was_centering:
+            if self.reset_phase > 0 and not self._previous_value:
                 phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
                 time_added = (
@@ -381,9 +382,9 @@ class ConditionalWrapper(DynamicStimulus):
             else:
                 self.active._elapsed = self._elapsed - self._elapsed_difference
 
-            self.on = False
+            self.value = True
 
-        self._was_centering = self.on
+        self._previous_value = self.value
         self.active.update()
 
     def paint(self, p, w, h):
@@ -394,8 +395,8 @@ class ConditionalWrapper(DynamicStimulus):
 
 class CenteringWrapper(ConditionalWrapper):
     def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
-        super().__init__(*args, stim_false=stimulus,
-                         stim_true=centering_stimulus or RadialSineStimulus(stimulus.duration),
+        super().__init__(*args, stim_true=stimulus,
+                         stim_false=centering_stimulus or RadialSineStimulus(stimulus.duration),
                          **kwargs)
         self.name = "centering"
         self.margin = margin ** 2
@@ -404,7 +405,7 @@ class CenteringWrapper(ConditionalWrapper):
 
     def check_condition(self):
         y, x, theta = self._experiment.estimator.get_position()
-        return not (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
+        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2

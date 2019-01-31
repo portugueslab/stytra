@@ -1,11 +1,11 @@
 # 0.8.4
 
 ## Fixes
-Centering wrapper now has one
 get_velocity of the fish position estimator should work 
 
 ## Changes in default behavior
-entering 
+`CenteringWrapper` has the radial centering stimulus by default, the non-centering
+stimulus is specified as the `stimulus` keyword argument 
 
 
 # Stytra 0.8
