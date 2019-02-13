@@ -306,7 +306,6 @@ class BackgroundStimulus(PositionStimulus):
         p.setBrush(QBrush(QColor(0, 0, 0)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
-
         imw, imh = self.get_unit_dims(w, h)
 
         dx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw

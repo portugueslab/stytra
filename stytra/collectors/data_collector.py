@@ -55,10 +55,14 @@ class DataCollector(ParameterTree):
     """
 
     def __init__(self, *data_tuples_list, extra_settings=None,
+                 instance_number = -1,
                  folder_path="C:/"):
         """ """
         super().__init__()
-        self.metadata_fn = "stytra_last_config.json"
+        if instance_number >= 0:
+            self.metadata_fn = "stytra_last_config.json"
+        else:
+            self.metadata_fn = "stytra_last_config_{}.json".format(instance_number)
 
         # Check validity of directory:
         self.home_path = Path.home()

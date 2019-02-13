@@ -91,6 +91,7 @@ class Experiment(QObject):
             protocol=None,
             dir_save=None,
             dir_assets="",
+            instance_number=-1,
             database=None,
             metadata_general=None,
             metadata_animal=None,
@@ -120,7 +121,8 @@ class Experiment(QObject):
         self.log_format = log_format
         self.loop_protocol = loop_protocol
 
-        self.dc = DataCollector(folder_path=self.base_dir)
+        self.dc = DataCollector(folder_path=self.base_dir,
+                                instance_number=instance_number)
 
         self.window_main = None
         self.scope_config = None
