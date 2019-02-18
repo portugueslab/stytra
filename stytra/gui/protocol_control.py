@@ -42,6 +42,9 @@ class ProtocolControlToolbar(QToolBar):
         self.main_window = main_window
         self.protocol_runner = protocol_runner
 
+        self.update_duration_each = 120
+        self._update_duration_i = 0
+
         self.toggleStatus = ToggleIconButton(
             icon_off="play", icon_on="stop", action_on="play", on=False
         )
@@ -97,6 +100,11 @@ class ProtocolControlToolbar(QToolBar):
     def update_progress(self):
         """ Update progress bar
         """
+
+        if self._update_duration_i == 0:
+            self.protocol_runner.duration = self.protocol_runner.get_duration()
+        self._update_duration_i = (self._update_duration_i + 1) % self.update_duration_each
+
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))
         self.progress_bar.setValue(int(self.protocol_runner.t))
 
