@@ -30,6 +30,8 @@ In stytra.examples.most_basic_exp.py we define a very simple experiment:
    :language: python
    :caption:
 
+It is important to note that stimuli should be instances, not classes!
+
 Try to run this code or type in the command prompt::
 
    python -m stytra.examples.most_basic_exp

@@ -394,6 +394,7 @@ class Protocol(ParametrizedQt):
 
         """
         main_stimuli = self.get_stim_sequence()
+
         stimuli = []
         if self.pre_pause > 0:
             stimuli.append(Pause(duration=self.pre_pause))  # self.params[

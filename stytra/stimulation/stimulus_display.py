@@ -180,7 +180,7 @@ class StimDisplayWidget:
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
-            if (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
+            if self.last_time is None or (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()
@@ -190,7 +190,7 @@ class StimDisplayWidget:
                     (current_time - self.starting_time).total_seconds()
                 )
 
-        self.last_time = current_time
+                self.last_time = current_time
 
     def get_movie(self):
         """Finalize stimulus movie.

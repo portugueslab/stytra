@@ -103,10 +103,15 @@ class Stytra:
 
     """
 
-    def __init__(self, camera=None, tracking=None, recording=None, exec=True, **kwargs):
+    def __init__(self, camera=None, tracking=None, recording=None, exec=True,
+                 **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
-        default_config_file = Path.home() / "stytra_setup_config.json"
+        inum = kwargs.get("instance_number", -1)
+        if inum >= 0:
+            default_config_file = Path.home() / "stytra_setup_config_{}.json".format(inum)
+        else:
+            default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():
             config = json.load(open(str(default_config_file)))
         else:
