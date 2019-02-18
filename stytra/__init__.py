@@ -5,6 +5,7 @@ from stytra.experiments.tracking_experiments import (
     CameraVisualExperiment,
     TrackingExperiment,
 )
+from stytra.experiments.camera_recording_experiment import VideoRecordingExperiment
 from stytra.calibration import CircleCalibrator
 from stytra.utilities import recursive_update
 
@@ -147,6 +148,9 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
+
+            if recording:
+                base = VideoRecordingExperiment
 
         # Stytra logo :)
         app_icon = QIcon()
