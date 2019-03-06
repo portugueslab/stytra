@@ -178,8 +178,6 @@ class ProtocolRunner(QObject):
         self.update_protocol()
         self.log = []
         self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
-        self.timer.timeout.connect(self.timestep)  # connect timer to update fun
-        self.timer.setSingleShot(False)
 
         self.past_stimuli_elapsed = self.experiment.t0
         self.current_stimulus.started = self.experiment.t0
@@ -261,11 +259,7 @@ class ProtocolRunner(QObject):
         if self.running:
             self.running = False
             self.t_end = datetime.datetime.now()
-            # try:
-            self.timer.timeout.disconnect()
             self.timer.stop()
-            # except:
-            #     pass
 
     def update_log(self):
         """Append the log appending info from the last stimulus. Add to the
