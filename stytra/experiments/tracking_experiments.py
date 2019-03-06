@@ -73,7 +73,8 @@ class CameraVisualExperiment(VisualExperiment):
             self.camera_state = VideoControlParameters(tree=self.dc)
 
         self.acc_camera_framerate = FramerateAccumulator(self,
-            self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None), name="camera"  # TODO implement no goal
+            self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None),
+                                                         name="camera"  # TODO implement no goal
         )
 
         # New parameters are sent with GUI timer:

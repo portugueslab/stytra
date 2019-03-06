@@ -120,3 +120,79 @@ class TrackingProcess(FrameProcess):
         if self.i == 0:
             self.gui_queue.put(frame, timestamp=frametime)
         self.i = (self.i + 1) % every_x
+
+
+class DispatchProcess(FrameProcess):
+    """ A class which handles taking frames from the camera and dispatch them to both a separate
+    process (e.g. for saving a movie) and to a gui for display
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+
+    """
+
+    def __init__(
+        self,
+        in_frame_queue,
+        finished_evt: Event = None,
+        dispatching_set_evt: Event = None,
+        gui_framerate=30,
+        gui_dispatcher=False,
+        **kwargs
+    ):
+        """
+        :param in_frame_queue: queue dispatching frames from camera
+        :param finished_evt: signal for the end of the acquisition
+        :param processing_parameter_queue: queue for function&parameters
+        :param gui_framerate: framerate of the display GUI
+        """
+        super().__init__(name="tracking", **kwargs)
+
+        self.frame_queue = in_frame_queue
+        self.gui_queue = TimestampedArrayQueue(max_mbytes=300)  # GUI queue for displaying the image
+        self.output_frame_queue = TimestampedArrayQueue(max_mbytes=300)
+
+        self.dispatching_set_evt = dispatching_set_evt
+        self.finished_signal = finished_evt
+        self.gui_framerate = gui_framerate
+        self.gui_dispatcher = gui_dispatcher
+
+        self.i = 0
+
+    def run(self):
+        """Loop where the tracking function runs."""
+
+        while not self.finished_signal.is_set():
+
+            # Gets frame from its queue, if the input is too fast, drop frames
+            # and process the latest, if it is too slow continue:
+            try:
+                time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
+            except Empty:
+                continue
+
+            if self.dispatching_set_evt.is_set():
+                self.output_frame_queue.put(frame.copy(), time)
+
+            # put current frame into the GUI queue
+            self.send_to_gui(time, frame)
+
+            # calculate the frame rate
+            self.update_framerate()
+
+
+
+        return
+
+    def send_to_gui(self, frametime, frame):
+        """ Sends the current frame to the GUI queue at the appropriate framerate"""
+        if self.framerate_rec.current_framerate:
+            every_x = max(int(self.framerate_rec.current_framerate / self.gui_framerate), 1)
+        else:
+            every_x = 1
+        if self.i == 0:
+            self.gui_queue.put(frame, timestamp=frametime)
+        self.i = (self.i + 1) % every_x

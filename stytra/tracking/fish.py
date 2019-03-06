@@ -67,7 +67,6 @@ class FishTrackingMethod(ImageToDataNode):
     def _process(
         self,
         bg,
-        reset: Param(False),
         n_fish_max: Param(1, (1, 50)),
         n_segments: Param(10, (2, 30)),
         bg_downsample: Param(1, (1, 8)),
@@ -207,7 +206,6 @@ class FishTrackingMethod(ImageToDataNode):
         if nofish:
             messages.append("W:No object of right area, between {:.0f} and {:.0f}".format(
                 *fish_area))
-
 
         # if a debugging image is to be shown, set it
         if self.set_diagnostic == "background difference":

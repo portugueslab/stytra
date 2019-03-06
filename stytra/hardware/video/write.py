@@ -1,9 +1,7 @@
 import datetime
-
-try:
-    import av
-except ImportError:
-    pass
+import numpy as np
+import imageio
+import deepdish as dd
 
 from stytra.utilities import FrameProcess
 from multiprocessing import Event, Queue
@@ -26,12 +24,14 @@ class VideoWriter(FrameProcess):
         ouput movie bitrate
     """
 
-    def __init__(self, folder, input_queue, finished_signal, kbit_rate=4000):
+    def __init__(self, folder, input_queue, finished_signal, saving_evt,
+                 format="hdf5", kbit_rate=4000):
         super().__init__()
+        self.format = format
         self.folder = folder
         self.input_queue = input_queue
-        self.filename_queue = Queue()
         self.finished_signal = finished_signal
+        self.saving_evt = saving_evt
         self.kbit_rate = kbit_rate
         self.reset_signal = Event()
         if not os.path.isdir(folder):
@@ -39,38 +39,47 @@ class VideoWriter(FrameProcess):
 
     def run(self):
         while True:
-            filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S") + ".mp4"
-            out_container = av.open(os.path.join(self.folder, filename), mode="w")
 
-            self.filename_queue.put(filename)
-            out_stream = None
             video_frame = None
+
+            movie = []
+            toggle_save = False
             while True:
-                if self.reset_signal.is_set() or self.finished_signal.is_set():
-                    out_container.close()
-                    self.reset_signal.clear()
-                    break
                 try:
-                    if out_stream is None:
-                        current_frame = self.input_queue.get(timeout=1)
-                        out_stream = out_container.add_stream("mpeg4", rate=50)
-                        out_stream.width, out_stream.height = current_frame.shape[::-1]
-                        out_stream.pix_fmt = "yuv420p"
-                        out_stream.bit_rate = self.kbit_rate * 1000
-                        video_frame = av.VideoFrame(
-                            current_frame.shape[1], current_frame.shape[0], "gray"
-                        )
-                        video_frame.planes[0].update(current_frame)
-                    else:
-                        video_frame.planes[0].update(self.input_queue.get(timeout=1))
-                    packet = out_stream.encode(video_frame)
-                    out_container.mux(packet)
-                    self.update_framerate()
+                    t, current_frame = self.input_queue.get(timeout=0.01)
+                    if self.saving_evt.is_set():
+                        movie.append(current_frame)
+                        toggle_save = True
 
                 except Empty:
                     pass
+
+                if not self.saving_evt.is_set() and toggle_save:
+                    if self.format == "mp4":
+                        imageio.mimwrite(self.folder + filename + "movie.mp4",
+                                         np.array(movie, dtype=np.uint8), fps=3,
+                                         quality=None,
+                                         ffmpeg_params=["-pix_fmt", "yuv420p", "-profile:v", "baseline",
+                                                        "-level", "3", ], )
+
+                    elif self.format == "hdf5":
+                        filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                        print(self.folder + filename + "movie.hdf5")
+                        dd.io.save(self.folder + filename + "movie.hdf5",
+                                   np.array(movie, dtype=np.uint8))
+                        print("Saved!")
+
+                    toggle_save = False
+
+                if self.reset_signal.is_set() or self.finished_signal.is_set():
+                    self.reset_signal.clear()
+                    movie = []
+                    toggle_save = False
+                    break
+
+                self.framerate_rec.update_framerate()
+
             if self.finished_signal.is_set():
                 break
 
-        if out_stream is not None:
-            out_container.close()
+
