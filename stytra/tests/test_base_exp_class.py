@@ -64,7 +64,6 @@ class TestExperimentClass(unittest.TestCase):
 
         exp.wrap_up()
 
-
         data = []
         for path in sorted(glob.glob(self.test_dir + "/*/*.json")):
             with open(path, "r") as f:

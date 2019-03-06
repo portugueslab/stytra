@@ -1,7 +1,13 @@
 # 0.8.4
 
+## New features
+- maximal stimulus display framerate can be set
+
 ## Fixes
-get_velocity of the fish position estimator should work 
+- fish position estimator also allows querying velocity
+- remaining protocol duration estimate is refreshed during execution, so protocols
+whose duration depends on the animal behavior (such as those with a CenteringWrapper)
+display more sensible numbers.  
 
 ## Changes in default behavior
 `CenteringWrapper` has the radial centering stimulus by default, the non-centering

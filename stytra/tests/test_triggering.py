@@ -28,6 +28,12 @@ class DummyTrigger(Trigger):
             self.k = True
             return False
 
+class TestProtocol(Protocol):
+    name = "test_protocol"
+
+    def get_stim_sequence(self):
+        return [Pause(duration=0.5)]
+
 
 class TestExperimentClass(unittest.TestCase):
     def setUp(self):
@@ -37,17 +43,12 @@ class TestExperimentClass(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_experiment_class(self):
-        class TestProtocol(Protocol):
-            name = "test_protocol"
-
-            def get_stim_sequence(self):
-                return [Pause(duration=0.5)]
 
         trigger = DummyTrigger()
         app = QApplication([])
         exp = VisualExperiment(
             app=app,
-            protocols=[TestProtocol],
+            protocol=TestProtocol(),
             dir_save=self.test_dir,
             scope_triggering=trigger,
         )
