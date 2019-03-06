@@ -371,7 +371,8 @@ class ConditionalWrapper(DynamicStimulus):
         else:
             self.active = self._stim_true
             if self.reset_phase > 0 and not self._previous_value:
-                phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
+                phase_reset = max(self.active.current_phase -
+                                  (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
                 time_added = (
                     self._elapsed
