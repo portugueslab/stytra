@@ -103,7 +103,7 @@ class Stytra:
 
     """
 
-    def __init__(self, camera=None, tracking=None, recording=None, exec=True,
+    def __init__(self, recording=None, exec=True,
                  **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
@@ -152,7 +152,7 @@ class Stytra:
             if recording:
                 base = VideoRecordingExperiment
 
-        # Stytra logo :)
+        # Stytra logo
         app_icon = QIcon()
         for size in [32, 64, 128, 256]:
             app_icon.addFile(

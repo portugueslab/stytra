@@ -80,6 +80,8 @@ class ProtocolRunner(QObject):
         self.t = 0
 
         self.timer = QTimer()
+        self.timer.timeout.connect(self.timestep)  # connect timer to update fun
+        self.timer.setSingleShot(False)
 
         self.protocol = experiment.protocol
         self.stimuli = []
