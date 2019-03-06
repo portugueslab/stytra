@@ -106,7 +106,7 @@ class PositionEstimator(Estimator):
 
     def get_position(self):
         if len(self.acc_tracking.stored_data) == 0 or not np.isfinite(self.acc_tracking.stored_data[-1].f0_x):
-            o = self._output_type(-1, -1, 0)
+            o = self._output_type(np.nan, np.nan, np.nan)
             return o
 
 

@@ -29,13 +29,13 @@ def test_a_pipeline():
     p = TestPipeline()
     p.setup()
     tt = namedtuple("o", "inp par")
-    assert p.run() == ([], tt(None, 1))
+    assert p.run(None) == ([], tt(None, 1))
     assert p.diagnostic_image is None
     ser = p.serialize_params()
     print(ser)
     ser["/source/testnode"]["a"] = 2
     ser["diagnostics"]["image"] = "/source/testnode/processed"
     p.deserialize_params(ser)
-    assert p.run() == NodeOutput([], tt(None, 2))
+    assert p.run(None) == NodeOutput([], tt(None, 2))
     assert p.diagnostic_image == "img"
 

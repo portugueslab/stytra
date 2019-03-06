@@ -69,11 +69,12 @@ class ProtocolRunner(QObject):
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
     """Emitted when protocol is changed/updated"""
 
-    def __init__(self, experiment=None, log_print=True):
+    def __init__(self, experiment=None, target_dt=0, log_print=True):
         """ """
         super().__init__()
 
         self.experiment = experiment
+        self.target_dt = target_dt
 
         self.t_end = None
         self.completed = False
@@ -185,7 +186,7 @@ class ProtocolRunner(QObject):
         self.running = True
         self.current_stimulus.start()
         # start the timer
-        self.timer.start()
+        self.timer.start(self.target_dt)
 
     def timestep(self):
         """Update displayed stimulus. This function is the core of the

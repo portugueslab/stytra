@@ -3,7 +3,6 @@ import os
 import traceback
 from queue import Empty
 import numpy as np
-import pandas as pd
 import deepdish as dd
 import logging
 import tempfile
@@ -66,9 +65,12 @@ class Experiment(QObject):
     asset_directory : str
         (optional) Path where asset files such as movies or images to be
         displayed can be found.
-    display_config: dict
+    display: dict
         (optional) Dictionary with specifications for the display. Possible
-        key values are "full_screen" and "window_size".
+        key values are
+        full_screen: bool (False)
+        window_size: Tuple(Int, Int)
+        framerate: target framerate, if 0, it is the highest possilbe
         gl_display : bool (False)
     rec_stim_framerate : int
         (optional) Set to record a movie of the displayed visual stimulus. It
@@ -483,6 +485,9 @@ class VisualExperiment(Experiment):
             self.display_config = dict(full_screen=False, gl=True)
         else:
             self.display_config = display
+            target_fps = self.display_config.get("framerate", 0)
+            if target_fps > 0:
+                self.protocol_runner.target_dt = 1000//target_fps
 
         if not self.offline:
             self.window_display = StimulusDisplayWindow(
