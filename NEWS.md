@@ -2,12 +2,18 @@
 
 ## New features
 - maximal stimulus display framerate can be set
+- added a new conditional stimulus that has a different conditions for the two possible switches
+(stim_true->stim_false) on condition_off and and (stim_false->stim_true) on condition_on
+This enables the TwoRadiusCenteringWrapper, a centering stimulus which appears when the fish disappears
+from the outer border and disappears when the fish is close to the center.
 
 ## Fixes
 - fish position estimator also allows querying velocity
 - remaining protocol duration estimate is refreshed during execution, so protocols
 whose duration depends on the animal behavior (such as those with a CenteringWrapper)
-display more sensible numbers.  
+display more sensible numbers.
+- Stytra version, in addition to condition, is now saved
+- single source for log names, so that metadata corresponds to file names
 
 ## Changes in default behavior
 `CenteringWrapper` has the radial centering stimulus by default, the non-centering

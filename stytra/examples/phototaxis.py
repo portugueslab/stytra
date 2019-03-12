@@ -3,9 +3,9 @@ from stytra.stimulation.stimuli import (
     FishTrackingStimulus,
     HalfFieldStimulus,
     RadialSineStimulus,
-    CenteringWrapper,
     FullFieldVisualStimulus,
 )
+from stytra.stimulation.stimuli.conditional import CenteringWrapper
 
 from stytra.stimulation import Protocol
 from lightparam import Param
