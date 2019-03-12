@@ -6,7 +6,7 @@ import pandas as pd
 import json
 from collections import namedtuple
 from bisect import bisect_right
-
+from os.path import basename
 
 class Accumulator(QObject):
     """Abstract class for accumulating streams of data.
@@ -218,6 +218,7 @@ class Accumulator(QObject):
             json.dump(df.to_dict(), open(outpath, "w"))
         else:
             raise (NotImplementedError(format + " is not an implemented log foramt"))
+        return basename(outpath)
 
 
 class QueueDataAccumulator(Accumulator):

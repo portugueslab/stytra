@@ -9,6 +9,7 @@ import tempfile
 import git
 import sys
 import types
+import imageio
 
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtWidgets import QMessageBox
@@ -24,7 +25,7 @@ from stytra.gui.container_windows import (
     DynamicStimExperimentWindow,
 )
 
-import imageio
+import pkg_resources
 
 try:
     import av
@@ -171,16 +172,6 @@ class Experiment(QObject):
         self.animal_id = None
         self.session_id = None
 
-    def save_log(self, log, name, category="tracking"):
-        log.save(self.filename_base() + name, self.log_format)
-        self.dc.add_static_data(
-            self.filename_prefix() + name + "." + self.log_format,
-            category + "/" + name
-        )
-
-    def initialize_plots(self):
-        pass
-
     @property
     def folder_name(self):
         foldername = os.path.join(
@@ -190,19 +181,27 @@ class Experiment(QObject):
             os.makedirs(foldername)
         return foldername
 
-    def set_id(self):
-        self.animal_id = (
-            self.current_timestamp.strftime("%y%m%d") + "_f"
-            + str(self.metadata_animal.id)
-        )
-        self.session_id = self.current_timestamp.strftime("%H%M%S")
-
     def filename_prefix(self):
         return self.session_id + "_"
 
     def filename_base(self):
         # Save clean json file as timestamped Ymd_HMS_metadata.h5 files:
         return os.path.join(self.folder_name, self.filename_prefix())
+
+    def save_log(self, log, name, category="tracking"):
+        logname = log.save(self.filename_base() + name, self.log_format)
+
+        self.dc.add_static_data(logname, category + "/" + name)
+
+    def initialize_plots(self):
+        pass
+
+    def set_id(self):
+        self.animal_id = (
+            self.current_timestamp.strftime("%y%m%d") + "_f"
+            + str(self.metadata_animal.id)
+        )
+        self.session_id = self.current_timestamp.strftime("%H%M%S")
 
     def reset(self):
         self.t0 = datetime.datetime.now()
@@ -334,6 +333,7 @@ class Experiment(QObject):
                             git_hash=git_hash,
                             name=sys.argv[0],
                             arguments=self.arguments,
+                            version = pkg_resources.get_distribution('stytra').version,
                             dependencies=list(imports())
                         ),
                         name="general/program_version",
@@ -500,12 +500,6 @@ class VisualExperiment(Experiment):
         self.display_framerate_acc = None
         self.protocol_runner.framerate_acc.goal_framerate = self.display_config.get("min_framerate", None)
 
-    def save_log(self, log, name, category="tracking"):
-        log.save(self.filename_base() + name, self.log_format)
-        self.dc.add_static_data(
-            self.filename_prefix() + name + "." + self.log_format, category + "/" + name
-        )
-
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
 
@@ -545,7 +539,6 @@ class VisualExperiment(Experiment):
 
         self.window_main.construct_ui()
         self.window_main.show()
-
 
     def start_protocol(self):
         """Start the protocol from the ProtocolRunner. Before that, send a
