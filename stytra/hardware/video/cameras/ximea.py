@@ -57,7 +57,7 @@ class XimeaCamera(Camera):
                 self.cam.set_offsetX(self.roi[0])
                 self.cam.set_offsetY(self.roi[1])
         except xiapi.Xi_error:
-            return ("E:Could not set ROI "+str(self.roi)+", w has to be {}:{}:{}|{}:{}:{}".format(
+            return ("E:Could not set ROI "+str(self.roi)+", w has to be {}:{}:{}".format(
                 self.cam.get_width_minimum(),
                 self.cam.get_width_increment(),
                 self.cam.get_width_maximum()
