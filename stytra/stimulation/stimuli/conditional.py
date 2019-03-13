@@ -96,8 +96,13 @@ class PauseOutsideStimulus(DynamicStimulus):
 
 
 class ConditionalWrapper(DynamicStimulus):
-    """ A meta-stimulus which turns on centering if the fish
-    veers too much towards the edge.
+    """ A meta-stimulus which switches stimuli when a condition is fulfilled
+
+    Parameters
+    ----------
+    reset_to_mod_phase: tuple (int, int) or None (default)
+        E.g. if we want to reset to even phases (pauses) of a stimulus which consits of pauses
+        and motions
 
     """
 
@@ -106,6 +111,7 @@ class ConditionalWrapper(DynamicStimulus):
         stim_true,
         stim_false,
         reset_phase=0,
+        reset_to_mod_phase=None
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -116,6 +122,7 @@ class ConditionalWrapper(DynamicStimulus):
         self._elapsed_difference = 0
         self._elapsed_when_centering_started = 0
         self.reset_phase = reset_phase
+        self.reset_to_mod_phase = reset_to_mod_phase
 
         self.value = False
         self.dynamic_parameters.append("value")
@@ -177,6 +184,9 @@ class ConditionalWrapper(DynamicStimulus):
             if self.reset_phase > 0 and not self._previous_value:
                 phase_reset = max(self.active.current_phase -
                                   (self.reset_phase - 1), 0)
+                if self.reset_to_mod_phase is not None:
+                    outer_phase = phase_reset // self.reset_to_mod_phase[1]
+                    phase_reset = outer_phase * self.reset_to_mod_phase[1] + self.reset_to_mod_phase[0]
                 self.active._elapsed = self.active.phase_times[phase_reset]
                 time_added = (
                     self._elapsed
@@ -227,6 +237,10 @@ class DoubleConditionalWrapper(ConditionalWrapper):
             self.active = self._stim_true
             phase_reset = max(self.active.current_phase -
                               (self.reset_phase - 1), 0)
+            if self.reset_to_mod_phase is not None:
+                outer_phase = phase_reset // self.reset_to_mod_phase[1]
+                phase_reset = outer_phase * self.reset_to_mod_phase[1] + \
+                              self.reset_to_mod_phase[0]
             time_added = (
                     self._elapsed
                     - self._elapsed_difference
