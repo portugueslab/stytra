@@ -1,7 +1,7 @@
 import numpy as np
 from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
-from stytra.stimulation import DynamicStimulus
+from stytra.stimulation.stimuli.generic_stimuli import DynamicStimulus
 from stytra.stimulation.stimuli import RadialSineStimulus
 
 
