@@ -67,7 +67,6 @@ class VideoWriter(FrameProcess):
                         print(self.folder + filename + "movie.hdf5")
                         dd.io.save(self.folder + filename + "movie.hdf5",
                                    np.array(movie, dtype=np.uint8))
-                        print("Saved!")
 
                     toggle_save = False
 

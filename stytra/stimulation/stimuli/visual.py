@@ -268,7 +268,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
         """
 
-    def __init__(self, *args, centre_relative=True, **kwargs):
+    def __init__(self, *args, centre_relative=False, **kwargs):
         """ """
         self.x = 0
         self.y = 0

@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
 import pyqtgraph as pg
 import numpy as np
-from stytra.collectors import Accumulator
+from stytra.collectors import DataFrameAccumulator
 from stytra.collectors import QueueDataAccumulator
 from stytra.tracking.online_bouts import find_bouts_online, BoutState
 from stytra.utilities import reduce_to_pi
@@ -18,7 +18,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
     def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
         super().__init__(*args, **kwargs)
-        assert isinstance(data_accumulator, Accumulator)
+        assert isinstance(data_accumulator, DataFrameAccumulator)
         self.title = "position"
         self.positionPlot = self.addPlot()
         self.positionPlot.setAspectLocked(True)

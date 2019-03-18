@@ -1,5 +1,5 @@
 from multiprocessing import Event
-from stytra.collectors import FramerateAccumulator
+from stytra.collectors import FramerateQueueAccumulator
 
 import qdarkstyle
 from PyQt5.QtWidgets import QApplication

@@ -2,7 +2,7 @@ import numpy as np
 from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 from stytra.stimulation.stimuli.generic_stimuli import DynamicStimulus
-from stytra.stimulation.stimuli import RadialSineStimulus
+from stytra.stimulation.stimuli.visual import RadialSineStimulus
 
 
 class PauseOutsideStimulus(DynamicStimulus):
@@ -100,9 +100,16 @@ class ConditionalWrapper(DynamicStimulus):
 
     Parameters
     ----------
+    reset_phase: int
+        If we want to reset the phase of the stimulus when it reappears this
+        has to be bigger than 1, if we want to go back two phases we set it to
+        2 and so on.
+
     reset_to_mod_phase: tuple (int, int) or None (default)
         E.g. if we want to reset to even phases (pauses) of a stimulus which consits of pauses
         and motions
+        If using this parameter, reset_phase should be set to 1.
+
 
     """
 
@@ -111,14 +118,14 @@ class ConditionalWrapper(DynamicStimulus):
         stim_true,
         stim_false,
         reset_phase=0,
-        reset_to_mod_phase=None
+        reset_to_mod_phase=None,
         **kwargs
     ):
         super().__init__(**kwargs)
         self.name = "conditional"
         self._stim_false = stim_false
         self._stim_true = stim_true
-        self.active = self._stim_true
+        self.active = self._stim_false
         self._elapsed_difference = 0
         self._elapsed_when_centering_started = 0
         self.reset_phase = reset_phase
@@ -209,6 +216,25 @@ class ConditionalWrapper(DynamicStimulus):
         self.active.paint(p, w, h)
 
 
+class CenteringWrapper(ConditionalWrapper):
+    def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
+        super().__init__(*args, stim_true=stimulus,
+                         stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
+                         **kwargs)
+        self.name = "centering"
+        self.margin = margin ** 2
+        self.xc = 320
+        self.yc = 240
+
+    def check_condition(self):
+        y, x, theta = self._experiment.estimator.get_position()
+        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
+
+    def paint(self, p, w, h):
+        self.xc, self.yc = w / 2, h / 2
+        super().paint(p, w, h)
+
+
 class DoubleConditionalWrapper(ConditionalWrapper):
     """ An extension of the conditional wrapper where there can be two conditions,
     one for stimulus being turned on, and a different one for off.
@@ -222,8 +248,6 @@ class DoubleConditionalWrapper(ConditionalWrapper):
         return True
 
     def update(self):
-        super().update()
-
         self._dt = self._elapsed - self._past_t
         self._past_t = self._elapsed
 
@@ -262,27 +286,9 @@ class DoubleConditionalWrapper(ConditionalWrapper):
         self.active.update()
 
 
-class CenteringWrapper(ConditionalWrapper):
-    def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
-        super().__init__(*args, stim_true=stimulus,
-                         stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
-                         **kwargs)
-        self.name = "centering"
-        self.margin = margin ** 2
-        self.xc = 320
-        self.yc = 240
-
-    def check_condition(self):
-        y, x, theta = self._experiment.estimator.get_position()
-        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
-
-    def paint(self, p, w, h):
-        self.xc, self.yc = w / 2, h / 2
-        super().paint(p, w, h)
-
-
 class TwoRadiusCenteringWrapper(DoubleConditionalWrapper):
-    def __init__(self, stimulus, *args, centering_stimulus=None, r_out=400, r_in=100,
+    def __init__(self, stimulus, *args, centering_stimulus=None, r_out=400,
+                 r_in=100,
                  **kwargs):
         super().__init__(*args, stim_true=stimulus,
                          stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
@@ -301,7 +307,7 @@ class TwoRadiusCenteringWrapper(DoubleConditionalWrapper):
     def check_condition_off(self):
         y, x, theta = self._experiment.estimator.get_position()
         return (np.isnan(x) or
-                ((x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_out))
+                ((x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out))
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2

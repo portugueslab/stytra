@@ -8,7 +8,18 @@ from collections import namedtuple
 from bisect import bisect_right
 from os.path import basename
 
+
 class Accumulator(QObject):
+    def __init__(self, experiment, name="", max_history_if_not_running = 1000):
+        super().__init__()
+        self.name = name
+        self.exp = experiment
+        self.stored_data = []
+        self.times = []
+        self.max_history_if_not_running = max_history_if_not_running
+
+
+class DataFrameAccumulator(Accumulator):
     """Abstract class for accumulating streams of data.
 
     It is use to save or plot in real time data from stimulus logs or
@@ -47,14 +58,10 @@ class Accumulator(QObject):
     sig_acc_init = pyqtSignal()
 
     def __init__(
-        self, experiment, fps_calc_points=10, monitored_headers=None, name=""
+        self, *args, fps_calc_points=10, monitored_headers=None, **kwargs
     ):
-        super().__init__()
+        super().__init__(*args, **kwargs)
         """ """
-        self.exp = experiment
-        self.name = name
-        self.stored_data = []
-        self.times = []
         self.plot_columns = monitored_headers
         self.fps_calc_points = fps_calc_points
         self._header_dict = None
@@ -117,9 +124,17 @@ class Accumulator(QObject):
         self.sig_acc_reset.emit()
         if monitored_headers is not None:
             self.plot_columns = monitored_headers
+
         self.stored_data = []
         self.times = []
+
         self._header_dict = None
+
+    def trim_data(self):
+        if not self.exp.protocol_runner.running and len(
+                self.times) > self.max_history_if_not_running*1.5:
+            self.times[:-self.max_history_if_not_running] = []
+            self.stored_data[:-self.max_history_if_not_running] = []
 
     def get_fps(self):
         """ """
@@ -221,7 +236,7 @@ class Accumulator(QObject):
         return basename(outpath)
 
 
-class QueueDataAccumulator(Accumulator):
+class QueueDataAccumulator(DataFrameAccumulator):
     """General class for retrieving data from a Queue.
 
     The QueueDataAccumulator takes as input a multiprocessing.Queue object
@@ -271,6 +286,8 @@ class QueueDataAccumulator(Accumulator):
                 self.times.append(t_s)
                 self.stored_data.append(data)
 
+                self.trim_data()
+
                 # if the data type changed, emit a signal
                 if newtype:
                     self.sig_acc_init.emit()
@@ -278,19 +295,30 @@ class QueueDataAccumulator(Accumulator):
                 break
 
 
-class FramerateAccumulator:
-    """A simple accumulator, just for framerates"""
-    def __init__(self, experiment, queue, goal_framerate, name):
-        self.name = name
-        self.exp = experiment
-        self.queue = queue
+class FramerateAccumulator(Accumulator):
+    def __init__(self, *args, goal_framerate=None, **kwargs):
+        super().__init__(*args, **kwargs)
         self.goal_framerate = goal_framerate
-        self.times = []
-        self.data = []
+
+    def trim_data(self):
+        if len(self.times) > self.max_history_if_not_running*1.5:
+            self.times[:-self.max_history_if_not_running] = []
+            self.stored_data[:-self.max_history_if_not_running] = []
 
     def reset(self):
         self.times = []
-        self.data = []
+        self.stored_data = []
+
+    def update_list(self, fps):
+        self.stored_data.append(fps)
+        self.times.append((datetime.datetime.now() - self.exp.t0).total_seconds())
+
+
+class FramerateQueueAccumulator(FramerateAccumulator):
+    """A simple accumulator, just for framerates"""
+    def __init__(self, *args, queue, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.queue = queue
 
     def update_list(self):
         while True:
@@ -302,30 +330,15 @@ class FramerateAccumulator:
 
                 # append:
                 self.times.append(t_s)
-                self.data.append(fps)
+                self.stored_data.append(fps)
+
+                self.trim_data()
 
             except Empty:
                 break
 
 
-class FramerateDisplayAccumulator:
-    def __init__(self, experiment):
-        self.name = "display"
-        self.exp = experiment
-        self.goal_framerate = None
-        self.times = []
-        self.data = []
-
-    def reset(self):
-        self.times = []
-        self.data = []
-
-    def update_list(self, fps):
-        self.data.append(fps)
-        self.times.append((datetime.datetime.now() - self.exp.t0).total_seconds())
-
-
-class DynamicLog(Accumulator):
+class DynamicLog(DataFrameAccumulator):
     """Accumulator to save feature of a stimulus, e.g. velocity of gratings
     in a closed-loop experiment.
 
@@ -378,11 +391,10 @@ class DynamicLog(Accumulator):
             except AttributeError:
                 pass
         self._tupletype = namedtuple("s", dynamic_params)
-        self.stored_data = []
+        self.reset()
 
 
-# TODO update for namedtuples
-class EstimatorLog(Accumulator):
+class EstimatorLog(DataFrameAccumulator):
     """ """
 
     def __init__(self, *args, **kwargs):
@@ -403,5 +415,8 @@ class EstimatorLog(Accumulator):
         """
         self.times.append(t)
         self.stored_data.append(data)
+
+        self.trim_data()
+
         if len(self.stored_data) == 1:
             self.sig_acc_init.emit()

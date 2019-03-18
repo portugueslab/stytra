@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
-from stytra.collectors.accumulators import DynamicLog, FramerateDisplayAccumulator
+from stytra.collectors.accumulators import DynamicLog, FramerateAccumulator
 from stytra.utilities import FramerateRecorder
 from lightparam.param_qt import ParametrizedQt, Param
 
@@ -103,7 +103,7 @@ class ProtocolRunner(QObject):
         self.running = False
 
         self.framerate_rec = FramerateRecorder()
-        self.framerate_acc = FramerateDisplayAccumulator(experiment=self.experiment)
+        self.framerate_acc = FramerateAccumulator(experiment=self.experiment)
 
     def _set_new_protocol(self, protocol):
         """Set new Protocol.

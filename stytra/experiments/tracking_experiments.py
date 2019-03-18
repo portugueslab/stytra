@@ -16,7 +16,7 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-from stytra.collectors import QueueDataAccumulator, EstimatorLog, FramerateAccumulator
+from stytra.collectors import QueueDataAccumulator, EstimatorLog, FramerateQueueAccumulator
 from stytra.tracking.tracking_process import TrackingProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
@@ -72,10 +72,10 @@ class CameraVisualExperiment(VisualExperiment):
             )
             self.camera_state = VideoControlParameters(tree=self.dc)
 
-        self.acc_camera_framerate = FramerateAccumulator(self,
-            self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None),
-                                                         name="camera"  # TODO implement no goal
-        )
+        self.acc_camera_framerate = FramerateQueueAccumulator(self,
+                                                              queue=self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None),
+                                                              name="camera"  # TODO implement no goal
+                                                              )
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
@@ -255,10 +255,10 @@ class TrackingExperiment(CameraVisualExperiment):
         else:
             self.estimator = None
 
-        self.acc_tracking_framerate = FramerateAccumulator(self,
-            self.frame_dispatcher.framerate_queue, name="tracking",
-            goal_framerate=kwargs["camera"].get("min_framerate", None)
-        )
+        self.acc_tracking_framerate = FramerateQueueAccumulator(self,
+                                                                queue=self.frame_dispatcher.framerate_queue, name="tracking",
+                                                                goal_framerate=kwargs["camera"].get("min_framerate", None)
+                                                                )
 
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 

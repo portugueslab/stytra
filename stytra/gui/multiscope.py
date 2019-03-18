@@ -1,6 +1,6 @@
 import datetime
 from collections import namedtuple
-from stytra.collectors.accumulators import Accumulator
+from stytra.collectors.accumulators import DataFrameAccumulator
 
 import colorspacious
 import numpy as np
@@ -187,7 +187,7 @@ class MultiStreamPlot(QWidget):
         for accumulator, sel_columns in self.accumulators:
             pass
 
-    def add_stream(self, accumulator: Accumulator, header_items=None):
+    def add_stream(self, accumulator: DataFrameAccumulator, header_items=None):
         """Adds a data collector stream to the plot:
 
         Parameters

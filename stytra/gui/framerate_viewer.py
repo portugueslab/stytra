@@ -1,15 +1,13 @@
 from PyQt5.QtCore import QPoint
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QSizePolicy, QSpacerItem
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush
-#from stytra.gui.multiscope import MultiStreamPlot
+from PyQt5.QtCore import Qt
 
 import numpy as np
-from numba import jit
 
-from datetime import datetime
 
 class FramerateWidget(QWidget):
-    def __init__(self, acc, inertia=0.95):
+    def __init__(self, acc, inertia=0.98):
         super().__init__()
         self.acc = acc
         self.g_fps = self.acc.goal_framerate
@@ -19,11 +17,15 @@ class FramerateWidget(QWidget):
         self.set_fps = False
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding,
                                        QSizePolicy.Expanding))
+        self.indicator_color = (40, 230, 150)
+        self.indicator_shadow_color = (17, 147, 91)
+        self.error_indicator_color = (230, 40, 0)
+        self.error_indicator_shadow_color = (170, 30, 0)
 
     def update(self):
         self.set_fps = False
-        if len(self.acc.data) > 0:
-            self.fps = self.acc.data[-1]
+        if len(self.acc.stored_data) > 0:
+            self.fps = self.acc.stored_data[-1]
             self.set_fps = self.fps is not None
             if self.fps_inertia is None:
                 self.fps_inertia = self.fps
@@ -50,6 +52,7 @@ class FramerateWidget(QWidget):
 
         min_bound = np.floor(lb*0.08)*10
         max_bound = np.ceil(ub*0.12)*10
+        delta_bound = max_bound-min_bound
 
         size = self.size()
         pad = 6
@@ -63,25 +66,39 @@ class FramerateWidget(QWidget):
         if max_bound == min_bound:
             max_bound += 1
 
-
         limit_color = (200, 200, 200)
         goal_color = (80, 80, 80)
 
-        indicator_color = (40, 230, 150)
         if self.fps is not None and self.g_fps is not None and self.fps < self.g_fps:
-            indicator_color = (230, 40, 0)
+            indicator_color = self.error_indicator_color
+            shadow_color = self.error_indicator_shadow_color
+        else:
+            indicator_color = self.indicator_color
+            shadow_color = self.indicator_shadow_color
 
         w_min = 0
         w_max = w - pad
+        delta_w = w_max-w_min
         text_height = 16
         h_max = h - pad
         h_min = text_height + pad
 
         if self.set_fps and self.fps is not None:
-            loc = (self.fps - min_bound) / (max_bound - min_bound)
+            loc = (self.fps - min_bound) / delta_bound
+            w_l = int(w_min + loc * delta_w)
+            w_shadow = int(w_min + (self.fps_inertia - min_bound)*delta_w / delta_bound)
+
+            # Draw the inertially moving rectangle
+            p.setPen(Qt.NoPen)
+            p.setBrush(QBrush(QColor(*shadow_color)))
+
+            l_corner = min(w_shadow, w_l)
+            w_rect = abs(w_shadow-w_l)
+            p.drawRect(l_corner, h_min, w_rect, h_max-h_min)
+
             # Draw the indicator line
             p.setPen(QPen(QColor(*indicator_color)))
-            w_l = int(w_min + loc * (w_max - w_min))
+
             p.drawLine(w_l, h_min, w_l, h_max+5)
 
             val_str = "{:.1f}".format(self.fps)
@@ -92,9 +109,9 @@ class FramerateWidget(QWidget):
 
         if self.g_fps is not None:
             # Draw the goal line
-            loc_g = (self.g_fps - min_bound) / (max_bound - min_bound)
+            loc_g = (self.g_fps - min_bound) / delta_bound
             p.setPen(QPen(QColor(*goal_color), 3))
-            w_l = int(w_min + loc_g * (w_max - w_min))
+            w_l = int(w_min + loc_g * delta_w)
             p.drawLine(w_l, h_min, w_l, h_max)
 
         # Draw the limits

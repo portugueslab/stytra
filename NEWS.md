@@ -6,6 +6,7 @@
 (stim_true->stim_false) on condition_off and and (stim_false->stim_true) on condition_on
 This enables the TwoRadiusCenteringWrapper, a centering stimulus which appears when the fish disappears
 from the outer border and disappears when the fish is close to the center.
+- more improvements to conditional stimuli, please see API documentation for stimuli/conditional.
 
 ## Fixes
 - fish position estimator also allows querying velocity
@@ -14,6 +15,8 @@ whose duration depends on the animal behavior (such as those with a CenteringWra
 display more sensible numbers.
 - Stytra version, in addition to condition, is now saved
 - single source for log names, so that metadata corresponds to file names
+- the accumulators keep only a partial history if the protocol is not running, in order to
+prevent overflowing the memory.
 
 ## Changes in default behavior
 `CenteringWrapper` has the radial centering stimulus by default, the non-centering

@@ -1,5 +1,5 @@
 from multiprocessing import Event, Queue
-from stytra.collectors import FramerateAccumulator
+from stytra.collectors import FramerateQueueAccumulator
 
 import qdarkstyle
 from PyQt5.QtWidgets import QApplication
@@ -31,8 +31,8 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.start()
 
         # Create and connect framerate accumulator:
-        self.acc_tracking_framerate = FramerateAccumulator(self, self.frame_dispatcher.framerate_queue, name="tracking",
-                                                           goal_framerate=kwargs["camera"].get("min_framerate", None))
+        self.acc_tracking_framerate = FramerateQueueAccumulator(self, self.frame_dispatcher.framerate_queue, name="tracking",
+                                                                goal_framerate=kwargs["camera"].get("min_framerate", None))
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
         # self.filename_queue = Queue()
