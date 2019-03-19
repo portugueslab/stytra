@@ -322,13 +322,13 @@ class Protocol(ParametrizedQt):
     parametrized, so that variants can be made by changing the protocol
     parameters in the Stytra GUI.
 
-    The method :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`
+    The method :meth:`Protocol.get_stim_sequence() <stytra.stimulation.protocols.Protocol.get_stim_sequence>`
     should be redefined for each experimental protocol: it is called
     by the ProtocolRunner and it generates a list of stimuli that
     will be presented during the protocol.
     When defining new protocols, subclass this class and redefine
     :meth:`Protocol.get_stim_sequence()
-    <stytra.stimulation.protocols.Protocol.get_stim_sequence()>`.
+    <stytra.stimulation.protocols.Protocol.get_stim_sequence>`.
 
     By default, all protocols have an optinal initial and final pause and a parameter
     n_repetitions that specifies the number of times the sequence from

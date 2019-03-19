@@ -51,7 +51,7 @@ Parametrise the protocol
 .........................
 Sometimes, we want to control a protocol parameters from the interface. To do this, we can define
 protocol class attributes as `Param <https://github.com/portugueslab/lightparam>`_.
-All attributes defined as `Param`s will be modifiable from the user interface.
+All attributes defined as ``Param``s will be modifiable from the user interface.
 
 For a complete description of Params inside stytra see :ref:`parameters`.
 

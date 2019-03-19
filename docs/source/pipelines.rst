@@ -21,19 +21,21 @@ by the display and plotting classes (see the :py:mod:`stytra.experiments.fish_pi
 Processing nodes
 ----------------
 
-There are two types of nodes: :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`  and  `ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
+There are two types of nodes: :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`
+ and  :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
 
 Nodes must have:
+
 - A name
 
 - A _process function which contains optional parameters
 as keyword arguments, annotated with Params for everything
 that can be changed from the user interface. The _process
 function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple
-(from stytra.tracking.pipeline) which contains a list of
+(from :module:`stytra.tracking.pipeline`) which contains a list of
 diagnostic messages (can be empty), and either an
-image if the node is a ImageToImageNode
-or a NamedTuple if the node is a ImageToDataNode
+image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`
+or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
 
 Optionally, if the processing function is stateful (depends on previous inputs),
 you can define a reset function which resets the state.

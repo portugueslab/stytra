@@ -1,6 +1,8 @@
 Stytra user interface
 =====================
 
+The various behavioral paradigms supported by Stytra provide the user with a consistent interface to control experiments.
+
 .. image:: ../figures/screenshot.svg
    :scale: 50%
    :alt: user interface screenshot
@@ -27,7 +29,7 @@ The camera panel buttons are for:
 - button for editing the tracking settings
 
 The framerate display widget shows current framerates of the stimulus display,
-camera and tracking. If minimum framerates for display or tracking are configuresd,
+camera and tracking. If minimum framerates for display or tracking are configured,
 the indicators turn red if the framerate drops. These are configured in the stytra_config dict
 for a protocol or setup_config.json file in the following sections::
 
@@ -39,3 +41,5 @@ for a protocol or setup_config.json file in the following sections::
 The monitoring widget shows changing variables relating to the stimulus, tracking or estimation of the animal state for closed-loop stimulation use
 
 The status bar shows diagnostic messages from the camera or tracking.
+
+The stimulus window adjustment panel enables precise positioning of the stimulus display window and :ref:`calibration`
