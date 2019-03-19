@@ -96,46 +96,54 @@ class PauseOutsideStimulus(DynamicStimulus):
 
 
 class ConditionalWrapper(DynamicStimulus):
-    """ A meta-stimulus which switches stimuli when a condition is fulfilled
+    """ A wrapper for stimuli which switches between two stimuli dependending on
+    conditions: an on condition defined in the check_condition_on method
+    and an off condition defined check_condition_on
 
     Parameters
     ----------
-    reset_phase: int
-        If we want to reset the phase of the stimulus when it reappears this
-        has to be bigger than 1, if we want to go back two phases we set it to
-        2 and so on.
-
-    reset_to_mod_phase: tuple (int, int) or None (default)
-        E.g. if we want to reset to even phases (pauses) of a stimulus which consits of pauses
-        and motions
-        If using this parameter, reset_phase should be set to 1.
-
+    stim_on: Stimulus
+    stim_off: Stimulus
+    reset_phase: bool
+        whether to reset the phase of an InterpolatedStimulus if it goes from on to off
+    reset_phase_shift: int
+        when the stim_on reappears and reset_phase is true, we can set this to 0,
+        which resets the stim_on to the state at the beginning of the current phase,
+        1 to go to the next phase or -1 to go to the previous phase.
+    reset_to_mod_phase: tuple (int, int), optional, default None
+        if the stim_on consists of paired phases (e.g. motion on, motion off), it can
+        one can reset to the begging of the bigger phase.
+        If the stimulation pattern is e.g. [no_motion, motion_left, motion_right] to
+        always get to no_motion on reenter reset_to_mod_phase would be set to (0, 3)
+        This paremeter can be combined with reset_phase_shift, but in usual cases it
+        has to be set to 0
 
     """
-
     def __init__(
         self,
-        stim_true,
-        stim_false,
-        reset_phase=0,
+        stim_on,
+        stim_off,
+        reset_phase=False,
+        reset_phase_shift=0,
         reset_to_mod_phase=None,
         **kwargs
     ):
         super().__init__(**kwargs)
         self.name = "conditional"
-        self._stim_false = stim_false
-        self._stim_true = stim_true
-        self.active = self._stim_false
+        self._stim_off = stim_off
+        self._stim_on = stim_on
+        self.active = self._stim_off
         self._elapsed_difference = 0
         self._elapsed_when_centering_started = 0
         self.reset_phase = reset_phase
+        self.reset_phase_shift = reset_phase_shift
         self.reset_to_mod_phase = reset_to_mod_phase
 
-        self.value = False
-        self.dynamic_parameters.append("value")
+        self.on = False
+        self.dynamic_parameters.append("on")
 
-        self.duration = self._stim_true.duration
-        self.stimulus_dynamic = hasattr(stim_true, "dynamic_parameters")
+        self.duration = self._stim_on.duration
+        self.stimulus_dynamic = hasattr(stim_on, "dynamic_parameters")
         self._dt = 0
         self._past_t = 0
         self._previous_value = False
@@ -144,102 +152,32 @@ class ConditionalWrapper(DynamicStimulus):
     def dynamic_parameter_names(self):
         if self.stimulus_dynamic:
             return (
-                super().dynamic_parameter_names + self._stim_true.dynamic_parameter_names
+                super().dynamic_parameter_names + self._stim_on.dynamic_parameter_names
             )
         else:
             return super().dynamic_parameter_names
 
     def get_dynamic_state(self):
         state = super().get_dynamic_state()
-        if self.stimulus_dynamic and self.value:
-            state.update(self._stim_true.get_dynamic_state())
+        if self.stimulus_dynamic and self.on:
+            state.update(self._stim_on.get_dynamic_state())
         return state
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        self._stim_true.initialise_external(experiment)
-        self._stim_false.initialise_external(experiment)
+        self._stim_on.initialise_external(experiment)
+        self._stim_off.initialise_external(experiment)
 
     def get_state(self):
         state = super().get_state()
-        state.update({"True": self._stim_true.get_state(),
-                "False": self._stim_false.get_state()})
+        state.update({"On": self._stim_on.get_state(),
+                      "Off": self._stim_off.get_state()})
         return state
 
     def start(self):
         super().start()
-        self._stim_true.start()
-        self._stim_false.start()
-
-    def check_condition(self):
-        return True
-
-    def update(self):
-        super().update()
-
-        self._dt = self._elapsed - self._past_t
-        self._past_t = self._elapsed
-        if not self.check_condition():
-            self.value = False
-            self.active = self._stim_false
-            self.duration += self._dt
-            self.active.duration += self._dt
-            self._elapsed_difference += self._dt
-            self.active._elapsed = self._elapsed
-        else:
-            self.active = self._stim_true
-            if self.reset_phase > 0 and not self._previous_value:
-                phase_reset = max(self.active.current_phase -
-                                  (self.reset_phase - 1), 0)
-                if self.reset_to_mod_phase is not None:
-                    outer_phase = phase_reset // self.reset_to_mod_phase[1]
-                    phase_reset = outer_phase * self.reset_to_mod_phase[1] + self.reset_to_mod_phase[0]
-                self.active._elapsed = self.active.phase_times[phase_reset]
-                time_added = (
-                    self._elapsed
-                    - self._elapsed_difference
-                    - self.active.phase_times[phase_reset]
-                )
-                self.duration += time_added
-                self._elapsed_difference += time_added
-            else:
-                self.active._elapsed = self._elapsed - self._elapsed_difference
-
-            self.value = True
-
-        self._previous_value = self.value
-        self.active.update()
-
-    def paint(self, p, w, h):
-        p.setBrush(QBrush(QColor(0, 0, 0)))
-        p.drawRect(QRect(-1, -1, w + 2, h + 2))
-        self.active.paint(p, w, h)
-
-
-class CenteringWrapper(ConditionalWrapper):
-    def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
-        super().__init__(*args, stim_true=stimulus,
-                         stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
-                         **kwargs)
-        self.name = "centering"
-        self.margin = margin ** 2
-        self.xc = 320
-        self.yc = 240
-
-    def check_condition(self):
-        y, x, theta = self._experiment.estimator.get_position()
-        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
-
-    def paint(self, p, w, h):
-        self.xc, self.yc = w / 2, h / 2
-        super().paint(p, w, h)
-
-
-class DoubleConditionalWrapper(ConditionalWrapper):
-    """ An extension of the conditional wrapper where there can be two conditions,
-    one for stimulus being turned on, and a different one for off.
-
-    """
+        self._stim_on.start()
+        self._stim_off.start()
 
     def check_condition_on(self):
         return True
@@ -253,28 +191,30 @@ class DoubleConditionalWrapper(ConditionalWrapper):
 
         # check if the state switched
         if self._previous_value and self.check_condition_off():
-            self.value = False
-            self.active = self._stim_false
+            self.on = False
+            self.active = self._stim_off
 
         elif not self._previous_value and self.check_condition_on():
-            self.value = True
-            self.active = self._stim_true
-            phase_reset = max(self.active.current_phase -
-                              (self.reset_phase - 1), 0)
-            if self.reset_to_mod_phase is not None:
-                outer_phase = phase_reset // self.reset_to_mod_phase[1]
-                phase_reset = outer_phase * self.reset_to_mod_phase[1] + \
-                              self.reset_to_mod_phase[0]
-            time_added = (
-                    self._elapsed
-                    - self._elapsed_difference
-                    - self.active.phase_times[phase_reset]
-            )
-            self.duration += time_added
-            self._elapsed_difference += time_added
+            self.on = True
+            self.active = self._stim_on
+
+            if self.reset_phase:
+                new_phase = max(self.active.current_phase +
+                                  self.reset_phase_shift, 0)
+                if self.reset_to_mod_phase is not None:
+                    outer_phase = new_phase // self.reset_to_mod_phase[1]
+                    new_phase = outer_phase * self.reset_to_mod_phase[1] + \
+                                  self.reset_to_mod_phase[0]
+                time_added = (
+                        self._elapsed
+                        - self._elapsed_difference
+                        - self.active.phase_times[new_phase]
+                )
+                self.duration += time_added
+                self._elapsed_difference += time_added
 
         # update the current stimulus
-        if self.value:
+        if self.on:
             self.active._elapsed = self._elapsed - self._elapsed_difference
         else:
             self.duration += self._dt
@@ -282,16 +222,45 @@ class DoubleConditionalWrapper(ConditionalWrapper):
             self._elapsed_difference += self._dt
             self.active._elapsed = self._elapsed
 
-        self._previous_value = self.value
+        self._previous_value = self.on
         self.active.update()
 
+    def paint(self, p, w, h):
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+        self.active.paint(p, w, h)
 
-class TwoRadiusCenteringWrapper(DoubleConditionalWrapper):
+
+class SingleConditionalWrapper(ConditionalWrapper):
+    def chceck_condition_off(self):
+        return not self.check_condition_on()
+
+
+class CenteringWrapper(SingleConditionalWrapper):
+    def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
+        super().__init__(*args, stim_on=stimulus,
+                         stim_off=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
+                         **kwargs)
+        self.name = "centering"
+        self.margin = margin ** 2
+        self.xc = 320
+        self.yc = 240
+
+    def check_condition_on(self):
+        y, x, theta = self._experiment.estimator.get_position()
+        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
+
+    def paint(self, p, w, h):
+        self.xc, self.yc = w / 2, h / 2
+        super().paint(p, w, h)
+
+
+class TwoRadiusCenteringWrapper(ConditionalWrapper):
     def __init__(self, stimulus, *args, centering_stimulus=None, r_out=400,
                  r_in=100,
                  **kwargs):
-        super().__init__(*args, stim_true=stimulus,
-                         stim_false=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
+        super().__init__(*args, stim_on=stimulus,
+                         stim_off=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
                          **kwargs)
         self.name = "centering"
         self.margin_in = r_in ** 2

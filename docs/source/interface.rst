@@ -1,7 +1,7 @@
 Stytra user interface
 =====================
 
-.. image:: ../screenshots/screenshot.png
+.. image:: ../figures/screenshot.svg
    :scale: 50%
    :alt: user interface screenshot
    :align: center

@@ -12,6 +12,8 @@ and run it from your favorite IDE, or simply type on the command prompt::
    python -m stytra.examples.name_of_the_example
 
 
+.. _protocol-definition:
+
 Create a new protocol
 ---------------------
 To run a stytra experiment, we simply need to create a script were we define a protocol,
