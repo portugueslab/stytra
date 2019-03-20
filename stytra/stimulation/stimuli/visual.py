@@ -424,9 +424,10 @@ class GratingStimulus(BackgroundStimulus):
         wave_shape="square",
         grating_col_1=(255,) * 3,
         grating_col_2=(0,) * 3,
+        center_relative=True,
         **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, centre_relative=center_relative, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.wave_shape = wave_shape
