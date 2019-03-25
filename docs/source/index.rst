@@ -6,7 +6,11 @@
 Welcome to Stytra's documentation!
 ==================================
 
+Stytra:
+
 Stytra is a package to build and run behavioral experiments.
+
+If you encounter any issues, please report them on `github <https://github.com/portugueslab/stytra/issues>`_
 
 
 ..  toctree::

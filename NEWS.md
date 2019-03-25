@@ -17,6 +17,7 @@ display more sensible numbers.
 - single source for log names, so that metadata corresponds to file names
 - the accumulators keep only a partial history if the protocol is not running, in order to
 prevent overflowing the memory.
+- fixed crash on capturing camera image if the experiment was not started yet
 
 ## Changes in default behavior
 `CenteringWrapper` has the radial centering stimulus by default, the non-centering

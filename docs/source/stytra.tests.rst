@@ -20,14 +20,6 @@ stytra.tests.test\_base\_exp\_class module
     :undoc-members:
     :show-inheritance:
 
-stytra.tests.test\_fish\_tracking module
-----------------------------------------
-
-.. automodule:: stytra.tests.test_fish_tracking
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.tests.test\_kalman module
 --------------------------------
 

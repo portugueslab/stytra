@@ -20,6 +20,14 @@ stytra.stimulation.stimuli.closed\_loop module
     :undoc-members:
     :show-inheritance:
 
+stytra.stimulation.stimuli.conditional module
+---------------------------------------------
+
+.. automodule:: stytra.stimulation.stimuli.conditional
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.stimulation.stimuli.external module
 ------------------------------------------
 

@@ -4,6 +4,14 @@ stytra.experiments package
 Submodules
 ----------
 
+stytra.experiments.camera\_recording\_experiment module
+-------------------------------------------------------
+
+.. automodule:: stytra.experiments.camera_recording_experiment
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.experiments.fish\_pipelines module
 -----------------------------------------
 

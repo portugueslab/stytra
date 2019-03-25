@@ -222,6 +222,7 @@ class Experiment(QObject):
         """
         self.gui_timer.start(1000 // 60)
         self.dc.restore_from_saved()
+        self.set_id()
         self.make_window()
 
         if self.trigger is not None:

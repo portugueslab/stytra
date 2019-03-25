@@ -1,7 +1,7 @@
 .. _fishtracking:
 
 Configuring tracking of freely-swimming fish
-============================================
+--------------------------------------------
 
 .. image:: ../screenshots/freeswim_tracking.png
    :scale: 30%
@@ -34,7 +34,7 @@ Configuring tracking of freely-swimming fish
 .. _tailtracking:
 
 Configuring tracking of embedded fish
-=====================================
+-------------------------------------
 
 1) Ensure that the exposure time is not longer than 1.5 miliseconds, otherwise
    the tracking will not be correct for fast tail movements
@@ -51,8 +51,7 @@ Configuring tracking of embedded fish
 
 6) Adjust the number of tail segments, around 30 is a good number. Usually, not more than 10 n_output_segments are required
 
-7) Tap the dish of the fish so that it moves, and ensure the tail is tracked correctly. You can use the replay function to
-ensure the whole movement is tracked smoothly
+7) Tap the dish of the fish so that it moves, and ensure the tail is tracked correctly. You can use the replay function to ensure the whole movement is tracked smoothly
 
 8) To ensure the tracking is correct, you can enable the plotting of the last bout in the windows
 
@@ -60,7 +59,7 @@ ensure the whole movement is tracked smoothly
 .. _replaying:
 
 Replaying the camera feed to refine tracking
-============================================
+--------------------------------------------
 
 The replay functionality allows a frame-by-frame view of the camera feed during
 a period of interest (e.g. a bout or a struggle).

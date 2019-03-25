@@ -4,6 +4,14 @@ stytra.examples package
 Submodules
 ----------
 
+stytra.examples.camera\_record\_exp module
+------------------------------------------
+
+.. automodule:: stytra.examples.camera_record_exp
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 stytra.examples.closed\_loop\_exp module
 ----------------------------------------
 

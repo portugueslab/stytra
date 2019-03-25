@@ -23,7 +23,6 @@ Processing nodes
 
 There are two types of nodes: :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`
  and  :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
-
 Nodes must have:
 
 - A name
@@ -32,7 +31,7 @@ Nodes must have:
 as keyword arguments, annotated with Params for everything
 that can be changed from the user interface. The _process
 function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple
-(from :module:`stytra.tracking.pipeline`) which contains a list of
+(from :module:`stytra.tracking.pipelines.pipeline`) which contains a list of
 diagnostic messages (can be empty), and either an
 image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`
 or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`

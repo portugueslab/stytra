@@ -9,8 +9,8 @@
 Calibration
 ===========
 
-Positioning and calibrating the monitor for visual stimuli
-----------------------------------------------------------
+Calibration for head-fixed zebrafish experiments
+------------------------------------------------
 To calibrate the monitor for your experiment, first position the black
 stimulus screen on the monitor you are using for the experiment. Then, hit
 the show calibration button and drag around the ROI in the stytra GUI until
@@ -22,8 +22,8 @@ The calibration is saved in the last_stytra_config.json file, so once you
 have done it it maintains the same calibration for all subsequent experiments.
 
 
-Calibration of the camera and monitor
--------------------------------------
+Calibration for freely-swimming zebrafish experiments
+-----------------------------------------------------
 
 To calibrate the camera image to the displayed image, the Circle Calibrator
 is used (it is enabled automatically for freely-swimming experiments).
