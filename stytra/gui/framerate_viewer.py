@@ -7,12 +7,13 @@ import numpy as np
 
 
 class FramerateWidget(QWidget):
-    def __init__(self, acc, inertia=0.98):
+    def __init__(self, acc, inertia=0.985):
         super().__init__()
         self.acc = acc
         self.g_fps = self.acc.goal_framerate
         self.fps = None
-        self.fps_inertia = None
+        self.fps_inertia_max = None
+        self.fps_inertia_min = None
         self.inertia = inertia
         self.set_fps = False
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding,
@@ -27,10 +28,21 @@ class FramerateWidget(QWidget):
         if len(self.acc.stored_data) > 0:
             self.fps = self.acc.stored_data[-1]
             self.set_fps = self.fps is not None
-            if self.fps_inertia is None:
-                self.fps_inertia = self.fps
+            if self.fps_inertia_max is None:
+                self.fps_inertia_max = self.fps
+                self.fps_inertia_min = self.fps
             else:
-                self.fps_inertia = self.fps_inertia * self.inertia + self.fps * (1 - self.inertia)
+                if self.fps > self.fps_inertia_max:
+                    self.fps_inertia_max = self.fps
+                else:
+                    self.fps_inertia_max = self.fps_inertia_max * self.inertia + self.fps * (1 - self.inertia)
+
+                if self.fps < self.fps_inertia_min:
+                    self.fps_inertia_min = self.fps
+                else:
+                    self.fps_inertia_min = self.fps_inertia_min * self.inertia + self.fps * (
+                                1 - self.inertia)
+
         super().update()
 
     def paintEvent(self, e):
@@ -38,11 +50,11 @@ class FramerateWidget(QWidget):
         # or either of them
         if self.fps is not None:
             if self.g_fps is not None:
-                lb = min(self.fps_inertia, self.g_fps)
-                ub = max(self.fps_inertia, self.g_fps)
+                lb = min(self.fps_inertia_min, self.g_fps)
+                ub = max(self.fps_inertia_max, self.g_fps)
             else:
-                lb = self.fps_inertia
-                ub = self.fps_inertia
+                lb = self.fps_inertia_min
+                ub = self.fps_inertia_max
         else:
             if self.g_fps is not None:
                 lb = self.g_fps
@@ -86,14 +98,18 @@ class FramerateWidget(QWidget):
         if self.set_fps and self.fps is not None:
             loc = (self.fps - min_bound) / delta_bound
             w_l = int(w_min + loc * delta_w)
-            w_shadow = int(w_min + (self.fps_inertia - min_bound)*delta_w / delta_bound)
+
+            w_shadow_min = int(w_min + (
+                        self.fps_inertia_min - min_bound) * delta_w / delta_bound)
+            w_shadow_max = int(w_min + (self.fps_inertia_max - min_bound) * delta_w / delta_bound)
+
 
             # Draw the inertially moving rectangle
             p.setPen(Qt.NoPen)
             p.setBrush(QBrush(QColor(*shadow_color)))
 
-            l_corner = min(w_shadow, w_l)
-            w_rect = abs(w_shadow-w_l)
+            l_corner = w_shadow_min
+            w_rect = w_shadow_max-w_shadow_min
             p.drawRect(l_corner, h_min, w_rect, h_max-h_min)
 
             # Draw the indicator line
