@@ -1,4 +1,4 @@
-from stytra.hardware.video.cameras.abstract_class import Camera
+from stytra.hardware.video.cameras.interface import Camera
 import ctypes
 import numpy as np
 

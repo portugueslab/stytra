@@ -1,5 +1,19 @@
-Image processing pipelines
-==========================
+.. _tracking-desc:
+
+Image acquisition and tracking
+==============================
+
+Image acquisition
+-----------------
+
+A key feature of Stytra is the extraction of relevant behavioral features in real time from video inputs. The :class:`Camera <stytra.hardware.video.camera.interface.Camera>` object provides an interface for grabbing frames and setting parameters for a range of different camera types. Currently supported models include those by XIMEA, AVT, PointGray FLIR, and Mikrotron, as well as webcams supported by OpenCV :cite:`opencv_library`. Support for other cameras can be added as long as a Python or C API exists. In addition, previously-recorded videos can also be processed, allowing for offline tracking. Frames are acquired from the original source in a process separated from the user interface and stimulus display. This ensures that the acquisition and tracking frame rate are independent of the stimulus display, which, depending on the complexity of the stimulus and output resolution, can be between 30 and 60 Hz.
+
+
+.. bibliography:: biblio.bib
+
+
+Implementation of image processing pipelines
+============================================
 
 Image processing and tracking pipelines are defined by subclassing the :class:`Pipeline <stytra.tracking.pipelines.Pipeline>` class.
 The pipelines are defined as trees of nodes, starting from the camera image

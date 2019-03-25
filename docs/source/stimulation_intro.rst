@@ -1,3 +1,5 @@
+.. _stim-desc:
+
 Stimulation
 ===========
 

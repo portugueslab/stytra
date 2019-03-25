@@ -1,3 +1,5 @@
+.. _trig-desc:
+
 Triggering a Stytra protocol
 =============================
 

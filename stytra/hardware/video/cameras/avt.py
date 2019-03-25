@@ -1,5 +1,5 @@
 import numpy as np
-from stytra.hardware.video.cameras.abstract_class import Camera
+from stytra.hardware.video.cameras.interface import Camera
 
 try:
     from pymba import Vimba
