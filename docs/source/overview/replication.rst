@@ -56,7 +56,8 @@ yielded the same result (panel B), that
 inter-bout interval decreased in low gain conditions and increased in
 high gain conditions.
 
-.. image:: ../../figures/portugues2011replication.png
+.. raw:: html
+   :file: ../../figures/portugues2011_replication.html
 
 Replication within Stytra of results published in
 :cite:`portugues2011adaptive`. A) Changing the gain that
