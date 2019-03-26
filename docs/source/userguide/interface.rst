@@ -1,3 +1,5 @@
+.. _gui-desc:
+
 Stytra user interface
 =====================
 
