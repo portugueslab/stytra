@@ -17,7 +17,7 @@ Attributes of pipelines are:
 - (optional) an extra plotting window class
 
 the nodes can be set as attributes of the class,
-with names that are arbitrary except for how they are used
+with names that are arbitrary, except for how they are used
 by the display and plotting classes (see the :py:mod:`stytra.experiments.fish_pipelines` for examples)
 
 
@@ -31,14 +31,9 @@ Nodes must have:
 
 - A name
 
-- A _process function which contains optional parameters
-as keyword arguments, annotated with Params for everything
-that can be changed from the user interface. The _process
-function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple
-(from :module:`stytra.tracking.pipelines.Pipeline`) which contains a list of
-diagnostic messages (can be empty), and either an
-image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>`
-or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
+- A _process method which contains optional parameters as keyword arguments, annotated with Params for everything that can be changed from the user interface.
+
+The _process function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple (from :module:`stytra.tracking.pipelines`) which contains a list of diagnostic messages (can be empty), and either an image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>` or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
 
 Optionally, if the processing function is stateful (depends on previous inputs),
 you can define a reset function which resets the state.
