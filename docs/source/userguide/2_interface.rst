@@ -1,7 +1,7 @@
 .. _gui-desc:
 
-Stytra user interface
-=====================
+User interface
+==============
 
 The various behavioral paradigms supported by Stytra provide the user with a consistent interface to control experiments.
 

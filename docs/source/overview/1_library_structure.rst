@@ -1,15 +1,14 @@
+..  _sytra-struct:
+
 The structure of Stytra
 =======================
 
-<<<<<<< HEAD:docs/source/overview/library_structure.rst
 .. image:: ../../figures/data_flow.svg
    :scale: 80%
    :alt: dataflow diagram
    :align: center
 
 
-=======
->>>>>>> master:docs/source/overview/1_library_structure.rst
 We developed Stytra using the Python programming language. We endeavored to follow best practices in software engineering: separation of user interface and data processing code, modularity and consistent programming interfaces.
 
 In Stytra, new experiments can be designed using very simple Python syntax, allowing even beginners in programming to develop their own stimulation paradigms. Once defined, the experiment is controlled through a graphical user interface which can be used with no knowledge of Python.
@@ -27,14 +26,10 @@ a sequence of steps: first, images are acquired from the camera, then the image 
 
 This approach improves the reliability and the performance of online behavioral tracking, and exploits the advantages of multi-core processors. After processing, streaming numerical data (such as tracking results and dynamic parameters of stimuli) is passed into data accumulators in the main thread, and a user-selected subset can be plotted in real time and saved in one of the several supported formats. Moreover, for every experimental session all changeable properties impacting the execution of the experiment are recorded and saved. Finally, as the software package is version-controlled, the version (commit hash) of the software in use is saved as well, ensuring the complete reproducibility of every experiment.
 
-<<<<<<< HEAD:docs/source/overview/library_structure.rst
-.. image:: ../../figures/dataflow_classes.svg
-   :scale: 80%
-=======
+
 .. _dataflow-block:
 
 .. image:: ../../figures/dataflow_classes.svg
->>>>>>> master:docs/source/overview/1_library_structure.rst
    :alt: dataflow class diagram
    :align: center
 

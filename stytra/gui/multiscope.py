@@ -60,7 +60,7 @@ class MultiStreamPlot(QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
 
         self.precision = precision or 3
-        self.penwidth = 1
+        self.penwidth = 2
 
         if not compact:
             self.control_layout = QHBoxLayout()

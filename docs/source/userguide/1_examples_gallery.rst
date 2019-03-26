@@ -1,5 +1,5 @@
-Examples gallery
-================
+Designing and running experiments
+=================================
 
 You don't need to get acquainted with the full feature set of stytra to start
 running experiments. Here and in the stytra/examples directory, we  provide a number of example protocols that you
@@ -218,9 +218,8 @@ To customize an experiment, we need to subclass :class:`Experiment <stytra.exper
 which deal with experiments with a projector or with tracking
 from a camera, respectively.
 In the example below, we see how to make a very simple subclass, with an additional event
-(a mask waiting for an OK from the user) implemented at protocol onset. For a description
-of how the :class:`Experiment <stytra.experiments.Experiment>` class work, refer to
-its documentation.
+(a dialog waiting for an OK from the user) implemented at protocol onset. For a description
+of how the :class:`Experiment <stytra.experiments.Experiment>` class fits in the structure of stytra, please refer to the :ref:`corresponding section <sytra-struct>`.
 
 
 .. literalinclude:: ../../../stytra/examples/custom_exp.py
