@@ -44,8 +44,23 @@ If you encounter any issues, please report them `here <https://github.com/portug
 
 ..  toctree::
     :maxdepth: 2
-    :caption: Contents:
+    :caption: Overview
+    :glob:
 
-    overview
-    userguide
-    devdocs
+    overview/*
+
+
+..  toctree::
+    :maxdepth: 2
+    :caption: User guide
+    :glob:
+
+    userguide/*
+
+
+..  toctree::
+    :maxdepth: 2
+    :caption: Developer guide
+    :glob:
+
+    devdocs/*
