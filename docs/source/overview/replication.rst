@@ -37,13 +37,18 @@ demonstrated that reducing or increasing the magnitude of this velocity
 by a factor of 1.5 (high gain) or 0.5 (low gain) resulted in modifications
 of the bout parameters such as bout length and inter-bout interval
 (time between two consecutive bouts). The figure below
-shows in panel A the inter-bout interval along the protocol,
+shows the inter-bout interval along the protocol,
 where the three gain conditions were presented in a sequence
 that tested all possible gain transitions. When the gain increased
 the fish was consistently swimming less (higher inter-bout interval),
 while the opposite was observed when the gain decreased. Therefore,
 as expected, fish adapted the swimming parameters to compensate for
-changes in visual feedback.
+changes in visual feedback. The line represents the average normalized inter-bout time, and bars represent standard error of the mean from n=28 larvae. Here is the figure adapted fron adapted from :cite:`portugues2011adaptive`).
+
+.. figure:: ../../figures/portugues2011.png
+   :scale: 50%
+   :align: center
+
 
 We reproduced exactly the same protocol within Stytra, and we used
 Stytra modules for closed-loop control of a visual stimulus to
@@ -52,22 +57,13 @@ compare whether it could replicate the findings from
 extracted tail segments was used with a gain factor to estimate
 the fish velocity and the gain factor was changed in a sequence matching
 the protocol in :cite:`portugues2011adaptive`. The replication with Stytra
-yielded the same result (panel B), that
+yielded the same result:
 inter-bout interval decreased in low gain conditions and increased in
-high gain conditions.
+high gain conditions. Here are plotted average and individual fish (n=24 larvae):
 
 .. raw:: html
    :file: ../../figures/portugues2011_replication.html
 
-Replication within Stytra of results published in
-:cite:`portugues2011adaptive`. A) Changing the gain that
-is used to convert the fish's swimming vigor to relative velocity
-with respect to the grating affects the inter-bout interval. The line
-represents the average normalized inter-bout time, and bars represent
-standard error of the mean from n=28 larvae (adapted from
-:cite:`portugues2011adaptive`). B) Replication in Stytra of the
-same experimental protocol (n=24 larvae). Individual fish traces
-are shown in gray.
 
 Closed-loop phototaxis assay
 ----------------------------

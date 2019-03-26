@@ -36,9 +36,8 @@ with the information about microscope configuration over the network to the
 ip of the computer running Stytra, identified by its IP. Stytra uses by
 default port 5555 to listen for triggering messages.
 
-.. image:: ../hardware_list/pictures/zmq.png
+.. image:: ../../hardware_list/pictures/zmq.png
    :scale: 80%
-   :alt: alternate text
    :align: center
 
 

@@ -28,7 +28,7 @@ which will be presented in succession.
 
 In stytra.examples.most_basic_exp.py we define a very simple experiment:
 
-.. literalinclude:: ../../stytra/examples/most_basic_exp.py
+.. literalinclude:: ../../../stytra/examples/most_basic_exp.py
    :language: python
    :caption:
 
@@ -55,7 +55,7 @@ All attributes defined as ``Param``s will be modifiable from the user interface.
 
 For a complete description of Params inside stytra see :ref:`parameters`.
 
-.. literalinclude:: ../../stytra/examples/flash_exp.py
+.. literalinclude:: ../../../stytra/examples/flash_exp.py
    :language: python
    :caption:
 
@@ -79,7 +79,7 @@ class.
 In this example, we use a dataframe for changing the diameter of a circle
 stimulus, making it a looming object:
 
-.. literalinclude:: ../../stytra/examples/looming_exp.py
+.. literalinclude:: ../../../stytra/examples/looming_exp.py
    :language: python
    :caption:
 
@@ -95,7 +95,7 @@ dynamically updated is the
 position `x` of the gratings, but with the dictionary we specify its velocity
 with `vel_x`.
 
-.. literalinclude:: ../../stytra/examples/gratings_exp.py
+.. literalinclude:: ../../../stytra/examples/gratings_exp.py
    :language: python
    :caption:
 
@@ -116,7 +116,7 @@ If you want to monitor in real time the changes in your experiment
 parameters, you can pass the stim_plot argument to the call to stytra to add
 to the interface an online plot:
 
-.. literalinclude:: ../../stytra/examples/plot_dynamic_exp.py
+.. literalinclude:: ../../../stytra/examples/plot_dynamic_exp.py
    :language: python
    :caption:
 
@@ -130,7 +130,7 @@ Add a camera to a protocol
 We often need to have frames streamed from a file or a camera. In the following
 example we comment on how to achieve this when defining a protocol:
 
-.. literalinclude:: ../../stytra/examples/display_camera_exp.py
+.. literalinclude:: ../../../stytra/examples/display_camera_exp.py
    :language: python
    :caption:
 
@@ -149,7 +149,7 @@ experiment documentation for a description of the available tracking methods.
 In this example, we redefine the previously defined windmill protocol (which
 displays a rotating windmill) to add tracking of the eyes as well:
 
-.. literalinclude:: ../../stytra/examples/tail_tracking_exp.py
+.. literalinclude:: ../../../stytra/examples/tail_tracking_exp.py
    :language: python
    :caption:
 
@@ -166,7 +166,7 @@ In the example below we create a full-screen stimulus that turns red when
 the fish is swimming above a certain threshold (estimated with the vigour
 method).
 
-.. literalinclude:: ../../stytra/examples/custom_visual_exp.py
+.. literalinclude:: ../../../stytra/examples/custom_visual_exp.py
    :language: python
    :caption:
 
@@ -182,7 +182,7 @@ where the bright field is always displayed on the right side of the fish, and
 a centering stimulus is activated if the fish swims out of the field of view.
 Configuring tracking for freely-swimming experiments is explained here :ref:`fishtracking`
 
-.. literalinclude:: ../../stytra/examples/phototaxis.py
+.. literalinclude:: ../../../stytra/examples/phototaxis.py
    :language: python
    :caption:
 
@@ -204,7 +204,7 @@ constructor class, which by design deals only with standard Experiment classes. 
 simple, and it is described in the example below:
 
 
-.. literalinclude:: ../../stytra/examples/no_stytra_exp.py
+.. literalinclude:: ../../../stytra/examples/no_stytra_exp.py
    :language: python
    :caption:
 
@@ -223,7 +223,7 @@ of how the :class:`Experiment <stytra.experiments.Experiment>` class work, refer
 its documentation.
 
 
-.. literalinclude:: ../../stytra/examples/custom_exp.py
+.. literalinclude:: ../../../stytra/examples/custom_exp.py
    :language: python
    :caption:
 
