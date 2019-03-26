@@ -6,7 +6,7 @@
 Stytra: an open-source, integrated system for stimulation, tracking and closed-loop behavioral experiments
 ==========================================================================================================
 
-Vilim Štih\ :sup:`#`\ , Luigi Petrucco\ :sup:`#`\ , Andreas M. Kist* and Ruben Portugues\ :sup:`1`\
+Vilim Štih\ :sup:`#`\ , Luigi Petrucco\ :sup:`#`\ , Andreas M. Kist* and Ruben Portugues
 
 Research Group of Sensorimotor Control, Max Planck Institute of Neurobiology,
 Martinsried, Germany
