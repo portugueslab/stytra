@@ -23,7 +23,7 @@ This configuration requires high magnification, provided by a 50 mm macro
 objective. On the other side, illumination be provided only in a very
 small field and can be accomplished by with a simple single IR-LED.
 
-.. image:: ../hardware_list/pictures/embedded.png
+.. image:: ../../hardware_list/pictures/embedded.png
    :scale: 18%
    :alt: alternate text
    :align: center
@@ -36,7 +36,7 @@ Freely swimming fish setup
 This configuration uses a camera with larger field of view and a custom-built
 LED box for illuminating homogeneously a large area.
 
-.. image:: ../hardware_list/pictures/freely.png
+.. image:: ../../hardware_list/pictures/freely.png
    :scale: 18%
    :alt: alternate text
    :align: center
@@ -54,7 +54,7 @@ supplier pages are provided as well.
     easily be replaced with custom solutions.
 
 
-.. image:: ../hardware_list/pictures/parts_full.png
+.. image:: ../../hardware_list/pictures/parts_full.png
    :scale: 30%
    :alt: alternate text
    :align: center
@@ -63,7 +63,7 @@ supplier pages are provided as well.
 Head-restrained setup
 .....................
 .. csv-table:: Components for embedded configuration behavioral setup
-   :file: ../hardware_list/embedded.csv
+   :file: ../../hardware_list/embedded.csv
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
 
@@ -71,7 +71,7 @@ Head-restrained setup
 Freely-swimming setup
 .....................
 .. csv-table:: Components for freely swimming configuration behavioral setup
-   :file: ../hardware_list/freely_swimming.csv
+   :file: ../../hardware_list/freely_swimming.csv
    :widths: 10, 25, 25, 25, 25, 25, 25, 25, 25, 25
    :header-rows: 1
 
@@ -83,7 +83,7 @@ objective. The dimensions of this setup are quite small and parts can be kept in
 a basic custom-made frame that can be laser-cut or even made out of cardboard.
 
 
-.. image:: ../hardware_list/pictures/low_cost.png
+.. image:: ../../hardware_list/pictures/low_cost.png
    :scale: 15%
    :alt: alternate text
    :align: center

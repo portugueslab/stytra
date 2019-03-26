@@ -1,7 +1,7 @@
 The structure of Stytra
 =======================
 
-.. image:: ../figures/data_flow.svg
+.. image:: ../../figures/data_flow.svg
    :scale: 80%
    :alt: dataflow diagram
    :align: center
@@ -18,7 +18,7 @@ a sequence of steps: first, images are acquired from the camera, then the image 
 
  This approach improves the reliability and the performance of online behavioral tracking, and exploits the advantages of multi-core processors. After processing, streaming numerical data (such as tracking results and dynamic parameters of stimuli) is passed into data accumulators in the main thread, and a user-selected subset can be plotted in real time and saved in one of the several supported formats. Moreover, for every experimental session all changeable properties impacting the execution of the experiment are recorded and saved. Finally, as the software package is version-controlled, the version (commit hash) of the software in use is saved as well, ensuring the complete reproducibility of every experiment.
 
-.. image:: ../figures/dataflow_classes.svg
+.. image:: ../../figures/dataflow_classes.svg
    :scale: 80%
    :alt: dataflow class diagram
    :align: center
