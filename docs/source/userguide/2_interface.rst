@@ -5,7 +5,7 @@ User interface
 
 The various behavioral paradigms supported by Stytra provide the user with a consistent interface to control experiments.
 
-.. image:: ../figures/screenshot.svg
+.. image:: ../../figures/screenshot.svg
    :scale: 50%
    :alt: user interface screenshot
    :align: center
