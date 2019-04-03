@@ -157,6 +157,8 @@ Now a window with the fish image an a ROI to control tail position will appear,
 and the tail will be tracked! See :ref:`tailtracking` for instructions on
 how to adjust tracking parameters.
 
+.. _closedloop-definition:
+
 Closed-loop experiments
 -----------------------
 
