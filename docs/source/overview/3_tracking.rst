@@ -33,12 +33,18 @@ Zebrafish larvae swim in discrete units called bouts, and different types of swi
 To find the tail segments, two different functions are implemented. The first one looks at pixels along an arc to find their maximum (or minimum, if the image is inverted) where the current segment would end (as already described in e.g. :cite:`portugues2014whole`). The second method, introduced here, is based on centers of mass of sampling windows (see figure below), and provides a more reliable and smoother estimate over a wider range of resolutions and illumination methods. The image contrast and tail segment numbers have to be adjusted for each setup, which can be easily accomplished through the live view of the filtering and tracking results. In the documentation we provide :ref:`guidelines <guidelines>` on choosing these parameters. To compare results across different setups which might have different camera resolutions, the resulting tail shape can be interpolated  to a fixed number of segments regardless of the number of traced points.
 
 .. image:: ../../figures/tracking_img.png
-   :width: 14.6%
+   :height: 320px
    :alt: tracking animation
 
-.. image:: ../../figures/tracking_anim.png
-   :width: 65.4%
+.. image:: ../../figures/tracking_img_proc.png
+   :height: 320px
    :alt: tracking animation
+
+.. raw:: html
+
+    <video height="320px" loop src="../_static/tracking_anim.mp4"
+        style="vertical-align:middle;margin-bottom:24px" autoplay controls> </video>
+
 
 The image is first pre-processed by inverting, down-scaling, blurring and clipping, resulting in the image on the right, where the fish is the only object brighter than the background. Then, tail tracing starts from a user-defined point, and in the direction determined by another user-defined point at the end of the tail at rest (:blue:`blue line`). For each segment, a square (outlined in white) in the :yellow:`direction of the previous segment` is sampled, and the direction for the next segment is chosen as the :red:`vector` connecting the previous segment end and the center of mass of the sampled square.
 
