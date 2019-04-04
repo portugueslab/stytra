@@ -36,7 +36,7 @@
      id="namedview189"
      showgrid="false"
      inkscape:zoom="2.9896466"
-     inkscape:cx="288.39826"
+     inkscape:cx="150.58932"
      inkscape:cy="178.50132"
      inkscape:window-x="0"
      inkscape:window-y="0"
@@ -92,15 +92,15 @@
      style="fill:none;stroke:#5a8f40;stroke-width:0.93993396;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st6 st7"
      id="text16"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;stroke-width:1;"
      x="0.89270145"
      y="29.166019"><tspan
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:0.93993402"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Lato;-inkscape-font-specification:Lato;stroke-width:0.93993402;"
        id="tspan4670">Trajectories</tspan></text>
 <text
      class="st6 st7"
      id="text18"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;stroke-width:1;"
      x="6.3417015"
      y="141.0993">1 mm</text>
 <line
@@ -120,7 +120,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text24"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="162.60471"
      y="176.07368">0.0</text>
 <line
@@ -140,7 +140,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text30"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="213.52042"
      y="176.07368">0.1</text>
 <line
@@ -160,13 +160,13 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text36"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="264.43665"
      y="176.07368">0.2</text>
 <text
      class="st10 st6 st7"
      id="text38"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#333333;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#333333;stroke-width:1;"
      x="206.86578"
      y="190.05403">Time [s]</text>
 <line
@@ -186,7 +186,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text44"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="150.10117"
      y="158.12338">0</text>
 <line
@@ -206,7 +206,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text50"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="150.10117"
      y="130.63742">5</text>
 <line
@@ -226,7 +226,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text56"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="144.1832"
      y="103.1525">10</text>
 <line
@@ -246,7 +246,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text62"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="144.1832"
      y="75.666626">15</text>
 <line
@@ -266,7 +266,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text68"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="144.1832"
      y="48.180653">20</text>
 <line
@@ -286,14 +286,14 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text74"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="144.1832"
      y="20.695211">25</text>
 <text
      transform="rotate(-90)"
      class="st10 st6 st7"
      id="text76"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#333333;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#333333;stroke-width:1;"
      x="-147.86351"
      y="137.68349">Velocity magnitude [mm/s]</text>
 <polyline
@@ -387,7 +387,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text106"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="362.73557"
      y="176.07368">0.0</text>
 <line
@@ -407,7 +407,7 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text112"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="413.6514"
      y="176.07368">0.1</text>
 <line
@@ -427,13 +427,13 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text118"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1;"
      x="464.56711"
      y="176.07368">0.2</text>
 <text
      class="st10 st6 st7"
      id="text120"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#333333;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#333333;stroke-width:1;"
      x="406.99677"
      y="190.05403">Time [s]</text>
 <line
@@ -453,8 +453,8 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text126"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
-     x="335.13748"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1"
+     x="333.13748"
      y="129.11539">−0.5</text>
 <line
      class="st8"
@@ -473,8 +473,8 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text132"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
-     x="341.35461"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1"
+     x="341.79208"
      y="89.3078">0.0</text>
 <line
      class="st8"
@@ -493,14 +493,14 @@
      style="fill:none;stroke:#666666;stroke-width:0.5;stroke-linejoin:round;stroke-miterlimit:10" /><text
      class="st8 st6 st7"
      id="text138"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#666666;stroke-width:1"
-     x="341.35461"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#666666;stroke-width:1"
+     x="341.84406"
      y="49.500641">0.5</text>
 <text
      transform="rotate(-90)"
      class="st10 st6 st7"
      id="text140"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:sans-serif;-inkscape-font-specification:sans-serif;fill:#333333;stroke-width:1"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.63904572px;font-family:Lato;-inkscape-font-specification:Lato;fill:#333333;stroke-width:1;"
      x="-131.31586"
      y="328.63785">Relative angle [rad]</text>
 <polyline

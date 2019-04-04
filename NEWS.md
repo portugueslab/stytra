@@ -3,7 +3,7 @@
 ## New features
 - maximal stimulus display framerate can be set
 - added a new conditional stimulus that has a different conditions for the two possible switches
-(stim_true->stim_false) on condition_off and and (stim_false->stim_true) on condition_on
+(stim_on->stim_off) on condition_off and and (stim_on->stim_off) on condition_on
 This enables the TwoRadiusCenteringWrapper, a centering stimulus which appears when the fish disappears
 from the outer border and disappears when the fish is close to the center.
 - more improvements to conditional stimuli, please see API documentation for stimuli/conditional.
@@ -22,6 +22,9 @@ prevent overflowing the memory.
 ## Changes in default behavior
 `CenteringWrapper` has the radial centering stimulus by default, the non-centering
 stimulus is specified as the `stimulus` keyword argument 
+
+## Documentation updates
+- large reorganization and inclusion of the mansucript
 
 
 # Stytra 0.8
