@@ -56,7 +56,12 @@ The image is first pre-processed by inverting, down-scaling, blurring and clippi
 Eye tracking
 ............
 
-Zebrafish larvae move their eyes to stabilize their gaze in response to whole field motion, perform re-positioning saccades, and converge their eyes to follow a potential prey in hunting maneuvers :cite:`beck2004quantifying`. Naso-temporal eye movements can be described by the eye orientation with respect to the fish axis. Given the ellipsoidal shape of the eyes when seen from above, to find their orientation it is sufficient to fit an ellipse to the eye pixels and determine the angle of the major axis \cite{beck2004quantifying}. In Stytra, a movable and scalable rectangular region can be used to select the area of the camera view containing the eyes. As eyes are usually much darker than the background, with proper illumination conditions it is  sufficient to binarize the image with an adjustable threshold which selects the pixels belonging to the eyes. Then, functions from the OpenCV library are used to find the two largest connected components of the binarized region and fits an ellipse to them. The absolute angle of the major axis of the ellipse is recorded as the eye angle. A live preview of the binarized image and the extracted ellipses helps the user to adjust the parameters.
+Zebrafish larvae move their eyes to stabilize their gaze in response to whole field motion, perform re-positioning saccades, and converge their eyes to follow a potential prey in hunting maneuvers :cite:`beck2004quantifying`. Naso-temporal eye movements can be described by the eye orientation with respect to the fish axis. Given the ellipsoidal shape of the eyes when seen from above, to find their orientation it is sufficient to fit an ellipse to the eye pixels and determine the angle of the major axis :cite:`beck2004quantifying`. In Stytra, a movable and scalable rectangular region can be used to select the area of the camera view containing the eyes. As eyes are usually much darker than the background, with proper illumination conditions it is  sufficient to binarize the image with an adjustable threshold which selects the pixels belonging to the eyes. Then, functions from the OpenCV library are used to find the two largest connected components of the binarized region and fits an ellipse to them. The absolute angle of the major axis of the ellipse is recorded as the eye angle. A live preview of the binarized image and the extracted ellipses helps the user to adjust the parameters.
+
+The image below illustrates an example of ellipses fitted to the eyes and angle traces as the eyes were moving in response to a rotating windmill.
+
+.. image:: ../../figures/okr.png
+   :alt: tracking animation
 
 
 Freely-swimming fish tracking
