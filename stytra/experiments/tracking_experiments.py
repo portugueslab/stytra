@@ -32,6 +32,7 @@ from inspect import isclass
 
 import sys
 
+from profilehooks import profile
 
 class CameraVisualExperiment(VisualExperiment):
     """General class for Experiment that need to handle a camera.
@@ -321,6 +322,7 @@ class TrackingExperiment(CameraVisualExperiment):
         super().start_protocol()
         self.gui_timer.start(1000 // 60)
 
+    @profile(filename="profile_end_prot")
     def end_protocol(self, save=True):
         super().end_protocol(save)
         if self.window_main.stream_plot.frozen:
@@ -360,6 +362,7 @@ class TrackingExperiment(CameraVisualExperiment):
         super().set_protocol(protocol)
         self.protocol.sig_protocol_started.connect(self.acc_tracking.reset)
 
+    @profile(filename="profile_wrapup")
     def wrap_up(self, *args, **kwargs):
         """
 

@@ -3,12 +3,6 @@
 The structure of Stytra
 =======================
 
-.. image:: ../../figures/data_flow.svg
-   :scale: 80%
-   :alt: dataflow diagram
-   :align: center
-
-
 We developed Stytra using the Python programming language. We endeavored to follow best practices in software engineering: separation of user interface and data processing code, modularity and consistent programming interfaces.
 
 In Stytra, new experiments can be designed using very simple Python syntax, allowing even beginners in programming to develop their own stimulation paradigms. Once defined, the experiment is controlled through a graphical user interface which can be used with no knowledge of Python.
