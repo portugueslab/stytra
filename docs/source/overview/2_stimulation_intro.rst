@@ -75,6 +75,3 @@ Radial sine (freely-swimming fish centering stimulus)
 .. literalinclude:: ../../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 34-36
-
-
-.. bibliography:: biblio.bib

@@ -17,6 +17,19 @@ Martinsried, Germany
 Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nurnberg,
 Germany.
 
+.. raw:: html
+
+    <video width="100%" loop autoplay controls>
+
+    <source src="<http://www.portugueslab.com/files/stytra_freeswim.webm"
+            type="video/webm">
+
+    <source src="http://www.portugueslab.com/files/stytra_freeswim.mp4"
+            type="video/mp4">
+    </video>
+
+
+
 We present Stytra, a flexible, open-source software package, written in Python and
 designed to cover all the general requirements involved in larval zebrafish behavioral
 experiments. It provides :ref:`timed stimulus presentation<stim-desc>`, :ref:`interfacing with external devices<trig-desc>`
