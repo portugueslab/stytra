@@ -92,4 +92,3 @@ Right: the equivalent panel, with n=10 fish and the protocol run with
 Stytra. The dark shading on the plot represents the dark side of the visual
 field.
 
-.. bibliography:: biblio.bib

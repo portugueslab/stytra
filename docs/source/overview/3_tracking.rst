@@ -84,7 +84,18 @@ Fish identities are maintained constant while they are in the field of view and 
 
 Custom tracking functions
 -------------------------
-Stytra is designed in an extensible fashion and video tracking algorithms for other animals can be easily added. To demonstrate this, we provide a small example of DeepLabCut-based tracking, which can be integrated with very few lines of code and immediately used with closed-loop stimuli. DeepLabCut is a convolutional neural network-based pose estimation toolbox :cite:`Mathisetal2018` built on top of the DeeperCut architecture :cite:`insafutdinov2016eccv`. We incorporated an open-field recording example with the video and parameters provided in the original repository. The code for this example is in a separate `GitHub repository <https://github.com/portugueslab/Stytra-with-DeepLabCut>`_. The tracking performance of DeepLabCut mainly depends on video resolution and CPU and GPU performance. We managed to obtain a tracking speed of 20 Hz (resulting in a tracking latency of 50 ms) for a 640x480 px video on a computer equipped with a nVidia GeForce GTX Titan X GPU and Intel Xeon E5-2687W v3 CPU. For a detailed investigation of DeepLabCut performance see :cite:`Mathis457242`.
+Stytra is designed in an extensible fashion and video tracking algorithms for other animals can be easily added. To demonstrate this, we provide a small example of DeepLabCut-based tracking, which can be integrated with very few lines of code and immediately used with closed-loop stimuli. DeepLabCut is a convolutional neural network-based pose estimation toolbox :cite:`Mathisetal2018` built on top of the DeeperCut architecture :cite:`insafutdinov2016eccv`. We incorporated an open-field recording example with the video and parameters provided in the original repository.
+
+.. raw:: html
+
+    <video width="100%" loop autoplay controls>
+
+    <source src="<http://www.portugueslab.com/files/dlc.webm"
+            type="video/webm">
+
+    <source src="http://www.portugueslab.com/files/dlc.mp4"
+            type="video/mp4">
+    </video>
 
 
-.. bibliography:: biblio.bib
+The code for this example is in a separate `GitHub repository <https://github.com/portugueslab/Stytra-with-DeepLabCut>`_. The tracking performance of DeepLabCut mainly depends on video resolution and CPU and GPU performance. We managed to obtain a tracking speed of 20 Hz (resulting in a tracking latency of 50 ms) for a 640x480 px video on a computer equipped with a nVidia GeForce GTX Titan X GPU and Intel Xeon E5-2687W v3 CPU. For a detailed investigation of DeepLabCut performance see :cite:`Mathis457242`.

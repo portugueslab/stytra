@@ -1,5 +1,6 @@
-Comparison with existing software packages
-==========================================
+Comparison with existing software and limitations
+=================================================
+
 Many general-purpose systems have been proposed over the years
 to present visual and other kinds of stimuli and control behavioral
 experiments, each with its own strengths and limitations.
@@ -80,3 +81,6 @@ while Stytra can perform online eye tracking at 500 Hz, and Stytra's
 performance is mainly limited by the camera frame rate.
 
 
+Limitations
+-----------
+Support for different hardware would require some extensions in the architecture. Simultaneous use of multiple cameras is currently not supported, but this requires a minor rewriting of the frame dispatching module. We will both continue to extend Stytra's capabilities and support any contributions that expand the library to cover a wider range of experimental conditions. Finally, it is important to note that the choice of Python as a language would make it difficult to obtain millisecond-level or higher temporal precision (e.g. for closed-loop electrophysiology). To this aim, existing solutions based on compiled languages should be employed, such as :cite`ciliberti2017falcon` (a system for closed-loop electrophysiology in C++). Another possibility would be to combine Open Ephys and Bonsai, as in :cite:`buccino2018open`.
