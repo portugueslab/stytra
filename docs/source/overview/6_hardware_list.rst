@@ -3,14 +3,11 @@
 Hardware description
 ====================
 
-Below we provide a description of the setups in use in the lab together with a
-full list of components that can be
-used to assemble them.
+In our effort to make experiments as open and reproducible as possible, we documented example setups that can be used together with the Stytra software for performing behavioral experiments in head-restrained and freely swimming fish. In general, the minimal setup for tracking the fish larvae requires a high-speed camera (a minimum of 100 Hz is required to capture the most common tail beats which have a frequency up to 50 Hz, but we recommend at least 300 Hz to describe the details of the tail kinematics). The camera must be equipped with a suitable objective: a macro lens for the head-restrained tail tracking or a normal lens for the freely swimming recordings, where a smaller magnification and a larger field of view are required.  Infrared illumination is then used to provide contrast without interfering with the animal's visual perception.
+Since fish strongly rely on vision and many of their reflexes can be triggered by visual stimulation, the setup is usually equipped with a projector or screen to present the visual stimulus to the fish. Although in our setups stimuli are projected below the fish, a lateral projector would be fully compatible with Stytra.
+Most of our rig frames consist of optomechanical parts commonly used for building microscopes. These parts are convenient but not strictly necessary to build a well-functioning rig. Replacing them with simple hardware-store and laser-cut components can significantly reduce the costs.  Therefore, we also provide instructions for a head-restrained setup built inside a cardboard box, where the most expensive item is the high-speed camera, bringing the price of the whole setup without the computer below 700 euros.
 
-Two configurations of our setups are described: the first one is for detailed
-kinematic
-tracking of eyes and tail in a fish with head restrained in agarose, the
-second for tracking freely swimming fish in a petri dish.
+Here we describe two configurations of our setups: the first one is for detailed kinematic tracking of eyes and tail in a fish with head restrained in agarose, the second for tracking freely swimming fish in a petri dish.
 
 Finally, we present a cheap version of the behavioral setup that can be
 easily built for about 700 euros, and easily assembled using cardboard,

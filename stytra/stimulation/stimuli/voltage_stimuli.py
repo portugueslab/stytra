@@ -1,7 +1,7 @@
-# try:
-# import nidaqmx
-# except:
-# print("No nidamax module found")
+try:
+    import nidaqmx
+except:
+    pass
 from stytra.stimulation.stimuli import Stimulus, InterpolatedStimulus, DynamicStimulus
 from time import sleep
 
@@ -10,10 +10,13 @@ try:
 except ImportError:
     pass
 
+# Code of this section tend to be hard to be general across setups. Please use
+# the stimulus classes below as examples of interaction with a LabJAck or a NI device,
+# but consider having to reimplement custom classes for your purposes.
+
 
 class NIVoltageStimulus(Stimulus):
     def __init__(self, *args, dev="Dev1", chan="ao0"):
-        import nidaqmx
 
         self.dev = dev
         self.chan = chan
