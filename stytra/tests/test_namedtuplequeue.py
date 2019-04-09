@@ -4,6 +4,7 @@ from collections import namedtuple
 from time import sleep
 
 
+
 class TupProc(Process):
     def __init__(self, q):
         super().__init__()
@@ -11,9 +12,9 @@ class TupProc(Process):
         self.q.tuple_type = None
 
     def run(self):
-        m = self.q.get()
+        _, m = self.q.get()
         mtype = type(m)
-        self.q.put(mtype(m[0]+1, *m[1:]))
+        self.q.put(None, mtype(m[0]+1, *m[1:]))
 
 
 def test_ntqueue():
@@ -23,12 +24,12 @@ def test_ntqueue():
     tup = t(1, 2, 3)
     tp = TupProc(q)
     tp.start()
-    tp.q.put(tup)
+    tp.q.put(None, tup)
     print("started sleeping")
     sleep(0.1)
     print("stopped sleeping")
     #
     tp.join()
-    tup2 = tp.q.get()
+    _, tup2 = tp.q.get()
     assert tup2 == t(2, 2, 3)
 

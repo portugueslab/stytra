@@ -32,6 +32,7 @@ from inspect import isclass
 
 import sys
 
+
 class CameraVisualExperiment(VisualExperiment):
     """General class for Experiment that need to handle a camera.
     It implements a view of frames from the camera in the control GUI, and the
@@ -373,14 +374,12 @@ class TrackingExperiment(CameraVisualExperiment):
         -------
 
         """
-        self.camera.kill_event.set()
-
-        for q in [self.camera.frame_queue, self.frame_dispatcher.gui_queue]:
-            q.clear()
-
-        self.frame_dispatcher.join()
 
         super().wrap_up(*args, **kwargs)
+
+        self.frame_dispatcher.gui_queue.clear()
+
+        self.frame_dispatcher.join()
 
     def excepthook(self, exctype, value, tb):
         """ If an exception happens in the main loop, close all the

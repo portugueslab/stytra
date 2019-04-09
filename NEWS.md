@@ -7,9 +7,10 @@
 This enables the TwoRadiusCenteringWrapper, a centering stimulus which appears when the fish disappears
 from the outer border and disappears when the fish is close to the center.
 - more improvements to conditional stimuli, please see API documentation for stimuli/conditional.
+- fish position estimator also allows querying velocity
 
 ## Fixes
-- fish position estimator also allows querying velocity
+- after long runs, Stytra does not hang on exit anymore (fix in ArrayQueues 1.2)
 - remaining protocol duration estimate is refreshed during execution, so protocols
 whose duration depends on the animal behavior (such as those with a CenteringWrapper)
 display more sensible numbers.

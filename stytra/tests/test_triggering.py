@@ -3,9 +3,7 @@ import shutil
 import tempfile
 import numpy as np
 import glob
-import deepdish as dd
 import json
-from pathlib import Path
 from time import sleep
 
 from stytra.experiments import VisualExperiment
