@@ -237,7 +237,8 @@ class SingleConditionalWrapper(ConditionalWrapper):
 
 
 class CenteringWrapper(SingleConditionalWrapper):
-    def __init__(self, stimulus, *args, centering_stimulus=None, margin=400, **kwargs):
+    def __init__(self, stimulus, *args, centering_stimulus=None, margin=45,
+                 **kwargs):
         super().__init__(*args, stim_on=stimulus,
                          stim_off=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
                          **kwargs)
@@ -248,7 +249,9 @@ class CenteringWrapper(SingleConditionalWrapper):
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
-        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin)
+        scale = self._experiment.calibrator.mm_px ** 2
+        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <=
+                self.margin / scale)
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
@@ -256,11 +259,12 @@ class CenteringWrapper(SingleConditionalWrapper):
 
 
 class TwoRadiusCenteringWrapper(ConditionalWrapper):
-    def __init__(self, stimulus, *args, centering_stimulus=None, r_out=400,
-                 r_in=100,
+    def __init__(self, stimulus, *args, centering_stimulus=None, r_out=45,
+                 r_in=25,
                  **kwargs):
         super().__init__(*args, stim_on=stimulus,
-                         stim_off=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
+                         stim_off=(centering_stimulus or RadialSineStimulus(
+                             duration=stimulus.duration)),
                          **kwargs)
         self.name = "centering"
         self.margin_in = r_in ** 2
@@ -270,13 +274,17 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
+        scale = self._experiment.calibrator.mm_px **2
         return ((not np.isnan(x)) and (
-                    (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in))
+                    (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in
+                    / scale))
 
     def check_condition_off(self):
         y, x, theta = self._experiment.estimator.get_position()
+        scale = self._experiment.calibrator.mm_px ** 2
         return (np.isnan(x) or
-                ((x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out))
+                ((x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out /
+                 scale))
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
