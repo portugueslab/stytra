@@ -38,7 +38,9 @@ class TrackingProcess(FrameProcess):
         super().__init__(name="tracking", **kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = TimestampedArrayQueue()  # GUI queue for displaying the image
+        self.gui_queue = TimestampedArrayQueue(max_mbytes=100)  # GUI queue for
+        #  displaying
+        #  the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
         self.processing_parameter_queue = processing_parameter_queue
         self.processing_counter = processing_counter
@@ -152,8 +154,9 @@ class DispatchProcess(FrameProcess):
         super().__init__(name="tracking", **kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = TimestampedArrayQueue(max_mbytes=300)  # GUI queue for displaying the image
-        self.output_frame_queue = TimestampedArrayQueue(max_mbytes=300)
+        self.gui_queue = TimestampedArrayQueue(max_mbytes=600)  # GUI queue
+        # for displaying the image
+        self.output_frame_queue = TimestampedArrayQueue(max_mbytes=600)
 
         self.dispatching_set_evt = dispatching_set_evt
         self.finished_signal = finished_evt
