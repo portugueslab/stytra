@@ -1,7 +1,7 @@
-stytra
-======
+modules
+=======
 
 .. toctree::
    :maxdepth: 4
 
-   stytra
+   stytra.*

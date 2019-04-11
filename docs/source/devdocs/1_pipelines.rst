@@ -33,7 +33,7 @@ Nodes must have:
 
 - A _process method which contains optional parameters as keyword arguments, annotated with Params for everything that can be changed from the user interface.
 
-The _process function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple (from :module:`stytra.tracking.pipelines`) which contains a list of diagnostic messages (can be empty), and either an image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>` or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
+The _process function **has to** output a :class:`NodeOutput <stytra.tracking.pipelines.NodeOutput>` named tuple (from :py:mod:`stytra.tracking.pipelines`) which contains a list of diagnostic messages (can be empty), and either an image if the node is a :class:`ImageToImageNode <stytra.tracking.pipelines.ImageToImageNode>` or a NamedTuple if the node is a :class:`ImageToDataNode <stytra.tracking.pipelines.ImageToDataNode>`
 
 Optionally, if the processing function is stateful (depends on previous inputs),
 you can define a reset function which resets the state.

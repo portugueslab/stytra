@@ -65,7 +65,7 @@ install using the -e argument::
 
 
 
-Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
+Now you can have a look at the stytra :ref:`Examples gallery <examples-gallery>`, or you can start
 :ref:`Configuring a computer for Stytra experiments`.
 In the second case, you might want to have a look at the camera APIs section below first.
 
@@ -99,7 +99,7 @@ and download and install the Vimba SDK. Then install the python wrapper
     pip install git+https://github.com/morefigs/pymba.git
 
 or, if using 64bit windows, you can grab the installation file from `here <http://www.portugueslab.com/files/pymba-0.1-py3-none-any.whl>`_.
-open the terminal in the folder where you downloaded it and install::
+Open the terminal in the folder where you downloaded it and install::
 
     pip install pymba-0.1-py3-none-any.whl
 
@@ -109,15 +109,17 @@ spinnaker: Point Grey / FLIR
 
 Go the the `FLIR support website <https://eu.ptgrey.com/support/downloads?countryid=2147483647>`_, download the SDK and the Python API.
 
-1. Install the SDK, by chosing the camera and OS, and then downloading
-    e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB
-    or the equivalent for your operating system
+1. Install the SDK, by chosing the camera and OS, and then downloading e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB or the equivalent for your operating system
 
-2. Install the python module
+2. Install the python module::
+
     pip install "path_to_extracted_zip/spinnaker_python-1.15.0.63-cp36-cp36m-win_amd64.whl"
 
 (with the file with the appropriate OS and Python versions)
 
+
+.. note::
+    The FLIR/Spinnaker Python API currently does not support Python 3.7, so you might need to install a Python 3.6 conda environment to use it. 
 
 National Instruments framegrabber with Mikrotron camera
 .......................................................

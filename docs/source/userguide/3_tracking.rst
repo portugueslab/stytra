@@ -1,9 +1,13 @@
+Tracking configuration
+======================
+
+
 .. _fishtracking:
 
-Configuring tracking of freely-swimming fish
---------------------------------------------
+Freely-swimming fish
+--------------------
 
-.. image:: ../screenshots/freeswim_tracking.png
+.. image:: ../../screenshots/freeswim_tracking.png
    :scale: 30%
    :alt: freely-swimming tracking screenshot
    :align: center
@@ -33,8 +37,8 @@ Configuring tracking of freely-swimming fish
 
 .. _tailtracking:
 
-Configuring tracking of embedded fish
--------------------------------------
+Embedded fish
+-------------
 
 1) Ensure that the exposure time is not longer than 1.5 miliseconds, otherwise
    the tracking will not be correct for fast tail movements

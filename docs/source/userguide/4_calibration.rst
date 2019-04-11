@@ -28,7 +28,7 @@ Calibration for freely-swimming zebrafish experiments
 To calibrate the camera image to the displayed image, the Circle Calibrator
 is used (it is enabled automatically for freely-swimming experiments).
 
-.. image:: ../screenshots/calibration.png
+.. image:: ../../screenshots/calibration.png
    :scale: 30%
    :alt: freely-swimming tracking screenshot
    :align: center
