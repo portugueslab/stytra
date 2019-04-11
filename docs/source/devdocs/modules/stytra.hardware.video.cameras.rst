@@ -4,18 +4,18 @@ stytra.hardware.video.cameras package
 Submodules
 ----------
 
-stytra.hardware.video.cameras.abstract\_class module
-----------------------------------------------------
-
-.. automodule:: stytra.hardware.video.cameras.abstract_class
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 stytra.hardware.video.cameras.avt module
 ----------------------------------------
 
 .. automodule:: stytra.hardware.video.cameras.avt
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+stytra.hardware.video.cameras.interface module
+----------------------------------------------
+
+.. automodule:: stytra.hardware.video.cameras.interface
     :members:
     :undoc-members:
     :show-inheritance:

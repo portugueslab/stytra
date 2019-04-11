@@ -2,8 +2,6 @@ Module description
 ==================
 
 
-Modules
--------
 .. glossary::
     :py:mod:`stytra`
         The root module, contains the Stytra class for running the experiment

@@ -1,3 +1,5 @@
+.. _examples-gallery:
+
 Designing and running experiments
 =================================
 
@@ -43,7 +45,7 @@ the second is the screen used to display the visual stimuli. In a real experimen
 to make sure this second window is presented to the animal. For details on positioning and calibration, please refer to
 :ref:`calibration`
 
-For an introduction to the functionality of the user interface, see :ref:`Stytra user interface`.
+For an introduction to the functionality of the user interface, see :ref:`Stytra user interface<gui-desc>`.
 To start the experiment, just press the play button: a flash will appear on the screen after 4 seconds.
 
 

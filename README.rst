@@ -19,6 +19,8 @@ A modular package to control stimulation and track behavior in zebrafish experim
     :target: http://www.portugueslab.com/stytra/
 
 
+If you are using Stytra for your own research, please `cite us <https://doi.org/10.1371/journal.pcbi.1006699>`_!
+    
 Stytra is divided into independent modules which can be assembled
 depending on the experimental requirements.
 
@@ -88,4 +90,4 @@ In the second case, you might want to have a look at the camera APIs section bel
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
     The problem will be resolved once the next pyqtgraph version is released.
 
-For further detais please consult the `documentation <http://www.portugueslab.com/stytra/>`_
+For further details please consult the `documentation <http://www.portugueslab.com/stytra/>`_
