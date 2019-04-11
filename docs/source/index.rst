@@ -14,7 +14,7 @@ Martinsried, Germany
 \ :sup:`#`\ These authors contributed equally to this work.
 
 *Current address: Department of Phoniatrics and Pediatric Audiology, University
-Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nurnberg,
+Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg,
 Germany.
 
 .. raw:: html
@@ -42,8 +42,8 @@ experimental protocols and setups. Current releases can be found at
 https://github.com/portugueslab/stytra. We also provide complete
 documentation with examples for extending the package to new stimuli and hardware,
 as well as a :ref:`schema and parts list <hardware-list>` for behavioral setups. We showcase Stytra by
-reproducing previously published behavioral protocols in both head-restrained and
-freely-swimming larvae. We also demonstrate the use of the software in the context of a
+:ref:`reproducing <reproduction>` previously published behavioral protocols in both head-restrained and
+freely-swimming larvae. We also :ref:`demonstrate <imaging-example>` the use of the software in the context of a
 calcium imaging experiment, where it interfaces with other acquisition devices. Our
 aims are to enable more laboratories to easily implement behavioral experiments, as
 well as to provide a platform for sharing stimulus protocols that permits easy

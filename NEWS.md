@@ -21,7 +21,7 @@ prevent overflowing the memory.
 - fixed crash on capturing camera image if the experiment was not started yet
 
 ## Changes in default behavior
-`CenteringWrapper` has the radial centering stimulus by default, the non-centering
+- `CenteringWrapper` has the radial centering stimulus by default, the non-centering
 stimulus is specified as the `stimulus` keyword argument 
 
 ## Documentation updates
