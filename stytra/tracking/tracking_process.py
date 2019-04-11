@@ -1,4 +1,4 @@
-from queue import Empty
+from queue import Empty, Full
 from multiprocessing import Event, Value
 
 from stytra.utilities import FrameProcess
@@ -120,8 +120,13 @@ class TrackingProcess(FrameProcess):
         else:
             every_x = 1
         if self.i == 0:
-            self.gui_queue.put(frame, timestamp=frametime)
+            try:
+                self.gui_queue.put(frame, timestamp=frametime)
+            except Full:
+                self.message_queue.put("E:GUI queue full")
+
         self.i = (self.i + 1) % every_x
+
 
 
 class DispatchProcess(FrameProcess):
