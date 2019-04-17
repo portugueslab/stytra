@@ -42,65 +42,20 @@ def imports():
 
 
 class Experiment(QObject):
-    """General class that runs an experiment.
-
-    Parameters
-    ----------
-    app : QApplication()
-        Application to run the Experiment QObject.
-    protocol : object of :class:`Protocol <stytra.stimulation.Protocol>`
-        list of protocols that can be run in this experiment session.
-    directory : str
-        (optional) Directory where metadata will be saved. If None, nothing
-        will be
-        saved (default: None).
-    metadata_general: :class:`GeneralMetadata <stytra.metadata.GeneralMetadata>` object
-        (optional) Class for saving general metadata about the experiment. I
-        If not passed, a default GeneralMetadata object will be set.
-    metadata_animal: :class:`AnimalMetadata <stytra.metadata.AnimalMetadata>` object
-        (optional) Class for saving animal metadata about the experiment.
-        If not passed, a default AnimalMetadata object will be set.
-    calibrator : :class:`Calibrator <stytra.calibration.Calibrator>` object
-        (optional) Calibrator object to calibrate the stimulus display. If
-        not set, a CrossCalibrator will be used.
-    asset_directory : str
-        (optional) Path where asset files such as movies or images to be
-        displayed can be found.
-    display: dict
-        (optional) Dictionary with specifications for the display. Possible
-        key values are
-        full_screen: bool (False)
-        window_size: Tuple(Int, Int)
-        framerate: target framerate, if 0, it is the highest possilbe
-        gl_display : bool (False)
-    rec_stim_framerate : int
-        (optional) Set to record a movie of the displayed visual stimulus. It
-        specifies every how many frames one will be saved (set to 1 to
-        record) all displayed frames. The final movie will be saved in the
-        directory in an .h5 file.
-    trigger : :class:`Trigger <stytra.triggering.Trigger>` object
-        (optional) Trigger class to control the beginning of the stimulation.
-    offline : bool
-        if stytra is used in offline analysis, stimulus is not displayed
-    log_format : str
-        one of "csv", "feather", "hdf5" (pytables-based) or "json"
-    """
-
     sig_data_saved = pyqtSignal()
 
     def __init__(
             self,
             app=None,
-            protocol=None,
             dir_save=None,
-            dir_assets="",
             instance_number=-1,
+
             database=None,
+
             metadata_general=None,
             metadata_animal=None,
-            loop_protocol=False,
             log_format="csv",
-            scope_triggering=None,
+
             offline=False,
             **kwargs
     ):
@@ -109,12 +64,8 @@ class Experiment(QObject):
         super().__init__()
 
         self.app = app
-        self.protocol = protocol
-        self.trigger = scope_triggering
         self.offline = offline
         self.framerate_goals = dict(display=30)
-
-        self.asset_dir = dir_assets
 
         if dir_save is None:
             dir_save = tempfile.gettempdir()
@@ -122,7 +73,6 @@ class Experiment(QObject):
         self.database = database
         self.use_db = True if database else False
         self.log_format = log_format
-        self.loop_protocol = loop_protocol
 
         self.dc = DataCollector(folder_path=self.base_dir,
                                 instance_number=instance_number)
@@ -198,10 +148,92 @@ class Experiment(QObject):
 
     def set_id(self):
         self.animal_id = (
-            self.current_timestamp.strftime("%y%m%d") + "_f"
-            + str(self.metadata_animal.id)
+                self.current_timestamp.strftime("%y%m%d") + "_f"
+                + str(self.metadata_animal.id)
         )
         self.session_id = self.current_timestamp.strftime("%H%M%S")
+
+
+    def restore_window_state(self):
+        if self.gui_params.window_state:
+            self.window_main.restoreState(
+                QByteArray.fromHex(bytes(self.gui_params.window_state, "ascii"))
+            )
+            self.window_main.restoreGeometry(
+                QByteArray.fromHex(bytes(self.gui_params.geometry, "ascii"))
+            )
+
+    def make_window(self):
+        """Make experiment GUI, defined in children depending on experiments.
+        """
+        self.window_main = ExperimentWindow(self)
+
+        self.window_main.construct_ui()
+        self.window_main.show()
+
+
+class OfflineExperiment(Experiment):
+    def __init__(self, *args, **kwargs):
+        self.video_file_list = []
+
+
+class StimulationExperiment(Experiment):
+    """General class that runs an experiment.
+
+    Parameters
+    ----------
+    app : QApplication()
+        Application to run the Experiment QObject.
+    protocol : object of :class:`Protocol <stytra.stimulation.Protocol>`
+        list of protocols that can be run in this experiment session.
+    directory : str
+        (optional) Directory where metadata will be saved. If None, nothing
+        will be
+        saved (default: None).
+    metadata_general: :class:`GeneralMetadata <stytra.metadata.GeneralMetadata>` object
+        (optional) Class for saving general metadata about the experiment. I
+        If not passed, a default GeneralMetadata object will be set.
+    metadata_animal: :class:`AnimalMetadata <stytra.metadata.AnimalMetadata>` object
+        (optional) Class for saving animal metadata about the experiment.
+        If not passed, a default AnimalMetadata object will be set.
+    calibrator : :class:`Calibrator <stytra.calibration.Calibrator>` object
+        (optional) Calibrator object to calibrate the stimulus display. If
+        not set, a CrossCalibrator will be used.
+    asset_directory : str
+        (optional) Path where asset files such as movies or images to be
+        displayed can be found.
+    display: dict
+        (optional) Dictionary with specifications for the display. Possible
+        key values are
+        full_screen: bool (False)
+        window_size: Tuple(Int, Int)
+        framerate: target framerate, if 0, it is the highest possilbe
+        gl_display : bool (False)
+    rec_stim_framerate : int
+        (optional) Set to record a movie of the displayed visual stimulus. It
+        specifies every how many frames one will be saved (set to 1 to
+        record) all displayed frames. The final movie will be saved in the
+        directory in an .h5 file.
+    trigger : :class:`Trigger <stytra.triggering.Trigger>` object
+        (optional) Trigger class to control the beginning of the stimulation.
+    offline : bool
+        if stytra is used in offline analysis, stimulus is not displayed
+    log_format : str
+        one of "csv", "feather", "hdf5" (pytables-based) or "json"
+    """
+
+    def __init__(self, *args,
+                 protocol=None,
+                 loop_protocol=False,
+                 dir_assets="",
+                 scope_triggering=None,
+                 **kwargs,
+                 ):
+        self.asset_dir = dir_assets
+        self.protocol = protocol
+        self.loop_protocol = loop_protocol
+        self.trigger = scope_triggering
+        super().__init__(*args, **kwargs)
 
     def reset(self):
         self.t0 = datetime.datetime.now()
@@ -228,22 +260,6 @@ class Experiment(QObject):
         if self.trigger is not None:
             self.trigger.start()
 
-    def restore_window_state(self):
-        if self.gui_params.window_state:
-            self.window_main.restoreState(
-                QByteArray.fromHex(bytes(self.gui_params.window_state, "ascii"))
-            )
-            self.window_main.restoreGeometry(
-                QByteArray.fromHex(bytes(self.gui_params.geometry, "ascii"))
-            )
-
-    def make_window(self):
-        """Make experiment GUI, defined in children depending on experiments.
-        """
-        self.window_main = ExperimentWindow(self)
-
-        self.window_main.construct_ui()
-        self.window_main.show()
 
     def start_protocol(self):
         """Start the protocol from the ProtocolRunner. Before that, send a
