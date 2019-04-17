@@ -1,3 +1,8 @@
+# 0.8.6
+
+## New features
+- added script for running Stytra offline on pre-recorded videos
+
 # 0.8.4
 
 ## New features
