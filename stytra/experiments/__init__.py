@@ -329,12 +329,18 @@ class Experiment(QObject):
                 try:
                     repo = git.Repo(sys.argv[0], search_parent_directories=True)
                     git_hash = repo.head.object.hexsha
+                    try:
+                        version = pkg_resources.get_distribution(
+                            'stytra').version
+                    except pkg_resources.DistributionNotFound:
+                        version=None
+                        self.logger.info("Could not find stytra version")
                     self.dc.add_static_data(
                         dict(
                             git_hash=git_hash,
                             name=sys.argv[0],
                             arguments=self.arguments,
-                            version = pkg_resources.get_distribution('stytra').version,
+                            version=version,
                             dependencies=list(imports())
                         ),
                         name="general/program_version",

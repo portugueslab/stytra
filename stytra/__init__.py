@@ -103,7 +103,7 @@ class Stytra:
 
     """
 
-    def __init__(self, recording=None, exec=True,
+    def __init__(self, recording=None, exec=True, app=None,
                  **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
@@ -132,10 +132,11 @@ class Stytra:
 
             config["scope_triggering"] = ZmqTrigger(port="5555")
 
-        app = QApplication([])
-        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
-        if app.devicePixelRatio() > 1:
-            app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+        if app is None:
+            app = QApplication([])
+            app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+            if app.devicePixelRatio() > 1:
+                app.setAttribute(Qt.AA_UseHighDpiPixmaps)
         class_kwargs = dict(app=app)
         class_kwargs.update(kwargs)
         class_kwargs.update(config)

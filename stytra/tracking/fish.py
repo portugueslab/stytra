@@ -56,7 +56,6 @@ class FishTrackingMethod(ImageToDataNode):
         self._output_type_changed = True
 
         self.bg_subtractor = BackgroundSubtractor()
-
         # used for booking a spot for one of the potentially tracked fish
         self.fishes = Fishes(self._params.n_fish_max, n_segments=self._params.n_segments - 1,
                              pos_std=self._params.pos_uncertainty,
