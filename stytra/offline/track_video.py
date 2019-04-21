@@ -2,6 +2,7 @@ from pathlib import Path
 from stytra import Stytra
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QPushButton,\
     QComboBox, QVBoxLayout
+import qdarkstyle
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import Stimulus
 from stytra.experiments.fish_pipelines import pipeline_dict
@@ -48,22 +49,22 @@ class StytraLoader(QDialog):
         self.stytra = None
 
     def select_video(self):
-        fn, _ = QFileDialog.getOpenFileName(self, "Select video file",
+        fn, _ = QFileDialog.getOpenFileName(None, "Select video file",
                                             filter="Videos (*.avi *.mov *.mp4 *.h5)")
         self.filename = fn
         self.btn_start.setEnabled(True)
 
     def run_stytra(self):
-        self.stytra = Stytra(app=app, protocol=EmptyProtocol(), camera=dict(
-            video_file=self.filename
-        ), tracking=dict(method=self.cmb_tracking.currentText(), exec=False),
-                             log_format=self.cmb_fmt.currentText())
+        self.stytra = Stytra(app=self.app, protocol=EmptyProtocol(),
+                             camera=dict(video_file=self.filename),
+                             tracking=dict(method=self.cmb_tracking.currentText()),
+                             log_format=self.cmb_fmt.currentText(),
+                             exec=False)
         btn_track = QPushButton("Track video")
-        print("Got here")
         self.stytra.exp.window_main.toolbar_control.addWidget(btn_track)
         btn_track.clicked.connect(self.track)
         self.stytra.exp.window_display.hide()
-        #self.close()
+        self.close()
 
     def track(self):
         assert isinstance(self.stytra, Stytra)
@@ -87,9 +88,10 @@ class StytraLoader(QDialog):
 
 if __name__ == "__main__":
     app = QApplication([])
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     ld = StytraLoader(app)
     ld.show()
-    app.exec_()
+    app.exec()
 
 
 
