@@ -1,7 +1,7 @@
 from pathlib import Path
 from stytra import Stytra
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QPushButton,\
-    QComboBox, QVBoxLayout
+    QComboBox, QGridLayout, QLabel
 import qdarkstyle
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import Stimulus
@@ -23,15 +23,19 @@ class StytraLoader(QDialog):
     """
     def __init__(self, app):
         super().__init__()
+        self.setWindowTitle("Select video for offline tracking")
         self.app = app
 
         self.btn_vid = QPushButton("Select video")
         self.btn_vid.clicked.connect(self.select_video)
         self.filename = None
+        self.lbl_filename = QLabel("")
 
+        self.lbl_whattrack = QLabel("What to track")
         self.cmb_tracking = QComboBox()
         self.cmb_tracking.addItems(list(pipeline_dict.keys()))
 
+        self.lbl_outformat = QLabel("Tracking output format")
         self.cmb_fmt = QComboBox()
         self.cmb_fmt.addItems([
             "csv", "feather", "hdf5", "json"])
@@ -40,18 +44,25 @@ class StytraLoader(QDialog):
         self.btn_start.clicked.connect(self.run_stytra)
         self.btn_start.setEnabled(False)
 
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.btn_vid)
-        self.layout().addWidget(self.cmb_tracking)
-        self.layout().addWidget(self.cmb_fmt)
-        self.layout().addWidget(self.btn_start)
+        self.setLayout(QGridLayout())
+        self.layout().addWidget(self.btn_vid, 0, 0)
+        self.layout().addWidget(self.lbl_filename, 0, 1)
+
+        self.layout().addWidget(self.lbl_whattrack, 1, 0)
+        self.layout().addWidget(self.cmb_tracking, 1, 1)
+
+        self.layout().addWidget(self.lbl_outformat, 2, 0)
+        self.layout().addWidget(self.cmb_fmt, 2, 1)
+
+        self.layout().addWidget(self.btn_start, 3, 0, 1, 2)
 
         self.stytra = None
 
     def select_video(self):
         fn, _ = QFileDialog.getOpenFileName(None, "Select video file",
-                                            filter="Videos (*.avi *.mov *.mp4 *.h5)")
+                                            filter="Videos (*.avi *.mov *.mp4)")
         self.filename = fn
+        self.lbl_filename.setText(self.filename)
         self.btn_start.setEnabled(True)
 
     def run_stytra(self):
