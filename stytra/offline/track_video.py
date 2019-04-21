@@ -48,7 +48,7 @@ class StytraLoader(QDialog):
         self.stytra = None
 
     def select_video(self):
-        fn, _ = QFileDialog.getOpenFileName(None, "Select video file",
+        fn, _ = QFileDialog.getOpenFileName(self, "Select video file",
                                             filter="Videos (*.avi *.mov *.mp4 *.h5)")
         self.filename = fn
         self.btn_start.setEnabled(True)
@@ -56,13 +56,14 @@ class StytraLoader(QDialog):
     def run_stytra(self):
         self.stytra = Stytra(app=app, protocol=EmptyProtocol(), camera=dict(
             video_file=self.filename
-        ), tracking=dict(method=self.cmb_tracking.currentText()),
+        ), tracking=dict(method=self.cmb_tracking.currentText(), exec=False),
                              log_format=self.cmb_fmt.currentText())
         btn_track = QPushButton("Track video")
+        print("Got here")
         self.stytra.exp.window_main.toolbar_control.addWidget(btn_track)
         btn_track.clicked.connect(self.track)
         self.stytra.exp.window_display.hide()
-        self.close()
+        #self.close()
 
     def track(self):
         assert isinstance(self.stytra, Stytra)
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     app = QApplication([])
     ld = StytraLoader(app)
     ld.show()
-    app.exec()
+    app.exec_()
 
 
 
