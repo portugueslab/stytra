@@ -1,3 +1,10 @@
+# 0.8.7
+## Improvements
+- improved workflow for offline tracking
+
+## Fixes
+- offline tracking works on OS X
+
 # 0.8.6
 
 ## New features

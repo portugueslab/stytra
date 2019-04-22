@@ -1,4 +1,5 @@
 import datetime
+import json
 import time
 from collections import OrderedDict
 from multiprocessing import Process, Queue
@@ -248,3 +249,33 @@ def recursive_update(d, u):
 def reduce_to_pi(angle):
     """Puts an angle or array of angles inside the (-pi, pi) range"""
     return np.mod(angle + np.pi, 2 * np.pi) - np.pi
+
+
+def save_df(df, path, fileformat):
+    """ Saves the dataframe in one of the supported formats
+
+    Parameters
+    ----------
+    df
+    path
+    fileformat
+
+    Returns
+    -------
+
+    """
+    outpath = Path(str(path) + "." + fileformat)
+    if fileformat == "csv":
+        # replace True and False in csv files:
+        df.replace({True: 1, False: 0}).to_csv(outpath, sep=";")
+    elif fileformat == "feather":
+        df.to_feather(outpath)
+    elif fileformat == "hdf5":
+        df.to_hdf(outpath, "/data", complib="blosc", complevel=5)
+    elif fileformat == "json":
+        json.dump(df.to_dict(), open(outpath, "w"))
+    else:
+        raise (
+            NotImplementedError(fileformat + " is not an implemented log format"))
+    return outpath.name
+

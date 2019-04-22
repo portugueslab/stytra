@@ -1,20 +1,93 @@
 from pathlib import Path
 from stytra import Stytra
 from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QPushButton,\
-    QComboBox, QGridLayout, QLabel
+    QComboBox, QGridLayout, QLabel, QToolBar, QProgressBar, QVBoxLayout
 import qdarkstyle
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import Stimulus
 from stytra.experiments.fish_pipelines import pipeline_dict
+from stytra.utilities import save_df
 import imageio
 import pandas as pd
+import json
 
 
 class EmptyProtocol(Protocol):
-    name = "parameters"
+    name = "Offline"
 
     def get_stim_sequence(self):
         return [Stimulus(duration=5.),]
+
+
+class TrackingDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setLayout(QVBoxLayout())
+        self.setWindowTitle("Tracking")
+        self.prog_track = QProgressBar()
+        self.lbl_status = QLabel()
+        self.layout().addWidget(self.prog_track)
+        self.layout().addWidget(self.lbl_status)
+
+
+class OfflineToolbar(QToolBar):
+    def __init__(self, app, exp, input_path, pipeline_type):
+        super().__init__()
+        self.app = app
+        self.setObjectName("toolbar_offline")
+        self.exp = exp
+        self.input_path = Path(input_path)
+        self.pipeline_type = pipeline_type
+        self.output_path = self.input_path.parent / self.input_path.stem
+
+        self.cmb_fmt = QComboBox()
+        self.cmb_fmt.addItems([
+            "csv", "feather", "hdf5", "json"])
+
+        self.addAction("Track video", self.track)
+        self.addAction("Output format")
+        self.addWidget(self.cmb_fmt)
+        self.addSeparator()
+        self.addAction("Save tracking params", self.save_params)
+
+        self.diag_track = TrackingDialog()
+
+    def track(self):
+
+        fileformat = self.cmb_fmt.currentText()
+
+        self.exp.camera.kill_event.set()
+        reader = imageio.get_reader(str(self.input_path))
+        data = []
+        self.exp.window_main.stream_plot.toggle_freeze()
+
+        output_name = str(self.output_path)+"."+fileformat
+        self.diag_track.show()
+        self.diag_track.prog_track.setMaximum(reader.get_length())
+        self.diag_track.lbl_status.setText("Tracking to "+
+                                           output_name)
+
+        for i, frame in enumerate(reader):
+            data.append(self.exp.pipeline.run(frame[:, :, 0]).data)
+            self.diag_track.prog_track.setValue(i)
+            if i % 100 == 0:
+                self.app.processEvents()
+
+        self.diag_track.lbl_status.setText("Saving " +
+                                           output_name)
+        df = pd.DataFrame.from_records(data,
+                                       columns=data[0]._fields)
+        save_df(df, self.output_path, fileformat)
+        self.diag_track.lbl_status.setText("Completed " +
+                                           output_name)
+        self.exp.wrap_up()
+
+    def save_params(self):
+        params = self.exp.pipeline.serialize_params()
+        json.dump(dict(pipeline_type=self.pipeline_type,
+                       pipeline_params=params),
+                  open(str(self.output_path) +
+                           "_trackingparams.json", "w"))
 
 
 class StytraLoader(QDialog):
@@ -35,11 +108,6 @@ class StytraLoader(QDialog):
         self.cmb_tracking = QComboBox()
         self.cmb_tracking.addItems(list(pipeline_dict.keys()))
 
-        self.lbl_outformat = QLabel("Tracking output format")
-        self.cmb_fmt = QComboBox()
-        self.cmb_fmt.addItems([
-            "csv", "feather", "hdf5", "json"])
-
         self.btn_start = QPushButton("Start stytra")
         self.btn_start.clicked.connect(self.run_stytra)
         self.btn_start.setEnabled(False)
@@ -51,10 +119,7 @@ class StytraLoader(QDialog):
         self.layout().addWidget(self.lbl_whattrack, 1, 0)
         self.layout().addWidget(self.cmb_tracking, 1, 1)
 
-        self.layout().addWidget(self.lbl_outformat, 2, 0)
-        self.layout().addWidget(self.cmb_fmt, 2, 1)
-
-        self.layout().addWidget(self.btn_start, 3, 0, 1, 2)
+        self.layout().addWidget(self.btn_start, 2, 0, 1, 2)
 
         self.stytra = None
 
@@ -69,32 +134,18 @@ class StytraLoader(QDialog):
         self.stytra = Stytra(app=self.app, protocol=EmptyProtocol(),
                              camera=dict(video_file=self.filename),
                              tracking=dict(method=self.cmb_tracking.currentText()),
-                             log_format=self.cmb_fmt.currentText(),
                              exec=False)
-        btn_track = QPushButton("Track video")
-        self.stytra.exp.window_main.toolbar_control.addWidget(btn_track)
-        btn_track.clicked.connect(self.track)
+
+        offline_toolbar = OfflineToolbar(self.app,
+                                         self.stytra.exp,
+                                         self.filename,
+                                         pipeline_type=self.cmb_tracking.currentText())
+
+        self.stytra.exp.window_main.toolbar_control.hide()
+        self.stytra.exp.window_main.addToolBar(offline_toolbar)
+
         self.stytra.exp.window_display.hide()
         self.close()
-
-    def track(self):
-        assert isinstance(self.stytra, Stytra)
-        self.stytra.exp.camera.kill_event.set()
-        reader = imageio.get_reader(self.filename)
-        data = []
-        self.stytra.exp.window_main.stream_plot.toggle_freeze()
-        self.stytra.exp.window_main.toolbar_control.progress_bar.setMaximum(reader.get_length())
-        self.stytra.exp.window_main.toolbar_control.progress_bar.setFormat("%v / %m")
-        for i, frame in enumerate(reader):
-            data.append(self.stytra.exp.pipeline.run(frame[:, :, 0]).data)
-            self.stytra.exp.window_main.toolbar_control.progress_bar.setValue(i)
-            if i % 100 == 0:
-                self.app.processEvents()
-        df = pd.DataFrame.from_records(data, columns=data[0]._fields)
-        out_path = Path(self.filename)
-        df.to_csv(out_path.parent / (out_path.stem + ".csv"))
-        self.stytra.exp.wrap_up()
-        self.app.quit()
 
 
 if __name__ == "__main__":

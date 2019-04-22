@@ -3,10 +3,11 @@ import datetime
 import numpy as np
 from queue import Empty
 import pandas as pd
-import json
 from collections import namedtuple
 from bisect import bisect_right
 from os.path import basename
+
+from stytra.utilities import save_df
 
 
 class Accumulator(QObject):
@@ -217,23 +218,11 @@ class DataFrameAccumulator(Accumulator):
             output format, csv, feather, hdf5, json
 
         """
-        outpath = path + "." + format
         df = self.get_dataframe()
         if df is None:
             return
-
-        if format == "csv":
-            # replace True and False in csv files:
-            df.replace({True: 1, False: 0}).to_csv(outpath, sep=";")
-        elif format == "feather":
-            df.to_feather(outpath)
-        elif format == "hdf5":
-            df.to_hdf(outpath, "/data", complib="blosc", complevel=5)
-        elif format == "json":
-            json.dump(df.to_dict(), open(outpath, "w"))
-        else:
-            raise (NotImplementedError(format + " is not an implemented log foramt"))
-        return basename(outpath)
+        saved_filename = save_df(df, path, format)
+        return basename(saved_filename)
 
 
 class QueueDataAccumulator(DataFrameAccumulator):
