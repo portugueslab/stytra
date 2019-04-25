@@ -52,8 +52,8 @@ class OfflineToolbar(QToolBar):
 
         self.diag_track = TrackingDialog()
 
-    def track(self):
 
+    def track(self):
         fileformat = self.cmb_fmt.currentText()
 
         self.exp.camera.kill_event.set()
@@ -63,7 +63,10 @@ class OfflineToolbar(QToolBar):
 
         output_name = str(self.output_path)+"."+fileformat
         self.diag_track.show()
-        self.diag_track.prog_track.setMaximum(reader.get_length())
+        l = reader.get_length()
+        if not (0 < l < 100000):
+            l = 1
+        self.diag_track.prog_track.setMaximum(l)
         self.diag_track.lbl_status.setText("Tracking to "+
                                            output_name)
 
@@ -143,6 +146,7 @@ class StytraLoader(QDialog):
 
         self.stytra.exp.window_main.toolbar_control.hide()
         self.stytra.exp.window_main.addToolBar(offline_toolbar)
+        offline_toolbar.show()
 
         self.stytra.exp.window_display.hide()
         self.close()
