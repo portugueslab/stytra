@@ -273,7 +273,7 @@ def save_df(df, path, fileformat):
     elif fileformat == "hdf5":
         df.to_hdf(outpath, "/data", complib="blosc", complevel=5)
     elif fileformat == "json":
-        json.dump(df.to_dict(), open(outpath, "w"))
+        json.dump(df.to_dict(), open(str(outpath), "w"))
     else:
         raise (
             NotImplementedError(fileformat + " is not an implemented log format"))

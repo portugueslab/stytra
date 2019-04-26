@@ -42,7 +42,7 @@ class OfflineToolbar(QToolBar):
 
         self.cmb_fmt = QComboBox()
         self.cmb_fmt.addItems([
-            "csv", "feather", "hdf5", "json"])
+            "csv", "feather", "hdf5"])
 
         self.addAction("Track video", self.track)
         self.addAction("Output format")
