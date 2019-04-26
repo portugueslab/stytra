@@ -14,7 +14,7 @@ Vilim Štih\ :sup:`#`\ , Luigi Petrucco\ :sup:`#`\ , Andreas M. Kist* and Ruben 
 `Research Group of Sensorimotor Control <http://www.portugueslab.com>`_, `Max Planck Institute of Neurobiology <https://www.neuro.mpg.de/>`_,
 Martinsried, Germany
 
-\ :sup:`#`\ These authors contributed equally to this work.
+\ :sup:`#`\ :small:`These authors contributed equally to this work.`
 
 :small:`\*Current address: Department of Phoniatrics and Pediatric Audiology, University
 Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg,

@@ -1,8 +1,8 @@
 Offline use of Stytra
 =====================
 
-How to analyse a video with Stytra
-----------------------------------
+Setting up and running video tracking
+-------------------------------------
 
 
  1. With Stytra installed, start the offline tracking script by running::
@@ -12,17 +12,16 @@ How to analyse a video with Stytra
     This will open the following window:
 
     .. image:: ../../screenshots/offline_start_window.png
-       :scale: 60%
        :alt: offline starting window
        :align: center
 
 |
 
  2. Choose an input video file and what you want to track (tail, eyes, tail and eyes, or freely swimming fish).
-    Then push the "Start Stytra" button. This will open the Stytra interface:
+    Then click the "Start Stytra" button. This will open the Stytra interface:
 
     .. image:: ../../screenshots/offline_main_window.png
-       :scale: 30%
+       :width: 100%
        :alt: offline main window
        :align: center
 
@@ -32,10 +31,10 @@ How to analyse a video with Stytra
 
 |
 
- 4. Click the `Track video` button in the toolbar. The video and the stream plotwill freeze, and a progress bar will appear showing the progress of the tracking.
+ 4. Click the `Track video` button in the toolbar. The video and the stream plot will freeze, and a progress bar will appear showing the progress of the tracking.
 
     .. image:: ../../screenshots/offline_progress_bar.png
-       :scale: 30%
+       :width: 100%
        :alt: offline main window
        :align: center
 
@@ -47,5 +46,5 @@ How to analyse a video with Stytra
 Automatic batch-processing
 --------------------------
 
-If you want to batch process multiple videos with the same parameters, running the Stytra pipeline through script or notebook might be convenient. For this, please refer to the analyses in `notebook repository <https://github.com/portugueslab/example_stytra_analysis>`_. You can save the parameters that you choose during the Stytra session with the "Save tracking params" button.
+If you want to batch process multiple videos with the same parameters, running the Stytra pipeline through a script or notebook might be convenient. For this, please refer to the analyses in `notebook repository <https://github.com/portugueslab/example_stytra_analysis>`_. You can save the parameters that you choose during the Stytra session with the "Save tracking params" button.
 
