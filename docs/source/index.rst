@@ -3,6 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. role:: small
+
+
 Stytra: an open-source, integrated system for stimulation, tracking and closed-loop behavioral experiments
 ==========================================================================================================
 
@@ -13,9 +16,9 @@ Martinsried, Germany
 
 \ :sup:`#`\ These authors contributed equally to this work.
 
-*Current address: Department of Phoniatrics and Pediatric Audiology, University
+:small:`\*Current address: Department of Phoniatrics and Pediatric Audiology, University
 Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg,
-Germany.
+Germany.`
 
 .. raw:: html
 

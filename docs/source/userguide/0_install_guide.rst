@@ -25,7 +25,11 @@ installed. Git can also be easily installed with conda::
     conda install git
 
 
-This should be everything you need to make ready before installing stytra.
+Also, for some video-related operations (offline tracking and saving of stimulus videos), a version of ffmpeg with libx264 has to be installed, for this, use the conda-forge channel::
+
+    conda install -c conda-forge ffmpeg
+
+These are all requirements not covered by the next installation step.
 
 .. note::
     PyQt5 is not listed as an explicit requirement because it should
