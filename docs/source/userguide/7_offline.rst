@@ -15,11 +15,6 @@ How to analyse a video with Stytra
        :scale: 60%
        :alt: offline starting window
        :align: center
-<<<<<<< HEAD
-=======
-
-|
->>>>>>> master
 
 |
 
@@ -46,11 +41,7 @@ How to analyse a video with Stytra
 
 |
 
-<<<<<<< HEAD
  5. When it is done, the program exit and saves an output file with the tracked quantities. It will have the same name and folder as the input video, with an extension corresponding to the chosen output format.
-=======
- 5. When it is done, the program will exit and you will get an output file with the tracked quantities. It will have the same name as the input video, with an extension corresponding to the chosen output format.
->>>>>>> master
 
 
 Automatic batch-processing
