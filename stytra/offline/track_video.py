@@ -137,7 +137,7 @@ class StytraLoader(QDialog):
         self.stytra = Stytra(app=self.app, protocol=EmptyProtocol(),
                              camera=dict(video_file=self.filename),
                              tracking=dict(method=self.cmb_tracking.currentText()),
-                             exec=False)
+                             exec=False,display=dict(gl_display=False))
 
         offline_toolbar = OfflineToolbar(self.app,
                                          self.stytra.exp,
