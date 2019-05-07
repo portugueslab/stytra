@@ -32,10 +32,18 @@ class PhototaxisProtocol(Protocol):
         self.brightness = Param(255, (0, 255))
 
     def get_stim_sequence(self):
-        centering = RadialSineStimulus(duration=self.stim_on_duration)
         stimuli = []
+        # The phototaxis stimulus for zebrafish is bright on one side of the
+        # fish and dark on the other. The type function combines two classes:
         stim = type("phototaxis", (FishTrackingStimulus, HalfFieldStimulus), {})
+
+        # The stimuli are a sequence of a phototactic stimulus and full-field
+        # illumination
         for i in range(self.n_trials):
+
+            # The stimulus of interest is wrapped in a CenteringStimulus,
+            # so if the fish moves out of the field of view, a stimulus is
+            # displayed which brings it back
             stimuli.append(
                 CenteringWrapper(
                     stimulus=stim(
@@ -45,9 +53,11 @@ class PhototaxisProtocol(Protocol):
                     ),
                 )
             )
+
             stimuli.append(
                 FullFieldVisualStimulus(
-                    color=(self.brightness,) * 3, duration=self.stim_off_duration
+                    color=(self.brightness,) * 3,
+                    duration=self.stim_off_duration
                 )
             )
 

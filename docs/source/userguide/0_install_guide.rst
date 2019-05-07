@@ -111,7 +111,7 @@ Open the terminal in the folder where you downloaded it and install::
 spinnaker: Point Grey / FLIR
 ............................
 
-Go the the `FLIR support website <https://eu.ptgrey.com/support/downloads?countryid=2147483647>`_, download the SDK and the Python API.
+Go the the `FLIR support website <https://flir.app.boxcn.net/v/SpinnakerSDK>`_, download the SDK and the Python API.
 
 1. Install the SDK, by chosing the camera and OS, and then downloading e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB or the equivalent for your operating system
 

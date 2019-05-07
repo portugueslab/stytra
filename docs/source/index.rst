@@ -6,19 +6,16 @@
 .. role:: small
 
 
-Stytra: an open-source, integrated system for stimulation, tracking and closed-loop behavioral experiments
-==========================================================================================================
+Stytra
+======
+an open-source, integrated system for stimulation, tracking and closed-loop behavioral experiments
+---------------------------------------------------------------------------------------------------
 
-Vilim Štih\ :sup:`#`\ , Luigi Petrucco\ :sup:`#`\ , Andreas M. Kist* and Ruben Portugues
+| Vilim Štih\ :sup:`#`\ , Luigi Petrucco\ :sup:`#`\ , Andreas M. Kist* and Ruben Portugues
+| `Research Group of Sensorimotor Control <http://www.portugueslab.com>`_, `Max Planck Institute of Neurobiology <https://www.neuro.mpg.de/>`_, Martinsried, Germany
 
-`Research Group of Sensorimotor Control <http://www.portugueslab.com>`_, `Max Planck Institute of Neurobiology <https://www.neuro.mpg.de/>`_,
-Martinsried, Germany
-
-\ :sup:`#`\ :small:`These authors contributed equally to this work.`
-
-:small:`\*Current address: Department of Phoniatrics and Pediatric Audiology, University
-Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg,
-Germany.`
+| :sup:`\#`\ :small:`These authors contributed equally to this work.`
+| \*\ :small:`Current address: Department of Phoniatrics and Pediatric Audiology, University Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg, Germany.`
 
 .. raw:: html
 
