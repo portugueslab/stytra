@@ -1,3 +1,11 @@
+# 0.8.10
+## Fixes
+- fixed tracking crash for displaying diagnostics in fish tracking
+
+# 0.8.8 and 0.8.9
+## Fixes
+- fixed offline tracking issues
+
 # 0.8.7
 ## Improvements
 - improved workflow for offline tracking

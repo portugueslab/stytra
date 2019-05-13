@@ -212,7 +212,7 @@ class FishTrackingMethod(ImageToDataNode):
         elif self.set_diagnostic == "thresholded background difference":
             self.diagnostic_image = bg_thresh
         elif self.set_diagnostic == "fish detection":
-            fishdet = bg.copy()
+            fishdet = bg_small.copy()
             fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
         elif self.set_diagnostic == "thresholded for eye and swim bladder":
