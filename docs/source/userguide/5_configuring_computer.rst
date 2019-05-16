@@ -10,7 +10,7 @@ else that is specified when instantiating :class:`Stytra <stytra.Stytra>` .
 
 An example is provided below:
 
-`stytra_setup.config.json`
+`stytra_setup_config.json`
 
 .. code-block:: json
 
@@ -25,6 +25,36 @@ An example is provided below:
     }
 
 
+Camera configuration
+--------------------
+
+The currently supported cameras are
+
+==============  ==================  ============
+Manufacturer    Stytra camera type  Supports ROI
+--------------  ------------------  ------------
+Ximea           ximea               Yes
+FLIR/PointGrey  spinnaker           No
+AVT             avt                 No
+Mikrotron       mikrotron           Yes
+OpenCV          opencv              No
+==============  ==================  ============
+
+To use a camera with Stytra, either put it in the stytra_setup_config.json file or, in a script that runs Stytra set the camera argument, e.g.::
+
+    Stytra(protocol=ClosedLoopProtocol(), camera=dict(type="ximea")
 
 
+The priority of the configuration settings is the stytra_setup_config.json (lowest), the stytra_config dictionary in the Protocol class and the keyword arguments when calling Stytra.
 
+
+Trying example protocols on your setup
+--------------------------------------
+
+Copy the example file you are interested in from the repository (e.g. `stytra/examples/closed_loop_exp.py <https://github.com/portugueslab/stytra/blob/master/stytra/examples/closed_loop_exp.py>`_) and either:
+
+- remove the camera entry from the stytra_config dictionary in the protocol class and create the stytra_setup_config.json file
+
+- change the stytra_config dictionary in the protocol definition
+
+- add a keyword argument to the stytra call specifying the camera

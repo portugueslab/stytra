@@ -19,6 +19,9 @@ functions. If you don't have it installed, open the Anaconda prompt and type::
 
     conda install opencv
 
+.. note::
+    Sometimes, OpenCV installation does not work properly (DLL not found error when importin cv2), this can be fixed by installing a wheel directly from https://www.lfd.uci.edu/~gohlke/pythonlibs/#opencv
+
 If you are using Windows, git (used for tracking software versions) might not be
 installed. Git can also be easily installed with conda::
 
