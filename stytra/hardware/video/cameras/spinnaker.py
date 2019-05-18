@@ -1,3 +1,4 @@
+import numpy as np  
 from stytra.hardware.video.cameras.interface import Camera
 
 try:
@@ -48,8 +49,20 @@ class SpinnakerCamera(Camera):
 
         self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
         self.cam.GainAuto.SetValue(PySpin.GainAuto_Off)
-        self.cam.AcquisitionFrameRateEnable.SetValue(True)
-        # self.cam.AcquisitionFrameRate.SetValue(400)
+        
+        ### Enable frame rate control
+        enable_rate_control = PySpin.CBooleanPtr(nodemap.GetNode("AcquisitionFrameRateEnabled"))
+        if not PySpin.IsAvailable(
+                enable_rate_control
+        ) or not PySpin.IsWritable(enable_rate_control):
+            print("enable_rate_control not writable. Aborting...")
+            return False
+        enable_rate_control.SetValue(True)
+        if self.cam.AcquisitionFrameRate.GetAccessMode() != PySpin.RW:  
+            print("Frame rate mode not set to read/write. Aborting...")
+            return False
+        #To test frame rate control
+        #frame_rate = 1.0; self.cam.AcquisitionFrameRate.SetValue(frame_rate)       
 
         self.cam.BeginAcquisition()
         return "Spinnaker API camera successfully opened"
@@ -79,26 +92,19 @@ class SpinnakerCamera(Camera):
                 self.cam.AcquisitionFrameRate.SetValue(val)
 
         except PySpin.SpinnakerException as ex:
-            return "Invalid parameters"
+            return "Invalid parameters" + ex
         return ""
 
     def read(self):
         try:
             #  Retrieve next received image
             #
-            #  *** NOTES ***
             #  Capturing an image houses images on the camera buffer. Trying
             #  to capture an image that does not exist will hang the camera.
-            #
-            #  *** LATER ***
-            #  Once an image from the buffer is saved and/or no longer
-            #  needed, the image must be released in order to keep the
-            #  buffer from filling up.
             image_result = self.cam.GetNextImage()
 
             #  Ensure image completion
             #
-            #  *** NOTES ***
             #  Images can easily be checked for completion. This should be
             #  done whenever a complete image is expected or required.
             #  Further, check image status for a little more insight into
@@ -107,46 +113,14 @@ class SpinnakerCamera(Camera):
                 return
 
             else:
-
-                #  Print image information; height and width recorded in pixels
-                #
-                #  *** NOTES ***
-                #  Images have quite a bit of available metadata including
-                #  things such as CRC, image status, and offset values, to
-                #  name a few.
-                width = image_result.GetWidth()
-                height = image_result.GetHeight()
-                #  Convert image to mono 8
-                #
-                #  *** NOTES ***
-                #  Images can be converted between pixel formats by using
-                #  the appropriate enumeration value. Unlike the original
-                #  image, the converted one does not need to be released as
-                #  it does not affect the camera buffer.
-                #
-                #  When converting images, color processing algorithm is an
-                #  optional parameter.
-                image_converted = image_result.Convert(
-                    PySpin.PixelFormat_Mono8, PySpin.HQ_LINEAR
-                )
-
-                # Create a unique filename
-                #  Save image
-                #
-                #  *** NOTES ***
-                #  The standard practice of the examples is to use device
-                #  serial numbers to keep images of one device from
-                #  overwriting those of another.
-
-                #  Release image
-                #
-                #  *** NOTES ***
+                image_converted = np.array(image_result.GetData(), dtype="uint8").reshape((image_result.GetHeight(), 
+                                                                                           image_result.GetWidth()) );
                 #  Images retrieved directly from the camera (i.e. non-converted
                 #  images) need to be released in order to keep from filling the
                 #  buffer.
                 image_result.Release()
-                return image_converted.GetNDArray()
-
+                return image_converted
+            
         except PySpin.SpinnakerException as ex:
             print("Error: %s" % ex)
             return None
@@ -156,3 +130,23 @@ class SpinnakerCamera(Camera):
         self.cam.DeInit()
         del self.cam
         self.system.ReleaseInstance()
+
+if __name__ == "__main__":
+    """ 
+    Test PySpin api/SpinnakerCamera() using opencv.
+    """
+    print("\n**Testing SpinnakerCamera(): displaying data at 1Hz**")
+    import cv2
+    cv2.namedWindow("Stytra Spinnaker Stream", cv2.WINDOW_NORMAL)
+    spinCam = SpinnakerCamera()
+    spinCam.open_camera()
+    spinCam.set("framerate", 1.0)
+    while True:
+        image = spinCam.read()
+        cv2.imshow("Stytra Spinnaker Stream", image)
+        key = cv2.waitKey(1)  
+        if key == 27: #escape key
+            print("Streaming stopped")
+            cv2.destroyAllWindows()
+            spinCam.release()
+            break
