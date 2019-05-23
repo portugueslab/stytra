@@ -267,7 +267,7 @@ def save_df(df, path, fileformat):
     outpath = Path(str(path) + "." + fileformat)
     if fileformat == "csv":
         # replace True and False in csv files:
-        df.replace({True: 1, False: 0}).to_csv(outpath, sep=";")
+        df.replace({True: 1, False: 0}).to_csv(str(outpath), sep=";")
     elif fileformat == "feather":
         df.to_feather(outpath)
     elif fileformat == "hdf5":
