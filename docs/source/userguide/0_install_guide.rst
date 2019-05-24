@@ -134,3 +134,9 @@ National Instruments framegrabber with Mikrotron camera
 Install the NI vision SDK. For the Mikrotron MC1362 camera, you can use `this <http://www.portugueslab.com/files/MikrotronMC1362.icd>`_
 camera file. The camera file usually needs to be put into C:\Users\Public\Public Documents\National Instruments\NI-IMAQ\Data
 After putting the camera file there, is should be selected for the image acquisition device in NI MAX.
+
+
+Basler: pypylon
+...............
+
+Please refer to the instructions `here <https://github.com/basler/pypylon>`_.
