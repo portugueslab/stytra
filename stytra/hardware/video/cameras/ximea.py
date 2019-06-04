@@ -57,18 +57,18 @@ class XimeaCamera(Camera):
                 self.cam.set_offsetX(self.roi[0])
                 self.cam.set_offsetY(self.roi[1])
         except xiapi.Xi_error:
-            return ("E:Could not set ROI "+str(self.roi)+", w has to be {}:{}:{}".format(
+            return ["E:Could not set ROI "+str(self.roi)+", w has to be {}:{}:{}".format(
                 self.cam.get_width_minimum(),
                 self.cam.get_width_increment(),
                 self.cam.get_width_maximum()
             ) + ", h has to be {}:{}:{}".format(
                 self.cam.get_height_minimum(),
                 self.cam.get_height_increment(),
-                self.cam.get_height_maximum()))
+                self.cam.get_height_maximum())]
 
         self.cam.start_acquisition()
         self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
-        return "I:Opened Ximea camera " + str(self.cam.get_device_name())
+        return ["I:Opened Ximea camera " + str(self.cam.get_device_name())]
 
     def set(self, param, val):
         """
@@ -91,7 +91,7 @@ class XimeaCamera(Camera):
             if param == "framerate":
                 self.cam.set_framerate(val)
         except xiapi.Xi_error:
-            return "Invalid camera parameters"
+            return ["E:Invalid camera parameters"]
 
     def read(self):
         """ """
