@@ -7,10 +7,9 @@ from stytra.hardware.video.cameras.opencv import OpenCVCamera
 
 # Update this dictionary when adding a new camera!
 camera_class_dict = dict(
-        ximea=XimeaCamera,
-        avt=AvtCamera,
-        spinnaker=SpinnakerCamera,
-        mikrotron=MikrotronCLCamera,
-        opencv=OpenCVCamera
-
-    )
+    ximea=XimeaCamera,
+    avt=AvtCamera,
+    spinnaker=SpinnakerCamera,
+    mikrotron=MikrotronCLCamera,
+    opencv=OpenCVCamera,
+)

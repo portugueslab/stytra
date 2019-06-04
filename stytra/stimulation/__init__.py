@@ -379,8 +379,8 @@ class Protocol(ParametrizedQt):
             raise ValueError("Protocol does not have a specified name")
         super().__init__(name="stimulus/protocol/" + self.__class__.name)
 
-        self.pre_pause = Param(0.)
-        self.post_pause = Param(0.)
+        self.pre_pause = Param(0., limits=(0., 10000.))
+        self.post_pause = Param(0., limits=(0., 10000.))
         self.n_repeats = Param(1, limits=(1, 10000))
 
     def _get_stimulus_list(self):

@@ -118,7 +118,9 @@ class CameraSource(VideoSource):
                 param_dict = self.control_queue.get(timeout=0.0001)
                 self.state.params.values = param_dict
                 for param, value in param_dict.items():
-                    messages.append(self.cam.set(param, value))
+                    ms = self.cam.set(param, value)
+
+                    messages.extend(list(ms))
             except Empty:
                 break
 
@@ -139,7 +141,8 @@ class CameraSource(VideoSource):
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.message_queue.put("I: " + str(self.cam.open_camera()))
+        camera_messages = list(self.cam.open_camera())
+        [self.message_queue.put(m) for m in camera_messages]
         prt = None
         while True:
             # Kill if signal is set:

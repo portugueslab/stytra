@@ -22,7 +22,7 @@ class AvtCamera(Camera):
 
     """
 
-    def __init__(self, downsampling=None, **kwargs):
+    def __init__(self, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
 
@@ -34,24 +34,22 @@ class AvtCamera(Camera):
             raise Exception("The pymba package must be installed to use an AVT camera!")
 
         self.frame = None
-        self.debug = False
 
     def open_camera(self):
         """ """
         self.vimba.startup()
-
+        messages = []
         # If there are multiple cameras, only the first one is used (this may
         # change):
         camera_ids = self.vimba.getCameraIds()
-        if self.debug:
-            if len(camera_ids) > 1:
-                print(
-                    "Multiple cameras detected: {}. {} wiil be used.".format(
-                        camera_ids, camera_ids[0]
-                    )
+        if len(camera_ids) > 1:
+            messages.append(
+                "I:Multiple cameras detected: {}. {} wiil be used.".format(
+                    camera_ids, camera_ids[0]
                 )
-            else:
-                print("Detected camera {}.".format(camera_ids[0]))
+            )
+        else:
+            messages.append("I:Detected camera {}.".format(camera_ids[0]))
         self.cam = self.vimba.getCamera(camera_ids[0])
 
         # Start camera:
@@ -62,6 +60,8 @@ class AvtCamera(Camera):
         self.cam.startCapture()
         self.frame.queueFrameCapture()
         self.cam.runFeatureCommand("AcquisitionStart")
+
+        return messages
 
     def set(self, param, val):
         """
@@ -77,17 +77,19 @@ class AvtCamera(Camera):
         -------
 
         """
+        messages = []
         try:
             if param == "exposure":
                 # camera wants exposure in us:
                 self.cam.ExposureTime = int(val * 1000)
 
-            if param == "framerate":
+            else:
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
-                pass
+                messages.append("E:"+param+" setting not supported on AVT cameras")
         except VimbaException:
-            return "Invalid value! The parameter will not be changed."
+            messages.append("E:Invalid value! {} will not be changed.".format(param))
+        return messages
 
     def read(self):
         """ """
@@ -105,8 +107,6 @@ class AvtCamera(Camera):
 
         except VimbaException:
             frame = None
-            if self.debug:
-                print("Unable to acquire frame")
 
         return frame
 

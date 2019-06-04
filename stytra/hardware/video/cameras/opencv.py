@@ -26,27 +26,11 @@ class OpenCVCamera(Camera):
         # Test if API for the camera is available
         self.cam = cv2.VideoCapture(cam_idx)
 
-
     def open_camera(self):
         """ """
         pass
 
     def set(self, param, val):
-        """
-
-        Parameters
-        ----------
-        param :
-
-        val :
-
-
-        Returns
-        -------
-
-        """
-        # pass
-        # # try:
         if param == "exposure":
             self.cam.set(cv2.CAP_PROP_EXPOSURE, val)
         #

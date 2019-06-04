@@ -117,14 +117,14 @@ class Stytra:
         else:
             config = dict()
 
-        # Get rest of configuration parameters from the procotol:
+        # Get rest of configuration parameters from the protocol:
         try:
             extra_config = kwargs["protocol"].stytra_config
+            recursive_update(config, extra_config)
         except AttributeError:
-            extra_config = dict()
+            pass
 
-        recursive_update(config, extra_config)
-        recursive_update(config, kwargs)  # Use also stytra inputs
+        recursive_update(config, kwargs)  # Use also keyword arguments
 
         if config.get("scope_triggering", None) == "zmq":
             # Automatically use zmqTrigger if zmq is specified
@@ -138,7 +138,6 @@ class Stytra:
             if app.devicePixelRatio() > 1:
                 app.setAttribute(Qt.AA_UseHighDpiPixmaps)
         class_kwargs = dict(app=app)
-        class_kwargs.update(kwargs)
         class_kwargs.update(config)
 
         base = VisualExperiment
