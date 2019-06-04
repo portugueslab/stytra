@@ -18,7 +18,7 @@ class MikrotronCLCamera(Camera):
         try:
             self.imaq = ctypes.windll.imaq
         except OSError:
-            print("NI Vision drivers not installed")
+            raise Exception("NI Vision drivers not installed!")
 
     def open_camera(self):
         int_opened = self.imaq.imgInterfaceOpen(
@@ -48,7 +48,7 @@ class MikrotronCLCamera(Camera):
             _, _, w, h = [int(x, 16) for x in response.split(" ")]
             self.imaq.imgSessionSerialFlush(self.session_id)
         except ValueError:
-            return "E:Invalid message received " + response
+            return ["E:Invalid message received " + response]
 
         self.imaq.imgSessionConfigureROI(
             self.session_id,
@@ -64,8 +64,10 @@ class MikrotronCLCamera(Camera):
             ctypes.POINTER(ctypes.c_long)
         )
         if self.buffer_address is None:
-            return "E:Error in opening Mikrotron camera! Restart the program"
-        return "I:Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
+            return ["E:Error in opening Mikrotron camera! Restart the program"]
+        return [
+            "I:Mikrotron camera succesfully opened, frame size is {}x{}".format(w, h)
+        ]
 
     def _send_command(self, com):
         command = ctypes.c_char_p(bytes(com, "ansi"))
@@ -96,7 +98,7 @@ class MikrotronCLCamera(Camera):
                 self._send_command(":q{:06X}".format(int(val)))
                 self._read_response()
                 self.framerate_current = int(val)
-        return ""
+        return [""]
 
     def read(self):
         err = self.imaq.imgGrab(self.session_id, ctypes.byref(self.buffer_address), 1)
