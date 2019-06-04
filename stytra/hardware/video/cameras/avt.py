@@ -83,10 +83,10 @@ class AvtCamera(Camera):
                 # camera wants exposure in us:
                 self.cam.ExposureTime = int(val * 1000)
 
-            if param == "framerate":
+            else:
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
-                messages.append("E:you think you can set framerate on avt cameras?")
+                messages.append("E:"+param+" setting not supported on AVT cameras")
         except VimbaException:
             messages.append("E:Invalid value! {} will not be changed.".format(param))
         return messages

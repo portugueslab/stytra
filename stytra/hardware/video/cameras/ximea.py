@@ -44,7 +44,6 @@ class XimeaCamera(Camera):
             self.cam.set_sensor_feature_selector("XI_SENSOR_FEATURE_ZEROROT_ENABLE")
             self.cam.set_sensor_feature_value(1)
 
-
             self.cam.set_downsampling_type("XI_SKIPPING")
             self.cam.set_downsampling(
                 "XI_DWN_{}x{}".format(self.downsampling, self.downsampling)
@@ -57,14 +56,20 @@ class XimeaCamera(Camera):
                 self.cam.set_offsetX(self.roi[0])
                 self.cam.set_offsetY(self.roi[1])
         except xiapi.Xi_error:
-            return ["E:Could not set ROI "+str(self.roi)+", w has to be {}:{}:{}".format(
-                self.cam.get_width_minimum(),
-                self.cam.get_width_increment(),
-                self.cam.get_width_maximum()
-            ) + ", h has to be {}:{}:{}".format(
-                self.cam.get_height_minimum(),
-                self.cam.get_height_increment(),
-                self.cam.get_height_maximum())]
+            return [
+                "E:Could not set ROI "
+                + str(self.roi)
+                + ", w has to be {}:{}:{}".format(
+                    self.cam.get_width_minimum(),
+                    self.cam.get_width_increment(),
+                    self.cam.get_width_maximum(),
+                )
+                + ", h has to be {}:{}:{}".format(
+                    self.cam.get_height_minimum(),
+                    self.cam.get_height_increment(),
+                    self.cam.get_height_maximum(),
+                )
+            ]
 
         self.cam.start_acquisition()
         self.cam.set_acq_timing_mode("XI_ACQ_TIMING_MODE_FRAME_RATE")
@@ -91,7 +96,7 @@ class XimeaCamera(Camera):
             if param == "framerate":
                 self.cam.set_framerate(val)
         except xiapi.Xi_error:
-            return ["E:Invalid camera parameters"]
+            return ["E:Invalid {} value {.2f}".format(param, val)]
 
     def read(self):
         """ """
