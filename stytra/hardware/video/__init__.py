@@ -119,8 +119,10 @@ class CameraSource(VideoSource):
                 self.state.params.values = param_dict
                 for param, value in param_dict.items():
                     ms = self.cam.set(param, value)
-
-                    messages.extend(list(ms))
+                    try:
+                        messages.extend(list(ms))
+                    except TypeError:
+                        pass
             except Empty:
                 break
 
