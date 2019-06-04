@@ -68,6 +68,7 @@ class ProtocolRunner(QObject):
     """Emitted when the protocol sequence ends."""
     sig_protocol_updated = pyqtSignal()  # parameters changed in the protocol
     """Emitted when protocol is changed/updated"""
+    sig_protocol_interrupted = pyqtSignal()
 
     def __init__(self, experiment=None, target_dt=0, log_print=True):
         """ """
@@ -89,10 +90,8 @@ class ProtocolRunner(QObject):
         self.i_current_stimulus = None  # index of current stimulus
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
-        self.duration = None  # total duration of the protocol
         self.dynamic_log = None  # dynamic log for stimuli
 
-        # self.prot_class_dict = {c.name: c for c in experiment.protocols}
         self._set_new_protocol(self.protocol)
         self.update_protocol()
         self.protocol.sig_param_changed.connect(self.update_protocol)
@@ -117,13 +116,13 @@ class ProtocolRunner(QObject):
         if protocol is not None:
             self.protocol = protocol
 
-            self.update_protocol()
             # Connect changes to protocol parameters to update function:
             self.protocol.sig_param_changed.connect(self.update_protocol)
             self.experiment.dc.add(self.protocol)
 
             # Why were we resetting here?
             self.reset()
+            self.update_protocol()
             self.sig_protocol_updated.emit()
 
     def update_protocol(self):
@@ -143,8 +142,6 @@ class ProtocolRunner(QObject):
                 self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
             else:
                 self.dynamic_log.update_stimuli(self.stimuli)  # new stimulus log
-
-            self.duration = self.get_duration()  # set new duration
 
             self.sig_protocol_updated.emit()
 
@@ -175,7 +172,6 @@ class ProtocolRunner(QObject):
         #  to the calibrator that are considered only in initializing the
         # stimulus and not while it is running (e.g., gratings). Consider
         # removing if it slows down significantly the starting event.
-
         self.update_protocol()
         self.log = []
         self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
@@ -261,6 +257,9 @@ class ProtocolRunner(QObject):
             self.running = False
             self.t_end = datetime.datetime.now()
             self.timer.stop()
+            self.i_current_stimulus = 0
+            self.t = 0
+            self.sig_protocol_interrupted.emit()
 
     def update_log(self):
         """Append the log appending info from the last stimulus. Add to the
@@ -290,7 +289,8 @@ class ProtocolRunner(QObject):
 
         self.dynamic_log.update_list(self.t, self.current_stimulus.get_dynamic_state())
 
-    def get_duration(self):
+    @property
+    def duration(self):
         """Get total duration of the protocol in sec, calculated from stimuli
         durations.
 
@@ -300,10 +300,26 @@ class ProtocolRunner(QObject):
             protocol length in seconds.
 
         """
-        total_duration = 0
+        duration = 0
         for stim in self.stimuli:
-            total_duration += stim.duration
-        return total_duration
+            duration += stim.duration
+        return duration
+
+
+    #def get_duration(self):
+    #    """Get total duration of the protocol in sec, calculated from stimuli
+    #    durations.
+#
+    ##    Returns
+    #    -------
+    #    float :
+    #        protocol length in seconds.
+
+    #    """
+    #    total_duration = 0
+    #    for stim in self.stimuli:
+    #        total_duration += stim.duration
+    #    return total_duration
 
     def print(self):
         """Print protocol sequence.

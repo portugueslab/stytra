@@ -224,6 +224,7 @@ class Experiment(QObject):
         self.dc.restore_from_saved()
         self.set_id()
         self.make_window()
+        self.protocol_runner.update_protocol()
 
         if self.trigger is not None:
             self.trigger.start()
