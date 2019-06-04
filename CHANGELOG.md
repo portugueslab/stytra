@@ -1,3 +1,7 @@
+# 0.8.11
+## Improvements
+- Full-featured FLIR/PointGray camera support by @EricThomson and @vigji
+
 # 0.8.10
 ## Fixes
 - fixed tracking crash for displaying diagnostics in fish tracking
