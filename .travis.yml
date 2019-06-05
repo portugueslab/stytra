@@ -27,7 +27,7 @@ install:
   - conda install coverage --yes
   - conda install numpy scipy pyopengl pytest flake8 six coverage --yes
   - conda install pyqt --yes;
-  - conda install -c opencv --yes
+  - conda install opencv --yes
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
