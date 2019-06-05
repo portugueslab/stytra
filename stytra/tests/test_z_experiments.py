@@ -64,14 +64,18 @@ class TestProtocol(Protocol):
 
 @pytest.mark.last
 class TestExperimentClass(unittest.TestCase):
+    def __init__(self):
+        super().__init__()
+        self.app = QApplication([])
+
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        self.app = QApplication([])
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
     def test_experiment_class(self):
+
         for prot in [TestProtocol0, TestProtocol1]:
             exp = VisualExperiment(
                 app=self.app, protocol=prot(), dir_save=self.test_dir
