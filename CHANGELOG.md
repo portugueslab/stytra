@@ -1,3 +1,8 @@
+# 0.8.12
+## Fixes
+- fixed Ximea bug introduced by the previous version
+- tests run again and work on Travis
+
 # 0.8.11
 ## Improvements
 - Full-featured FLIR/PointGray camera support by @EricThomson and @vigji
