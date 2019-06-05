@@ -7,7 +7,7 @@ def test_online_bout_det():
         np.float64
     )
     coords = np.zeros((len(vel_profile), 3))
-    k, _ = find_bouts_online(
+    k, _, _ = find_bouts_online(
         vel_profile,
         coords,
         BoutState(0, 0.0, 0, 0, 0),
