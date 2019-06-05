@@ -64,8 +64,8 @@ class TestProtocol(Protocol):
 
 @pytest.mark.last
 class TestExperimentClass(unittest.TestCase):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.app = QApplication([])
 
     def setUp(self):
