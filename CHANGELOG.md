@@ -1,5 +1,6 @@
-# 0.8.13
+# 0.8.14
 ## Fixes
+- replay working again
 - if the camera is paused before the first frame arrives Stytra does not crash anymore
 - the replay buffer has a maximum length to prevent memory overflow
 
