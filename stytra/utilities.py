@@ -46,7 +46,7 @@ class FramerateRecorder:
         self.n_fps_frames = n_fps_frames
         self.i_fps = 0
         self.previous_time_fps = None
-        self.current_framerate = None
+        self.current_framerate = 0
 
         # Store current time timestamp:
         self.current_time = datetime.now()

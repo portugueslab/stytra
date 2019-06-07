@@ -190,7 +190,7 @@ class CameraSource(VideoSource):
                         *self.state.replay_limits, self.ring_buffer.length
                     )
                 )
-                old_fps = self.current_framerate
+                old_fps = self.framerate_rec.current_framerate
                 self.ring_buffer.replay_limits = (
                     int(round(self.state.replay_limits[0] * old_fps)),
                     int(round(self.state.replay_limits[1] * old_fps)),
