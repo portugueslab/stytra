@@ -1,3 +1,8 @@
+# 0.8.13
+## Fixes
+- if the camera is paused before the first frame arrives Stytra does not crash anymore
+- the replay buffer has a maximum length to prevent memory overflow
+
 # 0.8.12
 ## Fixes
 - fixed Ximea bug introduced by the previous version

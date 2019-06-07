@@ -58,6 +58,9 @@ class Stytra:
             downsampling: int
                 how many times to downsample the image (for some ximea cameras)
 
+            roi: tuple of int (x, y, w, h)
+                ROI for cameras that support it
+
         tracking : dict
             preprocessing_method: str, optional
                "prefilter" or "bgsub"

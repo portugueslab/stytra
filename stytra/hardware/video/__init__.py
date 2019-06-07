@@ -98,7 +98,9 @@ class CameraSource(VideoSource):
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(
-        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1), **kwargs
+        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1),
+            max_buffer_length=1000,
+            **kwargs
     ):
         """ """
         super().__init__(*args, **kwargs)
@@ -108,6 +110,8 @@ class CameraSource(VideoSource):
         self.camera_type = camera_type
         self.downsampling = downsampling
         self.roi = roi
+
+        self.max_buffer_length = max_buffer_length
 
         self.state = None
         self.ring_buffer = None
@@ -160,16 +164,25 @@ class CameraSource(VideoSource):
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
 
-            res_len = int(round(self.state.framerate * self.state.ring_buffer_length))
+            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            if res_len > self.max_buffer_length:
+                res_len = self.max_buffer_length
+                self.message_queue.put("W:Replay buffer too big, make the plot"
+                                       " time range smaller for full replay"
+                                       " capabilities")
+
             if self.ring_buffer is None or res_len != self.ring_buffer.length:
                 self.ring_buffer = RingBuffer(res_len)
 
             if self.state.paused:
                 self.message_queue.put(
-                    "I: ring_buffer_size:" + str(self.ring_buffer.length)
+                    "I:Ring_buffer_size:" + str(self.ring_buffer.length)
                 )
-                self.frame_queue.put(self.ring_buffer.get_most_recent())
-
+                if self.ring_buffer.arr is not None:
+                    self.frame_queue.put(self.ring_buffer.get_most_recent())
+                else:
+                    self.message_queue.put(
+                        "E:camera paused before any frames acquired")
                 prt = None
             elif self.state.replay and self.state.replay_fps > 0:
                 messages.append(
