@@ -191,10 +191,11 @@ class CameraSource(VideoSource):
                     )
                 )
                 old_fps = self.framerate_rec.current_framerate
-                self.ring_buffer.replay_limits = (
-                    int(round(self.state.replay_limits[0] * old_fps)),
-                    int(round(self.state.replay_limits[1] * old_fps)),
-                )
+                if old_fps is not None:
+                    self.ring_buffer.replay_limits = (
+                        int(round(self.state.replay_limits[0] * old_fps)),
+                        int(round(self.state.replay_limits[1] * old_fps)),
+                    )
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
