@@ -1,3 +1,7 @@
+# 0.8.15
+## Fixes
+- Fix for eye contour detection due to a change in the OpenCV API
+
 # 0.8.14
 ## Fixes
 - replay working again

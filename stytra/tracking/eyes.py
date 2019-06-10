@@ -163,9 +163,15 @@ def _fit_ellipse(thresholded_image):
         When eyes were found, the two ellipses, otherwise False
 
     """
-    _, contours, hierarchy = cv2.findContours(
+    cont_ret = cv2.findContours(
         thresholded_image.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
     )
+
+    # API change, in OpenCV 4 there are 2 values unlike OpenCV3
+    if len(cont_ret) == 3:
+        _, contours, hierarchy = cont_ret
+    else:
+        contours, hierarchy = cont_ret
 
     if len(contours) >= 2:
 
