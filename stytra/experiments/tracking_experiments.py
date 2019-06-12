@@ -202,6 +202,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
+        self.arguments.update(locals())
 
         self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
 

@@ -29,6 +29,9 @@ class TestProtocol(Protocol):
         stimuli = [Pause(duration=self.duration)]
         return stimuli
 
+
+
+
 class TestTrackingClass(unittest.TestCase):
     """
     Note: this test assumes that the default parameters for the tracking
@@ -38,16 +41,6 @@ class TestTrackingClass(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.app = QApplication([])
-
-        # True value computed from asset movies with default parameters:
-        self.solutions = dict(
-            th_e0=np.array([-95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
-                  -95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
-                  -95.58, -95.58, -95.58, -95.58, -95.58, -95.58]),
-            th_e1=np.array([-77.34, -77.34, -77.34, -77.34, -77.34, -77.34, -79.74,
-                  -79.74, -79.74, -79.74, -79.74, -79.56, -79.74, -79.74,
-                  -79.74, -77.51, -77.51, -77.51, -77.51, -77.5]))
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
@@ -81,7 +74,27 @@ class TestTrackingClass(unittest.TestCase):
 
 
     def test_tracking(self):
+        self.app = QApplication([])
+
+        # True value computed from asset movies with default parameters:
+        self.solutions = dict(
+            th_e0=np.array(
+                [-95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
+                 -95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
+                 -95.58, -95.58, -95.58, -95.58, -95.58, -95.58]),
+            th_e1=np.array(
+                [-77.34, -77.34, -77.34, -77.34, -77.34, -77.34, -79.74,
+                 -79.74, -79.74, -79.74, -79.74, -79.56, -79.74, -79.74,
+                 -79.74, -77.51, -77.51, -77.51, -77.51, -77.5]),
+            theta_00=np.array([-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
+                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
+                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52]),
+            theta_08=np.array([-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
+                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
+                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52])
+        )
         self.run_experiment("hdf5", "eyes")
+        self.run_experiment("hdf5", "tail")
 
         for path in Path(self.test_dir).glob("*/*/*.json"):
             with open(path, "r") as f:
@@ -90,7 +103,15 @@ class TestTrackingClass(unittest.TestCase):
                 "tracking"][
                 "behavior_log"], "/data")
 
-            for k in ["th_e0", "th_e1"]:
-                self.check_result(behavior_log[k].values, k)
+            method = data["general"]["program_version"]["arguments"]["tracking"]["method"]
+            if method == "tail":
+                for k in ["theta_00", "theta_08"]:
+                    self.check_result(behavior_log[k].values, k)
+            elif method == "eyes":
+                for k in ["th_e0", "th_e1"]:
+                    self.check_result(behavior_log[k].values, k)
+
+
+
 
         assert "test_protocol" in data["stimulus"]["protocol"].keys()
