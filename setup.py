@@ -25,6 +25,7 @@ setup(
         "pillow",
         "scikit-image",
         "imageio",
+        "imageio-ffmpeg",
         "lightparam>=0.3.6",
     ],
     classifiers=[

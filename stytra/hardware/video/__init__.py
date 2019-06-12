@@ -296,48 +296,44 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
 
         else:
-            import cv2
+            import imageio
 
-            cap = cv2.VideoCapture(self.source_file)
+            reader = imageio.get_reader(self.source_file)
             ret = True
 
             try:
-                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
+                delta_t = 1 / reader.get_meta_data()["fps"]
             except ZeroDivisionError:
                 delta_t = 1 / 30
 
             prt = None
-            while ret and not self.kill_event.is_set():
-                if self.paused:
-                    ret = True
-                    frame = self.old_frame
-                else:
-                    ret, frame = cap.read()
-
-                # adjust the frame rate by adding extra time if the processing
-                # is quicker than the specified framerate
-
-                if self.control_queue is not None:
-                    self.update_params()
-
-                delta_t = 1 / self.state.framerate
-                if prt is not None:
-                    extrat = delta_t - (time.process_time() - prt)
-                    if extrat > 0:
-                        time.sleep(extrat)
-
-                if ret:
-                    self.frame_queue.put(frame[:, :, 0])
-                else:
-                    if self.loop:
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        ret = True
+            while self.loop:
+                for frame in reader:
+                    if self.paused:
+                        frame = self.old_frame
                     else:
-                        break
+                        pass
 
-                prt = time.process_time()
-                self.old_frame = frame
-                self.update_framerate()
+                    # adjust the frame rate by adding extra time if the processing
+                    # is quicker than the specified framerate
+
+                    if self.control_queue is not None:
+                        self.update_params()
+
+                    delta_t = 1 / self.state.framerate
+                    if prt is not None:
+                        extrat = delta_t - (time.process_time() - prt)
+                        # if extrat > 0:
+                        #     time.sleep(extrat)
+
+                    if ret:
+                        self.frame_queue.put(frame[:, :, 0])
+
+                    prt = time.process_time()
+                    self.old_frame = frame
+                    self.update_framerate()
+
+                reader.set_image_index(0)
             return
 
 

@@ -26,6 +26,7 @@ install:
   - source activate test_env
   - conda install coverage --yes
   - conda install numpy scipy pyopengl pytest flake8 six coverage --yes
+  - conda install ffmpeg
   - conda install pyqt --yes;
   - conda install opencv --yes
   - echo ${QT}
