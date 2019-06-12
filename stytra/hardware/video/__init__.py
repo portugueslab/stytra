@@ -296,48 +296,41 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
 
         else:
-            import cv2
+            import av
 
-            cap = cv2.VideoCapture(self.source_file)
+            container = av.open(self.source_file)
+            container.streams.video[0].thread_type = "AUTO"
+            container.streams.video[0].thread_count = 1
             ret = True
 
-            try:
-                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
-            except ZeroDivisionError:
-                delta_t = 1 / 30
 
             prt = None
-            while ret and not self.kill_event.is_set():
-                if self.paused:
-                    ret = True
-                    frame = self.old_frame
-                else:
-                    ret, frame = cap.read()
-
-                # adjust the frame rate by adding extra time if the processing
-                # is quicker than the specified framerate
-
-                if self.control_queue is not None:
-                    self.update_params()
-
-                delta_t = 1 / self.state.framerate
-                if prt is not None:
-                    extrat = delta_t - (time.process_time() - prt)
-                    if extrat > 0:
-                        time.sleep(extrat)
-
-                if ret:
-                    self.frame_queue.put(frame[:, :, 0])
-                else:
-                    if self.loop:
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        ret = True
+            while self.loop:
+                for framedata in container.decode(video=0):
+                    if self.paused:
+                        frame = self.old_frame
                     else:
-                        break
+                        frame = framedata.to_ndarray(format="rgb24")
 
-                prt = time.process_time()
-                self.old_frame = frame
-                self.update_framerate()
+                    # adjust the frame rate by adding extra time if the processing
+                    # is quicker than the specified framerate
+
+                    if self.control_queue is not None:
+                        self.update_params()
+
+                    delta_t = 1 / self.state.framerate
+                    if prt is not None:
+                        extrat = delta_t - (time.process_time() - prt)
+                        if extrat > 0:
+                            time.sleep(extrat)
+
+                    if ret:
+                        self.frame_queue.put(frame[:, :, 0])
+
+                    prt = time.process_time()
+                    self.old_frame = frame
+                    self.update_framerate()
+
             return
 
 
