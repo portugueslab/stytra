@@ -296,23 +296,21 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
 
         else:
-            import imageio
+            import av
 
-            reader = imageio.get_reader(self.source_file)
+            container = av.open(self.source_file)
+            container.streams.video[0].thread_type = "AUTO"
+            container.streams.video[0].thread_count = 1
             ret = True
 
-            try:
-                delta_t = 1 / reader.get_meta_data()["fps"]
-            except ZeroDivisionError:
-                delta_t = 1 / 30
 
             prt = None
             while self.loop:
-                for frame in reader:
+                for framedata in container.decode(video=0):
                     if self.paused:
                         frame = self.old_frame
                     else:
-                        pass
+                        frame = framedata.to_ndarray(format="rgb24")
 
                     # adjust the frame rate by adding extra time if the processing
                     # is quicker than the specified framerate
@@ -323,8 +321,8 @@ class VideoFileSource(VideoSource):
                     delta_t = 1 / self.state.framerate
                     if prt is not None:
                         extrat = delta_t - (time.process_time() - prt)
-                        # if extrat > 0:
-                        #     time.sleep(extrat)
+                        if extrat > 0:
+                            time.sleep(extrat)
 
                     if ret:
                         self.frame_queue.put(frame[:, :, 0])
@@ -333,7 +331,6 @@ class VideoFileSource(VideoSource):
                     self.old_frame = frame
                     self.update_framerate()
 
-                reader.set_image_index(0)
             return
 
 
