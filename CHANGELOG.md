@@ -1,3 +1,10 @@
+# 0.8.16
+## Fixes
+- Tests on Travis working properly now for full experiments with tracking
+
+## Improvements
+- Switched to PyAV for video reading 
+
 # 0.8.15
 ## Fixes
 - Fix for eye contour detection due to a change in the OpenCV API
