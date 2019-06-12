@@ -326,6 +326,10 @@ class Experiment(QObject):
                     db_id = -1
                 self.dc.add_static_data(db_id, name="general/db_index")
 
+                # Clean up arguments dict:
+                kwargs = self.arguments.pop("kwargs")
+                self.arguments.update(kwargs)
+
                 # Get program name and version and save to the data_log:
                 git_hash = None
                 version = None
