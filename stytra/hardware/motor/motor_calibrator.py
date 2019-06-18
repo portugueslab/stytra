@@ -63,15 +63,17 @@ class MotorCalibrator():
       print("dot points x,y: ", self.point_x, self.point_y)
       print("distance x,y to center:", self.distance_x, self.distance_y)
 
+      return self.point_x, self.point_y
+
   def track_dot(self):
       pos_x = mottitwo.get_position()
       pos_y = mottione.get_position()
       print ("stage at x,y:",pos_x, pos_y)
 
       conx = abs(self.distance_x)
-      connx = int(conx *1666) #some over/undershooting through rounding errors
+      connx = int(conx *self.conversion_x) #some over/undershooting through rounding errors
       cony = abs(self.distance_y)
-      conny = int(cony * 1666) #some over/undershooting through rounding errors
+      conny = int(cony * self.conversion_y) #some over/undershooting through rounding errors
 
       if self.distance_x > 0:
           conn = (pos_x + connx)
@@ -119,13 +121,28 @@ class MotorCalibrator():
       #print (positions_w, positions_h)
 
   def calibrate_motor(self):
-      pass
 
-  def converter(self):
-      pass
+      self.point_x_prev, self.point_y_prev = MotorCalibrator.find_dot(self)
 
-  def stitching(self):
-      pass
+      posx = mottitwo.get_position()
+      mottitwo.movethatthing(posx + 20000)
+
+      posy = mottione.get_position()
+      mottione.movethatthing(posy + 20000)
+
+      self.point_x_after, self.point_y_after = MotorCalibrator.find_dot(self)
+
+      self.distance_points_x = int(self.point_x_prev - self.point_x_after)
+      self.distance_points_y = int(self.point_y_prev - self.point_y_after)
+
+      self.conversion_x = int(20000/ abs(self.distance_points_x))
+      self.conversion_y  = int(20000/ abs(self.distance_points_y))
+
+      print ("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+
+      return self.conversion_x, self.conversion_y
+
+
 
 #############################################################################
 acc = 204552
@@ -134,13 +151,17 @@ velo = 107374182
 m = MotorCalibrator()
 mottione  = Motor(1)
 mottitwo = Motor(2)
-
 mottione.homethatthing()
 mottitwo.homethatthing()
+
+m.calibrate_motor()
+
+m.find_dot()
+m.track_dot()
 
 #m.positions_array(70,70)
 #m.scanning_whole_area(acc,velo)
 
-while True:
-    m.find_dot()
-    m.track_dot()
+# while True:
+#     m.find_dot()
+#     m.track_dot()
