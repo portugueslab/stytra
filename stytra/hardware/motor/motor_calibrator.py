@@ -21,14 +21,10 @@ class MotorCalibrator():
 
       for pos in self.positions_h:
           for posi in self.positions_w:
-              #print ("y:", pos, ",x:", posi)
+              print ("y:", pos, ",x:", posi)
               positions_h2.append(pos)
               mottitwo.movethatthing(pos)
               mottione.movethatthing(posi)
-
-              #MotorCalibrator.calibrateMotor()
-              #grab frame from camera, maybe from calibrate function
-              #save that somewhere
 
       mottione.close()
       mottitwo.close()
@@ -64,40 +60,33 @@ class MotorCalibrator():
       self.distance_x = int(self.center_x - self.point_x)
       self.distance_y = int(self.center_y - self.point_y)
 
-      print("dot points x,z: ", self.point_x, self.point_y)
-      print("distancex,z to center:", self.distance_x, self.distance_y)
+      print("dot points x,y: ", self.point_x, self.point_y)
+      print("distance x,y to center:", self.distance_x, self.distance_y)
 
   def track_dot(self):
       pos_x = mottitwo.get_position()
       pos_y = mottione.get_position()
       print ("stage at x,y:",pos_x, pos_y)
 
-      if self.distance_y < 0:
-          con = (pos_y + (self.distance_y*16666))
-          mottione.movethatthing(con)
+      conx = abs(self.distance_x)
+      connx = int(conx *1666) #some over/undershooting through rounding errors
+      cony = abs(self.distance_y)
+      conny = int(cony * 1666) #some over/undershooting through rounding errors
+
+      if self.distance_x > 0:
+          conn = (pos_x + connx)
+          mottitwo.movethatthing(conn)
+
+      if self.distance_x < 0:
+          conn = (pos_x - connx)
+          mottitwo.movethatthing(conn)
+
       if self.distance_y > 0:
-          con = (pos_y - (self.distance_y * 16666))
-          mottione.movethatthing(con)
-
-
-
-      #conv_x = int(2200000 + distance_x* 16666)
-      #conv_y = int(2200000 + distance_y* 16666)
-
-      #print (conv_x, conv_y)
-
-      #mottione.movethatthing(conv_y)
-      #mottitwo.movethatthing(conv_x)
-
-
-
-      #dot location in pixels
-
-
-
-
-      #return tuple
-      # convert and send to stage
+          conn = (pos_y + conny)
+          mottione.movethatthing(conn)
+      if self.distance_y < 0:
+          conn = (pos_y - conny)
+          mottione.movethatthing(conn)
 
   def positions_array(self,  w, h):
 
@@ -139,24 +128,19 @@ class MotorCalibrator():
       pass
 
 #############################################################################
-
-m = MotorCalibrator()
-
-# m.find_dot()
-# m.track_dot()
-# m.find_dot()
-m.positions_array(70,70)
-
 acc = 204552
 velo = 107374182
 
+m = MotorCalibrator()
 mottione  = Motor(1)
 mottitwo = Motor(2)
 
 mottione.homethatthing()
-#mottione.movethatthing(2200000 - 40000)
 mottitwo.homethatthing()
 
-m.scanning_whole_area(acc,velo)
+#m.positions_array(70,70)
+#m.scanning_whole_area(acc,velo)
 
-
+while True:
+    m.find_dot()
+    m.track_dot()

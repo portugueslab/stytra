@@ -1,4 +1,4 @@
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Event
 from queue import Empty
 from time import sleep
 import datetime
@@ -13,7 +13,7 @@ class SendPositionsProcess(Process):
     def run(self):
         for i in range(10):
             self.position_queue.put(np.random.rand())
-            sleep(0.1)
+            sleep(0.01)
 
 
 class ReceiverProcess(Process):
