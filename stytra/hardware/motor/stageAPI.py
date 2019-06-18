@@ -13,7 +13,7 @@ from thorlabs_kinesis._utils import (
 )
 
 from thorlabs_kinesis import benchtop_brushless_motor as bbm
-
+import random
 ##############################################
 
 lib = cdll.LoadLibrary("Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll")
@@ -220,3 +220,8 @@ velo2 = 107374182
 position2 = int(2200000 /2)
 
 #positions = [2200000 *2, 3620000, 400, 655000, 2200000 ]
+
+
+for i in range(0, 10):
+    i = random.randint(1, 4400000)
+    print(i)
