@@ -42,17 +42,62 @@ class BaslerCamera(Camera):
         # pass
         # # try:
         if param == "exposure":
-            self.camera.ExposureTime = val
+            self.camera.ExposureTime = val*1000
             return ""
         else:
-            return param + "not implemented"
+            return "W:" + param + "not implemented"
 
     def read(self):
         """ """
-        res = self.camera.RetrieveResult(0, pylon.TimeoutHandling_Return)
+        grabResult = self.camera.RetrieveResult(5000,
+                                           pylon.TimeoutHandling_ThrowException)
 
-        return res.Array
+        if grabResult.GrabSucceeded():
+            # Access the image data.
+            # print("SizeX: ", grabResult.Width)
+            # print("SizeY: ", grabResult.Height)
+            img = grabResult.Array
+            # print("Gray value of first pixel: ", img[0, 0])
+            grabResult.Release()
+            return img
+
+        else:
+            return None
+
+
+
+        # return res.Array
 
     def release(self):
         """ """
-        self.camera.stopGrabbing()
+        pass
+        # self.camera.stopGrabbing()
+
+
+if __name__ == "__main__":
+    camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+    # camera.Open()
+    # camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
+    # res = camera.RetrieveResult(0, pylon.TimeoutHandling_Return)
+    # print(res)
+    # re.
+    # print(res.Array)
+    # camera.stopGrabbing()
+    # camera.Close()
+
+    # camera = pylon.InstantCamera(
+    #     pylon.TlFactory.GetInstance().CreateFirstDevice())
+    camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+
+    # while camera.IsGrabbing():
+    grabResult = camera.RetrieveResult(5000,
+                                       pylon.TimeoutHandling_ThrowException)
+
+    if grabResult.GrabSucceeded():
+        # Access the image data.
+        print("SizeX: ", grabResult.Width)
+        print("SizeY: ", grabResult.Height)
+        img = grabResult.Array
+        print("Gray value of first pixel: ", img[0, 0])
+
+    grabResult.Release()
