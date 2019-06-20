@@ -178,7 +178,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
     Parameters
     ----------
-        tracking_config: dict
+        tracking: dict
             containing fields:  tracking_method
                                 estimator: can be vigor for embedded fish, position
                                     for freely-swimming, or a custom subclass of Estimator
@@ -202,6 +202,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
+        self.arguments.update(locals())
 
         self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
 
@@ -330,7 +331,7 @@ class TrackingExperiment(CameraVisualExperiment):
         """Save tail position and dynamic parameters and terminate.
 
         """
-        super().save_data()
+
         self.window_main.camera_display.save_image(
             name=self.filename_base() + "img.png"
         )
@@ -344,6 +345,8 @@ class TrackingExperiment(CameraVisualExperiment):
             self.save_log(self.estimator.log, "estimator_log")
         except AttributeError:
             pass
+
+        super().save_data()
 
     def set_protocol(self, protocol):
         """Connect new protocol start to resetting of the data accumulator.

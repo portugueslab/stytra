@@ -58,6 +58,14 @@ class Stytra:
             downsampling: int
                 how many times to downsample the image (for some ximea cameras)
 
+            roi: tuple of int (x, y, w, h)
+                ROI for cameras that support it
+
+            max_buffer_length: int, default 1000
+                the maximal length of the replay buffer in frames, can to be adjusted
+                depending on the memory of the computer and the camera resolution
+                and framerate
+
         tracking : dict
             preprocessing_method: str, optional
                "prefilter" or "bgsub"

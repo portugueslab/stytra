@@ -9,11 +9,10 @@ class TrackingWindmillProtocol(WindmillProtocol):
     # To add tracking to a protocol, we simply need to add a tracking
     # argument to the stytra_config:
     stytra_config = dict(
-        tracking=dict(embedded=True, method="eyes_tail"),
+        tracking=dict(embedded=True, method="eyes"),
         camera=dict(
-            video_file="/Users/luigipetrucco/Desktop/160222_1.avi"
-            #video_file=str(Path(__file__).parent / "assets" /
-            # "fish_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" /
+             "fish_compressed.h5")
         ),
     )
 

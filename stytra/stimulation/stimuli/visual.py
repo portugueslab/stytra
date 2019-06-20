@@ -852,7 +852,7 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
         # draw the circle
         p.setBrush(QBrush(QColor(*self.circle_color)))
         p.drawEllipse(
-            QPointF(self.x / mm_px, self.y / mm_px),
-            self.radius / mm_px,
-            self.radius / mm_px,
+            QPointF(self.x * w, self.y * h),
+            self.radius * w,
+            self.radius * h,
         )

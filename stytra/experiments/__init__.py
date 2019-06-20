@@ -224,6 +224,7 @@ class Experiment(QObject):
         self.dc.restore_from_saved()
         self.set_id()
         self.make_window()
+        self.protocol_runner.update_protocol()
 
         if self.trigger is not None:
             self.trigger.start()
@@ -325,7 +326,14 @@ class Experiment(QObject):
                     db_id = -1
                 self.dc.add_static_data(db_id, name="general/db_index")
 
+                # Clean up arguments dict:
+                kwargs = self.arguments.pop("kwargs")
+                self.arguments.update(kwargs)
+
                 # Get program name and version and save to the data_log:
+                git_hash = None
+                version = None
+
                 try:
                     repo = git.Repo(sys.argv[0], search_parent_directories=True)
                     git_hash = repo.head.object.hexsha
@@ -333,21 +341,21 @@ class Experiment(QObject):
                         version = pkg_resources.get_distribution(
                             'stytra').version
                     except pkg_resources.DistributionNotFound:
-                        version=None
                         self.logger.info("Could not find stytra version")
-                    self.dc.add_static_data(
-                        dict(
-                            git_hash=git_hash,
-                            name=sys.argv[0],
-                            arguments=self.arguments,
-                            version=version,
-                            dependencies=list(imports())
-                        ),
-                        name="general/program_version",
 
-                    )
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
+
+                self.dc.add_static_data(
+                    dict(
+                        git_hash=git_hash,
+                        name=sys.argv[0],
+                        arguments=self.arguments,
+                        version=version,
+                        dependencies=list(imports())
+                    ),
+                    name="general/program_version",
+                )
 
                 self.dc.save(
                     self.filename_base() + "metadata.json")  # save data_log

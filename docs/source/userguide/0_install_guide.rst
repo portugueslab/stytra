@@ -32,6 +32,12 @@ Also, for some video-related operations (offline tracking and saving of stimulus
 
     conda install -c conda-forge ffmpeg
 
+
+as well as `PyAV <https://github.com/mikeboers/PyAV>`_::
+
+    conda install av -c conda-forge
+
+
 These are all requirements not covered by the next installation step.
 
 .. note::

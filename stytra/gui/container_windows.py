@@ -37,7 +37,10 @@ class QPlainTextEditLogger(logging.Handler):
         msg = "{} {}".format(
             datetime.datetime.now().strftime("[%H:%M:%S]"), self.format(record)
         )
-        self.widget.appendPlainText(msg)
+        try:
+            self.widget.appendPlainText(msg)
+        except:
+            pass
 
 
 class ExperimentWindow(QMainWindow):
