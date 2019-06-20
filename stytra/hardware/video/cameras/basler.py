@@ -24,7 +24,6 @@ class BaslerCamera(Camera):
         """ """
         self.camera.Open()
         self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
-        self.camera.TriggerMode.SetValue(pylon.)
 
     def set(self, param, val):
         """
