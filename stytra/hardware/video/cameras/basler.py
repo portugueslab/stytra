@@ -24,6 +24,7 @@ class BaslerCamera(Camera):
         """ """
         self.camera.Open()
         self.camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+        self.camera.TriggerMode.SetValue(pylon.)
 
     def set(self, param, val):
         """
@@ -44,8 +45,12 @@ class BaslerCamera(Camera):
         if param == "exposure":
             self.camera.ExposureTime = val*1000
             return ""
+        # elif param == "framerate":
+        #     self.camera.FrameRate = 100
+        elif param == "gain":
+            self.camera.Gain = val
         else:
-            return "W:" + param + "not implemented"
+            return "W: " + param + " not implemented"
 
     def read(self):
         """ """
@@ -76,6 +81,8 @@ class BaslerCamera(Camera):
 
 if __name__ == "__main__":
     camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+    i = camera.GetNodeMap()
+
     # camera.Open()
     # camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
     # res = camera.RetrieveResult(0, pylon.TimeoutHandling_Return)
@@ -88,6 +95,7 @@ if __name__ == "__main__":
     # camera = pylon.InstantCamera(
     #     pylon.TlFactory.GetInstance().CreateFirstDevice())
     camera.StartGrabbing(pylon.GrabStrategy_OneByOne)
+    camera.FrameRate = 10
 
     # while camera.IsGrabbing():
     grabResult = camera.RetrieveResult(5000,
