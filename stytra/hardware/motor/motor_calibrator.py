@@ -21,6 +21,7 @@ class MotorCalibrator():
       # self.cam = SpinnakerCamera()
       # self.cam.open_camera()
       # self.cam.set("exposure", 12)
+
       pass
 
   def calibrate_motor(self):
@@ -75,29 +76,29 @@ class MotorCalibrator():
 
       return self.point_x, self.point_y
 
-  def track_dot(self):
-      pos_x = mottitwo.get_position()
-      pos_y = mottione.get_position()
+  def track_dot(self, pos_x, pos_y, connx, conny, distance_x, distance_y):
+      # pos_x = mottitwo.get_position()
+      # pos_y = mottione.get_position()
       #print ("stage at x,y:",pos_x, pos_y)
 
-      conx = abs(self.distance_x)
-      connx = int(conx * self.conversion_x) #some over/undershooting through rounding errors
-      cony = abs(self.distance_y)
-      conny = int(cony * self.conversion_y) #some over/undershooting through rounding errors
+      # conx = abs(self.distance_x)
+      # connx = int(conx * self.conversion_x) #some over/undershooting through rounding errors
+      # cony = abs(self.distance_y)
+      # conny = int(cony * self.conversion_y) #some over/undershooting through rounding errors
 
-      if self.distance_x > 0:
+      if distance_x > 0:
           conn = (pos_x + connx)
           mottitwo.movethatthing(conn)
 
-      if self.distance_x < 0:
+      if distance_x < 0:
           conn = (pos_x - connx)
           mottitwo.movethatthing(conn)
 
-      if self.distance_y > 0:
+      if distance_y > 0:
           conn = (pos_y + conny)
           mottione.movethatthing(conn)
 
-      if self.distance_y < 0:
+      if distance_y < 0:
           conn = (pos_y - conny)
           mottione.movethatthing(conn)
 
@@ -144,9 +145,7 @@ class MotorCalibrator():
 
 
 #############################################################################
-# acc = 204552
-# velo = 107374182
-# #
+
 # m = MotorCalibrator()
 # mottione  = Motor(1)
 # mottitwo = Motor(2)
@@ -154,14 +153,14 @@ class MotorCalibrator():
 # mottione.setvelocity(acc, velo)
 # mottitwo.homethatthing()
 # mottitwo.setvelocity(acc,velo)
-#
+
 # m.calibrate_motor()
-# # #
-# # m.find_dot()
-# # m.track_dot()
 #
-# #m.positions_array(70,70)
-# #m.scanning_whole_area(acc,velo)
+# m.find_dot()
+# m.track_dot()
+
+#m.positions_array(70,70)
+#m.scanning_whole_area(acc,velo)
 #
 # while True:
 #     m.find_dot()

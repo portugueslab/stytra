@@ -9,8 +9,11 @@ mm.homethatthing()
 mm.open()
 mm.setvelocity(acc, velo)
 mm.close()
-#
-# mm2.homethatthing()
-# mm2.open()
-# mm2.setvelocity(acc, velo)
-# mm2.close()
+
+
+mu =Motor(2)
+
+mu.homethatthing()
+mu.open()
+mu.setvelocity(acc, velo)
+mu.close()

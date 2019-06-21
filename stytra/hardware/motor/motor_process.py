@@ -3,9 +3,10 @@ from queue import Empty
 from time import sleep
 import datetime
 import numpy as np
-# from stytra.hardware.motor.stageAPI import Motor
+from stytra.hardware.motor.stageAPI import Motor
 #import random
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
+from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import cv2
 
 
@@ -48,7 +49,7 @@ class SendPositionsProcess(Process):
             conny = int(cony * 1666)
 
             # i = random.randint(1, 4400000)
-            self.position_queue.put([connx, conny])
+            self.position_queue.put([connx, conny, distance_x, distance_y])
             print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
 
 
@@ -59,23 +60,46 @@ class ReceiverProcess(Process):
         self.position_queue = position_queue
 
     def run(self):
+
+        mottione = Motor(1)
+        mottitwo = Motor(2)
+        mc = MotorCalibrator()
+
+        mottione.open()
+        mottitwo.open()
+
         prev_event_time = datetime.datetime.now()
         start = datetime.datetime.now()
 
         while True:
             try:
                 pos = self.position_queue.get(timeout=0.01)
+                pos_x = mottitwo.get_position()
+                pos_y = mottione.get_position()
+
+                mc.track_dot(pos_x, pos_y, pos[0], pos[1], pos[2], pos[3])
+
                 print("time since last ", (datetime.datetime.now() - prev_event_time).total_seconds())
                 prev_event_time = datetime.datetime.now()
-                # print("Retrieved position x: {}".format(pos[0]))
-                # print("Retrieved position y: {}".format(pos[1]))
+                print("Retrieved position x: {}".format(pos[0]))
+                print("Retrieved position y: {}".format(pos[1]))
+
+
             except Empty:
                 pass
 
             if (datetime.datetime.now() - start).total_seconds() > 5:
                 break
 
+        mottitwo.close()
+        mottione.close()
+
+
+################################
+
+
 if __name__ == '__main__':
+
     source = SendPositionsProcess()
     receiver = ReceiverProcess(source.position_queue)
     source.start()
