@@ -1,3 +1,11 @@
+# 0.8.17
+## Fixes
+- Experiment parameters saved more consistently
+
+## Improvements
+- Initial support for Basler camera
+- Added example to test camera in computer config
+
 # 0.8.16
 ## Fixes
 - Tests on Travis working properly now for full experiments with tracking
