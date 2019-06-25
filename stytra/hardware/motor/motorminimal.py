@@ -8,12 +8,15 @@ mm =Motor(1)
 mm.homethatthing()
 mm.open()
 mm.setvelocity(acc, velo)
+# mm.movethatthing(0)
 mm.close()
 
 
 mu =Motor(2)
-
 mu.homethatthing()
 mu.open()
 mu.setvelocity(acc, velo)
+# mu.movethatthing(0)
 mu.close()
+
+

@@ -1,28 +1,99 @@
 from stytra.hardware.motor.stageAPI import Motor
 import datetime
-import random
+from time import sleep
+# import random
 
 # Run motorminimal before that here
 
 mo = Motor(1)
 
-# mo.open()
-# mo.movethatthing(4000)
+mo.open()
 
+mo.tolerance = 200
+# distances1 = [3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 27000, 30000, 33000, 36000, 39000, 42000, 45000, 48000, 51000 ]
+#
+# # for j in distances1:
+# positions =[]
+# time = []
+#
+# pos, t = mo.movethatthing(4400000)
+# print (pos, t)
 # time1 = []
 # time2 = []
-#
+# time3 = []
+# positions = []
 # for i in range(5):
+#     pos1 = mo.get_position()
+#     positions.append(pos1)
 #     start1 = datetime.datetime.now()
-#     mo.movethatthing(int(110000 +30000*2))
+#     mo.movesimple(3300000)
 #     time1.append((datetime.datetime.now() - start1).total_seconds())
+#     sleep(0.2)
 #
-#     # mo.tolerance = 2000
+#     pos2 =mo.get_position()
+#     positions.append(pos2)
 #     start2 = datetime.datetime.now()
-#     mo.movethatthing(110000)
+#     mo.stopprof()
 #     time2.append((datetime.datetime.now() - start2).total_seconds())
+#     pos3 =mo.get_position()
+#     positions.append(pos3)
+#     sleep(0.2)
+#     #
+#     # pos4 =mo.get_position()
+#     # positions.append(pos4)
+#     # start3 = datetime.datetime.now()
+#     # mo.movesimple(3300000 + 20000)
+#     # time3.append((datetime.datetime.now() - start3).total_seconds())
+#     # sleep(0.2)
+#     #
+#     # pos5 = mo.get_position()
+#     # positions.append(pos5)
 #
-# print (time1, time2)
+# print (time1)
+# print (time2)
+# # print (time3)
+# print(positions)
 
-# mo.close()
+# distances = [3000, 6000, 9000, 12000]
+# no_pos = 5000
+#
+# while True:
+#     pos = mo.get_position()
+#     print (pos)
+#     for i in distances:
+#         mo.movesimple(i)
+#         # print (i)
+#         if abs(pos - no_pos) <= 100:
+#             #mo.stopimm()
+#             mo.stopprof()
+#             mo.movesimple(100)
+#             sleep(0.4)
+#             print ("final position reached")
+#
 
+# time =[]
+# mo.tolerance = 200
+# for i in range(6):
+#     start1 = datetime.datetime.now()
+#     mo.new_move(int(110000 + 20000))
+#     time.append((datetime.datetime.now() - start1).total_seconds())
+#
+#     start2 = datetime.datetime.now()
+#     mo.new_move(110000)
+#     time.append((datetime.datetime.now() - start2).total_seconds())
+#
+# print (time)
+
+for i in range (5):
+    start = datetime.datetime.now()
+    print(i)
+    mo.movesimple(3000)
+    sleep(0.20)
+    mo.movesimple(12000)
+    print((datetime.datetime.now() - start).total_seconds())
+    sleep(0.20)
+# mo.movesimple(210000)
+# sleep(0.06)
+# mo.movethatthing(2500000)
+
+mo.close()
