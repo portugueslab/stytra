@@ -101,9 +101,9 @@ class Motor():
 
                 BMC_StopPolling(self.serial_nom, self.channel)
                 BMC_Close(self.serial_nom, self.channel)
-                #print ("Closing device and stopping Polling")
+                print ("Closing device and stopping Polling")
 
-            self.hometime = 3
+            self.hometime = 4
             sleep(self.hometime)
 
             #TODO Needs error statement if stage cant be homed for some reason
@@ -163,7 +163,7 @@ class Motor():
                     start = datetime.datetime.now()
                     err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
                     # sleep(0.01)
-                    # print("Called movetopos with error {}".format(err))
+                    print("Called movetopos with error {}".format(err))
                     # TODO print a error meesage depending on err variable
 
                     if err == 0:
@@ -177,7 +177,7 @@ class Motor():
                             # print(abs(pos - move_to))
                             # print("poition: {}".format(pos))
 
-                    return positions, times
+                    # return positions, times
                         # TODO assessment if motor gets stuck???
                 else:
                     print("Invalid position provided. Range: 0 - 4400000")

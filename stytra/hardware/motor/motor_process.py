@@ -9,7 +9,7 @@ from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import cv2
 
-
+duration = 100
 class SendPositionsProcess(Process):
     def __init__(self):
         super().__init__()
@@ -19,39 +19,36 @@ class SendPositionsProcess(Process):
         cam = SpinnakerCamera()
         cam.open_camera()
         cam.set("exposure", 12)
+        start = datetime.datetime.now()
 
-        center_y = 270
-        center_x = 360
+        # center_y = 270
+        # center_x = 360
 
-        for i in range(0, 10):
+        while True:
             start_grabbing = datetime.datetime.now()
             image_converted = cam.read()
-            print("Grabbing timing:", (datetime.datetime.now() - start_grabbing).total_seconds())
-            start = datetime.datetime.now()
-            # cv2.imshow("img", image_converted)
-            # cv2.waitKey(600)
+            # grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
+            if image_converted is not None:
+                start = datetime.datetime.now()
+                # print("shape: {}".format(image_converted.shape))
+                cv2.imshow("img", image_converted)
+                cv2.waitKey(1)
 
-            # identify dot
-            blobdet = cv2.SimpleBlobDetector_create()
-            keypoints = blobdet.detect(image_converted)
-            kps = np.array([k.pt for k in keypoints])
-            # print(kps)
+                # identify dot
+                blobdet = cv2.SimpleBlobDetector_create()
+                keypoints = blobdet.detect(image_converted)
+                kps = np.array([k.pt for k in keypoints])
+                # print(kps)
 
-            point_x = int(kps[0][0])
-            point_y = int(kps[0][1])
+                point_x = int(kps[0][0])
+                point_y = int(kps[0][1])
 
-            distance_x = int(center_x - point_x)
-            distance_y = int(center_y - point_y)
+                # i = random.randint(1, 4400000)
+                self.position_queue.put((point_x, point_y))
+                # comp.append((datetime.datetime.now() - start).total_seconds())
 
-            conx = abs(distance_x)
-            cony = abs(distance_y)
-            connx = int(conx * 1666)
-            conny = int(cony * 1666)
-
-            # i = random.randint(1, 4400000)
-            self.position_queue.put([connx, conny, distance_x, distance_y])
-            print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
-
+            if (datetime.datetime.now() - start).total_seconds() > duration:
+                break
 
 
 class ReceiverProcess(Process):
@@ -60,36 +57,61 @@ class ReceiverProcess(Process):
         self.position_queue = position_queue
 
     def run(self):
-
         mottione = Motor(1)
         mottitwo = Motor(2)
-        mc = MotorCalibrator()
+        mc = MotorCalibrator(mottione, mottitwo)
 
         mottione.open()
         mottitwo.open()
 
         prev_event_time = datetime.datetime.now()
         start = datetime.datetime.now()
+        stage_at_x =[]
+        stage_at_y =[]
+        dot_at_x = []
+        dot_at_y = []
+        time =[]
 
         while True:
-            try:
-                pos = self.position_queue.get(timeout=0.01)
+            pos = None
+            while True:
+                try:
+                    pos = self.position_queue.get(timeout=0.001)
+                except Empty:
+                    break
+            if pos is not None:
+                # print("from queue:", pos[0], pos[1])
                 pos_x = mottitwo.get_position()
+                stage_at_x.append(pos_x)
                 pos_y = mottione.get_position()
+                stage_at_y.append(pos_y)
 
-                mc.track_dot(pos_x, pos_y, pos[0], pos[1], pos[2], pos[3])
+                connx, conny, distx, disty = mc.calculate(pos[0], pos[1])
+                # print (connx, conny, distx, disty)
+                con = pos_x + connx
+                mottitwo.movesimple(con)
 
-                print("time since last ", (datetime.datetime.now() - prev_event_time).total_seconds())
+                cony = pos_y + conny
+                mottione.movesimple(cony)
+
+                dot_at_x.append(pos[0])
+                dot_at_y.append(pos[1])
+
+                # print("time since last ", (datetime.datetime.now() - prev_event_time).total_seconds())
+                time.append((datetime.datetime.now() - prev_event_time).total_seconds())
                 prev_event_time = datetime.datetime.now()
-                print("Retrieved position x: {}".format(pos[0]))
-                print("Retrieved position y: {}".format(pos[1]))
+                # print("Retrieved position x: {}".format(pos[0]))
+                # print("Retrieved position y: {}".format(pos[1]))
+                print("stagex", stage_at_x)
+                print("stagey", stage_at_y)
+                print("dotx", dot_at_x)
+                print("doty", dot_at_y)
+                print("time", time)
 
 
-            except Empty:
-                pass
-
-            if (datetime.datetime.now() - start).total_seconds() > 5:
+            if (datetime.datetime.now() - start).total_seconds() > duration:
                 break
+
 
         mottitwo.close()
         mottione.close()
