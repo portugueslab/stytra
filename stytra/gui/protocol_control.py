@@ -68,6 +68,8 @@ class ProtocolControlToolbar(QToolBar):
         self.protocol_runner.sig_timestep.connect(self.update_progress)
 
         self.protocol_runner.sig_protocol_finished.connect(self.toggle_icon)
+        self.protocol_runner.sig_protocol_updated.connect(self.update_progress)
+        self.protocol_runner.sig_protocol_interrupted.connect(self.toggle_icon)
 
     def show_stim_params_gui(self):
         """Create and show window to update protocol parameters.
@@ -96,13 +98,15 @@ class ProtocolControlToolbar(QToolBar):
 
     def toggle_icon(self):
         self.toggleStatus.flip_icon(self.protocol_runner.running)
+        self.update_progress()
 
     def update_progress(self):
         """ Update progress bar
         """
 
-        if self._update_duration_i == 0:
-            self.protocol_runner.duration = self.protocol_runner.get_duration()
+        #if self._update_duration_i == 0:
+         #   pass
+            #self.protocol_runner.duration = self.protocol_runner.get_duration()
         self._update_duration_i = (self._update_duration_i + 1) % self.update_duration_each
 
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))

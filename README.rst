@@ -12,11 +12,14 @@ A modular package to control stimulation and track behavior in zebrafish experim
 .. image:: https://badge.fury.io/py/stytra.svg
     :target: https://pypi.org/project/stytra/
 
-.. image:: https://zenodo.org/badge/137260718.svg
-   :target: https://zenodo.org/badge/latestdoi/137260718
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3238310.svg
+   :target: https://doi.org/10.5281/zenodo.3238310
 
 .. image:: https://img.shields.io/badge/docs-0.8-yellow.svg
     :target: http://www.portugueslab.com/stytra/
+    
+.. image:: https://travis-ci.org/portugueslab/stytra.svg?branch=master
+    :target: https://travis-ci.org/portugueslab/stytra
 
 
 If you are using Stytra for your own research, please `cite us <https://doi.org/10.1371/journal.pcbi.1006699>`_!

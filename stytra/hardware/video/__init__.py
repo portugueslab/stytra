@@ -98,7 +98,9 @@ class CameraSource(VideoSource):
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(
-        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1), **kwargs
+        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1),
+            max_buffer_length=1000,
+            **kwargs
     ):
         """ """
         super().__init__(*args, **kwargs)
@@ -109,6 +111,8 @@ class CameraSource(VideoSource):
         self.downsampling = downsampling
         self.roi = roi
 
+        self.max_buffer_length = max_buffer_length
+
         self.state = None
         self.ring_buffer = None
 
@@ -118,7 +122,11 @@ class CameraSource(VideoSource):
                 param_dict = self.control_queue.get(timeout=0.0001)
                 self.state.params.values = param_dict
                 for param, value in param_dict.items():
-                    messages.append(self.cam.set(param, value))
+                    ms = self.cam.set(param, value)
+                    try:
+                        messages.extend(list(ms))
+                    except TypeError:
+                        pass
             except Empty:
                 break
 
@@ -139,7 +147,8 @@ class CameraSource(VideoSource):
             self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
-        self.message_queue.put("I: " + str(self.cam.open_camera()))
+        camera_messages = list(self.cam.open_camera())
+        [self.message_queue.put(m) for m in camera_messages]
         prt = None
         while True:
             # Kill if signal is set:
@@ -155,16 +164,25 @@ class CameraSource(VideoSource):
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
 
-            res_len = int(round(self.state.framerate * self.state.ring_buffer_length))
+            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            if res_len > self.max_buffer_length:
+                res_len = self.max_buffer_length
+                self.message_queue.put("W:Replay buffer too big, make the plot"
+                                       " time range smaller for full replay"
+                                       " capabilities")
+
             if self.ring_buffer is None or res_len != self.ring_buffer.length:
                 self.ring_buffer = RingBuffer(res_len)
 
             if self.state.paused:
                 self.message_queue.put(
-                    "I: ring_buffer_size:" + str(self.ring_buffer.length)
+                    "I:Ring_buffer_size:" + str(self.ring_buffer.length)
                 )
-                self.frame_queue.put(self.ring_buffer.get_most_recent())
-
+                if self.ring_buffer.arr is not None:
+                    self.frame_queue.put(self.ring_buffer.get_most_recent())
+                else:
+                    self.message_queue.put(
+                        "E:camera paused before any frames acquired")
                 prt = None
             elif self.state.replay and self.state.replay_fps > 0:
                 messages.append(
@@ -172,11 +190,12 @@ class CameraSource(VideoSource):
                         *self.state.replay_limits, self.ring_buffer.length
                     )
                 )
-                old_fps = self.current_framerate
-                self.ring_buffer.replay_limits = (
-                    int(round(self.state.replay_limits[0] * old_fps)),
-                    int(round(self.state.replay_limits[1] * old_fps)),
-                )
+                old_fps = self.framerate_rec.current_framerate
+                if old_fps is not None:
+                    self.ring_buffer.replay_limits = (
+                        int(round(self.state.replay_limits[0] * old_fps)),
+                        int(round(self.state.replay_limits[1] * old_fps)),
+                    )
                 try:
                     self.frame_queue.put(self.ring_buffer.get())
                 except ValueError:
@@ -277,48 +296,41 @@ class VideoFileSource(VideoSource):
                 prt = time.process_time()
 
         else:
-            import cv2
+            import av
 
-            cap = cv2.VideoCapture(self.source_file)
+            container = av.open(self.source_file)
+            container.streams.video[0].thread_type = "AUTO"
+            container.streams.video[0].thread_count = 1
             ret = True
 
-            try:
-                delta_t = 1 / cap.get(cv2.CAP_PROP_FPS)
-            except ZeroDivisionError:
-                delta_t = 1 / 30
 
             prt = None
-            while ret and not self.kill_event.is_set():
-                if self.paused:
-                    ret = True
-                    frame = self.old_frame
-                else:
-                    ret, frame = cap.read()
-
-                # adjust the frame rate by adding extra time if the processing
-                # is quicker than the specified framerate
-
-                if self.control_queue is not None:
-                    self.update_params()
-
-                delta_t = 1 / self.state.framerate
-                if prt is not None:
-                    extrat = delta_t - (time.process_time() - prt)
-                    if extrat > 0:
-                        time.sleep(extrat)
-
-                if ret:
-                    self.frame_queue.put(frame[:, :, 0])
-                else:
-                    if self.loop:
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        ret = True
+            while self.loop:
+                for framedata in container.decode(video=0):
+                    if self.paused:
+                        frame = self.old_frame
                     else:
-                        break
+                        frame = framedata.to_ndarray(format="rgb24")
 
-                prt = time.process_time()
-                self.old_frame = frame
-                self.update_framerate()
+                    # adjust the frame rate by adding extra time if the processing
+                    # is quicker than the specified framerate
+
+                    if self.control_queue is not None:
+                        self.update_params()
+
+                    delta_t = 1 / self.state.framerate
+                    if prt is not None:
+                        extrat = delta_t - (time.process_time() - prt)
+                        if extrat > 0:
+                            time.sleep(extrat)
+
+                    if ret:
+                        self.frame_queue.put(frame[:, :, 0])
+
+                    prt = time.process_time()
+                    self.old_frame = frame
+                    self.update_framerate()
+
             return
 
 

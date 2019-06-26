@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.8.10",
+    version="0.8.17",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
     license="GPLv3+",
@@ -25,6 +25,7 @@ setup(
         "pillow",
         "scikit-image",
         "imageio",
+        "imageio-ffmpeg",
         "lightparam>=0.3.6",
     ],
     classifiers=[

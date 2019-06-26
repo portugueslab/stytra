@@ -4,7 +4,6 @@ from collections import namedtuple
 from time import sleep
 
 
-
 class TupProc(Process):
     def __init__(self, q):
         super().__init__()
@@ -12,7 +11,7 @@ class TupProc(Process):
         self.q.tuple_type = None
 
     def run(self):
-        _, m = self.q.get()
+        _, m = self.q.get(timeout=1.0)
         mtype = type(m)
         self.q.put(None, mtype(m[0]+1, *m[1:]))
 

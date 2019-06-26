@@ -1,3 +1,37 @@
+# 0.8.17
+## Fixes
+- Experiment parameters saved more consistently
+
+## Improvements
+- Initial support for Basler camera
+- Added example to test camera in computer config
+
+# 0.8.16
+## Fixes
+- Tests on Travis working properly now for full experiments with tracking
+
+## Improvements
+- Switched to PyAV for video reading 
+
+# 0.8.15
+## Fixes
+- Fix for eye contour detection due to a change in the OpenCV API
+
+# 0.8.14
+## Fixes
+- replay working again
+- if the camera is paused before the first frame arrives Stytra does not crash anymore
+- the replay buffer has a maximum length to prevent memory overflow
+
+# 0.8.12
+## Fixes
+- fixed Ximea bug introduced by the previous version
+- tests run again and work on Travis
+
+# 0.8.11
+## Improvements
+- Full-featured FLIR/PointGray camera support by @EricThomson and @vigji
+
 # 0.8.10
 ## Fixes
 - fixed tracking crash for displaying diagnostics in fish tracking
