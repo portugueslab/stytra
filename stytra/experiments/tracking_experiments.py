@@ -215,7 +215,8 @@ class TrackingExperiment(CameraVisualExperiment):
                 gui_dispatcher=True,
                 gui_framerate=20,
             )
-
+        if self.pipeline_cls is None:
+            raise NameError("The selected tracking method does not exist!")
         self.pipeline = self.pipeline_cls()
         assert isinstance(self.pipeline, Pipeline)
         self.pipeline.setup(tree=self.dc)
