@@ -18,7 +18,7 @@ class SendPositionsProcess(Process):
     def run(self):
         cam = SpinnakerCamera()
         cam.open_camera()
-        cam.set("exposure", 12)
+        cam.set("exposure", 30)
         start = datetime.datetime.now()
 
         # center_y = 270
