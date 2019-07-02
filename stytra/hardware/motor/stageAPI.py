@@ -29,6 +29,27 @@ def null_function():
 lib = cdll.LoadLibrary("Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll")
 print("lib", lib)
 
+
+################### code taken from Tholabs-kinesis API on github ########################
+# TODO parts of the code taken from thorlabs-kinesis API found on Github credit
+
+c_word = c_ushort
+c_dword = c_ulong
+
+def bind(lib: CDLL, func: str,
+         argtypes: List[Any]=None, restype: Any=None) -> CFUNCTYPE:
+    _func = getattr(lib, func, null_function)
+    _func.argtypes = argtypes
+    _func.restype = restype
+
+    return _func
+
+def null_function():
+    pass
+
+TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
+TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
+
 #####################################################
 TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
 TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
@@ -38,7 +59,6 @@ BMC_StopPolling = bind(lib, "BMC_StopPolling",[c_char_p, c_short], c_bool)
 BMC_Close = bind(lib, "BMC_Close",[c_char_p,c_short], c_int)
 BMC_Home = bind(lib, "BMC_Home", [c_char_p, c_short], c_int)
 BMC_RequestVelParams = bind(lib, "BMC_RequestVelParams", [c_char_p, c_short],c_short)
-#BMC_GetVelParams = bind(lib, "BMC_GetVelParams", [c_char_p, c_short,c_int, c_int], c_short)
 BMC_GetVelParams = bind(lib, "BMC_GetVelParams", [c_char_p, c_short,POINTER(c_int), POINTER(c_int)], c_short)
 BMC_SetVelParams = bind(lib, "BMC_SetVelParams", [c_char_p, c_short, c_int, c_int], c_short)
 BMC_GetPosition = bind(lib, "BMC_GetPosition", [c_char_p, c_short], c_int)
@@ -84,7 +104,7 @@ class Motor():
                 print ("No serial number detected. Please check Device Status.")
                 self.serial_nom_set = False
 
-            #Set some basic stuff
+            #Set some basics
             self.sleeptime = 0.01
             self.channel = channel
             self.tolerance = 100
@@ -93,8 +113,6 @@ class Motor():
     def sethomingvelo(self):
 
         """Will be called by homethatthing to make homing faster."""
-
-        BMC_Open(self.serial_nom, self.channel)
         BMC_GetHomingVelocity(self.serial_nom, self.channel)
         BMC_SetHomingVelocity(self.serial_nom, self.channel, self.homing_velo)
 
@@ -110,17 +128,15 @@ class Motor():
 
                 Motor.sethomingvelo(self)
 
-                BMC_Home(self.serial_nom, self.channel)
-                #print("Homing")
+                err = BMC_Home(self.serial_nom, self.channel)
+                print("Called homing with error {}".format(err))
 
                 BMC_StopPolling(self.serial_nom, self.channel)
                 BMC_Close(self.serial_nom, self.channel)
                 # print ("Closing device and stopping Polling")
 
-            self.hometime = 4
+            self.hometime = 5
             sleep(self.hometime)
-
-            #TODO Needs error statement if stage cant be homed for some reason
 
         if self.serial_nom_set == False:
             print ("Serial number not found. No Device detected to be homed.")
@@ -128,10 +144,9 @@ class Motor():
 
     def open(self):
 
-        """Opens the device and starts polling"""
+        """Opens the device"""
         if self.serial_nom_set == True:
             BMC_Open(self.serial_nom, self.channel)
-            # BMC_StartPolling(self.serial_nom, self.channel, 250)
 
         if self.serial_nom_set == False:
             print ("Serial number not found. No Device detected to be opened.")
@@ -151,13 +166,14 @@ class Motor():
                 BMC_GetVelParams(self.serial_nom, self.channel, byref(acc), byref(max_vel))
                 BMC_SetVelParams(self.serial_nom, self.channel, acceleration, velocity)
                 sleep(self.sleeptime)
-                return True
+                self.setvelo = True
             else:
                 print ("Velocity set was too low (range:53687091 - 107374182). Please enter a valid velocity. ")
-                return False
+                self.setvelo = False
 
         if self.serial_nom_set == False:
-            print("Serial number not found. Velcoity could not be set.")
+            print("Serial number not found. Velocity could not be set.")
+
 
 
     def movethatthing(self, move_to):
@@ -206,7 +222,9 @@ class Motor():
 
     def movesimple(self, move_to):
         err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
+        #sleep(self.sleeptime)
         # print("moving", err)
+        #TODO might need to add a sleeptime estimator based on velo and dist here
 
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)

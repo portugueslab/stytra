@@ -3,17 +3,17 @@ acc = int(204552/100)
 velo = int (107374182/80)
 
 
-mm =Motor(1)
-mm.homethatthing()
-mm.open()
-mm.setvelocity(acc, velo)
-mm.close()
+m1 =Motor(1)
+m1.homethatthing()
+m1.open()
+m1.setvelocity(acc, velo)
+m1.close()
 
 
-mu =Motor(2)
-mu.homethatthing()
-mu.open()
-mu.setvelocity(acc, velo)
-mu.close()
+m2 =Motor(2)
+m2.homethatthing()
+m2.open()
+m2.setvelocity(acc, velo)
+m2.close()
 
 

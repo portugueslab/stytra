@@ -8,6 +8,8 @@ from stytra.hardware.motor.stageAPI import Motor
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import cv2
+import deepdish as dd
+import pandas as pd
 
 duration = 100
 class SendPositionsProcess(Process):
@@ -98,16 +100,14 @@ class ReceiverProcess(Process):
                 dot_at_y.append(pos[1])
 
                 # print("time since last ", (datetime.datetime.now() - prev_event_time).total_seconds())
-                time.append((datetime.datetime.now() - prev_event_time).total_seconds())
-                prev_event_time = datetime.datetime.now()
+                time.append((datetime.datetime.now() - start).total_seconds())
+                # prev_event_time = datetime.datetime.now()
                 # print("Retrieved position x: {}".format(pos[0]))
                 # print("Retrieved position y: {}".format(pos[1]))
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                dd.io.save("stage_movement.h5", pd.DataFrame(dict(stage_x=stage_at_x,
-                                                                  stage_y =stage_at_y,
-                                                                  dot_x =dot_at_x,
-                                                                  dot_y=dot_at_y,
+                dd.io.save("stage_movement.h5", pd.DataFrame(dict(stage_x=stage_at_x, stage_y =stage_at_y,
+                                                                  dot_x =dot_at_x, dot_y=dot_at_y,
                                                                   time_passed = time)))
                 break
 
