@@ -106,8 +106,10 @@ class ReceiverProcess(Process):
                 # print("Retrieved position y: {}".format(pos[1]))
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                dd.io.save("stage_movement.h5", pd.DataFrame(dict(stage_x=stage_at_x, stage_y =stage_at_y,
-                                                                  dot_x =dot_at_x, dot_y=dot_at_y,
+                dd.io.save("stage_movement.h5", pd.DataFrame(dict(stage_x=stage_at_x,
+                                                                  stage_y =stage_at_y,
+                                                                  dot_x =dot_at_x,
+                                                                  dot_y=dot_at_y,
                                                                   time_passed = time)))
                 break
 
