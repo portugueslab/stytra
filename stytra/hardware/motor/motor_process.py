@@ -86,7 +86,7 @@ class ReceiverProcess(Process):
                 pos_y = mottione.get_position()
                 stage_at_y.append(pos_y)
 
-                connx, conny, distx, disty = mc.calculate(pos[0], pos[1])
+                connx, conny = mc.calculate(pos[0], pos[1])
                 # print (connx, conny, distx, disty)
                 con = pos_x + connx
                 mottitwo.movesimple(con)
@@ -102,14 +102,13 @@ class ReceiverProcess(Process):
                 prev_event_time = datetime.datetime.now()
                 # print("Retrieved position x: {}".format(pos[0]))
                 # print("Retrieved position y: {}".format(pos[1]))
-                print("stagex", stage_at_x)
-                print("stagey", stage_at_y)
-                print("dotx", dot_at_x)
-                print("doty", dot_at_y)
-                print("time", time)
-
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
+                dd.io.save("stage_movement.h5", pd.DataFrame(dict(stage_x=stage_at_x,
+                                                                  stage_y =stage_at_y,
+                                                                  dot_x =dot_at_x,
+                                                                  dot_y=dot_at_y,
+                                                                  time_passed = time)))
                 break
 
 

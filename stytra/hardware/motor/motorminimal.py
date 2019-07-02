@@ -1,6 +1,6 @@
 from stytra.hardware.motor.stageAPI import Motor
-acc = 204552
-velo = 107374182
+acc = int(204552/100)
+velo = int (107374182/80)
 
 
 mm =Motor(1)

@@ -1,22 +1,37 @@
 "Bindings for Thorlabs Benchtop Brushless Motor DLL"
 from ctypes import *
 from time import sleep
-import datetime
-
-
-from thorlabs_kinesis._utils import (
-    c_dword,
-    bind
+from typing import (
+    Any,
+    List,
 )
 
-from thorlabs_kinesis import benchtop_brushless_motor as bbm
-import random
-##############################################
+#################### Code from other wrapper from Github ##########################
+
+c_word = c_ushort
+c_dword = c_ulong
+
+
+def bind(lib: CDLL, func: str,
+         argtypes: List[Any]=None, restype: Any=None) -> CFUNCTYPE:
+    _func = getattr(lib, func, null_function)
+    _func.argtypes = argtypes
+    _func.restype = restype
+
+    return _func
+
+
+def null_function():
+    pass
+
+######################################################
 
 lib = cdll.LoadLibrary("Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll")
 print("lib", lib)
 
 #####################################################
+TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
+TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
 BMC_StartPolling = bind(lib, "BMC_StartPolling",[c_char_p, c_short, c_int], c_bool) #true is successful
 BMC_Open = bind(lib, "BMC_Open",[c_char_p, c_short], c_int) # 0 is success
 BMC_StopPolling = bind(lib, "BMC_StopPolling",[c_char_p, c_short], c_bool)
@@ -41,7 +56,6 @@ BMC_StopImmediate = bind(lib, "BMC_StopImmediate", [c_char_p, c_short], c_short)
 
 # TODO .dll library bindings to a different file ????
 # TODO add examples for this library in a seperate file
-# TODO parts of the code taken from thorlabs-kinesis API found on Github credit
 
 class Motor():
     """this parameters are for the Thorlabs Benchtop Brushless motor BBD203 taken
@@ -55,11 +69,11 @@ class Motor():
 
         """Building a List of devices and extracting the Serial Number"""
 
-        if bbm.TLI_BuildDeviceList() == 0:
+        if TLI_BuildDeviceList() == 0:
             # Extracting serial number for following code by building a buffer and filling it
             receive_buffer: c_char_p = c_char_p(bytes(" " * 250, "utf-8"))
-            buffer_size = bbm.c_dword(250)
-            bbm.TLI_GetDeviceListExt(receive_buffer, buffer_size)
+            buffer_size = c_dword(250)
+            TLI_GetDeviceListExt(receive_buffer, buffer_size)
             serial_nos = receive_buffer.value.decode("utf-8").strip().split(',')
             self.serial_nom = c_char_p(bytes(serial_nos[0], "utf-8"))
 
@@ -74,7 +88,7 @@ class Motor():
             self.sleeptime = 0.01
             self.channel = channel
             self.tolerance = 100
-            self.homing_velo = int(107374182/8)
+            self.homing_velo = int(107374182/10)
 
     def sethomingvelo(self):
 
@@ -101,7 +115,7 @@ class Motor():
 
                 BMC_StopPolling(self.serial_nom, self.channel)
                 BMC_Close(self.serial_nom, self.channel)
-                print ("Closing device and stopping Polling")
+                # print ("Closing device and stopping Polling")
 
             self.hometime = 4
             sleep(self.hometime)
@@ -128,7 +142,8 @@ class Motor():
         """Sets the velocity of the stage.acceleration: int, velocity: int"""
         if self.serial_nom_set == True:
 
-            if velocity in range(int (Motor.max_velo/2),int(Motor.max_velo+1)):
+            # if velocity in range(int (Motor.max_velo/2),int(Motor.max_velo+1)):
+            if Motor.max_velo//200 <= velocity <= Motor.max_velo:
                 print ("Velocity set to {}".format(velocity)) #what is the unit of that??????
                 acc = c_int()  # containers
                 max_vel = c_int()
@@ -144,25 +159,19 @@ class Motor():
         if self.serial_nom_set == False:
             print("Serial number not found. Velcoity could not be set.")
 
-    def new_move(self, move_to):
-        self.movethatthing(int(move_to*1.5))
 
     def movethatthing(self, move_to):
             """Moves the stage to a specified position.channel:int, move_to: int"""
-            # positions = []
-            # times = []
 
             if self.serial_nom_set == True:
-                if move_to in range(0, int(Motor.max_pos + 1)):
+                if  0 <=  move_to <= int(Motor.max_pos + 1):
 
-                    # TODO if velocity wasnt set set it to max here or raise error
                     BMC_RequestPosition(self.serial_nom, self.channel)
                     pos = int(BMC_GetPosition(self.serial_nom, self.channel))
                     # print("Pos before moving: {}".format(pos))
 
-                    start = datetime.datetime.now()
                     err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
-                    # sleep(0.01)
+
                     print("Called movetopos with error {}".format(err))
                     # TODO print a error meesage depending on err variable
 
@@ -172,12 +181,7 @@ class Motor():
                             BMC_RequestPosition(self.serial_nom, self.channel)
                             pos = int(BMC_GetPosition(self.serial_nom, self.channel))
                             sleep(0.04)
-                            # positions.append(pos)
-                            # times.append((datetime.datetime.now()-start).total_seconds())
-                            # print(abs(pos - move_to))
-                            # print("poition: {}".format(pos))
 
-                    # return positions, times
                         # TODO assessment if motor gets stuck???
                 else:
                     print("Invalid position provided. Range: 0 - 4400000")
@@ -204,7 +208,6 @@ class Motor():
         err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
         # print("moving", err)
 
-
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)
         print ("channel disabeled")
@@ -215,34 +218,16 @@ class Motor():
 
     def close(self):
 
-        """Closes the device and Stops polling. channel: int"""
-
+        """Closes the device and Stops polling"""
         BMC_StopPolling(self.serial_nom, self.channel)
         BMC_Close(self.serial_nom, self.channel)
-
         #TODO Error statement
 
-    def convertunits(self):
-        # this needs to be tied to the calibration file during stytra aquisition
-        # so far used bouter function(from bouter.spatial import get_scale_mm)
-        # conversionfactor = get_scale_mm(calibrationfilefromexperiment)*encoder_counts_per_unit
-        #newunit = fishposition*conversionfactor
-        #return newunit
-        #needs to be continiously used
-        pass
-
-    def followfish(self):
-        #needs some input from stytra to follow the fish
-        pass
 
     def movemanualo(self):
         #maybe something to move the stage manually by keyboard
-        # Alternative: disable stage lock to move it by hand until you are over the fish
         pass
 
     def exportlogfile(self):
-        #im sure there is already something in stytra
-        #f = open("logfile.txt", "w")
-        #f.close()
         pass
 
