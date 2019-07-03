@@ -77,6 +77,9 @@ class TrackingProcess(FrameProcess):
             except Empty:
                 break
 
+    def send_to_queue(self, time, output):
+        self.output_queue.put(time, output)
+
     def run(self):
         """Loop where the tracking function runs."""
 
@@ -102,7 +105,7 @@ class TrackingProcess(FrameProcess):
             for msg in messages:
                 self.message_queue.put(msg)
 
-            self.output_queue.put(time, output)
+            self.send_to_queue(time, output)
 
             # calculate the frame rate
             self.update_framerate()
@@ -127,6 +130,15 @@ class TrackingProcess(FrameProcess):
 
         self.i = (self.i + 1) % every_x
 
+
+class TrackingProcessMotor(TrackingProcess):
+    def __init__(self, *args, second_output_queue=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.second_output_queue = second_output_queue
+
+    def send_to_queue(self, time, output):
+        super().send_to_queue(time, output)
+        self.second_output_queue.put(time, output)
 
 
 class DispatchProcess(FrameProcess):

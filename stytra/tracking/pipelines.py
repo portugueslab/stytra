@@ -55,6 +55,15 @@ class ImageToImageNode(PipelineNode):
         return any(c.output_type_changed for c in self.children)
 
 
+class DataToDataNode(PipelineNode):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    @property
+    def output_type_changed(self):
+        return any(c.output_type_changed for c in self.children)
+
+
 class SourceNode(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__("source", *args, **kwargs)

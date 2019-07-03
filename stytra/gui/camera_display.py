@@ -626,3 +626,43 @@ class CameraViewFish(CameraViewCalib):
                 self.lines_fish.setData(x=xs, y=ys)
         except ValueError as e:
             pass
+
+
+class CameraViewDot(CameraViewCalib):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.points_fish = pg.ScatterPlotItem(
+            size=5, pxMode=True, brush=(255, 0, 0), pen=None
+        )
+        self.display_area.addItem(self.points_fish)
+        # self.tracking_params = self.experiment.pipeline.fishtrack._params
+
+    def retrieve_image(self):
+        super().retrieve_image()
+
+        if len(self.experiment.acc_tracking.stored_data) == 0 or \
+                self.current_image is None:
+            return
+
+        current_data = self.experiment.acc_tracking.values_at_abs_time(
+            self.current_frame_time)
+
+        n_data_per_fish = (
+            len(current_data) - 1
+        )  # the first is time, the last is area
+
+        try:
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
+            x = int(getattr(retrieved_data, "x"))
+            y = int(getattr(retrieved_data, "y"))
+            self.points_fish.setData(y=[y], x=[x])
+            # self.points_fish.setData(
+            #     y=retrieved_data[valid, 2], x=retrieved_data[valid, 0]
+            # )
+            # retrieved_data = np.array(
+            #     current_data[: -1]  # the -1 if for the diagnostic area
+            # ).reshape(n_data_per_fish)
+            # valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
+
+        except ValueError as e:
+            pass

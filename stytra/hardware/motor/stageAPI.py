@@ -6,23 +6,6 @@ from typing import (
     List,
 )
 
-#################### Code from other wrapper from Github ##########################
-
-c_word = c_ushort
-c_dword = c_ulong
-
-
-def bind(lib: CDLL, func: str,
-         argtypes: List[Any]=None, restype: Any=None) -> CFUNCTYPE:
-    _func = getattr(lib, func, null_function)
-    _func.argtypes = argtypes
-    _func.restype = restype
-
-    return _func
-
-
-def null_function():
-    pass
 
 ######################################################
 
@@ -51,8 +34,6 @@ TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
 TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
 
 #####################################################
-TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
-TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
 BMC_StartPolling = bind(lib, "BMC_StartPolling",[c_char_p, c_short, c_int], c_bool) #true is successful
 BMC_Open = bind(lib, "BMC_Open",[c_char_p, c_short], c_int) # 0 is success
 BMC_StopPolling = bind(lib, "BMC_StopPolling",[c_char_p, c_short], c_bool)

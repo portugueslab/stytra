@@ -54,9 +54,11 @@ class SendPositionsProcess(Process):
 
 
 class ReceiverProcess(Process):
-    def __init__(self, position_queue):
+    def __init__(self, position_queue, finished_event):
         super().__init__()
         self.position_queue = position_queue
+        self.motor_position_queue = Queue()
+        self.finished_event = finished_event
 
     def run(self):
         mottione = Motor(1)
@@ -74,7 +76,8 @@ class ReceiverProcess(Process):
         dot_at_y = []
         time =[]
 
-        while True:
+        while not self.finished_event.is_set():
+
             pos = None
             while True:
                 try:

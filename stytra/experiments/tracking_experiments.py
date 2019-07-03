@@ -204,17 +204,9 @@ class TrackingExperiment(CameraVisualExperiment):
         super().__init__(*args, **kwargs)
         self.arguments.update(locals())
 
-        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
 
-        self.frame_dispatcher = TrackingProcess(
-                in_frame_queue=self.camera.frame_queue,
-                finished_signal=self.camera.kill_event,
-                pipeline=self.pipeline_cls,
-                processing_parameter_queue=self.processing_params_queue,
-                output_queue=self.tracking_output_queue,
-                gui_dispatcher=True,
-                gui_framerate=20,
-            )
+        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
+        self.initialize_tracking_meth()
 
         self.pipeline = self.pipeline_cls()
         assert isinstance(self.pipeline, Pipeline)
@@ -262,6 +254,16 @@ class TrackingExperiment(CameraVisualExperiment):
                                                                 )
 
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
+
+    def initialize_tracking_meth(self):
+        self.frame_dispatcher = TrackingProcess(
+            in_frame_queue=self.camera.frame_queue,
+            finished_signal=self.camera.kill_event,
+            pipeline=self.pipeline_cls,
+            processing_parameter_queue=self.processing_params_queue,
+            output_queue=self.tracking_output_queue,
+            gui_dispatcher=True,
+            gui_framerate=20)
 
     def reset(self):
         super().reset()

@@ -1,117 +1,139 @@
-from stytra.hardware.motor.stageAPI import Motor
-from stytra.hardware.motor.motor_calibrator import MotorCalibrator
-
-import datetime
+from multiprocessing import Process, Queue, Event
+from queue import Empty
 from time import sleep
-# import random
+import datetime
+import numpy as np
+from stytra.hardware.motor.stageAPI import Motor
+import random
+from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
+from stytra.hardware.motor.motor_calibrator import MotorCalibrator
+import cv2
+import deepdish as dd
+import pandas as pd
 
-# Run motorminimal before that here
+#########################################
+import PyQt5
+from PyQt5 import QtCore, QtGui
+from pyqtgraph.Qt import QtGui, QtCore
+import pyqtgraph as pg
+import random
 
-# mottione = Motor(1)
-#
-# mo.open()
-#
-# mo.tolerance = 200
-# distances1 = [3000, 6000, 9000, 12000, 15000, 18000, 21000, 24000, 27000, 30000, 33000, 36000, 39000, 42000, 45000, 48000, 51000 ]
-#
-# # for j in distances1:
-# positions =[]
-# time = []
-#
-# pos, t = mo.movethatthing(4400000)
-# print (pos, t)
-# time1 = []
-# time2 = []
-# time3 = []
-# positions = []
-# for i in range(5):
-#     pos1 = mo.get_position()
-#     positions.append(pos1)
-#     start1 = datetime.datetime.now()
-#     mo.movesimple(3300000)
-#     time1.append((datetime.datetime.now() - start1).total_seconds())
-#     sleep(0.2)
-#
-#     pos2 =mo.get_position()
-#     positions.append(pos2)
-#     start2 = datetime.datetime.now()
-#     mo.stopprof()
-#     time2.append((datetime.datetime.now() - start2).total_seconds())
-#     pos3 =mo.get_position()
-#     positions.append(pos3)
-#     sleep(0.2)
-#     #
-#     # pos4 =mo.get_position()
-#     # positions.append(pos4)
-#     # start3 = datetime.datetime.now()
-#     # mo.movesimple(3300000 + 20000)
-#     # time3.append((datetime.datetime.now() - start3).total_seconds())
-#     # sleep(0.2)
-#     #
-#     # pos5 = mo.get_position()
-#     # positions.append(pos5)
-#
-# print (time1)
-# print (time2)
-# # print (time3)
-# print(positions)
+app = QtGui.QApplication([])
+p = pg.plot()
+curve = p.plot()
+data = [0]
 
-# distances = [3000, 6000, 9000, 12000]
-# no_pos = 5000
-#
-# while True:
-#     pos = mo.get_position()
-#     print (pos)
-#     for i in distances:
-#         mo.movesimple(i)
-#         # print (i)
-#         if abs(pos - no_pos) <= 100:
-#             #mo.stopimm()
-#             mo.stopprof()
-#             mo.movesimple(100)
-#             sleep(0.4)
-#             print ("final position reached")
-#
+def updater():
 
-# time =[]
-# mo.tolerance = 200
-# for i in range(6):
-#     start1 = datetime.datetime.now()
-#     mo.new_move(int(110000 + 20000))
-#     time.append((datetime.datetime.now() - start1).total_seconds())
-#
-#     start2 = datetime.datetime.now()
-#     mo.new_move(110000)
-#     time.append((datetime.datetime.now() - start2).total_seconds())
-#
-# print (time)
+    data.append(random.random())
+    curve.setData(data) #xdata is not necessary
 
-#
-# time =[]
-# for i in range (5):
-#     start = datetime.datetime.now()
-#     mo.movesimple(3000)
-#     # mo.movethatthing(3000)
-#     time.append((datetime.datetime.now() - start).total_seconds())
-#     sleep(0.2)
-#     start1 = datetime.datetime.now()
-#     mo.movesimple(22000)
-#     # mo.movethatthing(22000)
-#     time.append((datetime.datetime.now() - start1).total_seconds())
-#     sleep(0.2)
-#
-# print (time)
 
-################### calibrator
-mottione = Motor(1)
-mottitwo = Motor(1)
+timer = QtCore.QTimer()
+timer.timeout.connect(updater)
+timer.start(0)
 
-mc = MotorCalibrator()
+if __name__ == '__main__':
+    import sys
+    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()
 
-mottione.open()
-mottitwo.open()
 
-conx, cony = mc.calibrate_motor()
+#############################################
 
-mottione.close()
-mottitwo.close()
+duration = 10
+
+class SendPositionsProcess(Process):
+    def __init__(self):
+        super().__init__()
+        self.position_queue = Queue()
+
+    def run(self):
+        cam = SpinnakerCamera()
+        cam.open_camera()
+        cam.set("exposure", 30)
+        start = datetime.datetime.now()
+        grab =[]
+        startshow =[]
+        blobident =  []
+
+        while True:
+            start_grabbing = datetime.datetime.now()
+            image_converted = cam.read()
+            grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
+            if image_converted is not None:
+                start_showing = datetime.datetime.now()
+                # print("shape: {}".format(image_converted.shape))
+                cv2.imshow("img", image_converted)
+                cv2.waitKey(1)
+                startshow.append((datetime.datetime.now() - start_showing).total_seconds())
+
+
+                # identify dot
+                start_blob = datetime.datetime.now()
+                blobdet = cv2.SimpleBlobDetector_create()
+                keypoints = blobdet.detect(image_converted)
+                kps = np.array([k.pt for k in keypoints])
+                # print(kps)
+                blobident.append((datetime.datetime.now() - start_blob).total_seconds())
+
+                point_x = int(kps[0][0])
+                point_y = int(kps[0][1])
+
+                # i = random.randint(1, 4400000)
+                self.position_queue.put((point_x, point_y))
+                # comp.append((datetime.datetime.now() - start).total_seconds())
+
+            if (datetime.datetime.now() - start).total_seconds() > duration:
+                dd.io.save("image_aquisition.h5", pd.DataFrame(dict(grabbing_img=grab,
+                                                                  showing_img=startshow,
+                                                                  blob_det=blobident)))
+                break
+
+class ReceiverProcess(Process):
+    def __init__(self, position_queue):
+        super().__init__()
+        self.position_queue = position_queue
+
+    def run(self):
+        prev_event_time = datetime.datetime.now()
+        start = datetime.datetime.now()
+        grabbing_queue =[]
+        grabbing_pos =[]
+        motorposition = []
+        motti1 = Motor(1)
+        motti1.open()
+
+        while True:
+            try:
+                pos = self.position_queue.get(timeout=1)
+                grabbing_queue.append((datetime.datetime.now() - prev_event_time).total_seconds())
+                prev_event_time = datetime.datetime.now()
+                # print("Retrieved position x : {}".format(pos[0]))
+                # print("Retrieved position y : {}".format(pos[1]))
+
+                start_motor_grab = datetime.datetime.now()
+                motorpos = motti1.get_position()
+                motorposition.append(motorpos)
+                grabbing_pos.append((datetime.datetime.now()- start_motor_grab).total_seconds())
+
+            except Empty:
+                pass
+
+            if (datetime.datetime.now() - start).total_seconds() > duration:
+                dd.io.save("stage_movement.h5", pd.DataFrame(dict(grabbing_queue=grabbing_queue,
+                                                                  grabbing_motor_pos=grabbing_pos,
+                                                                  motorpos = motorposition)))
+                break
+        motti1.close()
+
+################################
+
+if __name__ == '__main__':
+
+    source = SendPositionsProcess()
+    receiver = ReceiverProcess(source.position_queue)
+    source.start()
+    receiver.start()
+    source.join()
+    receiver.join()
