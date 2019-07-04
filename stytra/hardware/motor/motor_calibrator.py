@@ -28,7 +28,6 @@ class MotorCalibrator():
 
       self.distance_points_x = int(self.point_x_prev - self.point_x_after)
       self.distance_points_y = int(self.point_y_prev - self.point_y_after)
-      # print(self.distance_points_x, self.distance_points_y)
 
       self.conversion_x = int(20000/ abs(self.distance_points_x))
       self.conversion_y  = int(20000/ abs(self.distance_points_y))
@@ -38,7 +37,7 @@ class MotorCalibrator():
       return self.conversion_x, self.conversion_y
 
 
-  def find_dot(self):
+  def find_dot(self): #same as dot tracking method
       self.cam = SpinnakerCamera()
       self.cam.open_camera()
       self.cam.set("exposure", 12)
@@ -49,13 +48,10 @@ class MotorCalibrator():
       cv2.waitKey(10)
 
       #identify dot
-      blobdet = cv2.SimpleBlobDetector_create()
-      keypoints = blobdet.detect(image_converted)
-      kps = np.array([k.pt for k in keypoints])
-      print("kps: {}".format(kps))
-      self.point_x = int(kps[0][0])
-      self.point_y = int(kps[0][1])
-      # TODO:no dot found -tracking finished error message
+      idxs = np.unravel_index(np.nanargmin(im), im.shape)
+      e = (np.float(idxs[1]), np.float(idxs[0]))
+      self.point_x = e[0]
+      self.point_y = e[1]
 
       self.cam.cam.EndAcquisition()
 
@@ -89,9 +85,7 @@ class MotorCalibrator():
       mottione.movesimple(cony)
 
 
-
   def positions_array(self,  w, h):
-
       #Put in arena size and mm and get positions returned for scanning in motor units#
 
       self.width_arena = w

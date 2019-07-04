@@ -337,13 +337,10 @@ class MultiStreamPlot(QWidget):
                 # Exclude nans from calculation of percentile boundaries:
                 d = data_frame[col].values
                 if d.dtype != np.float64:
-                    print("non float")
                     continue
                 b = ~np.isnan(d)
 
-                print("b: {}".format(b))
                 if np.any(b):
-                    print("some")
                     non_nan_data = data_frame[col][b]
                     new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
                     # if the bounds are the same, set arbitrary ones
@@ -351,15 +348,11 @@ class MultiStreamPlot(QWidget):
                         new_bounds[id, 1] += 1
 
             self.update_bounds(i_acc, new_bounds)
-            # print(self.bounds[i_acc])
             for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
                 scale = ub - lb
-                print(scale)
                 if scale < 0.00001:
                     self.stream_items[i_stream].curve.setData(x=[], y=[])
                 else:
-                    print(time_array)
-                    print(i_stream + ((data_frame[col].values - lb) / scale))
                     self.stream_items[i_stream].curve.setData(
                         x=time_array,
                         y=i_stream + ((data_frame[col].values - lb) / scale),

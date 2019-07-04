@@ -2,33 +2,40 @@ from stytra.experiments.tracking_experiments import TrackingExperiment
 from stytra.tracking.tracking_process import TrackingProcessMotor
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.hardware.motor.motor_process import ReceiverProcess
-from stytra.collectors import QueueDataAccumulator, EstimatorLog, FramerateQueueAccumulator
+from stytra.collectors import QueueDataAccumulator
 
-class Motor_Experiment(TrackingExperiment):
+class MotorExperiment(TrackingExperiment):
     """"""
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        self.motor_pos_queue = NamedTupleQueue()
         self.tracked_position_queue = NamedTupleQueue()
-        # self.motor_position_queue = NamedTupleQueue()
-        super().__init__()
-        # self.motor_pos_queue = NamedTupleQueue()
+
+        super().__init__(*args, **kwargs)
+
         self.motor_process = ReceiverProcess(dot_position_queue=self.tracked_position_queue,
-                                             finished_event=self.camera.kill_event)
+                                             finished_event=self.camera.kill_event,
+                                             motor_position_queue=self.motor_pos_queue)
         self.motor_position_queue = self.motor_process.motor_position_queue
 
         self.acc_motor = QueueDataAccumulator(
             name="motor",
             experiment=self,
             data_queue=self.motor_position_queue,
-            # monitored_headers=self.pipeline.headers_to_plot
+            monitored_headers=["x_", "y_"]
         )
+
+        #TODO motti initate, home, set velo and claibrate here?
 
     def start_experiment(self):
         super().start_experiment()
         self.motor_process.run()
+        #TODO motti open here?
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
         self.motor_process.join()
+
+        #TODO motti close here?
 
     def initialize_tracking_meth(self):
         self.frame_dispatcher = TrackingProcessMotor(
@@ -40,6 +47,10 @@ class Motor_Experiment(TrackingExperiment):
             output_queue=self.tracking_output_queue,
             gui_dispatcher=True,
             gui_framerate=20)
+
+    def refresh_plots(self):
+        super().refresh_plots()
+        # self.window_main.stream_plot.add_stream(self.acc_motor)
 
 
 # exp = Motor_Experiment()
