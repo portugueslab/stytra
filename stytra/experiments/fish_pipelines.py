@@ -34,7 +34,6 @@ class DotTrackingPipeline(Pipeline):
         super().__init__()
         # self.bgsub = BackgroundSubtractor(parent=self.root)
         self.fishtrack = DotTrackingMethod(parent=self.root)
-        # self.extra_widget = StreamingPositionPlot
         self.display_overlay = CameraViewDot
 
 

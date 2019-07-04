@@ -652,7 +652,8 @@ class CameraViewDot(CameraViewCalib):
         )  # the first is time, the last is area
 
         try:
-            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
+                self.current_frame_time)
             x = int(getattr(retrieved_data, "x"))
             y = int(getattr(retrieved_data, "y"))
             self.points_fish.setData(y=[y], x=[x])
@@ -664,5 +665,5 @@ class CameraViewDot(CameraViewCalib):
             # ).reshape(n_data_per_fish)
             # valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
 
-        except ValueError as e:
+        except (TypeError, ValueError) as e:
             pass

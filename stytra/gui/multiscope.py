@@ -315,7 +315,6 @@ class MultiStreamPlot(QWidget):
             # difference from data accumulator time and now in seconds:
             delta_t = (self.experiment.t0 - current_time).total_seconds()
             data_frame = acc.get_last_t(self.time_past)
-
             # if this accumulator does not have enough data to plot, skip it
             if data_frame is None or data_frame.shape[0] <= 1:
                 for _ in sel_cols:
@@ -338,9 +337,13 @@ class MultiStreamPlot(QWidget):
                 # Exclude nans from calculation of percentile boundaries:
                 d = data_frame[col].values
                 if d.dtype != np.float64:
+                    print("non float")
                     continue
                 b = ~np.isnan(d)
+
+                print("b: {}".format(b))
                 if np.any(b):
+                    print("some")
                     non_nan_data = data_frame[col][b]
                     new_bounds[id, :] = np.percentile(non_nan_data, (0.5, 99.5), 0)
                     # if the bounds are the same, set arbitrary ones
@@ -348,12 +351,15 @@ class MultiStreamPlot(QWidget):
                         new_bounds[id, 1] += 1
 
             self.update_bounds(i_acc, new_bounds)
-
+            # print(self.bounds[i_acc])
             for col, (lb, ub) in zip(sel_cols, self.bounds[i_acc]):
                 scale = ub - lb
+                print(scale)
                 if scale < 0.00001:
                     self.stream_items[i_stream].curve.setData(x=[], y=[])
                 else:
+                    print(time_array)
+                    print(i_stream + ((data_frame[col].values - lb) / scale))
                     self.stream_items[i_stream].curve.setData(
                         x=time_array,
                         y=i_stream + ((data_frame[col].values - lb) / scale),

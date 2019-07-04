@@ -205,7 +205,8 @@ class TrackingExperiment(CameraVisualExperiment):
         self.arguments.update(locals())
 
 
-        self.pipeline_cls = pipeline_dict.get(tracking["method"], None) if isinstance(tracking["method"], str) else tracking["method"]
+        self.pipeline_cls = pipeline_dict.get(tracking["method"], None)\
+            if isinstance(tracking["method"], str) else tracking["method"]
         self.initialize_tracking_meth()
 
         self.pipeline = self.pipeline_cls()
