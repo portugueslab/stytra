@@ -24,15 +24,19 @@ class MotorExperiment(TrackingExperiment):
             monitored_headers=["x_", "y_"]
         )
 
+        self.gui_timer.timeout.connect(self.acc_motor.update_list)
+
         #TODO motti initate, home, set velo and claibrate here?
 
     def start_experiment(self):
         super().start_experiment()
-        self.motor_process.run()
+        self.motor_process.start()
         #TODO motti open here?
 
     def wrap_up(self, *args, **kwargs):
+        print("closing")
         super().wrap_up(*args, **kwargs)
+        print("super wrapped")
         self.motor_process.join()
 
         #TODO motti close here?
@@ -50,7 +54,7 @@ class MotorExperiment(TrackingExperiment):
 
     def refresh_plots(self):
         super().refresh_plots()
-        # self.window_main.stream_plot.add_stream(self.acc_motor)
+        self.window_main.stream_plot.add_stream(self.acc_motor)
 
 
 # exp = Motor_Experiment()

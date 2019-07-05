@@ -44,7 +44,7 @@ class SendPositionsProcess(Process):
             except (TypeError, IndexError):
                 e = (None, None)
 
-            self.position_queue.put(0, output_type(*e))
+            self.position_queue.put(datetime.datetime.now(), output_type(*e))
 
 
 class ReceiverProcess(Process):
@@ -63,30 +63,29 @@ class ReceiverProcess(Process):
         start = datetime.datetime.now()
         output_type = namedtuple("stagexy", ["x_", "y_"])
 
+        dt = datetime.datetime.now()
         pos = None
         while not self.finished_event.is_set():
-            sleep(0.02)
             # print("main while")
-            # try:
-            #     pos = self.position_queue.get(timeout=0.001)
-            # except Empty:
-            #     pass
-            # # print("here")
-            # if pos is not None:
-            #     # print("got position")
-            #     try:
-            #         pos_x = mottitwo.get_position()
-            #         pos_y = mottione.get_position()
-            #         time = ((datetime.datetime.now() - start).total_seconds())
-            #
-            #         e = (pos_x, pos_y)
-            #         # print (e)
-            #
-            #     except (TypeError, IndexError):
-            #         e = (0., 0.)
-            #
-            #     self.motor_position_queue.put(0, output_type(*e))
-            #     # print("put into queue")
+            try:
+                pos = self.position_queue.get(timeout=0.001)
+            except Empty:
+                pass
+            # print("here")
+            if pos is not None:
+                # print("got position")
+                try:
+                    pos_x = mottitwo.get_position()
+                    pos_y = mottione.get_position()
+                    time = datetime.datetime.now()
+
+                    e = (float(pos_x), float(pos_y))
+                    # print(e)
+
+                except (TypeError, IndexError):
+                    e = (0., 0.)
+
+                self.motor_position_queue.put(time, output_type(*e))
         mottitwo.close()
         mottione.close()
 
