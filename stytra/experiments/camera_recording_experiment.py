@@ -31,8 +31,15 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.start()
 
         # Create and connect framerate accumulator:
-        self.acc_tracking_framerate = FramerateQueueAccumulator(self, self.frame_dispatcher.framerate_queue, name="tracking",
-                                                                goal_framerate=kwargs["camera"].get("min_framerate", None))
+        self.acc_tracking_framerate = FramerateQueueAccumulator(
+            self,
+            queue=self.frame_dispatcher.framerate_queue,
+            name="tracking",
+            goal_framerate=kwargs["camera"].get(
+                "min_framerate", None
+            ),
+        )
+        
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
         # self.filename_queue = Queue()
@@ -50,7 +57,6 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.video_writer.reset_signal.set()
         super().start_protocol()
 
-
     def end_protocol(self, save=True):
         self.saving_evt.clear()
 
@@ -61,16 +67,3 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.video_writer.join()
         print("closed")
         super().wrap_up(*args, **kwargs)
-
-
-
-
-
-
-
-
-
-
-
-
-
