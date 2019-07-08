@@ -43,15 +43,21 @@ class MotorCalibrator():
       self.cam.set("exposure", 12)
       #TODO initiate camera somewhere else- cant be double initiated.
 
-      image_converted = self.cam.read()
-      cv2.imshow("img",image_converted)
+      im = self.cam.read()
+      cv2.imshow("img",im)
       cv2.waitKey(10)
+
+      # blobdet = cv2.SimpleBlobDetector_create()
+      # keypoints = blobdet.detect(im)
+      # kps = np.array([k.pt for k in keypoints])
+      # print (kps)
 
       #identify dot
       idxs = np.unravel_index(np.nanargmin(im), im.shape)
       e = (np.float(idxs[1]), np.float(idxs[0]))
       self.point_x = e[0]
       self.point_y = e[1]
+      print (self.point_x, self.point_y)
 
       self.cam.cam.EndAcquisition()
 

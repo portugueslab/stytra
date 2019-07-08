@@ -4,6 +4,7 @@ from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.hardware.motor.motor_process import ReceiverProcess
 from stytra.collectors import QueueDataAccumulator
 
+
 class MotorExperiment(TrackingExperiment):
     """"""
     def __init__(self, *args, **kwargs):
@@ -34,9 +35,7 @@ class MotorExperiment(TrackingExperiment):
         #TODO motti open here?
 
     def wrap_up(self, *args, **kwargs):
-        print("closing")
         super().wrap_up(*args, **kwargs)
-        print("super wrapped")
         self.motor_process.join()
 
         #TODO motti close here?
@@ -57,5 +56,3 @@ class MotorExperiment(TrackingExperiment):
         self.window_main.stream_plot.add_stream(self.acc_motor)
 
 
-# exp = Motor_Experiment()
-# exp.initialize_tracking_meth()

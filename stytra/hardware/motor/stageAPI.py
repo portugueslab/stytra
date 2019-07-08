@@ -58,6 +58,7 @@ BMC_StopImmediate = bind(lib, "BMC_StopImmediate", [c_char_p, c_short], c_short)
 # TODO .dll library bindings to a different file ????
 # TODO add examples for this library in a seperate file
 
+
 class Motor():
     """this parameters are for the Thorlabs Benchtop Brushless motor BBD203 taken
     from the XML file in the kinesis folder"""
@@ -66,7 +67,7 @@ class Motor():
     encoder_counts_per_unit = 20000
     max_pos = 4400000
 
-    def __init__(self, channel):
+    def __init__(self, channel, scale):
 
         """Building a List of devices and extracting the Serial Number"""
 
@@ -90,6 +91,7 @@ class Motor():
             self.channel = channel
             self.tolerance = 100
             self.homing_velo = int(107374182/10)
+            self.scale = scale
 
     def sethomingvelo(self):
 
@@ -203,9 +205,13 @@ class Motor():
 
     def movesimple(self, move_to):
         err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
-        #sleep(self.sleeptime)
-        # print("moving", err)
         #TODO might need to add a sleeptime estimator based on velo and dist here
+
+    def move_relative(self, distance):
+        pos = self.get_position()
+        to_move = distance*self.scale
+        print("moving the motor to", int(round(pos + to_move)))
+        self.movesimple(int(round(pos + to_move)))
 
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)
@@ -230,3 +236,14 @@ class Motor():
     def exportlogfile(self):
         pass
 
+
+if __name__ =="__main__":
+    mottione = Motor(1)
+    mottitwo = Motor(2)
+    mottione.open()
+    mottitwo.open()
+    y = mottione.get_position()
+    x = mottitwo.get_position()
+    print (y,x)
+    mottitwo.close()
+    mottione.close()

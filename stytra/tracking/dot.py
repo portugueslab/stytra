@@ -27,15 +27,8 @@ class DotTrackingMethod(ImageToDataNode):
         # identify dot
         try:
             msg = ""
-            # blobdet = cv2.SimpleBlobDetector_create()
-            # keypoints = blobdet.detect(im)
-            # kps = np.array([k.pt for k in keypoints])
-            #
             # self.center_y = 270  # TODO  change hardcoding and get info from camera directly
             # self.center_x = 360
-            # self.point_x = int(kps[0][0])  # change: what will happen with more than one dot?
-            # self.point_y = int(kps[0][1])
-            # e = (self.point_x, self.point_y)
             idxs = np.unravel_index(np.nanargmin(im), im.shape)
             e = (np.float(idxs[1]), np.float(idxs[0]))
         except (TypeError, IndexError):
