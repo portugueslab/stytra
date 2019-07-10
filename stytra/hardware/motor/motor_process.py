@@ -46,6 +46,7 @@ class SendPositionsProcess(Process):
             self.position_queue.put(datetime.datetime.now(), output_type(*e))
 
 
+
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, finished_event, motor_position_queue):
         super().__init__()
@@ -63,6 +64,10 @@ class ReceiverProcess(Process):
         motor_x.open()
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
+        dot_pos = []
+        motor_pos =[]
+        times = []
+
         while not self.finished_event.is_set():
 
             try:
@@ -72,8 +77,10 @@ class ReceiverProcess(Process):
 
             if last_position is not None:
                 time = datetime.datetime.now()
+                times.append(time)
                 pos_x = motor_x.get_position()
                 pos_y = motor_y.get_position()
+                motor_pos.append([pos_x, pos_y])
                 try:
                     distance_x = center_x - last_position.f0_x
                     distance_y = center_y - last_position.f0_y
@@ -82,6 +89,8 @@ class ReceiverProcess(Process):
                         print("Moving")
                         motor_x.move_relative(distance_x)
                         motor_y.move_relative(distance_y)
+                        print (distance_x, distance_y)
+                        dot_pos.append([distance_x,distance_y])
 
                     e = (float(pos_x), float(pos_y), distance_x, distance_y)
 
@@ -89,6 +98,9 @@ class ReceiverProcess(Process):
                     e = (pos_x, pos_y, 0., 0.)
 
                 self.motor_position_queue.put(time, output_type(*e))
+                dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
+                                                                  dots=dot_pos,
+                                                                  motorpos=motor_pos)))
         motor_x.close()
         motor_y.close()
 

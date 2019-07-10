@@ -13,7 +13,7 @@ class Nostim(Protocol):
     # movie saved in stytra assets.
     stytra_config = dict(
         camera=dict(type="spinnaker"),
-        tracking=dict(method="fish"),
+        tracking=dict(method="fish"), #other than that fish
         motor=dict())  #, estimator="position"))
 
     #  For a streaming from real cameras connected to the computer, specify camera type, e.g.:

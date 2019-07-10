@@ -210,8 +210,17 @@ class Motor():
     def move_relative(self, distance):
         pos = self.get_position()
         to_move = distance*self.scale
+        dotpos = int(round(pos + to_move))
         print("moving the motor to", int(round(pos + to_move)))
         self.movesimple(int(round(pos + to_move)))
+        return dotpos
+
+    def move_relative_without_move(self, distance):
+        pos = self.get_position()
+        to_move = distance*self.scale
+        dotpos = int(round(pos + to_move))
+        return dotpos
+
 
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)

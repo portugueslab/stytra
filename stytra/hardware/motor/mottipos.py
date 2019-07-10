@@ -4,40 +4,11 @@ from time import sleep
 import datetime
 import numpy as np
 from stytra.hardware.motor.stageAPI import Motor
-import random
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
-from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import cv2
 import deepdish as dd
 import pandas as pd
-
-#########################################
-import PyQt5
-from PyQt5 import QtCore, QtGui
-from pyqtgraph.Qt import QtGui, QtCore
-import pyqtgraph as pg
-import random
-
-app = QtGui.QApplication([])
-p = pg.plot()
-curve = p.plot()
-data = [0]
-
-def updater():
-
-    data.append(random.random())
-    curve.setData(data) #xdata is not necessary
-
-
-timer = QtCore.QTimer()
-timer.timeout.connect(updater)
-timer.start(0)
-
-if __name__ == '__main__':
-    import sys
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
-
+from collections import namedtuple
 
 #############################################
 
@@ -53,87 +24,100 @@ class SendPositionsProcess(Process):
         cam.open_camera()
         cam.set("exposure", 30)
         start = datetime.datetime.now()
-        grab =[]
-        startshow =[]
-        blobident =  []
-
-        while True:
-            start_grabbing = datetime.datetime.now()
-            image_converted = cam.read()
-            grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
-            if image_converted is not None:
-                start_showing = datetime.datetime.now()
-                # print("shape: {}".format(image_converted.shape))
-                cv2.imshow("img", image_converted)
-                cv2.waitKey(1)
-                startshow.append((datetime.datetime.now() - start_showing).total_seconds())
-
-
-                # identify dot
-                start_blob = datetime.datetime.now()
-                blobdet = cv2.SimpleBlobDetector_create()
-                keypoints = blobdet.detect(image_converted)
-                kps = np.array([k.pt for k in keypoints])
-                # print(kps)
-                blobident.append((datetime.datetime.now() - start_blob).total_seconds())
-
-                point_x = int(kps[0][0])
-                point_y = int(kps[0][1])
-
-                # i = random.randint(1, 4400000)
-                self.position_queue.put((point_x, point_y))
-                # comp.append((datetime.datetime.now() - start).total_seconds())
-
-            if (datetime.datetime.now() - start).total_seconds() > duration:
-                dd.io.save("image_aquisition.h5", pd.DataFrame(dict(grabbing_img=grab,
-                                                                  showing_img=startshow,
-                                                                  blob_det=blobident)))
-                break
-
-class ReceiverProcess(Process):
-    def __init__(self, position_queue):
-        super().__init__()
-        self.position_queue = position_queue
-
-    def run(self):
-        prev_event_time = datetime.datetime.now()
-        start = datetime.datetime.now()
-        grabbing_queue =[]
-        grabbing_pos =[]
-        motorposition = []
-        motti1 = Motor(1)
-        motti1.open()
+        output_type = namedtuple("dotxy", ["x", "y"])
 
         while True:
             try:
-                pos = self.position_queue.get(timeout=1)
-                grabbing_queue.append((datetime.datetime.now() - prev_event_time).total_seconds())
-                prev_event_time = datetime.datetime.now()
-                # print("Retrieved position x : {}".format(pos[0]))
-                # print("Retrieved position y : {}".format(pos[1]))
+                im = cam.read()
+                if im is not None:
+                    start = datetime.datetime.now()
+                    cv2.imshow("img", im)
+                    cv2.waitKey(1)
 
-                start_motor_grab = datetime.datetime.now()
-                motorpos = motti1.get_position()
-                motorposition.append(motorpos)
-                grabbing_pos.append((datetime.datetime.now()- start_motor_grab).total_seconds())
+                    idxs = np.unravel_index(np.nanargmin(im), im.shape)
+                    e = (np.float(idxs[1]), np.float(idxs[0]))
+
+                    point_x = e[0]
+                    point_y = e[1]
+
+                    self.position_queue.put((point_x, point_y))
+
+            except (TypeError, IndexError):
+                pass
+
+
+
+
+class ReceiverProcess(Process):
+    def __init__(self, position_queue, finished_event):
+        super().__init__()
+        self.position_queue = position_queue
+        self.finished_event = finished_event
+        self.thres = 5
+
+    def run(self):
+        motor_y = Motor(1, scale=1052)
+        motor_x = Motor(2, scale=909)
+        center_y = 270
+        center_x = 360
+        motor_y.open()
+        motor_x.open()
+
+        last_position = None
+        dot_pos = []
+        motor_pos =[]
+        times = []
+        start = datetime.datetime.now()
+
+        while not self.finished_event.is_set():
+
+            try:
+                pos = self.position_queue.get(timeout=0.001)
+                print ("gotten positions", pos)
+
+                times.append((datetime.datetime.now() - start).total_seconds())
+                pos_x = motor_x.get_position()
+                pos_y = motor_y.get_position()
+                motor_pos.append([pos_x, pos_y])
+                try:
+                    distance_x = center_x - pos[0]
+                    distance_y = center_y - pos[1]
+
+                    if distance_x ** 2 + distance_y ** 2 > self.thres ** 2:
+                        motor_x.move_relative(distance_x)
+                        motor_y.move_relative(distance_y)
+                        print("distances", distance_x, distance_y)
+                        dotposx = motor_x.move_relative_without_move(distance_x)
+                        dotposy = motor_x.move_relative_without_move(distance_y)
+                        dot_pos.append([dotposx, dotposy])
+
+
+
+                except (ValueError, TypeError, IndexError):
+                    pass
 
             except Empty:
                 pass
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                dd.io.save("stage_movement.h5", pd.DataFrame(dict(grabbing_queue=grabbing_queue,
-                                                                  grabbing_motor_pos=grabbing_pos,
-                                                                  motorpos = motorposition)))
-                break
-        motti1.close()
+                print (len(times), len(dot_pos), len(motor_pos))
+
+                df =pd.DataFrame(dict(time=times,dots=dot_pos, motorpos=motor_pos))
+                df.to_pickle('my_file.pkl')
+                motor_x.close()
+                motor_y.close()
 
 ################################
 
 if __name__ == '__main__':
-
+    event = Event()
     source = SendPositionsProcess()
-    receiver = ReceiverProcess(source.position_queue)
+    receiver = ReceiverProcess(source.position_queue, finished_event=event)
     source.start()
     receiver.start()
+
+    finishUp = True
+    sleep(20)
+    event.set()
     source.join()
     receiver.join()
