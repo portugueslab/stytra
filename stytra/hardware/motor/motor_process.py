@@ -121,10 +121,3 @@ if __name__ == '__main__':
     source.join()
     receiver.join()
 
-# cony = pos_y + int(conny * 0.95)
-# self.move_to_cony = cony
-# dsty = distance.euclidean(pos_y, self.move_to_cony)
-# print (dsty)
-# if dsty > 10000:
-#     self.motti1.movesimple(cony)
-#

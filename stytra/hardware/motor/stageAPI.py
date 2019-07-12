@@ -30,6 +30,21 @@ def bind(lib: CDLL, func: str,
 def null_function():
     pass
 
+
+class MOT_BrushlessPositionLoopParameters(Structure):
+    _fields_ = [("proportionalGain", c_word),
+                ("integralGain", c_word),
+                ("integralLimit", c_dword),
+                ("differentialGain", c_word),
+                ("derivativeRecalculationTime", c_word),
+                ("factorForOutput", c_word),
+                ("velocityFeedForward", c_word),
+                ("accelerationFeedForward", c_word),
+                ("positionErrorLimit", c_dword),
+                ("notUsed", c_word),
+                ("lastNotUsed", c_word)]
+
+
 TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
 TLI_GetDeviceListExt = bind(lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short)
 
@@ -53,6 +68,9 @@ BMC_GetHomingVelocity = bind(lib, "BMC_GetHomingVelocity", [c_char_p,c_short], c
 BMC_SetHomingVelocity = bind(lib, "BMC_SetHomingVelocity", [c_char_p, c_short, c_int], c_short)
 BMC_StopProfiled = bind(lib, "BMC_StopProfiled", [c_char_p, c_short], c_short)
 BMC_StopImmediate = bind(lib, "BMC_StopImmediate", [c_char_p, c_short], c_short)
+BMC_GetPosLoopParams = bind(lib, "BMC_GetPosLoopParams", [c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)], c_short)
+BMC_SetPosLoopParams = bind(lib, "BMC_SetPosLoopParams", [c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)], c_short)
+
 ################################################################################
 
 # TODO .dll library bindings to a different file ????
@@ -195,6 +213,37 @@ class Motor():
         # print ("position:", position)
         return position
 
+
+    def get_pos_loop_params(self):
+        posloop_info = MOT_BrushlessPositionLoopParameters()  # container
+        err = BMC_GetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
+        if err == 0:
+            print("proportionalGain: ", posloop_info.proportionalGain)
+            print("integralGain: ", posloop_info.integralGain)
+            print("integralLimit: ", posloop_info.integralLimit)
+            print("differentialGain: ", posloop_info.differentialGain)
+            print("derivativeRecalculationTime: ", posloop_info.derivativeRecalculationTime)
+            print("factorForOutput: ", posloop_info.factorForOutput)
+            print("velocityFeedForward: ", posloop_info.velocityFeedForward)
+            print("accelerationFeedForward: ", posloop_info.accelerationFeedForward)
+            print("positionErrorLimit: ", posloop_info.positionErrorLimit)
+            print("notUsed: ", posloop_info.notUsed)
+            print("lastNotUsed: ", posloop_info.lastNotUsed)
+        else:
+            print("Error getting position loop Info Block. Error Code:{}".format(err))
+
+    def set_pos_loop_params(self, pgain=int(), intgain=int(), intlim=int(),
+                                diffgain=int(), derivcalc=int()):
+        posloop_info = MOT_BrushlessPositionLoopParameters()  # container
+        posloop_info.proportionalGain = pgain
+        posloop_info.integralGain = intgain
+        posloop_info.integralLimit = intlim
+        posloop_info.differentialGain = diffgain
+        posloop_info.derivativeRecalculationTime = derivcalc
+
+        BMC_SetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
+        print("New loop parameters set.")
+
     def stopprof(self):
         err = BMC_StopProfiled(self.serial_nom, self.channel)
         print("stopping profiled", err)
@@ -203,9 +252,17 @@ class Motor():
         err = BMC_StopImmediate(self.serial_nom, self.channel)
         print ("stopping immediate", err)
 
-    def movesimple(self, move_to):
-        err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
-        #TODO might need to add a sleeptime estimator based on velo and dist here
+    def movesimple(self, position = int()):
+        BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
+        BMC_RequestPosition(self.serial_nom, self.channel)
+        motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
+
+        # while motor_pos != position:
+        #     print("Current pos {}".format(motor_pos) + " moving to {}".format(position))
+        #     print("distance: ", (position-motor_pos))
+        #     BMC_RequestPosition(self.serial_nom, self.channel)
+        #     motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
+        #     sleep(0.04)
 
     def move_relative(self, distance):
         pos = self.get_position()
@@ -221,7 +278,6 @@ class Motor():
         dotpos = int(round(pos + to_move))
         return dotpos
 
-
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)
         print ("channel disabeled")
@@ -231,28 +287,29 @@ class Motor():
         print("channel enableld")
 
     def close(self):
-
         """Closes the device and Stops polling"""
         BMC_StopPolling(self.serial_nom, self.channel)
         BMC_Close(self.serial_nom, self.channel)
         #TODO Error statement
 
-
     def movemanualo(self):
         #maybe something to move the stage manually by keyboard
         pass
 
-    def exportlogfile(self):
-        pass
 
 
 if __name__ =="__main__":
-    mottione = Motor(1)
-    mottitwo = Motor(2)
+    mottione = Motor(1, scale= 0)
+    mottitwo = Motor(2, scale= 0)
     mottione.open()
     mottitwo.open()
     y = mottione.get_position()
     x = mottitwo.get_position()
     print (y,x)
+
+    mottione.get_pos_loop_params()
+    # mottione.set_pos_loop_params(pgain=35, intgain=80, intlim=32767)
+    # mottione.get_POS_loop_params()
+
     mottitwo.close()
     mottione.close()

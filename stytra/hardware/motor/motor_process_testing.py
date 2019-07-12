@@ -10,29 +10,34 @@ import numpy as np
 import pandas as pd
 import deepdish as dd
 
-
+# duration = 10
 
 class SendPositionsProcess(Process):
     def __init__(self):
         super().__init__()
         self.position_queue = Queue()
 
-        self.l = [100, 3000, 1500,30000, 80]
+        self.l = [100, 2200000, 1500, 30000, 80]
+
 
     def run(self):
         start = datetime.datetime.now()
-        # for i in range(0, 10):
-        #     i = random.randint(22300, 330000)
-        for i in self.l:
+        somelist = []
+        for i in range(0, 10):
+            i = random.randint(1000000, 2000000)
+        #     somelist.append(i)
             self.position_queue.put(i)
-        #     # j = random.randint(22300, 330000)
-        self.position_queue.put(i)#,j])
+            sleep(0.009)
+
+        # print (somelist)
+        # for i in somelist:
+        #     self.position_queue.put(i)
+
+        # for i in self.l:
+        #     self.position_queue.put(i)
+
         print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
-        sleep(0.02)
-# #
-# #
-#
-# duration = 10
+
 
 # class SendPositionsProcess(Process):
 #     def __init__(self):
@@ -124,42 +129,56 @@ class ReceiverProcess(Process):
         start = datetime.datetime.now()
         mottione = Motor(1, scale= 0)
         mottione.open()
-        mottione.movesimple(50)
-        sleep (0.2)
 
         while True:
+            oldpos = 0
             try:
-                move_to = self.position_queue.get(timeout=1)
-                prev_event_time = datetime.datetime.now()
-                print("Retrieved position x0 : {}".format(move_to))
 
-                pos_motor = mottione.get_position()
-                print("Pos before moving: {}".format(pos_motor))
+                # newpos =self.position_queue.get(timeout=0)
+                # print("Retrieved position newpos: {}".format(newpos))
+                # mottipos = mottione.get_position()
+                # print("motor position before loop:", mottipos)
+                #
+                # if newpos != oldpos:
+                #     mottione.stopprof()
+                #     # mottione.stopimm()
+                #     mottione.movesimple(position=newpos)
+                #     mottipos = mottione.get_position()
+                #     print("motor position after move:", mottipos)
+                #     sleep(0.3)
+                #     oldpos = newpos
+                #     print ("oldpos",oldpos)
+                #
+
+                move_to = self.position_queue.get(timeout=0)
+                prev_event_time = datetime.datetime.now()
+                print("Retrieved position x: {}".format(move_to))
 
                 mottione.movesimple(move_to)
-                print ("motor moving")
-                sleep (0.2)
-                print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
 
-    #             # mottione.movethatthing(move_to)
-    #
-    #             # while not abs(pos_motor - move_to) <= 100:
-    #             #     mottione.movesimple(move_to)
-    #             #     print("Current pos {}".format(pos_motor) + " moving to {}".format(move_to))
-    #             #     pos_motor = mottione.get_position()
-    #             #     print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
-    #
-    #             # newpos = (move_to-100)
-    #             # while not pos_motor == newpos:
-    #             #     mottione.movesimple(newpos)
-    #             #     print("Current pos {}".format(pos_motor) + " moving to {}".format(move_to))
-    #             #     pos_motor = mottione.get_position()
-    #             #     print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
-    #
+                sleep (0.2)
+                motorpos = mottione.get_position()
+                print("motor at:", motorpos)
+                print("time since last event: ", (datetime.datetime.now() - prev_event_time).total_seconds())
+
+
+                # while not abs(pos_motor - move_to) <= 100:
+                #     mottione.movesimple(move_to)
+                #     print("Current pos {}".format(pos_motor) + " moving to {}".format(move_to))
+                #     pos_motor = mottione.get_position()
+                #     print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
+
+                # newpos = (move_to-100)
+                # while not pos_motor == newpos:
+                #     mottione.movesimple(newpos)
+                #     print("Current pos {}".format(pos_motor) + " moving to {}".format(move_to))
+                #     pos_motor = mottione.get_position()
+                #     print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
+
             except Empty:
                 pass
-    #
-            if (datetime.datetime.now() - start).total_seconds() >20:
+
+            if (datetime.datetime.now() - start).total_seconds() >10:
                 last_pos = mottione.get_position()
                 print ("last motor pos: {}".format(last_pos))
                 mottione.close()
