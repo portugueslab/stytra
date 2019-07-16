@@ -3,6 +3,8 @@ from stytra.hardware.motor.stageAPI import Motor
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
 import cv2
 from time import sleep
+import matplotlib.pyplot as plt
+
 
 
 class MotorCalibrator():
@@ -16,7 +18,7 @@ class MotorCalibrator():
       # self.cam.set("exposure", 12)
 
   def calibrate_motor(self):
-      self.point_x_prev, self.point_y_prev = MotorCalibrator.find_dot(self)
+      self.point_x_prev, self.point_y_prev, im = MotorCalibrator.find_dot(self)
 
       posx = self.motti2.get_position()
       self.motti2.movethatthing(posx + 20000) #20000 motot units is 1 mm
@@ -24,7 +26,7 @@ class MotorCalibrator():
       posy = self.motti1.get_position()
       self.motti1.movethatthing(posy + 20000) #20000 motot units is 1 mm
       sleep(0.5)
-      self.point_x_after, self.point_y_after = MotorCalibrator.find_dot(self)
+      self.point_x_after, self.point_y_after, im = MotorCalibrator.find_dot(self)
 
       self.distance_points_x = int(self.point_x_prev - self.point_x_after)
       self.distance_points_y = int(self.point_y_prev - self.point_y_after)
@@ -57,11 +59,11 @@ class MotorCalibrator():
       e = (np.float(idxs[1]), np.float(idxs[0]))
       self.point_x = e[0]
       self.point_y = e[1]
-      print (self.point_x, self.point_y)
+      print ("dot x,y", self.point_x, self.point_y)
 
       self.cam.cam.EndAcquisition()
 
-      return self.point_x, self.point_y
+      return self.point_x, self.point_y, im
 
 
   def calculate(self, x, y):
@@ -127,18 +129,104 @@ class MotorCalibrator():
               #im = SpinnakerCamera.read()
               # Camera needs to be initiated with exposure sometime before
 
+class MotorBackgroundSub():
+    def __init__(self, m1, m2, mc):
+        self.motti1 = m1
+        self.motti2 = m2
+        self.motorcalib = mc
+
+    def create_mask(self): #, x, y, im):
+        x,y,im = self.motorcalib.find_dot()
+
+        # create a mask with the image's shape
+        mask = np.ones(im.shape)
+        bx = int(x - 25)
+        bxx = int(x + 25)
+        by = int(y - 25)
+        byy = int(y + 25)
+        mask[by:byy, bx:bxx] = 0
+
+        self.masked = im * (-mask)
+
+        #just for visualization:
+        fig, ax = plt.subplots()
+        ax.imshow(im, cmap="gray")
+        ax.imshow(self.masked, cmap="gray")
+        ax.scatter(x, y, c="r")
+        plt.show()
+        plt.close(fig)
+
+        return self.masked
+
+    def get_motor_pos(self):
+        m_pos_y = self.motti1.get_position()
+        m_pos_x = self.motti2.get_position()
+
+        return (m_pos_x, m_pos_y)
+
+    def bgd_update(self):
+        arena = (4800, 4800) # needs to be pixels
+        arenax = 4800*1250
+        arenay = 4800*1818
+        arenaxmm = (4800 * 1250)/20000
+        arenaymm = (4800 * 1818)/20000
+
+        arenacenterx = 4800/2
+        arenacentery = 4800/2
+
+        print ("arena mu", arenax, arenay)
+        print ("arena mm", arenaxmm, arenaymm)
+        print ("arena center", arenacenterx, arenacentery)
+
+        background = np.zeros(arena)
+        print(background.shape)
+
+        x,y = MotorBackgroundSub.get_motor_pos(self)
+        print (x,y)
+
+        #TODO center stage and array
+
+
+
+
+
+
+
+        print (self.masked.shape)
+
+        # if background != 0:
+        #     new_bgd = old_bgd*0.9 + new_bgd*0.1
+        # else:
+        #     background = background
+
+        # learning_rate = 0.1
+        # background = masked
+        # background[:, :] = im.astype(np.float32) * np.float32(learning_rate) + background * np.float32(
+        #     1 - learning_rate)
+
+        # print ("image",im)
+        # print ("background learned", background)
+        # TODO learn every 400 ms
+
+
+
 
 #############################################################################
 
 if __name__ == "__main__":
-    mottione = Motor(1)
-    mottitwo = Motor(2)
+    mottione = Motor(1, scale=0)
+    mottitwo = Motor(2, scale=0)
 
     mottione.open()
     mottitwo.open()
 
-    m = MotorCalibrator(mottione, mottitwo)
-    m.calibrate_motor()
+    mc = MotorCalibrator(mottione, mottitwo)
+    mc.calibrate_motor()
+
+    # bgs = MotorBackgroundSub(mottione, mottitwo, mc)
+    # bgs.create_mask()
+    # bgs.bgd_update()
+
 
     mottitwo.close()
     mottione.close()
