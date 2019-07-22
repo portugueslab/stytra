@@ -35,7 +35,7 @@ class FishTrackingMethod(ImageToDataNode):
             "thresholded for eye and swim bladder",
         ]
 
-        self.bg_subtractor = BackgroundSubtractor()
+        self.bg_subtractor = BackgroundSubtractor() #TODO does this need changing?
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.fishes = None
 
@@ -82,7 +82,7 @@ class FishTrackingMethod(ImageToDataNode):
             desc="How many frames does the fish persist for if it is not detected",
         ),
         prediction_uncertainty: Param(0.1, (0.0, 10.0, 0.0001)),
-        fish_area: Param((200, 1200), (1, 4000)),
+        fish_area: Param((200, 1200), (1, 10000)),
         border_margin: Param(5, (0, 100)),
         tail_length: Param(60.0, (1.0, 200.0)),
         tail_track_window: Param(3, (3, 70))

@@ -98,9 +98,9 @@ class ReceiverProcess(Process):
                     e = (pos_x, pos_y, 0., 0.)
 
                 self.motor_position_queue.put(time, output_type(*e))
-                dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
-                                                                  dots=dot_pos,
-                                                                  motorpos=motor_pos)))
+                # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
+                #                                                   dots=dot_pos,
+                #                                                   motorpos=motor_pos)))
         motor_x.close()
         motor_y.close()
 

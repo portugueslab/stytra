@@ -13,22 +13,22 @@ import deepdish as dd
 
 duration = 10
 
-# class SendPositionsProcess(Process):
-#     def __init__(self):
-#         super().__init__()
-#         self.position_queue = Queue()
-#
-#         self.l = [100, 2200000, 1500, 30000, 80]
-#
-#
-#     def run(self):
-#         start = datetime.datetime.now()
-#         somelist = []
-#         for i in range(0, 10):
-#             i = random.randint(1000000, 2000000)
-#         #     somelist.append(i)
-#             self.position_queue.put(i)
-#             sleep(0.009)
+class SendPositionsProcess(Process):
+    def __init__(self):
+        super().__init__()
+        self.position_queue = Queue()
+
+        self.l = [100, 2200000, 1500, 30000, 80]
+
+
+    def run(self):
+        start = datetime.datetime.now()
+        somelist = []
+        for i in range(0, 10):
+            i = random.randint(1000000, 2000000)
+        #     somelist.append(i)
+            self.position_queue.put(i)
+            sleep(0.009)
 #
 #         # print (somelist)
 #         # for i in somelist:
@@ -39,45 +39,45 @@ duration = 10
 #
 #         print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
 
-
-class SendPositionsProcess(Process):
-    def __init__(self):
-        super().__init__()
-        self.position_queue = Queue()
-
-    def run(self):
-        cam = SpinnakerCamera()
-        cam.open_camera()
-        cam.set("exposure", 30)
-        start = datetime.datetime.now()
-        grab =[]
-        startshow =[]
-        blobident =[]
-
-        while True:
-            start_grabbing = datetime.datetime.now()
-            im = cam.read()
-            grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
-            if im is not None:
-                start_showing = datetime.datetime.now()
-                # print("shape: {}".format(image_converted.shape))
-                cv2.imshow("img", im)
-                cv2.waitKey(1)
-                startshow.append((datetime.datetime.now() - start_showing).total_seconds())
-
-                # identify dot
-                start_blob = datetime.datetime.now()
-                idxs = np.unravel_index(np.nanargmin(im), im.shape)
-                e = (np.float(idxs[1]), np.float(idxs[0]))
-                blobident.append((datetime.datetime.now() - start_blob).total_seconds())
-
-                point_x = e[0]
-                point_y = e[1]
-
-                self.position_queue.put((point_x, point_y, im))
-
-            if (datetime.datetime.now() - start).total_seconds() > duration:
-                break
+#
+# class SendPositionsProcess(Process):
+#     def __init__(self):
+#         super().__init__()
+#         self.position_queue = Queue()
+#
+#     def run(self):
+#         cam = SpinnakerCamera()
+#         cam.open_camera()
+#         cam.set("exposure", 30)
+#         start = datetime.datetime.now()
+#         grab =[]
+#         startshow =[]
+#         blobident =[]
+#
+#         while True:
+#             start_grabbing = datetime.datetime.now()
+#             im = cam.read()
+#             grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
+#             if im is not None:
+#                 start_showing = datetime.datetime.now()
+#                 # print("shape: {}".format(image_converted.shape))
+#                 cv2.imshow("img", im)
+#                 cv2.waitKey(1)
+#                 startshow.append((datetime.datetime.now() - start_showing).total_seconds())
+#
+#                 # identify dot
+#                 start_blob = datetime.datetime.now()
+#                 idxs = np.unravel_index(np.nanargmin(im), im.shape)
+#                 e = (np.float(idxs[1]), np.float(idxs[0]))
+#                 blobident.append((datetime.datetime.now() - start_blob).total_seconds())
+#
+#                 point_x = e[0]
+#                 point_y = e[1]
+#
+#                 self.position_queue.put((point_x, point_y, im))
+#
+#             if (datetime.datetime.now() - start).total_seconds() > duration:
+#                 break
 
 
 
@@ -88,58 +88,60 @@ class ReceiverProcess(Process):
         self.finished_event = finished_event
         self.thres = 5
 
-    def run(self):
-        start = datetime.datetime.now()
-        motor_y = Motor(1, scale=1818)
-        motor_x = Motor(2, scale=1250)
-        cali = MotorCalibrator(motor_x, motor_y)
-        motor_y.open()
-        motor_x.open()
-        center_y = 270
-        center_x = 360
-
-        while not self.finished_event.is_set():
-            try:
-                pos = self.position_queue.get(timeout=1)
-            except Empty:
-                pass
-
-            if pos is not None:
-                cali.background_sub(pos[0], pos[1], pos[2])
-
-                pos_x = motor_x.get_position()
-                pos_y = motor_y.get_position()
-                print ("motorpos", pos_x, pos_y)
-
-                try:
-                    distance_x = center_x - pos[0]
-                    distance_y = center_y - pos[1]
-
-                    if distance_x ** 2 + distance_y ** 2 > self.thres ** 2:
-                        print("Moving")
-                        motor_x.move_relative(distance_x)
-                        motor_y.move_relative(distance_y)
-                        print(distance_x, distance_y)
-
-                except (ValueError, TypeError, IndexError):
-                    pass
-
-            if (datetime.datetime.now() - start).total_seconds() > duration:
-                motor_x.close()
-                motor_y.close()
-                break
-
-
-
     # def run(self):
-    #     prev_event_time = datetime.datetime.now()
     #     start = datetime.datetime.now()
-    #     mottione = Motor(1, scale= 0)
-    #     mottione.open()
+    #     motor_y = Motor(1, scale=1818)
+    #     motor_x = Motor(2, scale=1250)
+    #     cali = MotorCalibrator(motor_x, motor_y)
+    #     motor_y.open()
+    #     motor_x.open()
+    #     center_y = 270
+    #     center_x = 360
     #
-    #     while True:
-    #         oldpos = 0
+    #     while not self.finished_event.is_set():
     #         try:
+    #             pos = self.position_queue.get(timeout=1)
+    #         except Empty:
+    #             pass
+    #
+    #         if pos is not None:
+    #             cali.background_sub(pos[0], pos[1], pos[2])
+    #
+    #             pos_x = motor_x.get_position()
+    #             pos_y = motor_y.get_position()
+    #             print ("motorpos", pos_x, pos_y)
+    #
+    #             try:
+    #                 distance_x = center_x - pos[0]
+    #                 distance_y = center_y - pos[1]
+    #
+    #                 if distance_x ** 2 + distance_y ** 2 > self.thres ** 2:
+    #                     print("Moving")
+    #                     motor_x.move_relative(distance_x)
+    #                     motor_y.move_relative(distance_y)
+    #                     print(distance_x, distance_y)
+    #
+    #             except (ValueError, TypeError, IndexError):
+    #                 pass
+    #
+    #         if (datetime.datetime.now() - start).total_seconds() > duration:
+    #             motor_x.close()
+    #             motor_y.close()
+    #             break
+
+
+
+    def run(self):
+        prev_event_time = datetime.datetime.now()
+        start = datetime.datetime.now()
+        mottione = Motor(1, scale= 0)
+        mottione.open()
+        moto =[]
+        time =[]
+        distances =[]
+        while True:
+    #         oldpos = 0
+            try:
     #
     #             # newpos =self.position_queue.get(timeout=0)
     #             # print("Retrieved position newpos: {}".format(newpos))
@@ -157,18 +159,27 @@ class ReceiverProcess(Process):
     #             #     print ("oldpos",oldpos)
     #             #
     #
-    #             move_to = self.position_queue.get(timeout=0)
-    #             prev_event_time = datetime.datetime.now()
-    #             print("Retrieved position x: {}".format(move_to))
-    #
-    #             mottione.movesimple(move_to)
-    #
-    #             sleep (0.2)
-    #             motorpos = mottione.get_position()
-    #             print("motor at:", motorpos)
-    #             print("time since last event: ", (datetime.datetime.now() - prev_event_time).total_seconds())
-    #
-    #
+                move_to = self.position_queue.get(timeout=0)
+                prev_event_time = datetime.datetime.now()
+                print("Retrieved position x: {}".format(move_to))
+
+                mottione.movesimple(move_to)
+
+                motor_pos = mottione.get_position()
+
+                while motor_pos != move_to:
+                    dist = (move_to - motor_pos)
+                    print("Current pos {}".format(motor_pos) + " moving to {}".format(move_to))
+                    print("distance: ", dist)
+                    motor_pos = mottione.get_position()
+                    moto.append(motor_pos)
+                    distances.append(dist)
+                    time.append((datetime.datetime.now() - prev_event_time).total_seconds())
+                    sleep(0.001)
+
+                    # print("coords", moto)
+                    # print("time", time)
+                    # print("dist", distances)
     #             # while not abs(pos_motor - move_to) <= 100:
     #             #     mottione.movesimple(move_to)
     #             #     print("Current pos {}".format(pos_motor) + " moving to {}".format(move_to))
@@ -182,20 +193,21 @@ class ReceiverProcess(Process):
     #             #     pos_motor = mottione.get_position()
     #             #     print ("time since last event: ",(datetime.datetime.now() - prev_event_time).total_seconds())
     #
-    #         except Empty:
-    #             pass
-    #
-    #         if (datetime.datetime.now() - start).total_seconds() >10:
-    #             last_pos = mottione.get_position()
-    #             print ("last motor pos: {}".format(last_pos))
-    #             mottione.close()
-    #             time = (datetime.datetime.now() - start).total_seconds()
-    #             print("time total {}".format(time))
-    #             #
-    #             # dd.io.save("stage_movement.h5", pd.DataFrame(dict(grabbing_queue=grabbing_queue,
-    #             #                                                   grabbing_motor_pos=grabbing_pos,
-    #             #                                                   motorpos=motorposition)))
-    #             break
+            except Empty:
+                pass
+
+            if (datetime.datetime.now() - start).total_seconds() >10:
+                last_pos = mottione.get_position()
+                print ("last motor pos: {}".format(last_pos))
+                mottione.close()
+                time = (datetime.datetime.now() - start).total_seconds()
+                print("time total {}".format(time))
+
+                #
+                # dd.io.save("stage_movement.h5", pd.DataFrame(dict(grabbing_queue=grabbing_queue,
+                #                                                   grabbing_motor_pos=grabbing_pos,
+                #                                                   motorpos=motorposition)))
+                break
 
 ################################
 

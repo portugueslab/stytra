@@ -11,7 +11,7 @@ class TrackingGratingsProtocol(GratingsProtocol):
     stytra_config = dict(
         tracking=dict(embedded=True, method="tail"),
         camera=dict(
-            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
+            type="spinnaker"
         ),
     )
 

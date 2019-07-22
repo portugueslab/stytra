@@ -1,6 +1,7 @@
 "Bindings for Thorlabs Benchtop Brushless Motor DLL"
 from ctypes import *
 from time import sleep
+import datetime
 from typing import (
     Any,
     List,
@@ -254,15 +255,17 @@ class Motor():
 
     def movesimple(self, position = int()):
         BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
-        BMC_RequestPosition(self.serial_nom, self.channel)
-        motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
-
+        # BMC_RequestPosition(self.serial_nom, self.channel)
+        # motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
+        #
         # while motor_pos != position:
         #     print("Current pos {}".format(motor_pos) + " moving to {}".format(position))
         #     print("distance: ", (position-motor_pos))
         #     BMC_RequestPosition(self.serial_nom, self.channel)
         #     motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
+        #     motorpositions.append(motor_pos)
         #     sleep(0.04)
+        #
 
     def move_relative(self, distance):
         pos = self.get_position()
