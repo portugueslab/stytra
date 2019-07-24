@@ -1,5 +1,5 @@
 from stytra.tracking.pipelines import Pipeline
-from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor, BackgroundSubtractorMotor
+from stytra.tracking.preprocessing import Prefilter, AdaptivePrefilter, BackgroundSubtractor, BackgroundSubtractorMotor
 from stytra.tracking.tail import CentroidTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
@@ -32,7 +32,7 @@ class FishTrackingPipeline(Pipeline):
 class FishTrackingMotorPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        self.filter = Prefilter(parent=self.root)
+        self.filter = AdaptivePrefilter(parent=self.root)
         self.bgsubmot = BackgroundSubtractorMotor(Motor(1, scale= 168), Motor(2, scale= 196),parent=self.filter)
         self.fishtrack = FishTrackingMethod(parent=self.filter)
         self.extra_widget = BoutPlot
