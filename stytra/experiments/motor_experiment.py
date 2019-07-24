@@ -22,7 +22,6 @@ class MotorExperiment(TrackingExperiment):
             name="motor",
             experiment=self,
             data_queue=self.motor_position_queue,
-            data_queue=self.motor_position_queue,
             monitored_headers=["x_", "y_"]
         )
 

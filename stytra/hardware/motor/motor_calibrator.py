@@ -101,10 +101,11 @@ class MotorCalibrator():
       positions_h = []
 
       start_w = int(self.center - (w*self.encoder_counts_per_unit/2))
+      end_w = int(self.center + (w * self.encoder_counts_per_unit / 2))
       start_h = int(self.center + (h*self.encoder_counts_per_unit/2))
       end_h = int(self.center - (h * self.encoder_counts_per_unit / 2))
 
-      for pos_w in range (start_w, w*self.encoder_counts_per_unit, self.stepsize):
+      for pos_w in range (start_w, end_w, self.stepsize):
           positions_w.append(pos_w)
 
       for pos_h in range (end_h, start_h, self.stepsize):
@@ -113,17 +114,43 @@ class MotorCalibrator():
       self.positions_h = positions_h
       self.positions_w = positions_w
       print ("positions array build")
+      return positions_h, positions_w
 
-  def scanning_whole_area(self):
+  def convert_motor_global(self, im):
+      con = 2200000 / (self.arena[0] / 2)
+      print(con)
 
+      motor_posx = self.motti1.get_position()
+      motor_posy = self.motti2.get_position()
+
+      motor_x = motor_posx / con
+      motor_y = motor_posy / con
+
+      mx = int(motor_x - im.shape[0] / 2)
+      mxx = int(motor_x + im.shape[0] / 2)
+      my = int(motor_y - im.shape[1] / 2)
+      myy = int(motor_y + im.shape[1] / 2)
+
+      return mx, mxx, my, myy
+
+  def scanning_whole_area(self, arenax, arenay):
+      self.cam = SpinnakerCamera()
+      self.cam.open_camera()
+      self.cam.set("exposure", 12)
       for pos in self.positions_h:
           for posi in self.positions_w:
               print("y:", pos, ",x:", posi)
               self.motti2.movethatthing(pos)
               self.motti1.movethatthing(posi)
-              #im = SpinnakerCamera.read()
-              # Camera needs to be initiated with exposure sometime before
+              im = cam.read()
+              self.arena = (arenax, arenay)
+              background_0 = p.zeros(self.arena)
+              mx, mxx, my, myy = MotorCalibrator.convert_motor_global()
+              background_0[mx:mxx, my:myy] = im
+              #TODO stitching/overlay problem ?
 
+      self.cam.cam.EndAcquisition()
+      return background_0
 
 
 #############################################################################
@@ -136,7 +163,9 @@ if __name__ == "__main__":
     mottitwo.open()
 
     mc = MotorCalibrator(mottione, mottitwo)
-    mc.calibrate_motor()
+    # mc.calibrate_motor()
+    pos_h, pos_w = mc.positions_array(60,86)
+    print (pos_h, pos_w)
 
 
     mottitwo.close()
