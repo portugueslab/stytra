@@ -28,7 +28,7 @@ class VideoSource(FrameProcess):
     """Abstract class for a process that generates frames, being it a camera
     or a file source. A maximum size of the memory used by the process can be
     set.
-
+    
     **Input Queues:**
 
     self.control_queue :
@@ -77,7 +77,7 @@ class CameraSource(VideoSource):
     """Process for controlling a camera.
 
     Cameras currently implemented:
-
+    
     ======== ===========================================
     Ximea    Add some info
     Avt      Add some info
@@ -265,14 +265,9 @@ class VideoFileSource(VideoSource):
     def run(self):
         if self.state is None:
             self.state = VideoControlParameters()
-        if self.source_file.endswith("h5") or self.source_file.endswith("hdf5"):
+        if self.source_file.endswith("h5"):
             framedata = dd.io.load(self.source_file)
-            
-            if isinstance(framedata, np.ndarray):
-                frames = framedata
-            else:
-                frames = framedata["video"]
-
+            frames = framedata["video"]
             i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():
