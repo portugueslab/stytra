@@ -3,23 +3,19 @@ from anytree import PreOrderIter, Node, Resolver
 from multiprocessing import Queue
 from collections import namedtuple
 from itertools import chain
-import numpy as np
 
 
 NodeOutput = namedtuple("NodeOutput", "messages data")
 
 
 class PipelineNode(Node):
-    def __init__(self, *args, run_every=1, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._params = None
         self.diagnostic_image_options = []
         self.diagnostic_image = None
         self.set_diagnostic = None
         self._output_type = None
-        self._run_every = run_every
-        self._out = None
-        self._counter = 0
 
     def reset(self):
         pass
@@ -39,17 +35,12 @@ class PipelineNode(Node):
         return self.separator.join([""] + [str(node.name) for node in self.path])
 
     def process(self, *inputs) -> NodeOutput:
-
-        if np.mod(self._counter, self._run_every) == 0:
-            out = self._process(*inputs, **self._params.params.values)
-            try:
-                assert isinstance(out, NodeOutput)
-            except AssertionError:
-                raise TypeError("Output type of "+self.name+" is wrong, "+str(type(out)))
-            self._out = out
-            self._counter = 0
-        self._counter += 1
-        return self._out
+        out = self._process(*inputs, **self._params.params.values)
+        try:
+            assert isinstance(out, NodeOutput)
+        except AssertionError:
+            raise TypeError("Output type of "+self.name+" is wrong, "+str(type(out)))
+        return out
 
     def _process(self, *inputs, set_diagnostic=None, **kwargs) -> NodeOutput:
         return NodeOutput([], None)
