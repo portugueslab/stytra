@@ -13,6 +13,8 @@ from lightparam.gui import ParameterGui, ControlToggleIcon
 
 from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
+import datetime
+
 
 class SingleLineROI(pg.LineSegmentROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
@@ -541,6 +543,43 @@ class CameraViewCalib(CameraViewWidget):
         pass
 
 
+# @jit(nopython=True)
+# def _tail_points_from_coords(coords, seglen):
+#     """ Computes the tail points from a list obtained from a data accumulator
+#
+#     Parameters
+#     ----------
+#     coords
+#         per fish, will be x, y, theta, theta_00, theta_01, theta_02...
+#     seglen
+#         length of a single segment
+#
+#     Returns
+#     -------
+#         xs, ys
+#         list of coordinates
+#     """
+#
+#     xs = []
+#     ys = []
+#     angles = np.zeros(coords.shape[1] - 5)
+#     for i_fish in range(coords.shape[0]):
+#         xs.append(coords[i_fish, 2])
+#         ys.append(coords[i_fish, 0])
+#         angles[0] = coords[i_fish, 4]
+#         angles[1:] = angles[0] + coords[i_fish, 6:]
+#         for i, an in enumerate(angles):
+#             if i > 0:
+#                 xs.append(xs[-1])
+#                 ys.append(ys[-1])
+#
+#             # for drawing the lines, points need to be repeated
+#             xs.append(xs[-1] + seglen * sin(an))
+#             ys.append(ys[-1] + seglen * cos(an))
+#
+#     return xs, ys
+
+
 @jit(nopython=True)
 def _tail_points_from_coords(coords, seglen):
     """ Computes the tail points from a list obtained from a data accumulator
@@ -549,8 +588,6 @@ def _tail_points_from_coords(coords, seglen):
     ----------
     coords
         per fish, will be x, y, theta, theta_00, theta_01, theta_02...
-    n_data_per_fish
-        number of coordinate entries per fish
     seglen
         length of a single segment
 
@@ -562,12 +599,12 @@ def _tail_points_from_coords(coords, seglen):
 
     xs = []
     ys = []
-    angles = np.zeros(coords.shape[1] - 5)
+    angles = np.zeros(coords.shape[1] - 2)
     for i_fish in range(coords.shape[0]):
-        xs.append(coords[i_fish, 2])
+        xs.append(coords[i_fish, 1])
         ys.append(coords[i_fish, 0])
-        angles[0] = coords[i_fish, 4]
-        angles[1:] = angles[0] + coords[i_fish, 6:]
+        angles[0] = coords[i_fish, 2]
+        angles[1:] = angles[0] + coords[i_fish, 3:]
         for i, an in enumerate(angles):
             if i > 0:
                 xs.append(xs[-1])
@@ -610,19 +647,39 @@ class CameraViewFish(CameraViewCalib):
         ) // n_fish  # the first is time, the last is area
         n_points_tail = self.tracking_params.n_segments
         try:
-            retrieved_data = np.array(
-                current_data[: -1]  # the -1 if for the diagnostic area
-            ).reshape(n_fish, n_data_per_fish)
-            valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
-            self.points_fish.setData(
-                y=retrieved_data[valid, 2], x=retrieved_data[valid, 0]
-            )
+            # create arrays containing the x,y coordinates of all fish:
+            y = np.ones(n_fish) * np.nan
+            x = np.ones(n_fish) * np.nan
+            theta = np.ones(n_fish) * np.nan
+
+            # Here there is an inconsistency between pyqtgraph x and y and
+            # Tracking function x and y:
+            for i_fish in range(n_fish):
+                y[i_fish] = getattr(current_data, "f{:d}_y".format(i_fish))
+                x[i_fish] = getattr(current_data, "f{:d}_x".format(i_fish))
+                theta[i_fish] = getattr(current_data, "f{:d}_theta".format(i_fish))
+
+            tail_angles = np.ones((n_fish, n_points_tail-1)) * np.nan
+            for i_fish in range(n_fish):
+                for i_segment in range(n_points_tail - 1):
+                    tail_angles[i_fish, i_segment] = \
+                        getattr(current_data,
+                                "f{:d}_theta_{:02d}".format(i_fish, i_segment))
+            self.points_fish.setData(y=y, x=x)
+
+            data_mat = np.concatenate([x[:, np.newaxis],
+                                       y[:, np.newaxis],
+                                       theta[:, np.newaxis],
+                                       tail_angles],
+                                      axis=1)
+
             if n_points_tail:
                 tail_len = (
                     self.tracking_params.tail_length
                     / self.tracking_params.n_segments
                 )
-                ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
+                ys, xs = _tail_points_from_coords(data_mat, tail_len)
                 self.lines_fish.setData(x=xs, y=ys)
-        except ValueError as e:
+
+        except (ValueError, AttributeError) as e:
             pass
