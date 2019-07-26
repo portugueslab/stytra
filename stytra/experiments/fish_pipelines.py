@@ -1,8 +1,7 @@
 from stytra.tracking.pipelines import Pipeline
 from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor
-from stytra.tracking.tail import CentroidTrackingMethod
-from stytra.tracking.fish import FishTrackingMethod
-from stytra.tracking.eyes import EyeTrackingMethod
+from stytra.tracking import CentroidTrackingMethod, FishTrackingMethod, \
+    EyeTrackingMethod
 from stytra.gui.fishplots import TailStreamPlot, BoutPlot
 from stytra.gui.camera_display import TailTrackingSelection, \
     CameraViewFish, EyeTrackingSelection, EyeTailTrackingSelection
@@ -29,7 +28,6 @@ class FishTrackingPipeline(Pipeline):
 class EyeTrackingPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        # self.filter = Prefilter(parent=self.root)
         self.eyetrack = EyeTrackingMethod(parent=self.root)
         self.display_overlay = EyeTrackingSelection
 
