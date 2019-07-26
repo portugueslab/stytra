@@ -168,7 +168,8 @@ class TestExperimentClass(unittest.TestCase):
                                 log_format="hdf5")
             with open(self.metadata_path, "r") as f:
                 data = json.load(f)
-
+            print("data: {}".format(data[
+                "tracking"]["behavior_log"]))
             behavior_log = dd.io.load(self.metadata_path.parent / data[
                 "tracking"]["behavior_log"], "/data")
 
