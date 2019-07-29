@@ -49,6 +49,7 @@ class Prefilter(ImageToImageNode):
         if self.set_diagnostic == "filtered":
             self.diagnostic_image = im
 
+
         return NodeOutput([], im)
 
 
@@ -63,8 +64,8 @@ class AdaptivePrefilter(ImageToImageNode):
         image_scale: Param(0.5, (0.05, 1.0)),
         filter_size: Param(2, (0, 15)),
         color_invert: Param(True),
-        clip: Param(150, (0, 255)),
-        percentile: Param(96.9, (0.,100.)),
+        clip: Param(96.9, (0.,100.)),
+        # percentile: Param(96.9, (0.,100.)),
         **extraparams
     ):
         """ Optionally resizes, smooths and inverts the image
@@ -85,9 +86,8 @@ class AdaptivePrefilter(ImageToImageNode):
         if color_invert:
             im = 255 - im
         if clip > 0:
-            #TODO maybe include fish size in pixel as percentile estimator
-            clip = np.percentile(im, percentile)
-            im = np.maximum(im, clip) - clip
+            clipp = np.percentile(im, clip)
+            im = np.maximum(im, clipp) - clipp
 
         if self.set_diagnostic == "filtered":
             self.diagnostic_image = im

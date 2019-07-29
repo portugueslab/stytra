@@ -190,12 +190,12 @@ class Motor():
 
                     err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
 
-                    print("Called movetopos with error {}".format(err))
+                    # print("Called movetopos with error {}".format(err))
                     # TODO print a error meesage depending on err variable
 
                     if err == 0:
                         while not abs(pos - move_to) <= self.tolerance:
-                            print("Current pos {}".format(pos) + " moving to {}".format(move_to))
+                            # print("Current pos {}".format(pos) + " moving to {}".format(move_to))
                             BMC_RequestPosition(self.serial_nom, self.channel)
                             pos = int(BMC_GetPosition(self.serial_nom, self.channel))
                             sleep(0.04)

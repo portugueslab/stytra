@@ -94,16 +94,22 @@ class MotorCalibrator():
       self.width_arena = w
       self.height_arena = h
       self.encoder_counts_per_unit = 20000
-      self.center =2200000
-      self.stepsize = 200000 # will depend on camera magnification and pixel size
+      self.center_x = self.motti1.get_position()
+      self.center_y = self.motti2.get_position()
+      self.stepsize = int(200000) # will depend on camera magnification and pixel size
+
+      arena_w = (w * self.encoder_counts_per_unit)/363 #TODO self.scale from motor
+      arena_h = (h * self.encoder_counts_per_unit) / 363  # TODO self.scale from motor
+      self.arena = (int(arena_w), int(arena_h))
+      # self.arena = (4800, 4800)
 
       positions_w = []
       positions_h = []
 
-      start_w = int(self.center - (w*self.encoder_counts_per_unit/2))
-      end_w = int(self.center + (w * self.encoder_counts_per_unit / 2))
-      start_h = int(self.center + (h*self.encoder_counts_per_unit/2))
-      end_h = int(self.center - (h * self.encoder_counts_per_unit / 2))
+      start_w = int(self.center_x - (w*self.encoder_counts_per_unit/2))
+      end_w = int(self.center_x + (w * self.encoder_counts_per_unit / 2))
+      start_h = int(self.center_y + (h*self.encoder_counts_per_unit/2))
+      end_h = int(self.center_y - (h * self.encoder_counts_per_unit / 2))
 
       for pos_w in range (start_w, end_w, self.stepsize):
           positions_w.append(pos_w)
@@ -113,18 +119,17 @@ class MotorCalibrator():
 
       self.positions_h = positions_h
       self.positions_w = positions_w
-      print ("positions array build")
+      # print ("positions array build")
       return positions_h, positions_w
 
-  def convert_motor_global(self, im):
-      con = 2200000 / (self.arena[0] / 2)
-      print(con)
+  def convert_motor_global(self,im):
+      self.motor_posx = self.motti1.get_position()
+      self.motor_posy = self.motti2.get_position()
 
-      motor_posx = self.motti1.get_position()
-      motor_posy = self.motti2.get_position()
-
-      motor_x = motor_posx / con
-      motor_y = motor_posy / con
+      motor_x = self.motor_posx / self.con
+      motor_y = self.motor_posy / self.con
+      # print ("motor pos orginal", self.motor_posx, self.motor_posy)
+      # print ("motor after con", motor_x, motor_y)
 
       mx = int(motor_x - im.shape[0] / 2)
       mxx = int(motor_x + im.shape[0] / 2)
@@ -133,40 +138,62 @@ class MotorCalibrator():
 
       return mx, mxx, my, myy
 
-  def scanning_whole_area(self, arenax, arenay):
+  def scanning_whole_area(self):
       self.cam = SpinnakerCamera()
       self.cam.open_camera()
-      self.cam.set("exposure", 12)
+      self.cam.set("exposure", 3)
+      background_0 = np.zeros(self.arena)
+      self.motor_posx = self.motti1.get_position()
+
+      self.con = self.motor_posx / (self.arena[0] / 2)
+
       for pos in self.positions_h:
           for posi in self.positions_w:
-              print("y:", pos, ",x:", posi)
+              # print("y:", pos, ",x:", posi)
               self.motti2.movethatthing(pos)
               self.motti1.movethatthing(posi)
-              im = cam.read()
-              self.arena = (arenax, arenay)
-              background_0 = p.zeros(self.arena)
-              mx, mxx, my, myy = MotorCalibrator.convert_motor_global()
-              background_0[mx:mxx, my:myy] = im
-              #TODO stitching/overlay problem ?
+              try:
+                  im = self.cam.read()
+                  if im is not None:
+                      cv2.imshow("img", im)
+                      cv2.waitKey(1)
+
+                      print ("image taken")
+                      mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self, im)
+                      print (mx, mxx, my, myy)
+                      background_0[mx:mxx, my:myy] = im
+              except:
+                  pass
+          #TODO stitching/overlay problem ?
 
       self.cam.cam.EndAcquisition()
       return background_0
+
+  def update_background(self, background_image, lr):
+      learning_rate = lr
+      background_old = np.copy(background_image)
+      background_image[mx:mxx, my:myy] = masked
+      background_image[:, :] = background_image.astype(np.float32) * np.float32(
+          learning_rate) + background_old * np.float32(
+          1 - learning_rate)
 
 
 #############################################################################
 
 if __name__ == "__main__":
-    mottione = Motor(1, scale=0)
-    mottitwo = Motor(2, scale=0)
+    mottione = Motor(1, scale=338)
+    mottitwo = Motor(2, scale=338)
 
     mottione.open()
     mottitwo.open()
 
     mc = MotorCalibrator(mottione, mottitwo)
     # mc.calibrate_motor()
-    pos_h, pos_w = mc.positions_array(60,86)
+    pos_h, pos_w = mc.positions_array(30,30)
     print (pos_h, pos_w)
-
+    bg = mc.scanning_whole_area()
+    plt.imshow(bg)
+    plt.waitforbuttonpress()
 
     mottitwo.close()
     mottione.close()

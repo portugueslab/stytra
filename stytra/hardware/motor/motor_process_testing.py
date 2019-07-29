@@ -10,53 +10,50 @@ import cv2
 import numpy as np
 import pandas as pd
 import deepdish as dd
+import matplotlib.pyplot as plt
 
 duration = 10
-
-class SendPositionsProcess(Process):
-    def __init__(self):
-        super().__init__()
-        self.position_queue = Queue()
-
-        self.l = [100, 2200000, 1500, 30000, 80]
-
-
-    def run(self):
-        start = datetime.datetime.now()
-        somelist = []
-        for i in range(0, 10):
-            i = random.randint(1000000, 2000000)
-        #     somelist.append(i)
-            self.position_queue.put(i)
-            sleep(0.009)
-#
-#         # print (somelist)
-#         # for i in somelist:
-#         #     self.position_queue.put(i)
-#
-#         # for i in self.l:
-#         #     self.position_queue.put(i)
-#
-#         print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
-
 #
 # class SendPositionsProcess(Process):
 #     def __init__(self):
 #         super().__init__()
 #         self.position_queue = Queue()
 #
-#     def run(self):
-#         cam = SpinnakerCamera()
-#         cam.open_camera()
-#         cam.set("exposure", 30)
-#         start = datetime.datetime.now()
-#         grab =[]
-#         startshow =[]
-#         blobident =[]
+#         self.l = [100, 2200000, 1500, 30000, 80]
 #
-#         while True:
-#             start_grabbing = datetime.datetime.now()
-#             im = cam.read()
+#
+#     def run(self):
+#         start = datetime.datetime.now()
+#         somelist = []
+#         for i in range(0, 10):
+#             i = random.randint(1000000, 2000000)
+#         #     somelist.append(i)
+#             self.position_queue.put(i)
+#             sleep(0.009)
+# #
+# #         # print (somelist)
+# #         # for i in somelist:
+# #         #     self.position_queue.put(i)
+# #
+# #         # for i in self.l:
+#         #     self.position_queue.put(i)
+#
+#         print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
+
+
+class SendPositionsProcess(Process):
+    def __init__(self):
+        super().__init__()
+        self.position_queue = Queue()
+
+    def run(self):
+        cam = SpinnakerCamera()
+        cam.open_camera()
+        cam.set("exposure", 5)
+
+        while True:
+            im = cam.read()
+            self.position_queue.put((im))
 #             grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
 #             if im is not None:
 #                 start_showing = datetime.datetime.now()
@@ -136,6 +133,8 @@ class ReceiverProcess(Process):
         start = datetime.datetime.now()
         mottione = Motor(1, scale= 0)
         mottione.open()
+        mottitwo = Motor(2, scale=0)
+        mottitwo.open()
         moto =[]
         time =[]
         distances =[]
@@ -159,23 +158,58 @@ class ReceiverProcess(Process):
     #             #     print ("oldpos",oldpos)
     #             #
     #
-                move_to = self.position_queue.get(timeout=0)
-                prev_event_time = datetime.datetime.now()
-                print("Retrieved position x: {}".format(move_to))
+                im = self.position_queue.get(timeout=0)
 
-                mottione.movesimple(move_to)
+                cv2.imshow("img", im)
+                cv2.waitKey(5)
+                arena = (2400, 2400)
+                background_0 = np.zeros(arena)
+                motor_posx = mottione.get_position()
 
-                motor_pos = mottione.get_position()
+                positions_h =[1900000, 2100000, 2300000]
+                positions_w =[1900000, 2100000, 2300000]
+                con = motor_posx / (arena[0] / 2)
 
-                while motor_pos != move_to:
-                    dist = (move_to - motor_pos)
-                    print("Current pos {}".format(motor_pos) + " moving to {}".format(move_to))
-                    print("distance: ", dist)
-                    motor_pos = mottione.get_position()
-                    moto.append(motor_pos)
-                    distances.append(dist)
-                    time.append((datetime.datetime.now() - prev_event_time).total_seconds())
-                    sleep(0.001)
+                for pos in positions_h:
+                    for posi in positions_w:
+                        # print("y:", pos, ",x:", posi)
+                        mottitwo.movethatthing(pos)
+                        mottione.movethatthing(posi)
+
+                        motor_posx = mottione.get_position()
+                        motor_posy = mottitwo.get_position()
+
+                        motor_x = motor_posx / con
+                        motor_y = motor_posy / con
+                        # print ("motor pos orginal", self.motor_posx, self.motor_posy)
+                        # print ("motor after con", motor_x, motor_y)
+
+                        mx = int(motor_x - im.shape[0] / 2)
+                        mxx = int(motor_x + im.shape[0] / 2)
+                        my = int(motor_y - im.shape[1] / 2)
+                        myy = int(motor_y + im.shape[1] / 2)
+                        print(mx, mxx, my, myy)
+                        background_0[mx:mxx, my:myy] = im
+                        # cv2.imshow("img", background_0)
+                        # cv2.waitKey(5)
+
+
+                # prev_event_time = datetime.datetime.now()
+                # print("Retrieved position x: {}".format(move_to))
+                #
+                # mottione.movesimple(move_to)
+                #
+                # motor_pos = mottione.get_position()
+                #
+                # while motor_pos != move_to:
+                #     dist = (move_to - motor_pos)
+                #     print("Current pos {}".format(motor_pos) + " moving to {}".format(move_to))
+                #     print("distance: ", dist)
+                #     motor_pos = mottione.get_position()
+                #     moto.append(motor_pos)
+                #     distances.append(dist)
+                #     time.append((datetime.datetime.now() - prev_event_time).total_seconds())
+                #     sleep(0.001)
 
                     # print("coords", moto)
                     # print("time", time)

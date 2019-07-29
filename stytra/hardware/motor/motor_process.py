@@ -56,8 +56,8 @@ class ReceiverProcess(Process):
         self.thres = 5
 
     def run(self):
-        motor_y = Motor(1, scale=250)
-        motor_x = Motor(2, scale=183)
+        motor_y = Motor(1, scale=363)
+        motor_x = Motor(2, scale=322)
         center_y = 270
         center_x = 360
         motor_y.open()
