@@ -9,6 +9,10 @@ sudo: false
 notifications:
   email: false
 
+cache:
+  directories:
+    - $HOME/mc
+
 env:
   - PYTHON=3.7 QT=pyqt5 TEST=standard
 
@@ -36,6 +40,7 @@ install:
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
+  - hash -r
 
   - which python
   - python --version

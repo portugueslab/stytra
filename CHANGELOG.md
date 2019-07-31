@@ -1,3 +1,12 @@
+# 0.8.19
+## Fixes
+- Tracking a video from a file loops it now
+- Fixed parts of the video recording experiment (#15)
+
+## Improvements
+- Background subtractor has an option
+- Added an option to track every nth frame, for running slow and fast tracking functions at the same time
+
 # 0.8.17
 ## Fixes
 - Experiment parameters saved more consistently

@@ -4,7 +4,6 @@ import qdarkstyle
 from PyQt5.QtWidgets import QApplication
 from stytra.stimulation.stimuli import Stimulus
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QPushButton
 
 
 # Here ve define an empty protocol:
