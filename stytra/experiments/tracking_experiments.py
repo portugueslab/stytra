@@ -22,11 +22,7 @@ from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
 
-from stytra.stimulation.estimators import (
-    PositionEstimator,
-    VigorMotionEstimator,
-    Estimator,
-)
+from stytra.stimulation.estimators import estimator_dict
 
 from inspect import isclass
 
@@ -239,14 +235,12 @@ class TrackingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.start()
 
         est_type = tracking.get("estimator", None)
-        if est_type == "position":
-            est = PositionEstimator
-        elif est_type == "vigor":
-            est = VigorMotionEstimator
-        elif isclass(est_type) and issubclass(est_type, Estimator):
-            est = est_type
-        else:
+        if est_type is None:
             est = None
+        elif isinstance(est_type, str):
+            est = estimator_dict.get(est_type, None)
+        else:
+            est = est_type
 
         if est is not None:
             self.estimator_log = EstimatorLog(experiment=self)

@@ -152,3 +152,7 @@ class PositionEstimator(Estimator):
         self.log.update_list(t, logout)
 
         return c_values
+
+    
+estimator_dict = dict(position=PositionEstimator,
+                      vigor=VigorMotionEstimator)
