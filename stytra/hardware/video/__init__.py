@@ -301,8 +301,6 @@ class VideoFileSource(VideoSource):
             container = av.open(self.source_file)
             container.streams.video[0].thread_type = "AUTO"
             container.streams.video[0].thread_count = 1
-            ret = True
-
 
             prt = None
             while self.loop:
@@ -324,12 +322,12 @@ class VideoFileSource(VideoSource):
                         if extrat > 0:
                             time.sleep(extrat)
 
-                    if ret:
-                        self.frame_queue.put(frame[:, :, 0])
+                    self.frame_queue.put(frame[:, :, 0])
 
                     prt = time.process_time()
                     self.old_frame = frame
                     self.update_framerate()
+                container.seek(0, whence="frame")
 
             return
 

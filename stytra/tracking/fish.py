@@ -35,33 +35,39 @@ class FishTrackingMethod(ImageToDataNode):
             "thresholded for eye and swim bladder",
         ]
 
-        self.bg_subtractor = BackgroundSubtractor()
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.fishes = None
 
     def changed(self, vals):
-        if any(p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]) or \
-           vals.get("reset", False):
+        if any(
+            p in vals.keys() for p in ["n_segments", "n_fish_max", "bg_downsample"]
+        ) or vals.get("reset", False):
             self.reset()
 
     def reset(self):
-        self._output_type = namedtuple("t",  list(
-            chain.from_iterable(
-                [
-                    _fish_column_names(i_fish, self._params.n_segments - 1)
-                    for i_fish in range(self._params.n_fish_max)
-                ]
+        self._output_type = namedtuple(
+            "t",
+            list(
+                chain.from_iterable(
+                    [
+                        _fish_column_names(i_fish, self._params.n_segments - 1)
+                        for i_fish in range(self._params.n_fish_max)
+                    ]
+                )
             )
-        ) + ["biggest_area"])
+            + ["biggest_area"],
+        )
         self._output_type_changed = True
 
-        self.bg_subtractor = BackgroundSubtractor()
         # used for booking a spot for one of the potentially tracked fish
-        self.fishes = Fishes(self._params.n_fish_max, n_segments=self._params.n_segments - 1,
-                             pos_std=self._params.pos_uncertainty,
-                             pred_coef = self._params.prediction_uncertainty,
-                             angle_std= np.pi / 10,
-                             persist_fish_for = self._params.persist_fish_for)
+        self.fishes = Fishes(
+            self._params.n_fish_max,
+            n_segments=self._params.n_segments - 1,
+            pos_std=self._params.pos_uncertainty,
+            pred_coef=self._params.prediction_uncertainty,
+            angle_std=np.pi / 10,
+            persist_fish_for=self._params.persist_fish_for,
+        )
 
     def _process(
         self,
@@ -85,7 +91,7 @@ class FishTrackingMethod(ImageToDataNode):
         fish_area: Param((200, 1200), (1, 4000)),
         border_margin: Param(5, (0, 100)),
         tail_length: Param(60.0, (1.0, 200.0)),
-        tail_track_window: Param(3, (3, 70))
+        tail_track_window: Param(3, (3, 70)),
     ):
 
         # update the previously-detected fish using the Kalman filter
@@ -195,16 +201,18 @@ class FishTrackingMethod(ImageToDataNode):
             # check if this is a new fish, or it is an update of
             # a fish detected previously
             if self.fishes.update(fish_coords):
-                messages.append(
-                    "I:Updated previous fish")
+                messages.append("I:Updated previous fish")
             elif self.fishes.add_fish(fish_coords):
                 messages.append("I:Added new fish")
             else:
                 messages.append("E:More fish than n_fish max")
 
         if nofish:
-            messages.append("W:No object of right area, between {:.0f} and {:.0f}".format(
-                *fish_area))
+            messages.append(
+                "W:No object of right area, between {:.0f} and {:.0f}".format(
+                    *fish_area
+                )
+            )
 
         # if a debugging image is to be shown, set it
         if self.set_diagnostic == "background difference":
@@ -221,9 +229,9 @@ class FishTrackingMethod(ImageToDataNode):
         if self._output_type is None:
             self.reset_state()
 
-        return NodeOutput(messages,
-                          self._output_type(*self.fishes.coords.flatten(),
-                                            max_area * 1.0))
+        return NodeOutput(
+            messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)
+        )
 
 
 spec = [
@@ -235,15 +243,17 @@ spec = [
     ("Q", float64[:, :]),
     ("Ps", float64[:, :, :, :]),
     ("def_P", float64[:, :, :]),
-    ("persist_fish_for", int64)
+    ("persist_fish_for", int64),
 ]
+
 
 @jitclass(spec)
 class Fishes(object):
-    def __init__(self, n_fish_max, pos_std, angle_std, n_segments,
-                 pred_coef, persist_fish_for):
+    def __init__(
+        self, n_fish_max, pos_std, angle_std, n_segments, pred_coef, persist_fish_for
+    ):
         self.n_fish = n_fish_max
-        self.coords = np.full((n_fish_max, 6+n_segments), np.nan)
+        self.coords = np.full((n_fish_max, 6 + n_segments), np.nan)
         self.uncertainties = np.array((pos_std, angle_std, angle_std))
         self.def_P = np.zeros((3, 2, 2))
         for i, uc in enumerate(self.uncertainties):
@@ -253,16 +263,22 @@ class Fishes(object):
         self.Ps = np.zeros((n_fish_max, 3, 2, 2))
         self.F = np.array([[1.0, 1.0], [0.0, 1.0]])
         dt = 0.02
-        self.Q = np.array([[0.25 * dt ** 4, 0.5 * dt ** 3],
-                           [0.5 * dt ** 3, dt ** 2]]) * pred_coef
+        self.Q = (
+            np.array([[0.25 * dt ** 4, 0.5 * dt ** 3], [0.5 * dt ** 3, dt ** 2]])
+            * pred_coef
+        )
         self.persist_fish_for = persist_fish_for
 
     def predict(self):
         for i_fish in range(self.n_fish):
             if not np.isnan(self.coords[i_fish, 0]):
                 for i_coord in range(0, 6, 2):
-                    predict_inplace(self.coords[i_fish, i_coord:i_coord+2],
-                                    self.Ps[i_fish, i_coord//2], self.F, self.Q)
+                    predict_inplace(
+                        self.coords[i_fish, i_coord : i_coord + 2],
+                        self.Ps[i_fish, i_coord // 2],
+                        self.F,
+                        self.Q,
+                    )
                 self.i_not_updated[i_fish] += 1
                 if self.i_not_updated[i_fish] > self.persist_fish_for:
                     self.coords[i_fish, :] = np.nan
@@ -277,10 +293,12 @@ class Fishes(object):
                         nc = new_fish[i_coord]
                         if i_coord == 2:
                             nc = _minimal_angle_dif(self.coords[i_fish, 4], nc)
-                        update_inplace(nc,
-                                       self.coords[i_fish, i_coord*2:i_coord*2+2],
-                                       self.Ps[i_fish, i_coord],
-                                       self.uncertainties[i_coord])
+                        update_inplace(
+                            nc,
+                            self.coords[i_fish, i_coord * 2 : i_coord * 2 + 2],
+                            self.Ps[i_fish, i_coord],
+                            self.uncertainties[i_coord],
+                        )
                     # update tail angles
                     self.coords[i_fish, 6:] = new_fish[3:]
                     self.i_not_updated[i_fish] = 0
@@ -322,7 +340,7 @@ def points_to_angles(points):
 
 @jit(nopython=True)
 def fish_start(mask, take_min):
-    su = 0.
+    su = 0.0
     ret = np.full((2,), 0.0)
     for i in range(mask.shape[0]):
         for j in range(mask.shape[1]):
