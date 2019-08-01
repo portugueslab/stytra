@@ -1,3 +1,7 @@
+# 0.8.20
+## Fixes
+- Maximal exposure fo the camera can now be 1s, minimal framerate 1Hz
+
 # 0.8.19
 ## Fixes
 - Tracking a video from a file loops it now
