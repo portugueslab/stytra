@@ -53,7 +53,9 @@ class SendPositionsProcess(Process):
 
         while True:
             im = cam.read()
-            self.position_queue.put((im))
+            cv2.imshow("img", im)
+            cv2.waitKey(5)
+            self.position_queue.put(im)
 #             grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
 #             if im is not None:
 #                 start_showing = datetime.datetime.now()
@@ -71,7 +73,7 @@ class SendPositionsProcess(Process):
 #                 point_x = e[0]
 #                 point_y = e[1]
 #
-#                 self.position_queue.put((point_x, point_y, im))
+            # print ("image in queue")
 #
 #             if (datetime.datetime.now() - start).total_seconds() > duration:
 #                 break
@@ -160,15 +162,15 @@ class ReceiverProcess(Process):
     #
                 im = self.position_queue.get(timeout=0)
 
-                cv2.imshow("img", im)
-                cv2.waitKey(5)
-                arena = (2400, 2400)
+                arena = (1200, 1200)
                 background_0 = np.zeros(arena)
                 motor_posx = mottione.get_position()
 
                 positions_h =[1900000, 2100000, 2300000]
                 positions_w =[1900000, 2100000, 2300000]
+                # con = motor_posx / (arena[0] / 2)
                 con = motor_posx / (arena[0] / 2)
+                print (con)
 
                 for pos in positions_h:
                     for posi in positions_w:
@@ -190,8 +192,7 @@ class ReceiverProcess(Process):
                         myy = int(motor_y + im.shape[1] / 2)
                         print(mx, mxx, my, myy)
                         background_0[mx:mxx, my:myy] = im
-                        # cv2.imshow("img", background_0)
-                        # cv2.waitKey(5)
+
 
 
                 # prev_event_time = datetime.datetime.now()
@@ -230,12 +231,15 @@ class ReceiverProcess(Process):
             except Empty:
                 pass
 
-            if (datetime.datetime.now() - start).total_seconds() >10:
+            if (datetime.datetime.now() - start).total_seconds() >3:
                 last_pos = mottione.get_position()
                 print ("last motor pos: {}".format(last_pos))
                 mottione.close()
                 time = (datetime.datetime.now() - start).total_seconds()
                 print("time total {}".format(time))
+                cv2.imwrite("test.jpg", background_0)
+
+
 
                 #
                 # dd.io.save("stage_movement.h5", pd.DataFrame(dict(grabbing_queue=grabbing_queue,

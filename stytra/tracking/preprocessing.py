@@ -147,84 +147,74 @@ class BackgroundSubtractor(ImageToImageNode):
 
 
 class BackgroundSubtractorMotor(ImageToImageNode):
-    def __init__(self, m1,m2,*args, **kwargs):
+    def __init__(self, motorx, motory, *args, **kwargs):
         super().__init__(*args, name="bgsubmot", **kwargs)
         self.background_image = None
+        self.background_global = global background_0
+        #TODO how to give him global bg - set global_bg as global variable or import from config file?
         self.i = 0
-        self.motti1 = m1
-        self.motti2 = m2
+        self.motorx = motorx
+        self.motory = motory
 
     def reset(self):
         self.background_image = None
 
-    def create_mask(self):
-        # TODO tie in f0_x, f0_y from fish tracking and orientation as well as lenght for masking box
-        # TODO fish_coords = np.concatenate([np.array(points[0][:2]), angles]) from FishTrackingMethod
-        # TODO also  _fish_direction_n
-
-        self.mask = np.ones(im.shape)
-        bx = int(f0_x - 25)
-        bxx = int(f0_x + 25)
-        by = int(f0_y - 25)
-        byy = int(f0_y + 25)
-        self.mask[by:byy, bx:bxx] = 0
-
-        self.masked = im * (-self.mask)
-        return self.masked
-
-    def global_bg(self,arenax, arenay):
-        self.arena = (arenax, arenay)  # needs to be pixels
-        self.background = np.zeros(self.arena)
-
     def convert_motor_global(self):
-        con = 2200000 / (self.arena[0] / 2)
-        print(con)
+        self.motor_posx = self.motorx.get_position()
+        self.motor_posy = self.motory.get_position()
 
-        motor_posx =self.motti1.get_position()
-        motor_posy =self.motti2.get_position()
+        self.con = self.motor_posx / (arenaw / 2)
+        #TODO: self.arena from somewhere, maybe motor config as well?
+        #TODO: constant motor position stream somewhere, but accurate enough to relate to specific time points?
 
-        motor_x = motor_posx / con
-        motor_y = motor_posy / con
+        motor_x = self.motor_posx / self.con
+        motor_y = self.motor_posy / self.con
+        mx = int(motor_x - self.im.shape[0] / 2)
+        mxx = int(motor_x + self.im.shape[0] / 2)
+        my = int(motor_y - self.im.shape[1] / 2)
+        myy = int(motor_y + self.im.shape[1] / 2)
+        return mx, mxx, my, myy
 
-        mx = int(motor_x - im.shape[0] / 2)
-        mxx = int(motor_x + im.shape[0] / 2)
-        my = int(motor_y - im.shape[1] / 2)
-        myy = int(motor_y + im.shape[1] / 2)
+    def find_fish(self):
+        self.im = 255 - self.im
+        idxs = np.unravel_index(np.nanargmax(self.im),self.im.shape)
+        e = (np.float(idxs[1]), np.float(idxs[0]))
+        x = int(e[0])
+        y = int(e[1])
+        return x, y
 
-        return mx,mxx,my,myy
+    def create_mask(self, x, y):
+        circle_image = np.ones(self.im.shape[0], self.im.shape[1]), np.uint8)
+        mask = cv2.circle(circle_image, (x, y), 60, 255, -1)
+        return mask
 
     def _process(
         self, im, learning_rate: Param(0.04, (0.0, 1.0)),
+        global_learning_rate: Param(0.04, (0.0, 1.0)),
         learn_every: Param(400, (1, 10000))
     ):
         messages = []
         if self.background_image is None:
-            BackgroundSubtractorMotor.create_mask(345, 669)
-            BackgroundSubtractorMotor.global_bg(4800,488)
-            mx, mxx, my, myy =BackgroundSubtractorMotor.convert_motor_global()
-            # if condition for if background already filled at that point
+            x, y = find_fish(self.im)
+            mask = create_mask(x, y, self.im)
+            self.background_image[mask == True] = self.im[mask == True]
+            messages.append("I:New background image set")
+        elif self.i == 0:
+            print ("Ready to roll.")
+            mx, mxx, my, myy =BackgroundSubtractorMotor.convert_motor_global(self)
+            self.background_old =self.background_global[mx:mxx, my:myy] #getting bg from global
+            self.background_image[:, :] = self.im.astype(np.float32) * np.float32(
+                learning_rate) + self.background_old * np.float32(
+                1 - learning_rate)
 
-            bg_filled = (background_image[mx:mxx, my:myy].any(0) == True)
+            #Updating gloabl bg as well
+            print ("Global update this.")
+            background_global_old = np.copy(self.background_global)
+            self.background_global[mx:mxx, my:myy] = self.background_image #setting new bg to global
+            self.background_global[:, :] = self.background_global.astype(np.float32) * np.float32(
+                global_learning_rate) + background_global_old * np.float32(
+                1 - global_learning_rate)
 
-            if bg_filled.any(0):
-                print("filled is True")
-                learning_rate = 0.04
-                background_old = np.copy(background_image)
-                background_image[mx:mxx, my:myy] = masked
-                background_image[:, :] = background_image.astype(np.float32) * np.float32(
-                    learning_rate) + background_old * np.float32(
-                    1 - learning_rate)
-            else:
-                print("Notfilled is True")
-                learning_rate = 0.1
-                background_old = np.copy(background_image)
-                background_image[mx:mxx, my:myy] = masked
-                background_image[:, :] = background_image.astype(np.float32) * np.float32(
-                    learning_rate) + background_old * np.float32(
-                    1 - learning_rate)
-        else:
-            pass
         self.i = (self.i + 1) % learn_every
 
-        return NodeOutput(messages, negdif(self.background_image[:, :], im))
-        #TODO this (background_image[:, :]) will likely not work
+        return NodeOutput(messages, negdif(self.background_image, im))

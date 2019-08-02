@@ -32,10 +32,10 @@ class FishTrackingPipeline(Pipeline):
 class FishTrackingMotorPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        self.filter = AdaptivePrefilter(parent=self.root)
+        # self.filter = AdaptivePrefilter(parent=self.root)
         # self.bgsub = BackgroundSubtractor(parent=self.filter)
-        # self.bgsubmot = BackgroundSubtractorMotor(Motor(1, scale= 168), Motor(2, scale= 196),parent=self.filter)
-        self.fishtrack = FishTrackingMethod(parent=self.filter)
+        self.bgsubmot = BackgroundSubtractorMotor(Motor(1, scale= 168), Motor(2, scale= 196),parent=self.root)
+        self.fishtrack = FishTrackingMethod(parent=self.bgsubmot)
         self.extra_widget = BoutPlot
         self.display_overlay = CameraViewFish
 
