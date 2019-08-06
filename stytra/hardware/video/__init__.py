@@ -283,9 +283,15 @@ class VideoFileSource(VideoSource):
     def run(self):
         if self.state is None:
             self.state = VideoControlParameters()
-        if self.source_file.endswith("h5"):
+        if self.source_file.endswith("h5") or self.source_file.endswith(
+                "hdf5"):
             framedata = dd.io.load(self.source_file)
-            frames = framedata["video"]
+
+            if isinstance(framedata, np.ndarray):
+                frames = framedata
+            else:
+                frames = framedata["video"]
+
             i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():

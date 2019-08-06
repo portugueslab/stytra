@@ -28,7 +28,10 @@ class VideoWriter(FrameProcess):
         ouput movie bitrate
     """
 
-    def __init__(self, input_queue, finished_signal, saving_evt, log_format):
+    def __init__(self, input_queue,
+                 finished_signal,
+                 saving_evt,
+                 log_format="hdf5"):
         super().__init__()
         self.filename_queue = Queue()
         self.filename_base = None
