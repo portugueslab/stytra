@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QToolButton
-from PyQt5.QtGui import QPalette, QIcon
+from PyQt5.QtGui import QIcon
 import pkg_resources
 
 

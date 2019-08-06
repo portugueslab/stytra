@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.8.18",
+    version="0.8.21",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
     license="GPLv3+",
@@ -37,7 +37,7 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     keywords="tracking behavior experiments",
-    description="A modular package to control stimulation and track behavior in zebrafish experiments.",
+    description="A modular package to control stimulation and track behavior experiments.",
     project_urls={
         "Source": "https://github.com/portugueslab/stytra",
         "Tracker": "https://github.com/portugueslab/stytra/issues",

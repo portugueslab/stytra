@@ -1,3 +1,23 @@
+# 0.8.21
+## New features
+- recording videos along with online tracking is supported
+
+## Fixes
+- the tracking pipeline output type changes work again (Stytra does not crash anymore when changing the number of fish or tail segments) 
+
+# 0.8.20
+## Fixes
+- Maximal exposure fo the camera can now be 1s, minimal framerate 1Hz
+
+# 0.8.19
+## Fixes
+- Tracking a video from a file loops it now
+- Fixed parts of the video recording experiment (#15)
+
+## Improvements
+- Background subtractor has an option
+- Added an option to track every nth frame, for running slow and fast tracking functions at the same time
+
 # 0.8.17
 ## Fixes
 - Experiment parameters saved more consistently
