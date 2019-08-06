@@ -28,7 +28,7 @@ class OpenCVCamera(Camera):
 
     def open_camera(self):
         """ """
-        pass
+        return "Webcam opened!"
 
     def set(self, param, val):
         if param == "exposure":
