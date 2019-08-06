@@ -35,7 +35,7 @@ class FishTrackingMethod(ImageToDataNode):
             "thresholded for eye and swim bladder",
         ]
 
-        # self.bg_subtractor = BackgroundSubtractor()
+        self.bg_subtractor = BackgroundSubtractor()
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.fishes = None
 
@@ -55,7 +55,7 @@ class FishTrackingMethod(ImageToDataNode):
         ) + ["biggest_area"])
         self._output_type_changed = True
 
-        # self.bg_subtractor = BackgroundSubtractor()
+        self.bg_subtractor = BackgroundSubtractor()
         # used for booking a spot for one of the potentially tracked fish
         self.fishes = Fishes(self._params.n_fish_max, n_segments=self._params.n_segments - 1,
                              pos_std=self._params.pos_uncertainty,

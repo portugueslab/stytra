@@ -30,7 +30,7 @@ class MotorCalibrator():
       self.conversion_x = int(20000/ abs(self.distance_points_x))
       self.conversion_y  = int(20000/ abs(self.distance_points_y))
 
-      print ("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+      # print ("conversion factors x,y: ", self.conversion_x, self.conversion_y)
 
       return self.conversion_x, self.conversion_y
 
@@ -50,7 +50,7 @@ class MotorCalibrator():
       e = (np.float(idxs[1]), np.float(idxs[0]))
       self.point_x = e[0]
       self.point_y = e[1]
-      print ("dot x,y", self.point_x, self.point_y)
+      # print ("dot x,y", self.point_x, self.point_y)
 
       self.cam.cam.EndAcquisition()
 
@@ -147,7 +147,7 @@ class MotorCalibrator():
               mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self, im)
               background_0[mx:mxx, my:myy] = im
 
-      return global background_0
+      # return global background_0
 
 
 #############################################################################
@@ -159,14 +159,13 @@ if __name__ == "__main__":
     mottione.open()
     mottitwo.open()
 
-    testimage = np.zeros(540,720)
     #TODO calibrator minimal + motor minimal combine
     mc = MotorCalibrator(mottione, mottitwo)
     mc.calibrate_motor()
-    pos_h, pos_w = mc.positions_array(30,30)
-    print (pos_h, pos_w)
-    bg = mc.scanning_whole_area(im= testimage)
-    plt.imshow(bg)
+    # pos_h, pos_w = mc.positions_array(30,30)
+    # print (pos_h, pos_w)
+    # bg = mc.scanning_whole_area(im= testimage)
+    # plt.imshow(bg)
 
     mottitwo.close()
     mottione.close()

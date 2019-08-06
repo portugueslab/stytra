@@ -16,6 +16,8 @@ class SendPositionsProcess(Process):
     def __init__(self):
         super().__init__()
         self.position_queue = NamedTupleQueue()
+        self.background = None
+        self.old_bg = None
 
     def run(self):
         cam = SpinnakerCamera()
@@ -54,9 +56,11 @@ class ReceiverProcess(Process):
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
         self.thres = 5
+        self.arena_thres = 2240000
+        self.home = 2200000
 
     def run(self):
-        motor_y = Motor(1, scale=363)
+        motor_y = Motor(1, scale=322)
         motor_x = Motor(2, scale=322)
         center_y = 270
         center_x = 360
@@ -84,6 +88,13 @@ class ReceiverProcess(Process):
                 try:
                     distance_x = center_x - last_position.f0_x
                     distance_y = center_y - last_position.f0_y
+                    print ("distance x,y:", distance_x, distance_y)
+                    dotx = motor_x.move_relative_without_move(distance_x)
+                    doty = motor_y.move_relative_without_move(distance_y)
+                    print (dotx, doty)
+
+                    # if dotx < self.arena_thres & doty < self.arena_thres:
+                    #     print ("small enough")
 
                     if distance_x**2 + distance_y**2 > self.thres**2:
                         print("Moving")
@@ -93,6 +104,11 @@ class ReceiverProcess(Process):
                         dot_pos.append([distance_x,distance_y])
 
                     e = (float(pos_x), float(pos_y), distance_x, distance_y)
+
+                    # else:
+                    #     print ("out of arena bounds, homing")
+                    #     motor_x.movesimple(self.home)
+                    #     motor_y.movesimple(self.home)
 
                 except (ValueError, TypeError, IndexError):
                     e = (pos_x, pos_y, 0., 0.)
