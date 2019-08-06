@@ -47,7 +47,7 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.video_writer.start()
 
     def start_protocol(self):
-        self.video_writer.folder_name_queue.put(self.folder_name)
+        self.video_writer.filename_queue.put(self.folder_name)
         self.saving_evt.set()
         self.video_writer.reset_signal.set()
         super().start_protocol()
