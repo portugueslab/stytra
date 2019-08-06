@@ -118,6 +118,7 @@ class CameraSource(VideoSource):
         downsampling=1,
         roi=(-1, -1, -1, -1),
         max_buffer_length=1000,
+        camera_params=dict(),
         **kwargs
     ):
         """ """
@@ -128,6 +129,7 @@ class CameraSource(VideoSource):
         self.camera_type = camera_type
         self.downsampling = downsampling
         self.roi = roi
+        self.camera_params = camera_params
 
         self.max_buffer_length = max_buffer_length
 
@@ -162,7 +164,9 @@ class CameraSource(VideoSource):
             self.state = CameraControlParameters()
         try:
             CameraClass = camera_class_dict[self.camera_type]
-            self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
+            self.cam = CameraClass(downsampling=self.downsampling,
+                                   roi=self.roi,
+                                   **self.camera_params)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
         camera_messages = list(self.cam.open_camera())
