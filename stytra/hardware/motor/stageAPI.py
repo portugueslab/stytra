@@ -195,7 +195,7 @@ class Motor():
 
                     if err == 0:
                         while not abs(pos - move_to) <= self.tolerance:
-                            # print("Current pos {}".format(pos) + " moving to {}".format(move_to))
+                            print("Current pos {}".format(pos) + " moving to {}".format(move_to))
                             BMC_RequestPosition(self.serial_nom, self.channel)
                             pos = int(BMC_GetPosition(self.serial_nom, self.channel))
                             sleep(0.04)
@@ -279,7 +279,8 @@ class Motor():
         pos = self.get_position()
         to_move = distance*self.scale
         dotpos = int(round(pos + to_move))
-        return dotpos
+        dot_c = int(dotpos - 2200000)
+        return dotpos, dot_c
 
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)

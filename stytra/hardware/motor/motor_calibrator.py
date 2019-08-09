@@ -30,7 +30,7 @@ class MotorCalibrator():
       self.conversion_x = int(20000/ abs(self.distance_points_x))
       self.conversion_y  = int(20000/ abs(self.distance_points_y))
 
-      # print ("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+      print ("conversion factors x,y: ", self.conversion_x, self.conversion_y)
 
       return self.conversion_x, self.conversion_y
 
@@ -117,37 +117,53 @@ class MotorCalibrator():
 
       return positions_h, positions_w
 
-  def convert_motor_global(self,im):
-
+  def conversion(self):
+      self.arena = (4800, 4800)
+      self.im = np.zeros((540, 720))
       self.motor_posx = self.motti1.get_position()
       self.motor_posy = self.motti2.get_position()
-      self.con = self.motor_posx/(arenaw/2)
-      motor_x = self.motor_posx / self.con
-      motor_y = self.motor_posy / self.con
-      # print ("motor pos orginal", self.motor_posx, self.motor_posy)
-      # print ("motor after con", motor_x, motor_y)
+      self.conx = self.motor_posx / (self.arena[0] / 2)
+      self.cony = self.motor_posy / (self.arena[1] / 2)
+      return self.conx, self.cony
 
-      mx = int(motor_x - im.shape[0] / 2)
-      mxx = int(motor_x + im.shape[0] / 2)
-      my = int(motor_y - im.shape[1] / 2)
-      myy = int(motor_y + im.shape[1] / 2)
+  def convert_motor_global(self):
+      motor_x = self.motor_posx / self.conx
+      motor_y = self.motor_posy / self.cony
+
+      mx = int(motor_x - self.im.shape[0]/ 2)
+      mxx = int(motor_x + self.im.shape[0]/ 2)
+      my = int(motor_y - self.im.shape[1]/ 2)
+      myy = int(motor_y + self.im.shape[1]/ 2)
 
       return mx, mxx, my, myy
 
-  def scanning_whole_area(self, im):
+  def scanning_whole_area(self):
+
+      self.cam = SpinnakerCamera()
+      self.cam.open_camera()
+      self.cam.set("exposure", 4)
+      # TODO initiate camera somewhere else- cant be double initiated.
+      self.arena = (4800, 4800)
+
       background_0 = np.zeros(self.arena)
-      self.con = self.motor_posx / (self.arena[0] / 2)
+      self.motor_posx = self.motti1.get_position()
+      self.motor_posy = self.motti2.get_position()
 
       for pos in self.positions_h:
           for posi in self.positions_w:
               # print("y:", pos, ",x:", posi)
               self.motti2.movethatthing(pos)
               self.motti1.movethatthing(posi)
+              im = self.cam.read()
 
-              mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self, im)
+              mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self)
+              print (mx, mxx, my, myy)
               background_0[mx:mxx, my:myy] = im
+              sleep(1)
 
-      # return global background_0
+      self.cam.cam.EndAcquisition()
+
+      return background_0
 
 
 #############################################################################
@@ -161,11 +177,13 @@ if __name__ == "__main__":
 
     #TODO calibrator minimal + motor minimal combine
     mc = MotorCalibrator(mottione, mottitwo)
-    mc.calibrate_motor()
-    # pos_h, pos_w = mc.positions_array(30,30)
-    # print (pos_h, pos_w)
-    # bg = mc.scanning_whole_area(im= testimage)
-    # plt.imshow(bg)
+    # mc.calibrate_motor()
+    pos_h, pos_w = mc.positions_array(50,50)
+    print (pos_h, pos_w)
+    conx, cony = mc.conversion()
+    bg = mc.scanning_whole_area()
+    plt.imshow(bg)
+    plt.waitforbuttonpress()
 
     mottitwo.close()
     mottione.close()

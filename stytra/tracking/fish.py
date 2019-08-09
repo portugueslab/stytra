@@ -121,14 +121,10 @@ class FishTrackingMethod(ImageToDataNode):
         messages = []
 
         nofish = True
-        print("beginning")
         for row, centroid in zip(stats, centroids):
             # check if the contour is fish-sized and central enough
             if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < fish_area[1]:
-                print("area problem")
                 continue
-            else:
-                print("happy: {}".format(fish_area))
 
             # find the bounding box of the fish in the original image coordinates
             ftop, fleft, fheight, fwidth = (
@@ -149,7 +145,6 @@ class FishTrackingMethod(ImageToDataNode):
             ):
                 messages.append("W:An object of right area found outside margins")
                 continue
-            print("1")
             # how much is this region shifted from the upper left corner of the image
             cent_shift = np.array([fleft - border_margin, ftop - border_margin])
 
@@ -160,7 +155,7 @@ class FishTrackingMethod(ImageToDataNode):
 
             # take the region and mask the background away to aid detection
             fishdet = bg[slices].copy()
-            print("2")
+
             # estimate the position of the head
             fish_coords = fish_start(fishdet, threshold_eyes)
 
@@ -168,7 +163,7 @@ class FishTrackingMethod(ImageToDataNode):
             if fish_coords[0] == -1:
                 messages.append("W:No appropriate tail start position found")
                 continue
-            print("3")
+
             head_coords_up = fish_coords + cent_shift
 
             theta = _fish_direction_n(bg, head_coords_up, int(round(tail_length / 2)))
@@ -182,13 +177,13 @@ class FishTrackingMethod(ImageToDataNode):
                 tail_length / n_segments,
                 n_segments + 1,
             )
-            print("4")
+
             # convert to angles
             angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
             if len(angles) == 0:
                 messages.append("W:Tail not completely detectable")
                 continue
-            print("5")
+
             # also, make the angles continuous
             angles[1:] = np.unwrap(angles[1:] - angles[0])
 
