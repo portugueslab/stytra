@@ -479,7 +479,7 @@ class VisualExperiment(Experiment):
         calibrator=None,
         stim_plot=False,
         stim_movie_format="h5",
-        rec_stim_framerate=None,
+        record_stim_framerate=None,
         display=None,
         **kwargs
     ):
@@ -501,13 +501,12 @@ class VisualExperiment(Experiment):
             target_fps = self.display_config.get("framerate", 0)
             if target_fps > 0:
                 self.protocol_runner.target_dt = 1000 // target_fps
-
         if not self.offline:
             self.window_display = StimulusDisplayWindow(
                 self.protocol_runner,
                 self.calibrator,
                 gl=self.display_config.get("gl", True),
-                record_stim_framerate=rec_stim_framerate,
+                record_stim_framerate=record_stim_framerate,
             )
 
         self.display_framerate_acc = None

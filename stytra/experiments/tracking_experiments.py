@@ -62,6 +62,7 @@ class CameraVisualExperiment(VisualExperiment):
                 downsampling=camera.get("downsampling", 1),
                 roi=camera.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
+                camera_params=camera.get("camera_params", dict())
             )
             self.camera_state = CameraControlParameters(tree=self.dc)
         else:
