@@ -39,9 +39,7 @@ class VideoRecordingExperiment(CameraVisualExperiment):
 
         self.set_id()
         self.video_writer = H5VideoWriter(
-            self.frame_dispatcher.output_frame_queue,
-            self.finished_evt,
-            self.saving_evt
+            self.frame_dispatcher.output_frame_queue, self.finished_evt, self.saving_evt
         )
 
         self.video_writer.start()

@@ -32,9 +32,11 @@ class WindmillProtocol(Protocol):
         t = [t[0]] + list(t + p) + [(t + 2 * p)[-1]]
         theta = [theta[0]] + list(theta) + [theta[-1]]
         df = pd.DataFrame(dict(t=t, theta=theta))
-        stimuli.append(MovingWindmillStimulus(df_param=df,
-                                              n_arms=self.n_arms,
-                                              wave_shape=self.wave_shape))
+        stimuli.append(
+            MovingWindmillStimulus(
+                df_param=df, n_arms=self.n_arms, wave_shape=self.wave_shape
+            )
+        )
         return stimuli
 
 
