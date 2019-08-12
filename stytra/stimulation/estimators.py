@@ -96,12 +96,17 @@ class PositionEstimator(Estimator):
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
 
     def get_velocity(self):
-        vel = np.diff(self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values, 0)
-        return np.sqrt(np.sum(vel**2))
+        vel = np.diff(
+            self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values,
+            0,
+        )
+        return np.sqrt(np.sum(vel ** 2))
 
     def get_istantaneous_velocity(self):
-        vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[["f0_vx", "f0_vy"]].values
-        return np.sqrt(np.sum(vel_xy**2))
+        vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[
+            ["f0_vx", "f0_vy"]
+        ].values
+        return np.sqrt(np.sum(vel_xy ** 2))
 
     def reset(self):
         super().reset()
@@ -113,7 +118,6 @@ class PositionEstimator(Estimator):
         ):
             o = self._output_type(np.nan, np.nan, np.nan)
             return o
-
 
         past_coords = self.acc_tracking.stored_data[-1]
         t = self.acc_tracking.times[-1]
@@ -155,5 +159,4 @@ class PositionEstimator(Estimator):
         return c_values
 
 
-estimator_dict = dict(position=PositionEstimator,
-                      vigor=VigorMotionEstimator)
+estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator)

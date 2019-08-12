@@ -164,9 +164,9 @@ class CameraSource(VideoSource):
             self.state = CameraControlParameters()
         try:
             CameraClass = camera_class_dict[self.camera_type]
-            self.cam = CameraClass(downsampling=self.downsampling,
-                                   roi=self.roi,
-                                   **self.camera_params)
+            self.cam = CameraClass(
+                downsampling=self.downsampling, roi=self.roi, **self.camera_params
+            )
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
         camera_messages = list(self.cam.open_camera())
@@ -283,8 +283,7 @@ class VideoFileSource(VideoSource):
     def run(self):
         if self.state is None:
             self.state = VideoControlParameters()
-        if self.source_file.endswith("h5") or self.source_file.endswith(
-                "hdf5"):
+        if self.source_file.endswith("h5") or self.source_file.endswith("hdf5"):
             framedata = dd.io.load(self.source_file)
 
             if isinstance(framedata, np.ndarray):

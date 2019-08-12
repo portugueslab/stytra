@@ -245,8 +245,6 @@ class DispatchProcess(FrameProcess):
             # calculate the frame rate
             self.update_framerate()
 
-
-
         return
 
     def send_to_gui(self, frametime, frame):

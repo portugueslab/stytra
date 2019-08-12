@@ -5,12 +5,11 @@ from stytra.hardware.serial import SerialConnection
 
 
 class ArduinoCommStimulus(Stimulus):
-
     def __init__(self, com_port="COM3", baudrate=115200, **kwargs):
         super().__init__(**kwargs)
         self._pyb = None
         self.com_port = com_port
-        self.baudrate=baudrate
+        self.baudrate = baudrate
 
     def initialise_external(self, experiment):
 
@@ -19,8 +18,9 @@ class ArduinoCommStimulus(Stimulus):
         try:
             self._pyb = getattr(experiment, "_pyb")
         except AttributeError:
-            experiment._pyb = SerialConnection(com_port=self.com_port,
-                                               baudrate=self.baudrate)
+            experiment._pyb = SerialConnection(
+                com_port=self.com_port, baudrate=self.baudrate
+            )
             self._pyb = getattr(experiment, "_pyb")
 
     def start(self):
@@ -31,7 +31,7 @@ class ArduinoCommStimulus(Stimulus):
 class ArduinoCommProtocol(Protocol):
     name = "arduino_comm_protocol"  # every protocol must have a name.
 
-    stytra_config=dict(camera=dict(type="ximea"), tracking=dict(method="tail"))
+    stytra_config = dict(camera=dict(type="ximea"), tracking=dict(method="tail"))
 
     def get_stim_sequence(self):
         # This is the

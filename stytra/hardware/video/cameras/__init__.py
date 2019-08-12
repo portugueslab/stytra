@@ -8,11 +8,10 @@ from stytra.hardware.video.cameras.basler import BaslerCamera
 
 # Update this dictionary when adding a new camera!
 camera_class_dict = dict(
-        ximea=XimeaCamera,
-        avt=AvtCamera,
-        basler=BaslerCamera,
-        spinnaker=SpinnakerCamera,
-        mikrotron=MikrotronCLCamera,
-        opencv=OpenCVCamera
-
-    )
+    ximea=XimeaCamera,
+    avt=AvtCamera,
+    basler=BaslerCamera,
+    spinnaker=SpinnakerCamera,
+    mikrotron=MikrotronCLCamera,
+    opencv=OpenCVCamera,
+)

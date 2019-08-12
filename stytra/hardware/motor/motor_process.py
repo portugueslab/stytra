@@ -71,6 +71,8 @@ class ReceiverProcess(Process):
         motor_pos = []
         times = []
 
+        # TODO motti initate, home, set velo and claibrate here?
+
         while not self.finished_event.is_set():
 
             try:

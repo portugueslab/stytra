@@ -56,6 +56,7 @@ class U3LabJackVoltageStimulus(Stimulus):
 
 class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
     name = "u3_volt_stim"
+
     def __init__(self, *args, voltage=0.0, **kwargs):
         self.voltage_out = voltage
         super().__init__(*args, **kwargs)
