@@ -50,7 +50,6 @@ class MotorExperiment(TrackingExperiment):
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
             recording_signal=self.recording_event,
-            gui_dispatcher=True,
             gui_framerate=20,
         )
 
