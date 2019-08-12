@@ -10,7 +10,7 @@ from stytra.stimulation.stimuli import (
     BackgroundStimulus,
     PositionStimulus,
     InterpolatedStimulus,
-    Stimulus
+    Stimulus,
 )
 
 
@@ -312,5 +312,3 @@ class FishTrackingStimulus(PositionStimulus):
                 self.y = y
                 self.theta = theta
         super().update()
-
-

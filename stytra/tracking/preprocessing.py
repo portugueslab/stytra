@@ -105,9 +105,11 @@ class BackgroundSubtractor(ImageToImageNode):
         self.background_image = None
 
     def _process(
-        self, im, learning_rate: Param(0.04, (0.0, 1.0)),
+        self,
+        im,
+        learning_rate: Param(0.04, (0.0, 1.0)),
         learn_every: Param(400, (1, 10000)),
-        only_darker: Param(True)
+        only_darker: Param(True),
     ):
         messages = []
         if self.background_image is None:

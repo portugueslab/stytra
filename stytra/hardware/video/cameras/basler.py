@@ -18,7 +18,9 @@ class BaslerCamera(Camera):
 
     def __init__(self, cam_idx=0, **kwargs):
         super().__init__(**kwargs)
-        self.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+        self.camera = pylon.InstantCamera(
+            pylon.TlFactory.GetInstance().CreateFirstDevice()
+        )
 
     def open_camera(self):
         """ """
@@ -42,7 +44,7 @@ class BaslerCamera(Camera):
         # pass
         # # try:
         if param == "exposure":
-            self.camera.ExposureTime = val*1000
+            self.camera.ExposureTime = val * 1000
             return ""
         # elif param == "framerate":
         #     self.camera.FrameRate = 100
@@ -53,8 +55,9 @@ class BaslerCamera(Camera):
 
     def read(self):
         """ """
-        grabResult = self.camera.RetrieveResult(5000,
-                                           pylon.TimeoutHandling_ThrowException)
+        grabResult = self.camera.RetrieveResult(
+            5000, pylon.TimeoutHandling_ThrowException
+        )
 
         if grabResult.GrabSucceeded():
             # Access the image data.
@@ -67,8 +70,6 @@ class BaslerCamera(Camera):
 
         else:
             return None
-
-
 
         # return res.Array
 
@@ -97,8 +98,7 @@ if __name__ == "__main__":
     camera.FrameRate = 10
 
     # while camera.IsGrabbing():
-    grabResult = camera.RetrieveResult(5000,
-                                       pylon.TimeoutHandling_ThrowException)
+    grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
 
     if grabResult.GrabSucceeded():
         # Access the image data.

@@ -25,7 +25,7 @@ class VigorMotionEstimator(Estimator):
     def __init__(self, *args, vigor_window=0.050, base_gain=-12, **kwargs):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window
-        self.last_dt = 1 / 500.
+        self.last_dt = 1 / 500.0
         self.base_gain = base_gain
         self._output_type = namedtuple("s", "vigor")
 
@@ -49,8 +49,8 @@ class VigorMotionEstimator(Estimator):
             vigor_n_samples + n_samples_lag
         )[0:vigor_n_samples]
         end_t = past_tail_motion.t.iloc[-1]
-        start_t = past_tail_motion.t.iloc[ 0]
-        new_dt = (end_t-start_t) / vigor_n_samples
+        start_t = past_tail_motion.t.iloc[0]
+        new_dt = (end_t - start_t) / vigor_n_samples
         if new_dt > 0:
             self.last_dt = new_dt
         vigor = np.nanstd(np.array(past_tail_motion.tail_sum))
@@ -63,8 +63,7 @@ class VigorMotionEstimator(Estimator):
 
 
 class PositionEstimator(Estimator):
-    def __init__(self, *args, change_thresholds=None,
-                 velocity_window=10, **kwargs):
+    def __init__(self, *args, change_thresholds=None, velocity_window=10, **kwargs):
         """ Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
@@ -97,22 +96,28 @@ class PositionEstimator(Estimator):
         return past_coords["f0_x"], past_coords["f0_y"], past_coords["f0_theta"]
 
     def get_velocity(self):
-        vel = np.diff(self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values, 0)
-        return np.sqrt(np.sum(vel**2))
-    
+        vel = np.diff(
+            self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values,
+            0,
+        )
+        return np.sqrt(np.sum(vel ** 2))
+
     def get_istantaneous_velocity(self):
-        vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[["f0_vx", "f0_vy"]].values
-        return np.sqrt(np.sum(vel_xy**2))
+        vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[
+            ["f0_vx", "f0_vy"]
+        ].values
+        return np.sqrt(np.sum(vel_xy ** 2))
 
     def reset(self):
         super().reset()
         self.past_values = None
 
     def get_position(self):
-        if len(self.acc_tracking.stored_data) == 0 or not np.isfinite(self.acc_tracking.stored_data[-1].f0_x):
+        if len(self.acc_tracking.stored_data) == 0 or not np.isfinite(
+            self.acc_tracking.stored_data[-1].f0_x
+        ):
             o = self._output_type(np.nan, np.nan, np.nan)
             return o
-
 
         past_coords = self.acc_tracking.stored_data[-1]
         t = self.acc_tracking.times[-1]
@@ -153,6 +158,5 @@ class PositionEstimator(Estimator):
 
         return c_values
 
-    
-estimator_dict = dict(position=PositionEstimator,
-                      vigor=VigorMotionEstimator)
+
+estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator)
