@@ -77,8 +77,13 @@ class Stytra:
                 for closed-loop experiments: either "vigor" for embedded experiments
                     or "position" for freely-swimming ones. A custom estimator can be supplied.
 
-        recording : bool
+        recording : bool (False) or dict
             for video-recording experiments
+                extension: mp4 (default) or h5
+                    take care, if saving as h5 all frames are first stored in memory,
+                    potentially overfilling it
+                kbit_rate: int
+                    for mp4 format, target kilobits per second of video
 
         embedded : bool
             if not embedded, use circle calibrator

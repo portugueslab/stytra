@@ -10,6 +10,7 @@ from stytra.stimulation.stimuli import (
     BackgroundStimulus,
     PositionStimulus,
     InterpolatedStimulus,
+    Stimulus
 )
 
 
@@ -176,6 +177,33 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
             )
 
 
+class GainChangerStimulus(Stimulus):
+    """
+    Vigor-based closed loop stimulus. Velocity is assumend to be calculated
+    with the
+
+    The parameters can change in time if the df_param is supplied which
+    specifies their values in time.
+
+    Parameters
+    ----------
+    base_vel:
+        the velocity of the background when the stimulus is not moving
+    swimming_threshold: float
+        the velocity at which the fish is considered to be performing
+        a bout
+    """
+
+    def __init__(self, newgain=1):
+        self.duration = 0.001
+        super().__init__()
+        self.name = "fix_gain_calibration_cl1D"
+        self.newgain = newgain
+
+    def start(self):
+        self._experiment.estimator.base_gain = self.newgain
+
+
 class GainLagClosedLoop1D(Basic_CL_1D):
     def __init__(
         self,
@@ -284,3 +312,5 @@ class FishTrackingStimulus(PositionStimulus):
                 self.y = y
                 self.theta = theta
         super().update()
+
+

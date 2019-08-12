@@ -1,11 +1,7 @@
 from multiprocessing import Event, Queue
 from stytra.collectors import FramerateQueueAccumulator
 
-import qdarkstyle
-from PyQt5.QtWidgets import QApplication
-from stytra.hardware.video.write import VideoWriter
-from stytra.stimulation import Protocol, Pause
-from lightparam import Param
+from stytra.hardware.video.write import H5VideoWriter
 
 from stytra.experiments.tracking_experiments import CameraVisualExperiment
 from stytra.tracking.tracking_process import DispatchProcess
@@ -33,7 +29,7 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         # Create and connect framerate accumulator:
         self.acc_tracking_framerate = FramerateQueueAccumulator(
             self,
-            self.frame_dispatcher.framerate_queue,
+            queue=self.frame_dispatcher.framerate_queue,
             name="tracking",
             goal_framerate=kwargs["camera"].get("min_framerate", None),
         )
@@ -42,16 +38,16 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         # self.filename_queue = Queue()
 
         self.set_id()
-        self.video_writer = VideoWriter(
-            self.filename_base(),
+        self.video_writer = H5VideoWriter(
             self.frame_dispatcher.output_frame_queue,
             self.finished_evt,
-            self.saving_evt,
+            self.saving_evt
         )
 
         self.video_writer.start()
 
     def start_protocol(self):
+        self.video_writer.filename_queue.put(self.folder_name)
         self.saving_evt.set()
         self.video_writer.reset_signal.set()
         super().start_protocol()

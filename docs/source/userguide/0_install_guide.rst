@@ -122,7 +122,7 @@ spinnaker: Point Grey / FLIR
 
 Go the the `FLIR support website <https://flir.app.boxcn.net/v/SpinnakerSDK>`_, download the SDK and the Python API.
 
-1. Install the SDK, by chosing the camera and OS, and then downloading e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB or the equivalent for your operating system
+1. Install the SDK, by chosing the camera and OS, and then downloading e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB or the equivalent for your operating system. We recommend selecting the "Camera evaluation" option in the installer, it is the smallest and installs everything required for the Python. The other options might require installing various Visual Studio runtimes.
 
 2. Install the python module::
 
@@ -140,3 +140,9 @@ National Instruments framegrabber with Mikrotron camera
 Install the NI vision SDK. For the Mikrotron MC1362 camera, you can use `this <http://www.portugueslab.com/files/MikrotronMC1362.icd>`_
 camera file. The camera file usually needs to be put into C:\Users\Public\Public Documents\National Instruments\NI-IMAQ\Data
 After putting the camera file there, is should be selected for the image acquisition device in NI MAX.
+
+
+Basler: pypylon
+...............
+
+Please refer to the instructions `here <https://github.com/basler/pypylon>`_.

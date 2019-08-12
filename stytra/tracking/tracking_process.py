@@ -24,30 +24,58 @@ class TrackingProcess(FrameProcess):
         pipeline=None,
         processing_parameter_queue=None,
         output_queue=None,
-        processing_counter: Value = None,
+        recording_signal=None,
         gui_framerate=30,
-        gui_dispatcher=False,
+        max_mb_queue=100,
         **kwargs
     ):
         """
-        :param in_frame_queue: queue dispatching frames from camera
-        :param finished_signal: signal for the end of the acquisition
-        :param processing_parameter_queue: queue for function&parameters
-        :param gui_framerate: framerate of the display GUI
+        Frame dispatcher process
+
+        Parameters
+        ----------
+        in_frame_queue:
+            queue dispatching frames from camera
+        finished_signal
+            signal for the end of the acquisition
+        pipeline: Pipeline
+            tracking pipeline
+        processing_parameter_queue
+            queue for function&parameters
+        output_queue:
+            tracking output queue
+        recording_signal: bool (false)
+
+        processing_counter
+        gui_framerate: int
+            target framerate of the display GUI
+        gui_dispatcher
+
+        max_mb_queue: int (200)
+            the maximal size of the image output queues
+
+        kwargs
         """
+
         super().__init__(name="tracking", **kwargs)
 
         self.frame_queue = in_frame_queue
-        self.gui_queue = TimestampedArrayQueue(max_mbytes=100)  # GUI queue for
+        self.gui_queue = TimestampedArrayQueue(max_mbytes=max_mb_queue)  # GUI queue for
+
+        self.recording_signal = recording_signal
+        if recording_signal is not None:
+            self.frame_copy_queue = TimestampedArrayQueue(max_mbytes=max_mb_queue)
+        else:
+            self.frame_copy_queue = None
+
         #  displaying
         #  the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
         self.processing_parameter_queue = processing_parameter_queue
-        self.processing_counter = processing_counter
 
         self.finished_signal = finished_signal
         self.gui_framerate = gui_framerate
-        self.gui_dispatcher = gui_dispatcher
+
         self.pipeline_cls = pipeline
         self.pipeline = None
 
@@ -98,11 +126,19 @@ class TrackingProcess(FrameProcess):
             except Empty:
                 continue
 
+            messages = []
+            # If we are copying the frames to another queue (e.g. for video recording), do it here
+            if self.recording_signal is not None and self.recording_signal.is_set():
+                try:
+                    self.frame_copy_queue.put(frame.copy(), timestamp=time)
+                except:
+                    messages.append("W:Dropping frames from recording")
+
             # If a processing function is specified, apply it:
 
-            messages, output = self.pipeline.run(frame)
+            new_messages, output = self.pipeline.run(frame)
 
-            for msg in messages:
+            for msg in messages + new_messages:
                 self.message_queue.put(msg)
 
             self.send_to_queue(time, output)
@@ -208,6 +244,8 @@ class DispatchProcess(FrameProcess):
 
             # calculate the frame rate
             self.update_framerate()
+
+
 
         return
 

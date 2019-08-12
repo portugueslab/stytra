@@ -225,6 +225,9 @@ class DataFrameAccumulator(Accumulator):
         saved_filename = save_df(df, path, format)
         return basename(saved_filename)
 
+    def is_empty(self):
+        return len(self.stored_data) == 0
+
 
 class QueueDataAccumulator(DataFrameAccumulator):
     """General class for retrieving data from a Queue.

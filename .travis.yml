@@ -9,8 +9,15 @@ sudo: false
 notifications:
   email: false
 
+cache:
+  directories:
+    - $HOME/mc
+
 env:
   - PYTHON=3.7 QT=pyqt5 TEST=standard
+
+services:
+    - xvfb
 
 before_install:
   # We need to create a (fake) display on Travis, let's use a funny resolution
@@ -33,6 +40,7 @@ install:
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
+  - hash -r
 
   - which python
   - python --version
@@ -46,7 +54,6 @@ install:
 before_script:
   # We need to create a (fake) display on Travis, let's use a funny resolution
   - export DISPLAY=:99.0
-  - "sh -e /etc/init.d/xvfb start"
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
 script:

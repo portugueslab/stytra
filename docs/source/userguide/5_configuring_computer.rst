@@ -36,6 +36,7 @@ Manufacturer    Stytra camera type  Supports ROI
 Ximea           ximea               Yes
 FLIR/PointGrey  spinnaker           No
 AVT             avt                 No
+Basler          basler              No
 Mikrotron       mikrotron           Yes
 OpenCV          opencv              No
 ==============  ==================  ============

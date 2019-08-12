@@ -116,6 +116,28 @@ def negdif(xf, y):
         return 0
 
 
+@vectorize([uint8(float32, uint8)])
+def absdif(xf, y):
+    """
+
+    Parameters
+    ----------
+    x :
+
+    y :
+
+
+    Returns
+    -------
+
+    """
+    x = np.uint8(xf)
+    if x > y:
+        return x - y
+    else:
+        return y - x
+
+
 class BackgroundSubtractor(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="bgsub", **kwargs)
@@ -126,10 +148,9 @@ class BackgroundSubtractor(ImageToImageNode):
         self.background_image = None
 
     def _process(
-        self,
-        im,
-        learning_rate: Param(0.04, (0.0, 1.0)),
+        self, im, learning_rate: Param(0.04, (0.0, 1.0)),
         learn_every: Param(400, (1, 10000)),
+        only_darker: Param(True)
     ):
         messages = []
         if self.background_image is None:
@@ -142,79 +163,7 @@ class BackgroundSubtractor(ImageToImageNode):
 
         self.i = (self.i + 1) % learn_every
 
-        return NodeOutput(messages, negdif(self.background_image, im))
-
-
-#
-# class BackgroundSubtractorMotor(ImageToImageNode):
-#     def __init__(self, motorx, motory, *args, **kwargs):
-#         super().__init__(*args, name="bgsubmot", **kwargs)
-#         self.background_image = None
-#         # self.background_global = global background_0
-#         #TODO how to give him global bg - set global_bg as global variable or import from config file?
-#         self.i = 0
-#         self.motorx = motorx
-#         self.motory = motory
-#
-#     def reset(self):
-#         self.background_image = None
-#
-#     def convert_motor_global(self):
-#         self.motor_posx = self.motorx.get_position()
-#         self.motor_posy = self.motory.get_position()
-#
-#         self.con = self.motor_posx / (arenaw / 2)
-#         #TODO: self.arena from somewhere, maybe motor config as well?
-#         #TODO: constant motor position stream somewhere, but accurate enough to relate to specific time points?
-#
-#         motor_x = self.motor_posx / self.con
-#         motor_y = self.motor_posy / self.con
-#         mx = int(motor_x - self.im.shape[0] / 2)
-#         mxx = int(motor_x + self.im.shape[0] / 2)
-#         my = int(motor_y - self.im.shape[1] / 2)
-#         myy = int(motor_y + self.im.shape[1] / 2)
-#         return mx, mxx, my, myy
-#
-#     def find_fish(self):
-#         self.im = 255 - self.im
-#         idxs = np.unravel_index(np.nanargmax(self.im),self.im.shape)
-#         e = (np.float(idxs[1]), np.float(idxs[0]))
-#         x = int(e[0])
-#         y = int(e[1])
-#         return x, y
-#
-#     def create_mask(self, x, y):
-#         # circle_image = np.ones(self.im.shape[0], self.im.shape[1]), np.uint8)
-#         mask = cv2.circle(circle_image, (x, y), 60, 255, -1)
-#         return mask
-#
-#     def _process(
-#         self, im, learning_rate: Param(0.04, (0.0, 1.0)),
-#         global_learning_rate: Param(0.04, (0.0, 1.0)),
-#         learn_every: Param(400, (1, 10000))
-#     ):
-#         messages = []
-#         if self.background_image is None:
-#             x, y = find_fish(self.im)
-#             mask = create_mask(x, y, self.im)
-#             self.background_image[mask == True] = self.im[mask == True]
-#             messages.append("I:New background image set")
-#         elif self.i == 0:
-#             print ("Ready to roll.")
-#             mx, mxx, my, myy =BackgroundSubtractorMotor.convert_motor_global(self)
-#             self.background_old =self.background_global[mx:mxx, my:myy] #getting bg from global
-#             self.background_image[:, :] = self.im.astype(np.float32) * np.float32(
-#                 learning_rate) + self.background_old * np.float32(
-#                 1 - learning_rate)
-#
-#             #Updating gloabl bg as well
-#             print ("Global update this.")
-#             background_global_old = np.copy(self.background_global)
-#             self.background_global[mx:mxx, my:myy] = self.background_image #setting new bg to global
-#             self.background_global[:, :] = self.background_global.astype(np.float32) * np.float32(
-#                 global_learning_rate) + background_global_old * np.float32(
-#                 1 - global_learning_rate)
-#
-#         self.i = (self.i + 1) % learn_every
-#
-#         return NodeOutput(messages, negdif(self.background_image, im))
+        if only_darker:
+            return NodeOutput(messages, negdif(self.background_image, im))
+        else:
+            return NodeOutput(messages, absdif(self.background_image, im))

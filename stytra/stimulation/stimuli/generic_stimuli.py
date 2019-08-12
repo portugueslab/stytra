@@ -64,7 +64,7 @@ class Stimulus:
 
         self._started = None
         self._elapsed = 0.0  # time from the beginning of the stimulus
-        self.name = ""
+        self.name = "undefined"
         self._experiment = None
         self.real_time_start = None
         self.real_time_stop = None

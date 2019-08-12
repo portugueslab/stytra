@@ -6,7 +6,7 @@ implement video saving
 import numpy as np
 
 from multiprocessing import Queue, Event
-from queue import Empty
+from queue import Empty, Full
 
 from lightparam import Param
 from lightparam.param_qt import ParametrizedQt
@@ -72,6 +72,20 @@ class VideoSource(FrameProcess):
         self.n_consumers = 1
         self.state = None
 
+    def put_frame(self, frame, messages):
+        # If the queue is full, arrayqueues should print a warning!
+        try:
+            if self.frame_queue.queue.qsize() < self.n_consumers + 2:
+                self.frame_queue.put(frame)
+            else:
+                messages.append("W:Dropped frame")
+        except NotImplementedError:
+            try:
+                self.frame_queue.put(frame)
+            except Full:
+                messages.append("W:Dropped frame")
+        self.update_framerate()
+
 
 class CameraSource(VideoSource):
     """Process for controlling a camera.
@@ -104,6 +118,7 @@ class CameraSource(VideoSource):
         downsampling=1,
         roi=(-1, -1, -1, -1),
         max_buffer_length=1000,
+        camera_params=dict(),
         **kwargs
     ):
         """ """
@@ -114,6 +129,7 @@ class CameraSource(VideoSource):
         self.camera_type = camera_type
         self.downsampling = downsampling
         self.roi = roi
+        self.camera_params = camera_params
 
         self.max_buffer_length = max_buffer_length
 
@@ -148,7 +164,9 @@ class CameraSource(VideoSource):
             self.state = CameraControlParameters()
         try:
             CameraClass = camera_class_dict[self.camera_type]
-            self.cam = CameraClass(downsampling=self.downsampling, roi=self.roi)
+            self.cam = CameraClass(downsampling=self.downsampling,
+                                   roi=self.roi,
+                                   **self.camera_params)
         except KeyError:
             raise Exception("{} is not a valid camera type!".format(self.camera_type))
         camera_messages = list(self.cam.open_camera())
@@ -218,12 +236,7 @@ class CameraSource(VideoSource):
                         self.ring_buffer.put(arr)
                     except AttributeError:
                         pass
-                    # If the queue is full, arrayqueues should print a warning!
-                    if self.frame_queue.queue.qsize() < self.n_consumers + 2:
-                        self.frame_queue.put(arr)
-                    else:
-                        messages.append("W:Dropped frame")
-                    self.update_framerate()
+                    self.put_frame(arr, messages)
             for m in messages:
                 self.message_queue.put(m)
 
@@ -270,13 +283,19 @@ class VideoFileSource(VideoSource):
     def run(self):
         if self.state is None:
             self.state = VideoControlParameters()
-        if self.source_file.endswith("h5"):
+        if self.source_file.endswith("h5") or self.source_file.endswith(
+                "hdf5"):
             framedata = dd.io.load(self.source_file)
-            frames = framedata["video"]
+
+            if isinstance(framedata, np.ndarray):
+                frames = framedata
+            else:
+                frames = framedata["video"]
+
             i_frame = self.offset
             prt = None
             while not self.kill_event.is_set():
-
+                messages = []
                 # Try to get new parameters from the control queue:
                 message = ""
                 if self.control_queue is not None:
@@ -289,15 +308,19 @@ class VideoFileSource(VideoSource):
                     if extrat > 0:
                         time.sleep(extrat)
 
-                self.frame_queue.put(frames[i_frame, :, :])
+                self.put_frame(frames[i_frame, :, :], messages)
+
                 if not self.state.paused:
                     i_frame += 1
+
                 if i_frame == frames.shape[0]:
                     if self.loop:
                         i_frame = self.offset
                     else:
                         break
-                self.update_framerate()
+
+                for m in messages:
+                    self.message_queue.put(m)
                 prt = time.process_time()
 
         else:
@@ -306,11 +329,11 @@ class VideoFileSource(VideoSource):
             container = av.open(self.source_file)
             container.streams.video[0].thread_type = "AUTO"
             container.streams.video[0].thread_count = 1
-            ret = True
 
             prt = None
             while self.loop:
                 for framedata in container.decode(video=0):
+                    messages = []
                     if self.paused:
                         frame = self.old_frame
                     else:
@@ -328,12 +351,15 @@ class VideoFileSource(VideoSource):
                         if extrat > 0:
                             time.sleep(extrat)
 
-                    if ret:
-                        self.frame_queue.put(frame[:, :, 0])
+                    self.put_frame(frame[:, :, 0], messages)
 
                     prt = time.process_time()
                     self.old_frame = frame
-                    self.update_framerate()
+
+                    for m in messages:
+                        self.message_queue.put(m)
+
+                container.seek(0, whence="frame")
 
             return
 
@@ -363,9 +389,9 @@ class CameraControlParameters(ParametrizedQt):
 
     def __init__(self, **kwargs):
         super().__init__(name="camera_params", **kwargs)
-        self.exposure = Param(1.0, limits=(0.1, 50), unit="ms", desc="Exposure (ms)")
+        self.exposure = Param(1.0, limits=(0.1, 1000), unit="ms", desc="Exposure (ms)")
         self.framerate = Param(
-            150.0, limits=(10, 700), unit=" Hz", desc="Framerate (Hz)"
+            150.0, limits=(1, 700), unit=" Hz", desc="Framerate (Hz)"
         )
         self.gain = Param(1.0, limits=(0.1, 12), desc="Camera amplification gain")
         self.ring_buffer_length = Param(

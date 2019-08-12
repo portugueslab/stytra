@@ -15,7 +15,6 @@ class WindmillProtocol(Protocol):
         self.inter_stim_pause = Param(2.)
         self.theta_amp = Param(np.pi / 2)
         self.windmill_freq = Param(0.2)
-        self.grating_vel = Param(10)
         self.stim_duration = Param(5.)
         self.wave_shape = Param(value="square", limits=["square", "sinusoidal"])
         self.n_arms = Param(10)
@@ -33,7 +32,9 @@ class WindmillProtocol(Protocol):
         t = [t[0]] + list(t + p) + [(t + 2 * p)[-1]]
         theta = [theta[0]] + list(theta) + [theta[-1]]
         df = pd.DataFrame(dict(t=t, theta=theta))
-        stimuli.append(MovingWindmillStimulus(df_param=df))
+        stimuli.append(MovingWindmillStimulus(df_param=df,
+                                              n_arms=self.n_arms,
+                                              wave_shape=self.wave_shape))
         return stimuli
 
 

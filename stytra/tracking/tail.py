@@ -26,7 +26,7 @@ class TailTrackingMethod(ImageToDataNode):
             ["tail_sum"]
             + ["theta_{:02}".format(i) for i in range(self._params.n_output_segments)],
         )
-        # self._output_type_changed = True
+        self._output_type_changed = True
 
 
 class CentroidTrackingMethod(TailTrackingMethod):

@@ -55,6 +55,7 @@ class U3LabJackVoltageStimulus(Stimulus):
 
 
 class SetU3LabJackVoltageStimulus(U3LabJackVoltageStimulus):
+    name = "u3_volt_stim"
     def __init__(self, *args, voltage=0.0, **kwargs):
         self.voltage_out = voltage
         super().__init__(*args, **kwargs)
@@ -73,6 +74,7 @@ class InterpolatedU3LabJackVoltageStimulus(
         self.voltage_out = 0
         new_dynamic_params = ["voltage_in_thermo", "voltage_in_peltier", "voltage_out"]
         super().__init__(*args, dynamic_parameters=new_dynamic_params, **kwargs)
+        self.name = "u3_dyn_volt_stim"
 
         self.voltage_in_thermo = 0
         self.voltage_in_peltier = 0

@@ -13,7 +13,7 @@ class OpenCVCamera(Camera):
 
     """
 
-    def __init__(self, cam_idx=0, **kwargs):
+    def __init__(self, cam_idx=0, bw=False, **kwargs):
         """
 
         Parameters
@@ -25,10 +25,11 @@ class OpenCVCamera(Camera):
 
         # Test if API for the camera is available
         self.cam = cv2.VideoCapture(cam_idx)
+        self.bw = bw
 
     def open_camera(self):
         """ """
-        pass
+        return "Webcam opened!"
 
     def set(self, param, val):
         if param == "exposure":
@@ -44,8 +45,10 @@ class OpenCVCamera(Camera):
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         except cv2.error:
             raise cv2.error("OpenCV can't find a camera!")
-
-        return rgb
+        if self.bw:
+            return np.mean(rgb, 2).astype(rgb.dtype)
+        else:
+            return rgb
 
     def release(self):
         """ """

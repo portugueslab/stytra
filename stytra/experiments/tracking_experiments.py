@@ -26,13 +26,9 @@ from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
 
-from stytra.stimulation.estimators import (
-    PositionEstimator,
-    VigorMotionEstimator,
-    Estimator,
-)
+from stytra.stimulation.estimators import estimator_dict
 
-from inspect import isclass
+from stytra.hardware.video.write import H5VideoWriter, StreamingVideoWriter
 
 import sys
 
@@ -66,6 +62,7 @@ class CameraVisualExperiment(VisualExperiment):
                 downsampling=camera.get("downsampling", 1),
                 roi=camera.get("roi", (-1, -1, -1, -1)),
                 max_mbytes_queue=camera_queue_mb,
+                camera_params=camera.get("camera_params", dict())
             )
             self.camera_state = CameraControlParameters(tree=self.dc)
         else:
@@ -194,7 +191,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
     """
 
-    def __init__(self, *args, tracking, **kwargs):
+    def __init__(self, *args, tracking, recording=None, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -210,13 +207,20 @@ class TrackingExperiment(CameraVisualExperiment):
         super().__init__(*args, **kwargs)
         self.arguments.update(locals())
 
+        self.recording_event = (
+            Event() if (recording is not None or recording is False) else None
+        )
+
         self.pipeline_cls = (
             pipeline_dict.get(tracking["method"], None)
             if isinstance(tracking["method"], str)
             else tracking["method"]
         )
+
         self.initialize_tracking_meth()
 
+        if self.pipeline_cls is None:
+            raise NameError("The selected tracking method does not exist!")
         self.pipeline = self.pipeline_cls()
         assert isinstance(self.pipeline, Pipeline)
         self.pipeline.setup(tree=self.dc)
@@ -239,14 +243,12 @@ class TrackingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.start()
 
         est_type = tracking.get("estimator", None)
-        if est_type == "position":
-            est = PositionEstimator
-        elif est_type == "vigor":
-            est = VigorMotionEstimator
-        elif isclass(est_type) and issubclass(est_type, Estimator):
-            est = est_type
-        else:
+        if est_type is None:
             est = None
+        elif isinstance(est_type, str):
+            est = estimator_dict.get(est_type, None)
+        else:
+            est = est_type
 
         if est is not None:
             self.estimator_log = EstimatorLog(experiment=self)
@@ -266,6 +268,25 @@ class TrackingExperiment(CameraVisualExperiment):
             goal_framerate=kwargs["camera"].get("min_framerate", None),
         )
 
+        if recording is not None:
+            if recording["extension"] == "h5":
+                self.frame_recorder = H5VideoWriter(
+                    self.filename_base(),
+                    self.frame_dispatcher.frame_copy_queue,
+                    self.finished_sig,
+                    self.recording_event,
+                    log_format=self.log_format,
+                )
+            else:
+                self.frame_recorder = StreamingVideoWriter(
+                    self.frame_dispatcher.frame_copy_queue,
+                    self.finished_sig,
+                    self.recording_event,
+                    kbit_rate=recording.get("kbit_rate", 1000),
+                    log_format=self.log_format,
+                )
+            self.frame_recorder.start()
+
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
     def initialize_tracking_meth(self):
@@ -275,7 +296,7 @@ class TrackingExperiment(CameraVisualExperiment):
             pipeline=self.pipeline_cls,
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
-            gui_dispatcher=True,
+            recording_signal=self.recording_event,
             gui_framerate=20,
         )
 
@@ -284,6 +305,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.acc_tracking_framerate.reset()
         self.acc_tracking.reset()
         if self.estimator is not None:
+            self.estimator.reset()
             self.estimator_log.reset()
 
     def make_window(self):
@@ -332,13 +354,20 @@ class TrackingExperiment(CameraVisualExperiment):
         # Reset data accumulator when starting the protocol.
         self.gui_timer.stop()
 
-        if self.estimator is not None:
-            self.estimator.reset()
-
         super().start_protocol()
+
+        if self.recording_event is not None:
+            fb = self.filename_base()
+            self.frame_recorder.filename_queue.put(fb)
+            self.dc.add_static_data(fb, "recording/filename")
+            self.recording_event.set()
+
         self.gui_timer.start(1000 // 60)
 
     def end_protocol(self, save=True):
+        if self.recording_event is not None:
+            self.recording_event.clear()
+
         super().end_protocol(save)
         if self.window_main.stream_plot.frozen:
             self.window_main.stream_plot.toggle_freeze()
@@ -391,6 +420,10 @@ class TrackingExperiment(CameraVisualExperiment):
         -------
 
         """
+
+        if self.recording_event is not None:
+            self.frame_recorder.finished_signal.set()
+            self.frame_recorder.join()
 
         super().wrap_up(*args, **kwargs)
 

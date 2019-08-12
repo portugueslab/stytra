@@ -56,6 +56,10 @@ class ImageToImageNode(PipelineNode):
     def output_type_changed(self):
         return any(c.output_type_changed for c in self.children)
 
+    def acknowledge_changes(self):
+        for c in self.children:
+            c.acknowledge_changes()
+
 
 class SourceNode(ImageToImageNode):
     def __init__(self, *args, **kwargs):
@@ -75,9 +79,11 @@ class ImageToDataNode(PipelineNode):
     @property
     def output_type_changed(self):
         if self._output_type_changed:
-            self._output_type_changed = False
             return True
         return False
+
+    def acknowledge_changes(self):
+        self._output_type_changed = False
 
     def _process(self):
         # Node processing code
@@ -192,18 +198,22 @@ class Pipeline:
             node._output_type = namedtuple(
                 "o", chain.from_iterable(map(lambda x: x.data._fields, child_outputs))
             )
+
         # collect all diagnostic messages and return a named tuple collecting
         # all the outputs
 
         # first element of the tuple concatenates all lists of diagnostic messages
         # second element makes a named tuple with fields from all the child named tuples
+        output_tuple = node._output_type(
+            *(chain.from_iterable(map(lambda x: x.data, child_outputs)))
+        )
         return NodeOutput(
             output.messages
             + list(chain.from_iterable(map(lambda x: x.messages, child_outputs))),
-            node._output_type(
-                *(chain.from_iterable(map(lambda x: x.data, child_outputs)))
-            ),
+            output_tuple,
         )
 
     def run(self, input):
-        return self.recursive_run(self.root, input)
+        out = self.recursive_run(self.root, input)
+        self.root.acknowledge_changes()
+        return out
