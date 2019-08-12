@@ -97,7 +97,7 @@ class ReceiverProcess(Process):
                     e = (float(pos_x), float(pos_y))
 
                 except (TypeError, IndexError):
-                    e = (0., 0.)
+                    e = (0.0, 0.0)
 
                 self.motor_position_queue.put(time, output_type(*e))
         mottitwo.close()
@@ -107,7 +107,7 @@ class ReceiverProcess(Process):
 ################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     event = Event()
     source = SendPositionsProcess()
@@ -120,4 +120,3 @@ if __name__ == '__main__':
     event.set()
     source.join()
     receiver.join()
-

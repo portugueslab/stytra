@@ -48,7 +48,6 @@ class SendPositionsProcess(Process):
             self.position_queue.put(datetime.datetime.now(), output_type(*e))
 
 
-
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, finished_event, motor_position_queue):
         super().__init__()
@@ -56,7 +55,7 @@ class ReceiverProcess(Process):
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
         self.jitter_thres = 15
-        self.arena_thres = 60000 #aka 3 cm
+        self.arena_thres = 60000  # aka 3 cm
         self.home = 2200000
 
     def run(self):
@@ -69,7 +68,7 @@ class ReceiverProcess(Process):
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
         dot_pos = []
-        motor_pos =[]
+        motor_pos = []
         times = []
 
         while not self.finished_event.is_set():
@@ -90,29 +89,29 @@ class ReceiverProcess(Process):
                     distance_y = center_y - last_position.f0_y
                     dotx, dotcx = motor_x.move_relative_without_move(distance_x)
                     doty, dotcy = motor_y.move_relative_without_move(distance_y)
-                    print ("dotx,y", dotx, doty, dotcx, dotcy)
-                    print(dotcx**2 + dotcy**2)
-                    print(self.arena_thres**2)
+                    print("dotx,y", dotx, doty, dotcx, dotcy)
+                    print(dotcx ** 2 + dotcy ** 2)
+                    print(self.arena_thres ** 2)
 
                     # arena bounds check relative to home
-                    if dotcx**2 +dotcy**2 < self.arena_thres**2:
-                        #TODO does not work - always out of bounds
+                    if dotcx ** 2 + dotcy ** 2 < self.arena_thres ** 2:
+                        # TODO does not work - always out of bounds
                         print("position inside arena bounds")
                         # jitter filter for camera
-                        if distance_x**2 + distance_y**2 > self.jitter_thres**2:
+                        if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
                             print("Moving")
                             motor_x.move_relative(distance_x)
                             motor_y.move_relative(distance_y)
-                            print (distance_x, distance_y)
-                            dot_pos.append([distance_x,distance_y])
+                            print(distance_x, distance_y)
+                            dot_pos.append([distance_x, distance_y])
 
                         e = (float(pos_x), float(pos_y), distance_x, distance_y)
 
                     else:
-                        print ("motor move command out of arena bounds")
+                        print("motor move command out of arena bounds")
 
                 except (ValueError, TypeError, IndexError):
-                    e = (pos_x, pos_y, 0., 0.)
+                    e = (pos_x, pos_y, 0.0, 0.0)
 
                 self.motor_position_queue.put(time, output_type(*e))
                 # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
@@ -125,7 +124,7 @@ class ReceiverProcess(Process):
 ################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     event = Event()
     source = SendPositionsProcess()
     receiver = ReceiverProcess(source.position_queue, finished_event=event)
@@ -137,4 +136,3 @@ if __name__ == '__main__':
     event.set()
     source.join()
     receiver.join()
-

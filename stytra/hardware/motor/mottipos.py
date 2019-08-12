@@ -14,6 +14,7 @@ from collections import namedtuple
 
 duration = 10
 
+
 class SendPositionsProcess(Process):
     def __init__(self):
         super().__init__()
@@ -46,8 +47,6 @@ class SendPositionsProcess(Process):
                 pass
 
 
-
-
 class ReceiverProcess(Process):
     def __init__(self, position_queue, finished_event):
         super().__init__()
@@ -65,7 +64,7 @@ class ReceiverProcess(Process):
 
         last_position = None
         dot_pos = []
-        motor_pos =[]
+        motor_pos = []
         times = []
         start = datetime.datetime.now()
 
@@ -73,7 +72,7 @@ class ReceiverProcess(Process):
 
             try:
                 pos = self.position_queue.get(timeout=0.001)
-                print ("gotten positions", pos)
+                print("gotten positions", pos)
 
                 times.append((datetime.datetime.now() - start).total_seconds())
                 pos_x = motor_x.get_position()
@@ -91,8 +90,6 @@ class ReceiverProcess(Process):
                         dotposy = motor_x.move_relative_without_move(distance_y)
                         dot_pos.append([dotposx, dotposy])
 
-
-
                 except (ValueError, TypeError, IndexError):
                     pass
 
@@ -100,16 +97,17 @@ class ReceiverProcess(Process):
                 pass
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                print (len(times), len(dot_pos), len(motor_pos))
+                print(len(times), len(dot_pos), len(motor_pos))
 
-                df =pd.DataFrame(dict(time=times,dots=dot_pos, motorpos=motor_pos))
-                df.to_pickle('my_file.pkl')
+                df = pd.DataFrame(dict(time=times, dots=dot_pos, motorpos=motor_pos))
+                df.to_pickle("my_file.pkl")
                 motor_x.close()
                 motor_y.close()
 
+
 ################################
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     event = Event()
     source = SendPositionsProcess()
     receiver = ReceiverProcess(source.position_queue, finished_event=event)

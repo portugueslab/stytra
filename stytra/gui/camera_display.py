@@ -17,6 +17,7 @@ from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 class SingleLineROI(pg.LineSegmentROI):
     """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.translatable = False
@@ -179,9 +180,14 @@ class CameraViewWidget(QWidget):
                     self.scale = self.current_image.shape[0]
                     self.scale_changed()
                     self.display_area.setRange(
-                        QRectF(0, 0, self.current_image.shape[1],
-                               self.current_image.shape[0]), update=True,
-                        disableAutoRange=True
+                        QRectF(
+                            0,
+                            0,
+                            self.current_image.shape[1],
+                            self.current_image.shape[0],
+                        ),
+                        update=True,
+                        disableAutoRange=True,
                     )
                 self.image_item.setImage(
                     self.current_image, autoLevels=self.btn_autorange.isChecked()
@@ -189,9 +195,9 @@ class CameraViewWidget(QWidget):
 
     def scale_changed(self):
         self.display_area.setRange(
-            QRectF(0, 0, self.current_image.shape[1],
-                   self.current_image.shape[0]),
-            update=True, disableAutoRange=True
+            QRectF(0, 0, self.current_image.shape[1], self.current_image.shape[0]),
+            update=True,
+            disableAutoRange=True,
         )
 
     def save_image(self, name=None):
@@ -281,13 +287,11 @@ class TailTrackingSelection(CameraSelection):
         # Draw ROI for tail selection:
         self.tail_params = self.experiment.pipeline.tailtrack._params
         self.roi_tail = SingleLineROI(
-            self.tail_points(),
-            pen=dict(color=(40, 5, 200), width=3),
+            self.tail_points(), pen=dict(color=(40, 5, 200), width=3)
         )
 
         # Prepare curve for plotting tracked tail position:
-        self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5),
-                                                    width=3))
+        self.curve_tail = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
         self.display_area.addItem(self.curve_tail)
 
         self.initialise_roi(self.roi_tail)
@@ -311,11 +315,12 @@ class TailTrackingSelection(CameraSelection):
         self.setting_param_val = True
 
         p1, p2 = self.roi_tail.getHandles()
-        self.tail_params.tail_start = (p1.y()/self.scale,
-                                       p1.x()/self.scale)
+        self.tail_params.tail_start = (p1.y() / self.scale, p1.x() / self.scale)
         self.tail_params.params.tail_start.changed = True
-        self.tail_params.tail_length = ((p2.y() - p1.y())/self.scale,
-                                        (p2.x() - p1.x())/self.scale)
+        self.tail_params.tail_length = (
+            (p2.y() - p1.y()) / self.scale,
+            (p2.x() - p1.x()) / self.scale,
+        )
         self.tail_params.params.tail_length.changed = True
 
         self.setting_param_val = False
@@ -334,12 +339,16 @@ class TailTrackingSelection(CameraSelection):
         if len(self.experiment.acc_tracking.stored_data) > 1:
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
-            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
+                self.current_frame_time
+            )
             # Check for data to be displayed:
             # Retrieve tail angles from tail
 
-            angles = [getattr(retrieved_data, "theta_{:02d}".format(i))
-                      for i in range(self.tail_params.n_output_segments)]
+            angles = [
+                getattr(retrieved_data, "theta_{:02d}".format(i))
+                for i in range(self.tail_params.n_output_segments)
+            ]
             # Get tail position and length from the parameters:
             (start_y, start_x), (tail_len_y, tail_len_x) = self.tail_dims()
             tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
@@ -360,7 +369,7 @@ class TailTrackingSelection(CameraSelection):
     def tail_points(self):
         tsy, tsx = (t * self.scale for t in self.tail_params.tail_start)
         tly, tlx = (t * self.scale for t in self.tail_params.tail_length)
-        return (tsx, tsy), (tsx+tlx, tsy+tly)
+        return (tsx, tsy), (tsx + tlx, tsy + tly)
 
     def tail_dims(self):
         tsy, tsx = (t * self.scale for t in self.tail_params.tail_start)
@@ -432,7 +441,9 @@ class EyeTrackingSelection(CameraSelection):
         if len(self.experiment.acc_tracking.stored_data) > 1:
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
-            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(self.current_frame_time)
+            retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
+                self.current_frame_time
+            )
             # Check for data to be displayed:
 
             if len(self.experiment.acc_tracking.stored_data) > 1:
@@ -454,8 +465,12 @@ class EyeTrackingSelection(CameraSelection):
                         # happens around lower corner and not
                         # around center.
                         # Might be improved with matrix transforms!
-                        th = -getattr(retrieved_data, "th_e{}".format(i))  # eye angle from tracked ellipse
-                        c_x = int(getattr(retrieved_data, "dim_x_e{}".format(i)) / 2)  # ellipse center x and y
+                        th = -getattr(
+                            retrieved_data, "th_e{}".format(i)
+                        )  # eye angle from tracked ellipse
+                        c_x = int(
+                            getattr(retrieved_data, "dim_x_e{}".format(i)) / 2
+                        )  # ellipse center x and y
                         c_y = int(getattr(retrieved_data, "dim_y_e{}".format(i)) / 2)
 
                         if c_x != 0 and c_y != 0:
@@ -480,9 +495,13 @@ class EyeTrackingSelection(CameraSelection):
                             # for the rotation around corner instead of center.
                             self.curves_eyes[i].setPos(
                                 getattr(retrieved_data, "pos_y_e{}".format(i))
-                                + pos[0] - c_x + (c_x - center_after[1]),
+                                + pos[0]
+                                - c_x
+                                + (c_x - center_after[1]),
                                 getattr(retrieved_data, "pos_x_e{}".format(i))
-                                + pos[1] - c_y + (c_y - center_after[0]),
+                                + pos[1]
+                                - c_y
+                                + (c_y - center_after[0]),
                             )
                             self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
 
@@ -596,12 +615,15 @@ class CameraViewFish(CameraViewCalib):
     def retrieve_image(self):
         super().retrieve_image()
 
-        if len(self.experiment.acc_tracking.stored_data) == 0 or \
-                self.current_image is None:
+        if (
+            len(self.experiment.acc_tracking.stored_data) == 0
+            or self.current_image is None
+        ):
             return
 
         current_data = self.experiment.acc_tracking.values_at_abs_time(
-            self.current_frame_time)
+            self.current_frame_time
+        )
 
         n_fish = self.tracking_params.n_fish_max
 
@@ -611,7 +633,7 @@ class CameraViewFish(CameraViewCalib):
         n_points_tail = self.tracking_params.n_segments
         try:
             retrieved_data = np.array(
-                current_data[: -1]  # the -1 if for the diagnostic area
+                current_data[:-1]  # the -1 if for the diagnostic area
             ).reshape(n_fish, n_data_per_fish)
             valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
             self.points_fish.setData(
@@ -619,8 +641,7 @@ class CameraViewFish(CameraViewCalib):
             )
             if n_points_tail:
                 tail_len = (
-                    self.tracking_params.tail_length
-                    / self.tracking_params.n_segments
+                    self.tracking_params.tail_length / self.tracking_params.n_segments
                 )
                 ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
                 self.lines_fish.setData(x=xs, y=ys)
@@ -640,20 +661,22 @@ class CameraViewDot(CameraViewCalib):
     def retrieve_image(self):
         super().retrieve_image()
 
-        if len(self.experiment.acc_tracking.stored_data) == 0 or \
-                self.current_image is None:
+        if (
+            len(self.experiment.acc_tracking.stored_data) == 0
+            or self.current_image is None
+        ):
             return
 
         current_data = self.experiment.acc_tracking.values_at_abs_time(
-            self.current_frame_time)
+            self.current_frame_time
+        )
 
-        n_data_per_fish = (
-            len(current_data) - 1
-        )  # the first is time, the last is area
+        n_data_per_fish = len(current_data) - 1  # the first is time, the last is area
 
         try:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
-                self.current_frame_time)
+                self.current_frame_time
+            )
             x = int(getattr(retrieved_data, "x"))
             y = int(getattr(retrieved_data, "y"))
             self.points_fish.setData(y=[y], x=[x])

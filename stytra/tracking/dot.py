@@ -1,4 +1,3 @@
-
 import numpy as np
 from skimage.filters import threshold_local
 import cv2
@@ -6,6 +5,7 @@ from lightparam import Parametrized, Param
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
+
 # from stytra.hardware.motor.stageAPI import Motor
 # from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 from time import sleep
@@ -19,7 +19,7 @@ class DotTrackingMethod(ImageToDataNode):
 
     def __init__(self, *args, **kwargs):
 
-        super().__init__(*args,  name="dot_tracking", **kwargs)
+        super().__init__(*args, name="dot_tracking", **kwargs)
 
         self._output_type = namedtuple("xy", ["x", "y"])
 
@@ -68,25 +68,23 @@ class DotTrackingMethod(ImageToDataNode):
         #
         # self.cam.cam.EndAcquisition()
 
-        return NodeOutput(
-            [msg],
-            self._output_type(*e)
-        )
+        return NodeOutput([msg], self._output_type(*e))
 
 
 if __name__ == "__main__":
-    motor1 = Motor (1)
-    motor2 = Motor (2)
+    motor1 = Motor(1)
+    motor2 = Motor(2)
     motor1.open()
     motor2.open()
-    motorcalib = MotorCalibrator(motor1, motor2) #TODO external calibration somewhere else?
+    motorcalib = MotorCalibrator(
+        motor1, motor2
+    )  # TODO external calibration somewhere else?
 
     dottrack = DotTrackingMethod(motor1, motor2, motorcalib)
 
     while True:
         node_output = dottrack._process()
-        print (node_output)
-
+        print(node_output)
 
     dottrack.cam.EndAcquisition()
 

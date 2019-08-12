@@ -23,25 +23,31 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.finished_evt = Event()
         self.saving_evt = Event()
 
-        self.frame_dispatcher = DispatchProcess(self.camera.frame_queue,
-                                                self.finished_evt,
-                                                self.saving_evt)
+        self.frame_dispatcher = DispatchProcess(
+            self.camera.frame_queue, self.finished_evt, self.saving_evt
+        )
 
         # start frame dispatcher process:
         self.frame_dispatcher.start()
 
         # Create and connect framerate accumulator:
-        self.acc_tracking_framerate = FramerateQueueAccumulator(self, self.frame_dispatcher.framerate_queue, name="tracking",
-                                                                goal_framerate=kwargs["camera"].get("min_framerate", None))
+        self.acc_tracking_framerate = FramerateQueueAccumulator(
+            self,
+            self.frame_dispatcher.framerate_queue,
+            name="tracking",
+            goal_framerate=kwargs["camera"].get("min_framerate", None),
+        )
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
         # self.filename_queue = Queue()
 
         self.set_id()
-        self.video_writer = VideoWriter(self.filename_base(),
-                                        self.frame_dispatcher.output_frame_queue,
-                                        self.finished_evt,
-                                        self.saving_evt)
+        self.video_writer = VideoWriter(
+            self.filename_base(),
+            self.frame_dispatcher.output_frame_queue,
+            self.finished_evt,
+            self.saving_evt,
+        )
 
         self.video_writer.start()
 
@@ -49,7 +55,6 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.saving_evt.set()
         self.video_writer.reset_signal.set()
         super().start_protocol()
-
 
     def end_protocol(self, save=True):
         self.saving_evt.clear()
@@ -61,16 +66,3 @@ class VideoRecordingExperiment(CameraVisualExperiment):
         self.video_writer.join()
         print("closed")
         super().wrap_up(*args, **kwargs)
-
-
-
-
-
-
-
-
-
-
-
-
-

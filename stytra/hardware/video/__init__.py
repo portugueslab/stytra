@@ -98,9 +98,13 @@ class CameraSource(VideoSource):
     """ dictionary listing classes used to instantiate camera object."""
 
     def __init__(
-        self, camera_type, *args, downsampling=1, roi=(-1, -1, -1, -1),
-            max_buffer_length=1000,
-            **kwargs
+        self,
+        camera_type,
+        *args,
+        downsampling=1,
+        roi=(-1, -1, -1, -1),
+        max_buffer_length=1000,
+        **kwargs
     ):
         """ """
         super().__init__(*args, **kwargs)
@@ -164,12 +168,14 @@ class CameraSource(VideoSource):
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
 
-            res_len = int(round(self.state.framerate*self.state.ring_buffer_length))
+            res_len = int(round(self.state.framerate * self.state.ring_buffer_length))
             if res_len > self.max_buffer_length:
                 res_len = self.max_buffer_length
-                self.message_queue.put("W:Replay buffer too big, make the plot"
-                                       " time range smaller for full replay"
-                                       " capabilities")
+                self.message_queue.put(
+                    "W:Replay buffer too big, make the plot"
+                    " time range smaller for full replay"
+                    " capabilities"
+                )
 
             if self.ring_buffer is None or res_len != self.ring_buffer.length:
                 self.ring_buffer = RingBuffer(res_len)
@@ -181,8 +187,7 @@ class CameraSource(VideoSource):
                 if self.ring_buffer.arr is not None:
                     self.frame_queue.put(self.ring_buffer.get_most_recent())
                 else:
-                    self.message_queue.put(
-                        "E:camera paused before any frames acquired")
+                    self.message_queue.put("E:camera paused before any frames acquired")
                 prt = None
             elif self.state.replay and self.state.replay_fps > 0:
                 messages.append(
@@ -303,7 +308,6 @@ class VideoFileSource(VideoSource):
             container.streams.video[0].thread_count = 1
             ret = True
 
-
             prt = None
             while self.loop:
                 for framedata in container.decode(video=0):
@@ -337,7 +341,9 @@ class VideoFileSource(VideoSource):
 class VideoControlParameters(ParametrizedQt):
     def __init__(self, **kwargs):
         super().__init__(name="video_params", **kwargs)
-        self.framerate = Param(100., limits=(10, 700), unit="Hz", desc="Framerate (Hz)")
+        self.framerate = Param(
+            100.0, limits=(10, 700), unit="Hz", desc="Framerate (Hz)"
+        )
         self.offset = Param(50)
         self.paused = Param(False)
 
@@ -357,11 +363,11 @@ class CameraControlParameters(ParametrizedQt):
 
     def __init__(self, **kwargs):
         super().__init__(name="camera_params", **kwargs)
-        self.exposure = Param(1., limits=(0.1, 50), unit="ms", desc="Exposure (ms)")
+        self.exposure = Param(1.0, limits=(0.1, 50), unit="ms", desc="Exposure (ms)")
         self.framerate = Param(
-            150., limits=(10, 700), unit=" Hz", desc="Framerate (Hz)"
+            150.0, limits=(10, 700), unit=" Hz", desc="Framerate (Hz)"
         )
-        self.gain = Param(1., limits=(0.1, 12), desc="Camera amplification gain")
+        self.gain = Param(1.0, limits=(0.1, 12), desc="Camera amplification gain")
         self.ring_buffer_length = Param(
             300, (1, 2000), desc="Rolling buffer that saves the last items", gui=False
         )

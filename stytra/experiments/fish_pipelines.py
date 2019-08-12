@@ -1,13 +1,21 @@
 from stytra.tracking.pipelines import Pipeline
-from stytra.tracking.preprocessing import Prefilter, AdaptivePrefilter, BackgroundSubtractor
+from stytra.tracking.preprocessing import (
+    Prefilter,
+    AdaptivePrefilter,
+    BackgroundSubtractor,
+)
 from stytra.tracking.tail import CentroidTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.dot import DotTrackingMethod
 from stytra.gui.fishplots import TailStreamPlot, BoutPlot, StreamingPositionPlot
-from stytra.gui.camera_display import TailTrackingSelection, \
-    CameraViewFish, EyeTrackingSelection, EyeTailTrackingSelection, CameraViewDot
-
+from stytra.gui.camera_display import (
+    TailTrackingSelection,
+    CameraViewFish,
+    EyeTrackingSelection,
+    EyeTailTrackingSelection,
+    CameraViewDot,
+)
 
 
 class TailTrackingPipeline(Pipeline):
@@ -62,12 +70,11 @@ class EyeTailTrackingPipeline(Pipeline):
         self.display_overlay = EyeTailTrackingSelection
 
 
-pipeline_dict = dict(tail=TailTrackingPipeline,
-                     fish=FishTrackingPipeline,
-                     fish_motor_bg=FishTrackingMotorPipeline,
-                     eyes=EyeTrackingPipeline,
-                     eyes_tail=EyeTailTrackingPipeline,
-                     dot=DotTrackingPipeline)
-
-
-
+pipeline_dict = dict(
+    tail=TailTrackingPipeline,
+    fish=FishTrackingPipeline,
+    fish_motor_bg=FishTrackingMotorPipeline,
+    eyes=EyeTrackingPipeline,
+    eyes_tail=EyeTailTrackingPipeline,
+    dot=DotTrackingPipeline,
+)

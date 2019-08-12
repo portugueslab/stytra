@@ -89,20 +89,20 @@ class Experiment(QObject):
     sig_data_saved = pyqtSignal()
 
     def __init__(
-            self,
-            app=None,
-            protocol=None,
-            dir_save=None,
-            dir_assets="",
-            instance_number=-1,
-            database=None,
-            metadata_general=None,
-            metadata_animal=None,
-            loop_protocol=False,
-            log_format="csv",
-            scope_triggering=None,
-            offline=False,
-            **kwargs
+        self,
+        app=None,
+        protocol=None,
+        dir_save=None,
+        dir_assets="",
+        instance_number=-1,
+        database=None,
+        metadata_general=None,
+        metadata_animal=None,
+        loop_protocol=False,
+        log_format="csv",
+        scope_triggering=None,
+        offline=False,
+        **kwargs
     ):
         """ """
         self.arguments = locals()
@@ -124,8 +124,9 @@ class Experiment(QObject):
         self.log_format = log_format
         self.loop_protocol = loop_protocol
 
-        self.dc = DataCollector(folder_path=self.base_dir,
-                                instance_number=instance_number)
+        self.dc = DataCollector(
+            folder_path=self.base_dir, instance_number=instance_number
+        )
 
         self.window_main = None
         self.scope_config = None
@@ -149,8 +150,7 @@ class Experiment(QObject):
 
         # This is done to save GUI configuration:
         self.gui_params = Parametrized(
-            "gui", tree=self.dc,
-            params=dict(geometry=Param(""), window_state=Param(""))
+            "gui", tree=self.dc, params=dict(geometry=Param(""), window_state=Param(""))
         )
 
         self.protocol_runner = ProtocolRunner(experiment=self)
@@ -198,7 +198,8 @@ class Experiment(QObject):
 
     def set_id(self):
         self.animal_id = (
-            self.current_timestamp.strftime("%y%m%d") + "_f"
+            self.current_timestamp.strftime("%y%m%d")
+            + "_f"
             + str(self.metadata_animal.id)
         )
         self.session_id = self.current_timestamp.strftime("%H%M%S")
@@ -268,8 +269,8 @@ class Experiment(QObject):
             msg.show()
             while True and not self.abort:
                 if (
-                            self.trigger.start_event.is_set()
-                        and not self.protocol_runner.running
+                    self.trigger.start_event.is_set()
+                    and not self.protocol_runner.running
                 ):
                     msg.close()
                     self.reset()
@@ -289,7 +290,6 @@ class Experiment(QObject):
                 else:
                     self.app.processEvents()
 
-
         else:
             self.reset()
             self.protocol_runner.start()
@@ -301,20 +301,13 @@ class Experiment(QObject):
     def save_data(self):
         if self.base_dir is not None:
             if self.dc is not None:
-                self.dc.add_static_data(self.protocol_runner.log,
-                                        name="stimulus/log")
-                self.dc.add_static_data(
-                    self.t0, name="general/t_protocol_start"
-                )
+                self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
+                self.dc.add_static_data(self.t0, name="general/t_protocol_start")
                 self.dc.add_static_data(
                     self.protocol_runner.t_end, name="general/t_protocol_end"
                 )
-                self.dc.add_static_data(
-                    self.animal_id, name="general/fish_id"
-                )
-                self.dc.add_static_data(
-                    self.session_id, name="general/session_id"
-                )
+                self.dc.add_static_data(self.animal_id, name="general/fish_id")
+                self.dc.add_static_data(self.session_id, name="general/session_id")
 
                 if self.database is not None and self.use_db:
                     db_id = self.database.insert_experiment_data(
@@ -338,8 +331,7 @@ class Experiment(QObject):
                     repo = git.Repo(sys.argv[0], search_parent_directories=True)
                     git_hash = repo.head.object.hexsha
                     try:
-                        version = pkg_resources.get_distribution(
-                            'stytra').version
+                        version = pkg_resources.get_distribution("stytra").version
                     except pkg_resources.DistributionNotFound:
                         self.logger.info("Could not find stytra version")
 
@@ -352,13 +344,12 @@ class Experiment(QObject):
                         name=sys.argv[0],
                         arguments=self.arguments,
                         version=version,
-                        dependencies=list(imports())
+                        dependencies=list(imports()),
                     ),
                     name="general/program_version",
                 )
 
-                self.dc.save(
-                    self.filename_base() + "metadata.json")  # save data_log
+                self.dc.save(self.filename_base() + "metadata.json")  # save data_log
                 self.logger.info(
                     "Saved log files under {}".format(self.filename_base())
                 )
@@ -416,8 +407,10 @@ class Experiment(QObject):
         """
         if self.protocol_runner is not None:
             self.protocol_runner.timer.stop()
-            if (self.protocol_runner.protocol is not None
-                and self.protocol_runner.running):
+            if (
+                self.protocol_runner.protocol is not None
+                and self.protocol_runner.running
+            ):
                 self.end_protocol(save=False)
 
         if self.trigger is not None:
@@ -477,7 +470,8 @@ class VisualExperiment(Experiment):
     sig_data_saved = pyqtSignal()
 
     def __init__(
-        self, *args,
+        self,
+        *args,
         calibrator=None,
         stim_plot=False,
         stim_movie_format="h5",
@@ -502,7 +496,7 @@ class VisualExperiment(Experiment):
             self.display_config = display
             target_fps = self.display_config.get("framerate", 0)
             if target_fps > 0:
-                self.protocol_runner.target_dt = 1000//target_fps
+                self.protocol_runner.target_dt = 1000 // target_fps
 
         if not self.offline:
             self.window_display = StimulusDisplayWindow(
@@ -513,7 +507,9 @@ class VisualExperiment(Experiment):
             )
 
         self.display_framerate_acc = None
-        self.protocol_runner.framerate_acc.goal_framerate = self.display_config.get("min_framerate", None)
+        self.protocol_runner.framerate_acc.goal_framerate = self.display_config.get(
+            "min_framerate", None
+        )
 
     def start_experiment(self):
         """Start the experiment creating GUI and initialising metadata.
@@ -624,8 +620,7 @@ class VisualExperiment(Experiment):
         self.window_display.show()
         if full_screen:
             try:
-                self.window_display.windowHandle().setScreen(
-                    self.app.screens()[1])
+                self.window_display.windowHandle().setScreen(self.app.screens()[1])
                 self.window_display.showFullScreen()
             except IndexError:
                 print("Second screen not available")

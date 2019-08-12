@@ -111,15 +111,21 @@ class TrackingProcess(FrameProcess):
             self.update_framerate()
 
             # put current frame into the GUI queue
-            self.send_to_gui(time, self.pipeline.diagnostic_image
-            if self.pipeline.diagnostic_image is not None else frame)
+            self.send_to_gui(
+                time,
+                self.pipeline.diagnostic_image
+                if self.pipeline.diagnostic_image is not None
+                else frame,
+            )
 
         return
 
     def send_to_gui(self, frametime, frame):
         """ Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
-            every_x = max(int(self.framerate_rec.current_framerate / self.gui_framerate), 1)
+            every_x = max(
+                int(self.framerate_rec.current_framerate / self.gui_framerate), 1
+            )
         else:
             every_x = 1
         if self.i == 0:
@@ -203,14 +209,14 @@ class DispatchProcess(FrameProcess):
             # calculate the frame rate
             self.update_framerate()
 
-
-
         return
 
     def send_to_gui(self, frametime, frame):
         """ Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
-            every_x = max(int(self.framerate_rec.current_framerate / self.gui_framerate), 1)
+            every_x = max(
+                int(self.framerate_rec.current_framerate / self.gui_framerate), 1
+            )
         else:
             every_x = 1
         if self.i == 0:

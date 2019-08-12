@@ -16,7 +16,11 @@ from stytra.hardware.video import (
 )
 
 # imports for tracking
-from stytra.collectors import QueueDataAccumulator, EstimatorLog, FramerateQueueAccumulator
+from stytra.collectors import (
+    QueueDataAccumulator,
+    EstimatorLog,
+    FramerateQueueAccumulator,
+)
 from stytra.tracking.tracking_process import TrackingProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
@@ -72,10 +76,12 @@ class CameraVisualExperiment(VisualExperiment):
             )
             self.camera_state = VideoControlParameters(tree=self.dc)
 
-        self.acc_camera_framerate = FramerateQueueAccumulator(self,
-                                                              queue=self.camera.framerate_queue, goal_framerate=camera.get("min_framerate", None),
-                                                              name="camera"  # TODO implement no goal
-                                                              )
+        self.acc_camera_framerate = FramerateQueueAccumulator(
+            self,
+            queue=self.camera.framerate_queue,
+            goal_framerate=camera.get("min_framerate", None),
+            name="camera",  # TODO implement no goal
+        )
 
         # New parameters are sent with GUI timer:
         self.gui_timer.timeout.connect(self.send_gui_parameters)
@@ -204,9 +210,11 @@ class TrackingExperiment(CameraVisualExperiment):
         super().__init__(*args, **kwargs)
         self.arguments.update(locals())
 
-
-        self.pipeline_cls = pipeline_dict.get(tracking["method"], None)\
-            if isinstance(tracking["method"], str) else tracking["method"]
+        self.pipeline_cls = (
+            pipeline_dict.get(tracking["method"], None)
+            if isinstance(tracking["method"], str)
+            else tracking["method"]
+        )
         self.initialize_tracking_meth()
 
         self.pipeline = self.pipeline_cls()
@@ -217,7 +225,7 @@ class TrackingExperiment(CameraVisualExperiment):
             name="tracking",
             experiment=self,
             data_queue=self.tracking_output_queue,
-            monitored_headers=self.pipeline.headers_to_plot
+            monitored_headers=self.pipeline.headers_to_plot,
         )
         self.acc_tracking.sig_acc_init.connect(self.refresh_plots)
 
@@ -242,17 +250,21 @@ class TrackingExperiment(CameraVisualExperiment):
 
         if est is not None:
             self.estimator_log = EstimatorLog(experiment=self)
-            self.estimator = est(self.acc_tracking,
-                                 experiment=self,
-                                 **tracking.get("estimator_params", {}))
+            self.estimator = est(
+                self.acc_tracking,
+                experiment=self,
+                **tracking.get("estimator_params", {})
+            )
             self.estimator_log.sig_acc_init.connect(self.refresh_plots)
         else:
             self.estimator = None
 
-        self.acc_tracking_framerate = FramerateQueueAccumulator(self,
-                                                                queue=self.frame_dispatcher.framerate_queue, name="tracking",
-                                                                goal_framerate=kwargs["camera"].get("min_framerate", None)
-                                                                )
+        self.acc_tracking_framerate = FramerateQueueAccumulator(
+            self,
+            queue=self.frame_dispatcher.framerate_queue,
+            name="tracking",
+            goal_framerate=kwargs["camera"].get("min_framerate", None),
+        )
 
         self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
@@ -264,7 +276,8 @@ class TrackingExperiment(CameraVisualExperiment):
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
             gui_dispatcher=True,
-            gui_framerate=20)
+            gui_framerate=20,
+        )
 
     def reset(self):
         super().reset()
@@ -338,9 +351,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.window_main.camera_display.save_image(
             name=self.filename_base() + "img.png"
         )
-        self.dc.add_static_data(
-            self.filename_prefix() + "img.png", "tracking/image"
-        )
+        self.dc.add_static_data(self.filename_prefix() + "img.png", "tracking/image")
 
         # Save log and estimators:
         self.save_log(self.acc_tracking, "behavior_log")

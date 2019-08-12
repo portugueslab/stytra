@@ -24,8 +24,15 @@ class VideoWriter(FrameProcess):
         ouput movie bitrate
     """
 
-    def __init__(self, folder, input_queue, finished_signal, saving_evt,
-                 format="hdf5", kbit_rate=4000):
+    def __init__(
+        self,
+        folder,
+        input_queue,
+        finished_signal,
+        saving_evt,
+        format="hdf5",
+        kbit_rate=4000,
+    ):
         super().__init__()
         self.format = format
         self.folder = folder
@@ -56,17 +63,28 @@ class VideoWriter(FrameProcess):
 
                 if not self.saving_evt.is_set() and toggle_save:
                     if self.format == "mp4":
-                        imageio.mimwrite(self.folder + filename + "movie.mp4",
-                                         np.array(movie, dtype=np.uint8), fps=3,
-                                         quality=None,
-                                         ffmpeg_params=["-pix_fmt", "yuv420p", "-profile:v", "baseline",
-                                                        "-level", "3", ], )
+                        imageio.mimwrite(
+                            self.folder + filename + "movie.mp4",
+                            np.array(movie, dtype=np.uint8),
+                            fps=3,
+                            quality=None,
+                            ffmpeg_params=[
+                                "-pix_fmt",
+                                "yuv420p",
+                                "-profile:v",
+                                "baseline",
+                                "-level",
+                                "3",
+                            ],
+                        )
 
                     elif self.format == "hdf5":
                         filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                         print(self.folder + filename + "movie.hdf5")
-                        dd.io.save(self.folder + filename + "movie.hdf5",
-                                   np.array(movie, dtype=np.uint8))
+                        dd.io.save(
+                            self.folder + filename + "movie.hdf5",
+                            np.array(movie, dtype=np.uint8),
+                        )
 
                     toggle_save = False
 
@@ -80,5 +98,3 @@ class VideoWriter(FrameProcess):
 
             if self.finished_signal.is_set():
                 break
-
-

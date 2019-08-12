@@ -2,16 +2,16 @@ from stytra.hardware.motor.stageAPI import Motor
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import json
 
-acc = int(204552/100)
-velo = int(107374182/100)
+acc = int(204552 / 100)
+velo = int(107374182 / 100)
 
-motor_x =Motor(1, scale=1)
+motor_x = Motor(1, scale=1)
 motor_x.homethatthing()
 motor_x.open()
 motor_x.setvelocity(acc, velo)
 motor_x.close()
 
-motor_y =Motor(2, scale=1)
+motor_y = Motor(2, scale=1)
 motor_y.homethatthing()
 motor_y.open()
 motor_y.setvelocity(acc, velo)

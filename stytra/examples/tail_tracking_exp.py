@@ -9,10 +9,7 @@ class TrackingGratingsProtocol(GratingsProtocol):
     # To add tracking to a protocol, we simply need to add a tracking
     # argument to the stytra_config:
     stytra_config = dict(
-        tracking=dict(embedded=True, method="tail"),
-        camera=dict(
-            type="spinnaker"
-        ),
+        tracking=dict(embedded=True, method="tail"), camera=dict(type="spinnaker")
     )
 
 

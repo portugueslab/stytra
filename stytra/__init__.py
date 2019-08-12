@@ -25,6 +25,7 @@ import json
 
 from pathlib import Path
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -112,13 +113,14 @@ class Stytra:
 
     """
 
-    def __init__(self, recording=None, exec=True, app=None,
-                 **kwargs):
+    def __init__(self, recording=None, exec=True, app=None, **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
         inum = kwargs.get("instance_number", -1)
         if inum >= 0:
-            default_config_file = Path.home() / "stytra_setup_config_{}.json".format(inum)
+            default_config_file = Path.home() / "stytra_setup_config_{}.json".format(
+                inum
+            )
         else:
             default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():

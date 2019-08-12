@@ -49,7 +49,6 @@ class Prefilter(ImageToImageNode):
         if self.set_diagnostic == "filtered":
             self.diagnostic_image = im
 
-
         return NodeOutput([], im)
 
 
@@ -64,7 +63,7 @@ class AdaptivePrefilter(ImageToImageNode):
         image_scale: Param(0.5, (0.05, 1.0)),
         filter_size: Param(2, (0, 15)),
         color_invert: Param(True),
-        clip: Param(96.9, (0.,100.)),
+        clip: Param(96.9, (0.0, 100.0)),
         # percentile: Param(96.9, (0.,100.)),
         **extraparams
     ):
@@ -93,7 +92,6 @@ class AdaptivePrefilter(ImageToImageNode):
             self.diagnostic_image = im
 
         return NodeOutput([], im)
-
 
 
 @vectorize([uint8(float32, uint8)])
@@ -128,8 +126,10 @@ class BackgroundSubtractor(ImageToImageNode):
         self.background_image = None
 
     def _process(
-        self, im, learning_rate: Param(0.04, (0.0, 1.0)),
-        learn_every: Param(400, (1, 10000))
+        self,
+        im,
+        learning_rate: Param(0.04, (0.0, 1.0)),
+        learn_every: Param(400, (1, 10000)),
     ):
         messages = []
         if self.background_image is None:
