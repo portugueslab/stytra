@@ -11,6 +11,7 @@ from lightparam import Param
 from stytra.tracking.simple_kalman import predict_inplace, update_inplace
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
+from stytra.tracking.eyes import _pad, _local_thresholding, _fit_ellipse
 
 
 def _fish_column_names(i_fish, n_segments):
@@ -22,6 +23,15 @@ def _fish_column_names(i_fish, n_segments):
         "f{:d}_theta".format(i_fish),
         "f{:d}_vtheta".format(i_fish),
     ] + ["f{:d}_theta_{:02d}".format(i_fish, i) for i in range(n_segments)]
+
+def _fish_eye_column_names(i_fish):
+    return [
+        "pos_x_e{}".format(i_fish),
+        "pos_y_e{}".format(i_fish),
+        "dim_x_e{}".format(i_fish),
+        "dim_y_e{}".format(i_fish),
+        "th_e{}".format(i_fish),
+        ]
 
 
 class FishTrackingMethod(ImageToDataNode):
@@ -232,6 +242,239 @@ class FishTrackingMethod(ImageToDataNode):
             messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)
         )
 
+class FishEyeMotorTrackingMethod(FishTrackingMethod):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.monitored_headers = ["biggest_area", "f0_theta", "th_e0","th_e1"]
+        self.data_log_name = "eye_track"
+        self.fish_coords = []
+
+    def reset(self):
+        self._output_type = namedtuple(
+            "t",
+            list(
+                chain.from_iterable(
+                    [
+                        _fish_column_names(i_fish, self._params.n_segments - 1)
+                        for i_fish in range(self._params.n_fish_max)
+                    ]
+                )
+            )
+            + list(
+                chain.from_iterable(
+                    [_fish_eye_column_names(i_fish)
+                      for i_fish in range(self._params.n_fish_max)]
+                )
+            )
+            + ["biggest_area"],
+        )
+        self._output_type_changed = True
+
+    def _process(
+            self,
+            bg,
+            n_fish_max: Param(1, (1, 50)),
+            n_segments: Param(10, (2, 30)),
+            bg_downsample: Param(1, (1, 8)),
+            bg_dif_threshold: Param(25, (0, 255)),
+            threshold_eyes: Param(35, (0, 255)),
+            pos_uncertainty: Param(
+                1.0,
+                (0, 10.0),
+                desc="Uncertainty in pixels about the location of the head center of mass",
+            ),
+            persist_fish_for: Param(
+                2,
+                (1, 50),
+                desc="How many frames does the fish persist for if it is not detected",
+            ),
+            prediction_uncertainty: Param(0.1, (0.0, 10.0, 0.0001)),
+            fish_area: Param((200, 1200), (1, 10000)),
+            border_margin: Param(5, (0, 100)),
+            tail_length: Param(60.0, (1.0, 200.0)),
+            tail_track_window: Param(3, (3, 70)),
+
+
+            wnd_pos: Param((129, 20), gui=False),
+            threshold: Param(56, limits=(1, 254)),
+            wnd_dim: Param((14, 22), gui=False),
+            **extraparams
+    ):
+
+        # update the previously-detected fish using the Kalman filter
+        if self.fishes is None:
+            self.reset()
+        else:
+            self.fishes.predict()
+
+        area_scale = bg_downsample * bg_downsample
+        border_margin = border_margin // bg_downsample
+
+        # downsample background
+        if bg_downsample > 1:
+            bg_small = cv2.resize(bg, None, fx=1 / bg_downsample, fy=1 / bg_downsample)
+        else:
+            bg_small = bg
+
+        bg_thresh = cv2.dilate(
+            (bg_small > bg_dif_threshold).view(dtype=np.uint8), self.dilation_kernel
+        )
+
+        # find regions where there is a difference with the background
+        n_comps, labels, stats, centroids = cv2.connectedComponentsWithStats(bg_thresh)
+
+        try:
+            max_area = np.max(stats[1:, cv2.CC_STAT_AREA]) * area_scale
+        except ValueError:
+            max_area = 0
+
+        # iterate through all the regions different from the background and try
+        # to find fish
+
+        messages = []
+
+        nofish = True
+        for row, centroid in zip(stats, centroids):
+            # check if the contour is fish-sized and central enough
+            if not fish_area[0] < row[cv2.CC_STAT_AREA] * area_scale < fish_area[1]:
+                continue
+
+            # find the bounding box of the fish in the original image coordinates
+            ftop, fleft, fheight, fwidth = (
+                int(round(row[x] * bg_downsample))
+                for x in [
+                cv2.CC_STAT_TOP,
+                cv2.CC_STAT_LEFT,
+                cv2.CC_STAT_HEIGHT,
+                cv2.CC_STAT_WIDTH,
+            ]
+            )
+
+            if not (
+                    (fleft - border_margin >= 0)
+                    and (fleft + fwidth + border_margin < bg.shape[1])
+                    and (ftop - border_margin >= 0)
+                    and (ftop + fheight + border_margin < bg.shape[0])
+            ):
+                messages.append("W:An object of right area found outside margins")
+                continue
+            # how much is this region shifted from the upper left corner of the image
+            cent_shift = np.array([fleft - border_margin, ftop - border_margin])
+
+            slices = (
+                slice(ftop - border_margin, ftop + fheight + border_margin),
+                slice(fleft - border_margin, fleft + fwidth + border_margin),
+            )
+
+            # take the region and mask the background away to aid detection
+            fishdet = bg[slices].copy()
+
+            # estimate the position of the head
+            self.fish_coords = fish_start(fishdet, threshold_eyes)
+
+            ##############  Eye detection part  #########################
+            # place the detction window where the head was detected
+            wnd_pos[0] = self.fish_coords[0]
+            wnd_pos[1] = self.fish_coords[1]
+
+            # set fixed window dimensions big enough for the whole head no matter orientation
+            # TODO to be adjusted or adjustable?
+            wnd_dim[0] = 200
+            wnd_dim[1] = 200
+
+            # create padding around the image to find the eyes
+            PAD = 0
+            cropped = _pad(
+                (im[
+                 wnd_pos[1]: wnd_pos[1] + wnd_dim[1],
+                 wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
+                 ] < threshold).view(dtype=np.uint8).copy(),
+                padding=PAD,
+                val=255,
+            )
+
+            # actual eye detection
+            # try:
+            eyes = _fit_ellipse(cropped)
+
+            if self.set_diagnostic == "thresholded":
+                self.diagnostic_image = (im < threshold).view(dtype=np.uint8)
+
+            if eyes is False:
+                eyes = (np.nan,) * 10
+                messages.append("E: eyes not detected!")
+            else:
+                eyes = (
+                        eyes[0][0][::-1]
+                        + eyes[0][1][::-1]
+                        + (-eyes[0][2],)
+                        + eyes[1][0][::-1]
+                        + eyes[1][1][::-1]
+                        + (-eyes[1][2],)
+                )
+            ######## End of eye detction part ######################
+
+            # if no actual fish was found here, continue on to the next connected component
+            if self.fish_coords[0] == -1:
+                messages.append("W:No appropriate tail start position found")
+                continue
+
+            head_coords_up = self.fish_coords + cent_shift
+
+            theta = _fish_direction_n(bg, head_coords_up, int(round(tail_length / 2)))
+
+            # find the points of the tail
+            points = find_fish_midline(
+                bg,
+                *head_coords_up,
+                theta,
+                tail_track_window,
+                tail_length / n_segments,
+                n_segments + 1,
+            )
+
+            # convert to angles
+            angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
+            if len(angles) == 0:
+                messages.append("W:Tail not completely detectable")
+                continue
+
+            # also, make the angles continuous
+            angles[1:] = np.unwrap(angles[1:] - angles[0])
+
+            # put the data together for one fish
+            self.fish_coords = np.concatenate([np.array(points[0][:2]), angles, eyes])
+            print (self.fish_coords)
+
+            nofish = False
+
+        if nofish:
+            messages.append(
+                "W:No object of right area, between {:.0f} and {:.0f}".format(
+                    *fish_area
+                )
+            )
+
+        # if a debugging image is to be shown, set it
+        if self.set_diagnostic == "background difference":
+            self.diagnostic_image = bg
+        elif self.set_diagnostic == "thresholded background difference":
+            self.diagnostic_image = bg_thresh
+        elif self.set_diagnostic == "fish detection":
+            fishdet = bg_small.copy()
+            fishdet[bg_thresh == 0] = 0
+            self.diagnostic_image = fishdet
+        elif self.set_diagnostic == "thresholded for eye and swim bladder":
+            self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
+
+        if self._output_type is None:
+            self.reset_state()
+
+        return NodeOutput(
+            messages, self._output_type(self.fish_coords, max_area * 1.0)
+        )
+
+########################################################################
 
 spec = [
     ("n_fish", int64),

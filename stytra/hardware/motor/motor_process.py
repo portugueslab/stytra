@@ -59,8 +59,8 @@ class ReceiverProcess(Process):
         self.home = 2200000
 
     def run(self):
-        motor_y = Motor(1, scale=454)
-        motor_x = Motor(2, scale=327)
+        motor_y = Motor(1, scale=294)
+        motor_x = Motor(2, scale=298)
         center_y = 270
         center_x = 360
         motor_y.open()
@@ -89,28 +89,28 @@ class ReceiverProcess(Process):
                 try:
                     distance_x = center_x - last_position.f0_x
                     distance_y = center_y - last_position.f0_y
-                    dotx, dotcx = motor_x.move_relative_without_move(distance_x)
-                    doty, dotcy = motor_y.move_relative_without_move(distance_y)
-                    print("dotx,y", dotx, doty, dotcx, dotcy)
-                    print(dotcx ** 2 + dotcy ** 2)
-                    print(self.arena_thres ** 2)
+                    # dotx, dotcx = motor_x.move_relative_without_move(distance_x)
+                    # doty, dotcy = motor_y.move_relative_without_move(distance_y)
+                    # print("dotx,y", dotx, doty, dotcx, dotcy)
+                    # print(dotcx ** 2 + dotcy ** 2)
+                    # print(self.arena_thres ** 2)
 
                     # arena bounds check relative to home
-                    if dotcx ** 2 + dotcy ** 2 < self.arena_thres ** 2:
-                        # TODO does not work - always out of bounds
-                        print("position inside arena bounds")
+                    # if dotcx ** 2 + dotcy ** 2 < self.arena_thres ** 2:
+                    #     # TODO does not work - always out of bounds
+                    #     print("position inside arena bounds")
                         # jitter filter for camera
-                        if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
-                            print("Moving")
-                            motor_x.move_relative(distance_x)
-                            motor_y.move_relative(distance_y)
-                            print(distance_x, distance_y)
-                            dot_pos.append([distance_x, distance_y])
+                    if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
+                        print("Moving")
+                        motor_x.move_relative(distance_x)
+                        motor_y.move_relative(distance_y)
+                        print(distance_x, distance_y)
+                        dot_pos.append([distance_x, distance_y])
 
-                        e = (float(pos_x), float(pos_y), distance_x, distance_y)
+                    e = (float(pos_x), float(pos_y), distance_x, distance_y)
 
-                    else:
-                        print("motor move command out of arena bounds")
+                    # else:
+                    #     print("motor move command out of arena bounds")
 
                 except (ValueError, TypeError, IndexError):
                     e = (pos_x, pos_y, 0.0, 0.0)

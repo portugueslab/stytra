@@ -174,13 +174,13 @@ if __name__ == "__main__":
 
     # TODO calibrator minimal + motor minimal combine
     mc = MotorCalibrator(mottione, mottitwo)
-    # mc.calibrate_motor()
-    pos_h, pos_w = mc.positions_array(50, 50)
-    print(pos_h, pos_w)
-    conx, cony = mc.conversion()
-    bg = mc.scanning_whole_area()
-    plt.imshow(bg)
-    plt.waitforbuttonpress()
+    mc.calibrate_motor()
+    # pos_h, pos_w = mc.positions_array(50, 50)
+    # print(pos_h, pos_w)
+    # conx, cony = mc.conversion()
+    # bg = mc.scanning_whole_area()
+    # plt.imshow(bg)
+    # plt.waitforbuttonpress()
 
     mottitwo.close()
     mottione.close()

@@ -7,6 +7,7 @@ from skimage.filters import threshold_local
 import cv2
 from lightparam import Parametrized, Param
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
+from stytra.tracking.tracking_process import TrackingProcess
 from collections import namedtuple
 
 
@@ -190,3 +191,5 @@ def _fit_ellipse(thresholded_image):
     else:
         # Not at least two eyes + maybe dirt found...
         return False
+
+
