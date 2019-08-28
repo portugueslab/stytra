@@ -32,7 +32,7 @@ install:
   - conda create -n test_env python=${PYTHON} --yes
   - source activate test_env
   - conda install coverage --yes
-  - conda install numpy scipy pyopengl pytest flake8 six coverage --yes
+  - conda install numpy scipy numba pyopengl pytest flake8 six coverage --yes
   - conda install ffmpeg --yes
   - conda install -c conda-forge av --yes
   - conda install pyqt --yes;

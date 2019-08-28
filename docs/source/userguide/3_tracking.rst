@@ -18,7 +18,7 @@ Freely-swimming fish
 
 3) Determine the parameters for background subtraction
    bglearning_rate and bglearn_every
-   The diagnostic display can be invoked by putting display_processed to different states
+   Under the camera view, you can select the currently displayed image (raw for the )
 
 4) Once you see the fish nicely, adjust the thresholded image,
    so that the full fish, but nothing more, is white bgdif_threshold
@@ -40,7 +40,7 @@ Freely-swimming fish
 Embedded fish
 -------------
 
-1) Ensure that the exposure time is not longer than 1.5 miliseconds, otherwise
+1) Ensure that the exposure time is not longer than 1.5 milliseconds, otherwise
    the tracking will not be correct for fast tail movements
 
 2) Open the tracking settings window
@@ -55,7 +55,7 @@ Embedded fish
 
 6) Adjust the number of tail segments, around 30 is a good number. Usually, not more than 10 n_output_segments are required
 
-7) Tap the dish of the fish so that it moves, and ensure the tail is tracked correctly. You can use the replay function to ensure the whole movement is tracked smoothly
+7) Tap the dish or the stage so that fish flicks its tail, and ensure the that it is tracked correctly. There should be no breaks in the tail_sum plot, if there are, it is likely the tail length line is too long. You can use the replay function to ensure the whole movement is tracked smoothly
 
 8) To ensure the tracking is correct, you can enable the plotting of the last bout in the windows
 
