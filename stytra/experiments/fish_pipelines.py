@@ -63,9 +63,11 @@ class EyeTrackingPipeline(Pipeline):
 class EyeTrackingMotorPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        # self.filter = Prefilter(parent=self.root)
-        self.eyetrack = FishEyeMotorTrackingMethod(parent=self.root)
+        self.filter = Prefilter(parent=self.root)
+        self.fishtrack = FishEyeMotorTrackingMethod(parent=self.filter)
         self.display_overlay = EyeTrackingSelection
+        self.extra_widget = BoutPlot
+        self.display_overlay = CameraViewFish
 
 
 class EyeTailTrackingPipeline(Pipeline):

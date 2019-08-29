@@ -11,7 +11,7 @@ from lightparam import Param
 from stytra.tracking.simple_kalman import predict_inplace, update_inplace
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
-from stytra.tracking.eyes import _pad, _local_thresholding, _fit_ellipse
+from stytra.tracking.eyes import _pad, _fit_ellipse
 
 
 def _fish_column_names(i_fish, n_segments):
@@ -26,11 +26,16 @@ def _fish_column_names(i_fish, n_segments):
 
 def _fish_eye_column_names(i_fish):
     return [
-        "pos_x_e{}".format(i_fish),
-        "pos_y_e{}".format(i_fish),
-        "dim_x_e{}".format(i_fish),
-        "dim_y_e{}".format(i_fish),
-        "th_e{}".format(i_fish),
+        "pos_x_e0{}".format(i_fish),
+        "pos_y_e0{}".format(i_fish),
+        "dim_x_e0{}".format(i_fish),
+        "dim_y_e0{}".format(i_fish),
+        "th_e0{}".format(i_fish),
+        "pos_x_e1{}".format(i_fish),
+        "pos_y_e1{}".format(i_fish),
+        "dim_x_e1{}".format(i_fish),
+        "dim_y_e1{}".format(i_fish),
+        "th_e1{}".format(i_fish),
         ]
 
 
@@ -174,6 +179,7 @@ class FishTrackingMethod(ImageToDataNode):
 
             # estimate the position of the head
             fish_coords = fish_start(fishdet, threshold_eyes)
+            print ("fish coords", fish_coords)
 
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
@@ -202,6 +208,7 @@ class FishTrackingMethod(ImageToDataNode):
 
             # also, make the angles continuous
             angles[1:] = np.unwrap(angles[1:] - angles[0])
+            print("angles", angles)
 
             # put the data together for one fish
             fish_coords = np.concatenate([np.array(points[0][:2]), angles])
@@ -238,6 +245,8 @@ class FishTrackingMethod(ImageToDataNode):
         if self._output_type is None:
             self.reset_state()
 
+        print ("output ", *self.fishes.coords.flatten(), max_area * 1.0)
+
         return NodeOutput(
             messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)
         )
@@ -245,9 +254,16 @@ class FishTrackingMethod(ImageToDataNode):
 class FishEyeMotorTrackingMethod(FishTrackingMethod):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.monitored_headers = ["biggest_area", "f0_theta", "th_e0","th_e1"]
-        self.data_log_name = "eye_track"
+        self.monitored_headers = ["biggest_area", "f0_theta", "th_e00","th_e10"]
+        self.data_log_name = "fish_eye_track"
         self.fish_coords = []
+        self.diagnostic_image_options = [
+            "thresholded eyes",
+            "background difference",
+            "thresholded background difference",
+            "fish detection",
+            "thresholded for eye and swim bladder",
+        ]
 
     def reset(self):
         self._output_type = namedtuple(
@@ -269,6 +285,16 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             + ["biggest_area"],
         )
         self._output_type_changed = True
+
+        # # used for booking a spot for one of the potentially tracked fish
+        self.fishes = Fishes(
+        self._params.n_fish_max,
+        n_segments=self._params.n_segments - 1,
+        pos_std=self._params.pos_uncertainty,
+        pred_coef=self._params.prediction_uncertainty,
+        angle_std=np.pi / 10,
+        persist_fish_for=self._params.persist_fish_for,
+    )
 
     def _process(
             self,
@@ -301,7 +327,7 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             **extraparams
     ):
 
-        # update the previously-detected fish using the Kalman filter
+        # # update the previously-detected fish using the Kalman filter
         if self.fishes is None:
             self.reset()
         else:
@@ -371,21 +397,23 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
 
             # estimate the position of the head
             self.fish_coords = fish_start(fishdet, threshold_eyes)
+            print("fish coords",self.fish_coords)
 
             ##############  Eye detection part  #########################
             # place the detction window where the head was detected
-            wnd_pos[0] = self.fish_coords[0]
-            wnd_pos[1] = self.fish_coords[1]
+            wnd_pos1 = self.fish_coords[0]
+            wnd_pos2 = self.fish_coords[1]
+            wnd_pos = (int(wnd_pos1),int(wnd_pos2))
 
             # set fixed window dimensions big enough for the whole head no matter orientation
-            # TODO to be adjusted or adjustable?
-            wnd_dim[0] = 200
-            wnd_dim[1] = 200
+            # TODO to be adjustable?
+            wnd_dim = (int(200),int(200))
 
             # create padding around the image to find the eyes
+            #TODO eye tracking on original and not bg sub image?
             PAD = 0
             cropped = _pad(
-                (im[
+                (bg[
                  wnd_pos[1]: wnd_pos[1] + wnd_dim[1],
                  wnd_pos[0]: wnd_pos[0] + wnd_dim[0],
                  ] < threshold).view(dtype=np.uint8).copy(),
@@ -397,8 +425,8 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             # try:
             eyes = _fit_ellipse(cropped)
 
-            if self.set_diagnostic == "thresholded":
-                self.diagnostic_image = (im < threshold).view(dtype=np.uint8)
+            if self.set_diagnostic == "thresholded eyes":
+                self.diagnostic_image = (bg < threshold).view(dtype=np.uint8)
 
             if eyes is False:
                 eyes = (np.nan,) * 10
@@ -412,6 +440,7 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
                         + eyes[1][1][::-1]
                         + (-eyes[1][2],)
                 )
+                print ("eyes", eyes)
             ######## End of eye detction part ######################
 
             # if no actual fish was found here, continue on to the next connected component
@@ -443,12 +472,19 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             angles[1:] = np.unwrap(angles[1:] - angles[0])
 
             # put the data together for one fish
+            fishi = [np.array(points[0][:2])]
             self.fish_coords = np.concatenate([np.array(points[0][:2]), angles, eyes])
-            print (self.fish_coords)
+            print ("fish one",self.fish_coords, len(self.fish_coords))
+            print ("angles", angles)
+            print("eyes", eyes)
+            print ("len fishi",len(fishi))
+            print (len(points[0]), len(angles), len(eyes))
 
             nofish = False
 
         if nofish:
+            self.fish_coords = (np.nan,) * 25
+            print ("empty coords", self.fish_coords)
             messages.append(
                 "W:No object of right area, between {:.0f} and {:.0f}".format(
                     *fish_area
@@ -469,9 +505,10 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
 
         if self._output_type is None:
             self.reset_state()
-
+        print("len fish coords", len(self.fish_coords))
+        print("output", *list(self.fish_coords), max_area * 1.0)
         return NodeOutput(
-            messages, self._output_type(self.fish_coords, max_area * 1.0)
+            messages, self._output_type(*self.fish_coords, max_area * 1.0)
         )
 
 ########################################################################
