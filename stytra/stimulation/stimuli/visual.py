@@ -91,39 +91,41 @@ class VisualStimulus(Stimulus):
 class StimulusCombiner(VisualStimulus, DynamicStimulus):
     def __init__(self, stim_list):
         super().__init__()
-        self.stim_list = stim_list
+        self._stim_list = stim_list
 
         self.duration = max([s.duration for s in stim_list])
 
         self.dynamic_parameters = self.dynamic_parameter_names
 
     def start(self):
-        for s in self.stim_list:
+        for s in self._stim_list:
             s.start()
 
+        super().start()
+
     def stop(self):
-        for s in self.stim_list:
+        for s in self._stim_list:
             s.stop()
 
     def paint(self, p, w, h):
-        for s in self.stim_list:
+        for s in self._stim_list:
             s.paint(p, w, h)
             # p.end()
 
     def update(self):
-        for s in self.stim_list:
+        for s in self._stim_list:
             s.update()
             s._elapsed = self._elapsed
 
     def initialise_external(self, experiment):
         super().initialise_external(experiment)
-        for s in self.stim_list:
+        for s in self._stim_list:
             s.initialise_external(experiment)
 
     @property
     def dynamic_parameter_names(self):
         names = []
-        for i, s in enumerate(self.stim_list):
+        for i, s in enumerate(self._stim_list):
             if isinstance(s, DynamicStimulus):
                 for n in s.dynamic_parameter_names:
                     names.append("s{}_{}".format(i, n))
@@ -132,12 +134,28 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
 
     def get_dynamic_state(self):
         state = dict()
-        for i, s in enumerate(self.stim_list):
+        for i, s in enumerate(self._stim_list):
             if isinstance(s, DynamicStimulus):
                 d = s.get_dynamic_state()
                 state.update({"s{}_{}".format(i, k): d[k] for k in d.keys()})
 
         return state
+
+    def get_state(self):
+        """
+        """
+        state_dict = dict()
+        for key, value in self.__dict__.items():
+            if not callable(value) and key[0] != "_":
+                state_dict[key] = value
+
+        for i, s in enumerate(self._stim_list):
+            for k, value in s.__dict__.items():
+                if not callable(value) and key[0] != "_":
+                    state_dict["s{}_{}".format(i, k)] = value
+
+
+        return state_dict
 
 
 class FullFieldVisualStimulus(VisualStimulus):
