@@ -35,7 +35,6 @@ class FlyTrackingMethod(ImageToDataNode):
     """Fly tracking method using ellipse fit.
     """
 
-    name = "fly"
     def __init__(self, *args, **kwargs):
         # Initialise the "Node" object passing the name of our tracking method:
         super().__init__(*args,  name="fly_track", **kwargs)
