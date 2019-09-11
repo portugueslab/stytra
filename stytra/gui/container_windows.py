@@ -228,7 +228,8 @@ class CameraExperimentWindow(VisualExperimentWindow):
         super().__init__(*args, **kwargs)
 
         self.camera_display = None
-        if hasattr(self.experiment, "pipeline"):
+        if hasattr(self.experiment, "pipeline") and \
+                self.experiment.pipeline.display_overlay is not None:
             self.camera_display = self.experiment.pipeline.display_overlay(
                 experiment=self.experiment)
         else:

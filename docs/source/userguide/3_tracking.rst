@@ -2,6 +2,14 @@ Tracking configuration
 ======================
 
 
+Here are some tips to adjust tracking on your setup. If you have not done
+that yet, you probably want to have a look at the
+:ref:`User interface` description first. Remember to use the dropdown menu to
+ display the diagnostic images from intermediate stages of the image
+ processing! That is the best way to ensure that all parameters are set
+ correctly.
+
+
 .. _fishtracking:
 
 Freely-swimming fish
@@ -17,7 +25,12 @@ Freely-swimming fish
 2) Input the number of fish in the dish
 
 3) Determine the parameters for background subtraction
-   bglearning_rate and bglearn_every
+   bglearning_rate and bglearn_every. bglearning_rate specifies what is the
+   weight which is assigned to every new image in the background computation,
+    from 0 (only the first frame acquired will be used at the background) to
+    1 (every new frame is set as the background). bglearn_every specifies
+    every how many frames a new image is used to compute background. This
+    should change
    Under the camera view, you can select the currently displayed image (raw for the )
 
 4) Once you see the fish nicely, adjust the thresholded image,
