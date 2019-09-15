@@ -18,7 +18,8 @@ class AnimalMetadata(Parametrized):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="general/animal", **kwargs)
-        self.id = Param(0, limits=(0, 100))
-        self.age = Param(7, limits=(3, 21), desc="age of the animal")
+        self.species = Param("")
+        self.age = Param("")
+        self.id = Param("")
         self.comments = Param("", desc="Comments on the animal or experiment")
-        self.genotype = Param("")
+        self.genotype = Param("WT")
