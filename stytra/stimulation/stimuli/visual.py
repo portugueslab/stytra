@@ -874,3 +874,25 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
             self.radius * w,
             self.radius * h,
         )
+
+
+class FixationCrossStimulus(FullFieldVisualStimulus):
+    def __init__(self, cross_color=(255,  0, 0), position=(0.5, 0.5),
+                 arm_len=0.05, arm_width=4, **kwargs):
+        super().__init__(**kwargs)
+        self.cross_color = cross_color
+        self.arm_len = arm_len
+        self.arm_width = arm_width
+        self.position = position
+
+    def paint(self, p, w, h):
+        super().paint(p, w, h)
+        pen = QPen(QColor(*self.cross_color))
+        pen.setWidth(self.arm_width)
+        p.setPen(pen)
+        #    p.setBrush(QBrush(QColor(0, 0, 0, 255)))
+        l = w * self.arm_len
+        w_p = w * self.position[0]
+        h_p = h * self.position[1]
+        p.drawLine(w_p - l, h_p, w_p + l, h_p)
+        p.drawLine(w_p, h_p- l, w_p, h_p+ l)
