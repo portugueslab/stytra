@@ -12,6 +12,7 @@ class Estimator:
     control of the stimulus (animal position/speed etc.) from the output
     stream of the tracking pipelines (position in pixels, tail angles, etc.).
     """
+
     def __init__(self, acc_tracking: QueueDataAccumulator, experiment):
         self.exp = experiment
         self.log = experiment.estimator_log
@@ -27,6 +28,7 @@ class VigorMotionEstimator(Estimator):
     vigor, computed as the standard deviation of the tail cumulative angle in a
     specified time window - generally 50 ms.
     """
+
     def __init__(self, *args, vigor_window=0.050, base_gain=-12, **kwargs):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window

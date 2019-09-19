@@ -180,7 +180,10 @@ class StimDisplayWidget:
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
-            if self.last_time is None or (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
+            if (
+                self.last_time is None
+                or (now - self.last_time).total_seconds() >= 1 / self.record_framerate
+            ):
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()

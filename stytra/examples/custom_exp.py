@@ -13,9 +13,11 @@ class FlashProtocol(Protocol):
     def get_stim_sequence(self):
         return [Stimulus(duration=5.0)]
 
+
 # Little demonstration on how to use a custom experiment to bypass standard
 # launching through Stytra class. This little experiment simply add an additional
 # message box warning the user to confirm before running the protocol.
+
 
 class CustomExperiment(Experiment):
     def __init__(self, *args, **kwargs):

@@ -10,7 +10,9 @@ class NamedTupleQueue:
     def put(self, t, obj, block=True, timeout=None):
         if self.tuple_type != type(obj):
             self.tuple_type = type(obj)
-            self.q.put((t, ("_fieldnames",)+obj._fields), block=block, timeout=timeout)
+            self.q.put(
+                (t, ("_fieldnames",) + obj._fields), block=block, timeout=timeout
+            )
         self.q.put((t, tuple(obj)), block=block, timeout=timeout)
 
     def get(self, block=True, timeout=-1):
@@ -21,5 +23,3 @@ class NamedTupleQueue:
             return t, self.tuple_type(*obtained)
         else:
             return t, self.tuple_type(*el)
-
-

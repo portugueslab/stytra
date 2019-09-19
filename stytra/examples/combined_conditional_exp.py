@@ -1,6 +1,9 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.stimuli.visual import StimulusCombiner, MovingGratingStimulus, \
-    HighResMovingWindmillStimulus
+from stytra.stimulation.stimuli.visual import (
+    StimulusCombiner,
+    MovingGratingStimulus,
+    HighResMovingWindmillStimulus,
+)
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -33,8 +36,7 @@ class CombinedProtocol(Protocol):
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
         camera=dict(
-            video_file=str(
-                Path(__file__).parent / "assets" / "fish_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
         ),
     )
 
@@ -46,15 +48,12 @@ class CombinedProtocol(Protocol):
 
         df = pd.DataFrame(dict(t=t, vel_x=vel))
 
-        s_a = MovingGratingStimulus(
-                df_param=df,
-                clip_mask=[0, 0, 1, 0.5])
+        s_a = MovingGratingStimulus(df_param=df, clip_mask=[0, 0, 1, 0.5])
 
         df = pd.DataFrame(dict(t=t, vel_x=-vel))
         s_b = MovingGratingStimulus(
-            df_param=df,
-            grating_angle=180,
-            clip_mask=[0, 0.5, 1, 0.5])
+            df_param=df, grating_angle=180, clip_mask=[0, 0.5, 1, 0.5]
+        )
 
         stimuli = [ConditionalCombiner([s_a, s_b])]
         return stimuli

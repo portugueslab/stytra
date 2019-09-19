@@ -14,11 +14,11 @@ class GratingsProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.t_pre = Param(5.)  # time of still gratings before they move
-        self.t_move = Param(5.)  # time of gratings movement
-        self.grating_vel = Param(-10.)  # gratings velocity
+        self.t_pre = Param(5.0)  # time of still gratings before they move
+        self.t_move = Param(5.0)  # time of gratings movement
+        self.grating_vel = Param(-10.0)  # gratings velocity
         self.grating_period = Param(10)  # grating spatial period
-        self.grating_angle_deg = Param(90.)  # grating orientation
+        self.grating_angle_deg = Param(90.0)  # grating orientation
 
     def get_stim_sequence(self):
         # Use six points to specify the velocity step to be interpolated:

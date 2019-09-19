@@ -16,17 +16,17 @@ class ClosedLoop1DProt(Protocol):
         tracking=dict(embedded=True, method="tail", estimator="vigor"),
         camera=dict(
             min_framerate=60,
-            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5"),
         ),
     )
 
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = Param(20.)
-        self.grating_vel = Param(10.)
-        self.grating_duration = Param(10.)
-        self.grating_cycle = Param(10.)
+        self.inter_stim_pause = Param(20.0)
+        self.grating_vel = Param(10.0)
+        self.grating_duration = Param(10.0)
+        self.grating_cycle = Param(10.0)
 
     def get_stim_sequence(self):
         stimuli = []

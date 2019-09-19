@@ -35,7 +35,6 @@ class VisualStimulus(Stimulus):
         super().__init__(*args, **kwargs)
         self.clip_mask = clip_mask
 
-
     def paint(self, p, w, h):
         """Paint function. Called by the StimulusDisplayWindow update method.
 
@@ -72,9 +71,13 @@ class VisualStimulus(Stimulus):
         """
         if self.clip_mask is not None:
             if isinstance(self.clip_mask, float):  # circle
-                a = QRegion(w/2-self.clip_mask*w, h/2-self.clip_mask*h,
-                            self.clip_mask*w*2, self.clip_mask*h*2,
-                            type=QRegion.Ellipse)
+                a = QRegion(
+                    w / 2 - self.clip_mask * w,
+                    h / 2 - self.clip_mask * h,
+                    self.clip_mask * w * 2,
+                    self.clip_mask * h * 2,
+                    type=QRegion.Ellipse,
+                )
                 p.setClipRegion(a)
             elif isinstance(self.clip_mask[0], tuple):
                 points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_mask]
@@ -153,7 +156,6 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
             for k, value in s.__dict__.items():
                 if not callable(value) and key[0] != "_":
                     state_dict["s{}_{}".format(i, k)] = value
-
 
         return state_dict
 
@@ -869,16 +871,18 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
         # draw the circle
         p.setBrush(QBrush(QColor(*self.circle_color)))
-        p.drawEllipse(
-            QPointF(self.x * w, self.y * h),
-            self.radius * w,
-            self.radius * h,
-        )
+        p.drawEllipse(QPointF(self.x * w, self.y * h), self.radius * w, self.radius * h)
 
 
 class FixationCrossStimulus(FullFieldVisualStimulus):
-    def __init__(self, cross_color=(255,  0, 0), position=(0.5, 0.5),
-                 arm_len=0.05, arm_width=4, **kwargs):
+    def __init__(
+        self,
+        cross_color=(255, 0, 0),
+        position=(0.5, 0.5),
+        arm_len=0.05,
+        arm_width=4,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.cross_color = cross_color
         self.arm_len = arm_len
@@ -895,4 +899,4 @@ class FixationCrossStimulus(FullFieldVisualStimulus):
         w_p = w * self.position[0]
         h_p = h * self.position[1]
         p.drawLine(w_p - l, h_p, w_p + l, h_p)
-        p.drawLine(w_p, h_p- l, w_p, h_p+ l)
+        p.drawLine(w_p, h_p - l, w_p, h_p + l)

@@ -42,7 +42,7 @@ def _process_input(
             i_inbout += 1
             i_below += 1
     elif state == 3:
-        n_after = n_after-1
+        n_after = n_after - 1
         if n_after == 0:
             state = 0
     return BoutState(state, vel, i_inbout, i_below, n_after)
@@ -87,7 +87,7 @@ def find_bouts_online(
             min_bout_len=min_bout_len,
         )
         if state.state != 1 and next_state.state == 1:
-            for j in range(i-pad_before, i):
+            for j in range(i - pad_before, i):
                 bout_coords.append(coords[j, :])
         if next_state.state > 0:
             bout_coords.append(coords[i, :])

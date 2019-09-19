@@ -22,7 +22,7 @@ class Calibrator(ParametrizedQt):
         self.enabled = False
 
         self.mm_px = Param(mm_px)
-        self.length_mm = Param(30., limits=(1, 800))
+        self.length_mm = Param(30.0, limits=(1, 800))
         self.length_px = Param(None)
         self.cam_to_proj = Param(None)
         self.proj_to_cam = Param(None)
@@ -88,7 +88,7 @@ class CrossCalibrator(Calibrator):
     ):
         super().__init__(*args, **kwargs)
 
-        self.length_px = self.length_mm/self.mm_px
+        self.length_px = self.length_mm / self.mm_px
         self.length_is_fixed = False
         self.transparent = transparent
 
@@ -157,7 +157,6 @@ class CircleCalibrator(Calibrator):
     def set_pixel_scale(self, w, h):
         """"Set pixel size, need to be called by the projector widget on resizes"""
         self.length_px = self.triangle_height * 2
-
 
     def paint_calibration_pattern(self, p, h, w, draw=True):
         """
