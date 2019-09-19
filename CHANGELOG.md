@@ -1,3 +1,16 @@
+# 0.8.22
+## New features
+- random dot kinematogram stimulus added
+- projector-camera calibration pattern size can be changed from GUI
+- fixation cross stimulus added
+
+## Improvements
+- added custom metadata example
+- imporved custom tracking documentation
+
+## Fixes
+- combined stimuli save metadata correctly
+
 # 0.8.21
 ## New features
 - recording videos along with online tracking is supported
