@@ -190,9 +190,15 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.layout_calibrate.addWidget(self.button_show_calib)
         self.layout_calibrate.addWidget(self.label_calibrate)
 
-        self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
+        if isinstance(experiment.calibrator, CircleCalibrator):
+            self.calibrator_px_len = ControlSpin(self.calibrator, "triangle_height")
+            self.layout_calibrate.addWidget(QLabel("calibrator size"))
+            self.layout_calibrate.addWidget(self.calibrator_px_len)
 
+
+        self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
+
 
         self.layout_calibrate.setContentsMargins(12, 0, 12, 12)
         self.container_layout.addLayout(self.layout_calibrate)

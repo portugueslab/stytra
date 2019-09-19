@@ -162,7 +162,7 @@ class StimDisplayWidget:
 
         if self.calibrator is not None:
             if self.calibrator.enabled:
-                self.calibrator.make_calibration_pattern(p, h, w)
+                self.calibrator.paint_calibration_pattern(p, h, w)
 
         p.end()
 
