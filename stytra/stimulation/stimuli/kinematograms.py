@@ -6,18 +6,18 @@ from stytra.stimulation.stimuli import VisualStimulus, InterpolatedStimulus
 
 class DotDisplay(VisualStimulus, InterpolatedStimulus):
     def __init__(
-            self,
-            *args,
-            dot_density=0.03,
-            dot_radius=1,
-            color_dots=(255, 255, 255),
-            color_bg=(0, 0, 0),
-            velocity=3,
-            coherence=0,
-            theta=0,
-            max_coherent_for=0.5,
-            display_size=(100, 100),
-            **kwargs
+        self,
+        *args,
+        dot_density=0.03,
+        dot_radius=1,
+        color_dots=(255, 255, 255),
+        color_bg=(0, 0, 0),
+        velocity=3,
+        coherence=0,
+        theta=0,
+        max_coherent_for=0.5,
+        display_size=(100, 100),
+        **kwargs
     ):
         """
         Abstract class for display of dot populations
@@ -80,10 +80,14 @@ class DotDisplay(VisualStimulus, InterpolatedStimulus):
         else:
             mm_px = 1
 
-        self.display_size = np.round(np.array(self.display_size_mm)/mm_px).astype(np.int32)
+        self.display_size = np.round(np.array(self.display_size_mm) / mm_px).astype(
+            np.int32
+        )
         self.radius_px = int(round(self.dot_radius / mm_px))
 
-        n_dots = int(round(self.display_size_mm[0]*self.display_size_mm[1]*self.dot_density))
+        n_dots = int(
+            round(self.display_size_mm[0] * self.display_size_mm[1] * self.dot_density)
+        )
 
         dx = self._dt * self.velocity / mm_px
 
@@ -101,7 +105,6 @@ class DotDisplay(VisualStimulus, InterpolatedStimulus):
                 self.radius_px,
                 self.radius_px,
             )
-
 
 
 class RandomDotKinematogram(DotDisplay):
@@ -127,9 +130,7 @@ class RandomDotKinematogram(DotDisplay):
         coherent = np.random.rand(n_dots) < np.abs(self.coherence)
 
         # put random coordinates and lifetimes on the dots to be reset
-        self.dots[to_reset, :] = (
-            np.random.rand(n_reset, 2)*self.display_size[None, :]
-        )
+        self.dots[to_reset, :] = np.random.rand(n_reset, 2) * self.display_size[None, :]
         self.coherent_for[to_reset] = np.random.rand(n_reset) * self.max_coherent_for
 
         # move the coherently moving dots in one direction
@@ -159,7 +160,7 @@ class RandomDotKinematogram(DotDisplay):
         return (
             QTransform()
             .translate(-xc, -yc)
-            .rotate((self.theta - np.pi/2) * 180 / np.pi)
+            .rotate((self.theta - np.pi / 2) * 180 / np.pi)
             .translate(xc, yc)
         )
 
@@ -177,12 +178,7 @@ class RandomDotKinematogram(DotDisplay):
 
 
 class ContinuousRandomDotKinematogram(DotDisplay):
-    def __init__(
-        self,
-        *args,
-        theta_relative=0,
-        **kwargs
-    ):
+    def __init__(self, *args, theta_relative=0, **kwargs):
         """ A version of the random dot kinematogram, as above, but with two
         improvements:
 
@@ -226,15 +222,15 @@ class ContinuousRandomDotKinematogram(DotDisplay):
         n_reset = np.sum(to_reset)
 
         # put random coordinates and lifetimes on the dots to be reset
-        self.dots[to_reset, :] = (
-            np.random.rand(n_reset, 2)*self.display_size[None, :]
-        )
+        self.dots[to_reset, :] = np.random.rand(n_reset, 2) * self.display_size[None, :]
         self.coherent_for[to_reset] = np.random.rand(n_reset) * self.max_coherent_for
 
         # move the coherently moving dots in one direction
-        theta_mov = self.theta + self.theta_relative + (np.sign(self.coherence) < 0)*np.pi
+        theta_mov = (
+            self.theta + self.theta_relative + (np.sign(self.coherence) < 0) * np.pi
+        )
         self.dots[np.logical_and(np.logical_not(to_reset), self.is_coherent), :] += (
-             dx * np.array([np.cos(theta_mov), np.sin(theta_mov)])[None, :]
+            dx * np.array([np.cos(theta_mov), np.sin(theta_mov)])[None, :]
         )
 
         # move the randomly moving dots in random directions
@@ -264,4 +260,3 @@ class ContinuousRandomDotKinematogram(DotDisplay):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
         self.paint_dots(p, w, h)
-

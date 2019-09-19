@@ -16,8 +16,7 @@ class FramerateWidget(QWidget):
         self.fps_inertia_min = None
         self.inertia = inertia
         self.set_fps = False
-        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding,
-                                       QSizePolicy.Expanding))
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
         self.indicator_color = (40, 230, 150)
         self.indicator_shadow_color = (17, 147, 91)
         self.error_indicator_color = (230, 40, 0)
@@ -35,13 +34,18 @@ class FramerateWidget(QWidget):
                 if self.fps > self.fps_inertia_max:
                     self.fps_inertia_max = self.fps
                 else:
-                    self.fps_inertia_max = self.fps_inertia_max * self.inertia + self.fps * (1 - self.inertia)
+                    self.fps_inertia_max = (
+                        self.fps_inertia_max * self.inertia
+                        + self.fps * (1 - self.inertia)
+                    )
 
                 if self.fps < self.fps_inertia_min:
                     self.fps_inertia_min = self.fps
                 else:
-                    self.fps_inertia_min = self.fps_inertia_min * self.inertia + self.fps * (
-                                1 - self.inertia)
+                    self.fps_inertia_min = (
+                        self.fps_inertia_min * self.inertia
+                        + self.fps * (1 - self.inertia)
+                    )
 
         super().update()
 
@@ -62,9 +66,9 @@ class FramerateWidget(QWidget):
             else:
                 return
 
-        min_bound = np.floor(lb*0.08)*10
-        max_bound = np.ceil(ub*0.12)*10
-        delta_bound = max_bound-min_bound
+        min_bound = np.floor(lb * 0.08) * 10
+        max_bound = np.ceil(ub * 0.12) * 10
+        delta_bound = max_bound - min_bound
 
         size = self.size()
         pad = 6
@@ -90,7 +94,7 @@ class FramerateWidget(QWidget):
 
         w_min = 0
         w_max = w - pad
-        delta_w = w_max-w_min
+        delta_w = w_max - w_min
         text_height = 16
         h_max = h - pad
         h_min = text_height + pad
@@ -99,29 +103,30 @@ class FramerateWidget(QWidget):
             loc = (self.fps - min_bound) / delta_bound
             w_l = int(w_min + loc * delta_w)
 
-            w_shadow_min = int(w_min + (
-                        self.fps_inertia_min - min_bound) * delta_w / delta_bound)
-            w_shadow_max = int(w_min + (self.fps_inertia_max - min_bound) * delta_w / delta_bound)
-
+            w_shadow_min = int(
+                w_min + (self.fps_inertia_min - min_bound) * delta_w / delta_bound
+            )
+            w_shadow_max = int(
+                w_min + (self.fps_inertia_max - min_bound) * delta_w / delta_bound
+            )
 
             # Draw the inertially moving rectangle
             p.setPen(Qt.NoPen)
             p.setBrush(QBrush(QColor(*shadow_color)))
 
             l_corner = w_shadow_min
-            w_rect = w_shadow_max-w_shadow_min
-            p.drawRect(l_corner, h_min, w_rect, h_max-h_min)
+            w_rect = w_shadow_max - w_shadow_min
+            p.drawRect(l_corner, h_min, w_rect, h_max - h_min)
 
             # Draw the indicator line
             p.setPen(QPen(QColor(*indicator_color)))
 
-            p.drawLine(w_l, h_min, w_l, h_max+5)
+            p.drawLine(w_l, h_min, w_l, h_max + 5)
 
             val_str = "{:.1f}".format(self.fps)
             textw = fm.width(val_str)
 
-            p.drawText(QPoint((w_max + w_min-textw) // 2, text_height),
-                       val_str)
+            p.drawText(QPoint((w_max + w_min - textw) // 2, text_height), val_str)
 
         if self.g_fps is not None:
             # Draw the goal line

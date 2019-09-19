@@ -104,10 +104,12 @@ class ProtocolControlToolbar(QToolBar):
         """ Update progress bar
         """
 
-        #if self._update_duration_i == 0:
-         #   pass
-            #self.protocol_runner.duration = self.protocol_runner.get_duration()
-        self._update_duration_i = (self._update_duration_i + 1) % self.update_duration_each
+        # if self._update_duration_i == 0:
+        #   pass
+        # self.protocol_runner.duration = self.protocol_runner.get_duration()
+        self._update_duration_i = (
+            self._update_duration_i + 1
+        ) % self.update_duration_each
 
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))
         self.progress_bar.setValue(int(self.protocol_runner.t))
