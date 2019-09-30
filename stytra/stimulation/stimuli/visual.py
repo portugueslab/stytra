@@ -150,9 +150,9 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
                 state_dict[key] = value
 
         for i, s in enumerate(self._stim_list):
-            for k, value in s.__dict__.items():
+            for key, value in s.__dict__.items():
                 if not callable(value) and key[0] != "_":
-                    state_dict["s{}_{}".format(i, k)] = value
+                    state_dict["s{}_{}".format(i, key)] = value
 
 
         return state_dict

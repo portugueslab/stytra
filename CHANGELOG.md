@@ -1,3 +1,13 @@
+# 0.8.23
+## Fixes
+- fixes bug for stimulus combiner log
+
+
+# 0.8.22
+## New features
+- Added random dot kinematogram
+- Calibrator size is now adjustable
+
 # 0.8.21
 ## New features
 - recording videos along with online tracking is supported
