@@ -65,6 +65,7 @@ class TailStreamPlot(QWidget):
     """ Displays the curvature of the tail in time using a heatmap
 
     """
+
     def __init__(self, acc, n_points=300):
         super().__init__()
         self.title = "Tail curvature"
@@ -141,22 +142,23 @@ class BoutPlot(QWidget):
     to the right.
 
     """
-    def __init__(self, acc: QueueDataAccumulator, i_fish=0,
-                 n_bouts=10, n_save_max=300):
+
+    def __init__(self, acc: QueueDataAccumulator, i_fish=0, n_bouts=10, n_save_max=300):
         super().__init__()
         self.title = "Bout shape"
         self.acc = acc
         self.bouts = deque()
         self.i_fish = i_fish
         self.processed_index = 0
-        self.detection_params = Parametrized(params=
-                                             dict(
-                                                 threshold=Param(0.2, (0.01, 5.0)),
-                                                 n_without_crossing=Param(5,(0,10)),
-                                                 pad_before=Param(5, (0, 20)),
-                                                 pad_after=Param(5, (0, 20)),
-                                                 min_bout_len=Param(1, (1, 30)),
-                                             ))
+        self.detection_params = Parametrized(
+            params=dict(
+                threshold=Param(0.2, (0.01, 5.0)),
+                n_without_crossing=Param(5, (0, 10)),
+                pad_before=Param(5, (0, 20)),
+                pad_after=Param(5, (0, 20)),
+                min_bout_len=Param(1, (1, 30)),
+            )
+        )
         self.n_bouts = n_bouts
         self.old_coords = None
         self.i_curve = 0
@@ -237,7 +239,7 @@ class BoutPlot(QWidget):
         self.lbl_vmax.setText("max velocity sq {:.1f}".format(self.vmax))
 
         if self.bout_coords is None:
-            self.bout_coords = [new_coords[0,:]]
+            self.bout_coords = [new_coords[0, :]]
 
         new_bout = None
         if self.detection_params.threshold > 0:
@@ -253,11 +255,11 @@ class BoutPlot(QWidget):
                 new_bout = self.bout_coords
                 self.bout_coords = [new_coords[0, :]]
 
-        self.old_coords = new_coords[-self.n_save_max:, :]
+        self.old_coords = new_coords[-self.n_save_max :, :]
 
         self.colors *= self.decay_constant
 
-        if new_bout and len(new_bout)>2:
+        if new_bout and len(new_bout) > 2:
             nb = normalise_bout(np.array(new_bout[1:]))
             self.bout_curves[self.i_curve].setData(x=nb[:, 0], y=nb[:, 1])
             self.colors[self.i_curve] = 255

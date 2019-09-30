@@ -31,13 +31,14 @@ import pyqtgraph as pg
 # To track the drosophila, we will fit an ellipse to its body, and we will
 # log the 5 variables of the ellipse (xy position, yx dimension, orientation).
 
+
 class FlyTrackingMethod(ImageToDataNode):
     """Fly tracking method using ellipse fit.
     """
 
     def __init__(self, *args, **kwargs):
         # Initialise the "Node" object passing the name of our tracking method:
-        super().__init__(*args,  name="fly_track", **kwargs)
+        super().__init__(*args, name="fly_track", **kwargs)
 
         # Those headers specify the names of the quantities we will get out
         # of the tracking function. In our case ellipse position on x and y,
@@ -59,10 +60,13 @@ class FlyTrackingMethod(ImageToDataNode):
         #  the raw image from the camera. Here we list the options:
         self.diagnostic_image_options = ["input", "thresholded"]
 
-    def _process(self, im,
-                 threshold: Param(56, limits=(1, 254)),
-                 fly_area: Param((5, 1000), (1, 4000)),
-                 **extraparams):
+    def _process(
+        self,
+        im,
+        threshold: Param(56, limits=(1, 254)),
+        fly_area: Param((5, 1000), (1, 4000)),
+        **extraparams
+    ):
         """
         :param im: input image
         :param threshold: threshold for binarization
@@ -76,8 +80,9 @@ class FlyTrackingMethod(ImageToDataNode):
         thesholded = (im[:, :] < threshold).view(dtype=np.uint8).copy()
 
         # Find contours with OpenCV:
-        cont_ret = cv2.findContours(thesholded.astype(np.uint8), cv2.RETR_TREE,
-                                    cv2.CHAIN_APPROX_SIMPLE)
+        cont_ret = cv2.findContours(
+            thesholded.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
 
         # Small compatibility fix on OpenCV versions.
         # API change, in OpenCV 4 there are 2 values unlike OpenCV3
@@ -90,17 +95,15 @@ class FlyTrackingMethod(ImageToDataNode):
         if len(contours) >= 2:
 
             # Get the largest ellipse:
-            contour = sorted(contours, key=lambda c: c.shape[0], reverse=True)[
-                0]
+            contour = sorted(contours, key=lambda c: c.shape[0], reverse=True)[0]
 
             # Fit the ellipse for the fly, if contours has a minimal length:
             if fly_area[0] < len(contour) < fly_area[1]:
                 # ell will be a tuple ((y, x), (dim_y, dim_x), theta)
                 ell = cv2.fitEllipse(contour)
 
-                max_approx_radius = np.sqrt(fly_area[1]/np.pi) * 10
-                if ell[1][0] > max_approx_radius or \
-                    ell[1][1] > max_approx_radius:
+                max_approx_radius = np.sqrt(fly_area[1] / np.pi) * 10
+                if ell[1][0] > max_approx_radius or ell[1][1] > max_approx_radius:
                     # If ellipse axis much larger than max area set to false:
                     ell = False
                     message = "W:Wrong fit - fly close to borders?"
@@ -126,12 +129,13 @@ class FlyTrackingMethod(ImageToDataNode):
             ell = (np.nan,) * 5
         else:
             # If valid, reshape it to a plain tuple:
-            ell = (ell[0][::-1] + ell[1][::-1] + (-ell[2],))
+            ell = ell[0][::-1] + ell[1][::-1] + (-ell[2],)
 
         # Return a NodeOutput object which combines the message and the
         # output named tuple created from the output type defined in the init
         #  and the tuple with our tracked values
-        return NodeOutput([message, ], self._output_type(*ell))
+        return NodeOutput([message], self._output_type(*ell))
+
 
 # To monitor the results of the tracking from the interface, we would like to
 #  have a way of displaying the fly ellipse on top of the gui interface. This
@@ -141,6 +145,7 @@ class FlyTrackingMethod(ImageToDataNode):
 # In our case, we will use it only for display. We will rely on pyqtgraph to
 # draw and control the ellipse position:
 
+
 class FlyTrackingSelection(CameraSelection):
     def __init__(self, **kwargs):
         """ """
@@ -148,9 +153,7 @@ class FlyTrackingSelection(CameraSelection):
 
         # We need to initialise the ellipse, add it to the area, and remove
         # the handles from the ellipseROI:
-        self.fly_ell = pg.EllipseROI(
-            pos=(0, 0), size=(10, 10), movable=False,
-            pen=None)
+        self.fly_ell = pg.EllipseROI(pos=(0, 0), size=(10, 10), movable=False, pen=None)
 
         self.display_area.addItem(self.fly_ell)
         [self.fly_ell.removeHandle(h) for h in self.fly_ell.getHandles()]
@@ -177,7 +180,8 @@ class FlyTrackingSelection(CameraSelection):
             # To match tracked points and frame displayed looks for matching
             # timestamps of the displayed frame and of tracked queue:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
-                self.current_frame_time)
+                self.current_frame_time
+            )
 
             # Check for valid data to be displayed:
             if len(self.experiment.acc_tracking.stored_data) > 1:
@@ -207,13 +211,16 @@ class FlyTrackingSelection(CameraSelection):
 
                         # Coords of the center after rotation around left lower
                         # corner, to be corrected when setting position:
-                        center_after = (np.cos(c_th + th_conv) * c_r,
-                                        np.sin(c_th + th_conv) * c_r)
+                        center_after = (
+                            np.cos(c_th + th_conv) * c_r,
+                            np.sin(c_th + th_conv) * c_r,
+                        )
 
                         # Calculate pos for fly ROIs. This require correction
                         # for the rotation around corner instead of center.
                         self.fly_ell.setPos(
-                            getattr(retrieved_data, "y") - dim_x
+                            getattr(retrieved_data, "y")
+                            - dim_x
                             + (dim_x - center_after[0]),
                             getattr(retrieved_data, "x")
                             - dim_y
@@ -228,6 +235,7 @@ class FlyTrackingSelection(CameraSelection):
                     # Hide ROI if no eyes detected:
                     self.fly_ell.setPen(None)
 
+
 # Finally, we assemble a "pipeline" where we specify the order of the
 # functions that we will apply to the image. Each pipeline node will take as
 # "parent" the node from which it reads the input frames. In this case,
@@ -237,6 +245,7 @@ class FlyTrackingSelection(CameraSelection):
 # specified, will allow us to overimpose on the GUI an ellipse to monitor
 #  live our tracking.
 
+
 class DrosophilaPipeline(Pipeline):
     def __init__(self):
         super().__init__()
@@ -245,20 +254,20 @@ class DrosophilaPipeline(Pipeline):
         self.eyetrack = FlyTrackingMethod(parent=self.bgsub)
         self.display_overlay = FlyTrackingSelection
 
+
 # Here we define our stumulus protocol (empty in this case), passing in the
 # config dictionary our custom pipeline:
 class FlyTrackingProtocol(Protocol):
     name = "fly_tracking"
     stytra_config = dict(
         tracking=dict(method=DrosophilaPipeline),
-        camera=dict(
-            video_file=str(r"/Users/luigipetrucco/Desktop/video.hdf5"),
-        ),
+        camera=dict(video_file=str(r"/Users/luigipetrucco/Desktop/video.hdf5")),
     )
 
     def get_stim_sequence(self):
         # Empty protocol of specified duration:
         return [Pause(duration=10)]
+
 
 if __name__ == "__main__":
     s = Stytra(protocol=FlyTrackingProtocol())

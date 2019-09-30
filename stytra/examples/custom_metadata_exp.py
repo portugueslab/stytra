@@ -16,8 +16,9 @@ class KrakenMetadata(AnimalMetadata):
         self.species = Param("Kraken kraken", loadable=False, editable=False)
         # String parameter with a default and a description.
         # The description appears hovering with mouse.
-        self.location = Param("North Atlantic",
-                              desc="Approximate location of the sightening")
+        self.location = Param(
+            "North Atlantic", desc="Approximate location of the sightening"
+        )
         # Drop down menu, for multiple choices:
         self.diet = Param("Humans", ["Humans", "Ships", "Unknown"])
         # Redefine age with units:
@@ -27,18 +28,20 @@ class KrakenMetadata(AnimalMetadata):
         # An integer with inferior boundary only (no upper limit for the terror):
         self.n_casualties = Param(8, limits=(1, None))
         # A simple float, with limits and measure units:
-        self.dimensions = Param(8., limits=(0.5, 100), unit="m")
+        self.dimensions = Param(8.0, limits=(0.5, 100), unit="m")
 
         # Some parameters are already defined in the AnimalMetadata class
         # (species, genotype, comments, id). Here we overwrite them:
         self.id = Param("")
+
 
 # Define some uninteresting stytra protocol for our docile animal:
 class FlashProtocol(Protocol):
     name = "empty_protocol"
 
     def get_stim_sequence(self):
-        return [Pause(duration=4.)]
+        return [Pause(duration=4.0)]
+
 
 # Finally, just pass Stytra the new class with the keyword "metadata_animal":
 # Remember to pass the metadata class - KrakenMetadata - and not the object

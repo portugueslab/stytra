@@ -95,8 +95,9 @@ class FrameProcess(Process):
     def update_framerate(self):
         self.framerate_rec.update_framerate()
         if self.framerate_rec.i_fps == 0:
-            self.framerate_queue.put((self.framerate_rec.current_time,
-                                 self.framerate_rec.current_framerate))
+            self.framerate_queue.put(
+                (self.framerate_rec.current_time, self.framerate_rec.current_framerate)
+            )
 
 
 def prepare_json(it, **kwargs):
@@ -275,7 +276,5 @@ def save_df(df, path, fileformat):
     elif fileformat == "json":
         json.dump(df.to_dict(), open(str(outpath), "w"))
     else:
-        raise (
-            NotImplementedError(fileformat + " is not an implemented log format"))
+        raise (NotImplementedError(fileformat + " is not an implemented log format"))
     return outpath.name
-

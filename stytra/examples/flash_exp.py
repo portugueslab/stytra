@@ -11,8 +11,8 @@ class FlashProtocol(Protocol):
         # Here we define these attributes as Param s. This will automatically
         #  build a control for them and make them modifiable live from the
         # interface.
-        self.period_sec = Param(10., limits=(0.2, None))
-        self.flash_duration = Param(1., limits=(0., None))
+        self.period_sec = Param(10.0, limits=(0.2, None))
+        self.flash_duration = Param(1.0, limits=(0.0, None))
 
     def get_stim_sequence(self):
         # This is the
