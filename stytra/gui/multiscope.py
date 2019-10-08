@@ -210,9 +210,7 @@ class MultiStreamPlot(QWidget):
                     header_items = accumulator.columns[1:]  # first column is always t
             self.colors = self.get_colors(len(self.stream_items) + len(header_items))
             self.accumulators.append(accumulator)
-            self.selected_columns.append(
-                header_items
-            )
+            self.selected_columns.append(header_items)
         except ValueError:
             return
         self.bounds.append(None)
@@ -220,7 +218,7 @@ class MultiStreamPlot(QWidget):
 
         for header_item in header_items:
             c = pg.PlotCurveItem(
-                x=np.array([0]), y=np.array([i_curve]), connect="finite",
+                x=np.array([0]), y=np.array([i_curve]), connect="finite"
             )
             curve_label = pg.TextItem(header_item, anchor=(0, 1))
             curve_label.setPos(-self.time_past * 0.9, i_curve)
@@ -284,8 +282,8 @@ class MultiStreamPlot(QWidget):
             self.bounds[i_acc] = new_bounds
         else:
             self.bounds[i_acc] = (
-                    self.bounds_update * new_bounds
-                    + (1 - self.bounds_update) * self.bounds[i_acc]
+                self.bounds_update * new_bounds
+                + (1 - self.bounds_update) * self.bounds[i_acc]
             )
 
     def update(self):
@@ -326,8 +324,7 @@ class MultiStreamPlot(QWidget):
 
             # downsampling if there are too many points
             if len(data_frame) > self.n_points_max:
-                data_frame = data_frame[
-                             :: len(data_frame) // self.n_points_max]
+                data_frame = data_frame[:: len(data_frame) // self.n_points_max]
 
             time_array = delta_t + data_frame.t.values
 
@@ -365,14 +362,13 @@ class MultiStreamPlot(QWidget):
                 i_stream += 1
 
     def show_extra_plot(self):
-        self.experiment.window_main.docks["dock_extra"].setVisible(
-            True
-        )
+        self.experiment.window_main.docks["dock_extra"].setVisible(True)
 
     def _qcolorstring(self, color):
         colorname = self.palette().color(QPalette.Background).name().lstrip("#")
-        return "rgb({},{},{})".format(*(int(colorname[i * 2: i * 2 + 2], 16)
-                                      for i in range(3)))
+        return "rgb({},{},{})".format(
+            *(int(colorname[i * 2 : i * 2 + 2], 16) for i in range(3))
+        )
 
     def toggle_freeze(self):
         self.frozen = not self.frozen
@@ -392,10 +388,10 @@ class MultiStreamPlot(QWidget):
                 self.plotContainer.removeItem(rep_line)
 
             if self.color_set:
-                self.plotContainer.setBackground(
-                    self.palette().color(QPalette.Button))
-                self.btn_freeze.setStyleSheet("background-color:"+
-                                              self._qcolorstring(QPalette.Mid))
+                self.plotContainer.setBackground(self.palette().color(QPalette.Button))
+                self.btn_freeze.setStyleSheet(
+                    "background-color:" + self._qcolorstring(QPalette.Mid)
+                )
             self.plotContainer.plotItem.vb.setMouseEnabled(x=False, y=False)
             self.plotContainer.setXRange(-self.time_past * 0.9, self.time_past * 0.05)
             self.plotContainer.setYRange(-0.1, len(self.stream_items) + 0.1)
@@ -474,8 +470,7 @@ class StreamPlotConfig(QWidget):
 
 
 class FrameratePlot(MultiStreamPlot):
-    def __init__(self, *args, round_bounds=0.1, framerate_limits=None,
-                 **kwargs):
+    def __init__(self, *args, round_bounds=0.1, framerate_limits=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.framerate_limits = framerate_limits or dict()
         self.round_bounds = round_bounds
@@ -484,7 +479,11 @@ class FrameratePlot(MultiStreamPlot):
         super().update()
         for acc in self.accumulators:
             lim = self.framerate_limits.get(acc.name, None)
-            if lim is not None and len(acc.stored_data) > 0 and acc.stored_data[-1][0] < lim:
+            if (
+                lim is not None
+                and len(acc.stored_data) > 0
+                and acc.stored_data[-1][0] < lim
+            ):
                 print("BAD ", acc.name)
 
     def _round_bounds(self, bounds):

@@ -1,0 +1,20 @@
+name: stytra
+channels:
+  - conda-forge
+dependencies:
+  - python=3.7
+  - pip
+  - numpy
+  - scipy
+  - numba
+  - pandas
+  - pytables
+  - git
+  - ffmpeg
+  - scikit-image
+  - matplotlib
+  - qt
+  - opencv
+  - av
+  - pip:
+    - stytra

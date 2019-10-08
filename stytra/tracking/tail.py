@@ -21,11 +21,12 @@ class TailTrackingMethod(ImageToDataNode):
             self.reset()
 
     def reset(self):
-        self._output_type = namedtuple("t", ["tail_sum"] + [
-            "theta_{:02}".format(i)
-            for i in range(self._params.n_output_segments)
-        ])
-        #self._output_type_changed = True
+        self._output_type = namedtuple(
+            "t",
+            ["tail_sum"]
+            + ["theta_{:02}".format(i) for i in range(self._params.n_output_segments)],
+        )
+        self._output_type_changed = True
 
 
 class CentroidTrackingMethod(TailTrackingMethod):
@@ -88,10 +89,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         scale = im.shape[0]
 
         # Calculate tail length:
-        length_tail = (
-            np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
-            * scale
-        )
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
@@ -157,8 +155,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         # Total curvature as sum of the last 2 angles - sum of the first 2
         return NodeOutput(
             messages,
-            self._output_type(angles[-1] + angles[-2] - angles[0] - angles[1],
-                              *angles),
+            self._output_type(angles[-1] + angles[-2] - angles[0] - angles[1], *angles),
         )
 
 
@@ -258,10 +255,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
         scale = im.shape[0]
 
         # Calculate tail length:
-        length_tail = (
-            np.sqrt(tail_length_x ** 2 + tail_length_y ** 2)
-            * scale
-        )
+        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale
 
         # Initial displacements in x and y:
         disp_x = tail_length_x * scale / n_segments
@@ -385,7 +379,7 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y, num_points, tail_
     # Initialise first angle arch, tail sum and angle list:
     pi2 = np.pi / 2
     lin = np.linspace(-pi2 + start_angle, pi2 + start_angle, 25)
-    tail_sum = 0.
+    tail_sum = 0.0
     angles = np.zeros(num_points + 1)
 
     # Create vector of intensities along the arch:

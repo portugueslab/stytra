@@ -73,6 +73,28 @@ def negdif(xf, y):
         return 0
 
 
+@vectorize([uint8(float32, uint8)])
+def absdif(xf, y):
+    """
+
+    Parameters
+    ----------
+    x :
+
+    y :
+
+
+    Returns
+    -------
+
+    """
+    x = np.uint8(xf)
+    if x > y:
+        return x - y
+    else:
+        return y - x
+
+
 class BackgroundSubtractor(ImageToImageNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="bgsub", **kwargs)
@@ -83,8 +105,11 @@ class BackgroundSubtractor(ImageToImageNode):
         self.background_image = None
 
     def _process(
-        self, im, learning_rate: Param(0.04, (0.0, 1.0)),
-        learn_every: Param(400, (1, 10000))
+        self,
+        im,
+        learning_rate: Param(0.04, (0.0, 1.0)),
+        learn_every: Param(400, (1, 10000)),
+        only_darker: Param(True),
     ):
         messages = []
         if self.background_image is None:
@@ -97,4 +122,7 @@ class BackgroundSubtractor(ImageToImageNode):
 
         self.i = (self.i + 1) % learn_every
 
-        return NodeOutput(messages, negdif(self.background_image, im))
+        if only_darker:
+            return NodeOutput(messages, negdif(self.background_image, im))
+        else:
+            return NodeOutput(messages, absdif(self.background_image, im))

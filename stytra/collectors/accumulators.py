@@ -11,7 +11,7 @@ from stytra.utilities import save_df
 
 
 class Accumulator(QObject):
-    def __init__(self, experiment, name="", max_history_if_not_running = 1000):
+    def __init__(self, experiment, name="", max_history_if_not_running=1000):
         super().__init__()
         self.name = name
         self.exp = experiment
@@ -58,9 +58,7 @@ class DataFrameAccumulator(Accumulator):
     sig_acc_reset = pyqtSignal()
     sig_acc_init = pyqtSignal()
 
-    def __init__(
-        self, *args, fps_calc_points=10, monitored_headers=None, **kwargs
-    ):
+    def __init__(self, *args, fps_calc_points=10, monitored_headers=None, **kwargs):
         super().__init__(*args, **kwargs)
         """ """
         self.plot_columns = monitored_headers
@@ -93,7 +91,7 @@ class DataFrameAccumulator(Accumulator):
         """
         find_time = (time - self.exp.t0).total_seconds()
         i = bisect_right(self.times, find_time)
-        return self.stored_data[i-1]
+        return self.stored_data[i - 1]
 
     @property
     def columns(self):
@@ -132,10 +130,12 @@ class DataFrameAccumulator(Accumulator):
         self._header_dict = None
 
     def trim_data(self):
-        if not self.exp.protocol_runner.running and len(
-                self.times) > self.max_history_if_not_running*1.5:
-            self.times[:-self.max_history_if_not_running] = []
-            self.stored_data[:-self.max_history_if_not_running] = []
+        if (
+            not self.exp.protocol_runner.running
+            and len(self.times) > self.max_history_if_not_running * 1.5
+        ):
+            self.times[: -self.max_history_if_not_running] = []
+            self.stored_data[: -self.max_history_if_not_running] = []
 
     def get_fps(self):
         """ """
@@ -170,8 +170,9 @@ class DataFrameAccumulator(Accumulator):
         if last_n == 0:
             return None
 
-        df = pd.DataFrame.from_records(self.stored_data[-last_n:],
-                                       columns=self.stored_data[-1]._fields)
+        df = pd.DataFrame.from_records(
+            self.stored_data[-last_n:], columns=self.stored_data[-1]._fields
+        )
         df["t"] = np.array(self.times[-last_n:])
         return df
 
@@ -224,6 +225,9 @@ class DataFrameAccumulator(Accumulator):
         saved_filename = save_df(df, path, format)
         return basename(saved_filename)
 
+    def is_empty(self):
+        return len(self.stored_data) == 0
+
 
 class QueueDataAccumulator(DataFrameAccumulator):
     """General class for retrieving data from a Queue.
@@ -264,7 +268,9 @@ class QueueDataAccumulator(DataFrameAccumulator):
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
                 newtype = False
-                if len(self.stored_data) == 0 or type(data) != type(self.stored_data[-1]):
+                if len(self.stored_data) == 0 or type(data) != type(
+                    self.stored_data[-1]
+                ):
                     self.reset()
                     newtype = True
 
@@ -290,9 +296,9 @@ class FramerateAccumulator(Accumulator):
         self.goal_framerate = goal_framerate
 
     def trim_data(self):
-        if len(self.times) > self.max_history_if_not_running*1.5:
-            self.times[:-self.max_history_if_not_running] = []
-            self.stored_data[:-self.max_history_if_not_running] = []
+        if len(self.times) > self.max_history_if_not_running * 1.5:
+            self.times[: -self.max_history_if_not_running] = []
+            self.stored_data[: -self.max_history_if_not_running] = []
 
     def reset(self):
         self.times = []
@@ -305,6 +311,7 @@ class FramerateAccumulator(Accumulator):
 
 class FramerateQueueAccumulator(FramerateAccumulator):
     """A simple accumulator, just for framerates"""
+
     def __init__(self, *args, queue, **kwargs):
         super().__init__(*args, **kwargs)
         self.queue = queue
@@ -367,8 +374,9 @@ class DynamicLog(DataFrameAccumulator):
 
         """
         self.times.append(time)
-        self.stored_data.append(self._tupletype(*(data.get(f, np.nan)
-                                                  for f in self._tupletype._fields)))
+        self.stored_data.append(
+            self._tupletype(*(data.get(f, np.nan) for f in self._tupletype._fields))
+        )
 
     def update_stimuli(self, stimuli):
         dynamic_params = []

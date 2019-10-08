@@ -7,7 +7,7 @@ class PybPulseStimulus(Stimulus):
     def __init__(
         self,
         burst_freq=100,
-        pulse_amp=3.,
+        pulse_amp=3.0,
         pulse_n=5,
         pulse_dur_ms=2,
         com_port="COM3",

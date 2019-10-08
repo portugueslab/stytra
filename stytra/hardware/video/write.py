@@ -1,12 +1,16 @@
 import datetime
 import numpy as np
-import imageio
 import deepdish as dd
 
 from stytra.utilities import FrameProcess
 from multiprocessing import Event, Queue
 from queue import Empty
 import os
+
+try:
+    import av
+except ImportError:
+    print("PyAv not installed, writing videos in formats other than H5 not possible.")
 
 
 class VideoWriter(FrameProcess):
@@ -24,56 +28,43 @@ class VideoWriter(FrameProcess):
         ouput movie bitrate
     """
 
-    def __init__(self, folder, input_queue, finished_signal, saving_evt,
-                 format="hdf5", kbit_rate=4000):
+    def __init__(self, input_queue, finished_signal, saving_evt, log_format="hdf5"):
         super().__init__()
-        self.format = format
-        self.folder = folder
+        self.filename_queue = Queue()
+        self.filename_base = None
         self.input_queue = input_queue
         self.finished_signal = finished_signal
         self.saving_evt = saving_evt
-        self.kbit_rate = kbit_rate
         self.reset_signal = Event()
-        if not os.path.isdir(folder):
-            os.makedirs(folder)
+        self.times = []
+        self.recording = False
+        self.log_format = log_format
 
     def run(self):
         while True:
-
-            video_frame = None
-
-            movie = []
             toggle_save = False
+            self.reset()
             while True:
                 try:
                     t, current_frame = self.input_queue.get(timeout=0.01)
                     if self.saving_evt.is_set():
-                        movie.append(current_frame)
+                        if not self.recording:
+                            self.configure(current_frame.shape)
+                            self.recording = True
+                        self.ingest_frame(current_frame)
+                        self.times.append(t)
                         toggle_save = True
 
                 except Empty:
                     pass
 
                 if not self.saving_evt.is_set() and toggle_save:
-                    if self.format == "mp4":
-                        imageio.mimwrite(self.folder + filename + "movie.mp4",
-                                         np.array(movie, dtype=np.uint8), fps=3,
-                                         quality=None,
-                                         ffmpeg_params=["-pix_fmt", "yuv420p", "-profile:v", "baseline",
-                                                        "-level", "3", ], )
-
-                    elif self.format == "hdf5":
-                        filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                        print(self.folder + filename + "movie.hdf5")
-                        dd.io.save(self.folder + filename + "movie.hdf5",
-                                   np.array(movie, dtype=np.uint8))
-
+                    self.complete()
                     toggle_save = False
 
                 if self.reset_signal.is_set() or self.finished_signal.is_set():
                     self.reset_signal.clear()
-                    movie = []
-                    toggle_save = False
+                    self.reset()
                     break
 
                 self.framerate_rec.update_framerate()
@@ -81,4 +72,84 @@ class VideoWriter(FrameProcess):
             if self.finished_signal.is_set():
                 break
 
+    def configure(self, size):
+        self.filename_base = self.filename_queue.get(timeout=0.01)
 
+    def ingest_frame(self, frame):
+        pass
+
+    def complete(self):
+        self.recording = False
+
+    def reset(self):
+        self.recording = False
+        self.times = []
+
+
+class H5VideoWriter(VideoWriter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.frames = []
+
+    def reset(self):
+        super().reset()
+        self.frames = []
+
+    def ingest_frame(self, frame):
+        self.frames.append(frame)
+
+    def complete(self):
+        super().complete()
+        dd.io.save(
+            self.filename_base + "video.hdf5", np.array(self.frames, dtype=np.uint8)
+        )
+
+
+class StreamingVideoWriter(VideoWriter):
+    def __init__(
+        self,
+        *args,
+        extension="mp4",
+        output_framerate=24,
+        format="mpeg4",
+        kbit_rate=1000,
+        **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+        self.extension = extension
+        self.output_framerate = output_framerate
+        self.format = format
+        self.kbit_rate = kbit_rate
+        self.container = None
+        self.stream = None
+
+    def configure(self, shape):
+        super().configure(shape)
+        filename = self.filename_base + "video." + self.extension
+        self.container = av.open(filename, mode="w")
+        self.stream = self.container.add_stream(self.format, rate=self.output_framerate)
+        self.stream.height, self.stream.width = shape
+        self.stream.codec_context.thread_type = "AUTO"
+        self.stream.codec_context.bit_rate = self.kbit_rate * 1000
+        self.stream.codec_context.bit_rate_tolerance = self.kbit_rate * 200
+        self.stream.pix_fmt = "yuv420p"
+
+    def ingest_frame(self, frame):
+        if self.stream is None:
+            self.configure(frame.shape)
+        av_frame = av.VideoFrame.from_ndarray(frame, format="gray8")
+        for packet in self.stream.encode(av_frame):
+            self.container.mux(packet)
+
+    def reset(self):
+        super().reset()
+        self.container = None
+        self.stream = None
+
+    def complete(self):
+        super().complete()
+        for packet in self.stream.encode():
+            self.container.mux(packet)
+
+        # Close the file
+        self.container.close()

@@ -25,7 +25,7 @@ class DisplayedMessage(QLabel):
             self.persist = -1
         else:
             self.persist = persist
-        self.start_color = np.array(color_dict[self.type])
+        self.start_color = np.array(color_dict.get(self.type, (143, 0, 1)))
         self.text_start_color = np.array((255,) * 3)
         self.end_color = np.array(end_color)
 

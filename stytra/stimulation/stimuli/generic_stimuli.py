@@ -64,7 +64,7 @@ class Stimulus:
 
         self._started = None
         self._elapsed = 0.0  # time from the beginning of the stimulus
-        self.name = ""
+        self.name = "undefined"
         self._experiment = None
         self.real_time_start = None
         self.real_time_stop = None
@@ -200,7 +200,7 @@ class InterpolatedStimulus(DynamicStimulus):
         self.phase_times = np.unique(df_param.t)
         self.current_phase = 0
         self._past_t = 0
-        self._dt = 1 / 60.
+        self._dt = 1 / 60.0
 
     def update(self):
         """ """
@@ -242,10 +242,7 @@ class TriggerStimulus(DynamicStimulus):
 
     """
 
-    def __init__(
-        self,
-        **kwargs
-    ):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.name = "trigger"
         self.duration = 0
@@ -258,4 +255,3 @@ class TriggerStimulus(DynamicStimulus):
         # If trigger is set, make it end:
         if self._experiment.trigger.start_event.is_set():
             self.duration = self._elapsed
-

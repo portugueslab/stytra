@@ -221,7 +221,7 @@ class Grid:
 
         """
 
-        rad = random.triangular(self.r, 2 * self.r, .3 * (2 * self.r - self.r))
+        rad = random.triangular(self.r, 2 * self.r, 0.3 * (2 * self.r - self.r))
         # was random.uniform(self.r, 2*self.r) but I think
         # this may be closer to the correct distribution
         # but easier to build

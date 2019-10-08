@@ -28,18 +28,18 @@ An example is provided below:
 Camera configuration
 --------------------
 
-The currently supported cameras are
+The currently supported cameras and features controllable from Stytra are:
 
-==============  ==================  ============
-Manufacturer    Stytra camera type  Supports ROI
---------------  ------------------  ------------
-Ximea           ximea               Yes
-FLIR/PointGrey  spinnaker           No
-AVT             avt                 No
-Basler          basler              No
-Mikrotron       mikrotron           Yes
-OpenCV          opencv              No
-==============  ==================  ============
+==============  ==================  ===  ========  =========  ====
+Manufacturer    Stytra camera type  ROI  Exposure  Framerate  Gain
+--------------  ------------------  ---  --------  ---------  ----
+Ximea           ximea               Yes  Yes       Yes        Yes
+FLIR/PointGrey  spinnaker           Yes  Yes       Yes        Yes
+AVT             avt                 No   No        No         No
+Basler          basler              No   Yes       ?          ?
+Mikrotron       mikrotron           Yes  Yes       Yes        No
+OpenCV          opencv              No   ?         ?          ?
+==============  ==================  ===  ========  =========  =====
 
 To use a camera with Stytra, either put it in the stytra_setup_config.json file or, in a script that runs Stytra set the camera argument, e.g.::
 

@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import (
-    CalibratingClosedLoop1D,
-    GratingStimulus)
+from stytra.stimulation.stimuli import CalibratingClosedLoop1D, GratingStimulus
 from lightparam import Param
 from pathlib import Path
 
@@ -24,10 +22,10 @@ class ClosedLoop1DProt(Protocol):
         super().__init__()
 
         self.inter_stim_pause = Param(10)
-        self.grating_vel = Param(10.)
+        self.grating_vel = Param(10.0)
         self.grating_duration = Param(30)
         self.grating_cycle = Param(10)
-        self.target_vel = Param(-15., limits=(-50, 20))
+        self.target_vel = Param(-15.0, limits=(-50, 20))
 
     def get_stim_sequence(self):
         stimuli = []
@@ -57,7 +55,7 @@ class ClosedLoop1DProt(Protocol):
                 grating_angle=np.pi / 2,
                 grating_period=self.grating_cycle,
                 target_avg_fish_vel=self.target_vel,
-                calibrate_after=5
+                calibrate_after=5,
             )
         )
         return stimuli

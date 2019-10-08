@@ -24,6 +24,7 @@ import json
 
 from pathlib import Path
 
+
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
@@ -75,8 +76,13 @@ class Stytra:
                 for closed-loop experiments: either "vigor" for embedded experiments
                     or "position" for freely-swimming ones. A custom estimator can be supplied.
 
-        recording : bool
+        recording : bool (False) or dict
             for video-recording experiments
+                extension: mp4 (default) or h5
+                    take care, if saving as h5 all frames are first stored in memory,
+                    potentially overfilling it
+                kbit_rate: int
+                    for mp4 format, target kilobits per second of video
 
         embedded : bool
             if not embedded, use circle calibrator
@@ -111,13 +117,14 @@ class Stytra:
 
     """
 
-    def __init__(self, recording=None, exec=True, app=None,
-                 **kwargs):
+    def __init__(self, recording=None, exec=True, app=None, **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
         inum = kwargs.get("instance_number", -1)
         if inum >= 0:
-            default_config_file = Path.home() / "stytra_setup_config_{}.json".format(inum)
+            default_config_file = Path.home() / "stytra_setup_config_{}.json".format(
+                inum
+            )
         else:
             default_config_file = Path.home() / "stytra_setup_config.json"
         if default_config_file.is_file():

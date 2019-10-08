@@ -8,7 +8,7 @@ class TestNode(ImageToDataNode):
         self.diagnostic_image_options = ["processed"]
         super().__init__("testnode", *args, **kwargs)
 
-    def _process(self, input, a:Param(1), set_diagnostic=None):
+    def _process(self, input, a: Param(1), set_diagnostic=None):
         if self._output_type is None:
             self._output_type = namedtuple("o", "inp par")
         else:
@@ -38,4 +38,3 @@ def test_a_pipeline():
     p.deserialize_params(ser)
     assert p.run(None) == NodeOutput([], tt(None, 2))
     assert p.diagnostic_image == "img"
-

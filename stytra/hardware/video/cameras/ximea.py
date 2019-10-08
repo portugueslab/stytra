@@ -96,7 +96,7 @@ class XimeaCamera(Camera):
             if param == "framerate":
                 self.cam.set_framerate(val)
         except xiapi.Xi_error:
-            return ["E:Invalid {} value {.2f}".format(param, val)]
+            return ["E:Invalid {} value {:0.2f}".format(param, val)]
 
     def read(self):
         """ """

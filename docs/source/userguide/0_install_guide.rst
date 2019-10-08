@@ -2,16 +2,32 @@ Installation
 ============
 
 Stytra was developed and tested using Python 3.7 installed as part of the
-`Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Other Python versions have not been tested.
-Make sure you have the latest version of Anaconda installed before proceeding
-with the installation. Installation with custom python environments,
-Miniconda, or in Anaconda virtual environments could be achieved but might
-give dependencies issues. The following instructions have been tested and
-work for an installation in the Anaconda root environment.
+`Anaconda Python <https://www.anaconda.com/download/>`_ distribution. Other Python versions have not been tested, although Python 3.6 will work. Python 3.5 is not supported.
+
+The latest version of Anaconda or Miniconda is recommended. Installation without Anaconda can be achieved but dependencies issues might be difficult to resolve, especially on Windows. The following two variants of instructions have been tested:
 
 
 Installing stytra
 -----------------
+
+1) Environment file
+...................
+
+The provided conda environment.yml file that should install everything except the camera support (described below). The environment file should work with any recent version of Anaconda or Miniconda on all platforms. ::
+
+    conda env create -f environment.yml
+
+
+Then, whenever you want to use Stytra, you have to activate the environment::
+
+    conda activate stytra
+
+
+Many Python editors and IDEs such as PyCharm or Visual Studio Code support setting a conda environment for projects and files.
+
+
+2) Manual installation
+......................
 
 Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
@@ -50,23 +66,11 @@ The simplest way to install Stytra is with pip::
 
     pip install stytra
 
-You can verify the installation by running one of the examples in stytra
-examples folder. To run a simple looming stimulus experiment, you can
-type::
-
-    python -m stytra.examples.looming_exp
-
-If the GUI opens correctly and pressing the play button starts the stimulus:
-congratulations, installation was successful! If it crashes, check
-if you have all dependencies correctly installed. If it still does not work,
-open an issue on the `Stytra github page <https://github
-.com/portugueslab/stytra>`_.
 
 Editable installation
 .....................
 
-On the other hand, if you want to modify the internals of stytra or use the
-unreleased features, clone or download stytra from `github <https://github.com/portugueslab/stytra>`_ and install it with::
+On the other hand, if you want to modify the internals of stytra or use unreleased features, clone or download stytra from `github <https://github.com/portugueslab/stytra>`_ and install it with::
 
     pip install path_to_stytra/stytra
 
@@ -81,6 +85,22 @@ install using the -e argument::
 Now you can have a look at the stytra :ref:`Examples gallery <examples-gallery>`, or you can start
 :ref:`Configuring a computer for Stytra experiments`.
 In the second case, you might want to have a look at the camera APIs section below first.
+
+Testing the installation
+........................
+
+You can verify the installation by running one of the examples in stytra
+examples folder. To run a simple looming stimulus experiment, you can
+type::
+
+    python -m stytra.examples.looming_exp
+
+If the GUI opens correctly and pressing the play button starts the stimulus:
+congratulations, installation was successful! If it crashes, check
+if you have all dependencies correctly installed. If it still does not work,
+open an issue on the `Stytra github page <https://github
+.com/portugueslab/stytra>`_.
+
 
 .. note::
     Stytra might raise an error after quitting because of a bug in the current
@@ -117,22 +137,19 @@ Open the terminal in the folder where you downloaded it and install::
     pip install pymba-0.1-py3-none-any.whl
 
 
-spinnaker: Point Grey / FLIR
+Spinnaker: Point Grey / FLIR
 ............................
 
-Go the the `FLIR support website <https://flir.app.boxcn.net/v/SpinnakerSDK>`_, download the SDK and the Python API.
+Go the the `FLIR support website <https://flir.app.boxcn.net/v/SpinnakerSDK>`_, download and install the SDK and the Python API.
 
-1. Install the SDK, by chosing the camera and OS, and then downloading e.g. Spinnaker 1.15.0.63 Full SDK - Windows (64-bit) — 07/27/2018 - 517.392MB or the equivalent for your operating system
+1. Install the SDK: select the operating system, and then Latest Spinnaker Web Installer with the version appropriate for your platform (usually x64). In the installer wizard, we recommend selecting the "Camera evaluation" option, it is the smallest one and installs everything required for the Python. The other options might require installing various Visual Studio runtimes.
 
-2. Install the python module::
+2. Download the Python package from the same link, selecting the appropriate operating system and version of Python (cp37 for Python 3.7 (recommended above) and cp36 for 3.6). Install the python module::
 
-    pip install "path_to_extracted_zip/spinnaker_python-1.15.0.63-cp36-cp36m-win_amd64.whl"
+    pip install "path_to_extracted_zip/spinnaker_python-1.24.0.60-cp37-cp37m-win_amd64.zip"
 
 (with the file with the appropriate OS and Python versions)
 
-
-.. note::
-    The FLIR/Spinnaker Python API currently does not support Python 3.7, so you might need to install a Python 3.6 conda environment to use it. 
 
 National Instruments framegrabber with Mikrotron camera
 .......................................................
@@ -145,4 +162,28 @@ After putting the camera file there, is should be selected for the image acquisi
 Basler: pypylon
 ...............
 
-Please refer to the instructions `here <https://github.com/basler/pypylon>`_.
+Please refer to the instructions `here <https://github.com/basler/pypylon>`_. After following the instructions it will work with Stytra.
+
+
+External hardware support
+-------------------------
+
+National Instruments Boards
+...........................
+
+Install the drivers and afterwards the Python package::
+
+     python -m pip install nidaqmx
+
+
+LabJack U3
+..........
+Check out the instructions `here <https://github.com/labjack/LabJackPython>`_.
+
+
+PyBoard/Arduino
+...............
+To communicate with microcontroller boards usually a serial connection is used.::
+
+    pip install pyserial
+

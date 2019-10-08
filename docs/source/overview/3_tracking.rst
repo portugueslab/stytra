@@ -84,7 +84,9 @@ Fish identities are maintained constant while they are in the field of view and 
 
 Custom tracking functions
 -------------------------
-Stytra is designed in an extensible fashion and video tracking algorithms for other animals can be easily added. To demonstrate this, we provide a small example of DeepLabCut-based tracking, which can be integrated with very few lines of code and immediately used with closed-loop stimuli. DeepLabCut is a convolutional neural network-based pose estimation toolbox :cite:`Mathisetal2018` built on top of the DeeperCut architecture :cite:`insafutdinov2016eccv`. We incorporated an open-field recording example with the video and parameters provided in the original repository.
+Stytra is designed in an extensible fashion and video tracking algorithms for other animals can be easily added. For an example of this, you can have a look at the documented `stytra/examples/custom_tracking_exp.py <https://github.com/portugueslab/stytra/blob/master/stytra/examples/custom_tracking_exp.py>`_ example in Stytra.
+
+We also provide an example of how we integrated Stytra with  DeepLabCut-based tracking, with very few lines of code and the possibility to be used with closed-loop stimuli. DeepLabCut is a convolutional neural network-based pose estimation toolbox :cite:`Mathisetal2018` built on top of the DeeperCut architecture :cite:`insafutdinov2016eccv`. We incorporated an open-field recording example with the video and parameters provided in the original repository.
 
 .. raw:: html
 

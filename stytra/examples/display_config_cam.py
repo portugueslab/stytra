@@ -6,6 +6,7 @@ from stytra.stimulation import Protocol
 
 class Nostim(Protocol):
     name = "empty_protocol"
+
     def get_stim_sequence(self):
         return [Pause(duration=10)]  # protocol does not do anything
 

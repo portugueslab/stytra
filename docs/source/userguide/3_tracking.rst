@@ -2,6 +2,14 @@ Tracking configuration
 ======================
 
 
+Here are some tips to adjust tracking on your setup. If you have not done
+that yet, you probably want to have a look at the
+:ref:`User interface` description first. Remember to use the dropdown menu to
+ display the diagnostic images from intermediate stages of the image
+ processing! That is the best way to ensure that all parameters are set
+ correctly.
+
+
 .. _fishtracking:
 
 Freely-swimming fish
@@ -17,8 +25,13 @@ Freely-swimming fish
 2) Input the number of fish in the dish
 
 3) Determine the parameters for background subtraction
-   bglearning_rate and bglearn_every
-   The diagnostic display can be invoked by putting display_processed to different states
+   bglearning_rate and bglearn_every. bglearning_rate specifies what is the
+   weight which is assigned to every new image in the background computation,
+    from 0 (only the first frame acquired will be used at the background) to
+    1 (every new frame is set as the background). bglearn_every specifies
+    every how many frames a new image is used to compute background. This
+    should change
+   Under the camera view, you can select the currently displayed image (raw for the )
 
 4) Once you see the fish nicely, adjust the thresholded image,
    so that the full fish, but nothing more, is white bgdif_threshold
@@ -40,7 +53,7 @@ Freely-swimming fish
 Embedded fish
 -------------
 
-1) Ensure that the exposure time is not longer than 1.5 miliseconds, otherwise
+1) Ensure that the exposure time is not longer than 1.5 milliseconds, otherwise
    the tracking will not be correct for fast tail movements
 
 2) Open the tracking settings window
@@ -55,7 +68,7 @@ Embedded fish
 
 6) Adjust the number of tail segments, around 30 is a good number. Usually, not more than 10 n_output_segments are required
 
-7) Tap the dish of the fish so that it moves, and ensure the tail is tracked correctly. You can use the replay function to ensure the whole movement is tracked smoothly
+7) Tap the dish or the stage so that fish flicks its tail, and ensure the that it is tracked correctly. There should be no breaks in the tail_sum plot, if there are, it is likely the tail length line is too long. You can use the replay function to ensure the whole movement is tracked smoothly
 
 8) To ensure the tracking is correct, you can enable the plotting of the last bout in the windows
 
