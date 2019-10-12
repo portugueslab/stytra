@@ -16,7 +16,7 @@ setup(
         "pandas",
         "qdarkstyle",
         "qimage2ndarray",
-        "deepdish",
+        "flammkuchen",
         "anytree",
         "pims",
         "GitPython",
