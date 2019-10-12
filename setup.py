@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.8.23",
+    version="0.8.24",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
     license="GPLv3+",

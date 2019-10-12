@@ -1,3 +1,7 @@
+# 0.8.24
+## Fixes
+- replaced deepdish dependency with flammkuchen (deepdish no longer maintained)
+
 # 0.8.23
 ## Fixes
 - fixes bug for stimulus combiner log
