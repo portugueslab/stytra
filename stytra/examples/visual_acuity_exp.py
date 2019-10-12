@@ -3,7 +3,11 @@ import numpy as np
 import pandas as pd
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import MovingWindmillStimulus, FullFieldVisualStimulus, StimulusCombiner
+from stytra.stimulation.stimuli import (
+    MovingWindmillStimulus,
+    FullFieldVisualStimulus,
+    StimulusCombiner,
+)
 from lightparam import Param
 
 
@@ -15,8 +19,7 @@ class WindmillProtocol(Protocol):
     stytra_config = dict(
         tracking=dict(embedded=True, method="eyes"),
         camera=dict(
-            video_file=str(Path(__file__).parent / "assets" /
-                           "fish_compressed.h5")
+            video_file=str(Path(__file__).parent / "assets" / "fish_compressed.h5")
         ),
     )
 
@@ -48,10 +51,9 @@ class WindmillProtocol(Protocol):
 
         for n_arms in range(self.n_arms_min, self.n_arms_max, self.n_arms_steps):
             windmill = MovingWindmillStimulus(
-                    df_param=df, n_arms=n_arms,
-                    wave_shape=self.wave_shape
-                )
-            pause = FullFieldVisualStimulus(duration=d, clip_mask=0.1, color=(0,0,0))
+                df_param=df, n_arms=n_arms, wave_shape=self.wave_shape
+            )
+            pause = FullFieldVisualStimulus(duration=d, clip_mask=0.1, color=(0, 0, 0))
             stimuli.append(StimulusCombiner(stim_list=[windmill, pause]))
 
         return stimuli
