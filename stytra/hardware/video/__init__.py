@@ -13,7 +13,7 @@ from lightparam.param_qt import ParametrizedQt
 
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
-import deepdish as dd
+import flammkuchen as fl
 
 from stytra.hardware.video.cameras import camera_class_dict
 
@@ -284,7 +284,7 @@ class VideoFileSource(VideoSource):
         if self.state is None:
             self.state = VideoControlParameters()
         if self.source_file.endswith("h5") or self.source_file.endswith("hdf5"):
-            framedata = dd.io.load(self.source_file)
+            framedata = fl.load(self.source_file)
 
             if isinstance(framedata, np.ndarray):
                 frames = framedata

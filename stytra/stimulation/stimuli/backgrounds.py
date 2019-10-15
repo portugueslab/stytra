@@ -3,7 +3,7 @@ import random
 from math import sqrt, pi, sin, cos
 from itertools import product
 from PIL import Image, ImageDraw
-import deepdish.io as dio
+import flammkuchen as fl
 import cv2
 import logging
 
@@ -49,7 +49,7 @@ def existing_file_background(filepath):
     """ Returns a numpy array from an image stored at filepath
     """
     if filepath.endswith(".h5"):
-        return dio.load(filepath)
+        return fl.load(filepath)
     else:
         # If using OpenCV, we have to get RGB, not BGR
         try:
@@ -452,4 +452,4 @@ class Grid:
 
 if __name__ == "__main__":
     bg = 255 - poisson_disk_background((640, 640), 12, 2)
-    dio.save("poisson_dense.h5", bg)
+    fl.save("poisson_dense.h5", bg)

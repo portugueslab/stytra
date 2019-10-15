@@ -1,6 +1,6 @@
 import datetime
 import numpy as np
-import deepdish as dd
+import flammkuchen as fl
 
 from stytra.utilities import FrameProcess
 from multiprocessing import Event, Queue
@@ -100,7 +100,7 @@ class H5VideoWriter(VideoWriter):
 
     def complete(self):
         super().complete()
-        dd.io.save(
+        fl.save(
             self.filename_base + "video.hdf5", np.array(self.frames, dtype=np.uint8)
         )
 

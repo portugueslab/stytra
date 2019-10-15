@@ -4,7 +4,7 @@ import tempfile
 import glob
 import json
 import numpy as np
-import deepdish as dd
+import flammkuchen as fl
 
 from stytra.experiments import VisualExperiment
 from stytra.experiments.tracking_experiments import TrackingExperiment
@@ -251,7 +251,7 @@ class TestExperimentClass(unittest.TestCase):
             with open(self.metadata_path, "r") as f:
                 data = json.load(f)
 
-            behavior_log = dd.io.load(
+            behavior_log = fl.load(
                 self.metadata_path.parent / data["tracking"]["behavior_log"], "/data"
             )
 
