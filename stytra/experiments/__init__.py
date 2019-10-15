@@ -152,6 +152,8 @@ class Experiment(QObject):
             "gui", tree=self.dc, params=dict(geometry=Param(""), window_state=Param(""))
         )
 
+        self.dc.add(self.protocol)
+
         self.protocol_runner = ProtocolRunner(experiment=self)
 
         # assign signals from protocol_runner to be used externally:
