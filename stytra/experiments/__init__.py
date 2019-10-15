@@ -112,7 +112,6 @@ class Experiment(QObject):
         self.protocol = protocol
         self.trigger = scope_triggering
         self.offline = offline
-        self.framerate_goals = dict(display=30)
 
         self.asset_dir = dir_assets
 

@@ -102,7 +102,7 @@ class TailStreamPlot(QWidget):
     def update(self):
         if not self.isVisible():
             return
-        data_array = self.acc.stored_data[-self.n_points :]
+        data_array = np.array(self.acc.stored_data[-self.n_points :])
         if len(data_array) > 0:
             self.image_item.setImage(
                 image=np.diff(data_array[:, 1:], axis=1).T, autoLevels=False

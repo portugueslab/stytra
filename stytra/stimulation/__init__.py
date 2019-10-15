@@ -92,7 +92,6 @@ class ProtocolRunner(QObject):
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
 
-        self._set_new_protocol(self.protocol)
         self.update_protocol()
         self.protocol.sig_param_changed.connect(self.update_protocol)
 
@@ -104,46 +103,23 @@ class ProtocolRunner(QObject):
         self.framerate_rec = FramerateRecorder()
         self.framerate_acc = FramerateAccumulator(experiment=self.experiment)
 
-    def _set_new_protocol(self, protocol):
-        """Set new Protocol.
-
-        Parameters
-        ----------
-        protocol : :obj:`stytra.experiment.Protocol`
-            Protocol to be set.
-
-        """
-        if protocol is not None:
-            self.protocol = protocol
-
-            # Connect changes to protocol parameters to update function:
-            self.protocol.sig_param_changed.connect(self.update_protocol)
-            self.experiment.dc.add(self.protocol)
-
-            # Why were we resetting here?
-            self.reset()
-            self.update_protocol()
-            self.sig_protocol_updated.emit()
-
     def update_protocol(self):
-        """Update current Protocol (get a new stimulus list if protocol
-        exist.
+        """Update current Protocol (get a new stimulus list)
         """
-        if self.protocol is not None:
-            self.stimuli = self.protocol._get_stimulus_list()
+        self.stimuli = self.protocol._get_stimulus_list()
 
-            self.current_stimulus = self.stimuli[0]
+        self.current_stimulus = self.stimuli[0]
 
-            # pass experiment to stimuli for calibrator and asset folders:
-            for stimulus in self.stimuli:
-                stimulus.initialise_external(self.experiment)
+        # pass experiment to stimuli for calibrator and asset folders:
+        for stimulus in self.stimuli:
+            stimulus.initialise_external(self.experiment)
 
-            if self.dynamic_log is None:
-                self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
-            else:
-                self.dynamic_log.update_stimuli(self.stimuli)  # new stimulus log
+        if self.dynamic_log is None:
+            self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
+        else:
+            self.dynamic_log.update_stimuli(self.stimuli)  # new stimulus log
 
-            self.sig_protocol_updated.emit()
+        self.sig_protocol_updated.emit()
 
     def reset(self):
         """Make the protocol ready to start again. Reset all ProtocolRunner
@@ -304,21 +280,6 @@ class ProtocolRunner(QObject):
         for stim in self.stimuli:
             duration += stim.duration
         return duration
-
-    # def get_duration(self):
-    #    """Get total duration of the protocol in sec, calculated from stimuli
-    #    durations.
-    #
-    ##    Returns
-    #    -------
-    #    float :
-    #        protocol length in seconds.
-
-    #    """
-    #    total_duration = 0
-    #    for stim in self.stimuli:
-    #        total_duration += stim.duration
-    #    return total_duration
 
     def print(self):
         """Print protocol sequence.
