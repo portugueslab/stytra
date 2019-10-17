@@ -1,6 +1,10 @@
 import zmq
 import socket
 
+""" 
+This is an example of ZMQ trigger to start a Stytra protocol.
+"""
+
 if __name__ == "__main__":
     address = "tcp://{}:5555".format(socket.gethostbyname(socket.gethostname()))
 

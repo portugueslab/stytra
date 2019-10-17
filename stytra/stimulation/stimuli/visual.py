@@ -3,7 +3,6 @@ from itertools import product
 import numpy as np
 import pims
 import qimage2ndarray
-import pandas as pd
 
 from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
