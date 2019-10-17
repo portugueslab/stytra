@@ -295,6 +295,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
         self.y = 0
         self.theta = 0
         self.centre_relative = centre_relative
+        self.name = "Stimulus_position"
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
 
