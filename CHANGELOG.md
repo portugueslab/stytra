@@ -1,5 +1,6 @@
 # 0.8.25
 - Fixed erratic bug in stimulus updating
+- Fixed not working test for tracking
 
 # 0.8.24
 ## Fixes
