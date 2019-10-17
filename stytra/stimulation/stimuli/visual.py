@@ -203,6 +203,7 @@ class DynamicLuminanceStimulus(
         super().__init__(*args, dynamic_parameters=["luminance"], **kwargs)
         self.original_color = np.array(color)
         self.color = color
+        self.name = "luminance"
 
     def update(self):
         super().update()
