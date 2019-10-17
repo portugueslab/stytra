@@ -10,6 +10,7 @@ from stytra.stimulation.stimuli import (
     SeamlessImageStimulus,
     InterpolatedStimulus,
     RadialSineStimulus,
+    ContinuousRandomDotKinematogram,
 )
 
 from stytra.stimulation import Protocol
@@ -87,7 +88,30 @@ class SeamlessImageProtocol(Protocol):
         ]
 
 
-class GenerateStimuliMovie(unittest.TestCase):
+class KinematogramProtocol(Protocol):
+    name = "kinematogram"
+
+    def get_stim_sequence(self):
+        return [
+            ContinuousRandomDotKinematogram(
+                dot_density=0.3,
+                dot_radius=0.4,
+                df_param=pd.DataFrame(
+                    dict(
+                        t=[0, 1, 1, 5, 5, 9],
+                        coherence=[0, 0, 0.5, 0.5, 1, 1],
+                        frozen=[1, 1, 0, 0, 0, 0],
+                    )
+                ),
+            )
+        ]
+
+
+class GenerateStimuliMovie:
+    def run(self):
+        self.setUp()
+        self.test_stimulus_rendering()
+
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.stopped = False
@@ -115,6 +139,7 @@ class GenerateStimuliMovie(unittest.TestCase):
         asset_dir = pkg_resources.resource_filename(__name__, "/test_assets")
 
         self.protocols = [
+            KinematogramProtocol,
             GratingProtocol,
             RadialSine,
             FullFieldProtocol,
@@ -122,7 +147,7 @@ class GenerateStimuliMovie(unittest.TestCase):
             SeamlessImageProtocol,
         ]
 
-        for protocol in self.protocols[-1:]:
+        for protocol in self.protocols[:1]:
             self.protocol_name = protocol.name
 
             s = Stytra(
@@ -130,7 +155,7 @@ class GenerateStimuliMovie(unittest.TestCase):
                 dir_assets=asset_dir,
                 dir_save=self.test_dir,
                 stim_movie_format="mp4",
-                rec_stim_framerate=30,
+                record_stim_framerate=30,
                 display=dict(window_size=(400, 400), full_screen=False),
                 exec=False,
             )
@@ -141,3 +166,8 @@ class GenerateStimuliMovie(unittest.TestCase):
             s.exp.start_protocol()
             s.exp.app.exec_()
         self.tearDown()
+
+
+if __name__ == "__main__":
+    gm = GenerateStimuliMovie()
+    gm.run()

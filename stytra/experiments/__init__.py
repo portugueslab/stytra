@@ -3,7 +3,7 @@ import os
 import traceback
 from queue import Empty
 import numpy as np
-import deepdish as dd
+import flammkuchen as fl
 import logging
 import tempfile
 import git
@@ -112,7 +112,6 @@ class Experiment(QObject):
         self.protocol = protocol
         self.trigger = scope_triggering
         self.offline = offline
-        self.framerate_goals = dict(display=30)
 
         self.asset_dir = dir_assets
 
@@ -152,6 +151,8 @@ class Experiment(QObject):
         self.gui_params = Parametrized(
             "gui", tree=self.dc, params=dict(geometry=Param(""), window_state=Param(""))
         )
+
+        self.dc.add(self.protocol)
 
         self.protocol_runner = ProtocolRunner(experiment=self)
 
@@ -579,7 +580,7 @@ class VisualExperiment(Experiment):
                         movie_dict = dict(
                             movie=np.stack(movie, 0), movie_times=movie_times
                         )
-                        dd.io.save(
+                        fl.save(
                             self.filename_base() + "stim_movie.h5",
                             movie_dict,
                             compression="blosc",

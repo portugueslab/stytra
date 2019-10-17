@@ -40,9 +40,9 @@ class Portugues2011Protocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = Param(20.)
-        self.grating_vel = Param(10.)
-        self.grating_duration = Param(10.)
+        self.inter_stim_pause = Param(20.0)
+        self.grating_vel = Param(10.0)
+        self.grating_duration = Param(10.0)
         self.grating_cycle = Param(10)
         self.low_gain = Param(0.5)
         self.high_gain = Param(1.5)

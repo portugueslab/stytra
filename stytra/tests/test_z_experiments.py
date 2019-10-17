@@ -4,7 +4,7 @@ import tempfile
 import glob
 import json
 import numpy as np
-import deepdish as dd
+import flammkuchen as fl
 
 from stytra.experiments import VisualExperiment
 from stytra.experiments.tracking_experiments import TrackingExperiment
@@ -19,6 +19,7 @@ from stytra.triggering import Trigger
 from time import sleep
 
 import pytest
+
 
 class TestProtocol0(Protocol):
     name = "test_protocol_0"
@@ -95,15 +96,13 @@ class TestExperimentClass(unittest.TestCase):
             tracking = None
 
         if tracking is None:
-            exp = VisualExperiment(
-                app=self.app, dir_save=self.test_dir, **kwargs)
+            exp = VisualExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
         else:
-            exp = TrackingExperiment(app=self.app, dir_save=self.test_dir,
-                **kwargs)
+            exp = TrackingExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
 
         exp.start_experiment()
         exp.start_protocol()
-        sleep(0.5)
+        sleep(5)
         if tracking is not None:
             exp.acc_tracking.update_list()
         exp.end_protocol(save=True)
@@ -113,33 +112,113 @@ class TestExperimentClass(unittest.TestCase):
     def check_result(array, key, tol=3):
         solutions = dict(
             th_e0=np.array(
-                [-95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
-                 -95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58,
-                 -95.58, -95.58, -95.58, -95.58, -95.58, -95.58]),
+                [
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                    -95.58,
+                ]
+            ),
             th_e1=np.array(
-                [-77.34, -77.34, -77.34, -77.34, -77.34, -77.34, -79.74,
-                 -79.74, -79.74, -79.74, -79.74, -79.56, -79.74, -79.74,
-                 -79.74, -77.51, -77.51, -77.51, -77.51, -77.5]),
-            theta_00=np.array([-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
-                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
-                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52]),
-            theta_08=np.array([-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
-                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52,
-                               -1.52, -1.52, -1.52, -1.52, -1.52, -1.52])
+                [
+                    -77.34,
+                    -77.34,
+                    -77.34,
+                    -77.34,
+                    -77.34,
+                    -77.34,
+                    -79.74,
+                    -79.74,
+                    -79.74,
+                    -79.74,
+                    -79.74,
+                    -79.56,
+                    -79.74,
+                    -79.74,
+                    -79.74,
+                    -77.51,
+                    -77.51,
+                    -77.51,
+                    -77.51,
+                    -77.5,
+                ]
+            ),
+            theta_00=np.array(
+                [
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                ]
+            ),
+            theta_08=np.array(
+                [
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                    -1.52,
+                ]
+            ),
         )
 
         sol = solutions[key]
-        assert ((sol - tol < array[:len(sol)]) &
-                           (array[:len(sol)] < sol + tol)).all()
+        assert ((sol - tol < array[: len(sol)]) & (array[: len(sol)] < sol + tol)).all()
 
     def test_visual_experiment(self):
         self.app = QApplication([])
         for prot in [TestProtocol0(), TestProtocol1()]:
             self.run_experiment(protocol=prot)
             with open(self.metadata_path, "r") as f:
-                    data = json.load(f)
-            assert prot.name.split("/")[-1] in data["stimulus"][
-                "protocol"].keys()
+                data = json.load(f)
+            assert prot.name.split("/")[-1] in data["stimulus"]["protocol"].keys()
 
             self.clear_dir()
 
@@ -158,21 +237,28 @@ class TestExperimentClass(unittest.TestCase):
         """
         self.app = QApplication([])
 
-        video_file = str(Path(__file__).parent.parent / "examples" /
-                           "assets" / "fish_compressed.h5")
+        video_file = str(
+            Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
+        )
 
         for method in ["eyes", "tail"]:
-            self.run_experiment(protocol=TestProtocol(),
-                                camera=dict(video_file=video_file),
-                                tracking=dict(method=method),
-                                log_format="hdf5")
+            self.run_experiment(
+                protocol=TestProtocol(),
+                camera=dict(video_file=video_file),
+                tracking=dict(method=method),
+                log_format="hdf5",
+            )
             with open(self.metadata_path, "r") as f:
                 data = json.load(f)
 
-            behavior_log = dd.io.load(self.metadata_path.parent / data[
-                "tracking"]["behavior_log"], "/data")
+            behavior_log = fl.load(
+                self.metadata_path.parent / data["tracking"]["behavior_log"], "/data"
+            )
 
-            assert method == data["general"]["program_version"]["arguments"]["tracking"]["method"]
+            assert (
+                method
+                == data["general"]["program_version"]["arguments"]["tracking"]["method"]
+            )
 
             if method == "tail":
                 for k in ["theta_00", "theta_08"]:

@@ -72,7 +72,10 @@ class LoomingProtocol(Protocol):
             # (specified in fractions from 0 to 1 for each dimension)
             stimuli.append(
                 LoomingStimulus(
-                    df_param=radius_df, origin=(self.x_pos_pix, self.y_pos_pix)
+                    background_color=(255, 255, 255),
+                    circle_color=(0, 0, 0),
+                    df_param=radius_df,
+                    origin=(self.x_pos_pix, self.y_pos_pix),
                 )
             )
 

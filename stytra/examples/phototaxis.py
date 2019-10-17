@@ -18,7 +18,9 @@ class PhototaxisProtocol(Protocol):
         display=dict(min_framerate=50),
         tracking=dict(method="fish", embedded=False, estimator="position"),
         camera=dict(
-            video_file=str(Path(__file__).parent / "assets" / "fish_free_compressed.h5"),
+            video_file=str(
+                Path(__file__).parent / "assets" / "fish_free_compressed.h5"
+            ),
             min_framerate=100,
         ),
     )
@@ -50,14 +52,13 @@ class PhototaxisProtocol(Protocol):
                         duration=self.stim_on_duration,
                         color=(self.brightness,) * 3,
                         center_dist=self.center_offset,
-                    ),
+                    )
                 )
             )
 
             stimuli.append(
                 FullFieldVisualStimulus(
-                    color=(self.brightness,) * 3,
-                    duration=self.stim_off_duration
+                    color=(self.brightness,) * 3, duration=self.stim_off_duration
                 )
             )
 

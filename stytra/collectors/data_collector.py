@@ -54,9 +54,13 @@ class DataCollector(ParameterTree):
 
     """
 
-    def __init__(self, *data_tuples_list, extra_settings=None,
-                 instance_number=-1,
-                 folder_path="C:/"):
+    def __init__(
+        self,
+        *data_tuples_list,
+        extra_settings=None,
+        instance_number=-1,
+        folder_path="C:/"
+    ):
         """ """
         super().__init__()
         if instance_number < 0:

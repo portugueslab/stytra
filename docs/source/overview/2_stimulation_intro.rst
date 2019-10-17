@@ -84,6 +84,19 @@ Radial sine (freely-swimming fish centering stimulus)
 .. literalinclude:: ../../../stytra/tests/record_stimuli.py
    :language: python
    :lines: 34-36
+   
+   
+Random dot kinematograms
+........................
+
+.. raw:: html
+
+        <video loop src="../_static/stim_movie_kinematogram.mp4"
+        width="200px" autoplay controls></video>
+
+.. literalinclude:: ../../../stytra/tests/record_stimuli.py
+   :language: python
+   :lines: 93-108
 
 Set voltage of an NI board
 ..........................

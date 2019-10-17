@@ -1,3 +1,24 @@
+# 0.8.24
+## Fixes
+- replaced deepdish dependency with flammkuchen (deepdish no longer maintained)
+
+# 0.8.23
+## Fixes
+- fixes bug for stimulus combiner log
+
+# 0.8.22
+## New features
+- random dot kinematogram stimulus added
+- projector-camera calibration pattern size can be changed from GUI
+- fixation cross stimulus added
+
+## Improvements
+- added custom metadata example
+- imporved custom tracking documentation
+
+## Fixes
+- combined stimuli save metadata correctly
+
 # 0.8.21
 ## New features
 - recording videos along with online tracking is supported

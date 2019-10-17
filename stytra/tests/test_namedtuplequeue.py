@@ -13,7 +13,7 @@ class TupProc(Process):
     def run(self):
         _, m = self.q.get(timeout=1.0)
         mtype = type(m)
-        self.q.put(None, mtype(m[0]+1, *m[1:]))
+        self.q.put(None, mtype(m[0] + 1, *m[1:]))
 
 
 def test_ntqueue():
@@ -31,4 +31,3 @@ def test_ntqueue():
     tp.join()
     _, tup2 = tp.q.get()
     assert tup2 == t(2, 2, 3)
-

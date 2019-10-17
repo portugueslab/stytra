@@ -19,6 +19,7 @@ Attributes of pipelines are:
 the nodes can be set as attributes of the class,
 with names that are arbitrary, except for how they are used
 by the display and plotting classes (see the :py:mod:`stytra.experiments.fish_pipelines` for examples)
+To pass data through nodes you have to set the parent attribute. The first nodes to receive data from the camera have to have the root node as parent (`parent=self.root`)
 
 
 Processing nodes
@@ -37,4 +38,3 @@ The _process function **has to** output a :class:`NodeOutput <stytra.tracking.pi
 
 Optionally, if the processing function is stateful (depends on previous inputs),
 you can define a reset function which resets the state.
-

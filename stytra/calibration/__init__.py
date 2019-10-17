@@ -22,7 +22,7 @@ class Calibrator(ParametrizedQt):
         self.enabled = False
 
         self.mm_px = Param(mm_px)
-        self.length_mm = Param(30., limits=(1, 800))
+        self.length_mm = Param(30.0, limits=(1, 800))
         self.length_px = Param(None)
         self.cam_to_proj = Param(None)
         self.proj_to_cam = Param(None)
@@ -56,7 +56,7 @@ class Calibrator(ParametrizedQt):
         self.length_mm = self.length_px * self.mm_px
         self.block_signal = False
 
-    def make_calibration_pattern(self, p, h, w):
+    def paint_calibration_pattern(self, p, h, w):
         """
 
         Parameters
@@ -88,7 +88,7 @@ class CrossCalibrator(Calibrator):
     ):
         super().__init__(*args, **kwargs)
 
-        self.length_px = self.length_mm/self.mm_px
+        self.length_px = self.length_mm / self.mm_px
         self.length_is_fixed = False
         self.transparent = transparent
 
@@ -106,7 +106,7 @@ class CrossCalibrator(Calibrator):
                 self.length_px = fixed_length
                 self.length_is_fixed = True
 
-    def make_calibration_pattern(self, p, h, w):
+    def paint_calibration_pattern(self, p, h, w):
         """
 
         Parameters
@@ -147,7 +147,7 @@ class CircleCalibrator(Calibrator):
 
     def __init__(self, *args, dh=80, r=1, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dh = dh
+        self.triangle_height = Param(dh, (2, 400))
         self.r = r
         self.length_px = dh * 2
         self.points = None
@@ -156,9 +156,9 @@ class CircleCalibrator(Calibrator):
 
     def set_pixel_scale(self, w, h):
         """"Set pixel size, need to be called by the projector widget on resizes"""
-        self.length_px = self.dh * 2
+        self.length_px = self.triangle_height * 2
 
-    def make_calibration_pattern(self, p, h, w, draw=True):
+    def paint_calibration_pattern(self, p, h, w, draw=True):
         """
 
         Parameters
@@ -178,8 +178,8 @@ class CircleCalibrator(Calibrator):
         """
         assert isinstance(p, QPainter)
 
-        d2h = self.dh // 2
-        d2w = int(self.dh * math.sqrt(3) // 2)
+        d2h = self.triangle_height // 2
+        d2w = int(self.triangle_height * math.sqrt(3) // 2)
         ch = h // 2
         cw = w // 2
         # the three points sorted in ascending angle order (30, 60, 90)

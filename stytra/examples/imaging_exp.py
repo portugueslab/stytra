@@ -26,9 +26,9 @@ class ImagingCLProtocol(Protocol):
     def __init__(self):
         super().__init__()
 
-        self.inter_stim_pause = Param(20.)
-        self.grating_vel = Param(10.)
-        self.grating_duration = Param(10.)
+        self.inter_stim_pause = Param(20.0)
+        self.grating_vel = Param(10.0)
+        self.grating_duration = Param(10.0)
         self.grating_cycle = Param(10)
         self.protocol_reps = Param(2)
 

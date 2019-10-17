@@ -4,7 +4,7 @@ from setuptools import find_packages
 
 setup(
     name="stytra",
-    version="0.8.21",
+    version="0.8.24",
     author="Vilim Stih, Luigi Petrucco @portugueslab",
     author_email="vilim@neuro.mpg.de",
     license="GPLv3+",
@@ -16,7 +16,7 @@ setup(
         "pandas",
         "qdarkstyle",
         "qimage2ndarray",
-        "deepdish",
+        "flammkuchen",
         "anytree",
         "pims",
         "GitPython",
