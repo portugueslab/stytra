@@ -29,7 +29,7 @@ install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
   - conda env create -f environment.yml
-  - activate stytra_env
+  - conda activate stytra_env
   - echo ${QT}
   - echo ${TEST}
   - echo ${PYTHON}
@@ -50,7 +50,7 @@ before_script:
   - /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1400x900x24 -ac +extension GLX +render
 
 script:
- - activate stytra_env
+ - conda activate stytra_env
  - pytest
 
 after_success:
