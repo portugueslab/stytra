@@ -1,3 +1,6 @@
+# 0.8.25
+- Fixed erratic bug in stimulus updating
+
 # 0.8.24
 ## Fixes
 - replaced deepdish dependency with flammkuchen (deepdish no longer maintained)
