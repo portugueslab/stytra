@@ -91,6 +91,9 @@ class VisualStimulus(Stimulus):
 
 
 class StimulusCombiner(VisualStimulus, DynamicStimulus):
+
+    #TODO what does StimulusCombiner do?
+
     def __init__(self, stim_list):
         super().__init__()
         self._stim_list = stim_list
@@ -519,6 +522,7 @@ class PaintGratingStimulus(BackgroundStimulus):
 
     def get_unit_dims(self, w, h):
         """
+        #TODO what does this thing define?
         """
         return (
             int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
@@ -544,7 +548,7 @@ class PaintGratingStimulus(BackgroundStimulus):
 
 class HalfFieldStimulus(PositionStimulus):
     """ For phototaxis
-
+#TODO what does this "phototaxis" comment mean?
     """
 
     def __init__(
@@ -669,6 +673,7 @@ class FishOverlayStimulus(PositionStimulus):
 
 
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
+    #TODO for what this class is used?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("x")
@@ -745,6 +750,7 @@ class WindmillStimulus(BackgroundStimulus):
 
 
 class MovingWindmillStimulus(WindmillStimulus, InterpolatedStimulus):
+    #TODO what is this class for?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("theta")
@@ -814,6 +820,7 @@ class HighResWindmillStimulus(BackgroundStimulus):
 
 
 class HighResMovingWindmillStimulus(HighResWindmillStimulus, InterpolatedStimulus):
+    #TODO that does this class do?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("theta")
@@ -877,6 +884,7 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
 
 class FixationCrossStimulus(FullFieldVisualStimulus):
+    #TODO what does this class do?
     def __init__(
         self,
         cross_color=(255, 0, 0),
