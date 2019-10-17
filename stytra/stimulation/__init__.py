@@ -87,7 +87,7 @@ class ProtocolRunner(QObject):
 
         self.protocol = experiment.protocol
         self.stimuli = []
-        self.i_current_stimulus = None  # index of current stimulus
+        self.i_current_stimulus = 0  # index of current stimulus
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
@@ -124,7 +124,6 @@ class ProtocolRunner(QObject):
     def reset(self):
         """Make the protocol ready to start again. Reset all ProtocolRunner
         and stimuli timers and elapsed times.
-
         """
         self.t_end = None
         self.completed = False
@@ -186,7 +185,6 @@ class ProtocolRunner(QObject):
                 self.current_stimulus.stop()
                 self.sig_stim_change.emit(self.i_current_stimulus)
                 self.update_log()
-
                 # Is this stimulus was also the last one end protocol:
                 if self.i_current_stimulus >= len(self.stimuli) - 1:
                     self.completed = True
