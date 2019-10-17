@@ -87,7 +87,7 @@ class ProtocolRunner(QObject):
 
         self.protocol = experiment.protocol
         self.stimuli = []
-        self.i_current_stimulus = None  # index of current stimulus
+        self.i_current_stimulus = 0  # index of current stimulus
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
