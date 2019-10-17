@@ -61,6 +61,7 @@ class SetTECtemperatureStimulus(TECStimulus):
                 :return:
                 """
         # assertion to explicitly enter floats
+        super().start()
         with MeCom("COM3") as mc:
             assert type(self.temperature) is float
             value_set = mc.set_parameter(parameter_id=3000, value=self.temperature, address=self.address,
@@ -86,9 +87,6 @@ class InterpolatedTECTemperatureStimulus(InterpolatedStimulus, SetTECtemperature
         self.device_status = 0
         self.object_temperature = 25.0
         self.k = 0
-
-    def start(self):
-        pass
 
     def update(self):
         super().update()
