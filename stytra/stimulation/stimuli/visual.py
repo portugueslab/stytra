@@ -202,6 +202,7 @@ class DynamicLuminanceStimulus(
         super().__init__(*args, dynamic_parameters=["luminance"], **kwargs)
         self.original_color = np.array(color)
         self.color = color
+        self.name = "luminance"
 
     def update(self):
         super().update()
@@ -293,6 +294,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
         self.y = 0
         self.theta = 0
         self.centre_relative = centre_relative
+        self.name = "Stimulus_position"
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
 
@@ -387,6 +389,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
     def __init__(self, *args, background, background_name=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = "seamless_image"
         self._background = background
         if background_name is not None:
             self.background_name = background_name
@@ -887,6 +890,7 @@ class FixationCrossStimulus(FullFieldVisualStimulus):
         self.arm_len = arm_len
         self.arm_width = arm_width
         self.position = position
+        self.name = "fixation_cross"
 
     def paint(self, p, w, h):
         super().paint(p, w, h)
