@@ -12,7 +12,7 @@ class CombinedProtocol(Protocol):
     name = "combined_protocol"  # every protocol must have a name.
 
     def get_stim_sequence(self):
-        # This is the
+        # This is the  ... same here better documentation
         # Use six points to specify the velocity step to be interpolated:
         t = [0, 1, 1, 6, 6, 7]
         vel = np.array([0, 0, 10, 10, 0, 0])
@@ -29,7 +29,7 @@ class CombinedProtocol(Protocol):
         p = 1
         d = 5
 
-        # Windmill
+        # Windmill  is this a concentric optomotor stim to bring fish to the middle?
         STEPS = 0.005
         t = np.arange(0, d, STEPS)
         theta = np.sin(2 * np.pi * t * 0.2) * np.pi / 2

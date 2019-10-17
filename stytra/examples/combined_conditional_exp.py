@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 class ConditionalCombiner(StimulusCombiner):
+    '''what is this class for?'''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # use clip masks to respectively hide and show the two stimuli
@@ -41,7 +42,7 @@ class CombinedProtocol(Protocol):
     )
 
     def get_stim_sequence(self):
-        # This is the
+        # This is the ...   Needs better documentation
         # Use six points to specify the velocity step to be interpolated:
         t = [0, 7]
         vel = np.array([10, 10])

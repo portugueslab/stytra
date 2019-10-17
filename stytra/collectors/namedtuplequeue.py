@@ -3,6 +3,8 @@ from collections import namedtuple
 
 
 class NamedTupleQueue:
+
+    '''class to do what?'''
     def __init__(self, *args, **kwargs):
         self.q = Queue()
         self.tuple_type = None

@@ -22,7 +22,7 @@ class Calibrator(ParametrizedQt):
         self.enabled = False
 
         self.mm_px = Param(mm_px)
-        self.length_mm = Param(30.0, limits=(1, 800))
+        self.length_mm = Param(30.0, limits=(1, 800)) # TODO: describe what defaults are
         self.length_px = Param(None)
         self.cam_to_proj = Param(None)
         self.proj_to_cam = Param(None)
@@ -56,7 +56,7 @@ class Calibrator(ParametrizedQt):
         self.length_mm = self.length_px * self.mm_px
         self.block_signal = False
 
-    def paint_calibration_pattern(self, p, h, w):
+    def paint_calibration_pattern(self, p, h, w): # TODO: what is this function doing? Can it be removed? Defined below again in CrossCalibrator Class
         """
 
         Parameters
@@ -81,7 +81,7 @@ class CrossCalibrator(Calibrator):
     def __init__(
         self,
         *args,
-        fixed_length=60,
+        fixed_length=60, # TODO: #why 60? what is this value?
         calibration_length="outside",
         transparent=True,
         **kwargs
@@ -122,7 +122,7 @@ class CrossCalibrator(Calibrator):
         -------
 
         """
-        p.setPen(QPen(QColor(255, 0, 0)))
+        p.setPen(QPen(QColor(255, 0, 0))) # TODO: can we explain what this is doing?
         if self.transparent:
             p.setBrush(QBrush(QColor(0, 0, 0, 0)))
         else:
@@ -199,7 +199,7 @@ class CircleCalibrator(Calibrator):
 
         Parameters
         ----------
-        kps :
+        kps :# TODO: can we describe better what this is doing?
             
 
         Returns
@@ -274,6 +274,8 @@ class CircleCalibrator(Calibrator):
 
     def find_transform_matrix(self, image):
         """
+        determines transform matrix based on calibration procedure.
+        matches camera coordinates into projection coordinates ?
 
         Parameters
         ----------

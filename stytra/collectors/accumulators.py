@@ -177,7 +177,7 @@ class DataFrameAccumulator(Accumulator):
         return df
 
     def get_last_t(self, t):
-        """
+        """Return the last timepoint.
 
         Parameters
         ----------
@@ -291,6 +291,8 @@ class QueueDataAccumulator(DataFrameAccumulator):
 
 
 class FramerateAccumulator(Accumulator):
+    '''General class for ??? unclear'''
+
     def __init__(self, *args, goal_framerate=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.goal_framerate = goal_framerate
@@ -392,7 +394,7 @@ class DynamicLog(DataFrameAccumulator):
 
 
 class EstimatorLog(DataFrameAccumulator):
-    """ """
+    '''"""General class for???'''
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -29,6 +29,8 @@ class ClosedLoop1DProt(Protocol):
         self.grating_cycle = Param(10.0)
 
     def get_stim_sequence(self):
+        '''needs better documentation what is actually doing'''
+
         stimuli = []
         # # gratings
         p = self.inter_stim_pause / 2
