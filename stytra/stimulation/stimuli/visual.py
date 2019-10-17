@@ -389,6 +389,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
     def __init__(self, *args, background, background_name=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = "seamless_image"
         self._background = background
         if background_name is not None:
             self.background_name = background_name
