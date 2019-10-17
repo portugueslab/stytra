@@ -20,16 +20,20 @@ from time import sleep
 
 import pytest
 
+PROTOCOL_DURATION = 5  # Duration of each simulated experiment
+N_REFRESH_EVTS = 10  # Number of updated of each simulated experiment
+
 
 class TestProtocol0(Protocol):
     name = "test_protocol_0"
 
     def __init__(self):
         super().__init__()
-        self.duration = Param(0.01)
+        self.duration = Param(PROTOCOL_DURATION / 2)
 
     def get_stim_sequence(self):
-        stimuli = [Pause(duration=self.duration)]
+        stimuli = [Pause(duration=self.duration),
+                   Pause(duration=self.duration)]
         return stimuli
 
 
@@ -38,7 +42,7 @@ class TestProtocol1(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.duration = Param(0.01)
+        self.duration = Param(PROTOCOL_DURATION)
 
     def get_stim_sequence(self):
         stimuli = [FullFieldVisualStimulus(duration=self.duration)]
@@ -52,7 +56,7 @@ class DummyTrigger(Trigger):
 
     def check_trigger(self):
         if self.k:
-            sleep(0.5)
+            sleep(PROTOCOL_DURATION / 5)
             self.k = False
             return True
         else:
@@ -64,7 +68,7 @@ class TestProtocol(Protocol):
     name = "test_protocol"
 
     def get_stim_sequence(self):
-        return [Pause(duration=0.5)]
+        return [Pause(duration=PROTOCOL_DURATION)]
 
 
 @pytest.mark.last
@@ -88,7 +92,8 @@ class TestExperimentClass(unittest.TestCase):
         return next(Path(self.test_dir).glob("*/*/*.json"))
 
     def run_experiment(self, **kwargs):
-        print(kwargs)
+        """ Run a simulation of a real experiment.
+        """
         # Weirdly, getattr(kwargs, "tracking", None) always returns None
         try:
             tracking = kwargs["tracking"]
@@ -96,13 +101,18 @@ class TestExperimentClass(unittest.TestCase):
             tracking = None
 
         if tracking is None:
-            exp = VisualExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
+            exp = VisualExperiment(app=self.app,
+                                   dir_save=self.test_dir, **kwargs)
         else:
-            exp = TrackingExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
+            exp = TrackingExperiment(app=self.app,
+                                     dir_save=self.test_dir, **kwargs)
 
+        # Run the protocol and update N_REFRESH_EVTS times:
         exp.start_experiment()
         exp.start_protocol()
-        sleep(5)
+        for _ in range(N_REFRESH_EVTS):
+            exp.protocol_runner.timestep()
+            sleep(PROTOCOL_DURATION / N_REFRESH_EVTS)
         if tracking is not None:
             exp.acc_tracking.update_list()
         exp.end_protocol(save=True)
@@ -113,17 +123,6 @@ class TestExperimentClass(unittest.TestCase):
         solutions = dict(
             th_e0=np.array(
                 [
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
                     -95.58,
                     -95.58,
                     -95.58,
@@ -146,32 +145,10 @@ class TestExperimentClass(unittest.TestCase):
                     -79.74,
                     -79.74,
                     -79.74,
-                    -79.74,
-                    -79.74,
-                    -79.56,
-                    -79.74,
-                    -79.74,
-                    -79.74,
-                    -77.51,
-                    -77.51,
-                    -77.51,
-                    -77.51,
-                    -77.5,
                 ]
             ),
             theta_00=np.array(
                 [
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
                     -1.52,
                     -1.52,
                     -1.52,
@@ -194,17 +171,6 @@ class TestExperimentClass(unittest.TestCase):
                     -1.52,
                     -1.52,
                     -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
                 ]
             ),
         )
@@ -214,6 +180,7 @@ class TestExperimentClass(unittest.TestCase):
 
     def test_visual_experiment(self):
         self.app = QApplication([])
+        print("asdf")
         for prot in [TestProtocol0(), TestProtocol1()]:
             self.run_experiment(protocol=prot)
             with open(self.metadata_path, "r") as f:
@@ -240,7 +207,7 @@ class TestExperimentClass(unittest.TestCase):
         video_file = str(
             Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
         )
-
+        print("asdfasdf")
         for method in ["eyes", "tail"]:
             self.run_experiment(
                 protocol=TestProtocol(),
