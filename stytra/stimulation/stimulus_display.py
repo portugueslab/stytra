@@ -85,6 +85,9 @@ class StimulusDisplayWindow(ParametrizedWidget):
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
 
 
+class SecondDisplay(QWidget):
+    pass
+
 class StimDisplayWidget:
     """Widget for the actual display area contained inside the
     StimulusDisplayWindow.
