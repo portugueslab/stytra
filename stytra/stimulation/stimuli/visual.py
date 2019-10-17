@@ -889,6 +889,7 @@ class FixationCrossStimulus(FullFieldVisualStimulus):
         self.arm_len = arm_len
         self.arm_width = arm_width
         self.position = position
+        self.name = "fixation_cross"
 
     def paint(self, p, w, h):
         super().paint(p, w, h)
