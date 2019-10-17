@@ -102,7 +102,7 @@ class TestExperimentClass(unittest.TestCase):
 
         exp.start_experiment()
         exp.start_protocol()
-        sleep(0.5)
+        sleep(5)
         if tracking is not None:
             exp.acc_tracking.update_list()
         exp.end_protocol(save=True)
