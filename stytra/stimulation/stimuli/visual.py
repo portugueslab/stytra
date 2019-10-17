@@ -3,7 +3,7 @@ from itertools import product
 import numpy as np
 import pims
 import qimage2ndarray
-import pandas as pd
+from pathlib import Path
 
 from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
@@ -288,11 +288,11 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
         """
 
-    def __init__(self, *args, centre_relative=False, **kwargs):
+    def __init__(self, *args, x=0, y=0, theta=0, centre_relative=False, **kwargs):
         """ """
-        self.x = 0
-        self.y = 0
-        self.theta = 0
+        self.x = x
+        self.y = y
+        self.theta = theta
         self.centre_relative = centre_relative
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
@@ -304,15 +304,8 @@ class BackgroundStimulus(PositionStimulus):
     def get_unit_dims(self, w, h):
         return w, h
 
-    def get_rot_transform(self, w, h):
-        xc = -w / 2
-        yc = -h / 2
-        return (
-            QTransform()
-            .translate(-xc, -yc)
-            .rotate(self.theta * 180 / np.pi)
-            .translate(xc, yc)
-        )
+    def get_transform(self, w, h, x, y):
+        return QTransform().rotate(self.theta * 180 / np.pi).translate(x, y)
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
@@ -331,17 +324,6 @@ class BackgroundStimulus(PositionStimulus):
         dx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw
         dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
-        if self.centre_relative:
-            # find the centres of the display and image
-            display_centre = (w / 2, h / 2)
-            image_centre = (imw / 2, imh / 2)
-
-            dx = display_centre[0] - image_centre[0] + dx
-            dy = display_centre[1] - image_centre[1] - dy
-
-        # rotate the coordinate transform around the position of the fish
-        p.setTransform(self.get_rot_transform(w, h))
-
         # calculate the rotated rectangle which encloses the display rectangle
         new_h = np.abs(np.sin(self.theta)) * w + np.abs(np.cos(self.theta)) * h
         new_w = np.abs(np.cos(self.theta)) * w + np.abs(np.sin(self.theta)) * h
@@ -349,11 +331,13 @@ class BackgroundStimulus(PositionStimulus):
         n_w = int(np.ceil(new_w / (imw * 2)))
         n_h = int(np.ceil(new_h / (imh * 2)))
 
+        # rotate the coordinate transform around the position of the fish
+        p.setTransform(self.get_transform(w, h, dx, dy))
+
         for idx, idy in product(range(-n_w - 1, n_w + 1), range(-n_h - 1, n_h + 1)):
-            self.draw_block(p, QPointF(idx * imw + dx, idy * imh + dy), w, h)
-        # p.setTransform(QTransform)
+            self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
+
         p.resetTransform()
-        # self.clip(p,w,h)
 
     def draw_block(self, p, point, w, h):
         """ Has to be defined in each child of the class, defines what
@@ -394,6 +378,8 @@ class SeamlessImageStimulus(BackgroundStimulus):
         else:
             if isinstance(background, str):
                 self.background_name = background
+            elif isinstance(background, Path):
+                self.background_name = background.name
             else:
                 self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
@@ -407,6 +393,10 @@ class SeamlessImageStimulus(BackgroundStimulus):
                 existing_file_background(
                     self._experiment.asset_dir + "/" + self._background
                 )
+            )
+        elif isinstance(self._background, Path):
+            self._qbackground = qimage2ndarray.array2qimage(
+                existing_file_background(self._background)
             )
         else:
             self._qbackground = qimage2ndarray.array2qimage(self._background)

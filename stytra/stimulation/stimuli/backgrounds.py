@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw
 import flammkuchen as fl
 import cv2
 import logging
-
+from pathlib import Path
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     """
@@ -48,12 +48,13 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 def existing_file_background(filepath):
     """ Returns a numpy array from an image stored at filepath
     """
-    if filepath.endswith(".h5"):
+    filepath = Path(filepath)
+    if filepath.suffix == ".h5":
         return fl.load(filepath)
     else:
         # If using OpenCV, we have to get RGB, not BGR
         try:
-            return cv2.imread(filepath)[:, :, [2, 1, 0]]
+            return cv2.imread(str(filepath))[:, :, [2, 1, 0]]
         except TypeError:
             log = logging.getLogger()
             log.info("Could nor load " + filepath)

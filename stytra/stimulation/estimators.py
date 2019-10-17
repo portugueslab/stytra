@@ -171,4 +171,29 @@ class PositionEstimator(Estimator):
         return c_values
 
 
+class SimulatedPositionEstimator(Estimator):
+    def __init__(self, *args, motion, **kwargs):
+        """ Uses the projector-to-camera calibration to give fish position in
+        scree coordinates. If change_thresholds are set, update only the fish
+        position after there is a big enough change (which prevents small
+        oscillations due to tracking)
+
+        :param args:
+        :param calibrator:
+        :param change_thresholds: a 3-tuple of thresholds, in px and radians
+        :param kwargs:
+        """
+        super().__init__(*args, **kwargs)
+        self.motion = motion
+        self._output_type = namedtuple("f", ["x", "y", "theta"])
+
+    def get_position(self):
+        t = (datetime.datetime.now() - self.exp.t0).total_seconds()
+
+        kt = tuple(
+            np.interp(t, self.motion.t, self.motion[p]) for p in ("y", "x", "theta")
+        )
+        return kt
+
+
 estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator)

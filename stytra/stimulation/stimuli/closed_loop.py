@@ -1,4 +1,5 @@
 import numpy as np
+from PyQt5.QtGui import QTransform
 
 try:
     from random import choices
@@ -312,3 +313,11 @@ class FishTrackingStimulus(PositionStimulus):
                 self.y = y
                 self.theta = theta
         super().update()
+
+
+class FishRelativeStimulus(BackgroundStimulus):
+    def get_transform(self, w, h, x, y):
+        y_fish, x_fish, theta_fish = self._experiment.estimator.get_position()
+        return super().get_transform(w, h, x, y) * QTransform().translate(
+            x_fish, y_fish
+        ).rotate(theta_fish)
