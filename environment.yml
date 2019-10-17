@@ -13,7 +13,7 @@ dependencies:
   - ffmpeg
   - scikit-image
   - matplotlib
-  - qt
+  - pyqt
   - opencv
   - av
   - pip:
