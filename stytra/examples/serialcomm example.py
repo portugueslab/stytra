@@ -3,6 +3,7 @@ from stytra.stimulation.stimuli.generic_stimuli import Stimulus
 from stytra.stimulation.stimuli.visual import Pause
 from stytra.hardware.serial import SerialConnection
 
+#TODO Documentation on how to setup Arduino (also add type of Arduino tested) with Sytra
 
 class ArduinoCommStimulus(Stimulus):
     def __init__(self, com_port="COM3", baudrate=115200, **kwargs):

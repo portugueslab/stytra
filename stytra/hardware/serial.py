@@ -1,6 +1,6 @@
 import serial as com
 
-
+#TODO explain. At the moment obscure class
 class SerialConnection:
     """ """
 

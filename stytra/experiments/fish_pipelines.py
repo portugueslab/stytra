@@ -11,6 +11,7 @@ from stytra.gui.camera_display import (
     EyeTailTrackingSelection,
 )
 
+#TODO pipelines need documentation for general user. Also make explicit if free-swimming or restrained experiment maybe in names
 
 class TailTrackingPipeline(Pipeline):
     def __init__(self):

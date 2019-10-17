@@ -1,6 +1,6 @@
 from stytra import Stytra
 from stytra.stimulation.stimuli import Pause
-from pathlib import Path
+
 from stytra.stimulation import Protocol
 
 

@@ -25,7 +25,7 @@ import pyqtgraph as pg
 # defined in a branching way, appending nodes for image transformations (
 # ImageToImage nodes) followed by nodes for extracting numbers, such as
 # animal position or posture (ImageToDataNode). For this particular example,
-# we will use the powerful adaptive background subraction that we just import
+# we will use the powerful adaptive background subtraction that we just import
 #  from stytra in line 2, followed by the following new custo method.
 
 # To track the drosophila, we will fit an ellipse to its body, and we will

@@ -6,7 +6,7 @@ from stytra.utilities import reduce_to_pi
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
 
-
+#TODO declare that this is only for embedded fish. Maybe think about adding that info to tracking names?
 class TailTrackingMethod(ImageToDataNode):
     """General tail tracking method."""
 

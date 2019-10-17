@@ -1,6 +1,6 @@
 from stytra import Stytra
 
-
+'''What is this for?'''
 if __name__ == "__main__":
     from stytra.examples.gratings_exp import GratingsProtocol
 

@@ -22,7 +22,7 @@ class EyeTrackingMethod(ImageToDataNode):
         for i in range(2):
             headers.extend(
                 [
-                    "pos_x_e{}".format(i),
+                    "pos_x_e{}".format(i), #TODO again what are the variables...expose to user
                     "pos_y_e{}".format(i),
                     "dim_x_e{}".format(i),
                     "dim_y_e{}".format(i),

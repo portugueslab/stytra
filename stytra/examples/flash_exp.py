@@ -19,7 +19,7 @@ class FlashProtocol(Protocol):
         stimuli = [
             Pause(duration=self.period_sec - self.flash_duration),
             FullFieldVisualStimulus(
-                duration=self.flash_duration, color=(255, 255, 255)
+                duration=self.flash_duration, color=(255, 255, 255) #White flash. For black flash change to color=(0, 0, 0) when using FullFieldVisualStimulus
             ),
         ]
         return stimuli

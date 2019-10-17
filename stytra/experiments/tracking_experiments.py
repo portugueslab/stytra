@@ -1,7 +1,7 @@
 import traceback
 
 from multiprocessing import Queue, Event, Value, set_start_method
-from queue import Empty
+
 
 from stytra.experiments import VisualExperiment
 from stytra.gui.container_windows import (

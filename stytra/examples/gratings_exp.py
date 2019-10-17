@@ -5,7 +5,7 @@ from stytra import Stytra
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import MovingGratingStimulus
 from lightparam import Param
-from pathlib import Path
+
 
 
 class GratingsProtocol(Protocol):

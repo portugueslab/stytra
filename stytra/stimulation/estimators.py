@@ -22,7 +22,7 @@ class Estimator:
         self.log.reset()
 
 
-class VigorMotionEstimator(Estimator):
+class VigorMotionEstimator(Estimator): #TODO again explicity state if class is only used for restrained or could also be free-swimming
     """
     A very common way of estimating velocity of an embedded animal is
     vigor, computed as the standard deviation of the tail cumulative angle in a
@@ -77,7 +77,7 @@ def rot_mat(theta):
 class PositionEstimator(Estimator):
     def __init__(self, *args, change_thresholds=None, velocity_window=10, **kwargs):
         """ Uses the projector-to-camera calibration to give fish position in
-        scree coordinates. If change_thresholds are set, update only the fish
+        screen coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
         oscillations due to tracking)
 
@@ -96,7 +96,7 @@ class PositionEstimator(Estimator):
         if change_thresholds is not None:
             self.change_thresholds = np.array(change_thresholds)
 
-        self._output_type = namedtuple("f", ["x", "y", "theta"])
+        self._output_type = namedtuple("f", ["x", "y", "theta"]) #TODO define what f, x, y, theta, f0_x and so on are exactly. Maybe in additional file
 
     def get_camera_position(self):
         past_coords = {

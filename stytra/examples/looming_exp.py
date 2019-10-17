@@ -72,8 +72,8 @@ class LoomingProtocol(Protocol):
             # (specified in fractions from 0 to 1 for each dimension)
             stimuli.append(
                 LoomingStimulus(
-                    background_color=(255, 255, 255),
-                    circle_color=(0, 0, 0),
+                    background_color=(255, 255, 255), #TODO once more is unclear how one should change color of stim and background.
+                    circle_color=(0, 0, 0),                 #shall one draw a full stimulus on top of main window and then looming on top?
                     df_param=radius_df,
                     origin=(self.x_pos_pix, self.y_pos_pix),
                 )
