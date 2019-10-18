@@ -2,9 +2,10 @@ from datetime import datetime
 
 import numpy as np
 import qimage2ndarray
-from PyQt5.QtCore import QPoint, QRect
+import pyqtgraph as pg
+from PyQt5.QtCore import QPoint, QRect, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor
-from PyQt5.QtWidgets import QOpenGLWidget, QWidget
+from PyQt5.QtWidgets import QOpenGLWidget, QWidget, QDockWidget, QPushButton, QVBoxLayout
 
 from lightparam.param_qt import ParametrizedWidget, Param
 
@@ -85,8 +86,67 @@ class StimulusDisplayWindow(ParametrizedWidget):
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
 
 
-class SecondDisplay(QWidget):
-    pass
+class SecondDisplay(QDockWidget):
+
+    def __init__(self, protocol_runner, calibrator, record_stim_framerate=60, **kwargs):
+        super().__init__()
+
+        StimDisplay = type("StimDisplay", (StimDisplayWidget, QWidget), {})
+        self.widget_display = StimDisplay(
+            self,
+            calibrator=calibrator,
+            protocol_runner=protocol_runner,
+            record_stim_framerate=record_stim_framerate,
+        )
+
+        self.setStyleSheet("background-color:black;")
+        self.widget_display.setFixedSize(300, 300)
+
+
+class ThirdDisplay(QWidget):
+    """ """
+
+    def __init__(self, experiment, record_stim_framerate, **kwargs):
+
+        super().__init__(**kwargs)
+        self.experiment = experiment
+        self.container_layout = QVBoxLayout()
+        self.container_layout.setContentsMargins(0, 0, 0, 0)
+
+        StimDisplay = type("StimDisplay", (StimDisplayWidgetConditional, QWidget), {})
+        self.widget_display = StimDisplay(
+            self,
+            calibrator=self.experiment.calibrator,
+            protocol_runner=self.experiment.protocol_runner,
+            record_stim_framerate=record_stim_framerate,
+        )
+        self.widget_display.setFixedSize(300, 300)
+
+        self.layout_calibrate = QVBoxLayout()
+        self.layout_calibrate.addWidget(self.widget_display)
+        self.button_show_display = QPushButton("Pause display")
+        self.widget_display.display_state = True
+        self.button_show_display.clicked.connect(self.paint_stimulus)
+        self.layout_calibrate.addWidget(self.button_show_display)
+
+        self.layout_calibrate.setContentsMargins(12, 0, 12, 12)
+        self.container_layout.addLayout(self.layout_calibrate)
+        self.setLayout(self.container_layout)
+        self.container_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+    def paint_stimulus(self):
+        """ """
+        if self.widget_display.display_state:
+            self.button_show_display.setText("Show display")
+            self.widget_display.display_state = False
+        else:
+            self.button_show_display.setText("Pause display")
+            self.widget_display.display_state = True
+
+    def update_size(self, size):
+        self.calibrator.set_pixel_scale(size[0], size[1])
+        self.calibrator_len_spin.update_display()
+
 
 class StimDisplayWidget:
     """Widget for the actual display area contained inside the
@@ -228,3 +288,39 @@ class StimDisplayWidget:
         self.movie = []
         self.movie_timestamps = []
         self.starting_time = None
+
+
+class StimDisplayWidgetConditional(StimDisplayWidget):
+
+    def __init__(self, *args, protocol_runner, calibrator, record_stim_framerate):
+        super().__init__(*args,  protocol_runner=protocol_runner, calibrator=calibrator, record_stim_framerate=record_stim_framerate)
+        self.button_show_state = True
+
+    def display_stimulus(self):
+
+        if self.display_state:
+            self.update()
+        current_time = datetime.now()
+
+        # Grab frame if recording is enabled.
+        if self.starting_time is None:
+            self.starting_time = current_time
+
+        if self.record_framerate:
+            now = datetime.now()
+            # Only one every self.record_stim_every frames will be captured.
+            if (
+                    self.last_time is None
+                    or (now - self.last_time).total_seconds() >= 1 / self.record_framerate
+            ):
+                #
+                # QImage from QPixmap taken with QWidget.grab():
+                img = self.grab().toImage()
+                arr = qimage2ndarray.rgb_view(img)  # Convert to np array
+                self.movie.append(arr.copy())
+                self.movie_timestamps.append(
+                    (current_time - self.starting_time).total_seconds()
+                )
+
+                self.last_time = current_time
+
