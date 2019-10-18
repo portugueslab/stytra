@@ -202,9 +202,8 @@ class VisualExperimentWindow(ExperimentWindow):
 
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(self.experiment)
-            # self.stimulus_display = SecondDisplay(self.experiment.protocol_runner, self.experiment.calibrator,
-            #                                      record_stim_framerate=60)
-            self.stimulus_display = ThirdDisplay(self.experiment, record_stim_framerate=60)
+            # self.stimulus_display = SecondDisplay(self.experiment.protocol_runner, self.experiment.calibrator)
+            self.stimulus_display = ThirdDisplay(self.experiment)
 
     def construct_ui(self):
         """ """
