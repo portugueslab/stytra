@@ -1,0 +1,61 @@
+Details to all Subclasses in visual.py
+
+StimulusCombiner
+Parent Classes: VisualStimulus, DynamicStimulus
+
+FullFieldVisualStimulus
+Parent Classes: VisualStimulus
+
+DynamicLuminanceStimulus
+Parent Classes: FullFieldVisualStimulus, InterpolatedStimulus, DynamicStimulus
+
+Pause
+Parent Classes: FullFieldVisualStimulus
+
+VideoStimulus
+Parent Classes: VisualStimulus, DynamicStimulus
+
+PositionStimulus
+Parent Classes: VisualStimulus, DynamicStimulus
+
+BackgroundStimulus
+Parent Classes: PositionStimulus
+
+SeamlessImageStimulus
+Parent Classes: BackgroundStimulus
+
+GratingStimulus
+Parent Classes: BackgroundStimulus
+
+PaintGratingStimulus
+Parent Classes: BackgroundStimulus
+
+HalfFieldStimulus
+Parent Classes: PositionStimulus
+
+RadialSineStimulus
+Parent Classes: VisualStimulus
+
+FishOverlayStimulus
+Parent Classes: PositionStimulus
+
+MovingGratingStimulus
+Parent Classes: PaintGratingStimulus, InterpolatedStimulus
+
+WindmillStimulus
+Parent Classes: BackgroundStimulus
+
+MovingWindmillStimulus
+Parent Classes: WindmillStimulus, InterpolatedStimulus
+
+HighResWindmillStimulus
+Parent Classes: BackgroundStimulus
+
+HighResMovingWindmillStimulus
+Parent Classes: HighResWindmillStimulus, InterpolatedStimulus
+
+CircleStimulus
+Parent Classes: VisualStimulus, DynamicStimulus
+
+FixationCrossStimulus
+Parent Classes: FullFieldVisualStimulus

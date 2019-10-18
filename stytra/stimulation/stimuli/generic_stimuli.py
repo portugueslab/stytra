@@ -235,7 +235,7 @@ class InterpolatedStimulus(DynamicStimulus):
                     np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                 )
 
-
+ 
 class TriggerStimulus(DynamicStimulus):
     """ A class that uses the Experiment trigger to trigger a sequence
     of stimuli.

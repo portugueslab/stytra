@@ -3,7 +3,6 @@ from itertools import product
 import numpy as np
 import pims
 import qimage2ndarray
-import pandas as pd
 
 from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
@@ -92,6 +91,9 @@ class VisualStimulus(Stimulus):
 
 
 class StimulusCombiner(VisualStimulus, DynamicStimulus):
+
+    #TODO what does StimulusCombiner do?
+
     def __init__(self, stim_list):
         super().__init__()
         self._stim_list = stim_list
@@ -203,6 +205,7 @@ class DynamicLuminanceStimulus(
         super().__init__(*args, dynamic_parameters=["luminance"], **kwargs)
         self.original_color = np.array(color)
         self.color = color
+        self.name = "luminance"
 
     def update(self):
         super().update()
@@ -294,6 +297,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
         self.y = 0
         self.theta = 0
         self.centre_relative = centre_relative
+        self.name = "Stimulus_position"
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
 
@@ -388,6 +392,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
     def __init__(self, *args, background, background_name=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.name = "seamless_image"
         self._background = background
         if background_name is not None:
             self.background_name = background_name
@@ -517,6 +522,7 @@ class PaintGratingStimulus(BackgroundStimulus):
 
     def get_unit_dims(self, w, h):
         """
+        #TODO what does this thing define?
         """
         return (
             int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
@@ -542,7 +548,7 @@ class PaintGratingStimulus(BackgroundStimulus):
 
 class HalfFieldStimulus(PositionStimulus):
     """ For phototaxis
-
+#TODO what does this "phototaxis" comment mean?
     """
 
     def __init__(
@@ -667,6 +673,7 @@ class FishOverlayStimulus(PositionStimulus):
 
 
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
+    #TODO for what this class is used?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("x")
@@ -743,6 +750,7 @@ class WindmillStimulus(BackgroundStimulus):
 
 
 class MovingWindmillStimulus(WindmillStimulus, InterpolatedStimulus):
+    #TODO what is this class for?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("theta")
@@ -812,6 +820,7 @@ class HighResWindmillStimulus(BackgroundStimulus):
 
 
 class HighResMovingWindmillStimulus(HighResWindmillStimulus, InterpolatedStimulus):
+    #TODO that does this class do?
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("theta")
@@ -875,6 +884,7 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
 
 class FixationCrossStimulus(FullFieldVisualStimulus):
+    #TODO what does this class do?
     def __init__(
         self,
         cross_color=(255, 0, 0),
@@ -888,6 +898,7 @@ class FixationCrossStimulus(FullFieldVisualStimulus):
         self.arm_len = arm_len
         self.arm_width = arm_width
         self.position = position
+        self.name = "fixation_cross"
 
     def paint(self, p, w, h):
         super().paint(p, w, h)
