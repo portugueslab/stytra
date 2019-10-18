@@ -7,7 +7,7 @@ import qimage2ndarray
 from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
 
-from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus
+from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus, CombinerStimulus
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
@@ -21,6 +21,24 @@ class VisualStimulus(Stimulus):
 
     Parameters
     ----------
+    clip_mask :
+        mask for clipping the stimulus. Unfortunately we cannot pass a QPolygon here,
+        se to allow for some flexibility there are some euristics to figure out the
+        clipping shape depending on the argument tipe and dimensions.
+        There's tree possible cases for the mask:
+            - **Circular mask**: If `clip_mask` is a single number, or a tuple of three numbers, the
+              mask will be a circle.
+              - A single number specifies the diameter of the circle,
+                in relative screen size units;
+              - A tuple of three numbers specifies center x, y and diameter of the circle,
+                in  relative screen size units.
+
+            - **Polygon mask**: If `clip_mask` is a list of tuples with 2 elements each, the mask will
+              be a polygon that uses the tuples of the list as (x, y) coordinates
+              (there should be at least three elements there)
+
+            - **Rectangular mask**: If `clip_mask` is a tuple of four numbers, the mask will be a rectangle
+              that interprets the coordinates as (x_pos, y_pos, width, height).
 
     Returns
     -------
@@ -29,18 +47,18 @@ class VisualStimulus(Stimulus):
 
     def __init__(self, *args, clip_mask=None, **kwargs):
         """
-        :param clip_mask: mask for clipping the stimulus ((x, y, w, h) tuple);
         """
         super().__init__(*args, **kwargs)
         self.clip_mask = clip_mask
 
     def paint(self, p, w, h):
-        """Paint function. Called by the StimulusDisplayWindow update method.
+        """Paint function. Called by the StimulusDisplayWindow update method
+        (NOT by the `ProtocolRunner.update()` !).
 
         Parameters
         ----------
-        p :
-            QPainter object for drawing
+        p : QPainter object
+            Painter object for drawing
         w :
             width of the display window
         h :
@@ -69,7 +87,7 @@ class VisualStimulus(Stimulus):
 
         """
         if self.clip_mask is not None:
-            if isinstance(self.clip_mask, float):  # circle
+            if isinstance(self.clip_mask, float):  # centered circle
                 a = QRegion(
                     w / 2 - self.clip_mask * w,
                     h / 2 - self.clip_mask * h,
@@ -78,7 +96,7 @@ class VisualStimulus(Stimulus):
                     type=QRegion.Ellipse,
                 )
                 p.setClipRegion(a)
-            elif isinstance(self.clip_mask[0], tuple):
+            elif isinstance(self.clip_mask[0], tuple):  # polygon
                 points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_mask]
                 p.setClipRegion(QRegion(QPolygon(points)))
             else:
@@ -90,76 +108,16 @@ class VisualStimulus(Stimulus):
                 )
 
 
-class StimulusCombiner(VisualStimulus, DynamicStimulus):
-
-    #TODO what does StimulusCombiner do?
-
-    def __init__(self, stim_list):
-        super().__init__()
-        self._stim_list = stim_list
-
-        self.duration = max([s.duration for s in stim_list])
-
-        self.dynamic_parameters = self.dynamic_parameter_names
-
-    def start(self):
-        for s in self._stim_list:
-            s.start()
-
-        super().start()
-
-    def stop(self):
-        for s in self._stim_list:
-            s.stop()
+class VisualCombinerStimulus(VisualStimulus, CombinerStimulus):
+    """
+    Class to have two visual stimuli happening pseudo-simultaneously (one update
+    still has to be called before the other one).
+    """
 
     def paint(self, p, w, h):
         for s in self._stim_list:
             s.paint(p, w, h)
             # p.end()
-
-    def update(self):
-        for s in self._stim_list:
-            s.update()
-            s._elapsed = self._elapsed
-
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
-        for s in self._stim_list:
-            s.initialise_external(experiment)
-
-    @property
-    def dynamic_parameter_names(self):
-        names = []
-        for i, s in enumerate(self._stim_list):
-            if isinstance(s, DynamicStimulus):
-                for n in s.dynamic_parameter_names:
-                    names.append("s{}_{}".format(i, n))
-
-        return names
-
-    def get_dynamic_state(self):
-        state = dict()
-        for i, s in enumerate(self._stim_list):
-            if isinstance(s, DynamicStimulus):
-                d = s.get_dynamic_state()
-                state.update({"s{}_{}".format(i, k): d[k] for k in d.keys()})
-
-        return state
-
-    def get_state(self):
-        """
-        """
-        state_dict = dict()
-        for key, value in self.__dict__.items():
-            if not callable(value) and key[0] != "_":
-                state_dict[key] = value
-
-        for i, s in enumerate(self._stim_list):
-            for key, value in s.__dict__.items():
-                if not callable(value) and key[0] != "_":
-                    state_dict["s{}_{}".format(i, key)] = value
-
-        return state_dict
 
 
 class FullFieldVisualStimulus(VisualStimulus):
@@ -185,7 +143,7 @@ class FullFieldVisualStimulus(VisualStimulus):
 
 
 class DynamicLuminanceStimulus(
-    FullFieldVisualStimulus, InterpolatedStimulus, DynamicStimulus
+    FullFieldVisualStimulus, InterpolatedStimulus
 ):
     """ A luminance stimulus that has dynamically specified luminance.
 
@@ -425,9 +383,9 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
 
 class GratingStimulus(BackgroundStimulus):
-    """ Displays a grating pattern with physical dimensions alternating two
-    colors. Can be square or sinusoidal.
-    For having moving grating stimulus, use subclass MovingGratingStimulus
+    """ Class for creating a grating pattern by tiling a numpy array that
+    defines the stimulus profile. Can be square or sinusoidal.
+    For having moving grating stimulus, use subclass MovingGratingStimulus.
 
     Parameters
     ----------
@@ -438,7 +396,7 @@ class GratingStimulus(BackgroundStimulus):
     grating_col_1 : (int, int, int) tuple
         first color (default=(255, 255, 255))
     grating_col_2 : (int, int, int) tuple
-        first color (default=(0, 0, 0))
+        second color (default=(0, 0, 0))
     """
 
     def __init__(
@@ -496,7 +454,11 @@ class GratingStimulus(BackgroundStimulus):
 
 
 class PaintGratingStimulus(BackgroundStimulus):
-    """ Class for moving a grating pattern.
+    """ Class for creating a grating pattern drawing rectangles with PyQt.
+    Note that this class does not moves
+    the grating pattern, to move you need to subclass this together with a dynamic
+    stimulus where the x of the gratings is changing (see `MovingGratingStimulus`).
+
     """
 
     def __init__(
@@ -545,10 +507,21 @@ class PaintGratingStimulus(BackgroundStimulus):
             self.barheight,
         )
 
+class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
+    # TODO refactor to cisambiguate
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append("x")
+
+class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dynamic_parameters.append("x")
+
 
 class HalfFieldStimulus(PositionStimulus):
-    """ For phototaxis
-#TODO what does this "phototaxis" comment mean?
+    """ Phototaxis stimulus which fill half visual field
+    with a white background.
     """
 
     def __init__(
@@ -610,7 +583,8 @@ class HalfFieldStimulus(PositionStimulus):
 
 
 class RadialSineStimulus(VisualStimulus):
-    """ Stimulus which makes the fish move to the center of the dish
+    """ Circular grating pattern that moves concentrically
+    which makes the fish move to the center of the dish.
 
     """
 
@@ -647,7 +621,8 @@ class RadialSineStimulus(VisualStimulus):
 
 
 class FishOverlayStimulus(PositionStimulus):
-    """ For testing freely-swimming closed loop
+    """ For testing freely-swimming closed loop, draws a fish in the corresponding
+    region on the projector.
 
     """
 
@@ -672,13 +647,6 @@ class FishOverlayStimulus(PositionStimulus):
         )
 
 
-class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
-    #TODO for what this class is used?
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dynamic_parameters.append("x")
-
-
 def z_func_windmill(x, y, arms):
     """ Function for sinusoidal windmill of arbitrary number of arms
     symmetrical with respect to perpendicular axes (for even n)
@@ -692,7 +660,8 @@ def z_func_windmill(x, y, arms):
 
 
 class WindmillStimulus(BackgroundStimulus):
-    """Class for drawing a rotating windmill (radial wedges in alternating colors).
+    """ Class for drawing a rotating windmill (radial wedges in alternating colors).
+    For moving gratings use subclass
 
     Parameters
     ----------

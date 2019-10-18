@@ -1,6 +1,6 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import (
-    StimulusCombiner,
+    VisualCombinerStimulus,
     MovingGratingStimulus,
     HighResMovingWindmillStimulus,
 )
@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 
 
-class ConditionalCombiner(StimulusCombiner):
+class ConditionalCombiner(VisualCombinerStimulus):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # use clip masks to respectively hide and show the two stimuli
