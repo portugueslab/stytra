@@ -300,6 +300,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
     def theta_total(self):
         return self.theta
 
+
 class BackgroundStimulus(PositionStimulus):
     """Stimulus with a tiling background
         """
@@ -328,8 +329,12 @@ class BackgroundStimulus(PositionStimulus):
         dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
         # calculate the rotated rectangle which encloses the display rectangle
-        new_h = np.abs(np.sin(self.theta_total)) * w + np.abs(np.cos(self.theta_total)) * h
-        new_w = np.abs(np.cos(self.theta_total)) * w + np.abs(np.sin(self.theta_total)) * h
+        new_h = (
+            np.abs(np.sin(self.theta_total)) * w + np.abs(np.cos(self.theta_total)) * h
+        )
+        new_w = (
+            np.abs(np.cos(self.theta_total)) * w + np.abs(np.sin(self.theta_total)) * h
+        )
 
         n_w = int(np.ceil(new_w / (imw * 2)))
         n_h = int(np.ceil(new_h / (imh * 2)))

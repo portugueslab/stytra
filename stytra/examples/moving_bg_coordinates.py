@@ -1,6 +1,5 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import (
-    Pause,
     SeamlessImageStimulus,
     InterpolatedStimulus,
 )
@@ -20,7 +19,9 @@ class BackgroundProtocol(Protocol):
             embedded=False,
             estimator=SimulatedPositionEstimator,
             estimator_params=dict(
-                motion=pd.DataFrame(dict(t=[0, 10], x=[0, 0], y=[0, 0], theta=[90, 90]))
+                motion=pd.DataFrame(
+                    dict(t=[0, 10], x=[100, 100], y=[10, 10], theta=[90, 90])
+                )
             ),
         ),
         camera=dict(
