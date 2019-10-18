@@ -87,7 +87,7 @@ class PauseOutsideStimulus(DynamicStimulus):
 
 
 class ConditionalWrapper(DynamicStimulus):
-    """ A wrapper for stimuli which switches between two stimuli dependending on
+    """ A wrapper for stimuli which switches between two stimuli depending on
     conditions: an on condition defined in the check_condition_on method
     and an off condition defined check_condition_on
 

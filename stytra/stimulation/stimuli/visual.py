@@ -296,6 +296,9 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
         self.centre_relative = centre_relative
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
 
+    @property
+    def theta_total(self):
+        return self.theta
 
 class BackgroundStimulus(PositionStimulus):
     """Stimulus with a tiling background
@@ -325,8 +328,8 @@ class BackgroundStimulus(PositionStimulus):
         dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
         # calculate the rotated rectangle which encloses the display rectangle
-        new_h = np.abs(np.sin(self.theta)) * w + np.abs(np.cos(self.theta)) * h
-        new_w = np.abs(np.cos(self.theta)) * w + np.abs(np.sin(self.theta)) * h
+        new_h = np.abs(np.sin(self.theta_total)) * w + np.abs(np.cos(self.theta_total)) * h
+        new_w = np.abs(np.cos(self.theta_total)) * w + np.abs(np.sin(self.theta_total)) * h
 
         n_w = int(np.ceil(new_w / (imw * 2)))
         n_h = int(np.ceil(new_h / (imh * 2)))
@@ -334,7 +337,7 @@ class BackgroundStimulus(PositionStimulus):
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.get_transform(w, h, dx, dy))
 
-        for idx, idy in product(range(-n_w - 1, n_w + 1), range(-n_h - 1, n_h + 1)):
+        for idx, idy in product(range(-n_w - 1, n_w + 2), range(-n_h - 1, n_h + 2)):
             self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
 
         p.resetTransform()
