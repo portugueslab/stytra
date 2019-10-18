@@ -61,7 +61,6 @@ class DataCollector(ParameterTree):
         instance_number=-1,
         folder_path="C:/"
     ):
-        """ """
         super().__init__()
         if instance_number < 0:
             self.metadata_fn = "stytra_last_config.json"

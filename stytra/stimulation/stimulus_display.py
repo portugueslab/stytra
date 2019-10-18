@@ -54,6 +54,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
             name="stimulus/display_params", tree=protocol_runner.experiment.dc, **kwargs
         )
         self.setWindowTitle("Stytra stimulus display")
+        
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
