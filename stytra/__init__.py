@@ -181,5 +181,6 @@ class Stytra:
         self.exp = base(**class_kwargs)
 
         self.exp.start_experiment()
+
         if exec:
             app.exec_()

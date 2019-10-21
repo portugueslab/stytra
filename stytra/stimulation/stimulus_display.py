@@ -2,9 +2,9 @@ from datetime import datetime
 
 import numpy as np
 import qimage2ndarray
-from PyQt5.QtCore import QPoint, QRect
-from PyQt5.QtGui import QPainter, QBrush, QColor
-from PyQt5.QtWidgets import QOpenGLWidget, QWidget
+from PyQt5.QtCore import QPoint, QRect, Qt, QSize
+from PyQt5.QtGui import QPainter, QBrush, QColor, QTransform
+from PyQt5.QtWidgets import QOpenGLWidget, QWidget, QDockWidget, QPushButton, QVBoxLayout, QSizePolicy
 
 from lightparam.param_qt import ParametrizedWidget, Param
 
@@ -86,6 +86,54 @@ class StimulusDisplayWindow(ParametrizedWidget):
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
 
 
+class StimulusDisplayOnMainWindow(QWidget):
+    """ Widget for stimulus display on the main GUI window."""
+
+    def __init__(self, experiment, **kwargs):
+
+        super().__init__(**kwargs)
+        self.experiment = experiment
+        self.container_layout = QVBoxLayout()
+        self.container_layout.setContentsMargins(0, 0, 0, 0)
+
+        StimDisplay = type("StimDisplay", (StimDisplayWidgetConditional, QWidget), {})
+        self.widget_display = StimDisplay(
+            self,
+            calibrator=self.experiment.calibrator,
+            protocol_runner=self.experiment.protocol_runner,
+            record_stim_framerate=None,
+        )
+
+        self.layout_inner = QVBoxLayout()
+        self.layout_inner.addWidget(self.widget_display)
+        self.button_show_display = QPushButton("Show stimulus (showing stimulus may impair performance)")
+        self.widget_display.display_state = False
+        self.button_show_display.clicked.connect(self.change_button)
+        self.layout_inner.addWidget(self.button_show_display)
+
+        self.layout_inner.setContentsMargins(12, 0, 12, 12)
+        self.container_layout.addLayout(self.layout_inner)
+        self.setLayout(self.container_layout)
+        self.container_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+
+        self.widget_display.sizeHint = lambda : QSize(100, 100)
+        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.widget_display.setSizePolicy(sizePolicy)
+
+        self.widget_display.setMaximumSize(500, 500)
+
+    def change_button(self):
+        """ """
+        if self.widget_display.display_state:
+            self.button_show_display.setText("Show stimulus (may impair performance!)")
+            self.button_show_display.setStyleSheet('background-color: None')
+            self.widget_display.display_state = False
+        else:
+            self.button_show_display.setText("Pause (pause not to impair performance!)")
+            self.button_show_display.setStyleSheet("background-color: rgb(170, 30, 0)")
+            self.widget_display.display_state = True
+
+
 class StimDisplayWidget:
     """Widget for the actual display area contained inside the
     StimulusDisplayWindow.
@@ -107,7 +155,7 @@ class StimDisplayWidget:
 
         self.calibrator = calibrator
         self.protocol_runner = protocol_runner
-        self.record_framerate = record_stim_framerate
+        self.record_stim_framerate = record_stim_framerate
 
         self.img = None
         self.calibrating = False
@@ -178,12 +226,12 @@ class StimDisplayWidget:
         if self.starting_time is None:
             self.starting_time = current_time
 
-        if self.record_framerate:
+        if self.record_stim_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
             if (
                 self.last_time is None
-                or (now - self.last_time).total_seconds() >= 1 / self.record_framerate
+                or (now - self.last_time).total_seconds() >= 1 / self.record_stim_framerate
             ):
                 #
                 # QImage from QPixmap taken with QWidget.grab():
@@ -207,7 +255,7 @@ class StimDisplayWidget:
         -------
 
         """
-        if self.record_framerate is not None:
+        if self.record_stim_framerate is not None:
             movie_arr = self.movie
 
             movie_timestamps = np.array(self.movie_timestamps)
@@ -226,3 +274,67 @@ class StimDisplayWidget:
         self.movie = []
         self.movie_timestamps = []
         self.starting_time = None
+
+
+class StimDisplayWidgetConditional(StimDisplayWidget):
+
+    def __init__(self, *args, protocol_runner, calibrator, record_stim_framerate):
+        super().__init__(*args,  protocol_runner=protocol_runner, calibrator=calibrator, record_stim_framerate=record_stim_framerate)
+        self.button_show_state = True
+
+    def display_stimulus(self):
+
+        if self.display_state:
+            self.update()
+        current_time = datetime.now()
+
+        # Grab frame if recording is enabled.
+        if self.starting_time is None:
+            self.starting_time = current_time
+
+        if self.record_stim_framerate:
+            now = datetime.now()
+            # Only one every self.record_stim_every frames will be captured.
+            if (
+                    self.last_time is None
+                    or (now - self.last_time).total_seconds() >= 1 / self.record_stim_framerate
+            ):
+                #
+                # QImage from QPixmap taken with QWidget.grab():
+                img = self.grab().toImage()
+                arr = qimage2ndarray.rgb_view(img)  # Convert to np array
+                self.movie.append(arr.copy())
+                self.movie_timestamps.append(
+                    (current_time - self.starting_time).total_seconds()
+                )
+
+                self.last_time = current_time
+
+    def paintEvent(self, QPaintEvent):
+
+        p = QPainter(self)
+        p.setBrush(QBrush(QColor(0, 0, 0)))
+
+        w = self.width()
+        h = self.height()
+
+        if self.display_state:
+
+            if self.protocol_runner is not None:
+                if self.protocol_runner.running:
+                    try:
+                        self.protocol_runner.current_stimulus.paint(p, w, h)
+                    except AttributeError:
+                        pass
+                else:
+                    p.drawRect(QRect(-1, -1, w + 2, h + 2))
+                    p.setRenderHint(QPainter.SmoothPixmapTransform, 1)
+                    if self.img is not None:
+                        p.drawImage(QPoint(0, 0), self.img)
+
+            if self.calibrator is not None:
+                if self.calibrator.enabled:
+                    self.calibrator.paint_calibration_pattern(p, h, w)
+
+        p.end()
+

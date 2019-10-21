@@ -22,6 +22,8 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 from stytra.gui.framerate_viewer import MultiFrameratesWidget
 
+from stytra.stimulation.stimulus_display import StimulusDisplayOnMainWindow
+
 from lightparam.gui import ParameterGui, pretty_name, ControlCombo, ControlButton
 
 
@@ -209,8 +211,10 @@ class VisualExperimentWindow(ExperimentWindow):
     def __init__(self, *args, **kwargs):
         """ """
         super().__init__(*args, **kwargs)
+
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(self.experiment)
+            self.stimulus_display = StimulusDisplayOnMainWindow(self.experiment)
 
     def construct_ui(self):
         """ """
@@ -222,6 +226,12 @@ class VisualExperimentWindow(ExperimentWindow):
             proj_dock.setObjectName("dock_projector")
             self.add_dock(proj_dock)
             self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
+
+            stimulus_dis = QDockWidget("Stimulus", self)
+            stimulus_dis.setWidget(self.stimulus_display)
+            stimulus_dis.setObjectName("stimulus_display")
+            self.add_dock(stimulus_dis)
+            self.addDockWidget(Qt.LeftDockWidgetArea, stimulus_dis)
 
 
 class CameraExperimentWindow(VisualExperimentWindow):
@@ -412,3 +422,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
+
+
+
+
