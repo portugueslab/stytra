@@ -336,13 +336,13 @@ class BackgroundStimulus(PositionStimulus):
             np.abs(np.cos(self.theta_total)) * w + np.abs(np.sin(self.theta_total)) * h
         )
 
-        n_w = int(np.ceil(new_w / (imw * 2)))
-        n_h = int(np.ceil(new_h / (imh * 2)))
+        n_w = int(np.ceil(new_w / imw))
+        n_h = int(np.ceil(new_h / imh))
 
         # rotate the coordinate transform around the position of the fish
         p.setTransform(self.get_transform(w, h, dx, dy))
 
-        for idx, idy in product(range(-n_w - 1, n_w + 2), range(-n_h - 1, n_h + 2)):
+        for idx, idy in product(range(- 1, n_w  + 1), range(- 1, n_h + 1)):
             self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
 
         p.resetTransform()
