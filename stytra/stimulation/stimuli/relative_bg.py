@@ -1,3 +1,5 @@
+# Look again after Vilim's refactoring
+
 #Note: We should look into refernece in all of these stimuli to figure
 # out what they do and where it goes wrong
 from stytra.stimulation.stimuli.visual import BackgroundStimulus
