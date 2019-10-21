@@ -124,10 +124,12 @@ class StimulusDisplayOnMainWindow(QWidget):
     def change_button(self):
         """ """
         if self.widget_display.display_state:
-            self.button_show_display.setText("Show stimulus (showing stimulus may impair performance)")
+            self.button_show_display.setText("Show stimulus (may impair performance!)")
+            self.button_show_display.setStyleSheet('background-color: None')
             self.widget_display.display_state = False
         else:
-            self.button_show_display.setText("Pause stimulus (showing stimulus may impair performance)")
+            self.button_show_display.setText("Pause (pause not to impair performance!)")
+            self.button_show_display.setStyleSheet("background-color: rgb(170, 30, 0)")
             self.widget_display.display_state = True
 
 
