@@ -85,25 +85,8 @@ class StimulusDisplayWindow(ParametrizedWidget):
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
 
 
-class SecondDisplay(QDockWidget):
-
-    def __init__(self, protocol_runner, calibrator, **kwargs):
-        super().__init__()
-
-        StimDisplay = type("StimDisplay", (StimDisplayWidget, QWidget), {})
-        self.widget_display = StimDisplay(
-            self,
-            calibrator=calibrator,
-            protocol_runner=protocol_runner,
-            record_stim_framerate=None,
-        )
-
-        self.setStyleSheet("background-color:black;")
-        self.widget_display.setFixedSize(300, 300)
-
-
-class ThirdDisplay(QWidget):
-    """ """
+class StimulusDisplayOnMainWindow(QWidget):
+    """ Widget for stimulus display on the main GUI window."""
 
     def __init__(self, experiment, **kwargs):
 
@@ -122,8 +105,8 @@ class ThirdDisplay(QWidget):
 
         self.layout_inner = QVBoxLayout()
         self.layout_inner.addWidget(self.widget_display)
-        self.button_show_display = QPushButton("Pause display")
-        self.widget_display.display_state = True
+        self.button_show_display = QPushButton("Show stimulus (showing stimulus may impair performance)")
+        self.widget_display.display_state = False
         self.button_show_display.clicked.connect(self.change_button)
         self.layout_inner.addWidget(self.button_show_display)
 
@@ -141,10 +124,10 @@ class ThirdDisplay(QWidget):
     def change_button(self):
         """ """
         if self.widget_display.display_state:
-            self.button_show_display.setText("Show display")
+            self.button_show_display.setText("Show stimulus (showing stimulus may impair performance)")
             self.widget_display.display_state = False
         else:
-            self.button_show_display.setText("Pause display")
+            self.button_show_display.setText("Pause stimulus (showing stimulus may impair performance)")
             self.widget_display.display_state = True
 
 
@@ -350,6 +333,5 @@ class StimDisplayWidgetConditional(StimDisplayWidget):
                 if self.calibrator.enabled:
                     self.calibrator.paint_calibration_pattern(p, h, w)
 
-            # p.setWorldTransform(QTransform().scale(w, h), combine=True)
         p.end()
 

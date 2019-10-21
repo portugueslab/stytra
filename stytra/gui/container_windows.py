@@ -22,7 +22,7 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 from stytra.gui.framerate_viewer import MultiFrameratesWidget
 
-from stytra.stimulation.stimulus_display import SecondDisplay, ThirdDisplay
+from stytra.stimulation.stimulus_display import StimulusDisplayOnMainWindow
 
 from lightparam.gui import ParameterGui, pretty_name, ControlCombo, ControlButton
 
@@ -202,8 +202,7 @@ class VisualExperimentWindow(ExperimentWindow):
 
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(self.experiment)
-            # self.stimulus_display = SecondDisplay(self.experiment.protocol_runner, self.experiment.calibrator)
-            self.stimulus_display = ThirdDisplay(self.experiment)
+            self.stimulus_display = StimulusDisplayOnMainWindow(self.experiment)
 
     def construct_ui(self):
         """ """
