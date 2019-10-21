@@ -20,7 +20,12 @@ class BackgroundProtocol(Protocol):
             estimator=SimulatedPositionEstimator,
             estimator_params=dict(
                 motion=pd.DataFrame(
-                    dict(t=[0, 10], x=[100, 100], y=[10, 10], theta=[90, 90])
+                    dict(
+                        t=[0, 5, 120],
+                        x=[100, 100, 100],
+                        y=[10, 10, 10],
+                        theta=[0, 0, np.pi / 2],
+                    )
                 )
             ),
         ),
@@ -34,20 +39,21 @@ class BackgroundProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.theta = Param(0, (0, 360))
+        self.theta = Param(0, (-360, 360))
+        self.delta = Param(0, (-360, 360))
 
     def get_stim_sequence(self):
         # This is the
         MovingStim = type(
             "MovingStim",
-            (FishRelativeStimulus, SeamlessImageStimulus, InterpolatedStimulus),
+            (FishRelativeStimulus, InterpolatedStimulus, SeamlessImageStimulus),
             dict(),
         )
         motion_df = pd.DataFrame(
             dict(
-                t=[0, 2, 10],  #  4,  4,   8,  8,  12,  12],
-                x=[0, 0, 200],  # ,100,100, 100, 100, 0, 0],
-                y=[0, 0, 0],
+                t=[0, 10, 20],  #  4,  4,   8,  8,  12,  12],
+                x=[50, 50, 500],  # ,100,100, 100, 100, 0, 0],
+                y=[50, 50, 50],
             )
         )  # , 0,  0,  100, 100, 100, 100]))
 
@@ -55,7 +61,9 @@ class BackgroundProtocol(Protocol):
             MovingStim(
                 background=Path(__file__).parent / "assets" / "coordinate_system.png",
                 df_param=motion_df,
-                duration=10,
+                duration=300,
+                x=self.delta,
+                y=self.delta,
                 theta=self.theta * np.pi / 180,
             )
         ]

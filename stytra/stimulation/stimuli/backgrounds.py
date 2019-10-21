@@ -4,9 +4,10 @@ from math import sqrt, pi, sin, cos
 from itertools import product
 from PIL import Image, ImageDraw
 import flammkuchen as fl
-import cv2
+import imageio
 import logging
 from pathlib import Path
+
 
 def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     """
@@ -54,7 +55,7 @@ def existing_file_background(filepath):
     else:
         # If using OpenCV, we have to get RGB, not BGR
         try:
-            return cv2.imread(str(filepath))[:, :, [2, 1, 0]]
+            return imageio.imread(str(filepath))
         except TypeError:
             log = logging.getLogger()
             log.info("Could nor load " + filepath)

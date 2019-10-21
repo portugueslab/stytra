@@ -288,17 +288,12 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
     """Stimulus with a defined position and orientation to the fish.
         """
 
-    def __init__(self, *args, x=0, y=0, theta=0, centre_relative=False, **kwargs):
+    def __init__(self, *args, x=0, y=0, theta=0, **kwargs):
         """ """
         self.x = x
         self.y = y
         self.theta = theta
-        self.centre_relative = centre_relative
         super().__init__(*args, dynamic_parameters=["x", "y", "theta"], **kwargs)
-
-    @property
-    def theta_total(self):
-        return self.theta
 
 
 class BackgroundStimulus(PositionStimulus):
@@ -310,6 +305,26 @@ class BackgroundStimulus(PositionStimulus):
 
     def get_transform(self, w, h, x, y):
         return QTransform().rotate(self.theta * 180 / np.pi).translate(x, y)
+
+    def get_tile_ranges(self, imw, imh, w, h, tr):
+        """ Calculates the number of tiles depending on the transform
+
+        Parameters
+        ----------
+        imw
+        imh
+        w
+        h
+        tr
+
+        Returns
+        -------
+
+        """
+        n_tiles_y = np.ceil(max(w / imh, h / imh)).astype(np.int32) + 1
+        n_tiles_x = np.ceil(max(w / imw, h / imw)).astype(np.int32) + 1
+
+        return range(-n_tiles_x, n_tiles_x + 1), range(-n_tiles_y, n_tiles_y + 1)
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
@@ -325,24 +340,14 @@ class BackgroundStimulus(PositionStimulus):
 
         imw, imh = self.get_unit_dims(w, h)
 
-        dx = self.x / mm_px - np.floor(self.x / mm_px / imw) * imw
+        dx = self.x / mm_px - np.floor((self.x / mm_px) / imw) * imw
         dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
 
-        # calculate the rotated rectangle which encloses the display rectangle
-        new_h = (
-            np.abs(np.sin(self.theta_total)) * w + np.abs(np.cos(self.theta_total)) * h
-        )
-        new_w = (
-            np.abs(np.cos(self.theta_total)) * w + np.abs(np.sin(self.theta_total)) * h
-        )
-
-        n_w = int(np.ceil(new_w / imw))
-        n_h = int(np.ceil(new_h / imh))
-
         # rotate the coordinate transform around the position of the fish
-        p.setTransform(self.get_transform(w, h, dx, dy))
+        tr = self.get_transform(w, h, dx, dy)
+        p.setTransform(tr)
 
-        for idx, idy in product(range(- 1, n_w  + 1), range(- 1, n_h + 1)):
+        for idx, idy in product(*self.get_tile_ranges(imw, imh, w, h, tr)):
             self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
 
         p.resetTransform()
