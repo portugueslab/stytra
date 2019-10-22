@@ -306,8 +306,14 @@ class BackgroundStimulus(PositionStimulus):
     def get_transform(self, w, h, x, y):
         return QTransform().rotate(self.theta * 180 / np.pi).translate(x, y)
 
-    def get_tile_ranges(self, imw, imh, w, h, tr):
-        """ Calculates the number of tiles depending on the transform
+    @staticmethod
+    def negceil(x):
+        """ negative ceiling function (e.g -0.2 gets rounded to -1, while 0.2 gets rounded to 1)
+        """
+        return int(-np.ceil(-x) if x < 0 else np.ceil(x))
+
+    def get_tile_ranges(self, imw, imh, w, h, tr: QTransform):
+        """ Calculates the number of tiles depending on the transform.
 
         Parameters
         ----------
@@ -321,10 +327,26 @@ class BackgroundStimulus(PositionStimulus):
         -------
 
         """
-        n_tiles_y = np.ceil(max(w / imh, h / imh)).astype(np.int32) + 1
-        n_tiles_x = np.ceil(max(w / imw, h / imw)).astype(np.int32) + 1
 
-        return range(-n_tiles_x, n_tiles_x + 1), range(-n_tiles_y, n_tiles_y + 1)
+        # we find where the display surface is in the coordinate system of a single tile
+        corner_points = [
+            np.array([0.0, 0.0]),
+            np.array([w, 0.0]),
+            np.array([w, h]),
+            np.array([0.0, h]),
+        ]
+        points_transformed = np.array(
+            [tr.inverted()[0].map(*cp) for cp in corner_points]
+        )
+
+        # calculate the rectangle covering the trnasformed display surface
+        min_x, min_y = np.min(points_transformed, 0)
+        max_x, max_y = np.max(points_transformed, 0)
+
+        # count which tiles need to be drawn
+        x_start, x_end = (self.negceil(x / imw) for x in [min_x, max_x])
+        y_start, y_end = (self.negceil(y / imh) for y in [min_y, max_y])
+        return range(x_start, x_end + 1), range(y_start, y_end + 1)
 
     def paint(self, p, w, h):
         if self._experiment.calibrator is not None:
@@ -340,8 +362,8 @@ class BackgroundStimulus(PositionStimulus):
 
         imw, imh = self.get_unit_dims(w, h)
 
-        dx = self.x / mm_px - np.floor((self.x / mm_px) / imw) * imw
-        dy = self.y / mm_px - np.floor((self.y / mm_px) / imh) * imh
+        dx = self.x / mm_px
+        dy = self.y / mm_px
 
         # rotate the coordinate transform around the position of the fish
         tr = self.get_transform(w, h, dx, dy)
