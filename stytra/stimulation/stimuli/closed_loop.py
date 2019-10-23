@@ -318,6 +318,8 @@ class FishTrackingStimulus(PositionStimulus):
 class FishRelativeStimulus(BackgroundStimulus):
     def get_transform(self, w, h, x, y):
         y_fish, x_fish, theta_fish = self._experiment.estimator.get_position()
+        if np.isnan(y_fish):
+            return super().get_transform(w, h, x, y)
         rot_fish = (theta_fish - np.pi / 2) * 180 / np.pi
         return super().get_transform(w, h, x, y) * (
             QTransform().translate(x_fish, y_fish).rotate(rot_fish)
