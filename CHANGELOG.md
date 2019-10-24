@@ -1,4 +1,10 @@
+# 0.8.26
+## Improvements
+- Added documentation
+- Added window to monitor stimulus in main GUI
+
 # 0.8.25
+## Fixes
 - Fixed erratic bug in stimulus updating
 - Fixed not working test for tracking
 
