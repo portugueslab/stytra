@@ -256,7 +256,6 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
         super().__init__(*args, **kwargs)
         self.monitored_headers = ["biggest_area", "f0_theta", "th_e00","th_e10"]
         self.data_log_name = "fish_eye_track"
-        self.fish_coords = []
         self.diagnostic_image_options = [
             "thresholded eyes",
             "background difference",
@@ -287,13 +286,13 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
         self._output_type_changed = True
 
         # # used for booking a spot for one of the potentially tracked fish
-        self.fishes = Fishes(
+        self.fishes = FishesWithEyes(
         self._params.n_fish_max,
         n_segments=self._params.n_segments - 1,
         pos_std=self._params.pos_uncertainty,
         pred_coef=self._params.prediction_uncertainty,
         angle_std=np.pi / 10,
-        persist_fish_for=self._params.persist_fish_for,
+        persist_fish_for=self._params.persist_fish_for
     )
 
     def _process(
@@ -396,17 +395,17 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             fishdet = bg[slices].copy()
 
             # estimate the position of the head
-            self.fish_coords = fish_start(fishdet, threshold_eyes)
-            print("fish coords",self.fish_coords)
+            fish_coords = fish_start(fishdet, threshold_eyes)
+            print("fish coords",fish_coords)
 
             ##############  Eye detection part  #########################
             # place the detction window where the head was detected
-            wnd_pos1 = self.fish_coords[0]
-            wnd_pos2 = self.fish_coords[1]
+            wnd_pos1 = fish_coords[0]
+            wnd_pos2 = fish_coords[1]
             wnd_pos = (int(wnd_pos1),int(wnd_pos2))
 
             # set fixed window dimensions big enough for the whole head no matter orientation
-            # TODO to be adjustable?
+            # TODO to be tied to fish len and orientated wth fish theta
             wnd_dim = (int(200),int(200))
 
             # create padding around the image to find the eyes
@@ -423,32 +422,35 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
 
             # actual eye detection
             # try:
-            eyes = _fit_ellipse(cropped)
+            self.eyes = _fit_ellipse(cropped)
 
-            if self.set_diagnostic == "thresholded eyes":
-                self.diagnostic_image = (bg < threshold).view(dtype=np.uint8)
+            # if self.set_diagnostic == "thresholded eyes":
+            #     self.diagnostic_image = (bg < threshold).view(dtype=np.uint8)
 
-            if eyes is False:
-                eyes = (np.nan,) * 10
+            if self.eyes is False:
+                self.eyes = (np.nan,) * 10
                 messages.append("E: eyes not detected!")
             else:
-                eyes = (
-                        eyes[0][0][::-1]
-                        + eyes[0][1][::-1]
-                        + (-eyes[0][2],)
-                        + eyes[1][0][::-1]
-                        + eyes[1][1][::-1]
-                        + (-eyes[1][2],)
+                self.eyes = (
+                        self.eyes[0][0][::-1]
+                        + self.eyes[0][1][::-1]
+                        + (-self.eyes[0][2],)
+                        + self.eyes[1][0][::-1]
+                        + self.eyes[1][1][::-1]
+                        + (-self.eyes[1][2],)
                 )
-                print ("eyes", eyes)
+                print ("eyes", self.eyes)
+
+                #TODO send eye stuff to gui?
             ######## End of eye detction part ######################
 
             # if no actual fish was found here, continue on to the next connected component
-            if self.fish_coords[0] == -1:
+            if fish_coords[0] == -1:
                 messages.append("W:No appropriate tail start position found")
                 continue
 
-            head_coords_up = self.fish_coords + cent_shift
+            # offset coordinates to have them in img coordinates
+            head_coords_up = fish_coords + cent_shift
 
             theta = _fish_direction_n(bg, head_coords_up, int(round(tail_length / 2)))
 
@@ -472,44 +474,48 @@ class FishEyeMotorTrackingMethod(FishTrackingMethod):
             angles[1:] = np.unwrap(angles[1:] - angles[0])
 
             # put the data together for one fish
-            fishi = [np.array(points[0][:2])]
-            self.fish_coords = np.concatenate([np.array(points[0][:2]), angles, eyes])
-            print ("fish one",self.fish_coords, len(self.fish_coords))
-            print ("angles", angles)
-            print("eyes", eyes)
-            print ("len fishi",len(fishi))
-            print (len(points[0]), len(angles), len(eyes))
+            fish_coords = np.concatenate([np.array(points[0][:2]), angles])
 
             nofish = False
+            # check if this is a new fish, or it is an update of
+            # a fish detected previously
+            if self.fishes.update(fish_coords,self.eyes):
+                messages.append("I:Updated previous fish")
+            elif self.fishes.add_fish(fish_coords):#TODO add eye stuff here
+                messages.append("I:Added new fish")
+            else:
+                messages.append("E:More fish than n_fish max")
 
         if nofish:
-            self.fish_coords = (np.nan,) * 25
-            print ("empty coords", self.fish_coords)
+            # self.fish_coords = (np.nan,) * 25
+            # print ("empty coords", self.fish_coords)
             messages.append(
                 "W:No object of right area, between {:.0f} and {:.0f}".format(
                     *fish_area
                 )
             )
 
-        # if a debugging image is to be shown, set it
-        if self.set_diagnostic == "background difference":
-            self.diagnostic_image = bg
-        elif self.set_diagnostic == "thresholded background difference":
-            self.diagnostic_image = bg_thresh
-        elif self.set_diagnostic == "fish detection":
-            fishdet = bg_small.copy()
-            fishdet[bg_thresh == 0] = 0
-            self.diagnostic_image = fishdet
-        elif self.set_diagnostic == "thresholded for eye and swim bladder":
-            self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
+            # if a debugging image is to be shown, set it
+            if self.set_diagnostic == "background difference":
+                self.diagnostic_image = bg
+            elif self.set_diagnostic == "thresholded background difference":
+                self.diagnostic_image = bg_thresh
+            elif self.set_diagnostic == "fish detection":
+                fishdet = bg_small.copy()
+                fishdet[bg_thresh == 0] = 0
+                self.diagnostic_image = fishdet
+            elif self.set_diagnostic == "thresholded for eye and swim bladder":
+                self.diagnostic_image = np.maximum(bg, threshold_eyes) - threshold_eyes
 
-        if self._output_type is None:
-            self.reset_state()
-        print("len fish coords", len(self.fish_coords))
-        print("output", *list(self.fish_coords), max_area * 1.0)
-        return NodeOutput(
-            messages, self._output_type(*self.fish_coords, max_area * 1.0)
-        )
+            if self._output_type is None:
+                self.reset_state()
+
+            print("output ", *self.fishes.coords.flatten(), max_area * 1.0)
+
+            return NodeOutput(
+                messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)
+            )
+
 
 ########################################################################
 
@@ -524,6 +530,99 @@ spec = [
     ("def_P", float64[:, :, :]),
     ("persist_fish_for", int64),
 ]
+
+# You can set default parameters:
+
+
+@jitclass(spec)
+class FishesWithEyes(object):
+    def __init__(
+            self, n_fish_max, pos_std, angle_std, n_segments, pred_coef, persist_fish_for):
+        self.n_fish = n_fish_max
+        self.coords = np.full((n_fish_max, 6 + n_segments +10), np.nan)
+        self.uncertainties = np.array((pos_std, angle_std, angle_std))
+        self.def_P = np.zeros((3, 2, 2))
+        for i, uc in enumerate(self.uncertainties):
+            self.def_P[i, 0, 0] = uc
+            self.def_P[i, 1, 1] = uc
+        self.i_not_updated = np.zeros(n_fish_max, dtype=np.int64)
+        self.Ps = np.zeros((n_fish_max, 3, 2, 2))
+        self.F = np.array([[1.0, 1.0], [0.0, 1.0]])
+        dt = 0.02
+        self.Q = (
+                np.array([[0.25 * dt ** 4, 0.5 * dt ** 3], [0.5 * dt ** 3, dt ** 2]])
+                * pred_coef
+        )
+        self.persist_fish_for = persist_fish_for
+        self.eye_coords = np.full((n_fish_max, 10), np.nan)
+        #this should create an empty container to be filled with eye coords later like general coords
+
+    def predict(self):
+        for i_fish in range(self.n_fish):  # loop over fish id
+            if not np.isnan(self.coords[i_fish, 0]):  # check valid x position
+                for i_coord in range(0, 6, 2):  # loop over x, y, theta
+                    predict_inplace(
+                        self.coords[i_fish, i_coord: i_coord + 2],
+                        self.Ps[i_fish, i_coord // 2],
+                        self.F,
+                        self.Q,
+                    )
+                self.i_not_updated[i_fish] += 1
+                if self.i_not_updated[i_fish] > self.persist_fish_for:
+                    self.coords[i_fish, :] = np.nan
+
+    def update(self, new_fish, new_eyes):
+        for i_fish in range(self.n_fish):
+            if not np.isnan(self.coords[i_fish, 0]):
+                if self.is_close(new_fish, i_fish) and self.i_not_updated[i_fish] != 0:
+                    # update position with Kalman filtering
+                    for i_coord in range(0, 3):
+                        # if it is the angle find the modulo 2pi closest
+                        nc = new_fish[i_coord]
+                        if i_coord == 2:
+                            nc = _minimal_angle_dif(self.coords[i_fish, 4], nc)
+                        update_inplace(
+                            nc,
+                            self.coords[i_fish, i_coord * 2: i_coord * 2 + 2],
+                            self.Ps[i_fish, i_coord],
+                            self.uncertainties[i_coord],
+                        )
+                        self.eye_coords[i_fish] = new_eyes
+                        self.coords =np.concatenate([self.coords,self.eye_coords])
+                        print ("len coords", len(self.coords))
+
+                    # update tail angles
+                    self.coords[i_fish, 6:] = new_fish[3:]
+                    self.i_not_updated[i_fish] = 0
+
+
+
+                    return True
+
+    def add_fish(self, new_fish):
+        for i_fish in range(self.n_fish):
+            if np.isnan(self.coords[i_fish, 0]):
+                self.coords[i_fish, 0:6:2] = new_fish[:3]
+                self.coords[i_fish, 1:6:2] = 0.0
+                self.coords[i_fish, 6:] = new_fish[3:]
+                self.Ps[i_fish] = self.def_P
+                self.i_not_updated[i_fish] = 0
+                return True
+        return False
+
+    def is_close(self, new_fish, i_fish):
+        """ Check whether the new coordinates are
+        within a certain number of pixels of the old estimate
+        and within a certain angle
+        """
+        n_px = 15
+        d_theta = np.pi / 2
+        dists = new_fish[:2] - self.coords[i_fish, 0:4:2]
+        dtheta = np.abs(
+            np.mod(new_fish[2] - self.coords[i_fish, 4] + np.pi, np.pi * 2) - np.pi
+        )
+
+        return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
 
 
 @jitclass(spec)

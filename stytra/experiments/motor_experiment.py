@@ -2,17 +2,24 @@ from stytra.experiments.tracking_experiments import TrackingExperiment
 from stytra.tracking.tracking_process import TrackingProcessMotor
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.hardware.motor.motor_process import ReceiverProcess
+from stytra.hardware.motor.motor_calibrator import MotorCalibrator
+from stytra.calibration import MotorPointCalibrator, CircleCalibrator,CrossCalibrator
 from stytra.collectors import QueueDataAccumulator
 
 
 class MotorExperiment(TrackingExperiment):
     """"""
-
     def __init__(self, *args, **kwargs):
-        self.motor_pos_queue = NamedTupleQueue()
         self.tracked_position_queue = NamedTupleQueue()
 
-        super().__init__(*args, **kwargs)
+        super().__init__(*args,calibrator=MotorPointCalibrator(), **kwargs)
+
+        self.motor_pos_queue = NamedTupleQueue()
+
+
+        # self.calibrator = MotorCalibrator(motor_x= self.motor_process.motor_x,
+        #                                   motor_y= self.motor_process.motor_y)
+
 
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
@@ -30,16 +37,17 @@ class MotorExperiment(TrackingExperiment):
 
         self.gui_timer.timeout.connect(self.acc_motor.update_list)
 
+
     def start_experiment(self):
         super().start_experiment()
         self.motor_process.start()
-        # TODO motti open here?
+        # self.xscale, self.yscale = self.motor_process.xscale, self.motor_process.yscale
+
 
     def wrap_up(self, *args, **kwargs):
         super().wrap_up(*args, **kwargs)
         self.motor_process.join()
 
-        # TODO motti close here?
 
     def initialize_tracking_meth(self):
         self.frame_dispatcher = TrackingProcessMotor(

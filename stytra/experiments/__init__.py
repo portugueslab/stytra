@@ -14,7 +14,7 @@ import imageio
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QByteArray
 from PyQt5.QtWidgets import QMessageBox
 
-from stytra.calibration import CrossCalibrator
+from stytra.calibration import CrossCalibrator, MotorPointCalibrator, CircleCalibrator
 from stytra.collectors import DataCollector
 from stytra.stimulation import ProtocolRunner
 from stytra.metadata import AnimalMetadata, GeneralMetadata

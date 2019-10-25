@@ -7,18 +7,20 @@ import matplotlib.pyplot as plt
 
 
 class MotorCalibrator:
-    def __init__(self, m1, m2):
-        self.motti1 = m1
-        self.motti2 = m2
+    def __init__(self, motor_x, motor_y):
+        self.moty = motor_y
+        self.motx = motor_x
 
     def calibrate_motor(self):
         self.point_x_prev, self.point_y_prev, im = MotorCalibrator.find_dot(self)
 
-        posx = self.motti2.get_position()
-        self.motti2.movethatthing(posx + 20000)  # 20000 motot units is 1 mm
+        posx = self.motx.get_position()
+        print ("moving x")
+        self.motx.movethatthing(posx + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
-        posy = self.motti1.get_position()
-        self.motti1.movethatthing(posy + 20000)  # 20000 motot units is 1 mm
+        posy = self.moty.get_position()
+        print ("moving y")
+        self.moty.movethatthing(posy + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
         self.point_x_after, self.point_y_after, im = MotorCalibrator.find_dot(self)
 
@@ -67,8 +69,8 @@ class MotorCalibrator:
         return connx, conny
 
     def track_dot(self):
-        pos_x = self.motti2.get_position()
-        pos_y = self.motti1.get_position()
+        pos_x = self.motx.get_position()
+        pos_y = self.moty.get_position()
         print("stage at x,y:", pos_x, pos_y)
 
         connx, conny = MotorCalibrator.calculate(self.point_x, self.point_y)
@@ -85,8 +87,8 @@ class MotorCalibrator:
         self.width_arena = w
         self.height_arena = h
         self.encoder_counts_per_unit = 20000
-        self.center_x = self.motti1.get_position()
-        self.center_y = self.motti2.get_position()
+        self.center_x = self.moty.get_position()
+        self.center_y = self.motx.get_position()
         self.stepsize = int(
             200000
         )  # will depend on camera magnification and pixel size
@@ -117,8 +119,8 @@ class MotorCalibrator:
     def conversion(self):
         self.arena = (4800, 4800)
         self.im = np.zeros((540, 720))
-        self.motor_posx = self.motti1.get_position()
-        self.motor_posy = self.motti2.get_position()
+        self.motor_posx = self.motx.get_position()
+        self.motor_posy = self.moty.get_position()
         self.conx = self.motor_posx / (self.arena[0] / 2)
         self.cony = self.motor_posy / (self.arena[1] / 2)
         return self.conx, self.cony
@@ -143,14 +145,14 @@ class MotorCalibrator:
         self.arena = (4800, 4800)
 
         background_0 = np.zeros(self.arena)
-        self.motor_posx = self.motti1.get_position()
-        self.motor_posy = self.motti2.get_position()
+        self.motor_posx = self.moty.get_position()
+        self.motor_posy = self.motx.get_position()
 
         for pos in self.positions_h:
             for posi in self.positions_w:
                 # print("y:", pos, ",x:", posi)
-                self.motti2.movethatthing(pos)
-                self.motti1.movethatthing(posi)
+                self.motx.movethatthing(pos)
+                self.moty.movethatthing(posi)
                 im = self.cam.read()
 
                 mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self)
@@ -166,14 +168,14 @@ class MotorCalibrator:
 #############################################################################
 
 if __name__ == "__main__":
-    mottione = Motor(1, scale=338)
-    mottitwo = Motor(2, scale=338)
+    motor_x = Motor(2, scale=1)
+    motor_y = Motor(1, scale=1)
 
-    mottione.open()
-    mottitwo.open()
+    motor_x.open()
+    motor_y.open()
 
     # TODO calibrator minimal + motor minimal combine
-    mc = MotorCalibrator(mottione, mottitwo)
+    mc = MotorCalibrator(motor_x, motor_y)
     mc.calibrate_motor()
     # pos_h, pos_w = mc.positions_array(50, 50)
     # print(pos_h, pos_w)
@@ -182,5 +184,5 @@ if __name__ == "__main__":
     # plt.imshow(bg)
     # plt.waitforbuttonpress()
 
-    mottitwo.close()
-    mottione.close()
+    motor_y.close()
+    motor_x.close()

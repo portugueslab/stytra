@@ -4,6 +4,7 @@ from time import sleep
 import datetime
 import numpy as np
 from stytra.hardware.motor.stageAPI import Motor
+from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
 import cv2
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
@@ -55,23 +56,42 @@ class ReceiverProcess(Process):
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
         self.jitter_thres = 15
-        self.arena_thres = 60000  # aka 3 cm
-        self.home = 2200000
+        # self.arena_thres = 60000  # aka 3 cm
+        # self.home = 2200000
 
     def run(self):
-        motor_y = Motor(1, scale=294)
-        motor_x = Motor(2, scale=298)
+        #Initialize the Motor here with standard scale
+        # self.motor_y = Motor(1, scale=1)
+        # self.motor_x = Motor(2, scale=1)
+        #
+        # #Initialize homing sequence:
+        # self.motor_x.motorminimal()
+        # self.motor_y.motorminimal()
+
+        #Wait for signal from calib
+        # #TODO put this in a diff process, replacement of motor scale works
+        # calibrator = MotorCalibrator(self.motor_x, self.motor_y)
+        # try:
+        #     self.xscale, self.yscale = calibrator.calibrate_motor()
+        #     self.motor_x.scale, self.motor_y.scale = self.xscale,self.yscale
+        #     print ("motor scale x,y set to: {},{}".format(self.motor_x.scale,self.motor_y.scale))
+        # except:
+        #     print ("Motor could not be calibrated")
+
+
+        ##########
         center_y = 270
         center_x = 360
-        motor_y.open()
-        motor_x.open()
+
+        # self.motor_y.open()
+        # self.motor_x.open()
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
         dot_pos = []
         motor_pos = []
         times = []
 
-        # TODO motti initate, home, set velo and claibrate here?
+        #TODO Wait for signal to start from GUI
 
         while not self.finished_event.is_set():
 
@@ -83,12 +103,15 @@ class ReceiverProcess(Process):
             if last_position is not None:
                 time = datetime.datetime.now()
                 times.append(time)
-                pos_x = motor_x.get_position()
-                pos_y = motor_y.get_position()
+                pos_x = self.motor_x.get_position()
+                pos_y = self.motor_y.get_position()
                 motor_pos.append([pos_x, pos_y])
                 try:
                     distance_x = center_x - last_position.f0_x
                     distance_y = center_y - last_position.f0_y
+
+                    #TODO arena bounds as Params of experiment.
+
                     # dotx, dotcx = motor_x.move_relative_without_move(distance_x)
                     # doty, dotcy = motor_y.move_relative_without_move(distance_y)
                     # print("dotx,y", dotx, doty, dotcx, dotcy)
@@ -102,8 +125,8 @@ class ReceiverProcess(Process):
                         # jitter filter for camera
                     if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
                         print("Moving")
-                        motor_x.move_relative(distance_x)
-                        motor_y.move_relative(distance_y)
+                        self.motor_x.move_relative(distance_x)
+                        self.motor_y.move_relative(distance_y)
                         print(distance_x, distance_y)
                         dot_pos.append([distance_x, distance_y])
 
@@ -119,8 +142,8 @@ class ReceiverProcess(Process):
                 # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
                 #                                                   dots=dot_pos,
                 #                                                   motorpos=motor_pos)))
-        motor_x.close()
-        motor_y.close()
+        self.motor_x.close()
+        self.motor_y.close()
 
 
 ################################

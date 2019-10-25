@@ -288,17 +288,6 @@ class Motor:
 
     def movesimple(self, position=int()):
         BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
-        # BMC_RequestPosition(self.serial_nom, self.channel)
-        # motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
-        #
-        # while motor_pos != position:
-        #     print("Current pos {}".format(motor_pos) + " moving to {}".format(position))
-        #     print("distance: ", (position-motor_pos))
-        #     BMC_RequestPosition(self.serial_nom, self.channel)
-        #     motor_pos = int(BMC_GetPosition(self.serial_nom, self.channel))
-        #     motorpositions.append(motor_pos)
-        #     sleep(0.04)
-        #
 
     def move_relative(self, distance):
         pos = self.get_position()
@@ -330,8 +319,21 @@ class Motor:
         # TODO Error statement
 
     def movemanualo(self):
-        # maybe something to move the stage manually by keyboard
+        #TODO maybe something to move the stage manually by keyboard
         pass
+
+    def motorminimal(self,
+                     acceleration=int(204552 / 10),
+                     velocity =int(107374182 / 10)):
+        """Mini script to run before motor can be used"""
+
+        self.acc = acceleration
+        self.velo = velocity
+
+        self.homethatthing()
+        self.open()
+        self.setvelocity(self.acc, self.velo)
+        self.close()
 
 
 if __name__ == "__main__":

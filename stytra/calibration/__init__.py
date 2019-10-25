@@ -6,6 +6,8 @@ from PyQt5.QtCore import QRect, QPoint
 from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
 
 from lightparam.param_qt import ParametrizedQt, Param
+from stytra.hardware.motor.stageAPI import Motor
+
 
 
 class CalibrationException(Exception):
@@ -292,3 +294,107 @@ class CircleCalibrator(Calibrator):
 
         self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
         self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
+
+
+class MotorPointCalibrator(Calibrator):
+    """Displays a Point for Motor Calibration"""
+
+    def __init__(self, *args, dh=80, r=1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dh = dh
+        self.r = r
+        self.length_px = dh * 2
+        self.points = None
+        self.points_cam = None
+
+
+    def make_calibration_pattern(self, p, h, w, draw=True):
+        assert isinstance(p, QPainter)
+
+        d2h = self.dh // 2
+        d2w = int(self.dh * math.sqrt(3) // 2)
+        ch = h // 2
+        cw = w // 2
+        centres = np.array ([(cw + d2h, ch + d2w)])
+
+        if draw:
+            p.setPen(QPen(QColor(255, 0, 0)))
+            p.setBrush(QBrush(QColor(255, 0, 0)))
+            for centre in centres:
+                p.drawEllipse(QPoint(*centre), self.r, self.r)
+
+
+    @staticmethod
+    def _find_blobs(image, blob_params=None):
+        if blob_params is None:
+            blobdet = cv2.SimpleBlobDetector_create()
+        else:
+            blobdet = cv2.SimpleBlobDetector_create(blob_params)
+        # TODO check if blob detection is robust
+        scaled_im = 255 - (image.astype(np.float32) * 255 / np.max(image)).astype(
+            np.uint8
+        )
+        keypoints = blobdet.detect(scaled_im)
+        if len(keypoints) != 1:
+            raise CalibrationException("Calibration needs one point")
+        kps = np.array([k.pt for k in keypoints])
+        return kps
+
+    def find_transform_matrix(self, image):
+        self.points_cam = self._find_blobs(image)
+        points_proj = self.points
+
+        x_proj = np.vstack([points_proj.T, np.ones(1)])
+        x_cam = np.vstack([self.points_cam.T, np.ones(1)])
+
+        self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
+        self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
+        print ("cam to projector", self.cam_to_proj)
+        print ("proj to cam", self.proj_to_cam)
+        #TODO does this work?
+
+
+    # def calibrate_motor(self):
+    #     self.point_x_prev, self.point_y_prev, im = MotorCalibrator.find_dot(self)
+    #
+    #     posx = self.motx.get_position()
+    #     print("moving x")
+    #     self.motx.movethatthing(posx + 20000)  # 20000 motor units is 1 mm
+    #     sleep(0.5)
+    #     posy = self.moty.get_position()
+    #     print("moving y")
+    #     self.moty.movethatthing(posy + 20000)  # 20000 motor units is 1 mm
+    #     sleep(0.5)
+    #     self.point_x_after, self.point_y_after, im = MotorCalibrator.find_dot(self)
+    #
+    #     self.distance_points_x = int(self.point_x_prev - self.point_x_after)
+    #     self.distance_points_y = int(self.point_y_prev - self.point_y_after)
+    #
+    #     self.conversion_x = int(20000 / abs(self.distance_points_x))
+    #     self.conversion_y = int(20000 / abs(self.distance_points_y))
+    #
+    #     print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+    #
+    #     return self.conversion_x, self.conversion_y
+    #
+    # def find_dot(self):  # same as dot tracking method
+    #     self.cam = SpinnakerCamera()
+    #     self.cam.open_camera()
+    #     self.cam.set("exposure", 12)
+    #     # TODO initiate camera somewhere else- cant be double initiated.
+    #
+    #     im = self.cam.read()
+    #     cv2.imshow("img", im)
+    #     cv2.waitKey(10)
+    #
+    #     # identify dot
+    #     idxs = np.unravel_index(np.nanargmin(im), im.shape)
+    #     e = (np.float(idxs[1]), np.float(idxs[0]))
+    #     self.point_x = e[0]
+    #     self.point_y = e[1]
+    #     # print ("dot x,y", self.point_x, self.point_y)
+    #
+    #     self.cam.cam.EndAcquisition()
+    #
+    #     return self.point_x, self.point_y, im
+    #
