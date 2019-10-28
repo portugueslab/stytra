@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QPushButton
 import numpy as np
 import pyqtgraph as pg
 
-from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException
+from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException, MotorCalibrator
 from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
 
@@ -185,6 +185,11 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
+        if isinstance(experiment.calibrator, MotorCalibrator):
+            self.button_calibrate = QPushButton("Calibrate Motor")
+            self.button_calibrate.clicked.connect(self.calibrate_motor)
+            self.layout_calibrate.addWidget(self.button_calibrate)
+
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
@@ -222,6 +227,26 @@ class ProjectorAndCalibrationWidget(QWidget):
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
         try:
             self.calibrator.find_transform_matrix(frame)
+            self.widget_proj_viewer.display_calibration_pattern(
+                self.calibrator, frame.shape, frame
+            )
+
+        except CalibrationException:
+            pass
+
+    def calibrate_motor(self):
+        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        try:
+            kps_prev = self.calibrator.find_transform_matrix(frame)
+            self.calibrator.calib_event.set()
+            #TODO move motor x,y via EVENT (calibration movement)
+
+            _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+            kps_after = self.calibrator.find_transform_matrix(frame)
+
+            conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
+            #Todo put conx and cony to experiment
+
             self.widget_proj_viewer.display_calibration_pattern(
                 self.calibrator, frame.shape, frame
             )

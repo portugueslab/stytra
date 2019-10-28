@@ -50,41 +50,34 @@ class SendPositionsProcess(Process):
 
 
 class ReceiverProcess(Process):
-    def __init__(self, dot_position_queue, finished_event, motor_position_queue):
+    def __init__(self, dot_position_queue, calib_event, finished_event, motor_position_queue):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
+        self.calib_event = calib_event
         self.jitter_thres = 15
         # self.arena_thres = 60000  # aka 3 cm
         # self.home = 2200000
 
     def run(self):
         #Initialize the Motor here with standard scale
-        # self.motor_y = Motor(1, scale=1)
-        # self.motor_x = Motor(2, scale=1)
-        #
+        self.motor_y = Motor(1, scale=1)
+        self.motor_x = Motor(2, scale=1)
+
         # #Initialize homing sequence:
+        #TODO maybe add homing button to calibrator EVENT?
+
         # self.motor_x.motorminimal()
         # self.motor_y.motorminimal()
-
-        #Wait for signal from calib
-        # #TODO put this in a diff process, replacement of motor scale works
-        # calibrator = MotorCalibrator(self.motor_x, self.motor_y)
-        # try:
-        #     self.xscale, self.yscale = calibrator.calibrate_motor()
-        #     self.motor_x.scale, self.motor_y.scale = self.xscale,self.yscale
-        #     print ("motor scale x,y set to: {},{}".format(self.motor_x.scale,self.motor_y.scale))
-        # except:
-        #     print ("Motor could not be calibrated")
-
+        if self.calib_event.is_set():
+            self.motor_x.calibrator_movement()
+            self.motor_y.calibrator_movement()
 
         ##########
-        center_y = 270
-        center_x = 360
 
-        # self.motor_y.open()
-        # self.motor_x.open()
+        self.motor_y.open()
+        self.motor_x.open()
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
         dot_pos = []
@@ -107,9 +100,6 @@ class ReceiverProcess(Process):
                 pos_y = self.motor_y.get_position()
                 motor_pos.append([pos_x, pos_y])
                 try:
-                    distance_x = center_x - last_position.f0_x
-                    distance_y = center_y - last_position.f0_y
-
                     #TODO arena bounds as Params of experiment.
 
                     # dotx, dotcx = motor_x.move_relative_without_move(distance_x)
@@ -125,6 +115,7 @@ class ReceiverProcess(Process):
                         # jitter filter for camera
                     if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
                         print("Moving")
+                        #TODO change just get pos and plus distance
                         self.motor_x.move_relative(distance_x)
                         self.motor_y.move_relative(distance_y)
                         print(distance_x, distance_y)

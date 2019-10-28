@@ -335,6 +335,12 @@ class Motor:
         self.setvelocity(self.acc, self.velo)
         self.close()
 
+    def calibrator_movement(self):
+        pos = self.get_position()
+        print("moving")
+        self.movethatthing(posx + 20000)  # 20000 motor units is 1 mm
+        sleep(0.5)
+
 
 if __name__ == "__main__":
     mottione = Motor(1, scale=0)

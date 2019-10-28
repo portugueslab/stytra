@@ -3,7 +3,7 @@ from stytra.tracking.tracking_process import TrackingProcessMotor
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.hardware.motor.motor_process import ReceiverProcess
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
-from stytra.calibration import MotorPointCalibrator, CircleCalibrator,CrossCalibrator
+from stytra.calibration import CircleCalibrator,CrossCalibrator, MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
 
 
@@ -12,18 +12,16 @@ class MotorExperiment(TrackingExperiment):
     def __init__(self, *args, **kwargs):
         self.tracked_position_queue = NamedTupleQueue()
 
-        super().__init__(*args,calibrator=MotorPointCalibrator(), **kwargs)
+        super().__init__(*args,calibrator=MotorCalibrator(), **kwargs)
 
         self.motor_pos_queue = NamedTupleQueue()
 
-
-        # self.calibrator = MotorCalibrator(motor_x= self.motor_process.motor_x,
-        #                                   motor_y= self.motor_process.motor_y)
-
+        self.motor_scale = self.calibrator.proj_to_cam #TODO send by queue to process
 
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
             finished_event=self.camera.kill_event,
+            calib_event= self.calibrator.calib_event,
             motor_position_queue=self.motor_pos_queue,
         )
         self.motor_position_queue = self.motor_process.motor_position_queue
