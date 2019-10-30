@@ -1,5 +1,6 @@
 from queue import Empty, Full
 from multiprocessing import Event, Value
+from time import sleep
 
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
@@ -174,13 +175,14 @@ class TrackingProcess(FrameProcess):
 
 
 class TrackingProcessMotor(TrackingProcess):
-    def __init__(self, *args, second_output_queue=None, calibration_signal: Event = None, **kwargs):
+    def __init__(self, *args, second_output_queue=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
+        self.calibration_event = Event()
+        self.home_event =Event()
         #TODO get scale from calibrator
         self.scale_x = None
         self.scale_y = None
-        self.calibration_signal = calibration_signal
 
     def send_to_queue(self, time, output):
         super().send_to_queue(time, output)
@@ -192,16 +194,20 @@ class TrackingProcessMotor(TrackingProcess):
         self.pipeline = self.pipeline_cls()
         self.pipeline.setup()
 
-        while not self.calibration_signal.is_set():
-            pass
-            #Todo get calibrator EVENT here and set scale
-            #set scale_x, scale_y
-
-
         while not self.finished_signal.is_set():
 
             # Gets the processing parameters from their queue
             self.retrieve_params()
+
+            if self.home_event.is_set():
+                sleep(0.1)
+                self.home_event.clear()
+
+            if self.calibration_event.is_set():
+                sleep(0.1)
+                self.calibration_event.clear()
+                #set xy scale
+
 
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
@@ -224,11 +230,11 @@ class TrackingProcessMotor(TrackingProcess):
 
             #Calculate new position for the motor
             # TODO put hardcoding out here
-            center_y = 270
-            center_x = 360
-            distance_x = (center_x - output.f0_x)*self.scale_x
-            distance_y = (center_y - output.f0_y)*self.scale_y
-            print ("distance x,y", distance_x, distance_y)
+            # center_y = 270
+            # center_x = 360
+            # distance_x = (center_x - output.f0_x)*self.scale_x
+            # distance_y = (center_y - output.f0_y)*self.scale_y
+            # print ("distance x,y", distance_x, distance_y)
 
             #TODO modify output to send distance as well -
             # output nametple is generated in fishtracking method

@@ -179,7 +179,7 @@ class FishTrackingMethod(ImageToDataNode):
 
             # estimate the position of the head
             fish_coords = fish_start(fishdet, threshold_eyes)
-            print ("fish coords", fish_coords)
+            # print ("fish coords", fish_coords)
 
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
@@ -208,7 +208,7 @@ class FishTrackingMethod(ImageToDataNode):
 
             # also, make the angles continuous
             angles[1:] = np.unwrap(angles[1:] - angles[0])
-            print("angles", angles)
+            # print("angles", angles)
 
             # put the data together for one fish
             fish_coords = np.concatenate([np.array(points[0][:2]), angles])
@@ -245,7 +245,7 @@ class FishTrackingMethod(ImageToDataNode):
         if self._output_type is None:
             self.reset_state()
 
-        print ("output ", *self.fishes.coords.flatten(), max_area * 1.0)
+        # print ("output ", *self.fishes.coords.flatten(), max_area * 1.0)
 
         return NodeOutput(
             messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)

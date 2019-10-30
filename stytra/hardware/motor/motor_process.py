@@ -50,32 +50,28 @@ class SendPositionsProcess(Process):
 
 
 class ReceiverProcess(Process):
-    def __init__(self, dot_position_queue, calib_event, finished_event, motor_position_queue):
+    def __init__(self, dot_position_queue, calib_event, home_event, finished_event, motor_position_queue):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
         self.calib_event = calib_event
+        self.home_event = home_event
         self.jitter_thres = 15
         # self.arena_thres = 60000  # aka 3 cm
         # self.home = 2200000
 
     def run(self):
+
         #Initialize the Motor here with standard scale
         self.motor_y = Motor(1, scale=1)
         self.motor_x = Motor(2, scale=1)
 
         # #Initialize homing sequence:
-        #TODO maybe add homing button to calibrator EVENT?
-
-        # self.motor_x.motorminimal()
-        # self.motor_y.motorminimal()
-        if self.calib_event.is_set():
-            self.motor_x.calibrator_movement()
-            self.motor_y.calibrator_movement()
+        self.motor_x.motorminimal()
+        self.motor_y.motorminimal()
 
         ##########
-
         self.motor_y.open()
         self.motor_x.open()
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
@@ -87,6 +83,19 @@ class ReceiverProcess(Process):
         #TODO Wait for signal to start from GUI
 
         while not self.finished_event.is_set():
+            #TODO does work by itself but calibrator movement doesnt work after
+
+            # if self.home_event.is_set():
+            #     self.motor_x.motorminimal()
+            #     self.motor_y.motorminimal()
+            #     print ("homing event was called")
+            #     self.home_event.clear()
+
+            if self.calib_event.is_set():
+                self.motor_x.calibrator_movement()
+                self.motor_y.calibrator_movement()
+                self.calib_event.clear()
+                #todo set x and y
 
             try:
                 tracked_time, last_position = self.position_queue.get(timeout=0.001)
@@ -107,7 +116,8 @@ class ReceiverProcess(Process):
                     # print("dotx,y", dotx, doty, dotcx, dotcy)
                     # print(dotcx ** 2 + dotcy ** 2)
                     # print(self.arena_thres ** 2)
-
+                    distance_x =10
+                    distance_y =10
                     # arena bounds check relative to home
                     # if dotcx ** 2 + dotcy ** 2 < self.arena_thres ** 2:
                     #     # TODO does not work - always out of bounds

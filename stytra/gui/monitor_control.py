@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
 
 import cv2
-
+from time import sleep
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows
@@ -190,6 +190,10 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate_motor)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
+            self.button_home = QPushButton("Home Motor")
+            self.button_home.clicked.connect(self.home_motor)
+            self.layout_calibrate.addWidget(self.button_home)
+
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
@@ -238,18 +242,29 @@ class ProjectorAndCalibrationWidget(QWidget):
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
         try:
             kps_prev = self.calibrator.find_transform_matrix(frame)
-            self.calibrator.calib_event.set()
-            #TODO move motor x,y via EVENT (calibration movement)
+
+            self.experiment.frame_dispatcher.calibration_event.set()
+
+            k = 0 #this loop is needed for the picture queue not to be jammed
+            while k < 100:
+                self.experiment.app.processEvents()
+                k += 1
 
             _, frame = self.experiment.frame_dispatcher.gui_queue.get()
             kps_after = self.calibrator.find_transform_matrix(frame)
 
             conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
-            #Todo put conx and cony to experiment
+            self.experiment.motor_scale = [conx, cony]
+            #Todo put conx and cony to experiment via queue
 
             self.widget_proj_viewer.display_calibration_pattern(
                 self.calibrator, frame.shape, frame
             )
 
+
         except CalibrationException:
             pass
+
+    def home_motor(self):
+        self.experiment.frame_dispatcher.home_event.set()
+        print ("Homing button pressed")

@@ -301,9 +301,9 @@ class CircleCalibrator(Calibrator):
 class MotorCalibrator(CircleCalibrator):
     """Displays a Point for Motor Calibration"""
 
+
     def __init__(self, *args, dh=10, r=1, **kwargs):
         super().__init__(*args,dh=10, **kwargs)
-        self.calib_event = Event()
 
     def find_transform_matrix(self, image):
         super().find_transform_matrix(image)
@@ -313,12 +313,10 @@ class MotorCalibrator(CircleCalibrator):
         diff = kps_prev - kps_after
         x_points = np.mean(diff[0:, 0:1])
         y_points = np.mean(diff[0:, 1:])
-        print(diff, x_points, y_points)
 
         self.conversion_x = int(20000 / abs(x_points))
         self.conversion_y = int(20000 / abs(y_points))
         print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
-
         self.motor_to_cam = [self.conversion_x, self.conversion_y]
 
         return self.conversion_x, self.conversion_y

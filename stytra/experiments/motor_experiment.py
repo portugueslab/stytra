@@ -16,12 +16,13 @@ class MotorExperiment(TrackingExperiment):
 
         self.motor_pos_queue = NamedTupleQueue()
 
-        self.motor_scale = self.calibrator.proj_to_cam #TODO send by queue to process
+        self.motor_scale =None
 
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
             finished_event=self.camera.kill_event,
-            calib_event= self.calibrator.calib_event,
+            calib_event= self.frame_dispatcher.calibration_event,
+            home_event= self.frame_dispatcher.home_event,
             motor_position_queue=self.motor_pos_queue,
         )
         self.motor_position_queue = self.motor_process.motor_position_queue

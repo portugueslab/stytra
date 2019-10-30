@@ -1,4 +1,4 @@
-from stytra.hardware.motor.stageAPI import Mot
+from stytra.hardware.motor.stageAPI import Motor
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 import json
 

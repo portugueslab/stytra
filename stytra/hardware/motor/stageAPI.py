@@ -337,8 +337,7 @@ class Motor:
 
     def calibrator_movement(self):
         pos = self.get_position()
-        print("moving")
-        self.movethatthing(posx + 20000)  # 20000 motor units is 1 mm
+        self.movethatthing(pos + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
 
 
