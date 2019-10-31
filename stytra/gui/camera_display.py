@@ -112,6 +112,7 @@ class CameraViewWidget(QWidget):
                 action_off="Resume",
                 action_on="Replay",
             )
+            self.btn_rewind.setToolTip("Replay the time period selected in the plot")
             self.layout_control.addWidget(self.btn_rewind)
 
         if self.control_queue is not None:

@@ -102,11 +102,13 @@ class ConditionalWrapper(DynamicStimulus):
         which resets the stim_on to the state at the beginning of the current phase,
         1 to go to the next phase or -1 to go to the previous phase.
     reset_to_mod_phase: tuple (int, int), optional, default None
+        (index, modulo)
         if the stim_on consists of paired phases (e.g. motion on, motion off), it can
-        one can reset to the begging of the bigger phase.
+        one can reset to the begging of one of the pair: (0, 2)
         If the stimulation pattern is e.g. [no_motion, motion_left, motion_right] to
         always get to no_motion on reenter reset_to_mod_phase would be set to (0, 3)
-        This paremeter can be combined with reset_phase_shift, but in usual cases it
+        The first element is the phase index, the second the modulo (
+        This parameter can be combined with reset_phase_shift, but in usual cases it
         has to be set to 0
 
     """
