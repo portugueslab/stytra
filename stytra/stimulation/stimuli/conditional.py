@@ -205,11 +205,9 @@ class ConditionalWrapper(DynamicStimulus):
 
             if self.reset_phase:
                 new_phase = self.get_phase()
-                time_added = (
-                    self._elapsed
-                    - self._elapsed_difference
-                    - self.active.phase_times[new_phase]
-                )
+                time_in_stim = self._elapsed - self._elapsed_difference
+                time_added = time_in_stim - self.active.phase_times[new_phase]  # time that passed after the phase
+                # we want to be in, is lost
                 self.duration += time_added
                 self._elapsed_difference += time_added
 
