@@ -185,8 +185,7 @@ class ConditionalWrapper(DynamicStimulus):
         if self.reset_to_mod_phase is not None:
             outer_phase = new_phase // self.reset_to_mod_phase[1]
             new_phase = (
-                    outer_phase * self.reset_to_mod_phase[1]
-                    + self.reset_to_mod_phase[0]
+                outer_phase * self.reset_to_mod_phase[1] + self.reset_to_mod_phase[0]
             )
         return new_phase
 
@@ -206,7 +205,9 @@ class ConditionalWrapper(DynamicStimulus):
             if self.reset_phase:
                 new_phase = self.get_phase()
                 time_in_stim = self._elapsed - self._elapsed_difference
-                time_added = time_in_stim - self.active.phase_times[new_phase]  # time that passed after the phase
+                time_added = (
+                    time_in_stim - self.active.phase_times[new_phase]
+                )  # time that passed after the phase
                 # we want to be in, is lost
                 self.duration += time_added
                 self._elapsed_difference += time_added
