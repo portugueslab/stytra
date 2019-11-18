@@ -1,11 +1,11 @@
-import datetime
 import numpy as np
 import flammkuchen as fl
 
 from stytra.utilities import FrameProcess
 from multiprocessing import Event, Queue
 from queue import Empty
-import os
+from stytra.utilities import save_df
+import pandas as pd
 
 try:
     import av
@@ -79,6 +79,11 @@ class VideoWriter(FrameProcess):
         pass
 
     def complete(self):
+        save_df(
+            pd.DataFrame(self.times, columns="t"),
+            self.filename_base + "video_times",
+            self.log_format,
+        )
         self.recording = False
 
     def reset(self):
