@@ -1,3 +1,8 @@
+# 0.8.26
+# Fixes
+- Background stimuli reworked: tiling of stimulus works in all cases regardless of transform
+- InterpolatedStimulus phase is not assumed to be always increasing anymore (possilbe in some closed-loop configurations)
+
 # 0.8.25
 - Fixed erratic bug in stimulus updating
 - Fixed not working test for tracking
