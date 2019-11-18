@@ -95,3 +95,6 @@ ENV/
 docs/source/_static/*.mp4
 
 \.pytest_cache/
+
+# MacOS stuff:
+.DS_Store

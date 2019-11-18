@@ -25,9 +25,9 @@ A modular package to control stimulation and track behavior in zebrafish experim
 If you are using Stytra for your own research, please `cite us <https://doi.org/10.1371/journal.pcbi.1006699>`_!
     
 Stytra is divided into independent modules which can be assembled
-depending on the experimental requirements.
+depending on the experimental requirements. For a complete description, look at the `full documentation <http://www.portugueslab.com/stytra>`_.
 
-Simple usage examples can be found in the examples folder.
+Instructions to create your first experiment in Stytra and usage examples can be found in the `example gallery <http://www.portugueslab.com/stytra/userguide/1_examples_gallery.html>`_.
 
 
 Quick installation guide
@@ -81,8 +81,8 @@ install using the -e argument::
 
 
 
-Now you can have a look at the stytra :ref:`Examples gallery`, or you can start
-:ref:`Configuring a computer for Stytra experiments`.
+Now you can have a look at the stytra `example gallery <http://www.portugueslab.com/stytra/userguide/1_examples_gallery.html>`_, or you can start
+`configuring a computer for Stytra experiments <http://www.portugueslab.com/stytra/userguide/5_configuring_computer.html>`_.
 In the second case, you might want to have a look at the camera APIs section below first.
 
 .. note::
@@ -93,4 +93,4 @@ In the second case, you might want to have a look at the camera APIs section bel
     from their `github repository <https://github.com/pyqtgraph/pyqtgraph>`_.
     The problem will be resolved once the next pyqtgraph version is released.
 
-For further details please consult the `documentation <http://www.portugueslab.com/stytra/>`_
+For further details on the installation please consult the relative `documentation  page <http://www.portugueslab.com/stytra/userguide/0_install_guide.html>`_.

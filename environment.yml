@@ -1,9 +1,10 @@
-name: stytra
+name: stytra_env
 channels:
   - conda-forge
 dependencies:
   - python=3.7
   - pip
+  - pyqt
   - numpy
   - scipy
   - numba
@@ -13,8 +14,5 @@ dependencies:
   - ffmpeg
   - scikit-image
   - matplotlib
-  - qt
   - opencv
   - av
-  - pip:
-    - stytra

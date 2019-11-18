@@ -22,6 +22,8 @@ from stytra.gui.buttons import IconButton, ToggleIconButton
 from stytra.gui.status_display import StatusMessageDisplay
 from stytra.gui.framerate_viewer import MultiFrameratesWidget
 
+from stytra.stimulation.stimulus_display import StimulusDisplayOnMainWindow
+
 from lightparam.gui import ParameterGui, pretty_name, ControlCombo, ControlButton
 
 
@@ -42,8 +44,10 @@ class QPlainTextEditLogger(logging.Handler):
 
 
 class ExperimentWindow(QMainWindow):
-    """Window for controlling a simple experiment including only a monitor
+    """ Window for controlling a simple experiment including only a monitor
     the relative controls and the buttons for data_log and protocol control.
+    All widgets objects are created and connected in the `__init__` and then added
+    ti the GUI in the `construct_ui` method
 
     Parameters
     ----------
@@ -64,9 +68,6 @@ class ExperimentWindow(QMainWindow):
 
         self.docks = dict()
 
-        # self.label_debug = DebugLabel(debug_on=experiment.debug_mode)
-        # if not self.experiment.offline:
-        #     self.widget_projection = ProjectorAndCalibrationWidget(experiment)
         self.toolbar_control = ProtocolControlToolbar(experiment.protocol_runner, self)
         self.toolbar_control.setObjectName("toolbar")
 
@@ -110,17 +111,23 @@ class ExperimentWindow(QMainWindow):
         self.metadata_win = None
 
     def change_folder_gui(self):
+        """ Open dialog window to specify a new saving directory.
+        """
         folder = QFileDialog.getExistingDirectory(
             caption="Results folder", directory=self.experiment.base_dir
         )
+        print(folder)
         if folder is not None:
             self.experiment.base_dir = folder
             self.act_folder.setText("Save in {}".format(self.experiment.base_dir))
 
     def show_metadata_gui(self):
-        """ """
+        """ Open Param GUI to control general experiment and animal metadata.
+        """
+        # Create widget, horizontal layout
         self.metadata_win = QWidget()
         self.metadata_win.setLayout(QHBoxLayout())
+        # Add metadata widgets to the main one
         self.metadata_win.layout().addWidget(ParameterGui(self.experiment.metadata))
         self.metadata_win.layout().addWidget(
             ParameterGui(self.experiment.metadata_animal)
@@ -128,10 +135,13 @@ class ExperimentWindow(QMainWindow):
         self.metadata_win.show()
 
     def add_dock(self, item: QDockWidget):
+        """ Adding a new DockWidget updating the docks dictionary.
+        """
         self.docks[item.objectName()] = item
 
     def construct_ui(self):
-        """ """
+        """ UI construction function.
+        """
         self.addToolBar(Qt.TopToolBarArea, self.toolbar_control)
 
         log_dock = QDockWidget("Log", self)
@@ -155,9 +165,13 @@ class ExperimentWindow(QMainWindow):
         self.setCentralWidget(None)
 
     def write_log(self, msg):
+        """ Write something in the log window.
+        """
         self.log_widget.textCursor().appendPlainText(msg)
 
     def toggle_db(self, tg):
+        """ Toggle database button.
+        """
         if self.chk_db.isChecked():
             self.experiment.use_db = True
         else:
@@ -181,8 +195,8 @@ class ExperimentWindow(QMainWindow):
 
 
 class VisualExperimentWindow(ExperimentWindow):
-    """Window for controlling a simple experiment including only a monitor
-    the relative controls and the buttons for data_log and protocol control.
+    """ Window for controlling a visual experiment, where we add the projector
+    calibration widget.
 
     Parameters
     ----------
@@ -197,8 +211,10 @@ class VisualExperimentWindow(ExperimentWindow):
     def __init__(self, *args, **kwargs):
         """ """
         super().__init__(*args, **kwargs)
+
         if not self.experiment.offline:
             self.widget_projection = ProjectorAndCalibrationWidget(self.experiment)
+            self.stimulus_display = StimulusDisplayOnMainWindow(self.experiment)
 
     def construct_ui(self):
         """ """
@@ -211,9 +227,16 @@ class VisualExperimentWindow(ExperimentWindow):
             self.add_dock(proj_dock)
             self.addDockWidget(Qt.RightDockWidgetArea, proj_dock)
 
+            stimulus_dis = QDockWidget("Stimulus", self)
+            stimulus_dis.setWidget(self.stimulus_display)
+            stimulus_dis.setObjectName("stimulus_display")
+            self.add_dock(stimulus_dis)
+            self.addDockWidget(Qt.LeftDockWidgetArea, stimulus_dis)
+
 
 class CameraExperimentWindow(VisualExperimentWindow):
-    """ """
+    """ Window for an experiment with a camera
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -399,3 +422,7 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
+
+
+
+

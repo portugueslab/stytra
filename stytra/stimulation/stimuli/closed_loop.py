@@ -112,7 +112,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
 
 class CalibratingClosedLoop1D(Basic_CL_1D):
     """
-    Vigor-based closed loop stimulus. Velocity is assumend to be calculated
+    Vigor-based closed loop stimulus. Velocity is assumed to be calculated
     with the
 
     The parameters can change in time if the df_param is supplied which

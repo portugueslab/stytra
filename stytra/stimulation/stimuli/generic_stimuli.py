@@ -232,7 +232,7 @@ class InterpolatedStimulus(DynamicStimulus):
                     np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                 )
 
-
+ 
 class TriggerStimulus(DynamicStimulus):
     """ A class that uses the Experiment trigger to trigger a sequence
     of stimuli.
@@ -252,3 +252,78 @@ class TriggerStimulus(DynamicStimulus):
         # If trigger is set, make it end:
         if self._experiment.trigger.start_event.is_set():
             self.duration = self._elapsed
+
+
+
+class CombinerStimulus(DynamicStimulus):
+    """
+    Class to have two stimuli happening pseudo-simultaneously (one update would
+    still be called before the other one).
+    """
+
+    def __init__(self, stim_list):
+        super().__init__()
+        self._stim_list = stim_list
+
+        self.duration = max([s.duration for s in stim_list])
+
+        self.dynamic_parameters = self.dynamic_parameter_names
+
+    def start(self):
+        for s in self._stim_list:
+            s.start()
+
+        super().start()
+
+    def stop(self):
+        for s in self._stim_list:
+            s.stop()
+
+    def paint(self, p, w, h):
+        for s in self._stim_list:
+            s.paint(p, w, h)
+            # p.end()
+
+    def update(self):
+        for s in self._stim_list:
+            s.update()
+            s._elapsed = self._elapsed
+
+    def initialise_external(self, experiment):
+        super().initialise_external(experiment)
+        for s in self._stim_list:
+            s.initialise_external(experiment)
+
+    @property
+    def dynamic_parameter_names(self):
+        names = []
+        for i, s in enumerate(self._stim_list):
+            if isinstance(s, DynamicStimulus):
+                for n in s.dynamic_parameter_names:
+                    names.append("s{}_{}".format(i, n))
+
+        return names
+
+    def get_dynamic_state(self):
+        state = dict()
+        for i, s in enumerate(self._stim_list):
+            if isinstance(s, DynamicStimulus):
+                d = s.get_dynamic_state()
+                state.update({"s{}_{}".format(i, k): d[k] for k in d.keys()})
+
+        return state
+
+    def get_state(self):
+        """
+        """
+        state_dict = dict()
+        for key, value in self.__dict__.items():
+            if not callable(value) and key[0] != "_":
+                state_dict[key] = value
+
+        for i, s in enumerate(self._stim_list):
+            for key, value in s.__dict__.items():
+                if not callable(value) and key[0] != "_":
+                    state_dict["s{}_{}".format(i, key)] = value
+
+        return state_dict

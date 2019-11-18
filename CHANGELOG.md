@@ -1,10 +1,15 @@
 # 0.8.26
-# Fixes
+## Fixes
 - Background stimuli reworked: tiling of stimulus works in all cases regardless of transform
 - InterpolatedStimulus phase is not assumed to be always increasing anymore (possilbe in some closed-loop configurations)
 - frame times for recordings of video feed now get saved
 
+## Improvements
+- Added documentation
+- Added window to monitor stimulus in main GUI
+
 # 0.8.25
+## Fixes
 - Fixed erratic bug in stimulus updating
 - Fixed not working test for tracking
 
