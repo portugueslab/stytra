@@ -244,8 +244,7 @@ class SpinnakerCamera(Camera):
                 return image_converted
 
         except PySpin.SpinnakerException as ex:
-            print("E: {0}".format(ex))
-            return None
+            return "E: {0}".format(ex)
 
     def release(self):
         self.cam.EndAcquisition()

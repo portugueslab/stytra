@@ -123,7 +123,6 @@ class GenerateStimuliMovie:
         shutil.rmtree(self.test_dir)
 
     def waitend(self):
-        print("At the end")
         output_folder = (
             path.dirname(pkg_resources.resource_filename(stytra.__name__, ""))
             + "/docs/source/_static/"

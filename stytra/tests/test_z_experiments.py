@@ -32,8 +32,7 @@ class TestProtocol0(Protocol):
         self.duration = Param(PROTOCOL_DURATION / 2)
 
     def get_stim_sequence(self):
-        stimuli = [Pause(duration=self.duration),
-                   Pause(duration=self.duration)]
+        stimuli = [Pause(duration=self.duration), Pause(duration=self.duration)]
         return stimuli
 
 
@@ -101,11 +100,9 @@ class TestExperimentClass(unittest.TestCase):
             tracking = None
 
         if tracking is None:
-            exp = VisualExperiment(app=self.app,
-                                   dir_save=self.test_dir, **kwargs)
+            exp = VisualExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
         else:
-            exp = TrackingExperiment(app=self.app,
-                                     dir_save=self.test_dir, **kwargs)
+            exp = TrackingExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
 
         # Run the protocol and update N_REFRESH_EVTS times:
         exp.start_experiment()
@@ -122,56 +119,16 @@ class TestExperimentClass(unittest.TestCase):
     def check_result(array, key, tol=3):
         solutions = dict(
             th_e0=np.array(
-                [
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                    -95.58,
-                ]
+                [-95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58, -95.58]
             ),
             th_e1=np.array(
-                [
-                    -77.34,
-                    -77.34,
-                    -77.34,
-                    -77.34,
-                    -77.34,
-                    -77.34,
-                    -79.74,
-                    -79.74,
-                    -79.74,
-                ]
+                [-77.34, -77.34, -77.34, -77.34, -77.34, -77.34, -79.74, -79.74, -79.74]
             ),
             theta_00=np.array(
-                [
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                ]
+                [-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52]
             ),
             theta_08=np.array(
-                [
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                    -1.52,
-                ]
+                [-1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52, -1.52]
             ),
         )
 
@@ -180,7 +137,6 @@ class TestExperimentClass(unittest.TestCase):
 
     def test_visual_experiment(self):
         self.app = QApplication([])
-        print("asdf")
         for prot in [TestProtocol0(), TestProtocol1()]:
             self.run_experiment(protocol=prot)
             with open(self.metadata_path, "r") as f:
@@ -207,7 +163,6 @@ class TestExperimentClass(unittest.TestCase):
         video_file = str(
             Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
         )
-        print("asdfasdf")
         for method in ["eyes", "tail"]:
             self.run_experiment(
                 protocol=TestProtocol(),

@@ -8,7 +8,12 @@ from pathlib import Path
 from PyQt5.QtCore import QPoint, QRect, QPointF, Qt
 from PyQt5.QtGui import QPainter, QBrush, QColor, QPen, QTransform, QPolygon, QRegion
 
-from stytra.stimulation.stimuli import Stimulus, DynamicStimulus, InterpolatedStimulus, CombinerStimulus
+from stytra.stimulation.stimuli import (
+    Stimulus,
+    DynamicStimulus,
+    InterpolatedStimulus,
+    CombinerStimulus,
+)
 from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
@@ -143,9 +148,7 @@ class FullFieldVisualStimulus(VisualStimulus):
         p.drawRect(QRect(-1, -1, w + 2, h + 2))  # draw full field rectangle
 
 
-class DynamicLuminanceStimulus(
-    FullFieldVisualStimulus, InterpolatedStimulus
-):
+class DynamicLuminanceStimulus(FullFieldVisualStimulus, InterpolatedStimulus):
     """ A luminance stimulus that has dynamically specified luminance.
 
 
@@ -532,11 +535,13 @@ class PaintGratingStimulus(BackgroundStimulus):
             self.barheight,
         )
 
+
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
     # TODO refactor to cisambiguate
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("x")
+
 
 class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
     def __init__(self, *args, **kwargs):
@@ -879,6 +884,7 @@ class FixationCrossStimulus(FullFieldVisualStimulus):
     """ Draws a simple cross in the center of the visual field
 
     """
+
     def __init__(
         self,
         cross_color=(255, 0, 0),

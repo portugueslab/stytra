@@ -29,13 +29,12 @@ class BrowserWindow(QWidget):
 
     def update_fish(self, str):
         self.str = str
-        self.fish_folder = Path(self.data_directory + '/{}/'.format(self.str.text()))
-        #self.fish_metadata = list(self.fish_folder.glob('*.json'))
-
+        self.fish_folder = Path(self.data_directory + "/{}/".format(self.str.text()))
+        # self.fish_metadata = list(self.fish_folder.glob('*.json'))
 
 
 class DragDropLabel(QLabel):
-    acceptedFormat = 'json'
+    acceptedFormat = "json"
     droppedFile = pyqtSignal(str)
 
     def __init__(self, parent):
@@ -56,10 +55,11 @@ class DragDropLabel(QLabel):
             else:
                 pass
 
+
 class JsonReader(QWidget):
     def __init__(self):
         super().__init__()
-        self.title = 'Json metadata reader'
+        self.title = "Json metadata reader"
         self.initUI()
 
     def initUI(self):
@@ -106,12 +106,11 @@ class JsonReader(QWidget):
         :param metadata: .json metadata
         """
 
-
         self.fish = fish
         print(self.fish)
 
-        self.fish_folder = Path(self.data_directory + '/{}/'.format(self.fish.text()))
-        self.fish_metadata_path = list(self.fish_folder.glob('*.json'))
+        self.fish_folder = Path(self.data_directory + "/{}/".format(self.fish.text()))
+        self.fish_metadata_path = list(self.fish_folder.glob("*.json"))
 
         with open(self.fish_metadata_path) as json_file:
             self.metadata = json.load(json_file)
@@ -126,7 +125,7 @@ class JsonReader(QWidget):
         self.parameters = self.create_parameters(self.fix_types(self.metadata))
 
         # Create tree of Parameter objects
-        self.p = Parameter.create(name='params', type='group', children=self.parameters)
+        self.p = Parameter.create(name="params", type="group", children=self.parameters)
 
         # Save original state
         self.original_state = self.p.saveState()
@@ -134,7 +133,7 @@ class JsonReader(QWidget):
         # Create ParameterTree widget
         self.tree = ParameterTree()
         self.tree.setParameters(self.p, showTop=False)
-        self.tree.setWindowTitle('pyqtgraph example: Parameter Tree')
+        self.tree.setWindowTitle("pyqtgraph example: Parameter Tree")
 
         # Display tree widget
         self.layout.addWidget(self.tree, 0, 0, 1, 2)
@@ -158,11 +157,15 @@ class JsonReader(QWidget):
         self.metadata_dict_mod = self.get_mod_dict(self.treevals_dict)
 
         # Nasty way to make new dict (with modified metadata) with same structure as the original one
-        self.metadata_dict_mod['stimulus']['log'] = self.metadata_dict['stimulus']['log']
-        self.metadata_dict_mod['stimulus']['display_params']['pos'] = \
-            json.loads(self.metadata_dict_mod['stimulus']['display_params']['pos'])
-        self.metadata_dict_mod['stimulus']['display_params']['size'] = \
-            json.loads(self.metadata_dict_mod['stimulus']['display_params']['size'])
+        self.metadata_dict_mod["stimulus"]["log"] = self.metadata_dict["stimulus"][
+            "log"
+        ]
+        self.metadata_dict_mod["stimulus"]["display_params"]["pos"] = json.loads(
+            self.metadata_dict_mod["stimulus"]["display_params"]["pos"]
+        )
+        self.metadata_dict_mod["stimulus"]["display_params"]["size"] = json.loads(
+            self.metadata_dict_mod["stimulus"]["display_params"]["size"]
+        )
 
         self.show_warning()
 
@@ -175,8 +178,10 @@ class JsonReader(QWidget):
             self.msg.setIcon(QMessageBox.Warning)
             self.setWindowTitle("Saving Warning")
             self.msg.setText("Some parameters have changed")
-            self.msg.setInformativeText("Do you want to overwrite the original .json metadata file?")
-            self.msg.addButton('Create new file', QMessageBox.AcceptRole)
+            self.msg.setInformativeText(
+                "Do you want to overwrite the original .json metadata file?"
+            )
+            self.msg.addButton("Create new file", QMessageBox.AcceptRole)
             self.msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
             self.ret = self.msg.exec_()
@@ -192,26 +197,26 @@ class JsonReader(QWidget):
             self.msg2.setIcon(QMessageBox.Information)
             self.setWindowTitle("Saving Warning")
             self.msg2.setText("No changes have been made.")
-            self.msg2.addButton('OK', QMessageBox.AcceptRole)
+            self.msg2.addButton("OK", QMessageBox.AcceptRole)
 
             self.ret = self.msg2.exec_()
 
     def overwrite_metadata_file(self, metadata_dict_mod):
         # Overwritte original metadata file
-        with open(self.filename, 'w') as file:
+        with open(self.filename, "w") as file:
             json.dump(metadata_dict_mod, file)
 
     def create_metadata_file(self, metadata_dict_mod):
         # Overwritte original metadata file
-        self.name, self.ext = self.filename.split('.')
-        with open('{}_modified.{}'.format(self.name, self.ext), 'w') as file:
+        self.name, self.ext = self.filename.split(".")
+        with open("{}_modified.{}".format(self.name, self.ext), "w") as file:
             json.dump(metadata_dict_mod, file)
 
     def reset(self):
         """Reset parameter tree values to the original state after loading.
         """
         self.p.restoreState(self.original_state, recursive=True)
-        #self.tree.setParameters(self.p, showTop=False)
+        # self.tree.setParameters(self.p, showTop=False)
 
     def fix_types(self, datadict):
         """Modify metadata dict so only accepted types are found.
@@ -231,15 +236,25 @@ class JsonReader(QWidget):
         """
         parameters = []
         for key, value in datadict.items():
-            if key == 'log':
+            if key == "log":
                 pass
             else:
                 if isinstance(value, dict):
                     parameters.append(
-                        {'name': '{}'.format(key), 'type': 'group', 'children': self.create_parameters(value)})
+                        {
+                            "name": "{}".format(key),
+                            "type": "group",
+                            "children": self.create_parameters(value),
+                        }
+                    )
                 else:
                     parameters.append(
-                        {'name': '{}'.format(key), 'type': '{}'.format(type(value).__name__), 'value': value})
+                        {
+                            "name": "{}".format(key),
+                            "type": "{}".format(type(value).__name__),
+                            "value": value,
+                        }
+                    )
         return parameters
 
     def get_mod_dict(self, treevals_dict):
@@ -259,15 +274,15 @@ class JsonReader(QWidget):
         for param, change, data in changes:
             path = self.p.childPath(param)
             if path is not None:
-                childName = '.'.join(path)
+                childName = ".".join(path)
             else:
                 childName = param.name()
-            print('  parameter: %s' % childName)
-            print('  change:    %s' % change)
-            print('  data:      %s' % str(data))
-            print('  ----------')
+            print("  parameter: %s" % childName)
+            print("  change:    %s" % change)
+            print("  data:      %s" % str(data))
+            print("  ----------")
 
-            if change == 'activated':
+            if change == "activated":
                 pass
             else:
                 self.has_changed = True
@@ -280,11 +295,12 @@ class JsonReader(QWidget):
         except AttributeError:
             pass
 
+
 class FolderViewer(QWidget):
     def __init__(self, json_viewer):
         self.json_viewer = json_viewer
         super().__init__()
-        self.title = 'Folder viewer'
+        self.title = "Folder viewer"
         self.initUI()
 
     def initUI(self):
@@ -294,7 +310,9 @@ class FolderViewer(QWidget):
         self.getbtn.clicked.connect(self.select_folder)
 
         self.draglbl = DragDropLabel(self)
-        self.draglbl.setText("... or drop folder here".format(DragDropLabel.acceptedFormat.upper()))
+        self.draglbl.setText(
+            "... or drop folder here".format(DragDropLabel.acceptedFormat.upper())
+        )
         self.draglbl.setAlignment(QtCore.Qt.AlignCenter)
         self.draglbl.droppedFile.connect(self.list_folders)
 
@@ -321,7 +339,6 @@ class FolderViewer(QWidget):
 
     # def get_data_directory(self):
 
-
     def list_folders(self, path):
         self.data_directory = path
         self.fish_list = os.listdir(self.data_directory)
@@ -342,7 +359,7 @@ class FolderViewer(QWidget):
     #     # self.layout.addLayout(self.jsontree, 0, 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = BrowserWindow()
     ex.show()

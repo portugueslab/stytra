@@ -92,10 +92,10 @@ class Trigger(Process):
                 time.sleep(TIME_START_EVENT_ON)
                 self.start_event.clear()
                 if self.start_event.is_set():
-                    print("we have a problem")
+                    print("Trying to start when the start event is already set")
 
             if self.check_trigger():
-                print("received")
+                print("Trigger signal received")
                 self.start_event.set()
                 self.t = datetime.datetime.now()
 

@@ -156,7 +156,6 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
             pass
 
     def display_stimulus(self, calibrator, camera_resolution=(480, 640), image=None):
-        print('progress')
         cw = camera_resolution[0]
         ch = camera_resolution[1]
         points_cam = np.array([[0, 0], [0, cw], [ch, cw], [ch, 0], [0, 0]])

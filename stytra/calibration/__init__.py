@@ -292,5 +292,3 @@ class CircleCalibrator(Calibrator):
 
         self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
         self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
-
-

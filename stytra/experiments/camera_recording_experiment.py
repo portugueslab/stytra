@@ -58,5 +58,4 @@ class VideoRecordingExperiment(CameraVisualExperiment):
     def wrap_up(self, *args, **kwargs):
         self.video_writer.finished_signal.set()
         self.video_writer.join()
-        print("closed")
         super().wrap_up(*args, **kwargs)

@@ -4,7 +4,14 @@ import numpy as np
 import qimage2ndarray
 from PyQt5.QtCore import QPoint, QRect, Qt, QSize
 from PyQt5.QtGui import QPainter, QBrush, QColor, QTransform
-from PyQt5.QtWidgets import QOpenGLWidget, QWidget, QDockWidget, QPushButton, QVBoxLayout, QSizePolicy
+from PyQt5.QtWidgets import (
+    QOpenGLWidget,
+    QWidget,
+    QDockWidget,
+    QPushButton,
+    QVBoxLayout,
+    QSizePolicy,
+)
 
 from lightparam.param_qt import ParametrizedWidget, Param
 
@@ -54,7 +61,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
             name="stimulus/display_params", tree=protocol_runner.experiment.dc, **kwargs
         )
         self.setWindowTitle("Stytra stimulus display")
-        
+
         # QOpenGLWidget is faster in painting complicated stimuli (but slower
         # with easy ones!) but does not allow stimulus recording. Therefore,
         # parent class for the StimDisplay window is created at runtime:
@@ -106,7 +113,9 @@ class StimulusDisplayOnMainWindow(QWidget):
 
         self.layout_inner = QVBoxLayout()
         self.layout_inner.addWidget(self.widget_display)
-        self.button_show_display = QPushButton("Show stimulus (showing stimulus may impair performance)")
+        self.button_show_display = QPushButton(
+            "Show stimulus (showing stimulus may impair performance)"
+        )
         self.widget_display.display_state = False
         self.button_show_display.clicked.connect(self.change_button)
         self.layout_inner.addWidget(self.button_show_display)
@@ -116,8 +125,10 @@ class StimulusDisplayOnMainWindow(QWidget):
         self.setLayout(self.container_layout)
         self.container_layout.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
-        self.widget_display.sizeHint = lambda : QSize(100, 100)
-        sizePolicy = QSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)
+        self.widget_display.sizeHint = lambda: QSize(100, 100)
+        sizePolicy = QSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding
+        )
         self.widget_display.setSizePolicy(sizePolicy)
 
         self.widget_display.setMaximumSize(500, 500)
@@ -126,7 +137,7 @@ class StimulusDisplayOnMainWindow(QWidget):
         """ """
         if self.widget_display.display_state:
             self.button_show_display.setText("Show stimulus (may impair performance!)")
-            self.button_show_display.setStyleSheet('background-color: None')
+            self.button_show_display.setStyleSheet("background-color: None")
             self.widget_display.display_state = False
         else:
             self.button_show_display.setText("Pause (pause not to impair performance!)")
@@ -231,7 +242,8 @@ class StimDisplayWidget:
             # Only one every self.record_stim_every frames will be captured.
             if (
                 self.last_time is None
-                or (now - self.last_time).total_seconds() >= 1 / self.record_stim_framerate
+                or (now - self.last_time).total_seconds()
+                >= 1 / self.record_stim_framerate
             ):
                 #
                 # QImage from QPixmap taken with QWidget.grab():
@@ -277,9 +289,13 @@ class StimDisplayWidget:
 
 
 class StimDisplayWidgetConditional(StimDisplayWidget):
-
     def __init__(self, *args, protocol_runner, calibrator, record_stim_framerate):
-        super().__init__(*args,  protocol_runner=protocol_runner, calibrator=calibrator, record_stim_framerate=record_stim_framerate)
+        super().__init__(
+            *args,
+            protocol_runner=protocol_runner,
+            calibrator=calibrator,
+            record_stim_framerate=record_stim_framerate
+        )
         self.button_show_state = True
 
     def display_stimulus(self):
@@ -296,8 +312,9 @@ class StimDisplayWidgetConditional(StimDisplayWidget):
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
             if (
-                    self.last_time is None
-                    or (now - self.last_time).total_seconds() >= 1 / self.record_stim_framerate
+                self.last_time is None
+                or (now - self.last_time).total_seconds()
+                >= 1 / self.record_stim_framerate
             ):
                 #
                 # QImage from QPixmap taken with QWidget.grab():
@@ -337,4 +354,3 @@ class StimDisplayWidgetConditional(StimDisplayWidget):
                     self.calibrator.paint_calibration_pattern(p, h, w)
 
         p.end()
-

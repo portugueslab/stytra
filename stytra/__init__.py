@@ -41,6 +41,8 @@ class Stytra:
                 it is in a window
             window_size : tuple(int, int)
                 optional specification of the size of the stimulus display area
+            gl : bool (default True)
+                enable OpenGL for drawing stimuli, faster for most stimuli and configurations.
 
         camera : dict
             video_file : str

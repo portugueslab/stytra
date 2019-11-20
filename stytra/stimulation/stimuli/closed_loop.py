@@ -4,7 +4,7 @@ from PyQt5.QtGui import QTransform
 try:
     from random import choices
 except ImportError:
-    print("Cannot import choiches!")
+    print("Cannot import choices!")
 
 from stytra.stimulation.stimuli import (
     DynamicStimulus,

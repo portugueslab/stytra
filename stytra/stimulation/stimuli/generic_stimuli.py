@@ -232,7 +232,7 @@ class InterpolatedStimulus(DynamicStimulus):
                     np.interp(self._elapsed, self.df_param.t, self.df_param[col]),
                 )
 
- 
+
 class TriggerStimulus(DynamicStimulus):
     """ A class that uses the Experiment trigger to trigger a sequence
     of stimuli.
@@ -252,7 +252,6 @@ class TriggerStimulus(DynamicStimulus):
         # If trigger is set, make it end:
         if self._experiment.trigger.start_event.is_set():
             self.duration = self._elapsed
-
 
 
 class CombinerStimulus(DynamicStimulus):

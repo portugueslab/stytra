@@ -422,7 +422,3 @@ class TrackingExperimentWindow(CameraExperimentWindow):
         self.track_params_wnd.setWindowTitle("Tracking parameters")
 
         self.track_params_wnd.show()
-
-
-
-

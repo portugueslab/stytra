@@ -17,7 +17,7 @@ from pyqtgraph.parametertree import Parameter, ParameterTree
 
 
 class DragDropLabel(QLabel):
-    acceptedFormat = 'json'
+    acceptedFormat = "json"
     droppedFile = pyqtSignal(str)
 
     def __init__(self, parent):
@@ -38,10 +38,11 @@ class DragDropLabel(QLabel):
             else:
                 pass
 
+
 class FolderViewer(QWidget):
     def __init__(self):
         super().__init__()
-        self.title = 'Folder viewer'
+        self.title = "Folder viewer"
         self.initUI()
 
     def initUI(self):
@@ -51,7 +52,9 @@ class FolderViewer(QWidget):
         self.getbtn.clicked.connect(self.select_folder)
 
         self.draglbl = DragDropLabel(self)
-        self.draglbl.setText("... or drop folder here".format(DragDropLabel.acceptedFormat.upper()))
+        self.draglbl.setText(
+            "... or drop folder here".format(DragDropLabel.acceptedFormat.upper())
+        )
         self.draglbl.setAlignment(QtCore.Qt.AlignCenter)
         self.draglbl.droppedFile.connect(self.list_folders)
 
@@ -81,14 +84,11 @@ class FolderViewer(QWidget):
 
     def do_smth(self, str):
         self.str = str
-        self.fish_folder = Path(self.data_directory + '/{}/'.format(self.str.text()))
-        print(list(self.fish_folder.glob('*.json')))
+        self.fish_folder = Path(self.data_directory + "/{}/".format(self.str.text()))
+        print(list(self.fish_folder.glob("*.json")))
 
 
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     ex = FolderViewer()
     sys.exit(app.exec_())
