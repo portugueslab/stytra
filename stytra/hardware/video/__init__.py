@@ -11,6 +11,7 @@ from queue import Empty, Full
 from lightparam import Param
 from lightparam.param_qt import ParametrizedQt
 
+from stytra.hardware.video.cameras.interface import CameraError
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import IndexedArrayQueue
 import flammkuchen as fl
@@ -182,7 +183,11 @@ class CameraSource(VideoSource):
             if self.control_queue is not None:
                 self.retrieve_params(messages)
             # Grab the new frame, and put it in the queue if valid:
-            arr = self.cam.read()
+            try:
+                arr = self.cam.read()
+            except CameraError:
+                pass
+
             if self.rotation:
                 arr = np.rot90(arr, self.rotation)
 

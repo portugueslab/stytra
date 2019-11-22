@@ -71,3 +71,7 @@ class Camera:
         """Close the camera.
         """
         pass
+
+
+class CameraError(Exception):
+    pass

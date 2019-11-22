@@ -1,5 +1,5 @@
 import numpy as np
-from stytra.hardware.video.cameras.interface import Camera
+from stytra.hardware.video.cameras.interface import Camera, CameraError
 
 try:
     import PySpin
@@ -244,7 +244,7 @@ class SpinnakerCamera(Camera):
                 return image_converted
 
         except PySpin.SpinnakerException as ex:
-            return "E: {0}".format(ex)
+            raise CameraError("Frame not read")
 
     def release(self):
         self.cam.EndAcquisition()
