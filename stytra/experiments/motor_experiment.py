@@ -11,12 +11,12 @@ class MotorExperiment(TrackingExperiment):
     """"""
     def __init__(self, *args, **kwargs):
         self.tracked_position_queue = NamedTupleQueue()
+        self.calibration_queue= NamedTupleQueue()
 
         super().__init__(*args,calibrator=MotorCalibrator(), **kwargs)
 
         self.motor_pos_queue = NamedTupleQueue()
 
-        self.motor_scale =None
 
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
@@ -40,7 +40,6 @@ class MotorExperiment(TrackingExperiment):
     def start_experiment(self):
         super().start_experiment()
         self.motor_process.start()
-        # self.xscale, self.yscale = self.motor_process.xscale, self.motor_process.yscale
 
 
     def wrap_up(self, *args, **kwargs):
@@ -51,6 +50,7 @@ class MotorExperiment(TrackingExperiment):
     def initialize_tracking_meth(self):
         self.frame_dispatcher = TrackingProcessMotor(
             second_output_queue=self.tracked_position_queue,
+            calib_receiver_queue= self.calibration_queue,
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
             pipeline=self.pipeline_cls,

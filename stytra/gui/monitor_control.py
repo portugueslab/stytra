@@ -254,12 +254,12 @@ class ProjectorAndCalibrationWidget(QWidget):
             kps_after = self.calibrator.find_transform_matrix(frame)
 
             conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
-            self.experiment.motor_scale = [conx, cony]
-            #Todo put conx and cony to experiment via queue
+            self.calibrator.motor_to_cam = [conx,cony]
 
             self.widget_proj_viewer.display_calibration_pattern(
                 self.calibrator, frame.shape, frame
             )
+            self.experiment.calibration_queue.put([conx,cony])
 
 
         except CalibrationException:

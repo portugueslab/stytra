@@ -126,8 +126,8 @@ class ReceiverProcess(Process):
                     if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
                         print("Moving")
                         #TODO change just get pos and plus distance
-                        self.motor_x.move_relative(distance_x)
-                        self.motor_y.move_relative(distance_y)
+                        self.motor_x.move_relative(last_position.f0_x)
+                        self.motor_y.move_relative(last_position.f0_y)
                         print(distance_x, distance_y)
                         dot_pos.append([distance_x, distance_y])
 
