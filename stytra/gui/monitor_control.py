@@ -7,7 +7,8 @@ import pyqtgraph as pg
 from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException, MotorCalibrator
 from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
-
+from collections import namedtuple
+from stytra.collectors.namedtuplequeue import NamedTupleQueue
 import cv2
 from time import sleep
 
@@ -239,7 +240,9 @@ class ProjectorAndCalibrationWidget(QWidget):
         #     pass
 
     def calibrate_motor(self):
-        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        output_calib = namedtuple("scale", ["scale_x", "scale_y"])
+
+        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
         # try:
         kps_prev = self.calibrator.find_transform_matrix(frame)
 
@@ -250,11 +253,14 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.experiment.app.processEvents()
             k += 1
 
-        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
         kps_after = self.calibrator.find_transform_matrix(frame)
 
         conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
-        self.experiment.motor_scale = [conx, cony]
+
+        e =(conx,cony)
+
+        self.experiment.calib_queue.put(time,output_calib(*e))
 
         self.widget_proj_viewer.display_calibration_pattern(
             self.calibrator, frame.shape, frame

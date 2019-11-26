@@ -331,9 +331,8 @@ class Motor:
         self.velo = velocity
 
         self.homethatthing()
-        self.open()
         self.setvelocity(self.acc, self.velo)
-        self.close()
+
 
     def calibrator_movement(self):
         pos = self.get_position()

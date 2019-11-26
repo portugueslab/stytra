@@ -175,12 +175,12 @@ class TrackingProcess(FrameProcess):
 
 
 class TrackingProcessMotor(TrackingProcess):
-    def __init__(self, *args, second_output_queue=None, **kwargs):
+    def __init__(self, *args, second_output_queue=None, calib_queue= None,**kwargs):
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
+        self.calib_queue = calib_queue
         self.calibration_event = Event()
         self.home_event =Event()
-        #TODO get scale from calibrator
         self.scale_x = None
         self.scale_y = None
 
@@ -199,14 +199,13 @@ class TrackingProcessMotor(TrackingProcess):
             # Gets the processing parameters from their queue
             self.retrieve_params()
 
-            if self.home_event.is_set():
-                sleep(0.1)
-                self.home_event.clear()
-
-            if self.calibration_event.is_set():
-                sleep(0.1)
-                self.calibration_event.clear()
-                #set xy scale
+            try:
+                time, [scale_x, scale_y] = self.calib_queue.get(timeout=0.01)
+                print("gotten from calibrator ", scale_x, scale_y)
+                self.scale_x =scale_x
+                self.scale_y = scale_y
+            except Empty:
+                pass
 
 
             # Gets frame from its queue, if the input is too fast, drop frames
@@ -215,6 +214,7 @@ class TrackingProcessMotor(TrackingProcess):
                 time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
             except Empty:
                 continue
+
 
             messages = []
             # If we are copying the frames to another queue (e.g. for video recording), do it here
@@ -228,16 +228,18 @@ class TrackingProcessMotor(TrackingProcess):
 
             new_messages, output = self.pipeline.run(frame)
 
-            #Calculate new position for the motor
-            # TODO put hardcoding out here
-            # center_y = 270
-            # center_x = 360
-            # distance_x = (center_x - output.f0_x)*self.scale_x
-            # distance_y = (center_y - output.f0_y)*self.scale_y
-            # print ("distance x,y", distance_x, distance_y)
+            #Calculate new position for the motor if calibration was set
+            if self.scale_x is not None:
+                center_y = 270
+                center_x = 360
+                print ("before", output.f0_x, output.f0_y)
+                distance_x = (center_x - output.f0_x)*self.scale_x
+                distance_y = (center_y - output.f0_y)*self.scale_y
 
-            #TODO modify output to send distance as well -
-            # output nametple is generated in fishtracking method
+                #modify the position f0_x and f0_y for motor
+                #todo change nametuple in fishtracking method sometime
+                output = output._replace(f0_x=distance_x, f0_y=distance_y)
+                print ("after", output.f0_x, output.f0_y)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)

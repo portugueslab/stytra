@@ -83,19 +83,17 @@ class ReceiverProcess(Process):
         #TODO Wait for signal to start from GUI
 
         while not self.finished_event.is_set():
-            #TODO does work by itself but calibrator movement doesnt work after
 
-            # if self.home_event.is_set():
-            #     self.motor_x.motorminimal()
-            #     self.motor_y.motorminimal()
-            #     print ("homing event was called")
-            #     self.home_event.clear()
+            if self.home_event.is_set():
+                self.motor_x.motorminimal()
+                self.motor_y.motorminimal()
+                print ("homing event was called")
+                self.home_event.clear()
 
             if self.calib_event.is_set():
                 self.motor_x.calibrator_movement()
                 self.motor_y.calibrator_movement()
                 self.calib_event.clear()
-                #todo set x and y
 
             try:
                 tracked_time, last_position = self.position_queue.get(timeout=0.001)
@@ -111,24 +109,15 @@ class ReceiverProcess(Process):
                 try:
                     #TODO arena bounds as Params of experiment.
 
-                    # dotx, dotcx = motor_x.move_relative_without_move(distance_x)
-                    # doty, dotcy = motor_y.move_relative_without_move(distance_y)
-                    # print("dotx,y", dotx, doty, dotcx, dotcy)
-                    # print(dotcx ** 2 + dotcy ** 2)
-                    # print(self.arena_thres ** 2)
-                    distance_x =10
-                    distance_y =10
-                    # arena bounds check relative to home
-                    # if dotcx ** 2 + dotcy ** 2 < self.arena_thres ** 2:
-                    #     # TODO does not work - always out of bounds
-                    #     print("position inside arena bounds")
-                        # jitter filter for camera
+                    # distance_x =10
+                    # distance_y =10
+                    distance_x= last_position.f0_x
+                    distance_y= last_position.f0_y
+
                     if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
                         print("Moving")
-                        #TODO change just get pos and plus distance
-                        self.motor_x.move_relative(distance_x)
-                        self.motor_y.move_relative(distance_y)
-                        print(distance_x, distance_y)
+                        self.motor_x.movesimple(int(round(pos_x + distance_x)))
+                        self.motor_y.movesimple(int(round(pos_y + distance_y)))
                         dot_pos.append([distance_x, distance_y])
 
                     e = (float(pos_x), float(pos_y), distance_x, distance_y)

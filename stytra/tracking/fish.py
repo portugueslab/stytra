@@ -72,6 +72,9 @@ class FishTrackingMethod(ImageToDataNode):
             )
             + ["biggest_area"],
         )
+
+        #Todo add conditional for motor process
+
         self._output_type_changed = True
 
         # used for booking a spot for one of the potentially tracked fish
