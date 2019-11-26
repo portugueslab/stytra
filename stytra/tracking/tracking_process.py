@@ -175,12 +175,14 @@ class TrackingProcess(FrameProcess):
 
 
 class TrackingProcessMotor(TrackingProcess):
-    def __init__(self, *args, second_output_queue=None, calib_receiver_queue=None,**kwargs):
+    def __init__(self, *args, second_output_queue=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
-        self.calib_queue = calib_receiver_queue
         self.calibration_event = Event()
         self.home_event =Event()
+        #TODO get scale from calibrator
+        self.scale_x = None
+        self.scale_y = None
 
     def send_to_queue(self, time, output):
         super().send_to_queue(time, output)
@@ -203,9 +205,9 @@ class TrackingProcessMotor(TrackingProcess):
 
             if self.calibration_event.is_set():
                 sleep(0.1)
-                self.scale_x, self.scale_y =self.calib_queue.get(timeout=0.001)
-                print ("gotten from calib", self.scale_x, self.scale_y)
                 self.calibration_event.clear()
+                #set xy scale
+
 
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
@@ -227,10 +229,15 @@ class TrackingProcessMotor(TrackingProcess):
             new_messages, output = self.pipeline.run(frame)
 
             #Calculate new position for the motor
-            center_y = 270
-            center_x = 360
-            output.f0_x = (center_x - output.f0_x) * self.scale_x
-            output.f0_y = (center_y - output.f0_y) * self.scale_y
+            # TODO put hardcoding out here
+            # center_y = 270
+            # center_x = 360
+            # distance_x = (center_x - output.f0_x)*self.scale_x
+            # distance_y = (center_y - output.f0_y)*self.scale_y
+            # print ("distance x,y", distance_x, distance_y)
+
+            #TODO modify output to send distance as well -
+            # output nametple is generated in fishtracking method
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)

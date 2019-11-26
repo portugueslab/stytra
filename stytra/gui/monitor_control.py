@@ -229,41 +229,40 @@ class ProjectorAndCalibrationWidget(QWidget):
     def calibrate(self):
         """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        try:
-            self.calibrator.find_transform_matrix(frame)
-            self.widget_proj_viewer.display_calibration_pattern(
-                self.calibrator, frame.shape, frame
-            )
+        # try:
+        self.calibrator.find_transform_matrix(frame)
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame
+        )
 
-        except CalibrationException:
-            pass
+        # except CalibrationException:
+        #     pass
 
     def calibrate_motor(self):
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        try:
-            kps_prev = self.calibrator.find_transform_matrix(frame)
+        # try:
+        kps_prev = self.calibrator.find_transform_matrix(frame)
 
-            self.experiment.frame_dispatcher.calibration_event.set()
+        self.experiment.frame_dispatcher.calibration_event.set()
 
-            k = 0 #this loop is needed for the picture queue not to be jammed
-            while k < 100:
-                self.experiment.app.processEvents()
-                k += 1
+        k = 0 #this loop is needed for the picture queue not to be jammed
+        while k < 100:
+            self.experiment.app.processEvents()
+            k += 1
 
-            _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-            kps_after = self.calibrator.find_transform_matrix(frame)
+        _, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        kps_after = self.calibrator.find_transform_matrix(frame)
 
-            conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
-            self.calibrator.motor_to_cam = [conx,cony]
+        conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
+        self.experiment.motor_scale = [conx, cony]
 
-            self.widget_proj_viewer.display_calibration_pattern(
-                self.calibrator, frame.shape, frame
-            )
-            self.experiment.calibration_queue.put([conx,cony])
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame
+        )
 
 
-        except CalibrationException:
-            pass
+        # except CalibrationException:
+        #     pass
 
     def home_motor(self):
         self.experiment.frame_dispatcher.home_event.set()

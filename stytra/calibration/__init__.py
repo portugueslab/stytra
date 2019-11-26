@@ -242,15 +242,20 @@ class CircleCalibrator(Calibrator):
             the three triangle points
 
         """
+
         if blob_params is None:
             blobdet = cv2.SimpleBlobDetector_create()
         else:
             blobdet = cv2.SimpleBlobDetector_create(blob_params)
-        # TODO check if blob detection is robust
+
         scaled_im = 255 - (image.astype(np.float32) * 255 / np.max(image)).astype(
             np.uint8
         )
-        keypoints = blobdet.detect(scaled_im)
+        # Blur image to remove noise
+        frame = cv2.GaussianBlur(scaled_im, (15, 15), 0)
+
+        keypoints = blobdet.detect(frame)
+
         if len(keypoints) != 3:
             raise CalibrationException("3 points for calibration not found")
         kps = np.array([k.pt for k in keypoints])

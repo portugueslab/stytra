@@ -289,17 +289,17 @@ class Motor:
     def movesimple(self, position=int()):
         BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
 
-    def move_relative(self, to_move):
+    def move_relative(self, distance):
         pos = self.get_position()
-        # to_move = distance * self.scale
+        to_move = distance * self.scale
         dotpos = int(round(pos + to_move))
         print("moving the motor to", int(round(pos + to_move)))
         self.movesimple(int(round(pos + to_move)))
         return dotpos
 
-    def move_relative_without_move(self, to_move):
+    def move_relative_without_move(self, distance):
         pos = self.get_position()
-        # to_move = distance * self.scale
+        to_move = distance * self.scale
         dotpos = int(round(pos + to_move))
         dot_c = int(dotpos - 2200000)
         return dotpos, dot_c
