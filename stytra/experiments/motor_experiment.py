@@ -23,6 +23,7 @@ class MotorExperiment(TrackingExperiment):
             calib_event= self.frame_dispatcher.calibration_event,
             home_event= self.frame_dispatcher.home_event,
             motor_position_queue=self.motor_pos_queue,
+            tracking_event=self.frame_dispatcher.tracking_event
         )
         self.motor_position_queue = self.motor_process.motor_position_queue
 

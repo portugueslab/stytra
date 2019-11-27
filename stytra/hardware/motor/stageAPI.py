@@ -135,7 +135,7 @@ class Motor:
             self.sleeptime = 0.01
             self.channel = channel
             self.tolerance = 100
-            self.homing_velo = int(107374182 / 10)
+            self.homing_velo = int(107374182 / 18)
             self.scale = scale
 
     def sethomingvelo(self):

@@ -1,6 +1,7 @@
 from queue import Empty, Full
 from multiprocessing import Event, Value
 from time import sleep
+from collections import namedtuple
 
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
@@ -175,21 +176,29 @@ class TrackingProcess(FrameProcess):
 
 
 class TrackingProcessMotor(TrackingProcess):
-    def __init__(self, *args, second_output_queue=None, calib_queue= None,**kwargs):
+    def __init__(self, *args,
+                 second_output_queue=None,
+                 calib_queue= None,**kwargs):
+
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
         self.calib_queue = calib_queue
         self.calibration_event = Event()
-        self.home_event =Event()
+        self.home_event = Event()
+        self.tracking_event = Event()
         self.scale_x = None
         self.scale_y = None
+        self.threshold = 100
 
     def send_to_queue(self, time, output):
-        super().send_to_queue(time, output)
+        self.output_queue.put(time, output)
+
+    def send_to_second_queue(self, time, output):
         self.second_output_queue.put(time, output)
 
     def run(self):
         """Loop where the tracking function runs."""
+        second_output = namedtuple("fish_scaled", ["f0_x", "f0_y"])
 
         self.pipeline = self.pipeline_cls()
         self.pipeline.setup()
@@ -204,6 +213,9 @@ class TrackingProcessMotor(TrackingProcess):
                 print("gotten from calibrator ", scale_x, scale_y)
                 self.scale_x =scale_x
                 self.scale_y = scale_y
+                if abs(scale_x - scale_y) > self.threshold:
+                    #todo maybe choose smaller value or force recalibration
+                    print("Calibrated scales difference too large")
             except Empty:
                 pass
 
@@ -232,19 +244,17 @@ class TrackingProcessMotor(TrackingProcess):
             if self.scale_x is not None:
                 center_y = 270
                 center_x = 360
-                print ("before", output.f0_x, output.f0_y)
                 distance_x = (center_x - output.f0_x)*self.scale_x
                 distance_y = (center_y - output.f0_y)*self.scale_y
-
-                #modify the position f0_x and f0_y for motor
-                #todo change nametuple in fishtracking method sometime
-                output = output._replace(f0_x=distance_x, f0_y=distance_y)
-                print ("after", output.f0_x, output.f0_y)
+                sec_output= (distance_x, distance_y)
+            else:
+                sec_output=(0.0,0.0)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)
 
             self.send_to_queue(time, output)
+            self.send_to_second_queue(time, second_output(*sec_output))
 
             # calculate the frame rate
             self.update_framerate()

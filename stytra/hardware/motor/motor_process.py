@@ -50,13 +50,16 @@ class SendPositionsProcess(Process):
 
 
 class ReceiverProcess(Process):
-    def __init__(self, dot_position_queue, calib_event, home_event, finished_event, motor_position_queue):
+    def __init__(self, dot_position_queue, calib_event,
+                 home_event, finished_event, motor_position_queue, tracking_event):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
         self.calib_event = calib_event
         self.home_event = home_event
+        self.tracking_event =tracking_event
+
         self.jitter_thres = 15
         # self.arena_thres = 60000  # aka 3 cm
         # self.home = 2200000
@@ -80,8 +83,6 @@ class ReceiverProcess(Process):
         motor_pos = []
         times = []
 
-        #TODO Wait for signal to start from GUI
-
         while not self.finished_event.is_set():
 
             if self.home_event.is_set():
@@ -95,43 +96,45 @@ class ReceiverProcess(Process):
                 self.motor_y.calibrator_movement()
                 self.calib_event.clear()
 
-            try:
-                tracked_time, last_position = self.position_queue.get(timeout=0.001)
-            except Empty:
-                pass
-
-            if last_position is not None:
-                time = datetime.datetime.now()
-                times.append(time)
-                pos_x = self.motor_x.get_position()
-                pos_y = self.motor_y.get_position()
-                motor_pos.append([pos_x, pos_y])
+            if self.tracking_event.is_set():
+                # print("tracking shiny stuff")
                 try:
-                    #TODO arena bounds as Params of experiment.
+                    tracked_time, last_position = self.position_queue.get(timeout=0.001)
+                except Empty:
+                    pass
 
-                    # distance_x =10
-                    # distance_y =10
-                    distance_x= last_position.f0_x
-                    distance_y= last_position.f0_y
+                if last_position is not None:
+                    time = datetime.datetime.now()
+                    times.append(time)
+                    pos_x = self.motor_x.get_position()
+                    pos_y = self.motor_y.get_position()
+                    motor_pos.append([pos_x, pos_y])
+                    try:
+                        #TODO arena bounds as Params of experiment.
+                        distance_x= last_position.f0_x
+                        distance_y= last_position.f0_y
 
-                    if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
-                        print("Moving")
-                        self.motor_x.movesimple(int(round(pos_x + distance_x)))
-                        self.motor_y.movesimple(int(round(pos_y + distance_y)))
-                        dot_pos.append([distance_x, distance_y])
+                        if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
+                            print("Moving")
+                            self.motor_x.movesimple(int(round(pos_x + distance_x)))
+                            self.motor_y.movesimple(int(round(pos_y + distance_y)))
+                            dot_pos.append([distance_x, distance_y])
 
-                    e = (float(pos_x), float(pos_y), distance_x, distance_y)
+                        e = (float(pos_x), float(pos_y), distance_x, distance_y)
 
-                    # else:
-                    #     print("motor move command out of arena bounds")
+                        # else:
+                        #     print("motor move command out of arena bounds")
 
-                except (ValueError, TypeError, IndexError):
-                    e = (pos_x, pos_y, 0.0, 0.0)
+                    except (ValueError, TypeError, IndexError):
+                        e = (pos_x, pos_y, 0.0, 0.0)
 
-                self.motor_position_queue.put(time, output_type(*e))
-                # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
-                #                                                   dots=dot_pos,
-                #                                                   motorpos=motor_pos)))
+                    self.motor_position_queue.put(time, output_type(*e))
+                    # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
+                    #                                                   dots=dot_pos,
+                    #                                                   motorpos=motor_pos)))
+
+
+
         self.motor_x.close()
         self.motor_y.close()
 

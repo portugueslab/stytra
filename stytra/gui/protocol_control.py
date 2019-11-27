@@ -35,6 +35,7 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
+
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
@@ -48,6 +49,7 @@ class ProtocolControlToolbar(QToolBar):
         self.toggleStatus = ToggleIconButton(
             icon_off="play", icon_on="stop", action_on="play", on=False
         )
+
         self.toggleStatus.clicked.connect(self.toggle_protocol_running)
         self.addWidget(self.toggleStatus)
 
@@ -95,6 +97,8 @@ class ProtocolControlToolbar(QToolBar):
             self.sig_start_protocol.emit()
         else:
             self.sig_stop_protocol.emit()
+
+
 
     def toggle_icon(self):
         self.toggleStatus.flip_icon(self.protocol_runner.running)

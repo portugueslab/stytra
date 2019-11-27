@@ -140,6 +140,20 @@ class CameraViewWidget(QWidget):
 
         self.param_widget = None
 
+        # todo add buttons for tracking control ONLY if experiment = motor experiment
+        self.toggleTracking = ToggleIconButton(
+            icon_off="play", icon_on="stop", action_on="play", on=False
+        )
+        self.layout_control.addWidget(self.toggleTracking)
+        self.toggleTracking.clicked.connect(self.toggle_tracking)
+
+    def toggle_tracking(self):
+        if self.toggleTracking.on ==True:
+            self.experiment.frame_dispatcher.tracking_event.set()
+        if self.toggleTracking.on == False:
+            self.experiment.frame_dispatcher.tracking_event.clear()
+
+
     def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
@@ -680,13 +694,6 @@ class CameraViewDot(CameraViewCalib):
             x = int(getattr(retrieved_data, "x"))
             y = int(getattr(retrieved_data, "y"))
             self.points_fish.setData(y=[y], x=[x])
-            # self.points_fish.setData(
-            #     y=retrieved_data[valid, 2], x=retrieved_data[valid, 0]
-            # )
-            # retrieved_data = np.array(
-            #     current_data[: -1]  # the -1 if for the diagnostic area
-            # ).reshape(n_data_per_fish)
-            # valid = np.logical_not(np.all(np.isnan(retrieved_data), 1))
 
         except (TypeError, ValueError) as e:
             pass
