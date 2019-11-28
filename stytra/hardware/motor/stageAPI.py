@@ -48,10 +48,34 @@ class MOT_BrushlessPositionLoopParameters(Structure):
     ]
 
 
+# enum MOT_TravelDirection
+MOT_TravelDirectionUndefined = c_short(0x00)
+MOT_Forwards = c_short(0x01)
+MOT_Reverse = c_short(0x02)
+MOT_TravelDirection = c_short
+
+# enum MOT_HomeLimitSwitchDirection
+MOT_LimitSwitchDirectionUndefined = c_short(0x00)
+MOT_ReverseLimitSwitch = c_short(0x01)
+MOT_ForwardLimitSwitch = c_short(0x04)
+MOT_HomeLimitSwitchDirection = c_short
+
+
+class MOT_HomingParameters(Structure):
+    _fields_ = [("direction", MOT_TravelDirection),
+                ("limitSwitch", MOT_HomeLimitSwitchDirection),
+                ("velocity", c_uint),
+                ("offsetDistance", c_uint)]
+
+
+
 TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
 TLI_GetDeviceListExt = bind(
     lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short
 )
+##################
+BMC_GetHomingParamsBlock = bind(lib, "BMC_GetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
+BMC_SetHomingParamsBlock = bind(lib, "BMC_SetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
 
 #####################################################
 BMC_StartPolling = bind(
@@ -77,7 +101,7 @@ BMC_RequestPosition = bind(lib, "BMC_RequestPosition", [c_char_p, c_short], c_in
 BMC_RequestStatusBits = bind(lib, "BMC_RequestStatusBits", [c_char_p, c_short], c_short)
 BMC_GetStatusBits = bind(lib, "BMC_GetStatusBits", [c_char_p, c_short], c_dword)
 BMC_DisableChannel = bind(lib, "BMC_DisableChannel", [c_char_p, c_short], c_short)
-BMC_EnableChannel = bind(lib, " BMC_EnableChannel", [c_char_p, c_short], c_short)
+BMC_EnableChannel = bind(lib, "BMC_EnableChannel", [c_char_p, c_short], c_short)
 BMC_GetHomingVelocity = bind(lib, "BMC_GetHomingVelocity", [c_char_p, c_short], c_short)
 BMC_SetHomingVelocity = bind(
     lib, "BMC_SetHomingVelocity", [c_char_p, c_short, c_int], c_short
@@ -150,17 +174,17 @@ class Motor:
 
         if self.serial_nom_set == True:
 
-            if BMC_Open(self.serial_nom, self.channel) == 0:
+            # if BMC_Open(self.serial_nom, self.channel) == 0:
                 # print("Opening device and starting Polling")
-                BMC_StartPolling(self.serial_nom, self.channel, 250)
+            BMC_StartPolling(self.serial_nom, self.channel, 250)
 
-                Motor.sethomingvelo(self)
+            Motor.sethomingvelo(self)
 
-                err = BMC_Home(self.serial_nom, self.channel)
-                print("Called homing with error {}".format(err))
+            err = BMC_Home(self.serial_nom, self.channel)
+            print("Called homing with error {}".format(err))
 
-                BMC_StopPolling(self.serial_nom, self.channel)
-                BMC_Close(self.serial_nom, self.channel)
+                # BMC_StopPolling(self.serial_nom, self.channel)
+                # BMC_Close(self.serial_nom, self.channel)
                 # print ("Closing device and stopping Polling")
 
             self.hometime = 5
@@ -168,6 +192,10 @@ class Motor:
 
         if self.serial_nom_set == False:
             print("Serial number not found. No Device detected to be homed.")
+
+    def home(self):
+        err = BMC_Home(self.serial_nom, self.channel)
+        print("Called homing with error {}".format(err))
 
     def open(self):
 
@@ -244,6 +272,38 @@ class Motor:
         # print ("position:", position)
         return position
 
+    def get_homing_params(self):
+        homing_info = MOT_HomingParameters()  # container
+        err = BMC_GetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
+        if err == 0:
+            print("direction: ", homing_info.direction)
+            print("limitSwitch: ", homing_info.limitSwitch)
+            print("velocity: ", homing_info.velocity)
+            print("offsetDistance: ", homing_info.offsetDistance)
+        else:
+            print("Error getting Homing Info Block. Error Code:{}".format(err))
+
+    def set_homing_params(
+        self, direction=int(), lim_switch=int(), velocity=int(), offset=int()):
+        homing_info = MOT_HomingParameters()  # container
+        homing_info.direction = direction
+        homing_info.limitSwitch = lim_switch
+        homing_info.velocity = velocity
+        homing_info.offsetDistance = offset
+        # print("direction: ", homing_info.direction)
+        # print("limitSwitch: ", homing_info.limitSwitch)
+        # print("velocity: ", homing_info.velocity)
+        # print("offsetDistance: ", homing_info.offsetDistance)
+
+        BMC_SetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
+        print("New homing parameters set.")
+
+    def set_homing_reverse(self, direction):
+        self.get_homing_params()
+        self.set_homing_params(direction=direction, lim_switch=1, velocity=5965232, offset=60000)
+        print ("homing in reverse direction")
+
+
     def get_pos_loop_params(self):
         posloop_info = MOT_BrushlessPositionLoopParameters()  # container
         err = BMC_GetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
@@ -316,7 +376,6 @@ class Motor:
         """Closes the device and Stops polling"""
         BMC_StopPolling(self.serial_nom, self.channel)
         BMC_Close(self.serial_nom, self.channel)
-        # TODO Error statement
 
     def movemanualo(self):
         #TODO maybe something to move the stage manually by keyboard
@@ -326,12 +385,8 @@ class Motor:
                      acceleration=int(204552 / 10),
                      velocity =int(107374182 / 10)):
         """Mini script to run before motor can be used"""
-
-        self.acc = acceleration
-        self.velo = velocity
-
         self.homethatthing()
-        self.setvelocity(self.acc, self.velo)
+        self.setvelocity(acceleration, velocity)
 
 
     def calibrator_movement(self):

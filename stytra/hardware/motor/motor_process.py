@@ -62,7 +62,7 @@ class ReceiverProcess(Process):
 
         self.jitter_thres = 15
         # self.arena_thres = 60000  # aka 3 cm
-        # self.home = 2200000
+
 
     def run(self):
 
@@ -71,8 +71,9 @@ class ReceiverProcess(Process):
         self.motor_x = Motor(2, scale=1)
 
         # #Initialize homing sequence:
-        self.motor_x.motorminimal()
         self.motor_y.motorminimal()
+        self.motor_x.set_homing_reverse(1)
+        self.motor_x.motorminimal()
 
         ##########
         self.motor_y.open()
@@ -86,8 +87,9 @@ class ReceiverProcess(Process):
         while not self.finished_event.is_set():
 
             if self.home_event.is_set():
-                self.motor_x.motorminimal()
                 self.motor_y.motorminimal()
+                self.motor_x.set_homing_reverse(1)
+                self.motor_x.motorminimal()
                 print ("homing event was called")
                 self.home_event.clear()
 
