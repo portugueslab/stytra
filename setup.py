@@ -26,7 +26,7 @@ setup(
         "scikit-image",
         "imageio",
         "imageio-ffmpeg",
-        "lightparam>=0.3.6",
+        "lightparam>=0.3.7",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
