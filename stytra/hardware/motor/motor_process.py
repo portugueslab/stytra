@@ -51,7 +51,8 @@ class SendPositionsProcess(Process):
 
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, calib_event,
-                 home_event, finished_event, motor_position_queue, tracking_event):
+                 home_event, finished_event, motor_position_queue,
+                 tracking_event):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
@@ -61,6 +62,7 @@ class ReceiverProcess(Process):
         self.tracking_event =tracking_event
 
         self.jitter_thres = 15
+
         # self.arena_thres = 60000  # aka 3 cm
 
 
@@ -69,11 +71,6 @@ class ReceiverProcess(Process):
         #Initialize the Motor here with standard scale
         self.motor_y = Motor(1, scale=1)
         self.motor_x = Motor(2, scale=1)
-
-        # #Initialize homing sequence:
-        self.motor_y.motorminimal()
-        self.motor_x.set_homing_reverse(1)
-        self.motor_x.motorminimal()
 
         ##########
         self.motor_y.open()
@@ -99,9 +96,11 @@ class ReceiverProcess(Process):
                 self.calib_event.clear()
 
             if self.tracking_event.is_set():
-                # print("tracking shiny stuff")
+                #todo if tracking stopped and restarted old queue is taken
+                # - that needs to be changed somehow
                 try:
                     tracked_time, last_position = self.position_queue.get(timeout=0.001)
+                    print ("last position", last_position)
                 except Empty:
                     pass
 
@@ -111,15 +110,15 @@ class ReceiverProcess(Process):
                     pos_x = self.motor_x.get_position()
                     pos_y = self.motor_y.get_position()
                     motor_pos.append([pos_x, pos_y])
+
                     try:
                         #TODO arena bounds as Params of experiment.
                         distance_x= last_position.f0_x
                         distance_y= last_position.f0_y
 
                         if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
-                            print("Moving")
-                            self.motor_x.movesimple(int(round(pos_x + distance_x)))
-                            self.motor_y.movesimple(int(round(pos_y + distance_y)))
+                            self.motor_x.movesimple(int(pos_x + distance_x))
+                            self.motor_y.movesimple(int(pos_y + distance_y))
                             dot_pos.append([distance_x, distance_y])
 
                         e = (float(pos_x), float(pos_y), distance_x, distance_y)

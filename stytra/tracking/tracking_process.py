@@ -209,7 +209,7 @@ class TrackingProcessMotor(TrackingProcess):
             self.retrieve_params()
 
             try:
-                time, [scale_x, scale_y] = self.calib_queue.get(timeout=0.01)
+                time, [scale_x, scale_y] = self.calib_queue.get(timeout=0.001)
                 print("gotten from calibrator ", scale_x, scale_y)
                 self.scale_x =scale_x
                 self.scale_y = scale_y
@@ -241,11 +241,15 @@ class TrackingProcessMotor(TrackingProcess):
             new_messages, output = self.pipeline.run(frame)
 
             #Calculate new position for the motor if calibration was set
+            #todo set default value for calibration somewhere
             if self.scale_x is not None:
                 center_y = 270
                 center_x = 360
-                distance_x = (center_x - output.f0_x)*self.scale_x
-                distance_y = (center_y - output.f0_y)*self.scale_y
+
+                #todo figure out why x and y are switched?
+                # is it because y coord sys always switched
+                distance_y = (output.f0_y - center_x) * self.scale_y
+                distance_x = (output.f0_x - center_y) * self.scale_x
                 sec_output= (distance_x, distance_y)
             else:
                 sec_output=(0.0,0.0)
