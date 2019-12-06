@@ -88,15 +88,6 @@ TLI_GetDeviceListExt = bind(
 BMC_GetHomingParamsBlock = bind(lib, "BMC_GetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
 BMC_SetHomingParamsBlock = bind(lib, "BMC_SetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
 
-####### Jogging trial ################
-BMC_RequestJogParams = bind(lib, "BMC_RequestJogParams", [POINTER(c_char), c_short], c_short)
-BMC_GetJogMode = bind(lib, "BMC_GetJogMode", [POINTER(c_char), c_short, POINTER(MOT_JogModes), POINTER(MOT_StopModes)], c_short)
-BMC_SetJogMode = bind(lib, "BMC_SetJogMode", [POINTER(c_char), c_short, MOT_JogModes, MOT_StopModes], c_short)
-BMC_GetJogStepSize = bind(lib, "BMC_GetJogStepSize", [POINTER(c_char), c_short], c_uint)
-BMC_SetJogStepSize = bind(lib, "BMC_SetJogStepSize", [POINTER(c_char), c_short, c_uint], c_short)
-BMC_GetJogVelParams = bind(lib, "BMC_GetJogVelParams", [POINTER(c_char), c_short, POINTER(c_int), POINTER(c_int)], c_short)
-BMC_SetJogVelParams = bind(lib, "BMC_SetJogVelParams", [POINTER(c_char), c_short, c_int, c_int], c_short)
-BMC_MoveJog = bind(lib, "BMC_MoveJog", [POINTER(c_char), c_short, MOT_TravelDirection], c_short)
 
 class MOT_VelocityParameters(Structure):
     _fields_ = [("minVelocity", c_int),
@@ -111,6 +102,22 @@ class MOT_JogParameters(Structure):
                 ("stopMode", MOT_StopModes)]
 
 
+BMC_GetJogParamsBlock = bind(lib, "BMC_GetJogParamsBlock", [POINTER(c_char), POINTER(MOT_JogParameters)], c_short)
+BMC_GetJogMode = bind(lib, "BMC_GetJogMode", [POINTER(c_char), c_short, POINTER(MOT_JogModes), POINTER(MOT_StopModes)], c_short)
+BMC_SetJogMode = bind(lib, "BMC_SetJogMode", [POINTER(c_char), c_short, MOT_JogModes, MOT_StopModes], c_short)
+BMC_GetJogStepSize = bind(lib, "BMC_GetJogStepSize", [POINTER(c_char), c_short], c_uint)
+BMC_SetJogStepSize = bind(lib, "BMC_SetJogStepSize", [POINTER(c_char), c_short, c_uint], c_short)
+BMC_GetJogVelParams = bind(lib, "BMC_GetJogVelParams", [POINTER(c_char), c_short, POINTER(c_int), POINTER(c_int)], c_short)
+BMC_SetJogVelParams = bind(lib, "BMC_SetJogVelParams", [POINTER(c_char), c_short, c_int, c_int], c_short)
+BMC_MoveJog = bind(lib, "BMC_MoveJog", [POINTER(c_char), c_short, MOT_TravelDirection], c_short)
+
+
+BMC_RequestMoveAbsolutePosition = bind(lib, "BMC_RequestMoveAbsolutePosition", [POINTER(c_char), c_short], c_short)
+BMC_GetMoveAbsolutePosition = bind(lib, "BMC_GetMoveAbsolutePosition", [POINTER(c_char), c_short], c_int)
+BMC_MoveAbsolute = bind(lib, "BMC_MoveAbsolute", [POINTER(c_char), c_short], c_short)
+BMC_SetMoveRelativeDistance = bind(lib, "BMC_SetMoveRelativeDistance", [POINTER(c_char), c_short, c_int], c_short)
+BMC_MoveRelative = bind(lib, "BMC_MoveRelative", [POINTER(c_char), c_int], c_short)
+BMC_SetMoveAbsolutePosition = bind(lib, "BMC_SetMoveAbsolutePosition", [POINTER(c_char), c_short, c_int], c_short)
 
 #####################################################
 BMC_StartPolling = bind(
@@ -399,6 +406,16 @@ class Motor:
         dot_c = int(dotpos - 2200000)
         return dotpos, dot_c
 
+
+    def abs_pos(self, pos):
+        BMC_SetMoveAbsolutePosition(self.serial_nom, self.channel, pos)
+
+    def move_absolute(self):
+        BMC_MoveAbsolute(self.serial_nom, self.channel)
+
+    def move_rel(self, distance):
+        BMC_MoveRelative(self.serial_nom, self.channel, distance)
+
     def movejog(self, direction):
         BMC_MoveJog(self.serial_nom, self.channel, direction)
 
@@ -409,17 +426,26 @@ class Motor:
     def set_jogstepsize(self, stepsize):
         BMC_SetJogStepSize(self.serial_nom, self.channel, stepsize)
 
-    def get_jog_params(self):
-        jog_params = MOT_JogParameters()  # container
-        err =  BMC_RequestJogParams(self.serial_nom, self.channel, byref(jog_params))
-        if err == 0:
-            print("mode: ", jog_params.mode)
-            print("stepSize: ", jog_params.stepSize)
-            print("velParams: ", jog_params.velParams)
-            print("stopMode: ", jog_params.stopMode)
+    def get_jogmode(self):
+        err = BMC_GetJogMode(self.serial_nom, self.channel)
+        print (err)
 
-    def set_jogmode(self, mode):
-        BMC_SetJogMode(self.serial_nom, self.channel, mode)
+    def set_jogmode(self, mode, stopmode):
+        """ mode: 1 = continous, 2 = jog step,
+            stopmode: 1 = immediate, 2 = profiled"""
+        BMC_SetJogMode(self.serial_nom, self.channel, mode, stopmode)
+
+    #Todo this function doesnt work
+
+    # def get_jog_params(self):
+    #     params = MOT_JogParameters()
+    #     BMC_GetJogParamsBlock(self.serial_nom, self.channel, byref(params))
+    #
+    #     if err == 0:
+    #         print("mode: ", params.mode)
+    #         print("stepSize: ", params.stepSize)
+    #         print("velParams: ", params.velParams)
+    #         print("stopMode: ", params.stopMode)
 
 
     def diablechannel(self):

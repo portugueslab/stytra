@@ -242,17 +242,21 @@ class TrackingProcessMotor(TrackingProcess):
 
             #Calculate new position for the motor if calibration was set
             #todo set default value for calibration somewhere
-            if self.scale_x is not None:
-                center_y = 270
-                center_x = 360
+            # if self.scale_x is not None:
 
-                #todo figure out why x and y are switched?
-                # is it because y coord sys always switched
-                distance_y = (output.f0_y - center_x) * self.scale_y
-                distance_x = (output.f0_x - center_y) * self.scale_x
-                sec_output= (distance_x, distance_y)
-            else:
-                sec_output=(0.0,0.0)
+            self.scale_x= 325
+            self.scale_y=317
+
+            center_y = 270
+            center_x = 360
+
+            #todo figure out why x and y are switched?
+            # is it because y coord sys always switched
+            distance_y = (output.f0_y - center_x) * self.scale_y
+            distance_x = (output.f0_x - center_y) * self.scale_x
+            sec_output= (distance_x, distance_y)
+            # else:
+            #     sec_output=(0.0,0.0)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)

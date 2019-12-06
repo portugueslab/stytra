@@ -113,12 +113,16 @@ class ReceiverProcess(Process):
 
                     try:
                         #TODO arena bounds as Params of experiment.
+
                         distance_x= last_position.f0_x
                         distance_y= last_position.f0_y
 
+                        #Todo change jitter thres cause now not pixels anymore
                         if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
-                            self.motor_x.movesimple(int(pos_x + distance_x))
-                            self.motor_y.movesimple(int(pos_y + distance_y))
+                            self.motor_x.move_rel(int(last_position.f0_x))
+                            self.motor_y.move_rel(int(last_position.f0_y))
+                            # self.motor_x.movesimple(int(pos_x + distance_x))
+                            # self.motor_y.movesimple(int(pos_y + distance_y))
                             dot_pos.append([distance_x, distance_y])
 
                         e = (float(pos_x), float(pos_y), distance_x, distance_y)
