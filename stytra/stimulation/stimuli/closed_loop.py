@@ -40,12 +40,13 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         """
 
     def __init__(
-        self, *args,
-            base_vel=10,
-            swimming_threshold=-2,
-            max_fish_vel=40,
-            max_interbout_time=None,
-            **kwargs
+        self,
+        *args,
+        base_vel=10,
+        swimming_threshold=-2,
+        max_fish_vel=40,
+        max_interbout_time=None,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.name = "general_cl1D"
@@ -92,7 +93,6 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
                     )
                 )
                 self.abort_experiment()
-
 
         self.get_fish_vel()
 
@@ -152,11 +152,9 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         (min, max) values for the final gain to be considered valid
     """
 
-    def __init__(self,
-                 target_avg_fish_vel=-15,
-                 calibrate_after=5,
-                 min_bout_n=30,
-                 **kwargs):
+    def __init__(
+        self, target_avg_fish_vel=-15, calibrate_after=5, min_bout_n=30, **kwargs
+    ):
         super().__init__(**kwargs)
         self.name = "calibrating_cl1D"
         self.dynamic_parameters.extend(["est_gain", "median_calib"])
@@ -203,9 +201,11 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.bout_vel = []
 
     def stop(self):
-        if len(self.bouts_vig_list) < self.min_bout_n or \
-            self.est_gain > self.valid_gain_range[1] or \
-            self.est_gain < self.valid_gain_range[0]:
+        if (
+            len(self.bouts_vig_list) < self.min_bout_n
+            or self.est_gain > self.valid_gain_range[1]
+            or self.est_gain < self.valid_gain_range[0]
+        ):
             self.abort_experiment()
 
             self._experiment.logger.info(
@@ -213,7 +213,6 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
                     len(self.bouts_vig_list), self.est_gain
                 )
             )
-
 
         if len(self.bouts_vig_list) > self.calibrate_after:
             self._experiment.logger.info(

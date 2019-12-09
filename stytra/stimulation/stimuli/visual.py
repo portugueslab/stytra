@@ -361,6 +361,15 @@ class BackgroundStimulus(PositionStimulus):
         pass
 
 
+class CenteredBackgroundStimulus(BackgroundStimulus):
+    def get_transform(self, w, h, x, y):
+        return (
+            QTransform().translate(-w / 2, -h / 2)
+            * super().get_transform(w, h, x, y)
+            * QTransform().translate(w / 2, h / 2)
+        )
+
+
 class SeamlessImageStimulus(BackgroundStimulus):
     """ Displays an image which should tile seamlessly.
 
