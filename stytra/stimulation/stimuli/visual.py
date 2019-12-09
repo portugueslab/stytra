@@ -698,7 +698,7 @@ def z_func_windmill(x, y, arms):
         ) * (y >= 0).astype(int)
 
 
-class WindmillStimulus(BackgroundStimulus):
+class WindmillStimulus(CenteredBackgroundStimulus):
     """ Class for drawing a rotating windmill (radial wedges in alternating colors).
     For moving gratings use subclass
 
@@ -763,7 +763,7 @@ class MovingWindmillStimulus(WindmillStimulus, InterpolatedStimulus):
         self.dynamic_parameters.append("theta")
 
 
-class HighResWindmillStimulus(BackgroundStimulus):
+class HighResWindmillStimulus(CenteredBackgroundStimulus):
     """Class for drawing a rotating windmill with sharp edges.
     Instead of rotating an image, this class use a painter to draw triangles
     of the windmill at every timestep.
