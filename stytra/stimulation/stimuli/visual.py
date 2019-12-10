@@ -271,12 +271,6 @@ class BackgroundStimulus(PositionStimulus):
     def get_transform(self, w, h, x, y):
         return QTransform().rotate(self.theta * 180 / np.pi).translate(x, y)
 
-    @staticmethod
-    def negceil(x):
-        """ negative ceiling function (e.g -0.2 gets rounded to -1, while 0.2 gets rounded to 1)
-        """
-        return int(-np.ceil(-x) if x < 0 else np.ceil(x))
-
     def get_tile_ranges(self, imw, imh, w, h, tr: QTransform):
         """ Calculates the number of tiles depending on the transform.
 
@@ -304,13 +298,14 @@ class BackgroundStimulus(PositionStimulus):
             [tr.inverted()[0].map(*cp) for cp in corner_points]
         )
 
-        # calculate the rectangle covering the trnasformed display surface
+        # calculate the rectangle covering the transformed display surface
         min_x, min_y = np.min(points_transformed, 0)
         max_x, max_y = np.max(points_transformed, 0)
 
         # count which tiles need to be drawn
-        x_start, x_end = (self.negceil(x / imw) for x in [min_x, max_x])
-        y_start, y_end = (self.negceil(y / imh) for y in [min_y, max_y])
+        x_start, x_end = (int(np.floor(min_x / imw)), int(np.ceil(max_x / imw)))
+        y_start, y_end = (int(np.floor(min_y / imh)), int(np.ceil(max_y / imh)))
+
         return range(x_start, x_end + 1), range(y_start, y_end + 1)
 
     def paint(self, p, w, h):
