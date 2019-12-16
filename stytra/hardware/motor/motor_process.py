@@ -75,6 +75,10 @@ class ReceiverProcess(Process):
         ##########
         self.motor_y.open()
         self.motor_x.open()
+        self.motor_x.set_jogmode(2, 1)
+        self.motor_x.set_jogstepsize(50000)
+        self.motor_y.set_jogmode(2, 1)
+        self.motor_y.set_jogstepsize(50000)
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
         dot_pos = []
@@ -101,6 +105,12 @@ class ReceiverProcess(Process):
                 try:
                     tracked_time, last_position = self.position_queue.get(timeout=0.001)
                     print ("last position", last_position)
+
+                    # k = 0  # this loop is needed for the picture queue not to be jammed
+                    # while k < 10:
+                    #     self.experiment.app.processEvents()
+                    #     k += 1
+
                 except Empty:
                     pass
 
@@ -119,8 +129,13 @@ class ReceiverProcess(Process):
 
                         #Todo change jitter thres cause now not pixels anymore
                         if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
-                            self.motor_x.move_rel(int(last_position.f0_x))
-                            self.motor_y.move_rel(int(last_position.f0_y))
+
+                            self.motor_x.jogging(int(last_position.f0_x))
+                            self.motor_y.jogging(int(last_position.f0_y))
+
+                            # self.motor_x.move_rel(int(last_position.f0_x))
+                            # self.motor_y.move_rel(int(last_position.f0_y))
+                            
                             # self.motor_x.movesimple(int(pos_x + distance_x))
                             # self.motor_y.movesimple(int(pos_y + distance_y))
                             dot_pos.append([distance_x, distance_y])

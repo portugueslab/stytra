@@ -419,9 +419,27 @@ class Motor:
     def movejog(self, direction):
         BMC_MoveJog(self.serial_nom, self.channel, direction)
 
+    def jogging(self, number):
+        stepsize = BMC_GetJogStepSize(self.serial_nom, self.channel)
+        jogs = int(abs(number)/stepsize)
+        print ("jogs,stepsize, number", jogs,stepsize,number)
+
+        flag = True
+        direction = self.assess_direction(number)
+        print ("direction", direction)
+
+        for i in range(jogs):
+            while flag == True:
+                BMC_MoveJog(self.serial_nom, self.channel, direction)
+                sleep(0.2)
+                flag = False
+            flag = True
+        print ("jogging done")
+
+
     def get_jogstepsize(self):
         number = BMC_GetJogStepSize(self.serial_nom, self.channel)
-        print (number)
+        return number
 
     def set_jogstepsize(self, stepsize):
         BMC_SetJogStepSize(self.serial_nom, self.channel, stepsize)
@@ -477,6 +495,14 @@ class Motor:
         pos = self.get_position()
         self.movethatthing(pos + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
+
+    def assess_direction(self, number):
+        """direction 1 - forward, direction 2- reverse"""
+        if number > 0:
+            direction = 1
+        else:
+            direction = 2
+        return int(direction)
 
 
 if __name__ == "__main__":
