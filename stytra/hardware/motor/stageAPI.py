@@ -422,19 +422,16 @@ class Motor:
     def jogging(self, number):
         stepsize = BMC_GetJogStepSize(self.serial_nom, self.channel)
         jogs = int(abs(number)/stepsize)
-        print ("jogs,stepsize, number", jogs,stepsize,number)
 
         flag = True
         direction = self.assess_direction(number)
-        print ("direction", direction)
 
         for i in range(jogs):
             while flag == True:
                 BMC_MoveJog(self.serial_nom, self.channel, direction)
-                sleep(0.2)
                 flag = False
             flag = True
-        print ("jogging done")
+
 
 
     def get_jogstepsize(self):

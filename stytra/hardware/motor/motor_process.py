@@ -10,6 +10,7 @@ import cv2
 from stytra.tracking.pipelines import ImageToDataNode, NodeOutput
 from collections import namedtuple
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
+import deepdish as dd
 from scipy.spatial import distance
 
 
@@ -76,9 +77,9 @@ class ReceiverProcess(Process):
         self.motor_y.open()
         self.motor_x.open()
         self.motor_x.set_jogmode(2, 1)
-        self.motor_x.set_jogstepsize(50000)
+        self.motor_x.set_jogstepsize(20000)
         self.motor_y.set_jogmode(2, 1)
-        self.motor_y.set_jogstepsize(50000)
+        self.motor_y.set_jogstepsize(20000)
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y"])
         last_position = None
         dot_pos = []
@@ -104,12 +105,6 @@ class ReceiverProcess(Process):
                 # - that needs to be changed somehow
                 try:
                     tracked_time, last_position = self.position_queue.get(timeout=0.001)
-                    print ("last position", last_position)
-
-                    # k = 0  # this loop is needed for the picture queue not to be jammed
-                    # while k < 10:
-                    #     self.experiment.app.processEvents()
-                    #     k += 1
 
                 except Empty:
                     pass
@@ -122,23 +117,23 @@ class ReceiverProcess(Process):
                     motor_pos.append([pos_x, pos_y])
 
                     try:
-                        #TODO arena bounds as Params of experiment.
-
+                        # #TODO arena bounds as Params of experiment.
+                        #
                         distance_x= last_position.f0_x
                         distance_y= last_position.f0_y
+                        #
+                        # #Todo change jitter thres cause now not pixels anymore
+                        # if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
 
-                        #Todo change jitter thres cause now not pixels anymore
-                        if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
+                        self.motor_x.jogging(int(last_position.f0_x))
+                        self.motor_y.jogging(int(last_position.f0_y))
 
-                            self.motor_x.jogging(int(last_position.f0_x))
-                            self.motor_y.jogging(int(last_position.f0_y))
+                        # self.motor_x.move_rel(int(last_position.f0_x))
+                        # self.motor_y.move_rel(int(last_position.f0_y))
 
-                            # self.motor_x.move_rel(int(last_position.f0_x))
-                            # self.motor_y.move_rel(int(last_position.f0_y))
-                            
-                            # self.motor_x.movesimple(int(pos_x + distance_x))
-                            # self.motor_y.movesimple(int(pos_y + distance_y))
-                            dot_pos.append([distance_x, distance_y])
+                        # self.motor_x.movesimple(int(pos_x + distance_x))
+                        # self.motor_y.movesimple(int(pos_y + distance_y))
+                        dot_pos.append([distance_x, distance_y])
 
                         e = (float(pos_x), float(pos_y), distance_x, distance_y)
 
@@ -149,10 +144,6 @@ class ReceiverProcess(Process):
                         e = (pos_x, pos_y, 0.0, 0.0)
 
                     self.motor_position_queue.put(time, output_type(*e))
-                    # dd.io.save("stage_movement.h5", pd.DataFrame(dict(time = times,
-                    #                                                   dots=dot_pos,
-                    #                                                   motorpos=motor_pos)))
-
 
 
         self.motor_x.close()

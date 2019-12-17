@@ -63,3 +63,12 @@ class MotorExperiment(TrackingExperiment):
     def refresh_plots(self):
         super().refresh_plots()
         self.window_main.stream_plot.add_stream(self.acc_motor)
+
+    def save_data(self):
+        super().save_data()
+
+        if self.acc_motor is not None:
+            self.save_log(
+                self.acc_motor, "motor_log", "motor"
+            )
+
