@@ -153,7 +153,6 @@ class CameraViewWidget(QWidget):
         if self.toggleTracking.on == False:
             self.experiment.frame_dispatcher.tracking_event.clear()
 
-
     def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
