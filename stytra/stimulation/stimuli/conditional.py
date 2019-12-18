@@ -273,7 +273,6 @@ class CenteringWrapper(SingleConditionalWrapper):
                 self.margin / scale)
 
     def paint(self, p, w, h):
-        #todo change xc and yc dynamically somehow during the protocol
         self.xc, self.yc = w / 2, h / 2
         super().paint(p, w, h)
 
@@ -331,3 +330,5 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
         super().paint(p, w, h)
+
+#TODO turn wrapper on after some time after losing

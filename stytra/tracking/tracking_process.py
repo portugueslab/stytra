@@ -228,6 +228,7 @@ class TrackingProcessMotor(TrackingProcess):
                 continue
 
 
+
             messages = []
             # If we are copying the frames to another queue (e.g. for video recording), do it here
             if self.recording_signal is not None and self.recording_signal.is_set():
@@ -239,6 +240,14 @@ class TrackingProcessMotor(TrackingProcess):
             # If a processing function is specified, apply it:
 
             new_messages, output = self.pipeline.run(frame)
+
+            #assess if the fish is tracked for the wrapper,
+            # if not tracked it should home
+            # Todo they have to work together, this code just plays ping pong 
+            # if output.f0_x > 0:
+            #     pass
+            # else:
+            #     self.home_event.set()
 
             #Calculate new position for the motor if calibration was set
             #todo set default value for calibration somewhere

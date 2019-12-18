@@ -1,6 +1,7 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from lightparam import Param
+from stytra.stimulation.stimuli.conditional import CenteringWrapper, TwoRadiusCenteringWrapper
 
 
 class FlashProtocol(Protocol):
@@ -16,11 +17,18 @@ class FlashProtocol(Protocol):
 
     def get_stim_sequence(self):
         # This is the
+        # stimuli = [
+        #     Pause(duration=self.period_sec - self.flash_duration),
+        #     FullFieldVisualStimulus(
+        #         duration=self.flash_duration, color=(255, 255, 255)
+        #     ),
+        # ]
+
         stimuli = [
-            Pause(duration=self.period_sec - self.flash_duration),
+            TwoRadiusCenteringWrapper(stimulus=
             FullFieldVisualStimulus(
                 duration=self.flash_duration, color=(255, 255, 255)
-            ),
+            )),
         ]
         return stimuli
 
