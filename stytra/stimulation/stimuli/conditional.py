@@ -2,7 +2,7 @@ import numpy as np
 from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 from stytra.stimulation.stimuli.generic_stimuli import DynamicStimulus
-from stytra.stimulation.stimuli.visual import RadialSineStimulus
+from stytra.stimulation.stimuli.visual import RadialSineStimulus, adaptiveRadialSineStimulus
 
 
 class PauseOutsideStimulus(DynamicStimulus):
@@ -328,7 +328,15 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
                  scale))
 
     def paint(self, p, w, h):
-        self.xc, self.yc = w / 2, h / 2
+        self.xc, self.yc = w /2, h / 2
         super().paint(p, w, h)
 
-#TODO turn wrapper on after some time after losing
+
+class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
+    """Extension of Two Radius centering Wrapper with adaptive location of
+    Wrapper center for Motti """
+    def __init__(self, *args,
+                 **kwargs):
+        super().__init__(*args, **kwargs)
+
+

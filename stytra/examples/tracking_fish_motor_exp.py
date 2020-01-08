@@ -4,7 +4,9 @@ from stytra.stimulation import Protocol
 from lightparam import Param
 from pathlib import Path
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli.conditional import CenteringWrapper, TwoRadiusCenteringWrapper
+from stytra.stimulation.stimuli.conditional import adaptiveRadialSineStimulus
+from stytra.stimulation.stimuli.conditional import CenteringWrapper,\
+    TwoRadiusCenteringWrapper, MottiCenteringWrapper
 from stytra.stimulation.stimuli.visual import FullFieldVisualStimulus
 
 class Motti(Protocol):
@@ -24,10 +26,10 @@ class Motti(Protocol):
     def get_stim_sequence(self):
         # This is the
         stimuli = [
-            TwoRadiusCenteringWrapper(stimulus=
+            MottiCenteringWrapper(stimulus=
             FullFieldVisualStimulus(
                 duration=self.flash_duration, color=(255, 255, 255)
-            )),
+            ),centering_stimulus = adaptiveRadialSineStimulus()),
         ]
 
         return stimuli

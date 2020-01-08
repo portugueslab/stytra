@@ -620,6 +620,27 @@ class RadialSineStimulus(VisualStimulus):
         p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
 
 
+class adaptiveRadialSineStimulus(RadialSineStimulus):
+    """ Centering Wrapper for Motti"""
+
+    def __init__(self, period=8, velocity=5, duration=1, **kwargs):
+        super().__init__(**kwargs)
+
+
+    def paint(self, p, w, h):
+        x, y = (
+            (np.arange(d) - 150) * self._experiment.calibrator.mm_px for d in (w, h)
+        )
+        self.image = np.round(
+            np.sin(
+                np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))
+                + self.phase
+            )
+            * 127
+            + 127
+        ).astype(np.uint8)
+        p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
+
 class FishOverlayStimulus(PositionStimulus):
     """ For testing freely-swimming closed loop
 
