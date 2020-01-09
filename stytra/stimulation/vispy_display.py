@@ -29,6 +29,7 @@ class DisplayProcess(Process):
         self.stim = None
         self.canvas = None
         self.scene = None
+        self.protocol = None
 
     def run(self) -> None:
         vispy.use("Glfw")
@@ -39,8 +40,11 @@ class DisplayProcess(Process):
             center=(100, 100), color="white", parent=view.scene, radius=(10, 10)
         )
         self.txt = scene.visuals.Text(parent=view.scene, color="white", pos=(40, 40))
-        timer = app.Timer("auto", connect=self.update, start=True)
+        self.timer = app.Timer("auto", connect=self.update, start=True)
         app.run()
+
+    def set_protocol(self):
+        pass
 
     def update(self, *args):
         ctime = process_time_ns()
