@@ -54,6 +54,7 @@ class VisualStimulus(Stimulus):
         """
         pass
 
+
     def clip(self, p, w, h):
         """Clip image before painting
 
@@ -625,21 +626,27 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
 
     def __init__(self, period=8, velocity=5, duration=1, **kwargs):
         super().__init__(**kwargs)
-
+        self.motor_proj = 0.00000091
 
     def paint(self, p, w, h):
-        x, y = (
-            (np.arange(d) - 150) * self._experiment.calibrator.mm_px for d in (w, h)
-        )
-        self.image = np.round(
-            np.sin(
-                np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))
-                + self.phase
-            )
-            * 127
-            + 127
-        ).astype(np.uint8)
-        p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
+        try:
+            t, last_position = self._experiment.acc_motor.data_queue.get()
+            print("motor pos",  last_position.x_, last_position.y_)
+
+            x, y_placeholder = ((np.arange(d) - d/round(int(last_position.x_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (w, 0))
+            x_placeholder, y = ((np.arange(d) - d/round(int(last_position.y_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (0, h))
+
+            self.image = np.round(
+                np.sin(
+                    np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))
+                    + self.phase
+                )
+                * 127
+                + 127
+            ).astype(np.uint8)
+            p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
+        except:
+            pass
 
 class FishOverlayStimulus(PositionStimulus):
     """ For testing freely-swimming closed loop

@@ -64,7 +64,9 @@ class ReceiverProcess(Process):
 
         self.jitter_thres = 15
 
-        # self.arena_thres = 60000  # aka 3 cm
+        self.lower_thres = 1200000
+        self.upper_thres = 3200000
+        self.home = 2200000
 
 
     def run(self):
@@ -115,6 +117,9 @@ class ReceiverProcess(Process):
                     pos_x = self.motor_x.get_position()
                     pos_y = self.motor_y.get_position()
                     motor_pos.append([pos_x, pos_y])
+                    # print ("motor pos", pos_x, pos_y)
+                    #
+                    # if pos_x
 
                     try:
                         # #TODO arena bounds as Params of experiment.

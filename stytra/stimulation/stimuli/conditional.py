@@ -339,4 +339,9 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
                  **kwargs):
         super().__init__(*args, **kwargs)
 
+    def paint(self, p, w, h):
+        super().paint(p,w,h)
+
+
+
 
