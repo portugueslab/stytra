@@ -53,7 +53,7 @@ class SendPositionsProcess(Process):
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, calib_event,
                  home_event, finished_event, motor_position_queue,
-                 tracking_event):
+                 tracking_event, motor_status_queue):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
@@ -61,9 +61,11 @@ class ReceiverProcess(Process):
         self.calib_event = calib_event
         self.home_event = home_event
         self.tracking_event =tracking_event
+        self.motor_status_queue = motor_status_queue
 
         self.jitter_thres = 15
 
+        self.arena_thres = 1000000
         self.lower_thres = 1200000
         self.upper_thres = 3200000
         self.home = 2200000
@@ -90,6 +92,9 @@ class ReceiverProcess(Process):
 
         while not self.finished_event.is_set():
 
+            # status = self.motor_status_queue.get()
+            # print ("here", status)
+
             if self.home_event.is_set():
                 self.motor_y.motorminimal()
                 self.motor_x.set_homing_reverse(1)
@@ -103,6 +108,7 @@ class ReceiverProcess(Process):
                 self.calib_event.clear()
 
             if self.tracking_event.is_set():
+
                 #todo if tracking stopped and restarted old queue is taken
                 # - that needs to be changed somehow
                 try:
@@ -112,23 +118,22 @@ class ReceiverProcess(Process):
                     pass
 
                 if last_position is not None:
+
                     time = datetime.datetime.now()
                     times.append(time)
                     pos_x = self.motor_x.get_position()
                     pos_y = self.motor_y.get_position()
                     motor_pos.append([pos_x, pos_y])
-                    # print ("motor pos", pos_x, pos_y)
-                    #
-                    # if pos_x
+
+                    #arena thresholding
+                    if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 < self.arena_thres ** 2:
+                        print("in arena")
+                    else:
+                        print("out of bounds")
 
                     try:
-                        # #TODO arena bounds as Params of experiment.
-                        #
                         distance_x= last_position.f0_x
                         distance_y= last_position.f0_y
-                        #
-                        # #Todo change jitter thres cause now not pixels anymore
-                        # if distance_x ** 2 + distance_y ** 2 > self.jitter_thres ** 2:
 
                         self.motor_x.jogging(int(last_position.f0_x))
                         self.motor_y.jogging(int(last_position.f0_y))

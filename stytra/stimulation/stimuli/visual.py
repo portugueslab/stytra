@@ -627,6 +627,7 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
     def __init__(self, period=8, velocity=5, duration=1, **kwargs):
         super().__init__(**kwargs)
         self.motor_proj = 0.00000091
+        # 0.00000091
 
     def paint(self, p, w, h):
         try:
@@ -635,6 +636,7 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
 
             x, y_placeholder = ((np.arange(d) - d/round(int(last_position.x_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (w, 0))
             x_placeholder, y = ((np.arange(d) - d/round(int(last_position.y_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (0, h))
+
 
             self.image = np.round(
                 np.sin(
