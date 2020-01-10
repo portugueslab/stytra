@@ -3,7 +3,7 @@ import math
 import cv2
 import numpy as np
 from PyQt5.QtCore import QRect, QPoint
-from PyQt5.QtGui import QPainter, QPen, QColor, QBrush
+from PyQt5.QtGui import QPainter, QPen, QColor, QBrush, QPolygon
 
 from lightparam.param_qt import ParametrizedQt, Param
 
@@ -129,9 +129,23 @@ class CrossCalibrator(Calibrator):
             p.setBrush(QBrush(QColor(0, 0, 0, 255)))
         p.drawRect(QRect(1, 1, w - 2, h - 2))
         l2 = self.length_px / 2
-        p.drawLine(w // 2 - l2, h // 2, w // 2 + l2, h // 2)
-        p.drawLine(w // 2, h // 2 + l2, w // 2, h // 2 - l2)
-        p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
+        cw = w // 2
+        ch = h // 2
+
+        # draw the cross and the axis labels
+        p.drawLine(cw - l2, ch, cw + l2, h // 2)
+        p.drawText(w * 3 // 4, ch - 5, "x")
+        p.drawLine(cw, h // 2 + l2, cw, ch - l2)
+        p.drawText(cw + 5, h * 3 // 4, "y")
+
+        # draw the "fish outline"
+        p.drawEllipse(cw - 5, ch - 8, 3, 5)
+        p.drawEllipse(cw + 2, ch - 8, 3, 5)
+        p.drawPolygon(
+            QPolygon(
+                [QPoint(cw - 3, ch + 2), QPoint(cw + 3, ch + 2), QPoint(cw, ch + 20)]
+            )
+        )
 
     def set_pixel_scale(self, w, h):
         """"Set pixel size, need to be called by the projector widget on resizes"""
