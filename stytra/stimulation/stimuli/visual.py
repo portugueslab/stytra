@@ -632,7 +632,6 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
     def paint(self, p, w, h):
         try:
             t, last_position = self._experiment.acc_motor.data_queue.get()
-            print("motor pos",  last_position.x_, last_position.y_)
 
             x, y_placeholder = ((np.arange(d) - d/round(int(last_position.x_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (w, 0))
             x_placeholder, y = ((np.arange(d) - d/round(int(last_position.y_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (0, h))
@@ -647,6 +646,7 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
                 + 127
             ).astype(np.uint8)
             p.drawImage(QPoint(0, 0), qimage2ndarray.array2qimage(self.image))
+
         except:
             pass
 

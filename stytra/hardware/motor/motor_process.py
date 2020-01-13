@@ -53,7 +53,7 @@ class SendPositionsProcess(Process):
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, calib_event,
                  home_event, finished_event, motor_position_queue,
-                 tracking_event, motor_status_queue):
+                 tracking_event, motor_status_queue, arena_lim):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
@@ -62,12 +62,7 @@ class ReceiverProcess(Process):
         self.home_event = home_event
         self.tracking_event =tracking_event
         self.motor_status_queue = motor_status_queue
-
-        self.jitter_thres = 15
-
-        self.arena_thres = 1000000
-        self.lower_thres = 1200000
-        self.upper_thres = 3200000
+        self.arena_lim = arena_lim
         self.home = 2200000
 
 
@@ -125,18 +120,21 @@ class ReceiverProcess(Process):
                     pos_y = self.motor_y.get_position()
                     motor_pos.append([pos_x, pos_y])
 
-                    #arena thresholding
-                    if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 < self.arena_thres ** 2:
-                        print("in arena")
-                    else:
-                        print("out of bounds")
 
                     try:
                         distance_x= last_position.f0_x
                         distance_y= last_position.f0_y
 
-                        self.motor_x.jogging(int(last_position.f0_x))
-                        self.motor_y.jogging(int(last_position.f0_y))
+                        #todo something wrong with this arena limiter
+                        if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 < self.arena_lim ** 2:
+                            self.motor_x.jogging(int(last_position.f0_x))
+                            self.motor_y.jogging(int(last_position.f0_y))
+
+                        else:
+                            print("out of bounds")
+
+                        # self.motor_x.jogging(int(last_position.f0_x))
+                        # self.motor_y.jogging(int(last_position.f0_y))
 
                         # self.motor_x.move_rel(int(last_position.f0_x))
                         # self.motor_y.move_rel(int(last_position.f0_y))

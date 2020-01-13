@@ -178,7 +178,7 @@ class TrackingProcess(FrameProcess):
 class TrackingProcessMotor(TrackingProcess):
     def __init__(self, *args,
                  second_output_queue=None,
-                 calib_queue= None,**kwargs):
+                 calib_queue= None, scale= None, **kwargs):
 
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
@@ -189,6 +189,10 @@ class TrackingProcessMotor(TrackingProcess):
         self.scale_x = None
         self.scale_y = None
         self.threshold = 100
+        self.scale = scale
+        #todo get center x, y from camera or something
+        self.center_y = 270
+        self.center_x = 360
 
     def send_to_queue(self, time, output):
         self.output_queue.put(time, output)
@@ -211,11 +215,12 @@ class TrackingProcessMotor(TrackingProcess):
             try:
                 time, [scale_x, scale_y] = self.calib_queue.get(timeout=0.001)
                 print("gotten from calibrator ", scale_x, scale_y)
-                self.scale_x =scale_x
+                self.scale_x = scale_x
                 self.scale_y = scale_y
                 if abs(scale_x - scale_y) > self.threshold:
-                    #todo maybe choose smaller value or force recalibration
-                    print("Calibrated scales difference too large")
+                    self.scale_x = self.scale[0]
+                    self.scale_y = self.scale[1]
+                    print("Calibrated scales difference too large. Setting default")
             except Empty:
                 pass
 
@@ -238,31 +243,24 @@ class TrackingProcessMotor(TrackingProcess):
                     messages.append("W:Dropping frames from recording")
 
             # If a processing function is specified, apply it:
-
             new_messages, output = self.pipeline.run(frame)
 
-            #assess if the fish is tracked for the wrapper,
-            # if not tracked it should home
-            # Todo they have to work together, this code just plays ping pong 
+            #todo assess tracking status of motor
+
             # if output.f0_x > 0:
-            #     pass
-            # else:
-            #     self.home_event.set()
+            #     print ("tracking")
+
 
             #Calculate new position for the motor if calibration was set
-            #todo set default value for calibration somewhere
-            # if self.scale_x is not None:
+            if self.scale_x is None:
+                print ("setting default")
+                self.scale_x = self.scale[0]
+                self.scale_y = self.scale[1]
 
-            self.scale_x= 325
-            self.scale_y=317
-
-            center_y = 270
-            center_x = 360
 
             #todo figure out why x and y are switched?
-            # is it because y coord sys always switched
-            distance_y = (output.f0_y - center_x) * self.scale_y
-            distance_x = (output.f0_x - center_y) * self.scale_x
+            distance_y = (output.f0_y - self.center_x) * self.scale_y
+            distance_x = (output.f0_x - self.center_y) * self.scale_x
             sec_output= (distance_x, distance_y)
             # else:
             #     sec_output=(0.0,0.0)
