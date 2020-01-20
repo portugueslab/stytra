@@ -32,7 +32,7 @@ class DisplayProcess(Process):
         self.protocol = None
 
     def run(self) -> None:
-        vispy.use("Glfw")
+        vispy.use("PyQt5")
         self.canvas = scene.SceneCanvas(size=(800, 600), show=True)
         view = self.canvas.central_widget.add_view()
         self.scene = view.scene

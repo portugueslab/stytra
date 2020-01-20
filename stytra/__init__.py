@@ -24,6 +24,9 @@ import json
 
 from pathlib import Path
 
+from stytra.stimulation.vispy_stimulusdisplay import StimulusDisplay
+from multiprocessing import Event, Queue
+
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
@@ -158,6 +161,15 @@ class Stytra:
         class_kwargs.update(config)
 
         base = VisualExperiment
+        start_event = Event()
+        abort_event = Event()
+        stop_event = Event()
+        sync_events = {"start_event": start_event,
+                       "abort_event": abort_event,
+                       "stop_event": stop_event
+                       }
+        class_kwargs['sync_events'] = sync_events
+        stimulus_process = StimulusDisplay(sync_events)
 
         if "camera" in class_kwargs.keys():
             base = CameraVisualExperiment
@@ -183,6 +195,7 @@ class Stytra:
         self.exp = base(**class_kwargs)
 
         self.exp.start_experiment()
+        stimulus_process.start()
 
         if exec:
             app.exec_()

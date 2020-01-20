@@ -93,8 +93,13 @@ class ProtocolControlToolbar(QToolBar):
         if not self.protocol_runner.running:
             self.progress_bar.setValue(0)
             self.sig_start_protocol.emit()
+            self.protocol_runner.experiment.start_event.set()
         else:
             self.sig_stop_protocol.emit()
+            self.protocol_runner.experiment.abort_event.set()
+            self.protocol_runner.experiment.start_event.clear()
+
+
 
     def toggle_icon(self):
         self.toggleStatus.flip_icon(self.protocol_runner.running)

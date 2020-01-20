@@ -102,6 +102,7 @@ class Experiment(QObject):
         log_format="csv",
         scope_triggering=None,
         offline=False,
+        sync_events=None,
         **kwargs
     ):
         """ """
@@ -114,6 +115,10 @@ class Experiment(QObject):
         self.offline = offline
 
         self.asset_dir = dir_assets
+
+        self.start_event = sync_events["start_event"]
+        self.abort_event = sync_events["abort_event"]
+        self.stop_event = sync_events["stop_event"]
 
         if dir_save is None:
             dir_save = tempfile.gettempdir()
@@ -294,10 +299,12 @@ class Experiment(QObject):
         self.check_trigger()
         self.reset()
         self.protocol_runner.start()
+
         self.read_scope_data()
 
     def abort_start(self):
         self.logger.info("Aborted")
+        self.start_event.clear()
         self.abort = True
 
     def save_data(self):
@@ -382,7 +389,7 @@ class Experiment(QObject):
 
         self.protocol_runner.stop()
         self.set_id()
-
+        self.start_event.clear()
         if save:
             self.save_data()
 

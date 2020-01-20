@@ -147,6 +147,7 @@ class ProtocolRunner(QObject):
         #  to the calibrator that are considered only in initializing the
         # stimulus and not while it is running (e.g., gratings). Consider
         # removing if it slows down significantly the starting event.
+
         self.update_protocol()
         self.log = []
         self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
