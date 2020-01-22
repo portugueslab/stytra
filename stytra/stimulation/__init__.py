@@ -9,6 +9,7 @@ from lightparam.param_qt import ParametrizedQt, Param
 
 import logging
 
+from multiprocessing import Event
 
 class ProtocolRunner(QObject):
     """Class for managing and running stimulation Protocols.
@@ -150,7 +151,7 @@ class ProtocolRunner(QObject):
 
         self.update_protocol()
         self.log = []
-        self.experiment.logger.info("{} protocol started...".format(self.protocol.name))
+
 
         self.past_stimuli_elapsed = self.experiment.t0
         self.current_stimulus.started = self.experiment.t0

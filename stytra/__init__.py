@@ -169,7 +169,6 @@ class Stytra:
                        "stop_event": stop_event
                        }
         class_kwargs['sync_events'] = sync_events
-        stimulus_process = StimulusDisplay(sync_events)
 
         if "camera" in class_kwargs.keys():
             base = CameraVisualExperiment
@@ -193,6 +192,8 @@ class Stytra:
         pg.setConfigOptions(imageAxisOrder="row-major")
 
         self.exp = base(**class_kwargs)
+
+        stimulus_process = StimulusDisplay(sync_events=sync_events, experiment=self.exp)
 
         self.exp.start_experiment()
         stimulus_process.start()

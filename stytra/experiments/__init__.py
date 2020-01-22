@@ -298,7 +298,7 @@ class Experiment(QObject):
         """
         self.check_trigger()
         self.reset()
-        self.protocol_runner.start()
+        self.logger.info("{} protocol started...".format(self.protocol.name))
 
         self.read_scope_data()
 
