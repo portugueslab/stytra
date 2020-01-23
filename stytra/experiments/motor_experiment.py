@@ -5,7 +5,7 @@ from stytra.hardware.motor.motor_process import ReceiverProcess
 from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 from stytra.calibration import MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
-
+from collections import namedtuple
 
 class MotorExperiment(TrackingExperiment):
     """"""
@@ -45,11 +45,9 @@ class MotorExperiment(TrackingExperiment):
         self.motor_tracking = False
 
 
-    def check_motor_status(self):
-        print ("checking status")
-        self.motor_status_queue.put(self.motor_tracking)
-        return (self.motor_tracking)
-
+    def send_motor_status(self,time, output):
+        self.second_output = namedtuple("motor_status", ["tracking", "homing", "waiting"])
+        self.motor_status_queue.put(time, self.second_output(*output))
 
     def start_experiment(self):
         super().start_experiment()

@@ -507,13 +507,15 @@ if __name__ == "__main__":
     mottitwo = Motor(2, scale=0)
     mottione.open()
     mottitwo.open()
-    y = mottione.get_position()
-    x = mottitwo.get_position()
-    print(y, x)
-
-    mottione.get_pos_loop_params()
-    # mottione.set_pos_loop_params(pgain=35, intgain=80, intlim=32767)
-    # mottione.get_POS_loop_params()
 
     mottitwo.close()
     mottione.close()
+
+# self.motor_x.jogging(int(last_position.f0_x))
+# self.motor_y.jogging(int(last_position.f0_y))
+
+# self.motor_x.move_rel(int(last_position.f0_x))
+# self.motor_y.move_rel(int(last_position.f0_y))
+
+# self.motor_x.movesimple(int(pos_x + distance_x))
+# self.motor_y.movesimple(int(pos_y + distance_y))

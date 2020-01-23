@@ -292,9 +292,11 @@ class CircleCalibrator(Calibrator):
         -------
 
         """
+        #Define your points for camera and projector
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
 
+        #These  lines add a row of ones under the 3 points
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
 

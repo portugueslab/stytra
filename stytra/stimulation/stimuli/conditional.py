@@ -3,7 +3,8 @@ from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 from stytra.stimulation.stimuli.generic_stimuli import DynamicStimulus
 from stytra.stimulation.stimuli.visual import RadialSineStimulus, adaptiveRadialSineStimulus
-
+import datetime
+from collections import namedtuple
 
 class PauseOutsideStimulus(DynamicStimulus):
     def __init__(
@@ -339,8 +340,17 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
                  **kwargs):
         super().__init__(*args, **kwargs)
 
+    def update(self):
+        t = datetime.datetime.now()
+        # tracking, homing, waiting
+        waiting_status = (False, False, True)
+        self._experiment.send_motor_status(t, waiting_status)
+        super().update()
+
     def paint(self, p, w, h):
         super().paint(p,w,h)
+
+
 
 
 
