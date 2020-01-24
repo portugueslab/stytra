@@ -22,4 +22,8 @@ class NamedTupleQueue:
         else:
             return t, self.tuple_type(*el)
 
+    def clear(self):
+        self.q.empty()
+
+
 

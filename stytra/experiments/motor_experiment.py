@@ -42,11 +42,10 @@ class MotorExperiment(TrackingExperiment):
 
         self.gui_timer.timeout.connect(self.acc_motor.update_list)
 
-        self.motor_tracking = False
 
 
     def send_motor_status(self,time, output):
-        self.second_output = namedtuple("motor_status", ["tracking", "homing", "waiting"])
+        self.second_output = namedtuple("motor_status", ["tracking", "waiting"])
         self.motor_status_queue.put(time, self.second_output(*output))
 
     def start_experiment(self):

@@ -141,17 +141,19 @@ class CameraViewWidget(QWidget):
         self.param_widget = None
 
         # todo add buttons for tracking control ONLY if experiment = motor experiment
-        self.toggleTracking = ToggleIconButton(
-            icon_off="play", icon_on="stop", action_on="play", on=False
-        )
-        self.layout_control.addWidget(self.toggleTracking)
-        self.toggleTracking.clicked.connect(self.toggle_tracking)
-
-    def toggle_tracking(self):
-        if self.toggleTracking.on ==True:
-            self.experiment.frame_dispatcher.tracking_event.set()
-        if self.toggleTracking.on == False:
-            self.experiment.frame_dispatcher.tracking_event.clear()
+        #tracking_on_buttton trial
+        self.tracking_event =None
+    #     self.toggleTracking = ToggleIconButton(
+    #         icon_off="play", icon_on="stop", action_on="play", on=True
+    #     )
+    #     self.layout_control.addWidget(self.toggleTracking)
+    #     self.toggleTracking.clicked.connect(self.toggle_tracking)
+    #
+    # def toggle_tracking(self):
+    #     if self.toggleTracking.on ==True:
+    #         self.experiment.frame_dispatcher.tracking_event.set()
+    #     if self.toggleTracking.on == False:
+    #         self.experiment.frame_dispatcher.tracking_event.clear()
 
     def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done

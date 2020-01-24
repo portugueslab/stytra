@@ -339,12 +339,18 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
     def __init__(self, *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
+        self.home = 2200000
+
+        #todo get motor pos in- if motor pos not home dont display
 
     def update(self):
         t = datetime.datetime.now()
-        # tracking, homing, waiting
-        waiting_status = (False, False, True)
+        # tracking, waiting
+        waiting_status = (False, True)
         self._experiment.send_motor_status(t, waiting_status)
+        # t, last_position = self._experiment.acc_motor.data_queue.get()
+        # print ("motor pos" ,last_position.x_, last_position.y_)
+
         super().update()
 
     def paint(self, p, w, h):

@@ -6,7 +6,7 @@ import datetime
 from collections import namedtuple
 from pathlib import Path
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli.conditional import adaptiveRadialSineStimulus
+from stytra.stimulation.stimuli.conditional import adaptiveRadialSineStimulus, RadialSineStimulus
 from stytra.stimulation.stimuli.conditional import CenteringWrapper,\
     TwoRadiusCenteringWrapper, MottiCenteringWrapper
 from stytra.stimulation.stimuli.visual import FullFieldVisualStimulus
@@ -18,8 +18,8 @@ class FullFieldVisualStimulus2(FullFieldVisualStimulus):
 
     def update(self):
         t = datetime.datetime.now()
-        # tracking, homing, waiting
-        sec_output = (True, False, False)
+        # tracking, waiting
+        sec_output = (True, False)
         self._experiment.send_motor_status(t, sec_output)
         super().update()
 
@@ -46,7 +46,7 @@ class Motti(Protocol):
             MottiCenteringWrapper(stimulus=
             FullFieldVisualStimulus2(
                 duration=self.flash_duration, color=(255, 255, 255)
-            ),centering_stimulus = adaptiveRadialSineStimulus()),
+            ),centering_stimulus =RadialSineStimulus()),
         ]
 
         return stimuli

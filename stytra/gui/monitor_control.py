@@ -267,9 +267,6 @@ class ProjectorAndCalibrationWidget(QWidget):
         )
 
 
-        # except CalibrationException:
-        #     pass
-
     def home_motor(self):
         self.experiment.frame_dispatcher.home_event.set()
         print ("Homing button pressed")
