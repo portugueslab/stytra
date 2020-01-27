@@ -245,12 +245,6 @@ class TrackingProcessMotor(TrackingProcess):
             # If a processing function is specified, apply it:
             new_messages, output = self.pipeline.run(frame)
 
-            #todo assess tracking status of motor
-
-            # if output.f0_x > 0:
-            #     print ("tracking")
-
-
             #Calculate new position for the motor if calibration was set
             if self.scale_x is None:
                 print ("setting default")
