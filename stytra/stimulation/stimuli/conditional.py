@@ -341,17 +341,28 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
         super().__init__(*args, **kwargs)
         self.home = 2200000
 
-        #todo get motor pos in- if motor pos not home dont display
-
     def update(self):
         t = datetime.datetime.now()
         # tracking, waiting
         waiting_status = (False, True)
         self._experiment.send_motor_status(t, waiting_status)
-        # t, last_position = self._experiment.acc_motor.data_queue.get()
-        # print ("motor pos" ,last_position.x_, last_position.y_)
-
         super().update()
+
+    # todo get motor pos in- if motor pos not home dont display
+
+    # def check_condition_on(self):
+    #     y, x, theta = self._experiment.estimator.get_position()
+    #     scale = self._experiment.calibrator.mm_px ** 2
+    #
+    #     t, motor_pos = self._experiment.acc_motor.data_queue.get()
+    #     print("motor pos", motor_pos.x_, motor_pos.y_)
+    #
+    #     if (motor_pos.x_ - self.home) ** 2 + (motor_pos.y_ - self.home) ** 2 <= 200 ** 2:
+    #         print ("ggg")
+    #         return ((x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in
+    #                 / scale)
+    #     else:
+    #         return (not np.isnan(x))
 
     def paint(self, p, w, h):
         super().paint(p,w,h)

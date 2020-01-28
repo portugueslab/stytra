@@ -44,9 +44,6 @@ class ReceiverProcess(Process):
         self.motor_status = status_type(*idle_status)
         self.start_time = None
 
-        # absolute_time_start = datetime.datetime.now()
-        # timer_start = datetime.datetime.now()
-
         while not self.finished_event.is_set():
 
             if self.home_event.is_set():
@@ -62,12 +59,7 @@ class ReceiverProcess(Process):
                 self.motor_y.calibrator_movement()
                 self.calib_event.clear()
 
-            # # print(f"Process loop took {(datetime.datetime.now() - timer_start).total_seconds()*1000} ms")
-            # timer_start = datetime.datetime.now()
-            # tracked_time = None
-            # k = 0
             while True:
-                k += 1
                 try:
                     tracked_time, last_position = self.position_queue.get(timeout=0.001)
                 except Empty:
@@ -77,11 +69,6 @@ class ReceiverProcess(Process):
                     t, status = self.motor_status_queue.get(timeout=0.001)
                 except Empty:
                     break
-
-            # if tracked_time is not None:
-            #     # ms_from_start = ( - absolute_time_start).total_seconds()
-            #     ms_ago = (datetime.datetime.now() - tracked_time).total_seconds() * 1000
-            #     # print(f"Current position was acquired {ms_ago} ms ago, after {k} loops")
 
             self.motor_status = status
 
