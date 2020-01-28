@@ -19,10 +19,9 @@ class ReceiverProcess(Process):
         self.home_event = home_event
         self.tracking_event =tracking_event
         self.motor_status_queue = motor_status_queue
-        self.arena_lim = arena_lim
+        self.arena_lim = arena_lim *20000 #put in mm, get our motor units,
         self.home = 2200000
         self.tracking_failure_timeout = 10 # 10 seconds
-        self.arena_lim = 1000000/2
 
 
     def run(self):
@@ -41,8 +40,12 @@ class ReceiverProcess(Process):
         status_type = namedtuple("motor_status", ["tracking", "waiting"])
         idle_status = (False, True)
         last_position = None
+        status = None
         self.motor_status = status_type(*idle_status)
         self.start_time = None
+
+        # absolute_time_start = datetime.datetime.now()
+        # timer_start = datetime.datetime.now()
 
         while not self.finished_event.is_set():
 
@@ -59,77 +62,73 @@ class ReceiverProcess(Process):
                 self.motor_y.calibrator_movement()
                 self.calib_event.clear()
 
-            try:
-                tracked_time, last_position = self.position_queue.get(timeout=0.001)
-                t, status = self.motor_status_queue.get(timeout=0.001)
-                self.motor_status = status
+            # # print(f"Process loop took {(datetime.datetime.now() - timer_start).total_seconds()*1000} ms")
+            # timer_start = datetime.datetime.now()
+            # tracked_time = None
+            # k = 0
+            while True:
+                k += 1
+                try:
+                    tracked_time, last_position = self.position_queue.get(timeout=0.001)
+                except Empty:
+                    break
+            while True:
+                try:
+                    t, status = self.motor_status_queue.get(timeout=0.001)
+                except Empty:
+                    break
 
-                if last_position is not None:
-                    time = datetime.datetime.now()
-                    pos_x = self.motor_x.get_position()
-                    pos_y = self.motor_y.get_position()
+            # if tracked_time is not None:
+            #     # ms_from_start = ( - absolute_time_start).total_seconds()
+            #     ms_ago = (datetime.datetime.now() - tracked_time).total_seconds() * 1000
+            #     # print(f"Current position was acquired {ms_ago} ms ago, after {k} loops")
 
-                    #if it actually is tracking something
-                    if abs(last_position.f0_x) > 0:
-                        dist_x = last_position.f0_x
-                        dist_y = last_position.f0_y
-                        tracking_status = (True, False)
-                        self.motor_status = status_type(*tracking_status)
+            self.motor_status = status
 
-                        #todo: it works but how do i make sure its right for my arena. gui control?
+            if last_position is not None:
+                time = datetime.datetime.now()
+                pos_x = self.motor_x.get_position()
+                pos_y = self.motor_y.get_position()
 
-                        # if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 <= self.arena_lim ** 2:
-                        #     print ("tracking")
+                #if it actually is tracking something
+                if abs(last_position.f0_x) > 0:
+                    tracking_status = (True, False)
+                    self.motor_status = status_type(*tracking_status)
 
-                        if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 >= self.arena_lim ** 2:
-                            print ("posx, posy", pos_x, pos_y)
-                            dist_y = 0
-                            dist_x = 0
-
-                        print ("last pos", last_position.f0_x, last_position.f0_y)
-                        print ("dist", dist_x, dist_y)
-
+                    if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 <= self.arena_lim ** 2:
                         self.start_time = datetime.datetime.now()
-                        self.motor_x.jogging(int((dist_x)))
-                        self.motor_y.jogging(int((dist_y)))
-                        # self.motor_x.jogging(int(last_position.f0_x))
-                        # self.motor_y.jogging(int(last_position.f0_y))
-
-
-                        #if this is used it needs a jitter filter:
-                        # if abs(last_position.f0_x)** 2 + abs(last_position.f0_y) ** 2 >= 10000:
-                        #     self.motor_x.move_rel(int(last_position.f0_x))
-                        #     self.motor_y.move_rel(int(last_position.f0_y))
-
+                        self.motor_x.jogging(int(last_position.f0_x))
+                        self.motor_y.jogging(int(last_position.f0_y))
 
                         e = (float(pos_x), float(pos_y), int(last_position.f0_x),
                              int(last_position.f0_y), self.motor_status.tracking,
                              self.motor_status.waiting)
 
-                        # else:
-                        #     print ("out of bounds", self.arena_lim)
-
-                    #if tracking failure takes too long, home
                     else:
-                        self.motor_status = status_type(*idle_status)
+                        print ("out of bounds", self.arena_lim, pos_x, pos_y)
+                        self.motor_x.movesimple(position=self.home)
+                        self.motor_y.movesimple(position=self.home)
+                        self.start_time = None
+                        print ("position reset")
 
-                        e = (pos_x, pos_y, 0.0, 0.0, self.motor_status.tracking, self.motor_status.waiting)
 
-                        if self.start_time is not None:
-                            idle_time = (datetime.datetime.now() - self.start_time).total_seconds()
-                            if idle_time > self.tracking_failure_timeout:
-                                print ("tracking failure timeout called")
-                                #todo doesnt work because while homing it tracks stuff which restarts the clock
-                                # self.motor_x.set_homing_reverse(1)
-                                # self.motor_x.home()
-                                # self.motor_y.home()
-                                self.start_time = None
+                #if tracking failure takes too long, go home and wait
+                else:
+                    self.motor_status = status_type(*idle_status)
 
-                    #save the output
-                    self.motor_position_queue.put(time, output_type(*e))
+                    e = (pos_x, pos_y, 0.0, 0.0, self.motor_status.tracking, self.motor_status.waiting)
 
-            except Empty:
-                pass
+                    if self.start_time is not None:
+                        idle_time = (datetime.datetime.now() - self.start_time).total_seconds()
+                        if idle_time > self.tracking_failure_timeout:
+                            print ("tracking failure timeout called")
+                            self.motor_x.movesimple(position=self.home)
+                            self.motor_y.movesimple(position=self.home)
+                            self.start_time = None
+
+                #save the output
+                self.motor_position_queue.put(time, output_type(*e))
+
 
 
         self.motor_x.close()
