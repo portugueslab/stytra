@@ -480,12 +480,12 @@ class Motor:
         #TODO maybe something to move the stage manually by keyboard
         pass
 
-    def motorminimal(self,
-                     acceleration=int(204552 / 10),
-                     velocity =int(107374182 / 10)):
+    def motorminimal(self):
+                     # ,acceleration=int(204552 / 10),
+                     # velocity =int(107374182 / 10)):
         """Mini script to run before motor can be used"""
         self.homethatthing()
-        self.setvelocity(acceleration, velocity)
+        # self.setvelocity(acceleration, velocity)
 
 
     def calibrator_movement(self):

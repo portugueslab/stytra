@@ -46,7 +46,7 @@ class Motti(Protocol):
             MottiCenteringWrapper(stimulus=
             FullFieldVisualStimulus2(
                 duration=self.flash_duration, color=(255, 255, 255)
-            ),centering_stimulus =RadialSineStimulus()),
+            ),centering_stimulus =RadialSineStimulus(period=1, velocity=5, duration=1)),
         ]
 
         return stimuli
