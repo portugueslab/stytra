@@ -6,7 +6,8 @@ from vispy import scene
 import time
 import numpy as np
 import pandas as pd
-
+from vispy.visuals.transforms import MatrixTransform
+from itertools import product
 
 class Protocol:
     def __init__(self, n_repeats=10):
@@ -112,11 +113,61 @@ class InterpolatedStimulus(Stimulus):
 class BackgroundStimulus(Stimulus):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.imw = 10
+        self.imh = 10
 
-    def get_tile_ranges(self, imw, imh, w, h):
-        n_tiles = int(w / imw)
-        pos = np.arange(imw/2, imw * (n_tiles - 1), imw)
-        return n_tiles, pos
+    def get_transform(self, x, y):
+        transform_mat = np.diag([1.0, 1, 1, 1])
+        transform_mat[3, 1] = x
+        transform_mat[3, 2] = y
+        return transform_mat
+
+    def negceil(self, x):
+        """ negative ceiling function (e.g -0.2 gets rounded to -1, while 0.2 gets rounded to 1)
+        """
+        return int(-np.ceil(-x) if x < 0 else np.ceil(x))
+
+    def get_tile_ranges(self, imw, imh, w, h, tr):
+    # we find where the display surface is in the coordinate system of a single tile
+        corner_points = [
+            np.array([0.0, 0.0]),
+            np.array([w, 0.0]),
+            np.array([w, h]),
+            np.array([0.0, h]),
+        ]
+        points_transformed = np.array(
+            [tr.inverted()[0].map(*cp) for cp in corner_points]
+        )
+
+        # calculate the rectangle covering the transformed display surface
+        min_x, min_y = np.min(points_transformed, 0)
+        max_x, max_y = np.max(points_transformed, 0)
+
+        # count which tiles need to be drawn
+        x_start, x_end = (self.negceil(x / imw) for x in [min_x, max_x])
+        y_start, y_end = (self.negceil(y / imh) for y in [min_y, max_y])
+        return range(x_start, x_end + 1), range(y_start, y_end + 1)
+
+    def paint(self, t):
+        self._elapsed = t
+        h = self.h
+        w = self.w
+        dx = self.x
+        dy = self.y
+
+        # rotate the coordinate transform around the position of the fish
+        tr = self.get_transform(dx, dy)
+        #tr = MatrixTransform(tr)
+        self.stimulus_container.transform = tr
+        for idx, idy in product(*self.get_tile_ranges(self.imw, self.imh, w, h, tr)):
+            self.draw_block()
+
+        p.resetTransform()
+
+    def draw_block(self):
+        # Get background image from folder:
+        pass
+
 
 
 class MovingGratings(BackgroundStimulus):
@@ -143,7 +194,9 @@ class MovingGratings(BackgroundStimulus):
         self._elapsed = t
         self.stimulus.visible = True
 
-
+    def draw_block(self, p, point, w, h):
+        # Get background image from folder:
+        p.drawImage(point, self._qbackground)
 
 class Circle(InterpolatedStimulus):
     def __init__(self, color=(1, 1, 1), w=10, h=10, duration=1.0, **kwargs):
@@ -154,10 +207,6 @@ class Circle(InterpolatedStimulus):
         self.color = color
         self.w = w
         self.h = h
-        # self.stimulus = vispy.scene.visuals.Markers(edge_color=self.color,
-        #                                             face_color=self.color,
-        #                                             size=15,
-        #                                             parent=self.scene)
         self.stimulus = vispy.scene.visuals.Ellipse(
             center=(self.x, self.y),
             color=self.color,

@@ -24,7 +24,6 @@ import json
 
 from pathlib import Path
 
-from stytra.stimulation.vispy_stimulusdisplay import StimulusDisplay
 from multiprocessing import Event, Queue
 
 
@@ -193,10 +192,8 @@ class Stytra:
 
         self.exp = base(**class_kwargs)
 
-        stimulus_process = StimulusDisplay(sync_events=sync_events, experiment=self.exp)
 
         self.exp.start_experiment()
-        stimulus_process.start()
 
         if exec:
             app.exec_()
