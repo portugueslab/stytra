@@ -306,3 +306,14 @@ class CircleCalibrator(Calibrator):
 
         self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
         self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
+
+    def camera_mm_px(self):
+        """
+        Calculates the size of the camera pixel in milimeters
+        """
+        if self.cam_to_proj is not None:
+            proj_size_px = np.linalg.norm(
+                np.array(self.cam_to_proj) @ np.array([1, 0, 1])
+            )
+            return proj_size_px * self.mm_px
+        return self.mm_px

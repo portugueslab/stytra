@@ -1,5 +1,5 @@
 import numpy as np
-from stytra.tracking.online_bouts import find_bouts_online, BoutState
+from stytra.tracking.online_bouts import find_bouts_online_positions, BoutState
 
 
 def test_online_bout_det():
@@ -7,7 +7,7 @@ def test_online_bout_det():
         np.float64
     )
     coords = np.zeros((len(vel_profile), 3))
-    k, _, _ = find_bouts_online(
+    k, _, _ = find_bouts_online_positions(
         vel_profile,
         coords,
         BoutState(0, 0.0, 0, 0, 0),

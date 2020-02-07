@@ -3,14 +3,12 @@ import pyqtgraph as pg
 import numpy as np
 from stytra.collectors import DataFrameAccumulator
 from stytra.collectors import QueueDataAccumulator
-from stytra.tracking.online_bouts import find_bouts_online, BoutState
+from stytra.tracking.online_bouts import find_bouts_online_positions, BoutState
 from stytra.utilities import reduce_to_pi
 
 from collections import deque
 from lightparam import Param, Parametrized
 from lightparam.gui import ParameterGui
-
-from scipy.ndimage.filters import gaussian_filter1d
 
 
 class StreamingPositionPlot(pg.GraphicsWindow):
@@ -243,7 +241,7 @@ class BoutPlot(QWidget):
 
         new_bout = None
         if self.detection_params.threshold > 0:
-            self.bout_coords, bout_finished, self.bout_state = find_bouts_online(
+            self.bout_coords, bout_finished, self.bout_state = find_bouts_online_positions(
                 vel,
                 new_coords,
                 self.bout_state,

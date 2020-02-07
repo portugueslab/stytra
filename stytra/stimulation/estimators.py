@@ -4,6 +4,8 @@ import datetime
 from stytra.collectors import QueueDataAccumulator
 from stytra.utilities import reduce_to_pi
 from collections import namedtuple
+import pandas as pd
+from stytra.tracking import online_bouts
 
 
 class Estimator:
@@ -118,7 +120,7 @@ class PositionEstimator(Estimator):
         vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[
             ["f0_vx", "f0_vy"]
         ].values
-        return np.sqrt(np.sum(vel_xy ** 2))
+        return np.mean(np.sqrt(np.sum(vel_xy ** 2, 1)))
 
     def reset(self):
         super().reset()
@@ -171,6 +173,47 @@ class PositionEstimator(Estimator):
         return c_values
 
 
+class BoutStatePositionEstimator(Estimator):
+    def __init__(self, *args, velocity_threshold=1, n_save_window=100, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calibrator = self.exp.calibrator
+        self.processed_index = 0
+        self.velocity_threshold = velocity_threshold
+        self._output_type = namedtuple(
+            "f", ["x", "y", "theta", "bout_state", "velocities"]
+        )
+        self.vel_tuple_indices = (
+            1,
+            3,
+        )  # the velocity indices of the named tuples in the tracking accumulator
+        self._camera_mm_px = None
+        self.n_save_window = n_save_window
+
+    @property
+    def camera_mm_px(self):
+        if self._camera_px_mm is None:
+            self._camera_mm_px = self.calibrator.camera_mm_px
+        return self._camera_mm_px
+
+    def _process(self):
+        current_index = len(self.acc_tracking.stored_data)
+        if current_index == 0 or self.processed_index == current_index:
+            return
+
+        time_data = self.acc_tracking.times[self.processed_index : current_index]
+        vel_data = np.array(
+            self.acc_tracking.stored_data[self.processed_index : current_index]
+        )[:, self.vel_tuple_indices]
+        vel_magnitudes = (
+            np.sqrt(np.sum(vel_data ** 2, 1))
+            * self.camera_mm_px
+            / np.mean(np.diff(time_data))
+        )
+
+    def reset(self):
+        self.processed_index = 0
+
+
 class SimulatedPositionEstimator(Estimator):
     def __init__(self, *args, motion, **kwargs):
         """ Uses the projector-to-camera calibration to give fish position in
@@ -184,6 +227,7 @@ class SimulatedPositionEstimator(Estimator):
         :param kwargs:
         """
         super().__init__(*args, **kwargs)
+        self.calibrator = self.exp.calibrator
         self.motion = motion
         self._output_type = namedtuple("f", ["x", "y", "theta"])
 

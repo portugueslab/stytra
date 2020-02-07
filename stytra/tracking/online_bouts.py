@@ -1,5 +1,6 @@
 from collections import namedtuple
 from numba import jit
+import numpy as np
 
 BoutState = namedtuple("BoutState", "state vel i_inbout i_below n_after")
 
@@ -49,7 +50,7 @@ def _process_input(
 
 
 @jit(nopython=True)
-def find_bouts_online(
+def find_bouts_online_positions(
     velocities,
     coords,
     initial_state,
@@ -97,3 +98,46 @@ def find_bouts_online(
             bout_finished = True
         state = next_state
     return bout_coords, bout_finished, state
+
+
+@jit(nopython=True)
+def find_bouts_online(
+    velocities,
+    initial_state,
+    bout_states,
+    shift=0,
+    threshold=1,
+    n_without_crossing=5,
+    pad_after=5,
+    min_bout_len=1,
+    pad_before=5,
+):
+    """ Online bout detection
+
+    Parameters
+    ----------
+    velocities
+    coords
+    initial_state
+    bout_coords
+
+    Returns
+    -------
+
+    """
+    state = initial_state
+    bout_finished = False
+
+    bout_states = np.array(len(velocities) - shift, dtype=np.uint8)
+    for i in range(shift, len(velocities)):
+        next_state = _process_input(
+            velocities[i],
+            state,
+            threshold=threshold,
+            n_without_crossing=n_without_crossing,
+            pad_after=pad_after,
+            min_bout_len=min_bout_len,
+        )
+        state = next_state
+        bout_states[i - shift] = state
+    return bout_states, bout_finished, state
