@@ -191,7 +191,7 @@ class TrackingProcessMotor(TrackingProcess):
         self.threshold = 100
         self.scale = scale
         #todo get center x, y from camera or something
-        self.center_y = 270
+        self.center_y = 268
         self.center_x = 360
 
     def send_to_queue(self, time, output):
@@ -233,7 +233,6 @@ class TrackingProcessMotor(TrackingProcess):
                 continue
 
 
-
             messages = []
             # If we are copying the frames to another queue (e.g. for video recording), do it here
             if self.recording_signal is not None and self.recording_signal.is_set():
@@ -251,13 +250,13 @@ class TrackingProcessMotor(TrackingProcess):
                 self.scale_x = self.scale[0]
                 self.scale_y = self.scale[1]
 
+            distance_y = (output.f0_y - self.center_y) * self.scale_y
+            distance_x = (output.f0_x - self.center_x) * self.scale_x
 
-            #todo figure out why x and y are switched?
-            distance_y = (output.f0_y - self.center_x) * self.scale_y
-            distance_x = (output.f0_x - self.center_y) * self.scale_x
-            sec_output= (distance_x, distance_y)
-            # else:
-            #     sec_output=(0.0,0.0)
+            if (distance_x) ** 2 + (distance_y) ** 2 >= 500 ** 2:
+                sec_output= (distance_x, distance_y)
+            else:
+                sec_output=(0.0,0.0)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)

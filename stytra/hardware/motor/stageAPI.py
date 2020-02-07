@@ -420,16 +420,19 @@ class Motor:
         BMC_MoveJog(self.serial_nom, self.channel, direction)
 
     def jogging(self, number):
-        stepsize = BMC_GetJogStepSize(self.serial_nom, self.channel)
-        jogs = int(abs(number)/stepsize)
+        stepsize = 20000
+        jogs = int(abs(number)/stepsize) #todo rounding does over/undershoot
 
+        print ("number input as distance", number, stepsize)
         flag = True
         direction = self.assess_direction(number)
+        print("jogs taken {} in direction {}".format(jogs, direction))
 
-        for i in range(jogs):
+        for i in range(jogs +1):
             while flag == True:
                 BMC_MoveJog(self.serial_nom, self.channel, direction)
                 flag = False
+                print ("jogging", i)
             flag = True
 
 
@@ -480,12 +483,11 @@ class Motor:
         #TODO maybe something to move the stage manually by keyboard
         pass
 
-    def motorminimal(self):
-                     # ,acceleration=int(204552 / 10),
-                     # velocity =int(107374182 / 10)):
+    def motorminimal(self ,acceleration=int(204552 / 10),
+                     velocity =int(107374182 / 10)):
         """Mini script to run before motor can be used"""
         self.homethatthing()
-        # self.setvelocity(acceleration, velocity)
+        self.setvelocity(acceleration, velocity)
 
 
     def calibrator_movement(self):

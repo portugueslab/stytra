@@ -33,9 +33,8 @@ class ReceiverProcess(Process):
         self.motor_y.open()
         self.motor_x.open()
         self.motor_x.set_jogmode(2, 1)
-        self.motor_x.set_jogstepsize(10000)
         self.motor_y.set_jogmode(2, 1)
-        self.motor_y.set_jogstepsize(10000)
+
         output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y", "tracking", "waiting"])
         status_type = namedtuple("motor_status", ["tracking", "waiting"])
         idle_status = (False, True)
@@ -62,6 +61,7 @@ class ReceiverProcess(Process):
             while True:
                 try:
                     tracked_time, last_position = self.position_queue.get(timeout=0.001)
+                    start = datetime.datetime.now()
                 except Empty:
                     break
             while True:
@@ -84,8 +84,14 @@ class ReceiverProcess(Process):
 
                     if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 <= self.arena_lim ** 2:
                         self.start_time = datetime.datetime.now()
-                        self.motor_x.jogging(int(last_position.f0_x))
-                        self.motor_y.jogging(int(last_position.f0_y))
+                        # self.motor_y.jogging(int(last_position.f0_y))
+                        # self.motor_x.jogging(int(last_position.f0_x))
+
+                        self.motor_x.move_rel(int(last_position.f0_x))
+                        self.motor_y.move_rel(int(last_position.f0_y))
+
+                        dt = (datetime.datetime.now() - start).total_seconds()
+                        # print ("jogging done, dt: ", dt)
 
                         e = (float(pos_x), float(pos_y), int(last_position.f0_x),
                              int(last_position.f0_y), self.motor_status.tracking,

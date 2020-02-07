@@ -13,33 +13,6 @@ import deepdish as dd
 import matplotlib.pyplot as plt
 
 duration = 10
-#
-# class SendPositionsProcess(Process):
-#     def __init__(self):
-#         super().__init__()
-#         self.position_queue = Queue()
-#
-#         self.l = [100, 2200000, 1500, 30000, 80]
-#
-#
-#     def run(self):
-#         start = datetime.datetime.now()
-#         somelist = []
-#         for i in range(0, 10):
-#             i = random.randint(1000000, 2000000)
-#         #     somelist.append(i)
-#             self.position_queue.put(i)
-#             sleep(0.009)
-# #
-# #         # print (somelist)
-# #         # for i in somelist:
-# #         #     self.position_queue.put(i)
-# #
-# #         # for i in self.l:
-#         #     self.position_queue.put(i)
-#
-#         print("Real function timing:", (datetime.datetime.now() - start).total_seconds())
-
 
 class SendPositionsProcess(Process):
     def __init__(self):
@@ -58,27 +31,6 @@ class SendPositionsProcess(Process):
             self.position_queue.put(im)
 
 
-#             grab.append((datetime.datetime.now() - start_grabbing).total_seconds())
-#             if im is not None:
-#                 start_showing = datetime.datetime.now()
-#                 # print("shape: {}".format(image_converted.shape))
-#                 cv2.imshow("img", im)
-#                 cv2.waitKey(1)
-#                 startshow.append((datetime.datetime.now() - start_showing).total_seconds())
-#
-#                 # identify dot
-#                 start_blob = datetime.datetime.now()
-#                 idxs = np.unravel_index(np.nanargmin(im), im.shape)
-#                 e = (np.float(idxs[1]), np.float(idxs[0]))
-#                 blobident.append((datetime.datetime.now() - start_blob).total_seconds())
-#
-#                 point_x = e[0]
-#                 point_y = e[1]
-#
-# print ("image in queue")
-#
-#             if (datetime.datetime.now() - start).total_seconds() > duration:
-#                 break
 
 
 class ReceiverProcess(Process):
