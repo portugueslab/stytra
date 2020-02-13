@@ -107,20 +107,20 @@ class Motti(Protocol):
         df = pd.DataFrame(dict(t=t, vel_x=vel))
 
         # This is the
-        # stimuli = [
-        #     MottiCenteringWrapper(stimulus=
-        #     FullFieldVisualStimulus2(
-        #         duration=self.flash_duration, color=(255, 255, 255)
-        #     ),centering_stimulus =RadialSineStimulus(period=1, velocity=5, duration=1)),
-        # ]
+        stimuli = [
+            MottiCenteringWrapper(stimulus=
+            FullFieldVisualStimulus2(
+                duration=self.flash_duration, color=(255, 255, 255)
+            ),centering_stimulus =RadialSineStimulus(period=2, velocity=5, duration=1)),
+        ]
 
-        stimuli =[(MottiCenteringWrapper(stimulus=GratingsTrackingStimulus(
-                            df_param=df,
-                            grating_period=self.grating_cycle,
-                            grating_col_1=(0, self.green, 0),
-                            grating_angle=0,
-                        ),  r_out=45, r_in=40,centering_stimulus=RadialSineStimulus(period=2, velocity=5, duration=1))
-                    )]
+        # stimuli =[(MottiCenteringWrapper(stimulus=GratingsTrackingStimulus(
+        #                     df_param=df,
+        #                     grating_period=self.grating_cycle,
+        #                     grating_col_1=(0, self.green, 0),
+        #                     grating_angle=0,
+        #                 ),  r_out=45, r_in=40,centering_stimulus=RadialSineStimulus(period=2, velocity=5, duration=1))
+        #             )]
 
 
         return stimuli

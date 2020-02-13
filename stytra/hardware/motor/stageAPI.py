@@ -414,7 +414,9 @@ class Motor:
         BMC_MoveAbsolute(self.serial_nom, self.channel)
 
     def move_rel(self, distance):
-        BMC_MoveRelative(self.serial_nom, self.channel, distance)
+        err = BMC_MoveRelative(self.serial_nom, self.channel, distance)
+        # print (err)
+
 
     def movejog(self, direction):
         BMC_MoveJog(self.serial_nom, self.channel, direction)
@@ -446,7 +448,7 @@ class Motor:
 
     def get_jogmode(self):
         err = BMC_GetJogMode(self.serial_nom, self.channel)
-        print (err)
+        # print (err)
 
     def set_jogmode(self, mode, stopmode):
         """ mode: 1 = continous, 2 = jog step,
