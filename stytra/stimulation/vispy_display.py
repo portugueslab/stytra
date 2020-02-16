@@ -33,8 +33,8 @@ class Stimulus:
         self.color = (0, 0, 0)
         self.w = self.scene.canvas.physical_size[0]
         self.h = self.scene.canvas.physical_size[1]
-        self.x = 100
-        self.y = 100
+        self.x = self.w / 2
+        self.y = self.h / 2
         self._elapsed = None
         self._elapsed = 0
         self.stimulus = None
@@ -45,6 +45,13 @@ class Stimulus:
 
     def start(self):
         self.running = True
+
+    def get_transform(self, x, y):
+            transform_mat = np.diag([1.0, 1, 1, 1])
+            transform_mat[3, 0] = x
+            transform_mat[3, 1] = y
+            transform_mat[3, 2] = 1
+            return transform_mat
 
 
 class InterpolatedStimulus(Stimulus):
@@ -71,7 +78,6 @@ class InterpolatedStimulus(Stimulus):
     def __init__(self, *args, df_param=None, **kwargs):
         """"""
         super().__init__(**kwargs)
-        #self.dynamic_parameters.append("current_phase")
         self.df_param = df_param
         self.duration = float(df_param.t.iat[-1])
         self.phase_times = np.unique(df_param.t)
@@ -115,12 +121,7 @@ class BackgroundStimulus(Stimulus):
         super().__init__(**kwargs)
         self.imw = 10
         self.imh = 10
-
-    def get_transform(self, x, y):
-        transform_mat = np.diag([1.0, 1, 1, 1])
-        transform_mat[3, 1] = x
-        transform_mat[3, 2] = y
-        return transform_mat
+        self.color = (0, 1, 0)
 
     def negceil(self, x):
         """ negative ceiling function (e.g -0.2 gets rounded to -1, while 0.2 gets rounded to 1)
@@ -136,7 +137,7 @@ class BackgroundStimulus(Stimulus):
             np.array([0.0, h]),
         ]
         points_transformed = np.array(
-            [tr.inverted()[0].map(*cp) for cp in corner_points]
+            [tr.inverse()[0].map(*cp) for cp in corner_points]
         )
 
         # calculate the rectangle covering the transformed display surface
@@ -157,17 +158,13 @@ class BackgroundStimulus(Stimulus):
 
         # rotate the coordinate transform around the position of the fish
         tr = self.get_transform(dx, dy)
-        #tr = MatrixTransform(tr)
-        self.stimulus_container.transform = tr
+        tr = MatrixTransform(tr)
+        # self.stimulus_container.transform = tr
         for idx, idy in product(*self.get_tile_ranges(self.imw, self.imh, w, h, tr)):
-            self.draw_block()
+            self.draw_block(idx * self.imw, idy * self.imh)
 
-        p.resetTransform()
-
-    def draw_block(self):
-        # Get background image from folder:
+    def draw_block(self,x_pos, y_pos):
         pass
-
 
 
 class MovingGratings(BackgroundStimulus):
@@ -178,7 +175,6 @@ class MovingGratings(BackgroundStimulus):
         self.stimulus = []
         n_tiles, pos = self.get_tile_ranges(self.grating_period, self.h, self.w, self.h)
         for i in range(n_tiles - 1):
-            print(i)
             if i % 2 > 0: color = (1, 1, 1)
             else: color = (0, 0, 0)
             self.stimulus.append(vispy.scene.visuals.Rectangle(
@@ -197,6 +193,7 @@ class MovingGratings(BackgroundStimulus):
     def draw_block(self, p, point, w, h):
         # Get background image from folder:
         p.drawImage(point, self._qbackground)
+
 
 class Circle(InterpolatedStimulus):
     def __init__(self, color=(1, 1, 1), w=10, h=10, duration=1.0, **kwargs):
@@ -260,6 +257,50 @@ class Pause(Stimulus):
         self.stimulus.update()
 
 
+class MultipleCircles(InterpolatedStimulus):
+    def __init__(self, n_circles=2, color=(1, 1, 1), w=10, h=10, duration=1.0, x_list=None, y_list=None, **kwargs):
+        super().__init__(**kwargs)
+        self.duration = duration
+        self.name = 'multiple_circles'
+        self.color = color
+        self.w = w
+        self.h = h
+        self.n_circles = n_circles
+        # for the time being
+        if (x_list is None) and (y_list is None):
+            x_list = np.random.randint(0, self.scene.canvas.physical_size[0], self.n_circles)
+            y_list = np.random.randint(0, self.scene.canvas.physical_size[1], self.n_circles)
+        self.stimulus = scene.node.Node(
+            parent=self.scene, transforms=MatrixTransform()
+        )
+        for i in range(self.n_circles):
+            vispy.scene.visuals.Ellipse(
+                center=(x_list[i], y_list[i]),
+                color=self.color,
+                parent=self.stimulus,
+                radius=(self.w, self.h),
+                name=self.name
+            )
+            self.stimulus.visible = False
+
+    def paint(self, t):
+        if self.running is False:
+            self.start()
+        else:
+            self._elapsed = t
+            if hasattr(self, 'df_param'):
+                self.update()
+        dx = 10
+        dy = 10
+        t = self.get_transform(dx, dy)
+        tr = MatrixTransform(t)
+        self.stimulus.transform = tr
+        self.stimulus.visible = True
+
+    def clear(self):
+        self.stimulus.visible = False
+        self.stimulus.update()
+
 class DisplayProcess(Process):
     def __init__(self, protocol=None):
         super().__init__()
@@ -295,7 +336,6 @@ class DisplayProcess(Process):
             self.stimulus_elapsed += dif
         self.prev_time = ctime
         if self.stimulus_elapsed >= self.current_stimulus.duration:
-            self.interval.append(self.current_stimulus.duration - self.stimulus_elapsed)
             self.stimulus_elapsed = 0
             if self.i_stimulus < len(self.stimuli) - 1:
                 self.i_stimulus += 1
@@ -324,7 +364,7 @@ class DisplayProcess(Process):
     #     self.stim = stim_dict[stim_params](scene=self.scene, **stim_params)
 
 
-class FlashProtocol(Protocol):
+class CircleProtocol(Protocol):
     name = "flash_protocol"  # every protocol must have a name.
 
     def __init__(self, scene=None):
@@ -347,6 +387,7 @@ class FlashProtocol(Protocol):
 
         return stimuli
 
+
 class GratingProtocol(Protocol):
     name = "grating_protocol"  # every protocol must have a name.
 
@@ -365,9 +406,35 @@ class GratingProtocol(Protocol):
 
         return stimuli
 
+
+class MultiCirclesProtocol(Protocol):
+    name = "flash_protocol"  # every protocol must have a name.
+
+    def __init__(self, scene=None):
+        super().__init__()
+        self.scene = scene
+        self.dur = 10
+        self.n_repeats = 10
+        self.n_circles = 1
+
+    def get_stim_sequence(self, scene):
+        t = [0, 10]
+        x = [0, 10]
+        y = [0, 10]
+
+        df = pd.DataFrame(dict(t=t, x=x, y=y))
+
+        stimuli = [
+            MultipleCircles(n_circles=self.n_circles, duration=self.dur, df_param=df, scene=scene),
+            Pause(duration=self.dur, scene=scene),
+        ]
+
+        return stimuli
+
+
 if __name__ == "__main__":
     app = QApplication([])
-    dp = DisplayProcess(protocol=FlashProtocol)
+    dp = DisplayProcess(protocol=MultiCirclesProtocol)
     wid = QWidget()
     wid.show()
     dp.start()
