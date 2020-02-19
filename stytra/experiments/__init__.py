@@ -100,6 +100,7 @@ class Experiment(QObject):
         metadata_animal=None,
         loop_protocol=False,
         log_format="csv",
+        trigger_duration_queue=None,
         scope_triggering=None,
         offline=False,
         **kwargs
@@ -111,6 +112,7 @@ class Experiment(QObject):
         self.app = app
         self.protocol = protocol
         self.trigger = scope_triggering
+        self.trigger_duration_queue = trigger_duration_queue
         self.offline = offline
 
         self.asset_dir = dir_assets
@@ -229,6 +231,8 @@ class Experiment(QObject):
         self.protocol_runner.update_protocol()
 
         if self.trigger is not None:
+            duration_exp = self.protocol_runner.duration
+            self.trigger_duration_queue.put(duration_exp)
             self.trigger.start()
 
     def restore_window_state(self):

@@ -7,6 +7,7 @@ received via ZMQ from a microscope.
 from multiprocessing import Process, Event, Queue
 import datetime
 import time
+from queue import Empty
 
 try:
     import zmq
@@ -82,11 +83,7 @@ class Trigger(Process):
         arbitrary time (0.1 s now) and then we clear it to be set again.
         """
         TIME_START_EVENT_ON = 0.1
-        while True:
-            self.kill_event.wait(0.0001)
-            if self.kill_event.is_set():
-                break
-
+        while not self.kill_event.is_set():
             if self.start_event.is_set():
                 # Keep the signal on for at least 0.1 s
                 time.sleep(TIME_START_EVENT_ON)
@@ -98,6 +95,10 @@ class Trigger(Process):
                 print("Trigger signal received")
                 self.start_event.set()
                 self.t = datetime.datetime.now()
+        self.complete()
+
+    def complete(self):
+        pass
 
 
 class ZmqTrigger(Trigger):
@@ -118,6 +119,8 @@ class ZmqTrigger(Trigger):
 
         """
         self.port = port
+        self.duration_queue = Queue()
+        self.protocol_duration = None
         self.scope_config = {}
         super().__init__()
 
@@ -127,12 +130,17 @@ class ZmqTrigger(Trigger):
         so that the experiment class can store it with the rest of the data.
         """
         # self.scope_config = self.zmq_socket.recv_json()
+
         poller = zmq.Poller()
         poller.register(self.zmq_socket, zmq.POLLIN)
-        if poller.poll(5):  # 10s timeout in milliseconds
+        try:
+            self.protocol_duration = self.duration_queue.get(timeout=0.0001)
+        except Empty:
+            pass
+        if poller.poll(10):
             self.scope_config = self.zmq_socket.recv_json()
             self.queue_trigger_params.put(self.scope_config)
-            self.zmq_socket.send_json("received")
+            self.zmq_socket.send_json(self.protocol_duration)
             return True
         else:
             return False
@@ -145,6 +153,9 @@ class ZmqTrigger(Trigger):
         self.zmq_socket.setsockopt(zmq.RCVTIMEO, -1)
 
         super().run()
+
+    def complete(self):
+        self.zmq_socket.close()
 
 
 class U3LabJackPulseTrigger(Trigger):

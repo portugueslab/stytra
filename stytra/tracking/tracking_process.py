@@ -134,7 +134,6 @@ class TrackingProcess(FrameProcess):
             # If a processing function is specified, apply it:
 
             new_messages, output = self.pipeline.run(frame)
-
             for msg in messages + new_messages:
                 self.message_queue.put(msg)
 
