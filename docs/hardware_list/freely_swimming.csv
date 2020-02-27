@@ -1,38 +1,38 @@
-,Component,Manufacturer,Part No.,Specs,Amount,Price  (euros),Link,Notes,Replacement
-**Breadbord**,,,,,,,,,
-1.1,Aluminum breadbord,Thorlabs,MB3045/M,,1,170,https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M,,
-1.2,Feet,Thorlabs,AV4/M,,1,20.86,https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421,,
-**Rail**,,,,,,,,,
-2.1,Construction rail,Thorlabs,XT66-750,,1,80,https://www.thorlabs.com/thorProduct.cfm?partNumber=XT66-750,,
-2.2,Construction rail mount,Thorlabs,XT66P1,,1,32.25,https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P1,,
-2.3,Rail carriage,Thorlabs,XT66P2/M,,2,62.25,https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P2/M,,
-2.4,Post holder,Thorlabs,PH20/M,,2,6.33,https://www.thorlabs.com/thorproduct.cfm?partnumber=PH20/M,,
-**Stage**,,,,,,,,,
-3.1,Post,Thorlabs,TR250/M,,4,8.12,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M,,
-3.2,Post holder,Thorlabs,PH75/M,,4,7.44,https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0,,
-3.3,Acrilic stage,custom,,,1,10,https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html,From item n. 0133555 of modulor,
-3.4,Screen,custom,,,,,,,
-**Projector**,,,,,,,,,
-4.1,Projector,Asus,P3E,,1,534,https://www.asus.com/us/Projectors/P3E/,,
-4.2,Display cable (HDMI),Any,,,,,,,
-4.3,Post,Thorlabs,TR40/M,,1,4.52,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR40/M,,
-4.4,Post holder,Thorlabs,PH40/M,,1,6.56,https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0,,
-**Camera**,,,,,,,,,
-5.1,Camera,Ximea,MQ013MG-ON,Python 1300,1,580,https://www.ximea.com/products/usb3-vision-cameras-xiq-line/mq013mg-on,,Camera PointGrey Blackfly S Mono 0.4 MP USB3 Vision (Sony IMX287) 305 https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287
-5.2,Camera cable,e.g. Ximea,CBL-U3-3M0,"USB 3, 3m passive",1,17,https://www.ximea.com/en/products/usb3-vision-compliant-cameras-xiq/xiq-usb-30-accessories/1-m-usb-30-passive-cable,,
-5.3,Camera holder,custom,,,1,0,,,
-5.4,Post,Thorlabs,TR75/M,,1,4.93,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M,,
-5.5a,Camera lens,Edmund Optics,59-872,C mount 35mm,1,295,https://www.edmundoptics.com/imaging-lenses/fixed-focal-length-lenses/35mm-c-series-fixed-focal-length-lens/#specs,,
-**IR filter**,,,,,,,,,
-6.1,Post,Thorlabs,TR75/M,,1,4.93,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M,,
-6.2,Lens mount,Thorlabs,LMR2/M,,1,23,https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M,,
-6.3,IR filter,Edmund Optics,66-106,830 nm LP,1,69,https://www.edmundoptics.de/optics/optical-filters/longpass-edge-filters/rg-830-50mm-dia.-longpass-filter/,,
-**Illumination**,,,,,,,,,
-7.1,Power supply,Conrad,ESPS-1500,Voltcraft,1,15,https://www.conrad.com/ce/en/product/1380523/Mains-PSU-adjustable-voltage-----VOLTCRAFT-----ESPS-1500-----3-Vdc-45-Vdc-5-Vdc,,
-7.2a,Post,Thorlabs,TR50/M,,1,8.12,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR50/M,,
-7.3a,Post,Thorlabs,TR150/M,,1,8.12,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR150/M,,
-7.4a,Right-angle clamp,Thorlabs,RA90/M,,3,8.87,https://www.thorlabs.com/thorProduct.cfm?partNumber=RA90/M,,
-7.5a,Mirror holder,Edmund Optics,#54-997,,1,70,https://www.edmundoptics.com/optomechanics/optical-mounts/optical-filter-mounts/40mm-sq.-fixed-filter-holder/,,
-7.6a,Cold mirror,Edmund Optics,#62-633,,1,20,https://www.edmundoptics.com/optics/optical-mirrors/hot-cold-mirrors/45deg-aoi-12.5mm-sq-cold-mirror/,,
-7.7a,LED box,custom,,,1,,,,
-,,,,,**Total**,2199,,,
+;Component;Manufacturer;Part No.;Specs;Amount;Price  (euros);Link;Notes;Replacement
+**Breadbord**;;;;;;;;;
+1.1;Aluminum breadbord;Thorlabs;MB3045/M;;1;170;https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M;;
+1.2;Feet;Thorlabs;AV4/M;;1;20.86;https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421;;
+**Rail**;;;;;;;;;
+2.1;Construction rail;Thorlabs;XT66-750;;1;80;https://www.thorlabs.com/thorProduct.cfm?partNumber=XT66-750;;
+2.2;Construction rail mount;Thorlabs;XT66P1;;1;32.25;https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P1;;
+2.3;Rail carriage;Thorlabs;XT66P2/M;;2;62.25;https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P2/M;;
+2.4;Post holder;Thorlabs;PH20/M;;2;6.33;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH20/M;;
+**Stage**;;;;;;;;;
+3.1;Post;Thorlabs;TR250/M;;4;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M;;
+3.2;Post holder;Thorlabs;PH75/M;;4;7.44;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0;;
+3.3;Acrilic stage;custom;;;1;10;https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html;From item n. 0133555 of modulor;
+3.4;Screen;custom;;;;;;;
+**Projector**;;;;;;;;;
+4.1;Projector;Asus;P3E;;1;534;https://www.asus.com/us/Projectors/P3E/;;
+4.2;Display cable (HDMI);Any;;;;;;;
+4.3;Post;Thorlabs;TR40/M;;1;4.52;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR40/M;;
+4.4;Post holder;Thorlabs;PH40/M;;1;6.56;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0;;
+**Camera**;;;;;;;;;
+5.1;Camera;Ximea;MQ013MG-ON;Python 1300;1;580;https://www.ximea.com/products/usb3-vision-cameras-xiq-line/mq013mg-on;;Camera PointGrey Blackfly S Mono 0.4 MP USB3 Vision (Sony IMX287) 305 https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287
+5.2;Camera cable;e.g. Ximea;CBL-U3-3M0;USB 3, 3m passive;1;17;https://www.ximea.com/en/products/usb3-vision-compliant-cameras-xiq/xiq-usb-30-accessories/1-m-usb-30-passive-cable;;
+5.3;Camera holder;custom;;;1;0;;;
+5.4;Post;Thorlabs;TR75/M;;1;4.93;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M;;
+5.5a;Camera lens;Edmund Optics;59-872;C mount 35mm;1;295;https://www.edmundoptics.com/imaging-lenses/fixed-focal-length-lenses/35mm-c-series-fixed-focal-length-lens/#specs;;
+**IR filter**;;;;;;;;;
+6.1;Post;Thorlabs;TR75/M;;1;4.93;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M;;
+6.2;Lens mount;Thorlabs;LMR2/M;;1;23;https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M;;
+6.3;IR filter;Edmund Optics;66-106;830 nm LP;1;69;https://www.edmundoptics.de/optics/optical-filters/longpass-edge-filters/rg-830-50mm-dia.-longpass-filter/;;
+**Illumination**;;;;;;;;;
+7.1;Power supply;Conrad;ESPS-1500;Voltcraft;1;15;https://www.conrad.com/ce/en/product/1380523/Mains-PSU-adjustable-voltage-----VOLTCRAFT-----ESPS-1500-----3-Vdc-45-Vdc-5-Vdc;;
+7.2a;Post;Thorlabs;TR50/M;;1;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR50/M;;
+7.3a;Post;Thorlabs;TR150/M;;1;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR150/M;;
+7.4a;Right-angle clamp;Thorlabs;RA90/M;;3;8.87;https://www.thorlabs.com/thorProduct.cfm?partNumber=RA90/M;;
+7.5a;Mirror holder;Edmund Optics;#54-997;;1;70;https://www.edmundoptics.com/optomechanics/optical-mounts/optical-filter-mounts/40mm-sq.-fixed-filter-holder/;;
+7.6a;Cold mirror;Edmund Optics;#64-452;;1;180;https://www.edmundoptics.com/p/45deg-aoi-101-x-127mm-cold-mirror/19164/;;
+7.7a;LED box;custom;;;1;;;;
+;;;;;**Total**;2359;;;
