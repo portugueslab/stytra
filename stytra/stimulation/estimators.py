@@ -69,6 +69,25 @@ class VigorMotionEstimator(Estimator):
         return vigor * self.base_gain
 
 
+class BoutsEstimator(VigorMotionEstimator):
+    def __init__(self, *args, bout_threshold = 0.1, vigor_window=0.05,
+                 min_interbout=0.1, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.bout_threshold = bout_threshold
+        self.vigor_window = vigor_window
+        self.min_interbout = min_interbout
+        self.last_bout_t = None
+
+    def bout_occured(self):
+        if self.get_velocity() > self.base_gain*self.bout_threshold:
+            if self.last_bout_t is not None:
+                if (datetime.datetime.now() - self.last_bout_t).total_seconds() > \
+                        self.min_interbout:
+                    self.last_bout_t = datetime.datetime.now()
+                    return True
+        return False
+
+
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
@@ -196,4 +215,5 @@ class SimulatedPositionEstimator(Estimator):
         return kt
 
 
-estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator)
+estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator,
+                      bouts=BoutsEstimator)
