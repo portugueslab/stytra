@@ -1,3 +1,10 @@
+# 0.8.27
+## Fixes
+- Tile range calculation fix
+- The calibrator now shows axis directions and proper positioning of the zebrafish
+- Fixes for closed loop stimulus logging
+- Windmill drawing moved to the new background framework
+
 # 0.8.26
 ## Fixes
 - Background stimuli reworked: tiling of stimulus works in all cases regardless of transform
