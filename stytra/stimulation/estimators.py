@@ -70,9 +70,9 @@ class VigorMotionEstimator(Estimator):
 
 
 class BoutsEstimator(VigorMotionEstimator):
-    def __init__(self, *args, bout_threshold = 0.1, vigor_window=0.05,
+    def __init__(self, *args, bout_threshold = 0.05, vigor_window=0.05,
                  min_interbout=0.1, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, base_gain=1, **kwargs)
         self.bout_threshold = bout_threshold
         self.vigor_window = vigor_window
         self.min_interbout = min_interbout
@@ -80,11 +80,10 @@ class BoutsEstimator(VigorMotionEstimator):
 
     def bout_occured(self):
         if self.get_velocity() > self.base_gain*self.bout_threshold:
-            if self.last_bout_t is not None:
-                if (datetime.datetime.now() - self.last_bout_t).total_seconds() > \
+            if self.last_bout_t is None or (datetime.datetime.now() - self.last_bout_t).total_seconds() > \
                         self.min_interbout:
-                    self.last_bout_t = datetime.datetime.now()
-                    return True
+                self.last_bout_t = datetime.datetime.now()
+                return True
         return False
 
 
