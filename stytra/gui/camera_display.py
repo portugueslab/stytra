@@ -38,7 +38,7 @@ class CameraViewWidget(QWidget):
 
     """
 
-    def __init__(self, *args, experiment=None, **kwargs):
+    def __init__(self, *args, experiment=None, camera=None, **kwargs):
         """
         :param experiment: experiment to which this belongs
                            (:class:Experiment <stytra.Experiment> object)
@@ -48,7 +48,10 @@ class CameraViewWidget(QWidget):
 
         self.experiment = experiment
         if experiment is not None:
-            self.camera = experiment.camera
+            if camera is None:
+                self.camera = experiment.camera # here you will need to change a bit so that it can take a second camera
+            else:
+                self.camera = camera
             experiment.gui_timer.timeout.connect(self.retrieve_image)
         else:
             self.gui_timer = QTimer()

@@ -254,6 +254,8 @@ class CameraExperimentWindow(VisualExperimentWindow):
 
         self.plot_framerate.setMaximumHeight(120)
 
+        # you need a subclass for the BrainCamera
+
         self.status_display.addMessageQueue(self.experiment.camera.message_queue)
 
     def construct_ui(self):

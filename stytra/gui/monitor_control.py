@@ -90,7 +90,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         self.display.pos = tuple([int(p) for p in self.roi_box.pos()])
         self.setting_param_val = False
 
-    def display_calibration_pattern(
+    def display_calibration_pattern( # A thing like this can be used to display the quality of the wrapping.
         self, calibrator, camera_resolution=(480, 640), image=None
     ):
         """
