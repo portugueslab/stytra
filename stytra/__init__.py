@@ -36,16 +36,23 @@ class Stytra:
             the protocols to be made available from the dropdown
 
         display : dict
-            full_screen : bool
+            full_screen: bool
                 displays the stimulus full screen on the secondary monitor, otherwise
                 it is in a window
-            window_size : tuple(int, int)
+
+            window_size: tuple(int, int)
                 optional specification of the size of the stimulus display area
-            gl : bool (default True)
-                enable OpenGL for drawing stimuli, faster for most stimuli and configurations.
+
+            gl: bool (default True)
+                enable OpenGL for drawing stimuli, faster for most stimuli and configurations. If set to True might
+                cause problems on some Linux configurations
+
+            min_framerate: number
+                if set, warn (by coloring red the framerate display) if the stimulus display
+                framerate drops below this number
 
         camera : dict
-            video_file : str
+            video_file: str
                 or
             type: str
                 supported cameras are
@@ -63,6 +70,10 @@ class Stytra:
 
             roi: tuple of int (x, y, w, h)
                 ROI for cameras that support it
+
+            min_framerate: number
+                if set, shows the camera framerate in red to warn the user that the framerate is too low
+                (lower than set in this argument) for proper tracking
 
             max_buffer_length: int, default 1000
                 the maximal length of the replay buffer in frames, can to be adjusted

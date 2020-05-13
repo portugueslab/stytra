@@ -17,12 +17,12 @@ The provided conda environment.yml file that should install everything except th
 
     conda env create -f environment.yml
 
-
-Then, whenever you want to use Stytra, you have to activate the environment::
+Then, you have to activate the environment and install stytra::
 
     conda activate stytra
+    pip install stytra
 
-
+When you want to use Stytra, ensure that you are in the stytra environment (``conda activate stytra``) in the Anaconda prompt.
 Many Python editors and IDEs such as PyCharm or Visual Studio Code support setting a conda environment for projects and files.
 
 
