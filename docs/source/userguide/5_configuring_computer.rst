@@ -39,7 +39,7 @@ AVT             avt                 No   No        No         No
 Basler          basler              No   Yes       ?          ?
 Mikrotron       mikrotron           Yes  Yes       Yes        No
 OpenCV          opencv              No   ?         ?          ?
-==============  ==================  ===  ========  =========  =====
+==============  ==================  ===  ========  =========  ====
 
 To use a camera with Stytra, either put it in the stytra_setup_config.json file or, in a script that runs Stytra set the camera argument, e.g.::
 

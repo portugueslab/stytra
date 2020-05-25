@@ -10,6 +10,7 @@ if "%SPHINXBUILD%" == "" (
 set SOURCEDIR=source
 set BUILDDIR=build
 set SPHINXPROJ=Stytra
+set SPHINXOPTS="-E -a"
 
 if "%1" == "" goto help
 

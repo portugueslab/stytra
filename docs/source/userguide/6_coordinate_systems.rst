@@ -7,6 +7,7 @@ For the recorded coordinates, the same holds. The angles correspondingly increas
 
 up to v0.8
 Fish angle is defined as the direction of the first segment of the tail with respect to the head. The angle is 0 when the fish faces left.
+
 .. image:: ../../figures/coordinate_v0_8.svg
    :scale: 50%
    :alt: coordinate system
