@@ -73,7 +73,6 @@ deploy:
     password:
       secure: AaZo11Z3qFgw/4ITrL8PS49MoT6rTbGBkaJfsYjQDSeHCOyOpHdgsa1IQjNRzCs9cnMIJrS1ZQcS/aCUjnxHeH6r5FLqivRV4Mdw1sxaXWJHBa7juDsg84yShslJUH7uzL+XWza+lrYSfItIQeS3TC2fdJngHCbXLT06/PnJLEtNYw3GAPwHhjQm+A7CXfNimGH9pTQZ2CJ4QtSDIWbyvYFwbkOJRTQzRbK3xewaekJZOddeYg3Jpqd7BX/nTGri8R8YZ6j5GJ9bLDDfH8IYfM32g4dhALpihwIlcMpAPVH34CxTb8LNUvYdVCKM5OIc7P7CGRsi8aTzrtmCrqWABAIqUglyQu6FIr9jFqoVklKW2dMoIVdfkK1NKq/pCJIyS6mfVsLHWUCERvHoa9v1HB2473KHCeofxj9LDfown6KBwhIDkowrbVcsCwTjhK5h+C1qm96LuxHmqG6/JXadsxhy+W/37LnlWN3YJ8LZ04uYBFv9MeTgt27b/9lOcFn2yJgBewlNkg9XtaQM440WiXy3P2heqr6j4EUuKVge7tRHoE9ALDzuFDYZFX8rYaqBUHa54gRLY8BltGQJB7jxrB+gVdK31Jxw579kZCMV0WD84XctOmutRSfcxvRm6zBZ3ZryWm30CQyObIc5TlEmbt/ot5vt4csz46VrhlOTu0Q=
     on:
-      tags: true
       branch: master
       python: 3.8
     skip_existing: true
