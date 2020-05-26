@@ -40,7 +40,7 @@ install:
   - pwd
   - ls
   - pip install pytest-xdist # multi-thread py.test
-  - pip install pytest-cov
+  - pip install -U tox-travis
   # add coverage stats
   - pip install .
 
