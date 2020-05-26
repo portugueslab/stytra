@@ -265,6 +265,10 @@ class BackgroundStimulus(PositionStimulus):
     """Stimulus with a tiling background
         """
 
+    def __init__(self, *args, background_color=(0, 0, 0), **kwargs):
+        self.background_color = background_color
+        super().__init__(*args, **kwargs)
+
     def get_unit_dims(self, w, h):
         return w, h
 
@@ -317,7 +321,7 @@ class BackgroundStimulus(PositionStimulus):
         self.clip(p, w, h)
 
         # draw the black background
-        p.setBrush(QBrush(QColor(0, 0, 0)))
+        p.setBrush(QBrush(QColor(*self.background_color)))
         p.drawRect(QRect(-1, -1, w + 2, h + 2))
 
         imw, imh = self.get_unit_dims(w, h)
@@ -439,10 +443,9 @@ class GratingStimulus(BackgroundStimulus):
         wave_shape="square",
         grating_col_1=(255,) * 3,
         grating_col_2=(0,) * 3,
-        center_relative=True,
         **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, background_color=grating_col_2, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.wave_shape = wave_shape
@@ -499,7 +502,7 @@ class PaintGratingStimulus(BackgroundStimulus):
         grating_angle=0,
         grating_period=10,
         grating_col_1=(255, 255, 255),
-        grating_col_2=None,
+        grating_col_2=(0, 0, 0),
         **kwargs
     ):
         """
@@ -507,7 +510,7 @@ class PaintGratingStimulus(BackgroundStimulus):
         :param grating_period: spatial period of the gratings (unit?)
         :param grating_color: color for the non-black stripes (int tuple)
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, background_color=grating_col_2, **kwargs)
         self.theta = grating_angle
         self.grating_period = grating_period
         self.color = grating_col_1
