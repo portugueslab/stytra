@@ -58,9 +58,9 @@ after_success:
 
   - pip install Sphinx==3.0.3
   - pip install sphinx_rtd_theme==0.4.3
-
+  - pip install sphinxcontrib-bibtex
   - cd docs
-  - sphinx-apidoc ../split_dataset -o ./
+  - sphinx-apidoc ../stytra -o ./build/doctrees
   - make html
   - cd ..
 
