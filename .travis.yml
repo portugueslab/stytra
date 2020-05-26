@@ -29,6 +29,7 @@ install:
   - export GIT_FULL_HASH=`git rev-parse HEAD`
   - conda update conda --yes
   - conda env create -f environment.yml
+  - conda install pyqt5
   - source activate stytra_env
   - echo ${QT}
   - echo ${TEST}
