@@ -73,7 +73,6 @@ deploy:
     password:
       secure: DGTQVhfqKA5+isv2KA92yr6NsLv2g4o8uz+LmsErNKE7uZIkJjx0GITMdHcpc4fQCHir8EvZGVNek+8NypNWxop3lxb+BSurT8Gq7w8TZTC+hdV8bU/NllJ0qaYUUcCKIbxztsgFH7x35K2xB9pHAxj2GE1BaaWJG9COQiocR5wW/Kpzt3dLVCJzMPOZX7BVnzbxqLoPTAjMvcObrJ7XjAMpG3cEmvZu+KcDiMUhyG/A1TNjXsoO5Q7C9ql5WOc7bokC2OpvBsGCjH/FYiVYgZ6vv3eu9zaoAjeuNZb68FQvO4V333KewPymzqd+Nxav1T5w0aNLUUp9SoFvydeuyi4G/MsHjKWQtZrp07UbXvgHOQFXr+jnuiTC7JK4Y7+812Vmb60f+Pff+AOjzTJSE67rHyfzrvMyUtf7xNCZ3hQXWdYl8blB1lcH5vDvtG3AQ9Gpwp1ZtMXoddXKQUr15T2RYxkaMuRYKCMYeoMMfoNZ3EZ2yzri0TVcThv3yJxsKZy3fPi0y0+dASZllNvAQQ/DyTbcjmEafE8p6A5w9aPoMabpDiYC3kF+iEiwLWfPhtdMf5ieffuXM6ZWxiBJR/6qln98KUfe7dPt9G5ghN07IkIr6i5pxopMSN6LRmYCiWxD/SDyNgvmicX8jGX/+BA8QVQpIS7tcQK6SPKPGb8=
     on:
-      tags: true
       branch: master
     skip_existing: true
 
@@ -83,7 +82,6 @@ deploy:
     github_token:
       secure: dJxMEtXCiiUHd9cx/G4hiIGeOcPw1bnoMeHodziVmRsSsnK+2Ukrsg9XSnT4SShKjdUyZqz8VBvLonHVpJJKDPe+ohl54CwsvDV1wpEu2xmY4UqsfRu4RAHL4x3YTvu5qBBcUXksBwXuQNd/XT1qzpXEiGHo3HXwq1MKMiXyp8FL50pu6KkskiY4xbQiKcDe9MRWextx9tLCiWX/iFPKfh4FbXlKNnKe0aOpnOHdt3S66IjG2haFp0RrHu5s8UtNIO3LGngApAw4bh1/RbrddHHKYoomqQkoFHoKqCENckRpozdKW9BATnqqVVwuFgvF4kIsDdVf+EkcArHq35HE7Oz/gt5SbqCLHxeoApfoLT45+n2BXTTcbzIFQPJ4wjQ75z2PangMsSmVaKP20AT+i2oHXMq+MemDrRVv8wAgDvoy3WIilw9dXHuT0gSN/WORN27NEB26rh1KhJjKIUFo1JBr2B9C0NKjuPI65XbfR/ePwPp732Q4lXhXhcAFcYiiiFvqi3I5NO2Q6/+40bEcCyxzbCfItlSEzd7TIlGD2RNv6ovAZQpp2jrGv+2q/XEbIAdGwhovKKGtKC1Prq9IsVungEueLuavgiCxfoKx+ZRHxiSMrvGX4Fl8DJxDbrizmhNxyU6qrLtMAl3VmRSoYheAKR4s3IBnyzfLQY9wafY=
     on:
-      tags: true
       branch: master
     local-dir: docs/_build/html
     committer-from-gh: true
