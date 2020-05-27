@@ -10,7 +10,6 @@ from stytra.calibration import CircleCalibrator
 from stytra.utilities import recursive_update
 
 # imports for easy experiment building
-from stytra.metadata import AnimalMetadata, GeneralMetadata
 from stytra.stimulation import Protocol
 
 from PyQt5.QtCore import QSize, Qt
