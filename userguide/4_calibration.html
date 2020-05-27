@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Calibration &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Configuring a computer for Stytra experiments" href="5_configuring_computer.html" />
+    <link rel="prev" title="Tracking configuration" href="3_tracking.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Calibration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#calibration-for-head-fixed-zebrafish-experiments">Calibration for head-fixed zebrafish experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#calibration-for-freely-swimming-zebrafish-experiments">Calibration for freely-swimming zebrafish experiments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Calibration</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/userguide/4_calibration.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <style> .red {color:red} </style><div class="section" id="calibration">
+<span id="id1"></span><h1>Calibration<a class="headerlink" href="#calibration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="calibration-for-head-fixed-zebrafish-experiments">
+<h2>Calibration for head-fixed zebrafish experiments<a class="headerlink" href="#calibration-for-head-fixed-zebrafish-experiments" title="Permalink to this headline">¶</a></h2>
+<p>To calibrate the monitor for your experiment, first position the black
+stimulus screen on the monitor you are using for the experiment. Then, hit
+the show calibration button and drag around the ROI in the stytra GUI until
+the red rectangle covers the area you want to use for the stimulus and the
+cross is at the center. Finally, specify in the spin box the final size of
+the lateral edge of the calibrator in centimeters.</p>
+<p>The calibration is saved in the last_stytra_config.json file, so once you
+have done it it maintains the same calibration for all subsequent experiments.</p>
+</div>
+<div class="section" id="calibration-for-freely-swimming-zebrafish-experiments">
+<h2>Calibration for freely-swimming zebrafish experiments<a class="headerlink" href="#calibration-for-freely-swimming-zebrafish-experiments" title="Permalink to this headline">¶</a></h2>
+<p>To calibrate the camera image to the displayed image, the Circle Calibrator
+is used (it is enabled automatically for freely-swimming experiments).</p>
+<a class="reference internal image-reference" href="../_images/calibration.png"><img alt="freely-swimming tracking screenshot" class="align-center" src="../_images/calibration.png" style="width: 575.6999999999999px; height: 283.5px;" /></a>
+<p>After Stytra starts, turn off the IR illumination and remove the IR filter
+in front of the camera. Then, click the display calibration pattern button (<span class="red">a</span>) and
+move the display window on the projector so that the 3 dots are clearly visible.
+Sometimes the camera exposure has to be adjusted as well (<span class="red">b</span>) so that all 3 dots are visible.
+Due to screen or projector framerates, usually setting the camera framerate to 30 and the exposure to 10ms works well.</p>
+<p>Then, click calibrate (<span class="red">c</span>) and verify that the location of the camera image
+in the projected image makes sense. If not, try adjusting camera settings and
+calibrating again.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="5_configuring_computer.html" class="btn btn-neutral float-right" title="Configuring a computer for Stytra experiments" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="3_tracking.html" class="btn btn-neutral float-left" title="Tracking configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

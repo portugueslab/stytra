@@ -1,7 +1,0 @@
-bump2version
-flake8
-tox
-Sphinx
-
-pytest
-pytest-cov

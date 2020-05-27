@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>User interface &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Tracking configuration" href="3_tracking.html" />
+    <link rel="prev" title="Designing and running experiments" href="1_examples_gallery.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>User interface</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/userguide/2_interface.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="user-interface">
+<span id="gui-desc"></span><h1>User interface<a class="headerlink" href="#user-interface" title="Permalink to this headline">¶</a></h1>
+<p>The various behavioral paradigms supported by Stytra provide the user with a consistent interface to control experiments.</p>
+<a class="reference internal image-reference" href="../_images/screenshot.svg"><img alt="user interface screenshot" class="align-center" src="../_images/screenshot.svg" /></a>
+<p>The toolbar on top controls running of the protocols: starting and stopping,
+progress display, opening a dialog for protocol settings, changing the metadata and
+save destination.</p>
+<p>The rest of the interface is reconfigured depending on the experiment type.
+Each panel can be moved separately and closed.
+To reopen a closed panel, you can right-click on the title bar of any panel and
+a list of all available panels will appear.</p>
+<p>The camera panel buttons are for:</p>
+<ul class="simple">
+<li><p>pausing and starting the camera feed</p></li>
+<li><p>activating the replay (for a region selected when the camera is paused). Refer to <a class="reference internal" href="3_tracking.html#replaying"><span class="std std-ref">Replaying the camera feed to refine tracking</span></a> section for details.</p></li>
+<li><p>adjusting camera settings (framerate, exposure and gain)</p></li>
+<li><p>capturing the current image of the camera (without the tracking results superimposed</p></li>
+<li><p>turning on and off auto-scaling of the image brightness range.</p></li>
+<li><p>selection box to display the image at a particular stage in the tracking pipeline</p></li>
+<li><p>button for editing the tracking settings</p></li>
+</ul>
+<p>The framerate display widget shows current framerates of the stimulus display,
+camera and tracking. If minimum framerates for display or tracking are configured,
+the indicators turn red if the framerate drops. These are configured in the stytra_config dict
+for a protocol or setup_config.json file in the following sections:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stytra_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">display</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">min_framerate</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>
+        <span class="n">camera</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">min_framerate</span><span class="o">=</span><span class="mi">100</span><span class="p">),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>The monitoring widget shows changing variables relating to the stimulus, tracking or estimation of the animal state for closed-loop stimulation use</p>
+<p>The status bar shows diagnostic messages from the camera or tracking.</p>
+<p>The stimulus window adjustment panel enables precise positioning of the stimulus display window and <a class="reference internal" href="4_calibration.html#calibration"><span class="std std-ref">Calibration</span></a></p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="3_tracking.html" class="btn btn-neutral float-right" title="Tracking configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="1_examples_gallery.html" class="btn btn-neutral float-left" title="Designing and running experiments" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

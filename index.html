@@ -1,0 +1,406 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Stytra &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="overview/0_motivation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="#" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="userguide/0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#">Docs</a> &raquo;</li>
+        
+      <li>Stytra</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="stytra">
+<h1>Stytra<a class="headerlink" href="#stytra" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="an-open-source-integrated-system-for-stimulation-tracking-and-closed-loop-behavioral-experiments">
+<h2>an open-source, integrated system for stimulation, tracking and closed-loop behavioral experiments<a class="headerlink" href="#an-open-source-integrated-system-for-stimulation-tracking-and-closed-loop-behavioral-experiments" title="Permalink to this headline">¶</a></h2>
+<div class="line-block">
+<div class="line">Vilim Štih<sup>#</sup>, Luigi Petrucco<sup>#</sup>, Andreas M. Kist* and Ruben Portugues</div>
+<div class="line"><a class="reference external" href="http://www.portugueslab.com">Research Group of Sensorimotor Control</a>, <a class="reference external" href="https://www.neuro.mpg.de/">Max Planck Institute of Neurobiology</a>, Martinsried, Germany</div>
+</div>
+<div class="line-block">
+<div class="line"><sup>#</sup><span class="small">These authors contributed equally to this work.</span></div>
+<div class="line">*<span class="small">Current address: Department of Phoniatrics and Pediatric Audiology, University Hospital Erlangen, Medical School, Friedrich-Alexander-University Erlangen-Nürnberg, Germany.</span></div>
+</div>
+<video width="100%" loop autoplay controls>
+
+<source src="<http://www.portugueslab.com/files/stytra_freeswim.webm"
+        type="video/webm">
+
+<source src="http://www.portugueslab.com/files/stytra_freeswim.mp4"
+        type="video/mp4">
+</video><p>We present Stytra, a flexible, open-source software package, written in Python and
+designed to cover all the general requirements involved in larval zebrafish behavioral
+experiments. It provides <a class="reference internal" href="overview/2_stimulation_intro.html#stim-desc"><span class="std std-ref">timed stimulus presentation</span></a>, <a class="reference internal" href="devdocs/2_triggering_intro.html#trig-desc"><span class="std std-ref">interfacing with external devices</span></a>
+and simultaneous real-time <a class="reference internal" href="overview/3_tracking.html#tracking-desc"><span class="std std-ref">tracking</span></a> of behavioral parameters such as position,
+orientation, tail and eye motion in both freely-swimming and head-restrained
+preparations. Stytra logs all recorded quantities, metadata, and code version in
+standardized formats to allow full provenance tracking, from data acquisition through
+analysis to publication. The package is modular and expandable for different
+experimental protocols and setups. Current releases can be found at
+<a class="reference external" href="https://github.com/portugueslab/stytra">https://github.com/portugueslab/stytra</a>. We also provide complete
+documentation with examples for extending the package to new stimuli and hardware,
+as well as a <a class="reference internal" href="overview/6_hardware_list.html#hardware-list"><span class="std std-ref">schema and parts list</span></a> for behavioral setups. We showcase Stytra by
+<a class="reference internal" href="overview/8_replication.html#reproduction"><span class="std std-ref">reproducing</span></a> previously published behavioral protocols in both head-restrained and
+freely-swimming larvae. We also <a class="reference internal" href="overview/5_external_sync.html#imaging-example"><span class="std std-ref">demonstrate</span></a> the use of the software in the context of a
+calcium imaging experiment, where it interfaces with other acquisition devices. Our
+aims are to enable more laboratories to easily implement behavioral experiments, as
+well as to provide a platform for sharing stimulus protocols that permits easy
+reproduction of experiments and straightforward validation. Finally, we demonstrate
+how Stytra can serve as a platform to design behavioral experiments involving tracking
+or visual stimulation with other animals and provide an <a class="reference external" href="https://github.com/portugueslab/Stytra-with-DeepLabCut">example integration</a> with the
+DeepLabCut neural network-based tracking method.</p>
+<p>If you are using Stytra for your own research, please <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1006699">cite us</a>!</p>
+<p>If you encounter any issues, please report them <a class="reference external" href="https://github.com/portugueslab/stytra/issues">here</a>.</p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/1_library_structure.html">The structure of Stytra</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/1_library_structure.html#basic-classes">Basic classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/2_stimulation_intro.html">Stimulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/2_stimulation_intro.html#stimuli-examples">Stimuli examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/3_tracking.html">Image acquisition and tracking</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/3_tracking.html#image-acquisition">Image acquisition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/3_tracking.html#tracking-pipelines">Tracking pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/3_tracking.html#tracking-the-behavior-of-head-restrained-fish">Tracking the behavior of head-restrained fish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/3_tracking.html#freely-swimming-fish-tracking">Freely-swimming fish tracking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/3_tracking.html#custom-tracking-functions">Custom tracking functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="overview/6_hardware_list.html">Hardware description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/6_hardware_list.html#head-restrained-fish-setup">Head-restrained fish setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/6_hardware_list.html#freely-swimming-fish-setup">Freely swimming fish setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/6_hardware_list.html#list-of-components">List of components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/6_hardware_list.html#low-cost-behavioral-setup">Low-cost behavioral setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/7_comparison.html">Comparison with existing software and limitations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#bonsai">Bonsai</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#psychophysics-toolbox">Psychophysics Toolbox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#psychopy">Psychopy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#mworks">MWorks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#zebeyetrack">ZebEyeTrack</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/7_comparison.html#limitations">Limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/8_replication.html">Experiment replication</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview/8_replication.html#closed-loop-motor-adaptation">Closed-loop motor adaptation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview/8_replication.html#closed-loop-phototaxis-assay">Closed-loop phototaxis assay</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="overview/9_references.html">References</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="userguide/0_install_guide.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/0_install_guide.html#installing-stytra">Installing stytra</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/0_install_guide.html#installing-camera-apis">Installing camera APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/0_install_guide.html#external-hardware-support">External hardware support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/1_examples_gallery.html">Designing and running experiments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#create-a-new-protocol">Create a new protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#define-dynamic-stimuli">Define dynamic stimuli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#stimulation-and-tracking">Stimulation and tracking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#closed-loop-experiments">Closed-loop experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#freely-swimming-experiments">Freely-swimming experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/1_examples_gallery.html#defining-custom-experiment-classes">Defining custom Experiment classes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/3_tracking.html">Tracking configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/3_tracking.html#freely-swimming-fish">Freely-swimming fish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/3_tracking.html#embedded-fish">Embedded fish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/3_tracking.html#replaying-the-camera-feed-to-refine-tracking">Replaying the camera feed to refine tracking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/4_calibration.html">Calibration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/4_calibration.html#calibration-for-head-fixed-zebrafish-experiments">Calibration for head-fixed zebrafish experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/4_calibration.html#calibration-for-freely-swimming-zebrafish-experiments">Calibration for freely-swimming zebrafish experiments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/5_configuring_computer.html">Configuring a computer for Stytra experiments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/5_configuring_computer.html#camera-configuration">Camera configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/5_configuring_computer.html#trying-example-protocols-on-your-setup">Trying example protocols on your setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/7_offline.html">Offline use of Stytra</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/7_offline.html#setting-up-and-running-video-tracking">Setting up and running video tracking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/7_offline.html#automatic-batch-processing">Automatic batch-processing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/8_faqs.html">Frequently Asked Questions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#what-is-stytra-good-for">What is Stytra good for?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#what-is-stytra-not-good-for">What is Stytra not good for?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-need-to-start-a-new-experiment-in-the-lab-can-i-use-stytra">I need to start a new experiment in the lab. Can I use Stytra?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-don-t-know-python-can-i-use-stytra">I don’t know Python, can I use Stytra?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-know-only-a-bit-of-python-can-i-use-stytra">I know only a bit of Python, can I use Stytra?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-need-to-setup-stytra-to-run-experiments-on-my-computer-what-should-i-do">I need to setup Stytra to run experiments on my computer. What should I do?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-need-to-design-a-new-stimulus-what-should-i-do">I need to design a new stimulus. What should I do?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#what-are-all-these-param-n-things-do-i-have-to-care">What are all these Param(n.) things? Do I have to care?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-need-to-use-a-custom-tracking-function-what-should-i-do">I need to use a custom tracking function. What should I do?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-have-run-a-stytra-experiment-and-now-what-what-s-in-the-log-files">I have run a Stytra experiment. And now what? What’s in the log files?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#can-i-run-two-setups-from-the-same-computer">Can I run two setups from the same computer?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userguide/8_faqs.html#i-have-used-the-freely-swimming-fish-tracking-what-are-the-units-of-my-output">I have used the freely swimming fish tracking. What are the units of my output?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/1_pipelines.html">Implementation of image processing pipelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/1_pipelines.html#processing-nodes">Processing nodes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/2_triggering_intro.html#ttl-pulse-triggering-on-a-labjack-ni-board-and-serial-ports">TTL pulse triggering on a Labjack/NI board and serial ports.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/2_triggering_intro.html#zeromq">ZeroMQ</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/2_triggering_intro.html#additional-methods">Additional methods</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/3_data_saving.html">Data and metadata saving</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/3_data_saving.html#implementation-notes">Implementation notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devdocs/3_data_saving.html#configuring-stytra-for-updating-external-database">Configuring Stytra for updating external database:</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="overview/0_motivation.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

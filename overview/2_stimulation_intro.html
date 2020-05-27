@@ -1,0 +1,352 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Stimulation &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Image acquisition and tracking" href="3_tracking.html" />
+    <link rel="prev" title="The structure of Stytra" href="1_library_structure.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Stimulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#stimuli-examples">Stimuli examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#full-field-luminance">Full-field luminance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gratings">Gratings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#okr-inducing-rotating-windmill-stimulus">OKR inducing rotating windmill stimulus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#seamlessly-tiled-image">Seamlessly-tiled image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#radial-sine-freely-swimming-fish-centering-stimulus">Radial sine (freely-swimming fish centering stimulus)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#random-dot-kinematograms">Random dot kinematograms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#set-voltage-of-an-ni-board">Set voltage of an NI board</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Stimulation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/overview/2_stimulation_intro.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="stimulation">
+<span id="stim-desc"></span><h1>Stimulation<a class="headerlink" href="#stimulation" title="Permalink to this headline">¶</a></h1>
+<p>Experimental protocols in Stytra are defined as sequences of timed stimuli presented to the animal through a projector or external actuators. A sequence of stimuli, defined as a Python list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> objects, is defined in a <code class="xref py py-class docutils literal notranslate"><span class="pre">Protocol</span></code> object. This structure enables  straightforward design of new experimental protocols, requiring very little knowledge of the general structure of the library and only basic Python syntax. A dedicated class coordinates the timed execution of the protocol relying on a <code class="docutils literal notranslate"><span class="pre">QTimer</span></code> from the PyQt5 library, ensuring a temporal resolution in the order of 15-20 ms (around the response time of a normal monitor, see inset). Drawing very complex stimuli consisting of many polygons or requiring online computation of large arrays can decrease the stimulus display performance.</p>
+<div class="figure align-right" id="id2" style="width: 200px">
+<img alt="../_images/framerates.svg" src="../_images/framerates.svg" /><p class="caption"><span class="caption-text">Interval duration when flickering a white stimulus on every update of the display loop. The screen was recorded at 2 kHz.</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
+</div>
+<p>The stimulus display framerate can be monitored online from the user interface when the protocol is running (see the lower left corner of the window in <a class="reference internal" href="../userguide/2_interface.html#gui-desc"><span class="std std-ref">interface</span></a>.  Milli- or microsecond precision, which might be required for optogenetic experiments, for example, is currently not supported. Each <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> has methods which are called at starting time or at every subsequent time step while it is set. In this way one can generate dynamically changing stimuli, or trigger external devices. New <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> types can be easily added to the library just by subclassing <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> and re-defining the <code class="xref py py-meth docutils literal notranslate"><span class="pre">start()</span></code> and <code class="xref py py-meth docutils literal notranslate"><span class="pre">update()</span></code> methods.</p>
+<p>A large number of stimuli is included in the package. In particular, a library of visual stimuli has been implemented as <code class="xref py py-class docutils literal notranslate"><span class="pre">VisualStimulus</span></code> objects using the <a class="reference external" href="https://doc.qt.io/qt-5/qpainter.html">QPainter</a> object, a part of the Qt GUI library, enabling efficient drawing with OpenGL. Relying on a set of high-level drawing primitives makes the code very readable and maintainable. Stytra already includes common stimuli used in  visual neuroscience, such as moving bars, dots, whole-field translation or rotations of patterns on a screen, and additional features such as movie playback and the presentation of images from a file (which can be generated by packages such as Imagen <a class="bibtex reference internal" href="9_references.html#imagen" id="id1">[ima]</a>). The classes describing visual stimuli can be combined, and new stimuli where these patterns are moved or masked can be quickly defined by combining the appropriate <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> types. Finally, new stimuli can be easily created by redefining the <code class="xref py py-meth docutils literal notranslate"><span class="pre">paint()</span></code> method in a new <code class="xref py py-class docutils literal notranslate"><span class="pre">VisualStimulus</span></code> object. Multiple stimuli can be presented simultaneously using <code class="xref py py-class docutils literal notranslate"><span class="pre">StimulusCombiner</span></code>. Presenting different stimuli depending on animal behavior or external signals can be achieved using the <code class="xref py py-class docutils literal notranslate"><span class="pre">ConditionalWrapper</span></code> container, or with similarly designed custom objects. Visual stimuli are usually displayed on a secondary screen, therefore Stytra provides a convenient interface for positioning and calibrating the stimulation window (visible in <a class="reference internal" href="../userguide/2_interface.html#gui-desc"><span class="std std-ref">interface</span></a> on the right-hand side). Although in our experiments we are using a single stimulation monitor, displaying stimuli on multiple screens can be achieved with virtual desktop technology or screen-splitting hardware boards. Importantly, all stimulus parameters are specified in physical units and are therefore independent of the display hardware. Finally, the timed execution of code inside <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> objects can be used to control hardware via I/O boards or serial communication with micro-controllers such as <a class="reference external" href="https://www.arduino.cc/">Arduino</a> or <a class="reference external" href="https://micropython.org/">MicroPython PyBoard</a>. For example, in this way one may deliver odors or temperature stimuli or optogenetic stimulation.  Examples for a few different kinds of stimuli are provided below.
+For a description of how to synchronize the stimulus with an external data-acquisition device such a s a microscope, see the <a class="reference internal" href="../devdocs/2_triggering_intro.html#trig-desc"><span class="std std-ref">triggering</span></a> section of the developer documentation.</p>
+<div class="section" id="stimuli-examples">
+<h2>Stimuli examples<a class="headerlink" href="#stimuli-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="full-field-luminance">
+<h3>Full-field luminance<a class="headerlink" href="#full-field-luminance" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_full_field.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">lum</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">luminance</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">DynamicLuminanceStimulus</span><span class="p">(</span><span class="n">df_param</span><span class="o">=</span><span class="n">lum</span><span class="p">,</span> <span class="n">clip_mask</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)),</span>
+            <span class="n">DynamicLuminanceStimulus</span><span class="p">(</span><span class="n">df_param</span><span class="o">=</span><span class="n">lum</span><span class="p">,</span> <span class="n">clip_mask</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)),</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="gratings">
+<h3>Gratings<a class="headerlink" href="#gratings" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_grating.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Stim</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;stim&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">GratingStimulus</span><span class="p">),</span> <span class="nb">dict</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Stim</span><span class="p">(</span><span class="n">df_param</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">vel_x</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">theta</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="okr-inducing-rotating-windmill-stimulus">
+<h3>OKR inducing rotating windmill stimulus<a class="headerlink" href="#okr-inducing-rotating-windmill-stimulus" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_okr.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Stim</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+            <span class="s2">&quot;stim&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">WindmillStimulus</span><span class="p">),</span> <span class="p">{}</span>  <span class="c1"># order is important!</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="seamlessly-tiled-image">
+<h3>Seamlessly-tiled image<a class="headerlink" href="#seamlessly-tiled-image" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_seamless_image.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Stim</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;stim&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">SeamlessImageStimulus</span><span class="p">,</span> <span class="n">InterpolatedStimulus</span><span class="p">),</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">Stim</span><span class="p">(</span>
+                <span class="n">background</span><span class="o">=</span><span class="s2">&quot;caustics.png&quot;</span><span class="p">,</span>
+                <span class="n">df_param</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">vel_x</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="n">vel_y</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">])),</span>
+            <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="radial-sine-freely-swimming-fish-centering-stimulus">
+<h3>Radial sine (freely-swimming fish centering stimulus)<a class="headerlink" href="#radial-sine-freely-swimming-fish-centering-stimulus" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_radial_sine.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">RadialSineStimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">velocity</span><span class="o">=</span><span class="mi">5</span><span class="p">)]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="random-dot-kinematograms">
+<h3>Random dot kinematograms<a class="headerlink" href="#random-dot-kinematograms" title="Permalink to this headline">¶</a></h3>
+<video loop src="../_static/stim_movie_kinematogram.mp4"
+width="200px" autoplay controls></video><div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">ContinuousRandomDotKinematogram</span><span class="p">(</span>
+                <span class="n">dot_density</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                <span class="n">dot_radius</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+                <span class="n">df_param</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                    <span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+                        <span class="n">coherence</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                        <span class="n">frozen</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+</pre></div>
+</div>
+</div>
+<div class="section" id="set-voltage-of-an-ni-board">
+<h3>Set voltage of an NI board<a class="headerlink" href="#set-voltage-of-an-ni-board" title="Permalink to this headline">¶</a></h3>
+<p>This example set a voltage on an external NI board.
+Note that this code would require an installed NI board and the nidaqmx library installed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">():</span>
+    <span class="k">return</span><span class="p">([</span><span class="n">SetVoltageStimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dev</span><span class="o">=</span><span class="s2">&quot;Dev1&quot;</span><span class="p">,</span> <span class="n">chan</span><span class="o">=</span><span class="s2">&quot;ao0&quot;</span><span class="p">,</span> <span class="n">voltage</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+            <span class="n">SetVoltageStimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dev</span><span class="o">=</span><span class="s2">&quot;Dev1&quot;</span><span class="p">,</span> <span class="n">chan</span><span class="o">=</span><span class="s2">&quot;ao0&quot;</span><span class="p">,</span> <span class="n">voltage</span><span class="o">=</span><span class="mf">3.5</span><span class="p">)])</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="3_tracking.html" class="btn btn-neutral float-right" title="Image acquisition and tracking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="1_library_structure.html" class="btn btn-neutral float-left" title="The structure of Stytra" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,1226 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Hardware description &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Comparison with existing software and limitations" href="7_comparison.html" />
+    <link rel="prev" title="Synchronizing stimulation with data acquisition" href="5_external_sync.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Hardware description</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#head-restrained-fish-setup">Head-restrained fish setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#freely-swimming-fish-setup">Freely swimming fish setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-of-components">List of components</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#head-restrained-setup">Head-restrained setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#freely-swimming-setup">Freely-swimming setup</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#low-cost-behavioral-setup">Low-cost behavioral setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Hardware description</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/overview/6_hardware_list.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="hardware-description">
+<span id="hardware-list"></span><h1>Hardware description<a class="headerlink" href="#hardware-description" title="Permalink to this headline">¶</a></h1>
+<p>In our effort to make experiments as open and reproducible as possible, we documented example setups that can be used together with the Stytra software for performing behavioral experiments in head-restrained and freely swimming fish. In general, the minimal setup for tracking the fish larvae requires a high-speed camera (a minimum of 100 Hz is required to capture the most common tail beats which have a frequency up to 50 Hz, but we recommend at least 300 Hz to describe the details of the tail kinematics). The camera must be equipped with a suitable objective: a macro lens for the head-restrained tail tracking or a normal lens for the freely swimming recordings, where a smaller magnification and a larger field of view are required.  Infrared illumination is then used to provide contrast without interfering with the animal’s visual perception.
+Since fish strongly rely on vision and many of their reflexes can be triggered by visual stimulation, the setup is usually equipped with a projector or screen to present the visual stimulus to the fish. Although in our setups stimuli are projected below the fish, a lateral projector would be fully compatible with Stytra.
+Most of our rig frames consist of optomechanical parts commonly used for building microscopes. These parts are convenient but not strictly necessary to build a well-functioning rig. Replacing them with simple hardware-store and laser-cut components can significantly reduce the costs.  Therefore, we also provide instructions for a head-restrained setup built inside a cardboard box, where the most expensive item is the high-speed camera, bringing the price of the whole setup without the computer below 700 euros.</p>
+<p>Here we describe two configurations of our setups: the first one is for detailed kinematic tracking of eyes and tail in a fish with head restrained in agarose, the second for tracking freely swimming fish in a petri dish.</p>
+<p>Finally, we present a cheap version of the behavioral setup that can be
+easily built for about 700 euros, and easily assembled using cardboard,
+laser-cut parts or other custom-made enclosures.</p>
+<div class="section" id="head-restrained-fish-setup">
+<h2>Head-restrained fish setup<a class="headerlink" href="#head-restrained-fish-setup" title="Permalink to this headline">¶</a></h2>
+<p>This configuration requires high magnification, provided by a 50 mm macro
+objective. On the other side, illumination be provided only in a very
+small field and can be accomplished by with a simple single IR-LED.</p>
+<a class="reference internal image-reference" href="../_images/embedded.png"><img alt="alternate text" class="align-center" src="../_images/embedded.png" style="width: 450.0px; height: 535.68px;" /></a>
+</div>
+<div class="section" id="freely-swimming-fish-setup">
+<h2>Freely swimming fish setup<a class="headerlink" href="#freely-swimming-fish-setup" title="Permalink to this headline">¶</a></h2>
+<p>This configuration uses a camera with larger field of view and a custom-built
+LED box for illuminating homogeneously a large area.</p>
+<a class="reference internal image-reference" href="../_images/freely.png"><img alt="alternate text" class="align-center" src="../_images/freely.png" style="width: 480.06px; height: 549.54px;" /></a>
+</div>
+<div class="section" id="list-of-components">
+<h2>List of components<a class="headerlink" href="#list-of-components" title="Permalink to this headline">¶</a></h2>
+<p>Below we provide a list of all components required for building the two
+setups. Indicative prices in euros (Jul 2018) and links to
+supplier pages are provided as well.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Many parts of the setup, such as the base, the stage and the holders can
+easily be replaced with custom solutions.</p>
+</div>
+<a class="reference internal image-reference" href="../_images/parts_full.png"><img alt="alternate text" class="align-center" src="../_images/parts_full.png" style="width: 671.4px; height: 503.4px;" /></a>
+<div class="section" id="head-restrained-setup">
+<h3>Head-restrained setup<a class="headerlink" href="#head-restrained-setup" title="Permalink to this headline">¶</a></h3>
+<table class="colwidths-given docutils align-default" id="id1">
+<caption><span class="caption-text">Components for embedded configuration behavioral setup</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 4%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"></th>
+<th class="head"><p>Component</p></th>
+<th class="head"><p>Manufacturer</p></th>
+<th class="head"><p>Part No</p></th>
+<th class="head"><p>Specs</p></th>
+<th class="head"><p>Amount</p></th>
+<th class="head"><p>Price (euros)</p></th>
+<th class="head"><p>Link</p></th>
+<th class="head"><p>Notes</p></th>
+<th class="head"><p>Replacement</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Breadboard</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>1.1</p></td>
+<td><p>Aluminum breadbord</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>MB3045/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>170</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>1.2</p></td>
+<td><p>Feet</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>AV4/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>20.86</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421">https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Rail</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2.1</p></td>
+<td><p>Construction rail</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>XT66-750</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>80</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorProduct.cfm?partNumber=XT66-750">https://www.thorlabs.com/thorProduct.cfm?partNumber=XT66-750</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2.2</p></td>
+<td><p>Construction rail mount</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>XT66P1</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>32.25</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P1">https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P1</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2.3</p></td>
+<td><p>Rail carriage</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>XT66P2/M</p></td>
+<td></td>
+<td><p>2</p></td>
+<td><p>62.25</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P2/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P2/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2.4</p></td>
+<td><p>Post holder</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>PH20/M</p></td>
+<td></td>
+<td><p>2</p></td>
+<td><p>6.33</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=PH20/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=PH20/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Stage</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3.1</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR250/M</p></td>
+<td></td>
+<td><p>4</p></td>
+<td><p>8.12</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M</a></p></td>
+<td><p>can be smaller for embedded prep</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3.2</p></td>
+<td><p>Post holder</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>PH75/M</p></td>
+<td></td>
+<td><p>4</p></td>
+<td><p>7.44</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0">https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3.3</p></td>
+<td><p>Acrilic stage</p></td>
+<td><p>custom</p></td>
+<td><p>133555</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>10</p></td>
+<td><p><a class="reference external" href="https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html">https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3.4</p></td>
+<td><p>Screen</p></td>
+<td><p>Rosco</p></td>
+<td><p>#3026</p></td>
+<td><p>Cinegel</p></td>
+<td><p>5x5cm</p></td>
+<td><p>5</p></td>
+<td><p><a class="reference external" href="https://us.rosco.com/en/products/filters/r3026-tough-white-diffusion">https://us.rosco.com/en/products/filters/r3026-tough-white-diffusion</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Projector</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4.1</p></td>
+<td><p>Projector</p></td>
+<td><p>Asus</p></td>
+<td><p>P3E</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>534</p></td>
+<td><p><a class="reference external" href="https://www.asus.com/us/Projectors/P3E/">https://www.asus.com/us/Projectors/P3E/</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4.2</p></td>
+<td><p>Display cable (HDMI)</p></td>
+<td><p>Any</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4.3</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR40/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>4.52</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR40/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR40/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4.4</p></td>
+<td><p>Post holder</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>PH40/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>6.56</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0">https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Camera</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.1</p></td>
+<td><p>Camera</p></td>
+<td><p>Ximea</p></td>
+<td><p>MQ013MG-ON</p></td>
+<td><p>Python 1300</p></td>
+<td><p>1</p></td>
+<td><p>580</p></td>
+<td><p><a class="reference external" href="https://www.ximea.com/products/usb3-vision-cameras-xiq-line/mq013mg-on">https://www.ximea.com/products/usb3-vision-cameras-xiq-line/mq013mg-on</a></p></td>
+<td></td>
+<td><p>PointGrey Blackfly S Mono 0.4 MP USB3 Vision (Sony IMX287) <a class="reference external" href="https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287">https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287</a></p></td>
+</tr>
+<tr class="row-even"><td><p>5.2</p></td>
+<td><p>Camera cable</p></td>
+<td><p>e.g. Ximea</p></td>
+<td><p>CBL-U3-3M0</p></td>
+<td><p>USB 3, 3m passive</p></td>
+<td><p>1</p></td>
+<td><p>17</p></td>
+<td><p><a class="reference external" href="https://www.ximea.com/en/products/usb3-vision-compliant-cameras-xiq/xiq-usb-30-accessories/1-m-usb-30-passive-cable">https://www.ximea.com/en/products/usb3-vision-compliant-cameras-xiq/xiq-usb-30-accessories/1-m-usb-30-passive-cable</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.3</p></td>
+<td><p>Camera holder</p></td>
+<td><p>custom</p></td>
+<td></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>5.4</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR75/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>4.93</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.5b</p></td>
+<td><p>Camera objective</p></td>
+<td><p>Navitar</p></td>
+<td><p>TC.5028</p></td>
+<td><p>C mount</p></td>
+<td><p>1</p></td>
+<td><p>590</p></td>
+<td><p><a class="reference external" href="https://navitar.com/products/imaging-optics/telecentric/video-telecentric/">https://navitar.com/products/imaging-optics/telecentric/video-telecentric/</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>IR filter</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6.1</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR75/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>4.93</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>6.2</p></td>
+<td><p>Lens mount</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>LMR2/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>23</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6.3</p></td>
+<td><p>IR filter</p></td>
+<td><p>Edmund Optics</p></td>
+<td><p>66-106</p></td>
+<td><p>830 nm LP</p></td>
+<td><p>1</p></td>
+<td><p>69</p></td>
+<td><p><a class="reference external" href="https://www.edmundoptics.de/optics/optical-filters/longpass-edge-filters/rg-830-50mm-dia.-longpass-filter/">https://www.edmundoptics.de/optics/optical-filters/longpass-edge-filters/rg-830-50mm-dia.-longpass-filter/</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Illumination</strong></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.1</p></td>
+<td><p>Power supply</p></td>
+<td><p>Conrad</p></td>
+<td><p>ESPS-1500</p></td>
+<td><p>Voltcraft</p></td>
+<td><p>1</p></td>
+<td><p>15</p></td>
+<td><p><a class="reference external" href="https://www.conrad.com/ce/en/product/1380523/Mains-PSU-adjustable-voltage-----VOLTCRAFT-----ESPS-1500-----3-Vdc-45-Vdc-5-Vdc">https://www.conrad.com/ce/en/product/1380523/Mains-PSU-adjustable-voltage—–VOLTCRAFT—–ESPS-1500—–3-Vdc-45-Vdc-5-Vdc</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.2b</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR150/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>8.12</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR150/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR150/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.3b</p></td>
+<td><p>Post</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>TR50/M</p></td>
+<td></td>
+<td><p>2</p></td>
+<td><p>8.12</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=TR50/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=TR50/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.4b</p></td>
+<td><p>Post holder</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>PH40/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>6.56</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0">https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.5b</p></td>
+<td><p>Right-angle clamp</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>RA90/M</p></td>
+<td></td>
+<td><p>2</p></td>
+<td><p>8.87</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorProduct.cfm?partNumber=RA90/M">https://www.thorlabs.com/thorProduct.cfm?partNumber=RA90/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.6b</p></td>
+<td><p>Lens mount</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>LMR2/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>23</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.7b</p></td>
+<td><p>cold mirror</p></td>
+<td><p>Edmund Optics</p></td>
+<td><p>#64-450</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>75</p></td>
+<td><p><a class="reference external" href="https://www.edmundoptics.de/optics/optical-mirrors/hot-cold-mirrors/45deg-aoi-50.0mm-diameter-cold-mirror/">https://www.edmundoptics.de/optics/optical-mirrors/hot-cold-mirrors/45deg-aoi-50.0mm-diameter-cold-mirror/</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.8b</p></td>
+<td><p>LED holder</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>SMR1/M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>17</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=SMR1/M">https://www.thorlabs.com/thorproduct.cfm?partnumber=SMR1/M</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.9b</p></td>
+<td><p>Cap for LED</p></td>
+<td><p>Thorlabs</p></td>
+<td><p>SM1CP2M</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>16</p></td>
+<td><p><a class="reference external" href="https://www.thorlabs.com/thorproduct.cfm?partnumber=SM1CP2M">https://www.thorlabs.com/thorproduct.cfm?partnumber=SM1CP2M</a></p></td>
+<td><p>machined to accomodate wires</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.10b</p></td>
+<td><p>high power LED</p></td>
+<td><p>RS Components</p></td>
+<td><p>e.g. 796-1772</p></td>
+<td><p>850 nm LED</p></td>
+<td><p>1</p></td>
+<td><p>10</p></td>
+<td><p><a class="reference external" href="https://de.rs-online.com/web/p/led-ir/7961772/">https://de.rs-online.com/web/p/led-ir/7961772/</a></p></td>
+<td><p>max 1 A power</p></td>
+<td><p>LED-tech , Osram Black 850 nm (LT-2418) (<a class="reference external" href="https://www.led-tech.de/de/OSRAM-Black-Series-850nm-auf-Star">https://www.led-tech.de/de/OSRAM-Black-Series-850nm-auf-Star</a>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>7.11b</p></td>
+<td><p>LED pad</p></td>
+<td><p>LED-tech</p></td>
+<td><p>LT-2418</p></td>
+<td></td>
+<td><p>10</p></td>
+<td><p>0.4</p></td>
+<td><p><a class="reference external" href="https://www.led-tech.de/de/Waermeleitklebepad-fuer-16mm-Star">https://www.led-tech.de/de/Waermeleitklebepad-fuer-16mm-Star</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.12b</p></td>
+<td><p>buck pack</p></td>
+<td><p>Digikey</p></td>
+<td><p>RCD-24-1.00/W/X3</p></td>
+<td></td>
+<td><p>1</p></td>
+<td><p>22</p></td>
+<td><p><a class="reference external" href="https://www.digikey.com/product-detail/en/recom-power/RCD-24-1.00-W-X3/945-1131-ND/2256311">https://www.digikey.com/product-detail/en/recom-power/RCD-24-1.00-W-X3/945-1131-ND/2256311</a></p></td>
+<td><p>buck pack that has max 1 A power</p></td>
+<td><p>wired and dimmable using PWM and/or analogue in</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td><p><strong>Total</strong></p></td>
+<td><p>2586</p></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="freely-swimming-setup">
+<h3>Freely-swimming setup<a class="headerlink" href="#freely-swimming-setup" title="Permalink to this headline">¶</a></h3>
+<table class="colwidths-given docutils align-default" id="id2">
+<caption><span class="caption-text">Components for freely swimming configuration behavioral setup</span><a class="headerlink" href="#id2" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col style="width: 4%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>;Component;Manufacturer;Part No.;Specs;Amount;Price  (euros);Link;Notes;Replacement</p></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Breadbord</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>1.1;Aluminum breadbord;Thorlabs;MB3045/M;;1;170;https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>1.2;Feet;Thorlabs;AV4/M;;1;20.86;https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Rail</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2.1;Construction rail;Thorlabs;XT66-750;;1;80;https://www.thorlabs.com/thorProduct.cfm?partNumber=XT66-750;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2.2;Construction rail mount;Thorlabs;XT66P1;;1;32.25;https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P1;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>2.3;Rail carriage;Thorlabs;XT66P2/M;;2;62.25;https://www.thorlabs.com/thorproduct.cfm?partnumber=XT66P2/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>2.4;Post holder;Thorlabs;PH20/M;;2;6.33;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH20/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Stage</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3.1;Post;Thorlabs;TR250/M;;4;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3.2;Post holder;Thorlabs;PH75/M;;4;7.44;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>3.3;Acrilic stage;custom;;;1;10;https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html;From item n. 0133555 of modulor;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>3.4</p></td>
+<td><p>Screen</p></td>
+<td><p>Rosco</p></td>
+<td><p>#3026</p></td>
+<td><p>Cinegel</p></td>
+<td><p>5x5cm</p></td>
+<td><p>5</p></td>
+<td><p><a class="reference external" href="https://us.rosco.com/en/products/filters/r3026-tough-white-diffusion">https://us.rosco.com/en/products/filters/r3026-tough-white-diffusion</a></p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Projector</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4.1;Projector;Asus;P3E;;1;534;https://www.asus.com/us/Projectors/P3E/;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4.2;Display cable (HDMI);Any;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>4.3;Post;Thorlabs;TR40/M;;1;4.52;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR40/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>4.4;Post holder;Thorlabs;PH40/M;;1;6.56;https://www.thorlabs.com/thorproduct.cfm?partnumber=PH40/M#ad-image-0;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Camera</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.1;Camera;Ximea;MQ013MG-ON;Python 1300;1;580;https://www.ximea.com/products/usb3-vision-cameras-xiq-line/mq013mg-on;;Camera PointGrey Blackfly S Mono 0.4 MP USB3 Vision (Sony IMX287) 305 <a class="reference external" href="https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287">https://eu.ptgrey.com/blackfly-s-mono-04-mp-usb3-vision-sony-imx287</a></p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>5.2;Camera cable;e.g. Ximea;CBL-U3-3M0;USB 3</p></td>
+<td><p>3m passive;1;17;https://www.ximea.com/en/products/usb3-vision-compliant-cameras-xiq/xiq-usb-30-accessories/1-m-usb-30-passive-cable;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.3;Camera holder;custom;;;1;0;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>5.4;Post;Thorlabs;TR75/M;;1;4.93;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>5.5a;Camera lens;Edmund Optics;59-872;C mount 35mm;1;295;https://www.edmundoptics.com/imaging-lenses/fixed-focal-length-lenses/35mm-c-series-fixed-focal-length-lens/#specs;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>IR filter</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6.1;Post;Thorlabs;TR75/M;;1;4.93;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR75/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>6.2;Lens mount;Thorlabs;LMR2/M;;1;23;https://www.thorlabs.com/thorproduct.cfm?partnumber=LMR2/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>6.3;IR filter;Edmund Optics;66-106;830 nm LP;1;69;https://www.edmundoptics.de/optics/optical-filters/longpass-edge-filters/rg-830-50mm-dia.-longpass-filter/;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><strong>Illumination</strong>;;;;;;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.1;Power supply;Conrad;ESPS-1500;Voltcraft;1;15;https://www.conrad.com/ce/en/product/1380523/Mains-PSU-adjustable-voltage—–VOLTCRAFT—–ESPS-1500—–3-Vdc-45-Vdc-5-Vdc;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.2a;Post;Thorlabs;TR50/M;;1;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR50/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.3a;Post;Thorlabs;TR150/M;;1;8.12;https://www.thorlabs.com/thorproduct.cfm?partnumber=TR150/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.4a;Right-angle clamp;Thorlabs;RA90/M;;3;8.87;https://www.thorlabs.com/thorProduct.cfm?partNumber=RA90/M;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.5a;Mirror holder;Edmund Optics;#54-997;;1;70;https://www.edmundoptics.com/optomechanics/optical-mounts/optical-filter-mounts/40mm-sq.-fixed-filter-holder/;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>7.6a;Cold mirror;Edmund Optics;#64-452;;1;180;https://www.edmundoptics.com/p/45deg-aoi-101-x-127mm-cold-mirror/19164/;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>7.7a;LED box;custom;;;1;;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>;;;;;**Total**;2359;;;</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="low-cost-behavioral-setup">
+<h2>Low-cost behavioral setup<a class="headerlink" href="#low-cost-behavioral-setup" title="Permalink to this headline">¶</a></h2>
+<p>A very cheap version of the behavioral setup can be built by replacing the
+projector with small LED display and the camera lens with a fixed focal length
+objective. The dimensions of this setup are quite small and parts can be kept in place with
+a basic custom-made frame that can be laser-cut or even made out of cardboard.</p>
+<a class="reference internal image-reference" href="../_images/low_cost.png"><img alt="alternate text" class="align-center" src="../_images/low_cost.png" style="width: 453.59999999999997px; height: 604.8px;" /></a>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="7_comparison.html" class="btn btn-neutral float-right" title="Comparison with existing software and limitations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="5_external_sync.html" class="btn btn-neutral float-left" title="Synchronizing stimulation with data acquisition" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,271 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Implementation of image processing pipelines &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Triggering a Stytra protocol" href="2_triggering_intro.html" />
+    <link rel="prev" title="Module description" href="0_module_desc.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/0_install_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/1_examples_gallery.html">Designing and running experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../userguide/8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_module_desc.html">Module description</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Implementation of image processing pipelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#processing-nodes">Processing nodes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Implementation of image processing pipelines</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/devdocs/1_pipelines.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="implementation-of-image-processing-pipelines">
+<span id="dev-pipelines"></span><h1>Implementation of image processing pipelines<a class="headerlink" href="#implementation-of-image-processing-pipelines" title="Permalink to this headline">¶</a></h1>
+<p>Image processing and tracking pipelines are defined by subclassing the <code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code> class.
+The pipelines are defined as trees of nodes, starting from the camera image
+with each node parametrized using lightparam.
+The image processing nodes are subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToImageNode</span></code> whereas the terminal
+nodes are <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToDataNode</span></code></p>
+<p>Attributes of pipelines are:</p>
+<ul class="simple">
+<li><p>a tree of processing nodes, along</p></li>
+<li><p>(optional) a subclass of the camera window which displays the tracking overlay</p></li>
+<li><p>(optional) an extra plotting window class</p></li>
+</ul>
+<p>the nodes can be set as attributes of the class,
+with names that are arbitrary, except for how they are used
+by the display and plotting classes (see the <code class="xref py py-mod docutils literal notranslate"><span class="pre">stytra.experiments.fish_pipelines</span></code> for examples)
+To pass data through nodes you have to set the parent attribute. The first nodes to receive data from the camera have to have the root node as parent (<cite>parent=self.root</cite>)</p>
+<div class="section" id="processing-nodes">
+<h2>Processing nodes<a class="headerlink" href="#processing-nodes" title="Permalink to this headline">¶</a></h2>
+<p>There are two types of nodes: <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToImageNode</span></code> and  <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToDataNode</span></code></p>
+<p>Nodes must have:</p>
+<ul class="simple">
+<li><p>A name</p></li>
+<li><p>A _process method which contains optional parameters as keyword arguments, annotated with Params for everything that can be changed from the user interface.</p></li>
+</ul>
+<p>The _process function <strong>has to</strong> output a <code class="xref py py-class docutils literal notranslate"><span class="pre">NodeOutput</span></code> named tuple (from <code class="xref py py-mod docutils literal notranslate"><span class="pre">stytra.tracking.pipelines</span></code>) which contains a list of diagnostic messages (can be empty), and either an image if the node is a <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToImageNode</span></code> or a NamedTuple if the node is a <code class="xref py py-class docutils literal notranslate"><span class="pre">ImageToDataNode</span></code></p>
+<p>Optionally, if the processing function is stateful (depends on previous inputs),
+you can define a reset function which resets the state.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="2_triggering_intro.html" class="btn btn-neutral float-right" title="Triggering a Stytra protocol" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="0_module_desc.html" class="btn btn-neutral float-left" title="Module description" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

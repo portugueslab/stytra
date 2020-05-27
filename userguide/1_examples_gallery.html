@@ -1,0 +1,888 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Designing and running experiments &mdash; Stytra 0.8.33 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="User interface" href="2_interface.html" />
+    <link rel="prev" title="Installation" href="0_install_guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #4987a7" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> Stytra
+          
+
+          
+            
+            <img src="../_static/logo.svg" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8.32
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Overview</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview/0_motivation.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/1_library_structure.html">The structure of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/2_stimulation_intro.html">Stimulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/3_tracking.html">Image acquisition and tracking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/4_closed_loop.html">Closed-loop stimuli design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/5_external_sync.html">Synchronizing stimulation with data acquisition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/6_hardware_list.html">Hardware description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/7_comparison.html">Comparison with existing software and limitations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/8_replication.html">Experiment replication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../overview/9_references.html">References</a></li>
+</ul>
+<p class="caption"><span class="caption-text">User guide</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="0_install_guide.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Designing and running experiments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#create-a-new-protocol">Create a new protocol</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parametrise-the-protocol">Parametrise the protocol</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#define-dynamic-stimuli">Define dynamic stimuli</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#use-velocities-instead-of-quantities">Use velocities instead of quantities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#visualise-with-stim-plot-parameter">Visualise with stim_plot parameter</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#stimulation-and-tracking">Stimulation and tracking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#add-a-camera-to-a-protocol">Add a camera to a protocol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#add-tracking-to-a-defined-protocol">Add tracking to a defined protocol</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#closed-loop-experiments">Closed-loop experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#freely-swimming-experiments">Freely-swimming experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#defining-custom-experiment-classes">Defining custom Experiment classes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#start-an-experiment-bypassing-the-stytra-constructor">Start an Experiment bypassing the Stytra constructor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#customise-an-experiment">Customise an Experiment</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="2_interface.html">User interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="3_tracking.html">Tracking configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="4_calibration.html">Calibration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="5_configuring_computer.html">Configuring a computer for Stytra experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="6_coordinate_systems.html">Coordinate systems in Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="7_offline.html">Offline use of Stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="8_faqs.html">Frequently Asked Questions</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Developer guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/0_module_desc.html">Module description</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/1_pipelines.html">Implementation of image processing pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/2_triggering_intro.html">Triggering a Stytra protocol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/3_data_saving.html">Data and metadata saving</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/4_parameters_stytra.html">Parameters in stytra</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devdocs/5_status_messages.html">Process status messages</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Stytra</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Designing and running experiments</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/userguide/1_examples_gallery.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="designing-and-running-experiments">
+<span id="examples-gallery"></span><h1>Designing and running experiments<a class="headerlink" href="#designing-and-running-experiments" title="Permalink to this headline">¶</a></h1>
+<p>You don’t need to get acquainted with the full feature set of stytra to start
+running experiments. Here and in the stytra/examples directory, we  provide a number of example protocols that you
+can use to get inspiration for your own. In this section, we will illustrate general concepts of
+designing and running experiments with examples.</p>
+<p>All examples in this section can be run in two ways: copy and paste the code in a python script
+and run it from your favorite IDE, or simply type on the command prompt:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">stytra</span><span class="o">.</span><span class="n">examples</span><span class="o">.</span><span class="n">name_of_the_example</span>
+</pre></div>
+</div>
+<div class="section" id="create-a-new-protocol">
+<span id="protocol-definition"></span><h2>Create a new protocol<a class="headerlink" href="#create-a-new-protocol" title="Permalink to this headline">¶</a></h2>
+<p>To run a stytra experiment, we simply need to create a script were we define a protocol,
+and we assign it to a <code class="xref py py-class docutils literal notranslate"><span class="pre">Stytra</span></code> object. Running this script will create
+the Stytra GUI with controls for editing and running the protocol.</p>
+<p>The essential ingredient of protocols is the list of stimuli that will be displayed.
+To create it, we need to define the
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">Protocol.get_stim_sequence()</span></code> method.
+This method returns a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code> objects
+which will be presented in succession.</p>
+<p>In stytra.examples.most_basic_exp.py we define a very simple experiment:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/most_basic_exp.py</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli.visual</span> <span class="kn">import</span> <span class="n">Pause</span><span class="p">,</span> <span class="n">FullFieldVisualStimulus</span>
+
+<span class="c1"># 1. Define a protocol subclass</span>
+<span class="k">class</span> <span class="nc">FlashProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;flash_protocol&quot;</span>  <span class="c1"># every protocol must have a name.</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># This is the method we need to write to create a new stimulus list.</span>
+        <span class="c1"># In this case, the protocol is simply a 1 second flash on the entire screen</span>
+        <span class="c1"># after a pause of 4 seconds:</span>
+        <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Pause</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">4.0</span><span class="p">),</span>
+            <span class="n">FullFieldVisualStimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)),</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">stimuli</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># This is the line that actually opens stytra with the new protocol.</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">FlashProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>It is important to note that stimuli should be instances, not classes!</p>
+<p>Try to run this code or type in the command prompt:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">stytra</span><span class="o">.</span><span class="n">examples</span><span class="o">.</span><span class="n">most_basic_exp</span>
+</pre></div>
+</div>
+<p>This will open two windows: one is the main control GUI to run the experiments,
+the second is the screen used to display the visual stimuli. In a real experiment, you want
+to make sure this second window is presented to the animal. For details on positioning and calibration, please refer to
+<a class="reference internal" href="4_calibration.html#calibration"><span class="std std-ref">Calibration</span></a></p>
+<p>For an introduction to the functionality of the user interface, see <a class="reference internal" href="2_interface.html#gui-desc"><span class="std std-ref">Stytra user interface</span></a>.
+To start the experiment, just press the play button: a flash will appear on the screen after 4 seconds.</p>
+<div class="section" id="parametrise-the-protocol">
+<h3>Parametrise the protocol<a class="headerlink" href="#parametrise-the-protocol" title="Permalink to this headline">¶</a></h3>
+<p>Sometimes, we want to control a protocol parameters from the interface. To do this, we can define
+protocol class attributes as <a class="reference external" href="https://github.com/portugueslab/lightparam">Param</a>.
+All attributes defined as <a href="#id1"><span class="problematic" id="id2">``</span></a>Param``s will be modifiable from the user interface.</p>
+<p>For a complete description of Params inside stytra see <a class="reference internal" href="../devdocs/4_parameters_stytra.html#parameters"><span class="std std-ref">Parameters in stytra</span></a>.</p>
+<div class="literal-block-wrapper docutils container" id="id4">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/flash_exp.py</span><a class="headerlink" href="#id4" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli.visual</span> <span class="kn">import</span> <span class="n">Pause</span><span class="p">,</span> <span class="n">FullFieldVisualStimulus</span>
+<span class="kn">from</span> <span class="nn">lightparam</span> <span class="kn">import</span> <span class="n">Param</span>
+
+
+<span class="k">class</span> <span class="nc">FlashProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;flash_protocol&quot;</span>  <span class="c1"># every protocol must have a name.</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># Here we define these attributes as Param s. This will automatically</span>
+        <span class="c1">#  build a control for them and make them modifiable live from the</span>
+        <span class="c1"># interface.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period_sec</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mf">0.2</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flash_duration</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># This is the</span>
+        <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Pause</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">period_sec</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">flash_duration</span><span class="p">),</span>
+            <span class="n">FullFieldVisualStimulus</span><span class="p">(</span>
+                <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">flash_duration</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+        <span class="k">return</span> <span class="n">stimuli</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">FlashProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Note that Parameters in Protocol param are the ones that can be changed from the GUI, but
+all stimulus attributes will be saved in the final log, both parameterized and unparameterized ones.
+No aspect of the stimulus configuration will be unsaved.</p>
+</div>
+</div>
+<div class="section" id="define-dynamic-stimuli">
+<h2>Define dynamic stimuli<a class="headerlink" href="#define-dynamic-stimuli" title="Permalink to this headline">¶</a></h2>
+<p>Many stimuli may have quantities, such as velocity for gratings or
+angular velocity for windmills, that change over time. To define these
+kind of stimuli Stytra use a convenient syntax: a param_df <a class="reference external" href="https://pandas.pydata.org">pandas</a> DataFrame
+with the specification of the desired parameter value at specific timepoints.
+The value at all the other timepoints will be linearly interpolated from the
+DataFrame. The dataframe has to contain a <cite>t</cite> column with the time, and one
+column for each quantity that has to change over time (<cite>x</cite>, <cite>theta</cite>, etc.).
+This stimulus behaviour is handled by the <code class="xref py py-class docutils literal notranslate"><span class="pre">Stimulus</span></code>
+class.</p>
+<p>In this example, we use a dataframe for changing the diameter of a circle
+stimulus, making it a looming object:</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/looming_exp.py</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CircleStimulus</span>
+<span class="kn">from</span> <span class="nn">lightparam</span> <span class="kn">import</span> <span class="n">Param</span>
+
+
+<span class="c1"># A looming stimulus is an expanding circle. Stimuli which contain</span>
+<span class="c1"># some kind of parameter change inherit from InterpolatedStimulus</span>
+<span class="c1"># which allows for specifying the values of parameters of the</span>
+<span class="c1"># stimulus at certain time points, with the intermediate</span>
+<span class="c1"># values interpolated</span>
+
+<span class="c1"># Use the 3-argument version of the Python type function to</span>
+<span class="c1"># make a temporary class combining two classes</span>
+
+
+<span class="k">class</span> <span class="nc">LoomingStimulus</span><span class="p">(</span><span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CircleStimulus</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;looming_stimulus&quot;</span>
+
+
+<span class="c1"># Let&#39;s define a simple protocol consisting of looms at random locations,</span>
+<span class="c1"># of random durations and maximal sizes</span>
+
+<span class="c1"># First, we inherit from the Protocol class</span>
+<span class="k">class</span> <span class="nc">LoomingProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+
+    <span class="c1"># We specify the name for the dropdown in the GUI</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;looming_protocol&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="c1"># It is convenient for a protocol to be parametrized, so</span>
+        <span class="c1"># we name the parameters we might want to change,</span>
+        <span class="c1"># along with specifying the the default values.</span>
+        <span class="c1"># This automatically creates a GUI to change them</span>
+        <span class="c1"># (more elaborate ways of adding parameters are supported,</span>
+        <span class="c1"># see the documentation of lightparam)</span>
+
+        <span class="c1"># if you are not interested in parametrizing your</span>
+        <span class="c1"># protocol the the whole __init__ definition</span>
+        <span class="c1"># can be skipped</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_looms</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_loom_size</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_loom_duration</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_pos_pix</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_pos_pix</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">limits</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2000</span><span class="p">))</span>
+
+    <span class="c1"># This is the only function we need to define for a custom protocol</span>
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_looms</span><span class="p">):</span>
+            <span class="c1"># The radius is only specified at the beginning and at the</span>
+            <span class="c1"># end of expansion. More elaborate functional relationships</span>
+            <span class="c1"># than linear can be implemented by specifying a more</span>
+            <span class="c1"># detailed interpolation table</span>
+
+            <span class="n">radius_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">t</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_loom_duration</span><span class="p">],</span>
+                    <span class="n">radius</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_loom_size</span><span class="p">],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># We construct looming stimuli with the radius change specification</span>
+            <span class="c1"># and a random point of origin within the projection area</span>
+            <span class="c1"># (specified in fractions from 0 to 1 for each dimension)</span>
+            <span class="n">stimuli</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">LoomingStimulus</span><span class="p">(</span>
+                    <span class="n">background_color</span><span class="o">=</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">),</span>
+                    <span class="n">circle_color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">df_param</span><span class="o">=</span><span class="n">radius_df</span><span class="p">,</span>
+                    <span class="n">origin</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">x_pos_pix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_pos_pix</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stimuli</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># We make a new instance of Stytra with this protocol as the only option:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">LoomingProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="use-velocities-instead-of-quantities">
+<h3>Use velocities instead of quantities<a class="headerlink" href="#use-velocities-instead-of-quantities" title="Permalink to this headline">¶</a></h3>
+<p>For every quantity we can specify the velocity at which it changes instead of
+the value itself. This can be done prefixing <cite>vel_</cite> to the quantity name
+in the DataFrame.
+In the next example, we use this syntax to create moving gratings. What is
+dynamically updated is the
+position <cite>x</cite> of the gratings, but with the dictionary we specify its velocity
+with <cite>vel_x</cite>.</p>
+<div class="literal-block-wrapper docutils container" id="id6">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/gratings_exp.py</span><a class="headerlink" href="#id6" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">MovingGratingStimulus</span>
+<span class="kn">from</span> <span class="nn">lightparam</span> <span class="kn">import</span> <span class="n">Param</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="k">class</span> <span class="nc">GratingsProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;gratings_protocol&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>  <span class="c1"># time of still gratings before they move</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_move</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>  <span class="c1"># time of gratings movement</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grating_vel</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="o">-</span><span class="mf">10.0</span><span class="p">)</span>  <span class="c1"># gratings velocity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grating_period</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># grating spatial period</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grating_angle_deg</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mf">90.0</span><span class="p">)</span>  <span class="c1"># grating orientation</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Use six points to specify the velocity step to be interpolated:</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_move</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_move</span><span class="p">,</span>
+            <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_pre</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">t_move</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="n">vel</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grating_vel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grating_vel</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">t</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">vel_x</span><span class="o">=</span><span class="n">vel</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">MovingGratingStimulus</span><span class="p">(</span>
+                <span class="n">df_param</span><span class="o">=</span><span class="n">df</span><span class="p">,</span>
+                <span class="n">grating_angle</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grating_angle_deg</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span><span class="p">,</span>
+                <span class="n">grating_period</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grating_period</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># We make a new instance of Stytra with this protocol as the only option</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">GratingsProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>You can look in the code of the windmill_exp.py example to see how to use
+the dataframe to specify a more complex motion - in this case, a rotation with
+sinusoidal velocity.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If aspects of your stimulus change abruptly, you can put twice the same
+timepoint in the param_df, for example:
+param_df = pd.DataFrame(dict(t = [0, 10, 10, 20], vel_x = [0, 0, 10, 10])</p>
+</div>
+</div>
+<div class="section" id="visualise-with-stim-plot-parameter">
+<h3>Visualise with stim_plot parameter<a class="headerlink" href="#visualise-with-stim-plot-parameter" title="Permalink to this headline">¶</a></h3>
+<p>If you want to monitor in real time the changes in your experiment
+parameters, you can pass the stim_plot argument to the call to stytra to add
+to the interface an online plot:</p>
+<div class="literal-block-wrapper docutils container" id="id7">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/plot_dynamic_exp.py</span><a class="headerlink" href="#id7" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">stytra.examples.gratings_exp</span> <span class="kn">import</span> <span class="n">GratingsProtocol</span>
+
+    <span class="c1"># We make a new instance of Stytra with this protocol as the only option:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">GratingsProtocol</span><span class="p">(),</span> <span class="n">stim_plot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="stimulation-and-tracking">
+<h2>Stimulation and tracking<a class="headerlink" href="#stimulation-and-tracking" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="add-a-camera-to-a-protocol">
+<h3>Add a camera to a protocol<a class="headerlink" href="#add-a-camera-to-a-protocol" title="Permalink to this headline">¶</a></h3>
+<p>We often need to have frames streamed from a file or a camera. In the following
+example we comment on how to achieve this when defining a protocol:</p>
+<div class="literal-block-wrapper docutils container" id="id8">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/display_camera_exp.py</span><a class="headerlink" href="#id8" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">Pause</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+
+
+<span class="k">class</span> <span class="nc">Nostim</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;empty_protocol&quot;</span>
+
+    <span class="c1"># In the stytra_config class attribute we specify a dictionary of</span>
+    <span class="c1"># parameters that control camera, tracking, monitor, etc.</span>
+    <span class="c1"># In this particular case, we add a stream of frames from one example</span>
+    <span class="c1"># movie saved in stytra assets.</span>
+    <span class="n">stytra_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">camera</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s2">&quot;spinnaker&quot;</span><span class="p">))</span>
+
+    <span class="c1">#  For a streaming from real cameras connected to the computer, specify camera type, e.g.:</span>
+    <span class="c1"># stytra_config = dict(camera=dict(type=&quot;ximea&quot;))</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Pause</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)]</span>  <span class="c1"># protocol does not do anything</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">Nostim</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Note however that usually the camera settings are always the same on the
+computer that controls a setup, therefore the camera settings are defined in
+the user config file and generally not required at the protocol level.
+See <a class="reference internal" href="5_configuring_computer.html#compconfig"><span class="std std-ref">Configuring a computer for Stytra experiments</span></a> for more info.</p>
+</div>
+<div class="section" id="add-tracking-to-a-defined-protocol">
+<h3>Add tracking to a defined protocol<a class="headerlink" href="#add-tracking-to-a-defined-protocol" title="Permalink to this headline">¶</a></h3>
+<p>To add tail or eye tracking to a protocol, it is enough to change the
+<cite>stytra_config</cite> attribute to contain a tracking argument as well. See the
+experiment documentation for a description of the available tracking methods.</p>
+<p>In this example, we redefine the previously defined windmill protocol (which
+displays a rotating windmill) to add tracking of the eyes as well:</p>
+<div class="literal-block-wrapper docutils container" id="id9">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/tail_tracking_exp.py</span><a class="headerlink" href="#id9" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+<span class="kn">from</span> <span class="nn">stytra.examples.gratings_exp</span> <span class="kn">import</span> <span class="n">GratingsProtocol</span>
+
+
+<span class="k">class</span> <span class="nc">TrackingGratingsProtocol</span><span class="p">(</span><span class="n">GratingsProtocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;gratings_tail_tracking&quot;</span>
+
+    <span class="c1"># To add tracking to a protocol, we simply need to add a tracking</span>
+    <span class="c1"># argument to the stytra_config:</span>
+    <span class="n">stytra_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">tracking</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">embedded</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;tail&quot;</span><span class="p">),</span>
+        <span class="n">camera</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">video_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;assets&quot;</span> <span class="o">/</span> <span class="s2">&quot;fish_compressed.h5&quot;</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">TrackingGratingsProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<p>Now a window with the fish image an a ROI to control tail position will appear,
+and the tail will be tracked! See <a class="reference internal" href="3_tracking.html#tailtracking"><span class="std std-ref">Embedded fish</span></a> for instructions on
+how to adjust tracking parameters.</p>
+</div>
+</div>
+<div class="section" id="closed-loop-experiments">
+<span id="closedloop-definition"></span><h2>Closed-loop experiments<a class="headerlink" href="#closed-loop-experiments" title="Permalink to this headline">¶</a></h2>
+<p>Stytra allows to simple definition of closed-loop experiments where quantities
+tracked from the camera are dynamically used to update some stimulus variable.
+In the example below we create a full-screen stimulus that turns red when
+the fish is swimming above a certain threshold (estimated with the vigour
+method).</p>
+<div class="literal-block-wrapper docutils container" id="id10">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/custom_visual_exp.py</span><a class="headerlink" href="#id10" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span><span class="p">,</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">VisualStimulus</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtCore</span> <span class="kn">import</span> <span class="n">QRect</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtGui</span> <span class="kn">import</span> <span class="n">QBrush</span><span class="p">,</span> <span class="n">QColor</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="k">class</span> <span class="nc">NewStimulus</span><span class="p">(</span><span class="n">VisualStimulus</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">paint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">):</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">setBrush</span><span class="p">(</span><span class="n">QBrush</span><span class="p">(</span><span class="n">QColor</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">color</span><span class="p">)))</span>  <span class="c1"># Use chosen color</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">drawRect</span><span class="p">(</span><span class="n">QRect</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">))</span>  <span class="c1"># draw full field rectangle</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fish_vel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">get_velocity</span><span class="p">()</span>
+        <span class="c1"># change color if speed of the fish is higher than threshold:</span>
+        <span class="k">if</span> <span class="n">fish_vel</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="mi">255</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CustomProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;custom protocol&quot;</span>  <span class="c1"># protocol name</span>
+
+    <span class="n">stytra_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">tracking</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;tail&quot;</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;vigor&quot;</span><span class="p">),</span>
+        <span class="n">camera</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">video_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;assets&quot;</span> <span class="o">/</span> <span class="s2">&quot;fish_compressed.h5&quot;</span><span class="p">)</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">NewStimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">10</span><span class="p">)]</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">CustomProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="freely-swimming-experiments">
+<h2>Freely-swimming experiments<a class="headerlink" href="#freely-swimming-experiments" title="Permalink to this headline">¶</a></h2>
+<p>For freely swimming experiments, it is important to calibrate the camera view
+to the displayed image. This is explained in <a class="reference internal" href="4_calibration.html#calibration"><span class="std std-ref">Calibration</span></a>. Then, we can
+easily create stimuli that track or change depending on the location of the fish.
+The following example shows the implementation of a simple phototaxis protocol,
+where the bright field is always displayed on the right side of the fish, and
+a centering stimulus is activated if the fish swims out of the field of view.
+Configuring tracking for freely-swimming experiments is explained here <a class="reference internal" href="3_tracking.html#fishtracking"><span class="std std-ref">Freely-swimming fish</span></a></p>
+<div class="literal-block-wrapper docutils container" id="id11">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/phototaxis.py</span><a class="headerlink" href="#id11" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FishTrackingStimulus</span><span class="p">,</span>
+    <span class="n">HalfFieldStimulus</span><span class="p">,</span>
+    <span class="n">RadialSineStimulus</span><span class="p">,</span>
+    <span class="n">FullFieldVisualStimulus</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli.conditional</span> <span class="kn">import</span> <span class="n">CenteringWrapper</span>
+
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">from</span> <span class="nn">lightparam</span> <span class="kn">import</span> <span class="n">Param</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="k">class</span> <span class="nc">PhototaxisProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;phototaxis&quot;</span>
+    <span class="n">stytra_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">display</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">min_framerate</span><span class="o">=</span><span class="mi">50</span><span class="p">),</span>
+        <span class="n">tracking</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;fish&quot;</span><span class="p">,</span> <span class="n">embedded</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;position&quot;</span><span class="p">),</span>
+        <span class="n">camera</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">video_file</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span>
+                <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;assets&quot;</span> <span class="o">/</span> <span class="s2">&quot;fish_free_compressed.h5&quot;</span>
+            <span class="p">),</span>
+            <span class="n">min_framerate</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_trials</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2400</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stim_on_duration</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stim_off_duration</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center_offset</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">brightness</span> <span class="o">=</span> <span class="n">Param</span><span class="p">(</span><span class="mi">255</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">stimuli</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># The phototaxis stimulus for zebrafish is bright on one side of the</span>
+        <span class="c1"># fish and dark on the other. The type function combines two classes:</span>
+        <span class="n">stim</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;phototaxis&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">FishTrackingStimulus</span><span class="p">,</span> <span class="n">HalfFieldStimulus</span><span class="p">),</span> <span class="p">{})</span>
+
+        <span class="c1"># The stimuli are a sequence of a phototactic stimulus and full-field</span>
+        <span class="c1"># illumination</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_trials</span><span class="p">):</span>
+
+            <span class="c1"># The stimulus of interest is wrapped in a CenteringStimulus,</span>
+            <span class="c1"># so if the fish moves out of the field of view, a stimulus is</span>
+            <span class="c1"># displayed which brings it back</span>
+            <span class="n">stimuli</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CenteringWrapper</span><span class="p">(</span>
+                    <span class="n">stimulus</span><span class="o">=</span><span class="n">stim</span><span class="p">(</span>
+                        <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stim_on_duration</span><span class="p">,</span>
+                        <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">brightness</span><span class="p">,)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span>
+                        <span class="n">center_dist</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">center_offset</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="n">stimuli</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">FullFieldVisualStimulus</span><span class="p">(</span>
+                    <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">brightness</span><span class="p">,)</span> <span class="o">*</span> <span class="mi">3</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">stim_off_duration</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stimuli</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Stytra</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">PhototaxisProtocol</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="defining-custom-experiment-classes">
+<h2>Defining custom Experiment classes<a class="headerlink" href="#defining-custom-experiment-classes" title="Permalink to this headline">¶</a></h2>
+<p>New Experiment objects with custom requirements might be needed; for example, if one wants
+to implement more events or controls when the experiment start and finishes, or if custom
+UIs with new plots are desired. In this case, we will have to sublcass the stytra <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code>
+class. This class already has the minimal structure for running an experimental protocol and
+collect metadata. Using it as a template, we can define a new custom class.</p>
+<div class="section" id="start-an-experiment-bypassing-the-stytra-constructor">
+<h3>Start an Experiment bypassing the Stytra constructor<a class="headerlink" href="#start-an-experiment-bypassing-the-stytra-constructor" title="Permalink to this headline">¶</a></h3>
+<p>First, to use a custom Experiment we need to see how we can start it bypassing the <code class="xref py py-class docutils literal notranslate"><span class="pre">Stytra</span></code>
+constructor class, which by design deals only with standard Experiment classes. This is very
+simple, and it is described in the example below:</p>
+<div class="literal-block-wrapper docutils container" id="id12">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/no_stytra_exp.py</span><a class="headerlink" href="#id12" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra.experiments</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">import</span> <span class="nn">qdarkstyle</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QApplication</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">Pause</span><span class="p">,</span> <span class="n">Stimulus</span>
+
+
+<span class="c1"># Here ve define an empty protocol:</span>
+<span class="k">class</span> <span class="nc">FlashProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;empty_protocol&quot;</span>  <span class="c1"># every protocol must have a name.</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Stimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)]</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Here we do not use the Stytra constructor but we instantiate an experiment</span>
+    <span class="c1"># and we start it in the script. Even though this is an internal Experiment</span>
+    <span class="c1"># subtype, a user can define a new Experiment subclass and start it</span>
+    <span class="c1"># this way.</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">([])</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="n">qdarkstyle</span><span class="o">.</span><span class="n">load_stylesheet_pyqt5</span><span class="p">())</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">FlashProtocol</span><span class="p">()</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">Experiment</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+    <span class="n">exp</span><span class="o">.</span><span class="n">start_experiment</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="customise-an-experiment">
+<h3>Customise an Experiment<a class="headerlink" href="#customise-an-experiment" title="Permalink to this headline">¶</a></h3>
+<p>To customize an experiment, we need to subclass <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code>, or the existing subclasses
+<code class="xref py py-class docutils literal notranslate"><span class="pre">VisualExperiment</span></code> and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">TrackingExperiment</span></code>,
+which deal with experiments with a projector or with tracking
+from a camera, respectively.
+In the example below, we see how to make a very simple subclass, with an additional event
+(a dialog waiting for an OK from the user) implemented at protocol onset. For a description
+of how the <code class="xref py py-class docutils literal notranslate"><span class="pre">Experiment</span></code> class fits in the structure of stytra, please refer to the <a class="reference internal" href="../overview/1_library_structure.html#sytra-struct"><span class="std std-ref">corresponding section</span></a>.</p>
+<div class="literal-block-wrapper docutils container" id="id13">
+<div class="code-block-caption"><span class="caption-text">../../../stytra/examples/custom_exp.py</span><a class="headerlink" href="#id13" title="Permalink to this code">¶</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">stytra.experiments</span> <span class="kn">import</span> <span class="n">Experiment</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
+<span class="kn">import</span> <span class="nn">qdarkstyle</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QApplication</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">Stimulus</span>
+<span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="kn">import</span> <span class="n">QMessageBox</span>
+
+
+<span class="c1"># Here ve define an empty protocol:</span>
+<span class="k">class</span> <span class="nc">FlashProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;empty_protocol&quot;</span>  <span class="c1"># every protocol must have a name.</span>
+
+    <span class="k">def</span> <span class="nf">get_stim_sequence</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Stimulus</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)]</span>
+
+
+<span class="c1"># Little demonstration on how to use a custom experiment to bypass standard</span>
+<span class="c1"># launching through Stytra class. This little experiment simply add an additional</span>
+<span class="c1"># message box warning the user to confirm before running the protocol.</span>
+
+
+<span class="k">class</span> <span class="nc">CustomExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">start_protocol</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Show message box with PyQt:</span>
+        <span class="n">msgBox</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="p">()</span>
+        <span class="n">msgBox</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;Start the protocol when ready!&quot;</span><span class="p">)</span>
+        <span class="n">msgBox</span><span class="o">.</span><span class="n">setStandardButtons</span><span class="p">(</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">Ok</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">msgBox</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">start_protocol</span><span class="p">()</span>  <span class="c1"># call the super() start_protocol method</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Here we do not use the Stytra constructor but we instantiate an experiment</span>
+    <span class="c1"># and we start it in the script. Even though this is an internal Experiment</span>
+    <span class="c1"># subtype, a user can define a new Experiment subclass and start it</span>
+    <span class="c1"># this way.</span>
+    <span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">([])</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">setStyleSheet</span><span class="p">(</span><span class="n">qdarkstyle</span><span class="o">.</span><span class="n">load_stylesheet_pyqt5</span><span class="p">())</span>
+    <span class="n">protocol</span> <span class="o">=</span> <span class="n">FlashProtocol</span><span class="p">()</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">CustomExperiment</span><span class="p">(</span><span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span> <span class="n">app</span><span class="o">=</span><span class="n">app</span><span class="p">)</span>
+    <span class="n">exp</span><span class="o">.</span><span class="n">start_experiment</span><span class="p">()</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="2_interface.html" class="btn btn-neutral float-right" title="User interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="0_install_guide.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2018, Vilim Štih and Luigi Petrucco, @portugueslab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
