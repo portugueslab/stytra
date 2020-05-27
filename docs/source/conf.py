@@ -26,9 +26,9 @@ copyright = "2018, Vilim Štih and Luigi Petrucco, @portugueslab"
 author = "Vilim Štih and Luigi Petrucco, @portugueslab"
 
 # The short X.Y version
-version = "version = '0.8.28'"
+version = "version = '0.8.29'"
 # The full version, including alpha/beta/rc tags
-release = "version = '0.8.28'"
+release = "version = '0.8.29'"
 
 
 # -- General configuration ---------------------------------------------------
