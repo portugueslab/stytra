@@ -69,7 +69,7 @@ class TestProtocol(Protocol):
         return [Pause(duration=PROTOCOL_DURATION)]
 
 
-@pytest.mark.last
+# pytest@.mark.last
 class TestExperimentClass(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

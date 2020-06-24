@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
 from numba import jit, int64, float64
-from numba.experimental import jitclass
+try:
+    from numba.experimental import jitclass
+except ModuleNotFoundError:
+    from numba import jitclass
+
 
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking.preprocessing import BackgroundSubtractor

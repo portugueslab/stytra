@@ -100,17 +100,21 @@ class Experiment(QObject):
         metadata_animal=None,
         loop_protocol=False,
         log_format="csv",
+        trigger_duration_queue=None,
         scope_triggering=None,
         offline=False,
         **kwargs
     ):
-        """ """
         self.arguments = locals()
         super().__init__()
 
         self.app = app
         self.protocol = protocol
+
+        # If there's a trigger, reference its queue to pass the duration:
         self.trigger = scope_triggering
+        if scope_triggering is not None:
+            self.trigger_duration_queue = scope_triggering.duration_queue
         self.offline = offline
 
         self.asset_dir = dir_assets
@@ -250,13 +254,23 @@ class Experiment(QObject):
 
     def check_trigger(self):
         self.abort = False
+        # If we have a trigger and trigger option is set:
         if self.trigger is not None and self.window_main.chk_scope.isChecked():
+            # Put duration of the experiment in the queue for the trigger:
+            duration_exp = self.protocol_runner.duration
+            self.trigger_duration_queue.put(duration_exp)
+
             self.logger.info("Waiting for trigger signal...")
+
+            # Open message box for aborting:
             msg = QMessageBox()
             msg.setText("Waiting for trigger event...")
             msg.setStandardButtons(QMessageBox.Abort)
             msg.buttonClicked.connect(self.abort_start)
             msg.show()
+
+            # While loop to keep processing application events while we
+            # are listening to the trigger (otherwise app would be stuck):
             while True and not self.abort:
                 if (
                     self.trigger.start_event.is_set()
@@ -268,9 +282,13 @@ class Experiment(QObject):
                     self.app.processEvents()
 
     def read_scope_data(self):
+        """Read data from an external acquisition device triggered with stytra.
+        Currently we assume this comes from a microscope, thus the logging in
+        "imaging/microscope_config".
+        """
         if self.trigger is not None:
             try:
-                self.scope_config = self.trigger.queue_trigger_params.get(timeout=0.001)
+                self.scope_config = self.trigger.device_params_queue.get(timeout=0.001)
                 self.logger.info(self.scope_config)
                 if self.dc is not None:
                     self.dc.add_static_data(
@@ -301,6 +319,8 @@ class Experiment(QObject):
         self.abort = True
 
     def save_data(self):
+        """Called at the end of the experiment to save all logs.
+        """
         if self.base_dir is not None:
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")

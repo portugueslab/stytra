@@ -173,11 +173,7 @@ class CameraSource(VideoSource):
         camera_messages = list(self.cam.open_camera())
         [self.message_queue.put(m) for m in camera_messages]
         prt = None
-        while True:
-            # Kill if signal is set:
-            self.kill_event.wait(0.0001)
-            if self.kill_event.is_set():
-                break
+        while not self.kill_event.is_set():
             # Try to get new parameters from the control queue:
             messages = []
             if self.control_queue is not None:
