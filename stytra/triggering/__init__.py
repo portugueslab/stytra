@@ -99,7 +99,6 @@ class Trigger(Process):
         """
         TIME_START_EVENT_ON = 0.1
         while not self.kill_event.is_set():
-            print("looping")
             if self.start_event.is_set():
                 # Keep the signal on for at least 0.1 s
                 time.sleep(TIME_START_EVENT_ON)
@@ -144,7 +143,6 @@ class ZmqTrigger(Trigger):
         experiment. Then, to the `queue_trigger_params` the received dict,
         so that the `Experiment` can store it with the rest of the data.
         """
-        # self.scope_config = self.zmq_socket.recv_json()
 
         poller = zmq.Poller()
         poller.register(self.zmq_socket, zmq.POLLIN)
