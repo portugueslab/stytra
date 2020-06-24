@@ -33,6 +33,15 @@ class Trigger(Process):
     start_event to be set before starting. The control in check_trigger() is
     defined in subclasses to reflect the condition that we want to control the
     beginning of the protocol.
+    The class has `Queue` objects to communicate from and to stytra from an
+    external acquisition
+    device. In particular, `self.queue_duration` queue can be use
+    to send to the external
+    device the duration of the Stytra experiment, and `self.queue_device_params`
+    can be use to send the external acquisition device parameters to stytra.
+    Usage of these queues must be implemented in `Trigger` subclasses;
+    `ZmqTrigger` already offers full implementation for this.
+
 
     **Events**
 
@@ -43,10 +52,15 @@ class Trigger(Process):
     kill_event:
         can be set to kill the Trigger process;
 
+    **Input Queues**
+
+    queue_duration :
+        Queue where the experiment update its duration so that it can be
+        sent to the acquisition device.
 
     **Output Queues**
 
-    queue_trigger_params:
+    queue_device_params:
         can be used to send to the Experiment data about
         the triggering event or device. For example, if triggering happens from
         a microscope via a ZMQ message, setting of the microscope can be sent in
@@ -62,7 +76,8 @@ class Trigger(Process):
         self.start_event = Event()
         self.t = datetime.datetime.now()
         self.kill_event = Event()
-        self.queue_trigger_params = Queue()
+        self.device_params_queue = Queue()
+        self.duration_queue = Queue()
 
     def check_trigger(self):
         """ Check condition required for triggering to happen. Implemented in
@@ -84,6 +99,7 @@ class Trigger(Process):
         """
         TIME_START_EVENT_ON = 0.1
         while not self.kill_event.is_set():
+            print("looping")
             if self.start_event.is_set():
                 # Keep the signal on for at least 0.1 s
                 time.sleep(TIME_START_EVENT_ON)
@@ -119,15 +135,14 @@ class ZmqTrigger(Trigger):
 
         """
         self.port = port
-        self.duration_queue = Queue()
         self.protocol_duration = None
         self.scope_config = {}
         super().__init__()
 
     def check_trigger(self):
-        """ Wait to receive the json file and reply with a simple "received"
-        string. Add to the queue_trigger_params Queue the received dictionary,
-        so that the experiment class can store it with the rest of the data.
+        """ Wait to receive the json file and reply with the duration of the
+        experiment. Then, to the `queue_trigger_params` the received dict,
+        so that the `Experiment` can store it with the rest of the data.
         """
         # self.scope_config = self.zmq_socket.recv_json()
 
@@ -135,11 +150,12 @@ class ZmqTrigger(Trigger):
         poller.register(self.zmq_socket, zmq.POLLIN)
         try:
             self.protocol_duration = self.duration_queue.get(timeout=0.0001)
+            print(self.protocol_duration)
         except Empty:
             pass
         if poller.poll(10):
             self.scope_config = self.zmq_socket.recv_json()
-            self.queue_trigger_params.put(self.scope_config)
+            self.device_params_queue.put(self.scope_config)
             self.zmq_socket.send_json(self.protocol_duration)
             return True
         else:

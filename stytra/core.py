@@ -158,8 +158,6 @@ class Stytra:
             from stytra.triggering import ZmqTrigger
 
             config["scope_triggering"] = ZmqTrigger(port="5555")
-            config["trigger_duration_queue"] = config[
-                "scope_triggering"].duration_queue
 
         if app is None:
             app = QApplication([])

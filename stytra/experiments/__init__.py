@@ -112,7 +112,8 @@ class Experiment(QObject):
         self.app = app
         self.protocol = protocol
         self.trigger = scope_triggering
-        self.trigger_duration_queue = trigger_duration_queue
+        if scope_triggering is not None:
+            self.trigger_duration_queue = scope_triggering.duration_queue
         self.offline = offline
 
         self.asset_dir = dir_assets
@@ -274,7 +275,7 @@ class Experiment(QObject):
     def read_scope_data(self):
         if self.trigger is not None:
             try:
-                self.scope_config = self.trigger.queue_trigger_params.get(timeout=0.001)
+                self.scope_config = self.trigger.device_params_queue.get(timeout=0.001)
                 self.logger.info(self.scope_config)
                 if self.dc is not None:
                     self.dc.add_static_data(

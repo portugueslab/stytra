@@ -3,3 +3,4 @@ __version__ = "0.8.33"
 
 
 from stytra.core import Stytra
+from stytra.stimulation import Protocol
