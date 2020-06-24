@@ -6,6 +6,7 @@ try:
 except ModuleNotFoundError:
     from numba import jitclass
 
+
 from stytra.tracking.tail import find_fish_midline
 from stytra.tracking.preprocessing import BackgroundSubtractor
 
