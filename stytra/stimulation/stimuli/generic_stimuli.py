@@ -210,7 +210,8 @@ class InterpolatedStimulus(DynamicStimulus):
         self._past_t = self._elapsed
 
         # the phase has to be found by searching, as there are situation where it does not always increase
-        self.current_phase = np.searchsorted(self.phase_times, self._elapsed) - 1
+        self.current_phase = np.searchsorted(self.phase_times - 1e-9,
+                                             self._elapsed) - 1
 
         for col in self.df_param.columns:
             if col != "t":

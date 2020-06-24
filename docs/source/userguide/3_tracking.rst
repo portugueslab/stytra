@@ -48,6 +48,17 @@ Freely-swimming fish
 8) If the fish jumps around too much, adjust the prediction uncertainty.
 
 
+Tracking results
+................
+A dataframe with position, orientation and tail shape data for each fish tracked.
+Data per fish are prefixed with ``fN_`` where N is the number of the fish
+(fish identities can change if they exit the field of view, cross or lose tracking)
+``x`` and ``y`` are positions in camera coordinates, ``theta`` the direction of the tail of the fish
+(to get the heading direction, add pi) and ``theta_XX`` the angles of the tail segments.
+To get the position in the projector coordinates, if the camera to projector
+mapping was properly calibrated :ref:`Calibration`,
+use the ``cam_to_proj`` matrix from the calibrator (saved in the metadata.json file)
+
 .. _tailtracking:
 
 Embedded fish
@@ -71,6 +82,12 @@ Embedded fish
 7) Tap the dish or the stage so that fish flicks its tail, and ensure the that it is tracked correctly. There should be no breaks in the tail_sum plot, if there are, it is likely the tail length line is too long. You can use the replay function to ensure the whole movement is tracked smoothly
 
 8) To ensure the tracking is correct, you can enable the plotting of the last bout in the windows
+
+
+Tracking results
+................
+A dataframe with the columns: ``tail_sum`` - the total curvature of the fish tail, i.e. the angle between the first and last segment
+and ``theta_XX`` - the angle of each tail segment
 
 
 .. _replaying:

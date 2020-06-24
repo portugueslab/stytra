@@ -1,5 +1,5 @@
 ,Component,Manufacturer,Part No,Specs,Amount,Price (euros),Link,Notes,Replacement
-**Breadbord**,,,,,,,,,
+**Breadboard**,,,,,,,,,
 1.1,Aluminum breadbord,Thorlabs,MB3045/M,,1,170,https://www.thorlabs.com/thorproduct.cfm?partnumber=MB3045/M,,
 1.2,Feet,Thorlabs,AV4/M,,1,20.86,https://www.thorlabs.com/newgrouppage9.cfm?objectgroup_id=6421,,
 **Rail**,,,,,,,,,
@@ -11,7 +11,7 @@
 3.1,Post,Thorlabs,TR250/M,,4,8.12,https://www.thorlabs.com/thorproduct.cfm?partnumber=TR250/M,can be smaller for embedded prep,
 3.2,Post holder,Thorlabs,PH75/M,,4,7.44,https://www.thorlabs.com/thorproduct.cfm?partnumber=PH75/M#ad-image-0,,
 3.3,Acrilic stage,custom,133555,,1,10,https://www.modulor.de/acrylglas-gs-transparent-farblos-6-00-x-250-x-500-mm.html,,
-3.4,Screen,custom,,,,,,,
+3.4,Screen,Rosco,#3026,Cinegel,5x5cm,5,https://us.rosco.com/en/products/filters/r3026-tough-white-diffusion,,
 **Projector**,,,,,,,,,
 4.1,Projector,Asus,P3E,,1,534,https://www.asus.com/us/Projectors/P3E/,,
 4.2,Display cable (HDMI),Any,,,,,,,

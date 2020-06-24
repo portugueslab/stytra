@@ -120,7 +120,8 @@ class GenerateStimuliMovie:
         self.exp = None
 
     def tearDown(self):
-        shutil.rmtree(self.test_dir)
+        pass
+    #    shutil.rmtree(self.test_dir)
 
     def waitend(self):
         output_folder = (
@@ -146,7 +147,7 @@ class GenerateStimuliMovie:
             SeamlessImageProtocol,
         ]
 
-        for protocol in self.protocols[:1]:
+        for protocol in self.protocols[:0]:
             self.protocol_name = protocol.name
 
             s = Stytra(

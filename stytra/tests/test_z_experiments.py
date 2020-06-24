@@ -1,7 +1,6 @@
 import unittest
 import shutil
 import tempfile
-import glob
 import json
 import numpy as np
 import flammkuchen as fl

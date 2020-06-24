@@ -28,11 +28,11 @@ Yes! Not much is needed to get started, look at examples.
 
 I need to setup Stytra to run experiments on my computer. What should I do?
 ...........................................................................
-Look at installation
+Look at the :ref:`Installation` and :ref:`Computer configuration <compconfig>` sections of the documentation.
 
 I need to design a new stimulus. What should I do?
 ..................................................
-Look at the stimuli library
+Look at the stimuli library for inspiration
 
 What are all these Param(n.) things? Do I have to care?
 .......................................................
@@ -44,7 +44,7 @@ Consult the relevant section of the developer documentation
 
 I have run a Stytra experiment. And now what? What's in the log files?
 ......................................................................
-...
+Look at the :ref:`tracking results <fishtracking>` sections of the tracking documentation
 
 Can I run two setups from the same computer?
 ............................................
