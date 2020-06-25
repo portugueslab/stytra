@@ -24,26 +24,15 @@ N_REFRESH_EVTS = 10  # Number of updated of each simulated experiment
 
 
 class TestProtocol0(Protocol):
-    name = "test_protocol_0"
+    name = "test_protocol"
 
     def __init__(self):
         super().__init__()
         self.duration = Param(PROTOCOL_DURATION / 2)
 
     def get_stim_sequence(self):
-        stimuli = [Pause(duration=self.duration), Pause(duration=self.duration)]
-        return stimuli
-
-
-class TestProtocol1(Protocol):
-    name = "test_protocol_1"
-
-    def __init__(self):
-        super().__init__()
-        self.duration = Param(PROTOCOL_DURATION)
-
-    def get_stim_sequence(self):
-        stimuli = [FullFieldVisualStimulus(duration=self.duration)]
+        stimuli = [Pause(duration=self.duration),
+                   FullFieldVisualStimulus(duration=self.duration)]
         return stimuli
 
 
@@ -60,13 +49,6 @@ class DummyTrigger(Trigger):
         else:
             self.k = True
             return False
-
-
-class TestProtocol(Protocol):
-    name = "test_protocol"
-
-    def get_stim_sequence(self):
-        return [Pause(duration=PROTOCOL_DURATION)]
 
 
 # pytest@.mark.last
@@ -99,9 +81,11 @@ class TestExperimentClass(unittest.TestCase):
             tracking = None
 
         if tracking is None:
-            exp = VisualExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
+            exp = VisualExperiment(app=self.app,
+                                   dir_save=self.test_dir, **kwargs)
         else:
-            exp = TrackingExperiment(app=self.app, dir_save=self.test_dir, **kwargs)
+            exp = TrackingExperiment(app=self.app,
+                                     dir_save=self.test_dir, **kwargs)
 
         # Run the protocol and update N_REFRESH_EVTS times:
         exp.start_experiment()
@@ -136,16 +120,16 @@ class TestExperimentClass(unittest.TestCase):
 
     def test_visual_experiment(self):
         self.app = QApplication([])
-        for prot in [TestProtocol0(), TestProtocol1()]:
-            self.run_experiment(protocol=prot)
-            with open(self.metadata_path, "r") as f:
-                data = json.load(f)
-            assert prot.name.split("/")[-1] in data["stimulus"]["protocol"].keys()
+        self.run_experiment(protocol=TestProtocol0())
+        with open(self.metadata_path, "r") as f:
+            data = json.load(f)
+        assert TestProtocol0.name.split("/")[-1] in data["stimulus"]["protocol"].keys()
 
-            self.clear_dir()
+        self.clear_dir()
 
         trigger = DummyTrigger()
-        self.run_experiment(protocol=TestProtocol(), scope_triggering=trigger)
+        self.run_experiment(protocol=TestProtocol0(),
+                            scope_triggering=trigger)
 
         with open(self.metadata_path, "r") as f:
             data = json.load(f)
@@ -164,7 +148,7 @@ class TestExperimentClass(unittest.TestCase):
         )
         for method in ["eyes", "tail"]:
             self.run_experiment(
-                protocol=TestProtocol(),
+                protocol=TestProtocol0(),
                 camera=dict(video_file=video_file),
                 tracking=dict(method=method),
                 log_format="hdf5",

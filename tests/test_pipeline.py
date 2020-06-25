@@ -32,7 +32,7 @@ def test_a_pipeline():
     assert p.run(None) == ([], tt(None, 1))
     assert p.diagnostic_image is None
     ser = p.serialize_params()
-    print(ser)
+
     ser["/source/testnode"]["a"] = 2
     ser["diagnostics"]["image"] = "/source/testnode/processed"
     p.deserialize_params(ser)
