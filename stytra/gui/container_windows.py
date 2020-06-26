@@ -3,6 +3,7 @@ import datetime
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
+    QApplication,
     QLabel,
     QWidget,
     QHBoxLayout,
@@ -177,8 +178,10 @@ class ExperimentWindow(QMainWindow):
         else:
             self.experiment.use_db = False
 
-    def closeEvent(self, *args, **kwargs):
-        """
+    def closeEvent(self, event=None):
+        """This is the method - called on window closing - that takes
+        care of the entire Stytra teardown. It does so through the
+        `Experiment.wrap_up()` method.
 
         Parameters
         ----------
@@ -191,8 +194,13 @@ class ExperimentWindow(QMainWindow):
         -------
 
         """
+        print("closingevt")
         self.experiment.wrap_up()
 
+        # After experiment wrapup, close all windows:
+        for widget in QApplication.topLevelWidgets():
+            if not isinstance(widget, ExperimentWindow):
+                widget.close()
 
 class VisualExperimentWindow(ExperimentWindow):
     """ Window for controlling a visual experiment, where we add the projector

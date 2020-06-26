@@ -12,7 +12,7 @@ import types
 import imageio
 
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal, QByteArray
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from stytra.calibration import CrossCalibrator
 from stytra.collectors import DataCollector
@@ -108,6 +108,8 @@ class Experiment(QObject):
         self.arguments = locals()
         super().__init__()
 
+        if app is None:
+            app = QApplication.instance()
         self.app = app
         self.protocol = protocol
 
@@ -447,7 +449,6 @@ class Experiment(QObject):
         self.gui_params.window_state = bytes(st.toHex()).decode("ascii")
         self.gui_params.geometry = bytes(geom.toHex()).decode("ascii")
         self.dc.save_config_file()
-        self.app.closeAllWindows()
 
     def excepthook(self, exctype, value, tb):
         """
@@ -648,3 +649,7 @@ class VisualExperiment(Experiment):
                 self.window_display.showFullScreen()
             except IndexError:
                 print("Second screen not available")
+
+    def wrap_up(self, *args, **kwargs):
+        self.window_display.close()
+        super().wrap_up(*args, **kwargs)
