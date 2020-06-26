@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
     QDockWidget,
     QFileDialog,
 )
+import pyqtgraph as pg
 
 from stytra.gui.monitor_control import ProjectorAndCalibrationWidget
 from stytra.gui.multiscope import MultiStreamPlot, FrameratePlot
@@ -198,9 +199,13 @@ class ExperimentWindow(QMainWindow):
         self.experiment.wrap_up()
 
         # After experiment wrapup, close all windows:
-        for widget in QApplication.topLevelWidgets():
-            if not isinstance(widget, ExperimentWindow):
-                widget.close()
+        # for widget in QApplication.topLevelWidgets():
+        #     if not isinstance(widget, ExperimentWindow):
+        #         widget.close()
+        self.experiment.app.closeAllWindows()
+
+        pg.cleanup()
+
 
 class VisualExperimentWindow(ExperimentWindow):
     """ Window for controlling a visual experiment, where we add the projector

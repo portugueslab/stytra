@@ -1,4 +1,7 @@
-import serial as com
+try:
+    import serial as com
+except ModuleNotFoundError:
+    raise ModuleNotFoundError("You must install the com module to use the SerialConnection class")
 
 
 class SerialConnection:

@@ -8,7 +8,6 @@ from stytra.stimulation.stimuli import Pause
 
 from stytra.stimulation import Protocol
 from lightparam import Param
-from pathlib import Path
 import numpy as np
 import cv2
 import pyqtgraph as pg

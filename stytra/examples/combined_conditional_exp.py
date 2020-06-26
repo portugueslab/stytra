@@ -30,8 +30,8 @@ class ConditionalCombiner(VisualCombinerStimulus):
         super().update()
 
 
-class CombinedProtocol(Protocol):
-    name = "combined_custom_protocol"  # every protocol must have a name.
+class CombinedConditionalProtocol(Protocol):
+    name = "combined_conditional_protocol"  # every protocol must have a name.
 
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
@@ -60,4 +60,4 @@ class CombinedProtocol(Protocol):
 
 
 if __name__ == "__main__":
-    st = Stytra(protocol=CombinedProtocol())
+    st = Stytra(protocol=CombinedConditionalProtocol())

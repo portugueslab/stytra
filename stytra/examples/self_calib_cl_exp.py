@@ -7,7 +7,7 @@ from lightparam import Param
 from pathlib import Path
 
 
-class ClosedLoop1DProt(Protocol):
+class ClosedLoop1DProtocol(Protocol):
     name = "self_calib_cl1D_gratings"
 
     stytra_config = dict(
@@ -62,4 +62,4 @@ class ClosedLoop1DProt(Protocol):
 
 
 if __name__ == "__main__":
-    s = Stytra(protocol=ClosedLoop1DProt())
+    s = Stytra(protocol=ClosedLoop1DProtocol())
