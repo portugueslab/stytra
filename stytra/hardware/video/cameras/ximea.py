@@ -38,9 +38,9 @@ class XimeaCamera(Camera):
 
         self.im = xiapi.Image()
 
-        # If camera supports hardware downsampling (MQ013MG-ON does,
+        # If camera supports hardware downsampling (MQ013xG-ON does,
         # MQ003MG-CM does not):
-        if self.cam.get_device_name() == b"MQ013MG-ON":
+        if self.cam.get_device_name() in [b"MQ013MG-ON", b"MQ013RG-ON", b"MQ013CG-ON"]:
             self.cam.set_sensor_feature_selector("XI_SENSOR_FEATURE_ZEROROT_ENABLE")
             self.cam.set_sensor_feature_value(1)
 
