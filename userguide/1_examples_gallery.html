@@ -332,7 +332,7 @@ stimulus, making it a looming object:</p>
 
 <span class="kn">from</span> <span class="nn">stytra</span> <span class="kn">import</span> <span class="n">Stytra</span>
 <span class="kn">from</span> <span class="nn">stytra.stimulation</span> <span class="kn">import</span> <span class="n">Protocol</span>
-<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CircleStimulus</span>
+<span class="kn">from</span> <span class="nn">stytra.stimulation.stimuli</span> <span class="kn">import</span> <span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CalibratedCircleStimulus</span>
 <span class="kn">from</span> <span class="nn">lightparam</span> <span class="kn">import</span> <span class="n">Param</span>
 
 
@@ -346,7 +346,7 @@ stimulus, making it a looming object:</p>
 <span class="c1"># make a temporary class combining two classes</span>
 
 
-<span class="k">class</span> <span class="nc">LoomingStimulus</span><span class="p">(</span><span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CircleStimulus</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">LoomingStimulus</span><span class="p">(</span><span class="n">InterpolatedStimulus</span><span class="p">,</span> <span class="n">CalibratedCircleStimulus</span><span class="p">):</span>
     <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;looming_stimulus&quot;</span>
 
 
