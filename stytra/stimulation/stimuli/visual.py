@@ -837,6 +837,58 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
     Parameters
     ---------
     origin : tuple(float, float)
+        positions of the circle centre (as fraction of screen size)
+
+    radius : float
+        circle radius (as fraction of screen size)
+
+    backgroud_color : tuple(int, int, int)
+        RGB color of the background
+
+    circle_color : tuple(int, int, int)
+        RGB color of the circle
+
+
+    """
+
+    def __init__(
+        self,
+        *args,
+        origin=(0.5, 0.5),
+        radius=10,
+        background_color=(0, 0, 0),
+        circle_color=(255, 255, 255),
+        **kwargs
+    ):
+        super().__init__(*args, dynamic_parameters=["x", "y", "radius"], **kwargs)
+        self.x = origin[0]
+        self.y = origin[1]
+        self.radius = radius
+        self.background_color = background_color
+        self.circle_color = circle_color
+        self.name = "circle"
+
+    def paint(self, p, w, h):
+        super().paint(p, w, h)
+
+        # draw the background
+        p.setPen(Qt.NoPen)
+        p.setBrush(QBrush(QColor(*self.background_color)))
+        self.clip(p, w, h)
+        p.drawRect(QRect(-1, -1, w + 2, h + 2))
+
+        # draw the circle
+        p.setBrush(QBrush(QColor(*self.circle_color)))
+        p.drawEllipse(QPointF(self.x * w, self.y * h), self.radius * w, self.radius * h)
+
+
+class CalibratedCircleStimulus(VisualStimulus, DynamicStimulus):
+    """ A filled circle stimulus, which in combination with interpolation
+    can be used to make looming stimuli
+
+    Parameters
+    ---------
+    origin : tuple(float, float)
         positions of the circle centre (in mm)
 
     radius : float
@@ -876,6 +928,8 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
         else:
             mm_px = 1
 
+        print(mm_px)
+
         # draw the background
         p.setPen(Qt.NoPen)
         p.setBrush(QBrush(QColor(*self.background_color)))
@@ -884,7 +938,8 @@ class CircleStimulus(VisualStimulus, DynamicStimulus):
 
         # draw the circle
         p.setBrush(QBrush(QColor(*self.circle_color)))
-        p.drawEllipse(QPointF(self.x * w, self.y * h), self.radius * w, self.radius * h)
+        p.drawEllipse(QPointF(self.x / mm_px, self.y / mm_px),
+                      self.radius / mm_px, self.radius / mm_px)
 
 
 class FixationCrossStimulus(FullFieldVisualStimulus):

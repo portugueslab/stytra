@@ -3,7 +3,7 @@ import pandas as pd
 
 from stytra import Stytra
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli import InterpolatedStimulus, CircleStimulus
+from stytra.stimulation.stimuli import InterpolatedStimulus, CalibratedCircleStimulus
 from lightparam import Param
 
 
@@ -17,7 +17,7 @@ from lightparam import Param
 # make a temporary class combining two classes
 
 
-class LoomingStimulus(InterpolatedStimulus, CircleStimulus):
+class LoomingStimulus(InterpolatedStimulus, CalibratedCircleStimulus):
     name = "looming_stimulus"
 
 
