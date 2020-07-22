@@ -33,7 +33,7 @@ Stytra relies on `opencv <https://docs.opencv.org/3
 .0-beta/doc/py_tutorials/py_tutorials.html>`_ for some of its fish tracking
 functions. If you don't have it installed, open the Anaconda prompt and type::
 
-    conda install opencv
+    pip install opencv-python
 
 .. note::
     Sometimes, OpenCV installation does not work properly (DLL not found error when importin cv2), this can be fixed by installing a wheel directly from https://www.lfd.uci.edu/~gohlke/pythonlibs/#opencv
