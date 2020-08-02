@@ -14,5 +14,6 @@ dependencies:
   - ffmpeg
   - scikit-image
   - matplotlib
-  - opencv
   - av
+  - pip:
+        - opencv-python
