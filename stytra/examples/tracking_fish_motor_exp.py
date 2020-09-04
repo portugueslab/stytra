@@ -28,7 +28,7 @@ class FullFieldVisualStimulus2(FullFieldVisualStimulus):
 class Motti(Protocol):
     name = "motti_protocol"
     stytra_config = dict(
-        camera=dict(type="spinnaker"), tracking=dict(method="fish",estimator="position"),
+        camera=dict(type="spinnaker"), tracking=dict(method="fish_motor_bg",estimator="position"),
         recording=dict(extension="mp4", kbit_rate=3000),
         motor=dict())
 
@@ -37,7 +37,6 @@ class Motti(Protocol):
 
         self.period_sec = Param(10., limits=(0.2, None))
         self.flash_duration = Param(1., limits=(0., None))
-
 
     def get_stim_sequence(self):
 

@@ -6,12 +6,14 @@ from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 from stytra.calibration import MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
 from collections import namedtuple
+from multiprocessing import  Queue
 
 class MotorExperiment(TrackingExperiment):
     """"""
     def __init__(self, *args, **kwargs):
         self.tracked_position_queue = NamedTupleQueue()
         self.calib_queue = NamedTupleQueue()
+        self.time_queue2 = Queue()
         self.scale = [kwargs["motor"]["scale_x"], kwargs["motor"]["scale_y"]]
 
         super().__init__(*args,calibrator=MotorCalibrator(), **kwargs)
@@ -21,6 +23,7 @@ class MotorExperiment(TrackingExperiment):
         self.motor_pos_queue = NamedTupleQueue()
         self.motor_status_queue = NamedTupleQueue()
 
+
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
             finished_event=self.camera.kill_event,
@@ -29,7 +32,8 @@ class MotorExperiment(TrackingExperiment):
             motor_position_queue=self.motor_pos_queue,
             tracking_event=self.frame_dispatcher.tracking_event,
             motor_status_queue = self.motor_status_queue,
-            arena_lim = self.arena_lim
+            arena_lim = self.arena_lim,
+            time_queue2 = self.time_queue2
         )
         self.motor_position_queue = self.motor_process.motor_position_queue
 
@@ -62,6 +66,8 @@ class MotorExperiment(TrackingExperiment):
         self.frame_dispatcher = TrackingProcessMotor(
             second_output_queue=self.tracked_position_queue,
             calib_queue =self.calib_queue,
+            time_queue = self.camera.time_queue,
+            time_queue2 = self.time_queue2,
             scale= self.scale,
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,

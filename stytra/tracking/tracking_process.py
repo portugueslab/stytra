@@ -2,10 +2,11 @@ from queue import Empty, Full
 from multiprocessing import Event, Value
 from time import sleep
 from collections import namedtuple
-
+import time as tim
+import datetime
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
-
+from multiprocessing import Queue
 
 class TrackingProcess(FrameProcess):
     """A class which handles taking frames from the camera and processing them,
@@ -64,6 +65,7 @@ class TrackingProcess(FrameProcess):
         self.frame_queue = in_frame_queue
         self.gui_queue = TimestampedArrayQueue(max_mbytes=max_mb_queue)  # GUI queue for
 
+        self.time_queue = Queue()
         self.recording_signal = recording_signal
         if recording_signal is not None:
             self.frame_copy_queue = TimestampedArrayQueue(max_mbytes=max_mb_queue)
@@ -178,12 +180,13 @@ class TrackingProcess(FrameProcess):
 class TrackingProcessMotor(TrackingProcess):
     def __init__(self, *args,
                  second_output_queue=None,
-                 calib_queue= None, scale= None, **kwargs):
+                 calib_queue= None, scale= None, time_queue=None, time_queue2=None, **kwargs):
 
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
         self.calib_queue = calib_queue
         self.calibration_event = Event()
+        self.time_queue= time_queue
         self.home_event = Event()
         self.tracking_event = Event()
         self.scale_x = None
@@ -193,6 +196,8 @@ class TrackingProcessMotor(TrackingProcess):
         #todo get center x, y from camera or something
         self.center_y = 268
         self.center_x = 360
+
+        self.time_queue2 = time_queue2
 
     def send_to_queue(self, time, output):
         self.output_queue.put(time, output)
@@ -229,6 +234,10 @@ class TrackingProcessMotor(TrackingProcess):
             # and process the latest, if it is too slow continue:
             try:
                 time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
+                out = self.time_queue.get(timeout=0.001)
+
+
+                start = datetime.datetime.now()
             except Empty:
                 continue
 
@@ -243,6 +252,7 @@ class TrackingProcessMotor(TrackingProcess):
 
             # If a processing function is specified, apply it:
             new_messages, output = self.pipeline.run(frame)
+            # print ("fish identified", output.f0_x, output.f0_y)
 
             #Calculate new position for the motor if calibration was set
             if self.scale_x is None:
@@ -263,6 +273,11 @@ class TrackingProcessMotor(TrackingProcess):
 
             self.send_to_queue(time, output)
             self.send_to_second_queue(time, second_output(*sec_output))
+
+            out[0] = tim.time_ns() - out[0]
+            # print('first', out[0] / 1000)
+            out.append(tim.time_ns())
+            self.time_queue2.put(out)
 
             # calculate the frame rate
             self.update_framerate()

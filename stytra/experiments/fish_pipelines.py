@@ -39,7 +39,7 @@ class FishTrackingPipeline(Pipeline):
 class FishTrackingMotorPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        self.filter = Prefilter(parent=self.root)
+        self.filter = AdaptivePrefilter(parent=self.root)
         self.fishtrack = FishTrackingMethod(parent=self.filter)
         #self.eyetrack = EyeTrackingMotorMethod(parent=self.root)
         self.extra_widget = BoutPlot
