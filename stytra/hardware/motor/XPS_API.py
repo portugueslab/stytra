@@ -22,7 +22,7 @@ def bind(
 def null_function():
     pass
 
-lib = cdll.LoadLibrary(r"C:\Users\kkoetter\python_code\stage\Newport.XPS.CommandInterface.dll")
+lib = cdll.LoadLibrary(r"J:\_Shared\Katharina\Motor\Newport_motto\stage\Newport.XPS.CommandInterface.dll")
 
 print("lib", lib)
 
