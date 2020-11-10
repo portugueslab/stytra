@@ -3,7 +3,7 @@ from queue import Empty
 from time import sleep
 import datetime
 import random
-
+from stytra.hardware.motor.stageAPI import Motor
 
 class SendPositionsProcess(Process):
     def __init__(self):
@@ -23,12 +23,16 @@ class ReceiverProcess(Process):
     def __init__(self, dot_position_queue):
         super().__init__()
         self.position_queue = dot_position_queue
+        self.motor = Motor(1, scale=1)
+        self.motor.open()
 
     def run(self):
         while True:
             try:
                 num = self.position_queue.get(timeout=0.01)
                 print ("number from queue", num)
+                pos = self.motor.get_position()
+                print (pos)
 
             except Empty:
                 break

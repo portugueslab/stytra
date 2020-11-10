@@ -1,9 +1,9 @@
 import sys
 from ctypes import *
 from typing import Any, List
-from newportxps import NewportXPS
+# from newportxps import NewportXPS #todo pip install
 
-sys.path.append(r'C:\Users\kkoetter\python_code')
+# sys.path.append(r'C:\Users\portugueslab\python_code') #todo change to your motion control directory
 
 c_word = c_ushort
 c_dword = c_ulong

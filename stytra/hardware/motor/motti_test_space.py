@@ -15,14 +15,30 @@ motor_x.open()
 # motor_x.home()
 # motor_x.open()
 # sleep(5)
-# motor_y.home()
+# # motor_y.home()
 # motor_y.open()
-# sleep(5)
+sleep(10)
 
+acc = int(204552)
+velo = int(107374182)
+
+
+motor_y.setvelocity(acceleration=acc, velocity=velo)
+motor_x.setvelocity(acceleration=acc, velocity=velo)
 #function to test
 pos_y = motor_y.get_position()
 pos_x = motor_x.get_position()
-print (pos_x, pos_y)
+print(pos_x, pos_y)
+
+# motor_x.move_relative(20000*30)
+motor_x.move_rel(20000*30)
+# motor_y.movesimple(pos_x + 20000*30)
+# motor_x.movethatthing(20000*30)
+sleep(1)
+pos_y = motor_y.get_position()
+pos_x = motor_x.get_position()
+print('After moving', pos_x, pos_y)
+# motor_y.home()
 
 #close motor again
 sleep(5)
