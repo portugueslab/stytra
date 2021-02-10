@@ -11,10 +11,10 @@ AD_ATTR_DICT = dict(a="analog", d="digital")
 
 
 class PyfirmataConnection:
-    '''Using StandardFirmata and pyfirmata to control an Arduino board with Python'''
+    """Using StandardFirmata and pyfirmata to control an Arduino board with Python"""
 
     def __init__(self, com_port, layout, iterator=True):
-        '''If using analog ports is handy to start an iterator thread'''
+        """If using analog ports is handy to start an iterator thread"""
 
         self.board = pyfi.Arduino(com_port)
         print('Connection successfully established')
@@ -83,8 +83,8 @@ class PyfirmataConnection:
         sel_pins = getattr(self.board, AD_ATTR_DICT[pin_conf["ad"]])[pin_n]
         sel_pins.write(value)
 
-    def write_multiple(self, values=None):
-        for pin_n, value in values.items():
+    def write_multiple(self, pin_values_dict):
+        for pin_n, value in pin_values_dict.items():
             self.write(pin_n, value)
         return True
 
@@ -99,12 +99,13 @@ if __name__ == "__main__":
     LAYOUT = (dict(pin=5, mode="pwm", ad="d"),
               dict(pin=11, mode="pwm", ad="d"))
 
-    write_multiple = {5: 0,
-                      11: 0}
+    write_multiple = {5: 0.4,
+                      11: 1.0}
 
     try_pumps = PyfirmataConnection(com_port='COM3', layout=LAYOUT)
-    #try_pumps.write(5, 0)
 
-    sleep(5)
+    #try_pumps.close()
+
+    #sleep(5)
     try_pumps.write_multiple(write_multiple)
     print("sending pulse")

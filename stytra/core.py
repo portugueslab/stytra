@@ -127,6 +127,18 @@ class Stytra:
             number of tracking processes to be used. Using more than 1 can improve performance
             but also cause issues in state-dependent tracking functions.
 
+        arduino_config : dict
+            Dictionary describing the configuration of an Arduino board.
+            Required fields:
+                - "com_port" : serial port of the board
+                - "layout" : list of dictionaries with the configuration of the pins. Each element of the dictionary
+                  is a dictionary with the fields:
+                   - "pin" : number of the pin
+                   - "mode" : one of "input", "output", "pwm", "servo" (PyFirmata docs for more info)
+                   - "ad" : either "a" (for analog) or "d" (for digital)
+
+            Example: arduino_board=dict(port="COM3", layout=(dict(pin=5, mode="pwm", ad="d")))
+
     """
 
     def __init__(self, recording=None, exec=True, app=None, **kwargs):

@@ -1,22 +1,31 @@
 from stytra import Stytra, Protocol
-from stytra.stimulation.stimuli.set_arduino_pin import WriteArduinoPin
-
-LAYOUT = (dict(pin=5, mode="pwm", ad="d"),
-              dict(pin=11, mode="pwm", ad="d"))
+from stytra.stimulation.stimuli.arduino import WriteArduinoPin
+from lightparam import Param
 
 
-class MotorProtocol(Protocol):
-    name = 'motor_protocol'
+# Example showcasing a protocol that uses an arduino and sets a pin value on it. For more sophisticate
+# applications you want to subclass the WriteArduinoPin class.
+class ArduinoProtocol(Protocol):
+    name = 'arduino_protocol'
+    stytra_config = dict(arduino_config=dict(com_port="COM3", layout=[dict(pin=11, mode="pwm", ad="d"),dict(pin=5, mode="pwm", ad="d")]))
+
+    def __init__(self):
+        super(ArduinoProtocol, self).__init__()
+        self.pin_on_period = Param(1., limits=(0., 1000.0), unit="s", loadable=False)
+        self.power_in = Param(0.5, limits=(0., 1.))
+        self.power_out = Param(0.5, limits=(0., 1.))
 
     def get_stim_sequence(self):
         stimuli = [
-            WriteArduinoPin(port='COM3', layout=LAYOUT, pin=5, value=0.8, duration=4.0),
-            WriteArduinoPin(port='COM3', layout=LAYOUT, pin=5, value=0)
+            WriteArduinoPin(pin_values_dict={
+                5: self.power_in,
+                11: self.power_out}, duration=self.pin_on_period),
+            WriteArduinoPin(pin_values_dict={
+                5: 0.,
+                11: 0.}, duration=1)
         ]
         return stimuli
 
 
 if __name__ == "__main__":
-
-    st = WriteArduinoPin(port='COM3', layout=LAYOUT, pin=5, value=0.8, duration=4.0)
-    #Stytra(protocol=MotorProtocol())
+    st = Stytra(protocol=ArduinoProtocol())
