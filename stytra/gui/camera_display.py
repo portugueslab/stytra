@@ -144,9 +144,9 @@ class CameraViewWidget(QWidget):
     def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
-        
+
         # TODO fix this somehow?
-        
+
         **Important!** if the input queue is too fast this will produce an
         infinite loop and block the interface!
 
@@ -218,7 +218,7 @@ class CameraSelection(CameraViewWidget):
     """Generic class to overlay on video an ROI that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).
-    
+
     The changes of parameters read through the ROI position are handled
     via the track_params class, so they must have a corresponding entry in the
     definition of the FrameProcessingMethod of the tracking function of choice.
@@ -453,7 +453,7 @@ class EyeTrackingSelection(CameraSelection):
                 for i, o in enumerate([0, 5]):
                     if checkifnan == checkifnan:
                         for ell, col in zip(
-                            self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
+                                self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
                         ):
                             ell.setPen(col, width=3)
 
@@ -533,7 +533,7 @@ class CameraViewCalib(CameraViewWidget):
         Parameters
         ----------
         calibrator :
-            
+
 
         Returns
         -------
@@ -541,13 +541,13 @@ class CameraViewCalib(CameraViewWidget):
         """
         if calibrator.proj_to_cam is not None:
             camera_points = (
-                np.pad(
-                    calibrator.points,
-                    ((0, 0), (0, 1)),
-                    mode="constant",
-                    constant_values=1,
-                )
-                @ calibrator.proj_to_cam.T
+                    np.pad(
+                        calibrator.points,
+                        ((0, 0), (0, 1)),
+                        mode="constant",
+                        constant_values=1,
+                    )
+                    @ calibrator.proj_to_cam.T
             )
 
             points_dicts = []
@@ -582,12 +582,12 @@ def _tail_points_from_coords(coords, seglen):
 
     xs = []
     ys = []
-    angles = np.zeros(coords.shape[1] - 5)
+    angles = np.zeros(coords.shape[1] - 16)
     for i_fish in range(coords.shape[0]):
         xs.append(coords[i_fish, 2])
         ys.append(coords[i_fish, 0])
         angles[0] = coords[i_fish, 4]
-        angles[1:] = angles[0] + coords[i_fish, 6:]
+        angles[1:] = angles[0] + coords[i_fish, 6:-11]
         for i, an in enumerate(angles):
             if i > 0:
                 xs.append(xs[-1])
@@ -612,13 +612,23 @@ class CameraViewFish(CameraViewCalib):
         self.display_area.addItem(self.points_fish)
         self.display_area.addItem(self.lines_fish)
         self.tracking_params = self.experiment.pipeline.fishtrack._params
+        self.curves_eyes = [
+            pg.EllipseROI(
+                pos=(0, 0), size=(10, 10), movable=False, pen=dict(color=k, width=3)
+            )
+            for k in [(5, 40, 230), (40, 230, 5)]
+        ]
+        for c in self.curves_eyes:
+            self.display_area.addItem(c)
+            [c.removeHandle(h) for h in c.getHandles()]
+        self.pre_th = [0, 0]
 
     def retrieve_image(self):
         super().retrieve_image()
 
         if (
-            len(self.experiment.acc_tracking.stored_data) == 0
-            or self.current_image is None
+                len(self.experiment.acc_tracking.stored_data) == 0
+                or self.current_image is None
         ):
             return
 
@@ -629,8 +639,8 @@ class CameraViewFish(CameraViewCalib):
         n_fish = self.tracking_params.n_fish_max
 
         n_data_per_fish = (
-            len(current_data) - 1
-        ) // n_fish  # the first is time, the last is area
+                                  len(current_data) - 1
+                          ) // n_fish  # the first is time, the last is area
         n_points_tail = self.tracking_params.n_segments
         try:
             retrieved_data = np.array(
@@ -642,9 +652,74 @@ class CameraViewFish(CameraViewCalib):
             )
             if n_points_tail:
                 tail_len = (
-                    self.tracking_params.tail_length / self.tracking_params.n_segments
+                        self.tracking_params.tail_length / self.tracking_params.n_segments
                 )
                 ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
                 self.lines_fish.setData(x=xs, y=ys)
+
+            # now the eyes
+            retrieved_data = current_data
+            for i_fish in range(n_fish):
+                checkifnan = getattr(retrieved_data, "f{:d}_th_e0".format(i_fish))
+                for i in [0, 1]:
+                    if checkifnan == checkifnan:
+                        for ell, col in zip(
+                                self.curves_eyes, [(5, 40, 230), (40, 230, 5)]
+                        ):
+                            ell.setPen(col, width=3)
+
+                        # This long annoying part take care of the calculation
+                        # of rotation and translation for the ROI starting from
+                        # ellipse center, axis and rotation.
+                        # Some geometry is required because pyqtgraph rotation
+                        # happens around lower corner and not
+                        # around center.
+                        # Might be improved with matrix transforms!
+                        th = getattr(
+                            retrieved_data, "f{:d}_th_mid".format(i_fish)
+                        ) - getattr(
+                            retrieved_data, "f{:d}_th_e{}".format(i_fish, i)
+                        ) - 90  # eye angle from tracked ellipse
+                        c_x = int(
+                            getattr(retrieved_data, "f{:d}_dim_x_e{}".format(i_fish, i)) / 2
+                        )  # ellipse center x and y
+                        c_y = int(getattr(retrieved_data, "f{:d}_dim_y_e{}".format(i_fish, i)) / 2)
+
+                        if c_x != 0 and c_y != 0:
+                            th_conv = th * (np.pi / 180)  # in radiants now
+
+                            # rotate based on different from previous angle:
+                            self.curves_eyes[i].rotate(th - self.pre_th[i])
+
+                            # Angle and rad of center point from left lower corner:
+                            c_th = np.arctan(c_x / c_y)
+                            c_r = np.sqrt(c_x ** 2 + c_y ** 2)
+
+                            # Coords of the center after rotation around left lower
+                            # corner, to be corrected when setting position:
+                            center_after = (
+                                np.sin(c_th + th_conv) * c_r,
+                                np.cos(c_th + th_conv) * c_r,
+                            )
+
+                            # Calculate pos for eye ROIs. This require correction
+                            # for the box position, for the ellipse dimensions and
+                            # for the rotation around corner instead of center.
+                            self.curves_eyes[i].setPos(
+                                getattr(retrieved_data, "f{:d}_pos_x_e{}".format(i_fish, i))
+                                - c_x
+                                + (c_x - center_after[1]),
+                                getattr(retrieved_data, "f{:d}_pos_y_e{}".format(i_fish, i))
+                                - c_y
+                                + (c_y - center_after[0]),
+                            )
+                            self.curves_eyes[i].setSize((c_y * 2, c_x * 2))
+
+                            self.pre_th[i] = th
+                    else:
+                        # No eyes detected:
+                        for ell in self.curves_eyes:
+                            ell.setPen(None)
         except ValueError as e:
             pass
+

@@ -38,10 +38,11 @@ def _fish_column_names(i_fish, n_segments):
         "f{:d}_pos_y_e1".format(i_fish),
         "f{:d}_dim_x_e1".format(i_fish),
         "f{:d}_dim_y_e1".format(i_fish),
-        "f{:d}_th_e1".format(i_fish)
+        "f{:d}_th_e1".format(i_fish),
+        "f{:d}_th_mid".format(i_fish)
     ]
 
-def _fit_ellipse(im, threshold, center, cent_shift):
+def _fit_ellipse(im, threshold, center):
     im_threshold = (im > threshold).view(dtype=np.uint8)
     cont_ret = cv2.findContours(
         im_threshold.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
@@ -58,7 +59,7 @@ def _fit_ellipse(im, threshold, center, cent_shift):
         # Get the three largest ellipses (i.e. the eyes and bladder, not any dirt)
         contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)[:3]
 
-        # Fit the ellipses for the two eyes
+        # Fit the ellipses for the two eyes and bladder
         if len(contours[0]) > 4 and len(contours[1]) > 4 and len(contours[2]) > 4:
             e = [cv2.fitEllipse(contours[i]) for i in range(3)]
         else:
@@ -102,13 +103,13 @@ def _fit_ellipse(im, threshold, center, cent_shift):
 
         return new_e
     else:
-        # Not at least two eyes + maybe dirt found...
+        # Not at least two eyes and bladder + maybe dirt found...
         return False
 
 class FishTrackingMethod(ImageToDataNode):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="fish_tracking", **kwargs)
-        self.monitored_headers = ["biggest_area", "f0_theta"]
+        self.monitored_headers = ["biggest_area", "f0_theta", "f0_th_e0", "f0_th_e1"]
         self.diagnostic_image_options = [
             "background difference",
             "thresholded background difference",
@@ -157,7 +158,8 @@ class FishTrackingMethod(ImageToDataNode):
         n_segments: Param(10, (2, 30)),
         bg_downsample: Param(1, (1, 8)),
         bg_dif_threshold: Param(25, (0, 255)),
-        threshold_eyes: Param(35, (0, 255)),
+        threshold_center: Param(35, (0, 255)),
+        threshold_eyes: Param(105, (0, 255)),
         pos_uncertainty: Param(
             1.0,
             (0, 10.0),
@@ -245,12 +247,12 @@ class FishTrackingMethod(ImageToDataNode):
             fishdet = bg[slices].copy()
 
             # estimate the position of the head
-            fish_coords = fish_start(fishdet, threshold_eyes)
+            fish_coords = fish_start(fishdet, threshold_center)
 
             # get eye shape and modified angle (considering the direction)
-            e = _fit_ellipse(fishdet, threshold_eyes, fish_coords, cent_shift)
+            e = _fit_ellipse(fishdet, threshold_eyes, fish_coords)
             if e is False:
-                e = (np.nan,) * 10
+                e = (np.nan,) * 11
                 messages.append("E: eyes not detected!")
             else:
                 e = list((
@@ -260,6 +262,7 @@ class FishTrackingMethod(ImageToDataNode):
                         + e[1][0]
                         + e[1][1]
                         + (e[2][2]-e[1][2],)
+                        + (e[2][2],)
                 ))
                 e[0:2] += cent_shift
                 e[5:7] += cent_shift
@@ -347,7 +350,7 @@ class Fishes(object):
         self, n_fish_max, pos_std, angle_std, n_segments, pred_coef, persist_fish_for
     ):
         self.n_fish = n_fish_max
-        self.coords = np.full((n_fish_max, 16 + n_segments), np.nan)
+        self.coords = np.full((n_fish_max, 17 + n_segments), np.nan)
         self.uncertainties = np.array((pos_std, angle_std, angle_std))
         self.def_P = np.zeros((3, 2, 2))
         for i, uc in enumerate(self.uncertainties):
