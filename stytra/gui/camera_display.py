@@ -622,6 +622,10 @@ class CameraViewFish(CameraViewCalib):
             self.display_area.addItem(c)
             [c.removeHandle(h) for h in c.getHandles()]
         self.pre_th = [0, 0]
+        self.fish_direction = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
+        self.eye_position = pg.PlotCurveItem(pen=dict(color=(230, 40, 5), width=3))
+        self.display_area.addItem(self.fish_direction)
+        self.display_area.addItem(self.eye_position)
 
     def retrieve_image(self):
         super().retrieve_image()
@@ -656,6 +660,33 @@ class CameraViewFish(CameraViewCalib):
                 )
                 ys, xs = _tail_points_from_coords(retrieved_data, tail_len)
                 self.lines_fish.setData(x=xs, y=ys)
+
+            # paint the direction of fish
+            xs = []
+            ys = []
+            xe = []
+            ye = []
+            eye_position = self.tracking_params.eye_position
+
+            for i_fish in range(retrieved_data.shape[0]):
+                angle = retrieved_data[i_fish][4] + retrieved_data[i_fish][6] + np.pi
+                x_ = retrieved_data[i_fish, 2]
+                y_ = retrieved_data[i_fish, 0]
+
+                xs.append(x_)
+                ys.append(y_)
+                xs.append(x_ + tail_len * 3 * sin(angle))
+                ys.append(y_ + tail_len * 3 * cos(angle))
+
+                angle_ = angle - np.pi / 2
+                xe.append(x_ + eye_position * sin(angle) + tail_len * sin(angle_))
+                ye.append(y_ + eye_position * cos(angle) + tail_len * cos(angle_))
+
+                xe.append(x_ + eye_position * sin(angle) - tail_len * sin(angle_))
+                ye.append(y_ + eye_position * cos(angle) - tail_len * cos(angle_))
+
+            self.fish_direction.setData(x=ys, y=xs)
+            self.eye_position.setData(x=ye, y=xe)
 
             # now the eyes
             retrieved_data = current_data

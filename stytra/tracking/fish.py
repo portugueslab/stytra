@@ -42,69 +42,64 @@ def _fish_column_names(i_fish, n_segments):
         "f{:d}_th_mid".format(i_fish)
     ]
 
-def _fit_ellipse(im, threshold, center):
-    im_threshold = (im > threshold).view(dtype=np.uint8)
-    cont_ret = cv2.findContours(
-        im_threshold.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
-    )
+def _fit_ellipse(im, threshold, center, direction, eye_size, eye_position, eye_learningrate):
+    _, contours, hierarchy = None,None,None
+    select_threshold = None
+    contour_count = None
+    for thr in [threshold + (i+1)//2*3*(-1)**i for i in range(12)]:
 
-    # API change, in OpenCV 4 there are 2 values unlike OpenCV3
-    if len(cont_ret) == 3:
-        _, contours, hierarchy = cont_ret
-    else:
-        contours, hierarchy = cont_ret
+        im_threshold = (im > thr).view(dtype=np.uint8)
+        cont_ret = cv2.findContours(
+            im_threshold.astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
+        )
 
-    if len(contours) >= 3:
-        e = []
-        # Get the three largest ellipses (i.e. the eyes and bladder, not any dirt)
-        contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)[:3]
-
-        # Fit the ellipses for the two eyes and bladder
-        if len(contours[0]) > 4 and len(contours[1]) > 4 and len(contours[2]) > 4:
-            e = [cv2.fitEllipse(contours[i]) for i in range(3)]
+        # API change, in OpenCV 4 there are 2 values unlike OpenCV3
+        if len(cont_ret) == 3:
+            _, contours, hierarchy = cont_ret
         else:
-            return False
+            contours, hierarchy = cont_ret
 
-        # Sort them in an order (lefteye, righteye, bladder)
-        distance_pairs = []
-        distance_pairs.append(abs(np.linalg.norm(e[0][0] - center)-np.linalg.norm(e[1][0] - center)))
-        distance_pairs.append(abs(np.linalg.norm(e[0][0] - center)-np.linalg.norm(e[2][0] - center)))
-        distance_pairs.append(abs(np.linalg.norm(e[1][0] - center) - np.linalg.norm(e[2][0] - center)))
+        contour_count = [c for c in contours if len(c) > eye_size]
+        if len(contour_count) >= 3:
+            select_threshold = thr*eye_learningrate + threshold*(1-eye_learningrate)
+            break
 
-        new_e = []
-        if distance_pairs[0]<distance_pairs[1] and distance_pairs[0]<distance_pairs[2]:
+    if len(contour_count) >= 3:
+        e = []
+
+        # Fit the ellipses
+        e = [cv2.fitEllipse(c) for c in contour_count]
+
+        eyes = []
+        eye_position = center + direction * eye_position
+        for ellipse in e:
+            dot = np.dot(ellipse[0]-eye_position, -direction)
+            if dot < 0:
+                eyes.append(ellipse)
+
+        if len(eyes) == 2:
             # cross product (x2-x1)*(y3-y1)-(y2-y1)*(x3-x1) or you can use np.cross
-            cross_product = (e[1][0][0] - e[0][0][0]) * (e[2][0][1] - e[0][0][1]) \
-                            - (e[1][0][1] - e[0][0][1]) * (e[2][0][0] - e[0][0][0])
+            cross_product = (eyes[1][0][0] - eyes[0][0][0]) * (center[1] - eyes[0][0][1]) \
+                            - (eyes[1][0][1] - eyes[0][0][1]) * (center[0] - eyes[0][0][0])
             if cross_product > 0:
-                new_e = [e[0], e[1], e[2]]
+                new_e = [eyes[0], eyes[1]]
             elif cross_product < 0:
-                new_e = [e[1], e[0], e[2]]
+                new_e = [eyes[1], eyes[0]]
             else:
-                return False
-        elif distance_pairs[1]<distance_pairs[2] and distance_pairs[1]<distance_pairs[0]:
-            cross_product = (e[2][0][0] - e[0][0][0]) * (e[1][0][1] - e[0][0][1]) \
-                            - (e[2][0][1] - e[0][0][1]) * (e[1][0][0] - e[0][0][0])
-            if cross_product > 0:
-                new_e = [e[0], e[2], e[1]]
-            elif cross_product < 0:
-                new_e = [e[2], e[0], e[1]]
-            else:
-                return False
-        elif distance_pairs[2]<distance_pairs[1] and distance_pairs[2]<distance_pairs[0]:
-            cross_product = (e[2][0][0] - e[1][0][0]) * (e[0][0][1] - e[1][0][1]) \
-                            - (e[2][0][1] - e[1][0][1]) * (e[0][0][0] - e[1][0][0])
-            if cross_product > 0:
-                new_e = [e[1], e[2], e[0]]
-            elif cross_product < 0:
-                new_e = [e[2], e[1], e[0]]
-            else:
-                return False
+                return False, threshold
 
-        return new_e
+            return new_e, select_threshold
+
+        else:
+            return False, threshold
     else:
         # Not at least two eyes and bladder + maybe dirt found...
-        return False
+        contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)
+        if len(contours) != 0 and contours[0][0].shape[0] > eye_size:
+            return False, threshold + 5
+        else:
+            return False, threshold
+
 
 class FishTrackingMethod(ImageToDataNode):
     def __init__(self, *args, **kwargs):
@@ -119,6 +114,7 @@ class FishTrackingMethod(ImageToDataNode):
 
         self.dilation_kernel = np.ones((3, 3), dtype=np.uint8)
         self.fishes = None
+        self.threshold_eyes = 90
 
     def changed(self, vals):
         if any(
@@ -140,6 +136,7 @@ class FishTrackingMethod(ImageToDataNode):
             + ["biggest_area"],
         )
         self._output_type_changed = True
+        self.threshold_eyes = self._params.start_eye_threshold
 
         # used for booking a spot for one of the potentially tracked fish
         self.fishes = Fishes(
@@ -159,7 +156,10 @@ class FishTrackingMethod(ImageToDataNode):
         bg_downsample: Param(1, (1, 8)),
         bg_dif_threshold: Param(25, (0, 255)),
         threshold_center: Param(35, (0, 255)),
-        threshold_eyes: Param(105, (0, 255)),
+        eye_size: Param(10, (5, 25)),
+        eye_position: Param(5, (2, 50)),
+        eye_learningrate: Param(0.2, (0, 1)),
+        start_eye_threshold: Param(90, (0, 255)),
         pos_uncertainty: Param(
             1.0,
             (0, 10.0),
@@ -176,7 +176,6 @@ class FishTrackingMethod(ImageToDataNode):
         tail_length: Param(60.0, (1.0, 200.0)),
         tail_track_window: Param(3, (3, 70)),
     ):
-
         # update the previously-detected fish using the Kalman filter
         if self.fishes is None:
             self.reset()
@@ -249,23 +248,6 @@ class FishTrackingMethod(ImageToDataNode):
             # estimate the position of the head
             fish_coords = fish_start(fishdet, threshold_center)
 
-            # get eye shape and modified angle (considering the direction)
-            e = _fit_ellipse(fishdet, threshold_eyes, fish_coords)
-            if e is False:
-                e = (np.nan,) * 11
-                messages.append("E: eyes not detected!")
-            else:
-                e = list((
-                        e[0][0]
-                        + e[0][1]
-                        + (e[2][2]-e[0][2],)
-                        + e[1][0]
-                        + e[1][1]
-                        + (e[2][2]-e[1][2],)
-                        + (e[2][2],)
-                ))
-                e[0:2] += cent_shift
-                e[5:7] += cent_shift
             # if no actual fish was found here, continue on to the next connected component
             if fish_coords[0] == -1:
                 messages.append("W:No appropriate tail start position found")
@@ -275,6 +257,7 @@ class FishTrackingMethod(ImageToDataNode):
             theta = _fish_direction_n(bg, head_coords_up, int(round(tail_length / 2)))
 
             # find the points of the tail
+
             points = find_fish_midline(
                 bg,
                 *head_coords_up,
@@ -283,15 +266,37 @@ class FishTrackingMethod(ImageToDataNode):
                 tail_length / n_segments,
                 n_segments + 1,
             )
-
             # convert to angles
             angles = np.mod(points_to_angles(points) + np.pi, np.pi * 2) - np.pi
             if len(angles) == 0:
                 messages.append("W:Tail not completely detectable")
                 continue
-
+            fish_direction = angles[0]*180/np.pi+90
             # also, make the angles continuous
             angles[1:] = np.unwrap(angles[1:] - angles[0])
+
+            # get eye shape and modified angle (considering the direction)
+            fish_direction_vec = head_coords_up-points[1][:2]
+            fish_direction_vec = fish_direction_vec/np.linalg.norm(fish_direction_vec)
+            e, select_threshold = _fit_ellipse(fishdet, self.threshold_eyes, fish_coords,
+                                               fish_direction_vec, eye_size, eye_position
+                                               ,eye_learningrate)
+            self.threshold_eyes = select_threshold
+            if e is False:
+                e = (np.nan,) * 11
+                messages.append("E: eyes not detected!")
+            else:
+                e = list((
+                        e[0][0]
+                        + e[0][1]
+                        + (fish_direction - e[0][2],)
+                        + e[1][0]
+                        + e[1][1]
+                        + (fish_direction - e[1][2],)
+                        + (fish_direction,)
+                ))
+                e[0:2] += cent_shift
+                e[5:7] += cent_shift
 
             # put the data together for one fish
             fish_coords = np.concatenate([np.array(points[0][:2]), angles,e])
@@ -322,7 +327,7 @@ class FishTrackingMethod(ImageToDataNode):
             fishdet[bg_thresh == 0] = 0
             self.diagnostic_image = fishdet
         elif self.set_diagnostic == "thresholded for eye and swim bladder":
-            self.diagnostic_image = (bg > threshold_eyes).view(dtype=np.uint8)*255
+            self.diagnostic_image = (bg > self.threshold_eyes).view(dtype=np.uint8)*255
         if self._output_type is None:
             self.reset_state()
 
