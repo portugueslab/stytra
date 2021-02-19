@@ -46,7 +46,7 @@ def _fit_ellipse(im, threshold, center, direction, eye_size, eye_position, eye_l
     _, contours, hierarchy = None,None,None
     select_threshold = None
     contour_count = None
-    for thr in [threshold + (i+1)//2*3*(-1)**i for i in range(12)]:
+    for thr in [threshold + (i+1)//2*5*(-1)**i for i in range(12)]:
 
         im_threshold = (im > thr).view(dtype=np.uint8)
         cont_ret = cv2.findContours(
@@ -94,11 +94,7 @@ def _fit_ellipse(im, threshold, center, direction, eye_size, eye_position, eye_l
             return False, threshold
     else:
         # Not at least two eyes and bladder + maybe dirt found...
-        contours = sorted(contours, key=lambda c: c.shape[0], reverse=True)
-        if len(contours) != 0 and contours[0][0].shape[0] > eye_size:
-            return False, threshold + 5
-        else:
-            return False, threshold
+        return False, threshold
 
 
 class FishTrackingMethod(ImageToDataNode):
