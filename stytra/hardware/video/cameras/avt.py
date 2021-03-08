@@ -22,9 +22,10 @@ class AvtCamera(Camera):
 
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, camera_id=None, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
+        self.camera_id = camera_id
 
         super().__init__(**kwargs)
 
@@ -39,18 +40,23 @@ class AvtCamera(Camera):
         """ """
         self.vimba.startup()
         messages = []
-        # If there are multiple cameras, only the first one is used (this may
-        # change):
+        # Get available cameras:
         camera_ids = self.vimba.camera_ids()
-        if len(camera_ids) > 1:
-            messages.append(
-                "I:Multiple cameras detected: {}. {} wiil be used.".format(
-                    camera_ids, camera_ids[0]
+        if self.camera_id is None:
+            camera_index = 0
+            if len(camera_ids) > 0:
+                messages.append(
+                    "I:Multiple cameras detected: {}. {} wiil be used.".format(
+                        camera_ids, self.camera_id
+                    )
                 )
-            )
         else:
-            messages.append("I:Detected camera {}.".format(camera_ids[0]))
-        self.cam = self.vimba.camera(0)
+            try:
+                camera_index = camera_ids.index(self.camera_id)
+            except KeyError:
+                raise KeyError(f"Camera id {self.camera_id} is not available (available cameras: {self.camera_ids})")
+        messages.append("I:Detected camera {}.".format(camera_ids[camera_index]))
+        self.cam = self.vimba.camera(camera_index)
 
         # Start camera:
         self.cam.open()
