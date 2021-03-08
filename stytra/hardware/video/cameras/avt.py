@@ -3,7 +3,7 @@ from stytra.hardware.video.cameras.interface import Camera
 
 try:
     from pymba import Vimba
-    from pymba.vimbaexception import VimbaException
+    from pymba.vimba_exception import VimbaException
 except ImportError:
     pass
 
@@ -41,7 +41,7 @@ class AvtCamera(Camera):
         messages = []
         # If there are multiple cameras, only the first one is used (this may
         # change):
-        camera_ids = self.vimba.getCameraIds()
+        camera_ids = self.vimba.camera_ids()
         if len(camera_ids) > 1:
             messages.append(
                 "I:Multiple cameras detected: {}. {} wiil be used.".format(
@@ -50,16 +50,16 @@ class AvtCamera(Camera):
             )
         else:
             messages.append("I:Detected camera {}.".format(camera_ids[0]))
-        self.cam = self.vimba.getCamera(camera_ids[0])
+        self.cam = self.vimba.camera(0)
 
         # Start camera:
-        self.cam.openCamera()
-        self.frame = self.cam.getFrame()
-        self.frame.announceFrame()
+        self.cam.open()
+        self.frame = self.cam.new_frame()
+        self.frame.announce()
 
-        self.cam.startCapture()
-        self.frame.queueFrameCapture()
-        self.cam.runFeatureCommand("AcquisitionStart")
+        self.cam.start_capture()
+        self.frame.queue_for_capture()
+        self.cam.run_feature_command("AcquisitionStart")
 
         return messages
 
@@ -94,15 +94,13 @@ class AvtCamera(Camera):
     def read(self):
         """ """
         try:
-            self.frame.waitFrameCapture(self.timeout_ms)
-            self.frame.queueFrameCapture()
-
-            raw_data = self.frame.getBufferByteData()
-
+            self.frame.wait_for_capture(self.timeout_ms)
+            self.frame.queue_for_capture()
+            raw_data = self.frame.buffer_data()
             frame = np.ndarray(
                 buffer=raw_data,
                 dtype=np.uint8,
-                shape=(self.frame.height, self.frame.width),
+                shape=(self.frame.data.height, self.frame.data.width),
             )
 
         except VimbaException:
@@ -112,8 +110,8 @@ class AvtCamera(Camera):
 
     def release(self):
         """ """
-        self.frame.waitFrameCapture(self.timeout_ms)
-        self.cam.runFeatureCommand("AcquisitionStop")
-        self.cam.endCapture()
-        self.cam.revokeAllFrames()
+        self.frame.wait_for_capture(self.timeout_ms)
+        self.cam.run_feature_command("AcquisitionStop")
+        self.cam.end_capture()
+        self.cam.revoke_all_frames()
         self.vimba.shutdown()
