@@ -6,7 +6,6 @@ import numpy as np
 from stytra.hardware.motor.stageAPI import Motor
 from stytra.hardware.video.cameras.spinnaker import SpinnakerCamera
 import cv2
-import deepdish as dd
 import pandas as pd
 from collections import namedtuple
 
@@ -23,7 +22,7 @@ class SendPositionsProcess(Process):
     def run(self):
         cam = SpinnakerCamera()
         cam.open_camera()
-        cam.set("exposure", 30)
+        cam.set("exposure", 10)
         start = datetime.datetime.now()
         output_type = namedtuple("dotxy", ["x", "y"])
 
@@ -52,11 +51,11 @@ class ReceiverProcess(Process):
         super().__init__()
         self.position_queue = position_queue
         self.finished_event = finished_event
-        self.thres = 5
+        self.thres = 10
 
     def run(self):
-        motor_y = Motor(1, scale=1052)
-        motor_x = Motor(2, scale=909)
+        motor_y = Motor(1, scale=290)
+        motor_x = Motor(2, scale=300)
         center_y = 270
         center_x = 360
         motor_y.open()
@@ -72,7 +71,7 @@ class ReceiverProcess(Process):
 
             try:
                 pos = self.position_queue.get(timeout=0.001)
-                print("gotten positions", pos)
+                # print("gotten positions", pos)
 
                 times.append((datetime.datetime.now() - start).total_seconds())
                 pos_x = motor_x.get_position()
@@ -83,12 +82,12 @@ class ReceiverProcess(Process):
                     distance_y = center_y - pos[1]
 
                     if distance_x ** 2 + distance_y ** 2 > self.thres ** 2:
-                        motor_x.move_relative(distance_x)
                         motor_y.move_relative(distance_y)
+                        motor_x.move_relative(distance_x)
                         print("distances", distance_x, distance_y)
-                        dotposx = motor_x.move_relative_without_move(distance_x)
-                        dotposy = motor_x.move_relative_without_move(distance_y)
-                        dot_pos.append([dotposx, dotposy])
+                        # dotposx = motor_x.move_relative_without_move(distance_x)
+                        # dotposy = motor_x.move_relative_without_move(distance_y)
+                        # dot_pos.append([dotposx, dotposy])
 
                 except (ValueError, TypeError, IndexError):
                     pass
@@ -97,10 +96,10 @@ class ReceiverProcess(Process):
                 pass
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                print(len(times), len(dot_pos), len(motor_pos))
+                # print(len(times), len(dot_pos), len(motor_pos))
 
-                df = pd.DataFrame(dict(time=times, dots=dot_pos, motorpos=motor_pos))
-                df.to_pickle("my_file.pkl")
+                # df = pd.DataFrame(dict(time=times, dots=dot_pos, motorpos=motor_pos))
+                # df.to_pickle("my_file.pkl")
                 motor_x.close()
                 motor_y.close()
 
