@@ -3,11 +3,17 @@ from ctypes import *
 from time import sleep
 import datetime
 from typing import Any, List
-
+import os
 
 ######################################################
+import os
+import sys
+# sys.path.append('C:\\Users\\portugueslab\\python_code\\stytra\\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
+# print (sys.path)
+# os.add_dll_directory('C:\\Users\\portugueslab\\python_code\\stytra\\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
+dll_path = r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll'
+lib = cdll.LoadLibrary(dll_path)
 
-lib = cdll.LoadLibrary("Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll")
 print("lib", lib)
 
 

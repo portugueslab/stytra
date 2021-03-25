@@ -310,21 +310,47 @@ class MotorCalibrator(CircleCalibrator):
 
 
     def __init__(self, *args, dh=10, r=1, **kwargs):
-        super().__init__(*args,dh=10, **kwargs)
+        super().__init__(*args,dh=50, **kwargs)
 
-    def find_transform_matrix(self, image):
-        super().find_transform_matrix(image)
-        return self.points_cam
+    def _find_triangle(image, blob_params=None):
+        params = cv2.SimpleBlobDetector_Params()
+        params.minThreshold = 1
+        params.maxThreshold = 255
+        params.filterByArea = True
+        params.minArea = 1
+        params.maxArea = 50
+        params.filterByCircularity = False
+        params.filterByConvexity = False
+        params.filterByInertia = False
 
-    def find_motor_transform(self, kps_prev, kps_after):
-        diff = kps_prev - kps_after
-        x_points = np.mean(diff[0:, 0:1])
-        y_points = np.mean(diff[0:, 1:])
+        if blob_params is None:
+            blobdet = cv2.SimpleBlobDetector_create()
+        else:
+            blobdet = cv2.SimpleBlobDetector_create(params)
 
-        self.conversion_x = int(20000 / abs(x_points))
-        self.conversion_y = int(20000 / abs(y_points))
-        print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
-        self.motor_to_cam = [self.conversion_x, self.conversion_y]
+        scaled_im = 255 - (image.astype(np.float32) * 255 / np.max(image)).astype(
+            np.uint8
+        )
+        # Blur image to remove noise
+        frame = cv2.GaussianBlur(scaled_im, (15, 15), 0)
 
-        return self.conversion_x, self.conversion_y
+        keypoints = blobdet.detect(frame)
+        print (len(keypoints))
 
+
+    # def find_transform_matrix(self, image):
+    #     super().find_transform_matrix(image)
+    #     return self.points_cam
+    #
+    # def find_motor_transform(self, kps_prev, kps_after):
+    #     diff = kps_prev - kps_after
+    #     x_points = np.mean(diff[0:, 0:1])
+    #     y_points = np.mean(diff[0:, 1:])
+    #
+    #     self.conversion_x = int(20000 / abs(x_points))
+    #     self.conversion_y = int(20000 / abs(y_points))
+    #     print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+    #     self.motor_to_cam = [self.conversion_x, self.conversion_y]
+    #
+    #     return self.conversion_x, self.conversion_y
+    #

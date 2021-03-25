@@ -7,7 +7,7 @@ from stytra.experiments.tracking_experiments import (
 )
 from stytra.experiments.motor_experiment import MotorExperiment
 from stytra.experiments.camera_recording_experiment import VideoRecordingExperiment
-from stytra.calibration import CircleCalibrator
+from stytra.calibration import CircleCalibrator, MotorCalibrator
 from stytra.utilities import recursive_update
 
 # imports for easy experiment building
@@ -164,6 +164,7 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
+                class_kwargs["calibrator"] = MotorCalibrator()
 
                 if "motor" in class_kwargs.keys():
                     base = MotorExperiment
