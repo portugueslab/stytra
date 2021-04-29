@@ -172,7 +172,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.median_calib = np.nan
         self.est_gain = 0
         self.min_bout_n = 30
-        self.valid_gain_range = (-40, -10)
+        self.valid_gain_range = (-80, -10)
         self.min_bout_duration = 0.2
 
     def bout_started(self):

@@ -5,3 +5,4 @@ from stytra.stimulation.stimuli.external import *
 from stytra.stimulation.stimuli.voltage_stimuli import *
 from stytra.stimulation.stimuli.conditional import *
 from stytra.stimulation.stimuli.kinematograms import *
+from stytra.stimulation.stimuli.arduino import *

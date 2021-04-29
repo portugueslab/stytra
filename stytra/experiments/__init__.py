@@ -99,6 +99,7 @@ class Experiment(QObject):
         metadata_general=None,
         metadata_animal=None,
         loop_protocol=False,
+        arduino_config=None,
         log_format="csv",
         trigger_duration_queue=None,
         scope_triggering=None,
@@ -110,6 +111,8 @@ class Experiment(QObject):
 
         self.app = app
         self.protocol = protocol
+
+        self.arduino_config = arduino_config
 
         # If there's a trigger, reference its queue to pass the duration:
         self.trigger = scope_triggering
@@ -133,6 +136,7 @@ class Experiment(QObject):
 
         self.window_main = None
         self.scope_config = None
+        self.arduino_board = None
         self.abort = False
 
         self.logger = logging.getLogger()
@@ -227,8 +231,15 @@ class Experiment(QObject):
 
         """
         self.gui_timer.start(1000 // 60)
+
         self.dc.restore_from_saved()
         self.set_id()
+
+        if self.arduino_config is not None:
+            from stytra.hardware.external_pyfirmata import PyfirmataConnection
+            self.arduino_board = PyfirmataConnection(com_port=self.arduino_config["com_port"],
+                                                     layout=self.arduino_config["layout"])
+
         self.make_window()
         self.protocol_runner.update_protocol()
 
@@ -284,7 +295,7 @@ class Experiment(QObject):
     def read_scope_data(self):
         """Read data from an external acquisition device triggered with stytra.
         Currently we assume this comes from a microscope, thus the logging in
-        "imaging/microscope_config".
+        "imaging/microscope_config". To be changed in a future version maybe.
         """
         if self.trigger is not None:
             try:
@@ -441,6 +452,9 @@ class Experiment(QObject):
         if self.trigger is not None:
             self.trigger.kill_event.set()
             self.trigger.join()
+
+        if self.arduino_board is not None:
+            self.arduino_board.close()
 
         st = self.window_main.saveState()
         geom = self.window_main.saveGeometry()

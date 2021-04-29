@@ -369,7 +369,7 @@ class CenteredBackgroundStimulus(BackgroundStimulus):
         )
 
 
-class SeamlessImageStimulus(BackgroundStimulus):
+class BaseSeamlessImageStimulus():
     """ Displays an image which should tile seamlessly.
 
     The top of the image should match with the bottom and the left
@@ -417,6 +417,13 @@ class SeamlessImageStimulus(BackgroundStimulus):
     def draw_block(self, p, point, w, h):
         p.drawImage(point, self._qbackground)
 
+
+class SeamlessImageStimulus(BaseSeamlessImageStimulus, BackgroundStimulus):
+    pass
+
+
+class CenteredSeamlessImageStimulus(BaseSeamlessImageStimulus, CenteredBackgroundStimulus):
+    pass
 
 class GratingStimulus(BackgroundStimulus):
     """ Class for creating a grating pattern by tiling a numpy array that
