@@ -87,6 +87,65 @@ class BoutsEstimator(VigorMotionEstimator):
         return False
 
 
+class TailSumEstimator(Estimator):
+    def __init__(self, *args, vigor_window=0.050, theta_window=0.1,
+                 base_gain=-12, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.vigor_window = vigor_window
+        self.theta_window = theta_window
+        self.last_dt = 1 / 500.0
+        self.base_gain = base_gain
+        self._output_type = namedtuple("s", ("vigor", "theta"))
+
+    def get_vel_and_theta(self, lag=0):
+        """
+
+        Parameters
+        ----------
+        lag :
+             (Default value = 0)
+
+        Returns
+        -------
+
+        """
+
+        # Vigor (copypasted from VigorEstimator method for simplicity)
+        vigor_n_samples = max(int(round(self.vigor_window / self.last_dt)), 2)
+        n_samples_lag = max(int(round(lag / self.last_dt)), 0)
+        if not self.acc_tracking.stored_data:
+            return 0, 0
+        past_tail_motion = self.acc_tracking.get_last_n(
+            vigor_n_samples + n_samples_lag
+        )[0:vigor_n_samples]
+        end_t = past_tail_motion.t.iloc[-1]
+        start_t = past_tail_motion.t.iloc[0]
+        new_dt = (end_t - start_t) / vigor_n_samples
+        if new_dt > 0:
+            self.last_dt = new_dt
+        vigor = np.nanstd(np.array(past_tail_motion.tail_sum))
+        if np.isnan(vigor):
+            vigor = 0
+
+        # Tail theta:
+        th_n_samples = max(int(round(self.theta_window / self.last_dt)), 2)
+        n_samples_lag = max(int(round(lag / self.last_dt)), 0)
+        if not self.acc_tracking.stored_data:
+            return 0, 0
+        past_tail_motion = self.acc_tracking.get_last_n(
+            th_n_samples + n_samples_lag
+        )[0:th_n_samples]
+        # past_tail_motion -= past_tail_motion[0]
+        tail_th = np.nanmean(np.array(past_tail_motion.tail_sum) - past_tail_motion.tail_sum.iloc[0])
+
+        if np.isnan(vigor):
+            vigor = 0
+
+        if len(self.log.times) == 0 or self.log.times[-1] < end_t:
+            self.log.update_list(end_t, self._output_type(vigor, tail_th))
+        return vigor * self.base_gain, tail_th
+
+
 def rot_mat(theta):
     """The rotation matrix for an angle theta """
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
