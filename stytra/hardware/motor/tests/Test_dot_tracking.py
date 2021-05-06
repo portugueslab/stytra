@@ -22,7 +22,7 @@ class SendPositionsProcess(Process):
     def run(self):
         cam = SpinnakerCamera()
         cam.open_camera()
-        cam.set("exposure", 5)
+        cam.set("exposure", 10)
         start = datetime.datetime.now()
         output_type = namedtuple("dotxy", ["x", "y"])
 
@@ -60,6 +60,9 @@ class ReceiverProcess(Process):
         center_x = 360
         motor_y.open()
         motor_x.open()
+
+        motor_x.polling(5)
+        motor_y.polling(5)
 
         last_position = None
         dot_pos = []

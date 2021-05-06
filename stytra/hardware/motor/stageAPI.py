@@ -8,9 +8,9 @@ import os
 ######################################################
 import os
 import sys
-# sys.path.append('C:\\Users\\portugueslab\\python_code\\stytra\\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
+# sys.path.append(r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
 # print (sys.path)
-# os.add_dll_directory('C:\\Users\\portugueslab\\python_code\\stytra\\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
+# os.add_dll_directory( r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
 dll_path = r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll'
 lib = cdll.LoadLibrary(dll_path)
 
@@ -211,42 +211,21 @@ class Motor:
             self.scale = scale
 
     def sethomingvelo(self):
-
         """Will be called by homethatthing to make homing faster."""
         BMC_GetHomingVelocity(self.serial_nom, self.channel)
         BMC_SetHomingVelocity(self.serial_nom, self.channel, self.homing_velo)
 
-    def homethatthing(self):
+    def polling(self, polling_speed):
+        BMC_StartPolling(self.serial_nom, self.channel, polling_speed)
 
-        """Opens the Device, Homes the stage at a set velocity and closes the Device again."""
-
-        if self.serial_nom_set == True:
-
-            # if BMC_Open(self.serial_nom, self.channel) == 0:
-                # print("Opening device and starting Polling")
-            BMC_StartPolling(self.serial_nom, self.channel, 250)
-
-            Motor.sethomingvelo(self)
-
-            err = BMC_Home(self.serial_nom, self.channel)
-            print("Called homing with error {}".format(err))
-
-                # BMC_StopPolling(self.serial_nom, self.channel)
-                # BMC_Close(self.serial_nom, self.channel)
-                # print ("Closing device and stopping Polling")
-
-            self.hometime = 5
-            sleep(self.hometime)
-
-        if self.serial_nom_set == False:
-            print("Serial number not found. No Device detected to be homed.")
+    def stop_polling(self):
+        BMC_StopPolling(self.serial_nom, self.channel)
 
     def home(self):
         err = BMC_Home(self.serial_nom, self.channel)
         print("Called homing with error {}".format(err))
 
     def open(self):
-
         """Opens the device"""
         if self.serial_nom_set == True:
             BMC_Open(self.serial_nom, self.channel)
@@ -263,7 +242,7 @@ class Motor:
             if Motor.max_velo // 200 <= velocity <= Motor.max_velo:
                 print(
                     "Velocity set to {}".format(velocity)
-                )  # what is the unit of that??????
+                )
                 acc = c_int()  # containers
                 max_vel = c_int()
 
@@ -282,42 +261,10 @@ class Motor:
         if self.serial_nom_set == False:
             print("Serial number not found. Velocity could not be set.")
 
-    def movethatthing(self, move_to):
-        """Moves the stage to a specified position.channel:int, move_to: int"""
-
-        if self.serial_nom_set == True:
-            if 0 <= move_to <= int(Motor.max_pos + 1):
-
-                BMC_RequestPosition(self.serial_nom, self.channel)
-                pos = int(BMC_GetPosition(self.serial_nom, self.channel))
-                # print("Pos before moving: {}".format(pos))
-
-                err = BMC_MoveToPosition(self.serial_nom, self.channel, c_int(move_to))
-
-                # print("Called movetopos with error {}".format(err))
-                # TODO print a error meesage depending on err variable
-
-                if err == 0:
-                    while not abs(pos - move_to) <= self.tolerance:
-                        print(
-                            "Current pos {}".format(pos)
-                            + " moving to {}".format(move_to)
-                        )
-                        BMC_RequestPosition(self.serial_nom, self.channel)
-                        pos = int(BMC_GetPosition(self.serial_nom, self.channel))
-                        sleep(0.04)
-
-                    # TODO assessment if motor gets stuck???
-            else:
-                print("Invalid position provided. Range: 0 - 4400000")
-
-        if self.serial_nom_set == False:
-            print("Serial number not found. No Device to be moved.")
 
     def get_position(self):
         BMC_RequestPosition(self.serial_nom, self.channel)
         position = int(BMC_GetPosition(self.serial_nom, self.channel))
-        # print ("position:", position)
         return position
 
     def get_homing_params(self):
@@ -338,10 +285,6 @@ class Motor:
         homing_info.limitSwitch = lim_switch
         homing_info.velocity = velocity
         homing_info.offsetDistance = offset
-        # print("direction: ", homing_info.direction)
-        # print("limitSwitch: ", homing_info.limitSwitch)
-        # print("velocity: ", homing_info.velocity)
-        # print("offsetDistance: ", homing_info.offsetDistance)
 
         BMC_SetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
         print("New homing parameters set.")
@@ -386,14 +329,6 @@ class Motor:
         BMC_SetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
         print("New loop parameters set.")
 
-    def stopprof(self):
-        err = BMC_StopProfiled(self.serial_nom, self.channel)
-        print("stopping profiled", err)
-
-    def stopimm(self):
-        err = BMC_StopImmediate(self.serial_nom, self.channel)
-        print("stopping immediate", err)
-
     def movesimple(self, position=int()):
         BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
 
@@ -412,17 +347,11 @@ class Motor:
         dot_c = int(dotpos - 2200000)
         return dotpos, dot_c
 
-
-    def abs_pos(self, pos):
-        BMC_SetMoveAbsolutePosition(self.serial_nom, self.channel, pos)
-
     def move_absolute(self):
         BMC_MoveAbsolute(self.serial_nom, self.channel)
 
     def move_rel(self, distance):
         err = BMC_MoveRelative(self.serial_nom, self.channel, distance)
-        # print (err)
-
 
     def movejog(self, direction):
         BMC_MoveJog(self.serial_nom, self.channel, direction)
@@ -443,8 +372,6 @@ class Motor:
                 print ("jogging", i)
             flag = True
 
-
-
     def get_jogstepsize(self):
         number = BMC_GetJogStepSize(self.serial_nom, self.channel)
         return number
@@ -461,46 +388,27 @@ class Motor:
             stopmode: 1 = immediate, 2 = profiled"""
         BMC_SetJogMode(self.serial_nom, self.channel, mode, stopmode)
 
-    #Todo this function doesnt work
-
-    # def get_jog_params(self):
-    #     params = MOT_JogParameters()
-    #     BMC_GetJogParamsBlock(self.serial_nom, self.channel, byref(params))
-    #
-    #     if err == 0:
-    #         print("mode: ", params.mode)
-    #         print("stepSize: ", params.stepSize)
-    #         print("velParams: ", params.velParams)
-    #         print("stopMode: ", params.stopMode)
-
-
     def diablechannel(self):
         BMC_DisableChannel(self.serial_nom, self.channel)
-        print("channel disabeled")
 
     def enablechannel(self):
         BMC_EnableChannel(self.serial_nom, self.channel)
-        print("channel enableld")
 
     def close(self):
         """Closes the device and Stops polling"""
         BMC_StopPolling(self.serial_nom, self.channel)
         BMC_Close(self.serial_nom, self.channel)
 
-    def movemanualo(self):
-        #TODO maybe something to move the stage manually by keyboard
-        pass
 
     def motorminimal(self ,acceleration=int(204552 / 10),
                      velocity =int(107374182 / 10)):
         """Mini script to run before motor can be used"""
-        self.homethatthing()
+        self.home()
         self.setvelocity(acceleration, velocity)
-
 
     def calibrator_movement(self):
         pos = self.get_position()
-        self.movethatthing(pos + 20000)  # 20000 motor units is 1 mm
+        self.movesimple(pos + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
 
     def assess_direction(self, number):
@@ -520,12 +428,3 @@ if __name__ == "__main__":
 
     mottitwo.close()
     mottione.close()
-
-# self.motor_x.jogging(int(last_position.f0_x))
-# self.motor_y.jogging(int(last_position.f0_y))
-
-# self.motor_x.move_rel(int(last_position.f0_x))
-# self.motor_y.move_rel(int(last_position.f0_y))
-
-# self.motor_x.movesimple(int(pos_x + distance_x))
-# self.motor_y.movesimple(int(pos_y + distance_y))

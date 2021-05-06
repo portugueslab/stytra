@@ -186,7 +186,7 @@ class TrackingProcessMotor(TrackingProcess):
         self.second_output_queue = second_output_queue
         self.calib_queue = calib_queue
         self.calibration_event = Event()
-        self.time_queue= time_queue
+        # self.time_queue= time_queue
         self.home_event = Event()
         self.tracking_event = Event()
         self.scale_x = None

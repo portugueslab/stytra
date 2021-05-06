@@ -18,11 +18,10 @@ class MotorExperiment(TrackingExperiment):
 
         super().__init__(*args,calibrator=MotorCalibrator(), **kwargs)
 
-        self.arena_lim = kwargs["motor"]["arena_lim"]
+        # self.arena_lim = kwargs["motor"]["arena_lim"]
 
         self.motor_pos_queue = NamedTupleQueue()
         self.motor_status_queue = NamedTupleQueue()
-
 
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
@@ -32,7 +31,7 @@ class MotorExperiment(TrackingExperiment):
             motor_position_queue=self.motor_pos_queue,
             tracking_event=self.frame_dispatcher.tracking_event,
             motor_status_queue = self.motor_status_queue,
-            arena_lim = self.arena_lim,
+            # arena_lim = self.arena_lim,
             time_queue2 = self.time_queue2
         )
         self.motor_position_queue = self.motor_process.motor_position_queue
@@ -61,12 +60,11 @@ class MotorExperiment(TrackingExperiment):
         super().wrap_up(*args, **kwargs)
         self.motor_process.join()
 
-
     def initialize_tracking_meth(self):
         self.frame_dispatcher = TrackingProcessMotor(
             second_output_queue=self.tracked_position_queue,
             calib_queue =self.calib_queue,
-            time_queue = self.camera.time_queue,
+            # time_queue = self.camera.time_queue,
             time_queue2 = self.time_queue2,
             scale= self.scale,
             in_frame_queue=self.camera.frame_queue,

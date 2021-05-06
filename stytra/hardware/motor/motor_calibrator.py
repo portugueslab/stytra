@@ -16,11 +16,11 @@ class MotorCalibrator:
 
         posx = self.motx.get_position()
         print ("moving x")
-        self.motx.movethatthing(posx + 20000)  # 20000 motor units is 1 mm
+        self.motx.movesimple(posx + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
         posy = self.moty.get_position()
         print ("moving y")
-        self.moty.movethatthing(posy + 20000)  # 20000 motor units is 1 mm
+        self.moty.movesimple(posy + 20000)  # 20000 motor units is 1 mm
         sleep(0.5)
         self.point_x_after, self.point_y_after, im = MotorCalibrator.find_dot(self)
 
@@ -136,33 +136,33 @@ class MotorCalibrator:
 
         return mx, mxx, my, myy
 
-    def scanning_whole_area(self):
-
-        self.cam = SpinnakerCamera()
-        self.cam.open_camera()
-        self.cam.set("exposure", 4)
-        # TODO initiate camera somewhere else- cant be double initiated.
-        self.arena = (4800, 4800)
-
-        background_0 = np.zeros(self.arena)
-        self.motor_posx = self.moty.get_position()
-        self.motor_posy = self.motx.get_position()
-
-        for pos in self.positions_h:
-            for posi in self.positions_w:
-                # print("y:", pos, ",x:", posi)
-                self.motx.movethatthing(pos)
-                self.moty.movethatthing(posi)
-                im = self.cam.read()
-
-                mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self)
-                print(mx, mxx, my, myy)
-                background_0[mx:mxx, my:myy] = im
-                sleep(1)
-
-        self.cam.cam.EndAcquisition()
-
-        return background_0
+    # def scanning_whole_area(self):
+    #
+    #     self.cam = SpinnakerCamera()
+    #     self.cam.open_camera()
+    #     self.cam.set("exposure", 4)
+    #     # TODO initiate camera somewhere else- cant be double initiated.
+    #     self.arena = (4800, 4800)
+    #
+    #     background_0 = np.zeros(self.arena)
+    #     self.motor_posx = self.moty.get_position()
+    #     self.motor_posy = self.motx.get_position()
+    #
+    #     for pos in self.positions_h:
+    #         for posi in self.positions_w:
+    #             # print("y:", pos, ",x:", posi)
+    #             self.motx.movethatthing(pos)
+    #             self.moty.movethatthing(posi)
+    #             im = self.cam.read()
+    #
+    #             mx, mxx, my, myy = MotorCalibrator.convert_motor_global(self)
+    #             print(mx, mxx, my, myy)
+    #             background_0[mx:mxx, my:myy] = im
+    #             sleep(1)
+    #
+    #     self.cam.cam.EndAcquisition()
+    #
+    #     return background_0
 
 
 #############################################################################
@@ -174,15 +174,8 @@ if __name__ == "__main__":
     motor_x.open()
     motor_y.open()
 
-    # TODO calibrator minimal + motor minimal combine
     mc = MotorCalibrator(motor_x, motor_y)
     mc.calibrate_motor()
-    # pos_h, pos_w = mc.positions_array(50, 50)
-    # print(pos_h, pos_w)
-    # conx, cony = mc.conversion()
-    # bg = mc.scanning_whole_area()
-    # plt.imshow(bg)
-    # plt.waitforbuttonpress()
 
     motor_y.close()
     motor_x.close()

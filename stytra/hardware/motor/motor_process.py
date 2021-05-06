@@ -12,7 +12,7 @@ import pickle
 class ReceiverProcess(Process):
     def __init__(self, dot_position_queue, calib_event,
                  home_event, finished_event, motor_position_queue,
-                 tracking_event, motor_status_queue, arena_lim, time_queue2):
+                 tracking_event, motor_status_queue, time_queue2): #arena_lim=None
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
@@ -21,11 +21,12 @@ class ReceiverProcess(Process):
         self.home_event = home_event
         self.tracking_event = tracking_event
         self.motor_status_queue = motor_status_queue
-        self.arena_lim = arena_lim *20000 #put in mm, get our motor units,
+        # self.arena_lim = arena_lim *20000 #put in mm, get our motor units,
         self.home = 2200000
         self.tracking_failure_timeout = 10 # 10 seconds
         self.time_queue2 = time_queue2
         self.time_list = []
+        self.polling_time = 100
 
 
     def run(self):
@@ -36,6 +37,9 @@ class ReceiverProcess(Process):
         ##########
         self.motor_y.open()
         self.motor_x.open()
+        self.motor_x.polling(self.polling_time)
+        self.motor_y.polling(self.polling_time)
+
         self.motor_x.set_jogmode(2, 1)
         self.motor_y.set_jogmode(2, 1)
         # self.motor_x.set_settle_params(time=197, settledError=1000, maxTrackingError=8000, notUsed=88, lastNotUsed=10562)
@@ -96,7 +100,7 @@ class ReceiverProcess(Process):
                 if abs(last_position.f0_x) > 0:
                     tracking_status = (True, False)
                     self.motor_status = status_type(*tracking_status)
-                    if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2 <= self.arena_lim ** 2:
+                    if (pos_x - self.home) ** 2 + (pos_y - self.home) ** 2: # <= self.arena_lim ** 2:
                         self.start_time = datetime.datetime.now()
                         # self.motor_y.jogging(int(last_position.f0_y))
                         # self.motor_x.jogging(int(last_position.f0_x))
@@ -110,7 +114,7 @@ class ReceiverProcess(Process):
                              self.motor_status.waiting)
 
                     else:
-                        print ("out of bounds", self.arena_lim, pos_x, pos_y)
+                        # print ("out of bounds", self.arena_lim, pos_x, pos_y)
                         self.motor_x.movesimple(position=self.home)
                         self.motor_y.movesimple(position=self.home)
                         self.start_time = None
