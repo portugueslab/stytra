@@ -5,7 +5,7 @@ from stytra.tracking.preprocessing import (
     BackgroundSubtractor,
 )
 from stytra.tracking.tail import CentroidTrackingMethod
-from stytra.tracking.fish import FishTrackingMethod, FishEyeMotorTrackingMethod
+from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
 from stytra.tracking.dot import DotTrackingMethod
 from stytra.gui.fishplots import TailStreamPlot, BoutPlot, StreamingPositionPlot
@@ -41,7 +41,6 @@ class FishTrackingMotorPipeline(Pipeline):
         super().__init__()
         self.filter = AdaptivePrefilter(parent=self.root)
         self.fishtrack = FishTrackingMethod(parent=self.filter)
-        #self.eyetrack = EyeTrackingMotorMethod(parent=self.root)
         self.extra_widget = BoutPlot
         self.display_overlay = CameraViewFish
 
@@ -56,18 +55,9 @@ class DotTrackingPipeline(Pipeline):
 class EyeTrackingPipeline(Pipeline):
     def __init__(self):
         super().__init__()
-        # self.filter = Prefilter(parent=self.root)
+        self.filter = Prefilter(parent=self.root)
         self.eyetrack = EyeTrackingMethod(parent=self.root)
         self.display_overlay = EyeTrackingSelection
-
-class EyeTrackingMotorPipeline(Pipeline):
-    def __init__(self):
-        super().__init__()
-        self.filter = Prefilter(parent=self.root)
-        self.fishtrack = FishEyeMotorTrackingMethod(parent=self.filter)
-        self.display_overlay = EyeTrackingSelection
-        self.extra_widget = BoutPlot
-        self.display_overlay = CameraViewFish
 
 
 class EyeTailTrackingPipeline(Pipeline):
@@ -83,9 +73,8 @@ class EyeTailTrackingPipeline(Pipeline):
 pipeline_dict = dict(
     tail=TailTrackingPipeline,
     fish=FishTrackingPipeline,
-    fish_motor_bg=FishTrackingMotorPipeline,
+    fish_motor=FishTrackingMotorPipeline,
     eyes=EyeTrackingPipeline,
-    eyes_motor= EyeTrackingMotorPipeline,
     eyes_tail=EyeTailTrackingPipeline,
     dot=DotTrackingPipeline,
 )

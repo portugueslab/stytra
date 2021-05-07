@@ -164,7 +164,6 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
-
                 if "motor" in class_kwargs.keys():
                     base = MotorExperiment
 

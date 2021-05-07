@@ -296,6 +296,8 @@ class CircleCalibrator(Calibrator):
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
 
+        print (" here ", self.points_cam, type(self.points_cam), points_proj)
+
         #These  lines add a row of ones under the 3 points
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
@@ -306,13 +308,11 @@ class CircleCalibrator(Calibrator):
 
 
 class MotorCalibrator(CircleCalibrator):
-    """Displays a Point for Motor Calibration"""
-
-
+    """Displays a pattern for Motor Calibration"""
     def __init__(self, *args, dh=10, r=1, **kwargs):
         super().__init__(*args,dh=50, **kwargs)
 
-    def _find_triangle(image, blob_params=None):
+    def _find_triangle(self, image, blob_params=None):
         params = cv2.SimpleBlobDetector_Params()
         params.minThreshold = 1
         params.maxThreshold = 255
@@ -335,22 +335,22 @@ class MotorCalibrator(CircleCalibrator):
         frame = cv2.GaussianBlur(scaled_im, (15, 15), 0)
 
         keypoints = blobdet.detect(frame)
-        print (len(keypoints))
+        print ("points found", len(keypoints))
 
 
-    # def find_transform_matrix(self, image):
-    #     super().find_transform_matrix(image)
-    #     return self.points_cam
-    #
-    # def find_motor_transform(self, kps_prev, kps_after):
-    #     diff = kps_prev - kps_after
-    #     x_points = np.mean(diff[0:, 0:1])
-    #     y_points = np.mean(diff[0:, 1:])
-    #
-    #     self.conversion_x = int(20000 / abs(x_points))
-    #     self.conversion_y = int(20000 / abs(y_points))
-    #     print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
-    #     self.motor_to_cam = [self.conversion_x, self.conversion_y]
-    #
-    #     return self.conversion_x, self.conversion_y
-    #
+    def find_transform_matrix(self, image):
+        super().find_transform_matrix(image)
+        return self.points_cam
+
+    def find_motor_transform(self, kps_prev, kps_after):
+        diff = kps_prev - kps_after
+        x_points = np.mean(diff[0:, 0:1])
+        y_points = np.mean(diff[0:, 1:])
+
+        self.conversion_x = int(20000 / abs(x_points))
+        self.conversion_y = int(20000 / abs(y_points))
+        print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+        self.motor_to_cam = [self.conversion_x, self.conversion_y]
+
+        return self.conversion_x, self.conversion_y
+

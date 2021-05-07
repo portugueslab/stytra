@@ -180,24 +180,20 @@ class TrackingProcess(FrameProcess):
 class TrackingProcessMotor(TrackingProcess):
     def __init__(self, *args,
                  second_output_queue=None,
-                 calib_queue= None, scale= None, time_queue=None, time_queue2=None, **kwargs):
+                 calib_queue= None, scale= None, **kwargs): # time_queue=None, time_queue2=None,
 
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
         self.calib_queue = calib_queue
         self.calibration_event = Event()
-        # self.time_queue= time_queue
         self.home_event = Event()
         self.tracking_event = Event()
         self.scale_x = None
         self.scale_y = None
         self.threshold = 100
         self.scale = scale
-        #todo get center x, y from camera or something
-        self.center_y = 268
+        self.center_y = 268 #Todo get center x, y from camera
         self.center_x = 360
-
-        self.time_queue2 = time_queue2
 
     def send_to_queue(self, time, output):
         self.output_queue.put(time, output)
@@ -208,18 +204,15 @@ class TrackingProcessMotor(TrackingProcess):
     def run(self):
         """Loop where the tracking function runs."""
         second_output = namedtuple("fish_scaled", ["f0_x", "f0_y"])
-
         self.pipeline = self.pipeline_cls()
         self.pipeline.setup()
 
         while not self.finished_signal.is_set():
-
             # Gets the processing parameters from their queue
             self.retrieve_params()
 
             try:
                 time, [scale_x, scale_y] = self.calib_queue.get(timeout=0.001)
-                print("gotten from calibrator ", scale_x, scale_y)
                 self.scale_x = scale_x
                 self.scale_y = scale_y
                 if abs(scale_x - scale_y) > self.threshold:
@@ -234,13 +227,8 @@ class TrackingProcessMotor(TrackingProcess):
             # and process the latest, if it is too slow continue:
             try:
                 time, frame_idx, frame = self.frame_queue.get(timeout=0.001)
-                out = self.time_queue.get(timeout=0.001)
-
-
-                start = datetime.datetime.now()
             except Empty:
                 continue
-
 
             messages = []
             # If we are copying the frames to another queue (e.g. for video recording), do it here
@@ -252,11 +240,9 @@ class TrackingProcessMotor(TrackingProcess):
 
             # If a processing function is specified, apply it:
             new_messages, output = self.pipeline.run(frame)
-            # print ("fish identified", output.f0_x, output.f0_y)
 
             #Calculate new position for the motor if calibration was set
             if self.scale_x is None:
-                print ("setting default")
                 self.scale_x = self.scale[0]
                 self.scale_y = self.scale[1]
 
@@ -273,12 +259,6 @@ class TrackingProcessMotor(TrackingProcess):
 
             self.send_to_queue(time, output)
             self.send_to_second_queue(time, second_output(*sec_output))
-
-            out[0] = tim.time_ns() - out[0]
-            # print('first', out[0] / 1000)
-            out.append(tim.time_ns())
-            self.time_queue2.put(out)
-
             # calculate the frame rate
             self.update_framerate()
 

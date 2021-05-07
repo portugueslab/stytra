@@ -230,14 +230,11 @@ class ProjectorAndCalibrationWidget(QWidget):
     def calibrate(self):
         """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        # try:
+
         self.calibrator.find_transform_matrix(frame)
         self.widget_proj_viewer.display_calibration_pattern(
             self.calibrator, frame.shape, frame
         )
-
-        # except CalibrationException:
-        #     pass
 
     def calibrate_motor(self):
         output_calib = namedtuple("scale", ["scale_x", "scale_y"])
@@ -245,6 +242,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         time, frame = self.experiment.frame_dispatcher.gui_queue.get()
         # try:
         kps_prev = self.calibrator.find_transform_matrix(frame)
+        print ("kps prev", kps_prev)
 
         self.experiment.frame_dispatcher.calibration_event.set()
 
@@ -255,6 +253,7 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         time, frame = self.experiment.frame_dispatcher.gui_queue.get()
         kps_after = self.calibrator.find_transform_matrix(frame)
+        print ("kps after", kps_after)
 
         conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
 
@@ -269,4 +268,3 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def home_motor(self):
         self.experiment.frame_dispatcher.home_event.set()
-        print ("Homing button pressed")

@@ -240,9 +240,6 @@ class Motor:
 
             # if velocity in range(int (Motor.max_velo/2),int(Motor.max_velo+1)):
             if Motor.max_velo // 200 <= velocity <= Motor.max_velo:
-                print(
-                    "Velocity set to {}".format(velocity)
-                )
                 acc = c_int()  # containers
                 max_vel = c_int()
 
@@ -270,13 +267,13 @@ class Motor:
     def get_homing_params(self):
         homing_info = MOT_HomingParameters()  # container
         err = BMC_GetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
-        if err == 0:
-            print("direction: ", homing_info.direction)
-            print("limitSwitch: ", homing_info.limitSwitch)
-            print("velocity: ", homing_info.velocity)
-            print("offsetDistance: ", homing_info.offsetDistance)
-        else:
-            print("Error getting Homing Info Block. Error Code:{}".format(err))
+        # if err == 0:
+        #     print("direction: ", homing_info.direction)
+        #     print("limitSwitch: ", homing_info.limitSwitch)
+        #     print("velocity: ", homing_info.velocity)
+        #     print("offsetDistance: ", homing_info.offsetDistance)
+        # else:
+        #     print("Error getting Homing Info Block. Error Code:{}".format(err))
 
     def set_homing_params(
         self, direction=int(), lim_switch=int(), velocity=int(), offset=int()):
@@ -285,9 +282,7 @@ class Motor:
         homing_info.limitSwitch = lim_switch
         homing_info.velocity = velocity
         homing_info.offsetDistance = offset
-
         BMC_SetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
-        print("New homing parameters set.")
 
     def set_homing_reverse(self, direction):
         self.get_homing_params()
@@ -298,23 +293,23 @@ class Motor:
     def get_pos_loop_params(self):
         posloop_info = MOT_BrushlessPositionLoopParameters()  # container
         err = BMC_GetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
-        if err == 0:
-            print("proportionalGain: ", posloop_info.proportionalGain)
-            print("integralGain: ", posloop_info.integralGain)
-            print("integralLimit: ", posloop_info.integralLimit)
-            print("differentialGain: ", posloop_info.differentialGain)
-            print(
-                "derivativeRecalculationTime: ",
-                posloop_info.derivativeRecalculationTime,
-            )
-            print("factorForOutput: ", posloop_info.factorForOutput)
-            print("velocityFeedForward: ", posloop_info.velocityFeedForward)
-            print("accelerationFeedForward: ", posloop_info.accelerationFeedForward)
-            print("positionErrorLimit: ", posloop_info.positionErrorLimit)
-            print("notUsed: ", posloop_info.notUsed)
-            print("lastNotUsed: ", posloop_info.lastNotUsed)
-        else:
-            print("Error getting position loop Info Block. Error Code:{}".format(err))
+        # if err == 0:
+        #     print("proportionalGain: ", posloop_info.proportionalGain)
+        #     print("integralGain: ", posloop_info.integralGain)
+        #     print("integralLimit: ", posloop_info.integralLimit)
+        #     print("differentialGain: ", posloop_info.differentialGain)
+        #     print(
+        #         "derivativeRecalculationTime: ",
+        #         posloop_info.derivativeRecalculationTime,
+        #     )
+        #     print("factorForOutput: ", posloop_info.factorForOutput)
+        #     print("velocityFeedForward: ", posloop_info.velocityFeedForward)
+        #     print("accelerationFeedForward: ", posloop_info.accelerationFeedForward)
+        #     print("positionErrorLimit: ", posloop_info.positionErrorLimit)
+        #     print("notUsed: ", posloop_info.notUsed)
+        #     print("lastNotUsed: ", posloop_info.lastNotUsed)
+        # else:
+        #     print("Error getting position loop Info Block. Error Code:{}".format(err))
 
     def set_pos_loop_params(
         self, pgain=int(), intgain=int(), intlim=int(), diffgain=int(), derivcalc=int()
@@ -327,7 +322,6 @@ class Motor:
         posloop_info.derivativeRecalculationTime = derivcalc
 
         BMC_SetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
-        print("New loop parameters set.")
 
     def movesimple(self, position=int()):
         BMC_MoveToPosition(self.serial_nom, self.channel, c_int(position))
@@ -336,7 +330,6 @@ class Motor:
         pos = self.get_position()
         to_move = distance * self.scale
         dotpos = int(round(pos + to_move))
-        print("moving the motor to", int(round(pos + to_move)))
         self.movesimple(int(round(pos + to_move)))
         return dotpos
 
@@ -359,17 +352,12 @@ class Motor:
     def jogging(self, number):
         stepsize = 20000
         jogs = int(abs(number)/stepsize) #todo rounding does over/undershoot
-
-        print ("number input as distance", number, stepsize)
         flag = True
         direction = self.assess_direction(number)
-        print("jogs taken {} in direction {}".format(jogs, direction))
-
         for i in range(jogs +1):
             while flag == True:
                 BMC_MoveJog(self.serial_nom, self.channel, direction)
                 flag = False
-                print ("jogging", i)
             flag = True
 
     def get_jogstepsize(self):
