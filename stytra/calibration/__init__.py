@@ -296,8 +296,6 @@ class CircleCalibrator(Calibrator):
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
 
-        print (" here ", self.points_cam, type(self.points_cam), points_proj)
-
         #These  lines add a row of ones under the 3 points
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
@@ -335,11 +333,28 @@ class MotorCalibrator(CircleCalibrator):
         frame = cv2.GaussianBlur(scaled_im, (15, 15), 0)
 
         keypoints = blobdet.detect(frame)
-        print ("points found", len(keypoints))
+
+        if len(keypoints) != 3:
+            raise CalibrationException("3 points for calibration not found")
+        kps = np.array([k.pt for k in keypoints])
+
+        # Find the angles between the points
+        # and return the points sorted by the angles
+        return kps[np.argsort(CircleCalibrator._find_angles(kps)), :]
 
 
     def find_transform_matrix(self, image):
-        super().find_transform_matrix(image)
+        # Define your points for camera and projector
+        self.points_cam = self._find_triangle(image)
+        points_proj = self.points
+
+        # These  lines add a row of ones under the 3 points
+        x_proj = np.vstack([points_proj.T, np.ones(3)])
+        x_cam = np.vstack([self.points_cam.T, np.ones(3)])
+
+        self.proj_to_cam = self.arr_to_tuple(self.points_cam.T @ np.linalg.inv(x_proj))
+        self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
+
         return self.points_cam
 
     def find_motor_transform(self, kps_prev, kps_after):
