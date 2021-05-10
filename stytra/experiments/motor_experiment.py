@@ -13,6 +13,7 @@ class MotorExperiment(TrackingExperiment):
         self.tracked_position_queue = NamedTupleQueue()
         self.calib_queue = NamedTupleQueue()
         self.scale = [kwargs["motor"]["scale_x"], kwargs["motor"]["scale_y"]]
+        self.motor_tracking = True
 
         super().__init__(*args, calibrator=MotorCalibrator(), **kwargs)
 

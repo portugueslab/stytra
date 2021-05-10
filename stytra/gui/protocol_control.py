@@ -35,7 +35,6 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
-    #todo make dependent on config file?
     sig_start_tracking = pyqtSignal()
     """ Emitted via the toggle button click, meant to
                          start the protocol."""
@@ -54,20 +53,9 @@ class ProtocolControlToolbar(QToolBar):
         self.update_duration_each = 120
         self._update_duration_i = 0
 
-        #todo make depnendent on config file
-
-        self.toggleMotor = ToggleIconButton(
-            icon_off="play", icon_on="stop", action_on="play", on=False
-        )
-        self.toggleMotor.clicked.connect(self.toggle_motor_tracking)
-        self.addWidget(self.toggleMotor)
-        self.addSeparator()
-
-
         self.toggleStatus = ToggleIconButton(
             icon_off="play", icon_on="stop", action_on="play", on=False
         )
-
         self.toggleStatus.clicked.connect(self.toggle_protocol_running)
         self.addWidget(self.toggleStatus)
 
@@ -117,12 +105,6 @@ class ProtocolControlToolbar(QToolBar):
         else:
             self.sig_stop_protocol.emit()
 
-    def toggle_motor_tracking(self):
-        # Start/stop the protocol:
-        if self.toggleMotor.on == True:
-            self.sig_start_tracking.emit()
-        else:
-            self.sig_stop_tracking.emit()
 
     def toggle_icon(self):
         self.toggleStatus.flip_icon(self.protocol_runner.running)
