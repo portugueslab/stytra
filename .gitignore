@@ -85,6 +85,9 @@ celerybeat-schedule
 venv/
 ENV/
 
+# Motortests
+hardware/motor/tests
+
 # Spyder project settings
 .spyderproject
 

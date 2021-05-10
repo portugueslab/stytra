@@ -79,6 +79,11 @@ class ExperimentWindow(QMainWindow):
             experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
+        # Connect signals from the protocol_control for motor tracking
+        self.toolbar_control.sig_start_tracking.connect(
+            experiment.set_tracking)
+        self.toolbar_control.sig_stop_tracking.connect(experiment.stop_tracking)
+
         self.btn_metadata = IconButton(
             icon_name="edit_fish", action_name="Edit metadata"
         )

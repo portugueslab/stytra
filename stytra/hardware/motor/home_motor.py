@@ -3,9 +3,6 @@
 from stytra.hardware.motor.stageAPI import Motor
 from time import sleep
 
-acc = int(204552)
-velo = int(107374182)
-
 motor_x = Motor(2, scale=1)
 motor_y = Motor(1, scale=1)
 sleep(1)

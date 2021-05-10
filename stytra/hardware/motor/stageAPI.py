@@ -4,25 +4,15 @@ from time import sleep
 import datetime
 from typing import Any, List
 import os
-
-######################################################
-import os
 import sys
-# sys.path.append(r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
-# print (sys.path)
-# os.add_dll_directory( r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll')
+
 dll_path = r'C:\Program Files\Thorlabs\Kinesis\Thorlabs.MotionControl.Benchtop.BrushlessMotor.dll'
 lib = cdll.LoadLibrary(dll_path)
 
-print("lib", lib)
-
 
 ################### code taken from Tholabs-kinesis API on github ########################
-# TODO parts of the code taken from thorlabs-kinesis API found on Github credit
-
 c_word = c_ushort
 c_dword = c_ulong
-
 
 def bind(
     lib: CDLL, func: str, argtypes: List[Any] = None, restype: Any = None
@@ -30,28 +20,11 @@ def bind(
     _func = getattr(lib, func, null_function)
     _func.argtypes = argtypes
     _func.restype = restype
-
     return _func
-
 
 def null_function():
     pass
 
-
-class MOT_BrushlessPositionLoopParameters(Structure):
-    _fields_ = [
-        ("proportionalGain", c_word),
-        ("integralGain", c_word),
-        ("integralLimit", c_dword),
-        ("differentialGain", c_word),
-        ("derivativeRecalculationTime", c_word),
-        ("factorForOutput", c_word),
-        ("velocityFeedForward", c_word),
-        ("accelerationFeedForward", c_word),
-        ("positionErrorLimit", c_dword),
-        ("notUsed", c_word),
-        ("lastNotUsed", c_word),
-    ]
 
 # enum MOT_JogModes
 MOT_JogModeUndefined = c_short(0x00)
@@ -78,22 +51,28 @@ MOT_ForwardLimitSwitch = c_short(0x04)
 MOT_HomeLimitSwitchDirection = c_short
 
 
+
+# Class containers for bound functions to fill
+class MOT_BrushlessPositionLoopParameters(Structure):
+    _fields_ = [
+        ("proportionalGain", c_word),
+        ("integralGain", c_word),
+        ("integralLimit", c_dword),
+        ("differentialGain", c_word),
+        ("derivativeRecalculationTime", c_word),
+        ("factorForOutput", c_word),
+        ("velocityFeedForward", c_word),
+        ("accelerationFeedForward", c_word),
+        ("positionErrorLimit", c_dword),
+        ("notUsed", c_word),
+        ("lastNotUsed", c_word),
+    ]
+
 class MOT_HomingParameters(Structure):
     _fields_ = [("direction", MOT_TravelDirection),
                 ("limitSwitch", MOT_HomeLimitSwitchDirection),
                 ("velocity", c_uint),
                 ("offsetDistance", c_uint)]
-
-
-
-TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
-TLI_GetDeviceListExt = bind(
-    lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short
-)
-##################
-BMC_GetHomingParamsBlock = bind(lib, "BMC_GetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
-BMC_SetHomingParamsBlock = bind(lib, "BMC_SetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
-
 
 class MOT_VelocityParameters(Structure):
     _fields_ = [("minVelocity", c_int),
@@ -107,67 +86,49 @@ class MOT_JogParameters(Structure):
                 ("velParams", MOT_VelocityParameters),
                 ("stopMode", MOT_StopModes)]
 
+############# Function list of bound functionf for API ########################
 
+### Functions to open and close the Device
+TLI_BuildDeviceList = bind(lib, "TLI_BuildDeviceList", None, c_short)
+TLI_GetDeviceListExt = bind(
+    lib, "TLI_GetDeviceListExt", [POINTER(c_char), c_dword], c_short
+)
+BMC_StartPolling = bind(lib, "BMC_StartPolling", [c_char_p, c_short, c_int], c_bool)  # true is successful
+BMC_Open = bind(lib, "BMC_Open", [c_char_p, c_short], c_int)  # 0 is success
+BMC_StopPolling = bind(lib, "BMC_StopPolling", [c_char_p, c_short], c_bool)
+BMC_Close = bind(lib, "BMC_Close", [c_char_p, c_short], c_int)
+BMC_DisableChannel = bind(lib, "BMC_DisableChannel", [c_char_p, c_short], c_short)
+BMC_EnableChannel = bind(lib, "BMC_EnableChannel", [c_char_p, c_short], c_short)
+
+### Functions to Home
+BMC_Home = bind(lib, "BMC_Home", [c_char_p, c_short], c_int)
+BMC_GetHomingParamsBlock = bind(lib, "BMC_GetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
+BMC_SetHomingParamsBlock = bind(lib, "BMC_SetHomingParamsBlock", [POINTER(c_char), c_short, POINTER(MOT_HomingParameters)], c_short)
+BMC_GetHomingVelocity = bind(lib, "BMC_GetHomingVelocity", [c_char_p, c_short], c_short)
+BMC_SetHomingVelocity = bind(lib, "BMC_SetHomingVelocity", [c_char_p, c_short, c_int], c_short)
+
+### Functions to set parameters (e.g. Velocity)
+BMC_GetPosLoopParams = bind(lib,"BMC_GetPosLoopParams",[c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)],c_short,)
+BMC_SetPosLoopParams = bind(lib,"BMC_SetPosLoopParams",[c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)],c_short,)
+BMC_GetVelParams = bind(lib, "BMC_GetVelParams", [c_char_p, c_short, POINTER(c_int), POINTER(c_int)],c_short,)
+BMC_SetVelParams = bind(lib, "BMC_SetVelParams", [c_char_p, c_short, c_int, c_int], c_short)
+
+### Functions for jogging movements
+BMC_MoveJog = bind(lib, "BMC_MoveJog", [POINTER(c_char), c_short, MOT_TravelDirection], c_short)
 BMC_GetJogParamsBlock = bind(lib, "BMC_GetJogParamsBlock", [POINTER(c_char), POINTER(MOT_JogParameters)], c_short)
 BMC_GetJogMode = bind(lib, "BMC_GetJogMode", [POINTER(c_char), c_short, POINTER(MOT_JogModes), POINTER(MOT_StopModes)], c_short)
 BMC_SetJogMode = bind(lib, "BMC_SetJogMode", [POINTER(c_char), c_short, MOT_JogModes, MOT_StopModes], c_short)
 BMC_GetJogStepSize = bind(lib, "BMC_GetJogStepSize", [POINTER(c_char), c_short], c_uint)
 BMC_SetJogStepSize = bind(lib, "BMC_SetJogStepSize", [POINTER(c_char), c_short, c_uint], c_short)
-BMC_GetJogVelParams = bind(lib, "BMC_GetJogVelParams", [POINTER(c_char), c_short, POINTER(c_int), POINTER(c_int)], c_short)
-BMC_SetJogVelParams = bind(lib, "BMC_SetJogVelParams", [POINTER(c_char), c_short, c_int, c_int], c_short)
-BMC_MoveJog = bind(lib, "BMC_MoveJog", [POINTER(c_char), c_short, MOT_TravelDirection], c_short)
 
-
-BMC_RequestMoveAbsolutePosition = bind(lib, "BMC_RequestMoveAbsolutePosition", [POINTER(c_char), c_short], c_short)
-BMC_GetMoveAbsolutePosition = bind(lib, "BMC_GetMoveAbsolutePosition", [POINTER(c_char), c_short], c_int)
-BMC_MoveAbsolute = bind(lib, "BMC_MoveAbsolute", [POINTER(c_char), c_short], c_short)
-BMC_SetMoveRelativeDistance = bind(lib, "BMC_SetMoveRelativeDistance", [POINTER(c_char), c_short, c_int], c_short)
-BMC_MoveRelative = bind(lib, "BMC_MoveRelative", [POINTER(c_char), c_int], c_short)
-BMC_SetMoveAbsolutePosition = bind(lib, "BMC_SetMoveAbsolutePosition", [POINTER(c_char), c_short, c_int], c_short)
-
-#####################################################
-BMC_StartPolling = bind(
-    lib, "BMC_StartPolling", [c_char_p, c_short, c_int], c_bool
-)  # true is successful
-BMC_Open = bind(lib, "BMC_Open", [c_char_p, c_short], c_int)  # 0 is success
-BMC_StopPolling = bind(lib, "BMC_StopPolling", [c_char_p, c_short], c_bool)
-BMC_Close = bind(lib, "BMC_Close", [c_char_p, c_short], c_int)
-BMC_Home = bind(lib, "BMC_Home", [c_char_p, c_short], c_int)
-BMC_RequestVelParams = bind(lib, "BMC_RequestVelParams", [c_char_p, c_short], c_short)
-BMC_GetVelParams = bind(
-    lib,
-    "BMC_GetVelParams",
-    [c_char_p, c_short, POINTER(c_int), POINTER(c_int)],
-    c_short,
-)
-BMC_SetVelParams = bind(
-    lib, "BMC_SetVelParams", [c_char_p, c_short, c_int, c_int], c_short
-)
+### Functions to move the Device
 BMC_GetPosition = bind(lib, "BMC_GetPosition", [c_char_p, c_short], c_int)
 BMC_MoveToPosition = bind(lib, "BMC_MoveToPosition", [c_char_p, c_short, c_int], c_int)
 BMC_RequestPosition = bind(lib, "BMC_RequestPosition", [c_char_p, c_short], c_int)
-BMC_RequestStatusBits = bind(lib, "BMC_RequestStatusBits", [c_char_p, c_short], c_short)
-BMC_GetStatusBits = bind(lib, "BMC_GetStatusBits", [c_char_p, c_short], c_dword)
-BMC_DisableChannel = bind(lib, "BMC_DisableChannel", [c_char_p, c_short], c_short)
-BMC_EnableChannel = bind(lib, "BMC_EnableChannel", [c_char_p, c_short], c_short)
-BMC_GetHomingVelocity = bind(lib, "BMC_GetHomingVelocity", [c_char_p, c_short], c_short)
-BMC_SetHomingVelocity = bind(
-    lib, "BMC_SetHomingVelocity", [c_char_p, c_short, c_int], c_short
-)
-BMC_StopProfiled = bind(lib, "BMC_StopProfiled", [c_char_p, c_short], c_short)
-BMC_StopImmediate = bind(lib, "BMC_StopImmediate", [c_char_p, c_short], c_short)
-BMC_GetPosLoopParams = bind(
-    lib,
-    "BMC_GetPosLoopParams",
-    [c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)],
-    c_short,
-)
-BMC_SetPosLoopParams = bind(
-    lib,
-    "BMC_SetPosLoopParams",
-    [c_char_p, c_short, POINTER(MOT_BrushlessPositionLoopParameters)],
-    c_short,
-)
+BMC_MoveAbsolute = bind(lib, "BMC_MoveAbsolute", [POINTER(c_char), c_short], c_short)
+BMC_MoveRelative = bind(lib, "BMC_MoveRelative", [POINTER(c_char), c_int], c_short)
+
+
 
 ################################################################################
 
@@ -206,12 +167,11 @@ class Motor:
             # Set some basics
             self.sleeptime = 0.01
             self.channel = channel
-            self.tolerance = 100
             self.homing_velo = int(107374182 / 18)
             self.scale = scale
 
     def sethomingvelo(self):
-        """Will be called by homethatthing to make homing faster."""
+        """Change homing velcity"""
         BMC_GetHomingVelocity(self.serial_nom, self.channel)
         BMC_SetHomingVelocity(self.serial_nom, self.channel, self.homing_velo)
 
@@ -223,41 +183,20 @@ class Motor:
 
     def home(self):
         err = BMC_Home(self.serial_nom, self.channel)
-        print("Called homing with error {}".format(err))
 
     def open(self):
         """Opens the device"""
-        if self.serial_nom_set == True:
-            BMC_Open(self.serial_nom, self.channel)
-
-        if self.serial_nom_set == False:
-            print("Serial number not found. No Device detected to be opened.")
+        BMC_Open(self.serial_nom, self.channel)
 
     def setvelocity(self, acceleration, velocity):
-
-        """Sets the velocity of the stage.acceleration: int, velocity: int"""
-        if self.serial_nom_set == True:
-
-            # if velocity in range(int (Motor.max_velo/2),int(Motor.max_velo+1)):
-            if Motor.max_velo // 200 <= velocity <= Motor.max_velo:
-                acc = c_int()  # containers
-                max_vel = c_int()
-
-                BMC_GetVelParams(
-                    self.serial_nom, self.channel, byref(acc), byref(max_vel)
-                )
-                BMC_SetVelParams(self.serial_nom, self.channel, acceleration, velocity)
-                sleep(self.sleeptime)
-                self.setvelo = True
-            else:
-                print(
-                    "Velocity set was too low (range:53687091 - 107374182). Please enter a valid velocity. "
-                )
-                self.setvelo = False
-
-        if self.serial_nom_set == False:
-            print("Serial number not found. Velocity could not be set.")
-
+        if Motor.max_velo // 200 <= velocity <= Motor.max_velo:
+            acc = c_int()  # containers
+            max_vel = c_int()
+            BMC_GetVelParams(self.serial_nom, self.channel, byref(acc), byref(max_vel))
+            BMC_SetVelParams(self.serial_nom, self.channel, acceleration, velocity)
+            sleep(self.sleeptime)
+        else:
+            print("Velocity set was too low (range:53687091 - 107374182). Please enter a valid velocity. ")
 
     def get_position(self):
         BMC_RequestPosition(self.serial_nom, self.channel)
@@ -267,13 +206,6 @@ class Motor:
     def get_homing_params(self):
         homing_info = MOT_HomingParameters()  # container
         err = BMC_GetHomingParamsBlock(self.serial_nom, self.channel, byref(homing_info))
-        # if err == 0:
-        #     print("direction: ", homing_info.direction)
-        #     print("limitSwitch: ", homing_info.limitSwitch)
-        #     print("velocity: ", homing_info.velocity)
-        #     print("offsetDistance: ", homing_info.offsetDistance)
-        # else:
-        #     print("Error getting Homing Info Block. Error Code:{}".format(err))
 
     def set_homing_params(
         self, direction=int(), lim_switch=int(), velocity=int(), offset=int()):
@@ -287,29 +219,10 @@ class Motor:
     def set_homing_reverse(self, direction):
         self.get_homing_params()
         self.set_homing_params(direction=direction, lim_switch=1, velocity=5965232, offset=60000)
-        print ("homing in reverse direction")
-
 
     def get_pos_loop_params(self):
         posloop_info = MOT_BrushlessPositionLoopParameters()  # container
         err = BMC_GetPosLoopParams(self.serial_nom, self.channel, byref(posloop_info))
-        # if err == 0:
-        #     print("proportionalGain: ", posloop_info.proportionalGain)
-        #     print("integralGain: ", posloop_info.integralGain)
-        #     print("integralLimit: ", posloop_info.integralLimit)
-        #     print("differentialGain: ", posloop_info.differentialGain)
-        #     print(
-        #         "derivativeRecalculationTime: ",
-        #         posloop_info.derivativeRecalculationTime,
-        #     )
-        #     print("factorForOutput: ", posloop_info.factorForOutput)
-        #     print("velocityFeedForward: ", posloop_info.velocityFeedForward)
-        #     print("accelerationFeedForward: ", posloop_info.accelerationFeedForward)
-        #     print("positionErrorLimit: ", posloop_info.positionErrorLimit)
-        #     print("notUsed: ", posloop_info.notUsed)
-        #     print("lastNotUsed: ", posloop_info.lastNotUsed)
-        # else:
-        #     print("Error getting position loop Info Block. Error Code:{}".format(err))
 
     def set_pos_loop_params(
         self, pgain=int(), intgain=int(), intlim=int(), diffgain=int(), derivcalc=int()
@@ -332,13 +245,6 @@ class Motor:
         dotpos = int(round(pos + to_move))
         self.movesimple(int(round(pos + to_move)))
         return dotpos
-
-    def move_relative_without_move(self, distance):
-        pos = self.get_position()
-        to_move = distance * self.scale
-        dotpos = int(round(pos + to_move))
-        dot_c = int(dotpos - 2200000)
-        return dotpos, dot_c
 
     def move_absolute(self):
         BMC_MoveAbsolute(self.serial_nom, self.channel)
@@ -369,7 +275,6 @@ class Motor:
 
     def get_jogmode(self):
         err = BMC_GetJogMode(self.serial_nom, self.channel)
-        # print (err)
 
     def set_jogmode(self, mode, stopmode):
         """ mode: 1 = continous, 2 = jog step,
@@ -386,7 +291,6 @@ class Motor:
         """Closes the device and Stops polling"""
         BMC_StopPolling(self.serial_nom, self.channel)
         BMC_Close(self.serial_nom, self.channel)
-
 
     def motorminimal(self ,acceleration=int(204552 / 10),
                      velocity =int(107374182 / 10)):
@@ -409,10 +313,10 @@ class Motor:
 
 
 if __name__ == "__main__":
-    mottione = Motor(1, scale=0)
-    mottitwo = Motor(2, scale=0)
-    mottione.open()
-    mottitwo.open()
+    motor_y = Motor(1, scale=0)
+    motor_x = Motor(2, scale=0)
+    motor_y.open()
+    motor_x.open()
 
-    mottitwo.close()
-    mottione.close()
+    motor_x.close()
+    motor_y.close()

@@ -222,7 +222,6 @@ class TrackingProcessMotor(TrackingProcess):
             except Empty:
                 pass
 
-
             # Gets frame from its queue, if the input is too fast, drop frames
             # and process the latest, if it is too slow continue:
             try:
@@ -246,10 +245,11 @@ class TrackingProcessMotor(TrackingProcess):
                 self.scale_x = self.scale[0]
                 self.scale_y = self.scale[1]
 
-            distance_y = (output.f0_y - self.center_y) * self.scale_y
-            distance_x = (output.f0_x - self.center_x) * self.scale_x
+            distance_y = -(output.f0_y - self.center_y) * self.scale_y
+            distance_x = -(output.f0_x - self.center_x) * self.scale_x
+            #todo negative now
 
-            if (distance_x) ** 2 + (distance_y) ** 2 >= 500 ** 2:
+            if (distance_x) ** 2 + (distance_y) ** 2 >= 500 ** 2: #this is a jitter filter
                 sec_output= (distance_x, distance_y)
             else:
                 sec_output=(0.0,0.0)

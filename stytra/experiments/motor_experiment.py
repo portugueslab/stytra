@@ -2,7 +2,6 @@ from stytra.experiments.tracking_experiments import TrackingExperiment
 from stytra.tracking.tracking_process import TrackingProcessMotor
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.hardware.motor.motor_process import ReceiverProcess
-# from stytra.hardware.motor.motor_calibrator import MotorCalibrator
 from stytra.calibration import MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
 from collections import namedtuple
@@ -39,6 +38,12 @@ class MotorExperiment(TrackingExperiment):
         )
 
         self.gui_timer.timeout.connect(self.acc_motor.update_list)
+
+    def set_tracking(self):
+        self.frame_dispatcher.tracking_event.set()
+
+    def stop_tracking(self):
+        self.frame_dispatcher.tracking_event.clear()
 
     def send_motor_status(self,time, output):
         self.second_output = namedtuple("motor_status", ["tracking", "waiting"])

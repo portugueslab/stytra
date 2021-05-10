@@ -309,6 +309,7 @@ class MotorCalibrator(CircleCalibrator):
     """Displays a pattern for Motor Calibration"""
     def __init__(self, *args, dh=10, r=1, **kwargs):
         super().__init__(*args,dh=50, **kwargs)
+        self.encoder_counts_per_unit = 20000 #motor unit to mm conversion gotten from motor
 
     def _find_triangle(self, image, blob_params=None):
         params = cv2.SimpleBlobDetector_Params()
@@ -362,9 +363,8 @@ class MotorCalibrator(CircleCalibrator):
         x_points = np.mean(diff[0:, 0:1])
         y_points = np.mean(diff[0:, 1:])
 
-        self.conversion_x = int(20000 / abs(x_points))
-        self.conversion_y = int(20000 / abs(y_points))
-        print("conversion factors x,y: ", self.conversion_x, self.conversion_y)
+        self.conversion_x = int(self.encoder_counts_per_unit / abs(x_points))
+        self.conversion_y = int(self.encoder_counts_per_unit / abs(y_points))
         self.motor_to_cam = [self.conversion_x, self.conversion_y]
 
         return self.conversion_x, self.conversion_y

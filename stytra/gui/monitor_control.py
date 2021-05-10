@@ -12,6 +12,8 @@ from stytra.collectors.namedtuplequeue import NamedTupleQueue
 import cv2
 from time import sleep
 
+from stytra.gui.buttons import ToggleIconButton
+
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows
      configuring the stimulus display window
@@ -195,6 +197,10 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_home.clicked.connect(self.home_motor)
             self.layout_calibrate.addWidget(self.button_home)
 
+            # self.toggleMotor = ToggleIconButton(icon_off="play", icon_on="stop", action_on="play", on=False)
+            # self.toggleMotor.clicked.connect(self.toggle_motor_tracking)
+            # self.layout_calibrate.addWidget(self.toggleMotor)
+
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
@@ -263,6 +269,10 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.calibrator, frame.shape, frame
         )
 
-
     def home_motor(self):
         self.experiment.frame_dispatcher.home_event.set()
+
+    # def toggle_motor_tracking(self):
+    #     #todo handle differently needs toggeling
+    #     self.experiment.frame_dispatcher.tracking_event.set()
+
