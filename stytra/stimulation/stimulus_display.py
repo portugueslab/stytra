@@ -13,18 +13,18 @@ class StimulusDisplayWindow(ParametrizedWidget):
     """Display window for a visual simulation protocol,
     with a display area that can be controlled and changed from a
     ProtocolControlWindow.
-    
+
     The display area (either a QWidget or a QOpenGLWidget, see below)
     is where the paint() method of  the current Stimulus will draw
     the current image. The paint() method is called in the paintEvent() of
     the QWidget.
-    
+
     Stimuli sequence and its timing is handled via a linked ProtocolRunner
     object.
-    
+
     Information about real dimensions of the display comes from a
     calibrator object.
-    
+
     If required, a movie of the displayed stimulus can be acquired and saved.
 
     Parameters
@@ -80,8 +80,7 @@ class StimulusDisplayWindow(ParametrizedWidget):
         self.set_dims()
 
     def set_dims(self):
-        """ Set monitor dimensions when changed from the control GUI.
-        """
+        """Set monitor dimensions when changed from the control GUI."""
         self.widget_display.setGeometry(*(tuple(self.pos) + tuple(self.size)))
 
 
@@ -137,7 +136,7 @@ class StimDisplayWidget:
         Parameters
         ----------
         QPaintEvent :
-            
+
 
         Returns
         -------
@@ -169,7 +168,7 @@ class StimDisplayWidget:
     def display_stimulus(self):
         """Function called by the protocol_runner timestep timer that update
         the displayed image and, if required, grab a picture of the current
-        widget state for recording the stimulus movie. """
+        widget state for recording the stimulus movie."""
         self.update()
         current_time = datetime.now()
 
@@ -180,7 +179,10 @@ class StimDisplayWidget:
         if self.record_framerate:
             now = datetime.now()
             # Only one every self.record_stim_every frames will be captured.
-            if self.last_time is None or (now - self.last_time).total_seconds() >= 1 / self.record_framerate:
+            if (
+                self.last_time is None
+                or (now - self.last_time).total_seconds() >= 1 / self.record_framerate
+            ):
                 #
                 # QImage from QPixmap taken with QWidget.grab():
                 img = self.grab().toImage()
@@ -213,7 +215,7 @@ class StimDisplayWidget:
             return None, None
 
     def reset(self):
-        """ Resets the movie recorder
+        """Resets the movie recorder
 
         Returns
         -------

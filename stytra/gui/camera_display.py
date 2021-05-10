@@ -15,8 +15,7 @@ from stytra.gui.buttons import IconButton, ToggleIconButton, get_icon
 
 
 class SingleLineROI(pg.LineSegmentROI):
-    """ Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior.
-    """
+    """Subclassing pyqtgraph polyLineROI to remove the "add handle" behavior."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -141,8 +140,9 @@ class CameraViewWidget(QWidget):
         self.param_widget = None
 
         # todo add buttons for tracking control ONLY if experiment = motor experiment
-        #tracking_on_buttton trial
-        self.tracking_event =None
+        # tracking_on_buttton trial
+        self.tracking_event = None
+
     #     self.toggleTracking = ToggleIconButton(
     #         icon_off="play", icon_on="stop", action_on="play", on=True
     #     )
@@ -158,9 +158,9 @@ class CameraViewWidget(QWidget):
     def retrieve_image(self):
         """Update displayed frame while emptying frame source queue. This is done
         through a while loop that takes all available frames at every update.
-        
+
         # TODO fix this somehow?
-        
+
         **Important!** if the input queue is too fast this will produce an
         infinite loop and block the interface!
 
@@ -232,7 +232,7 @@ class CameraSelection(CameraViewWidget):
     """Generic class to overlay on video an ROI that can be
     used to select regions of the image and communicate their position to the
     tracking algorithm (e.g., tail starting point or eyes region).
-    
+
     The changes of parameters read through the ROI position are handled
     via the track_params class, so they must have a corresponding entry in the
     definition of the FrameProcessingMethod of the tracking function of choice.
@@ -547,7 +547,7 @@ class CameraViewCalib(CameraViewWidget):
         Parameters
         ----------
         calibrator :
-            
+
 
         Returns
         -------
@@ -577,7 +577,7 @@ class CameraViewCalib(CameraViewWidget):
 
 @jit(nopython=True)
 def _tail_points_from_coords(coords, seglen):
-    """ Computes the tail points from a list obtained from a data accumulator
+    """Computes the tail points from a list obtained from a data accumulator
 
     Parameters
     ----------

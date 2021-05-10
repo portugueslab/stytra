@@ -12,7 +12,7 @@ print("y homing")
 motor_y.home()
 motor_y.open()
 
-sleep (5)
+sleep(5)
 
 motor_x.open()
 motor_x.set_homing_reverse(2)

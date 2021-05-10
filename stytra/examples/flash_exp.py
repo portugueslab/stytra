@@ -1,7 +1,10 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from lightparam import Param
-from stytra.stimulation.stimuli.conditional import CenteringWrapper, TwoRadiusCenteringWrapper
+from stytra.stimulation.stimuli.conditional import (
+    CenteringWrapper,
+    TwoRadiusCenteringWrapper,
+)
 
 
 class FlashProtocol(Protocol):
@@ -12,8 +15,8 @@ class FlashProtocol(Protocol):
         # Here we define these attributes as Param s. This will automatically
         #  build a control for them and make them modifiable live from the
         # interface.
-        self.period_sec = Param(10., limits=(0.2, None))
-        self.flash_duration = Param(1., limits=(0., None))
+        self.period_sec = Param(10.0, limits=(0.2, None))
+        self.flash_duration = Param(1.0, limits=(0.0, None))
 
     def get_stim_sequence(self):
         # This is the
@@ -25,10 +28,11 @@ class FlashProtocol(Protocol):
         # ]
 
         stimuli = [
-            TwoRadiusCenteringWrapper(stimulus=
-            FullFieldVisualStimulus(
-                duration=self.flash_duration, color=(255, 255, 255)
-            )),
+            TwoRadiusCenteringWrapper(
+                stimulus=FullFieldVisualStimulus(
+                    duration=self.flash_duration, color=(255, 255, 255)
+                )
+            ),
         ]
         return stimuli
 

@@ -114,7 +114,7 @@ class Pipeline:
         return hds
 
     def setup(self, tree=None):
-        """ Due to multiprocessing limitations, the setup is
+        """Due to multiprocessing limitations, the setup is
         run separately from the constructor
 
         """

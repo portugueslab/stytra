@@ -26,7 +26,7 @@ class Prefilter(ImageToImageNode):
         clip: Param(150, (0, 255)),
         **extraparams
     ):
-        """ Optionally resizes, smooths and inverts the image
+        """Optionally resizes, smooths and inverts the image
 
         :param im:
         :param state:
@@ -67,7 +67,7 @@ class AdaptivePrefilter(ImageToImageNode):
         # percentile: Param(96.9, (0.,100.)),
         **extraparams
     ):
-        """ Optionally resizes, smooths and inverts the image
+        """Optionally resizes, smooths and inverts the image
 
         :param im:
         :param state:

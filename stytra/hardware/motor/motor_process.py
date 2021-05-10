@@ -7,9 +7,16 @@ from collections import namedtuple
 
 
 class ReceiverProcess(Process):
-    def __init__(self, dot_position_queue, calib_event,
-                 home_event, finished_event, motor_position_queue,
-                 tracking_event, motor_status_queue):
+    def __init__(
+        self,
+        dot_position_queue,
+        calib_event,
+        home_event,
+        finished_event,
+        motor_position_queue,
+        tracking_event,
+        motor_status_queue,
+    ):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
@@ -19,12 +26,11 @@ class ReceiverProcess(Process):
         self.tracking_event = tracking_event
         self.motor_status_queue = motor_status_queue
         self.home = 2200000
-        self.tracking_failure_timeout = 10 # 10 seconds
+        self.tracking_failure_timeout = 10  # 10 seconds
         self.polling_time = 50
 
-
     def run(self):
-        #Initialize the Motor here with standard scale
+        # Initialize the Motor here with standard scale
         self.motor_y = Motor(1, scale=1)
         self.motor_x = Motor(2, scale=1)
 
@@ -33,14 +39,16 @@ class ReceiverProcess(Process):
         self.motor_x.polling(self.polling_time)
         self.motor_y.polling(self.polling_time)
 
-        output_type = namedtuple("stagexy", ["x_", "y_", "dist_x", "dist_y", "tracking", "waiting"])
+        output_type = namedtuple(
+            "stagexy", ["x_", "y_", "dist_x", "dist_y", "tracking", "waiting"]
+        )
         status_type = namedtuple("motor_status", ["tracking", "waiting"])
         idle_status = (False, True)
         tracking_status = (True, False)
         last_position = None
         status = None
         self.motor_status = status_type(*idle_status)
-        self.start_time = None #for tracking timeout
+        self.start_time = None  # for tracking timeout
 
         while not self.finished_event.is_set():
 
@@ -69,7 +77,6 @@ class ReceiverProcess(Process):
                 except Empty:
                     break
 
-
             self.motor_status = status
 
             if self.tracking_event.is_set():
@@ -80,36 +87,49 @@ class ReceiverProcess(Process):
                     pos_x = self.motor_x.get_position()
                     pos_y = self.motor_y.get_position()
 
-                    #if it actually is tracking something
+                    # if it actually is tracking something
                     if abs(last_position.f0_x) > 0:
                         self.motor_status = status_type(*tracking_status)
                         self.start_time = datetime.datetime.now()
                         self.motor_x.move_rel(int(last_position.f0_x))
                         self.motor_y.move_rel(int(last_position.f0_y))
 
-                        e = (float(pos_x), float(pos_y), int(last_position.f0_x),
-                             int(last_position.f0_y), self.motor_status.tracking,
-                             self.motor_status.waiting)
+                        e = (
+                            float(pos_x),
+                            float(pos_y),
+                            int(last_position.f0_x),
+                            int(last_position.f0_y),
+                            self.motor_status.tracking,
+                            self.motor_status.waiting,
+                        )
 
-                    #if tracking failure takes too long, go home and wait
+                    # if tracking failure takes too long, go home and wait
                     else:
                         self.motor_status = status_type(*idle_status)
-                        e = (pos_x, pos_y, 0.0, 0.0, self.motor_status.tracking, self.motor_status.waiting)
+                        e = (
+                            pos_x,
+                            pos_y,
+                            0.0,
+                            0.0,
+                            self.motor_status.tracking,
+                            self.motor_status.waiting,
+                        )
 
                         if self.start_time is not None:
-                            idle_time = (datetime.datetime.now() - self.start_time).total_seconds()
+                            idle_time = (
+                                datetime.datetime.now() - self.start_time
+                            ).total_seconds()
                             if idle_time > self.tracking_failure_timeout:
-                                print ("tracking failure timeout called")
+                                print("tracking failure timeout called")
                                 self.motor_x.movesimple(position=self.home)
                                 self.motor_y.movesimple(position=self.home)
                                 self.start_time = None
 
-                    #save the output
+                    # save the output
                     self.motor_position_queue.put(time, output_type(*e))
 
         self.motor_x.close()
         self.motor_y.close()
-
 
 
 ################################

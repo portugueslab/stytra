@@ -2,8 +2,7 @@ from lightparam import Parametrized, Param
 
 
 class GeneralMetadata(Parametrized):
-    """General metadata for the experiment.
-    """
+    """General metadata for the experiment."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(name="general/basic", **kwargs)
@@ -13,8 +12,7 @@ class GeneralMetadata(Parametrized):
 
 
 class AnimalMetadata(Parametrized):
-    """Metadata about the animal.
-     """
+    """Metadata about the animal."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, name="general/animal", **kwargs)

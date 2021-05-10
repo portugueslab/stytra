@@ -1,7 +1,17 @@
 from pathlib import Path
 from stytra import Stytra
-from PyQt5.QtWidgets import QFileDialog, QApplication, QDialog, QPushButton,\
-    QComboBox, QGridLayout, QLabel, QToolBar, QProgressBar, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QFileDialog,
+    QApplication,
+    QDialog,
+    QPushButton,
+    QComboBox,
+    QGridLayout,
+    QLabel,
+    QToolBar,
+    QProgressBar,
+    QVBoxLayout,
+)
 import qdarkstyle
 from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import Stimulus
@@ -16,7 +26,9 @@ class EmptyProtocol(Protocol):
     name = "Offline"
 
     def get_stim_sequence(self):
-        return [Stimulus(duration=5.),]
+        return [
+            Stimulus(duration=5.0),
+        ]
 
 
 class TrackingDialog(QDialog):
@@ -41,8 +53,7 @@ class OfflineToolbar(QToolBar):
         self.output_path = self.input_path.parent / self.input_path.stem
 
         self.cmb_fmt = QComboBox()
-        self.cmb_fmt.addItems([
-            "csv", "feather", "hdf5"])
+        self.cmb_fmt.addItems(["csv", "feather", "hdf5"])
 
         self.addAction("Track video", self.track)
         self.addAction("Output format")
@@ -52,7 +63,6 @@ class OfflineToolbar(QToolBar):
 
         self.diag_track = TrackingDialog()
 
-
     def track(self):
         fileformat = self.cmb_fmt.currentText()
 
@@ -61,14 +71,13 @@ class OfflineToolbar(QToolBar):
         data = []
         self.exp.window_main.stream_plot.toggle_freeze()
 
-        output_name = str(self.output_path)+"."+fileformat
+        output_name = str(self.output_path) + "." + fileformat
         self.diag_track.show()
         l = reader.get_length()
         if not (0 < l < 100000):
             l = 1
         self.diag_track.prog_track.setMaximum(l)
-        self.diag_track.lbl_status.setText("Tracking to "+
-                                           output_name)
+        self.diag_track.lbl_status.setText("Tracking to " + output_name)
 
         for i, frame in enumerate(reader):
             data.append(self.exp.pipeline.run(frame[:, :, 0]).data)
@@ -76,27 +85,23 @@ class OfflineToolbar(QToolBar):
             if i % 100 == 0:
                 self.app.processEvents()
 
-        self.diag_track.lbl_status.setText("Saving " +
-                                           output_name)
-        df = pd.DataFrame.from_records(data,
-                                       columns=data[0]._fields)
+        self.diag_track.lbl_status.setText("Saving " + output_name)
+        df = pd.DataFrame.from_records(data, columns=data[0]._fields)
         save_df(df, self.output_path, fileformat)
-        self.diag_track.lbl_status.setText("Completed " +
-                                           output_name)
+        self.diag_track.lbl_status.setText("Completed " + output_name)
         self.exp.wrap_up()
 
     def save_params(self):
         params = self.exp.pipeline.serialize_params()
-        json.dump(dict(pipeline_type=self.pipeline_type,
-                       pipeline_params=params),
-                  open(str(self.output_path) +
-                           "_trackingparams.json", "w"))
+        json.dump(
+            dict(pipeline_type=self.pipeline_type, pipeline_params=params),
+            open(str(self.output_path) + "_trackingparams.json", "w"),
+        )
 
 
 class StytraLoader(QDialog):
-    """ A quick-and-dirty monkey-patch of Stytra for easy offline tracking
+    """A quick-and-dirty monkey-patch of Stytra for easy offline tracking"""
 
-    """
     def __init__(self, app):
         super().__init__()
         self.setWindowTitle("Select video for offline tracking")
@@ -127,22 +132,29 @@ class StytraLoader(QDialog):
         self.stytra = None
 
     def select_video(self):
-        fn, _ = QFileDialog.getOpenFileName(None, "Select video file",
-                                            filter="Videos (*.avi *.mov *.mp4)")
+        fn, _ = QFileDialog.getOpenFileName(
+            None, "Select video file", filter="Videos (*.avi *.mov *.mp4)"
+        )
         self.filename = fn
         self.lbl_filename.setText(self.filename)
         self.btn_start.setEnabled(True)
 
     def run_stytra(self):
-        self.stytra = Stytra(app=self.app, protocol=EmptyProtocol(),
-                             camera=dict(video_file=self.filename),
-                             tracking=dict(method=self.cmb_tracking.currentText()),
-                             exec=False,display=dict(gl_display=False))
+        self.stytra = Stytra(
+            app=self.app,
+            protocol=EmptyProtocol(),
+            camera=dict(video_file=self.filename),
+            tracking=dict(method=self.cmb_tracking.currentText()),
+            exec=False,
+            display=dict(gl_display=False),
+        )
 
-        offline_toolbar = OfflineToolbar(self.app,
-                                         self.stytra.exp,
-                                         self.filename,
-                                         pipeline_type=self.cmb_tracking.currentText())
+        offline_toolbar = OfflineToolbar(
+            self.app,
+            self.stytra.exp,
+            self.filename,
+            pipeline_type=self.cmb_tracking.currentText(),
+        )
 
         self.stytra.exp.window_main.toolbar_control.hide()
         self.stytra.exp.window_main.addToolBar(offline_toolbar)
@@ -158,6 +170,3 @@ if __name__ == "__main__":
     ld = StytraLoader(app)
     ld.show()
     app.exec()
-
-
-

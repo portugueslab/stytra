@@ -10,28 +10,24 @@ from stytra.triggering import ZmqTrigger
 # Make sure that the "wait for trigger signal" box is not checked, or an additional
 # triggering signal will be required at the beginning!
 
+
 class FlashProtocol(Protocol):
     name = "flash protocol"
 
     def __init__(self):
         super().__init__()
-        self.pause_duration = 1.
-        self.flash_duration = 2.
+        self.pause_duration = 1.0
+        self.flash_duration = 2.0
 
     def get_stim_sequence(self):
         stimuli = [
             TriggerStimulus(),
             Pause(duration=self.pause_duration),
-            FullFieldVisualStimulus(
-                duration=self.flash_duration, color=(0, 255, 0)
-            ),
+            FullFieldVisualStimulus(duration=self.flash_duration, color=(0, 255, 0)),
             Pause(duration=self.pause_duration),
-
             TriggerStimulus(),
             Pause(duration=self.pause_duration),
-            FullFieldVisualStimulus(
-                duration=self.flash_duration, color=(255, 0, 0)
-            ),
+            FullFieldVisualStimulus(duration=self.flash_duration, color=(255, 0, 0)),
             Pause(duration=self.pause_duration),
         ]
         return stimuli

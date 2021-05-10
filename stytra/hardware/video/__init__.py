@@ -28,7 +28,7 @@ class VideoSource(FrameProcess):
     """Abstract class for a process that generates frames, being it a camera
     or a file source. A maximum size of the memory used by the process can be
     set.
-    
+
     **Input Queues:**
 
     self.control_queue :
@@ -91,7 +91,7 @@ class CameraSource(VideoSource):
     """Process for controlling a camera.
 
     Cameras currently implemented:
-    
+
     ======== ===========================================
     Ximea    Add some info
     Avt      Add some info

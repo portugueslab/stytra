@@ -240,8 +240,7 @@ class Experiment(QObject):
             )
 
     def make_window(self):
-        """Make experiment GUI, defined in children depending on experiments.
-        """
+        """Make experiment GUI, defined in children depending on experiments."""
         self.window_main = ExperimentWindow(self)
 
         self.window_main.construct_ui()
@@ -542,8 +541,7 @@ class VisualExperiment(Experiment):
             )
 
     def make_window(self):
-        """Make experiment GUI, defined in children depending on experiments.
-        """
+        """Make experiment GUI, defined in children depending on experiments."""
         if self.stim_plot:
             self.window_main = DynamicStimExperimentWindow(self)
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)

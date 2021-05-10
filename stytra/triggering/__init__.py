@@ -19,7 +19,7 @@ except:
 
 
 class Trigger(Process):
-    """ Stytra uses
+    """Stytra uses
     :class:`Trigger <stytra.triggering.Trigger.__init__()>` objects  to control
     the beginning of a stimulation protocol via an external event.
     In the most obvious case, the signal is sent by
@@ -64,7 +64,7 @@ class Trigger(Process):
         self.queue_trigger_params = Queue()
 
     def check_trigger(self):
-        """ Check condition required for triggering to happen. Implemented in
+        """Check condition required for triggering to happen. Implemented in
         subclasses.
 
         Returns
@@ -77,7 +77,7 @@ class Trigger(Process):
         return False
 
     def run(self):
-        """ In this process, we constantly invoke the check_trigger class to control
+        """In this process, we constantly invoke the check_trigger class to control
         if start_event has to be set. Once it has been set, we wait an
         arbitrary time (0.1 s now) and then we clear it to be set again.
         """
@@ -101,7 +101,7 @@ class Trigger(Process):
 
 
 class ZmqTrigger(Trigger):
-    """ This trigger uses the `ZMQ <http://zeromq.org/>`_ library to receive
+    """This trigger uses the `ZMQ <http://zeromq.org/>`_ library to receive
     a json file from an external source such as a microscope. The port on which
     the communication is happening is taken as input. The source of the trigger
     must be configured with the IP and the port of the computer running the
@@ -122,7 +122,7 @@ class ZmqTrigger(Trigger):
         super().__init__()
 
     def check_trigger(self):
-        """ Wait to receive the json file and reply with a simple "received"
+        """Wait to receive the json file and reply with a simple "received"
         string. Add to the queue_trigger_params Queue the received dictionary,
         so that the experiment class can store it with the rest of the data.
         """
@@ -148,12 +148,12 @@ class ZmqTrigger(Trigger):
 
 
 class U3LabJackPulseTrigger(Trigger):
-    """" This triiger uses the `labjack <https://github.com/labjack/LabJackPython/>`_ u3
+    """ " This triiger uses the `labjack <https://github.com/labjack/LabJackPython/>`_ u3
     to recieve a TTL pulse from an external source. The DIO number is used as input.
     The pin is initialized as input automatically"""
 
     def __init__(self, chan):
-        """"
+        """ "
 
         Parameters
         ----------
@@ -165,7 +165,7 @@ class U3LabJackPulseTrigger(Trigger):
         self.device = None
 
     def check_trigger(self):
-        """" Simply returns the state of the pin as a boolean """
+        """ " Simply returns the state of the pin as a boolean"""
         return bool(self.device.getFeedback(u3.BitStateRead(self.chan))[0])
 
     def run(self):

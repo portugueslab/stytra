@@ -10,8 +10,8 @@ class FlashProtocol(Protocol):
         # In this case, the protocol is simply a 1 second flash on the entire screen
         # after a pause of 4 seconds:
         stimuli = [
-            Pause(duration=4.),
-            FullFieldVisualStimulus(duration=1., color=(255, 255, 255)),
+            Pause(duration=4.0),
+            FullFieldVisualStimulus(duration=1.0, color=(255, 255, 255)),
         ]
         return stimuli
 

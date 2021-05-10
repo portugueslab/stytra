@@ -10,9 +10,7 @@ class TrackingWindmillProtocol(WindmillProtocol):
     # argument to the stytra_config:
     stytra_config = dict(
         tracking=dict(embedded=True, method="eyes_motor"),
-        camera=dict(
-            video_file= "J:\_Shared\Katharina\eyestrack_test.avi"
-        ),
+        camera=dict(video_file="J:\_Shared\Katharina\eyestrack_test.avi"),
     )
 
 

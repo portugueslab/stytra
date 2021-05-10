@@ -86,7 +86,7 @@ class AvtCamera(Camera):
             else:
                 # To set new frame rate for AVT cameras acquisition has to be
                 # interrupted:
-                messages.append("E:"+param+" setting not supported on AVT cameras")
+                messages.append("E:" + param + " setting not supported on AVT cameras")
         except VimbaException:
             messages.append("E:Invalid value! {} will not be changed.".format(param))
         return messages

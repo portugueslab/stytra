@@ -2,17 +2,16 @@ import numpy as np
 from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 from stytra.stimulation.stimuli.generic_stimuli import DynamicStimulus
-from stytra.stimulation.stimuli.visual import RadialSineStimulus, adaptiveRadialSineStimulus
+from stytra.stimulation.stimuli.visual import (
+    RadialSineStimulus,
+    adaptiveRadialSineStimulus,
+)
 import datetime
 from collections import namedtuple
 
+
 class PauseOutsideStimulus(DynamicStimulus):
-    def __init__(
-        self,
-        stim,
-        reset_phase=0,
-        **kwargs
-    ):
+    def __init__(self, stim, reset_phase=0, **kwargs):
         super().__init__(**kwargs)
         self.name = "conditional"
         self.active = stim
@@ -32,10 +31,7 @@ class PauseOutsideStimulus(DynamicStimulus):
     @property
     def dynamic_parameter_names(self):
         if self.stimulus_dynamic:
-            return (
-                super().dynamic_parameter_names +
-                self.active.dynamic_parameter_names
-            )
+            return super().dynamic_parameter_names + self.active.dynamic_parameter_names
         else:
             return super().dynamic_parameter_names
 
@@ -74,8 +70,7 @@ class PauseOutsideStimulus(DynamicStimulus):
             self._elapsed_difference += self._dt
         else:
             if self.reset_phase > 0 and not self._previous_value:
-                phase_reset = max(self.active.current_phase -
-                                  (self.reset_phase - 1), 0)
+                phase_reset = max(self.active.current_phase - (self.reset_phase - 1), 0)
                 self.active._elapsed = self.active.phase_times[phase_reset]
                 time_added = (
                     self._elapsed
@@ -97,7 +92,7 @@ class PauseOutsideStimulus(DynamicStimulus):
 
 
 class ConditionalWrapper(DynamicStimulus):
-    """ A wrapper for stimuli which switches between two stimuli dependending on
+    """A wrapper for stimuli which switches between two stimuli dependending on
     conditions: an on condition defined in the check_condition_on method
     and an off condition defined check_condition_on
 
@@ -120,6 +115,7 @@ class ConditionalWrapper(DynamicStimulus):
         has to be set to 0
 
     """
+
     def __init__(
         self,
         stim_on,
@@ -171,8 +167,9 @@ class ConditionalWrapper(DynamicStimulus):
 
     def get_state(self):
         state = super().get_state()
-        state.update({"On": self._stim_on.get_state(),
-                      "Off": self._stim_off.get_state()})
+        state.update(
+            {"On": self._stim_on.get_state(), "Off": self._stim_off.get_state()}
+        )
         return state
 
     def start(self):
@@ -200,16 +197,17 @@ class ConditionalWrapper(DynamicStimulus):
             self.active = self._stim_on
 
             if self.reset_phase:
-                new_phase = max(self.active.current_phase +
-                                  self.reset_phase_shift, 0)
+                new_phase = max(self.active.current_phase + self.reset_phase_shift, 0)
                 if self.reset_to_mod_phase is not None:
                     outer_phase = new_phase // self.reset_to_mod_phase[1]
-                    new_phase = outer_phase * self.reset_to_mod_phase[1] + \
-                                  self.reset_to_mod_phase[0]
+                    new_phase = (
+                        outer_phase * self.reset_to_mod_phase[1]
+                        + self.reset_to_mod_phase[0]
+                    )
                 time_added = (
-                        self._elapsed
-                        - self._elapsed_difference
-                        - self.active.phase_times[new_phase]
+                    self._elapsed
+                    - self._elapsed_difference
+                    - self.active.phase_times[new_phase]
                 )
                 self.duration += time_added
                 self._elapsed_difference += time_added
@@ -238,30 +236,34 @@ class SingleConditionalWrapper(ConditionalWrapper):
 
 
 class CenteringWrapper(SingleConditionalWrapper):
-    """ A wrapper which shows the centering stimulus (radial gratings)
-        when the fish exits a given radius from the display center
+    """A wrapper which shows the centering stimulus (radial gratings)
+    when the fish exits a given radius from the display center
 
-        Parameters
-        ----------
-        stimulus: Stimlus
-            the stimulus to be displayed when not centering
+    Parameters
+    ----------
+    stimulus: Stimlus
+        the stimulus to be displayed when not centering
 
-        centering_stimulus: Stimulus, optional
-            by default radial gratings
+    centering_stimulus: Stimulus, optional
+        by default radial gratings
 
-        margin: float
-            the centering activating radius in mm
+    margin: float
+        the centering activating radius in mm
 
 
-        **kwargs
-            other arguments supplied to :class:`ConditionalStimulus`
+    **kwargs
+        other arguments supplied to :class:`ConditionalStimulus`
 
-        """
-    def __init__(self, stimulus, *args, centering_stimulus=None, margin=45,
-                 **kwargs):
-        super().__init__(*args, stim_on=stimulus,
-                         stim_off=centering_stimulus or RadialSineStimulus(duration=stimulus.duration),
-                         **kwargs)
+    """
+
+    def __init__(self, stimulus, *args, centering_stimulus=None, margin=45, **kwargs):
+        super().__init__(
+            *args,
+            stim_on=stimulus,
+            stim_off=centering_stimulus
+            or RadialSineStimulus(duration=stimulus.duration),
+            **kwargs
+        )
         self.name = "centering"
         self.margin = margin ** 2
         self.xc = 320
@@ -270,8 +272,9 @@ class CenteringWrapper(SingleConditionalWrapper):
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
         scale = self._experiment.calibrator.mm_px ** 2
-        return (x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <=
-                self.margin / scale)
+        return (
+            x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin / scale
+        )
 
     def paint(self, p, w, h):
         self.xc, self.yc = w / 2, h / 2
@@ -279,7 +282,7 @@ class CenteringWrapper(SingleConditionalWrapper):
 
 
 class TwoRadiusCenteringWrapper(ConditionalWrapper):
-    """ An extension of the :class:`CenteringWrapper` that takes two radii,
+    """An extension of the :class:`CenteringWrapper` that takes two radii,
     a smaller one, to stop the centering stimulus, and a bigger one to start
     it again
 
@@ -301,13 +304,18 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
         other arguments supplied to :class:`ConditionalStimulus`
 
     """
-    def __init__(self, stimulus, *args, centering_stimulus=None, r_out=45,
-                 r_in=20,
-                 **kwargs):
-        super().__init__(*args, stim_on=stimulus,
-                         stim_off=(centering_stimulus or RadialSineStimulus(
-                             duration=stimulus.duration)),
-                         **kwargs)
+
+    def __init__(
+        self, stimulus, *args, centering_stimulus=None, r_out=45, r_in=20, **kwargs
+    ):
+        super().__init__(
+            *args,
+            stim_on=stimulus,
+            stim_off=(
+                centering_stimulus or RadialSineStimulus(duration=stimulus.duration)
+            ),
+            **kwargs
+        )
         self.name = "centering"
         self.margin_in = r_in ** 2
         self.margin_out = r_out ** 2
@@ -316,28 +324,28 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
-        scale = self._experiment.calibrator.mm_px **2
-        return ((not np.isnan(x)) and (
-                    (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in
-                    / scale))
+        scale = self._experiment.calibrator.mm_px ** 2
+        return (not np.isnan(x)) and (
+            (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in / scale
+        )
 
     def check_condition_off(self):
         y, x, theta = self._experiment.estimator.get_position()
         scale = self._experiment.calibrator.mm_px ** 2
-        return (np.isnan(x) or
-                ((x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out /
-                 scale))
+        return np.isnan(x) or (
+            (x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out / scale
+        )
 
     def paint(self, p, w, h):
-        self.xc, self.yc = w /2, h / 2
+        self.xc, self.yc = w / 2, h / 2
         super().paint(p, w, h)
 
 
 class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
     """Extension of Two Radius centering Wrapper with adaptive location of
-    Wrapper center for Motti """
-    def __init__(self, *args,
-                 **kwargs):
+    Wrapper center for Motti"""
+
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.home = 2200000
 
@@ -365,10 +373,4 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
     #         return (not np.isnan(x))
 
     def paint(self, p, w, h):
-        super().paint(p,w,h)
-
-
-
-
-
-
+        super().paint(p, w, h)

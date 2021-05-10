@@ -7,7 +7,7 @@ from collections import namedtuple
 
 
 def rot_mat(theta):
-    """The rotation matrix for an angle theta """
+    """The rotation matrix for an angle theta"""
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
@@ -64,7 +64,7 @@ class VigorMotionEstimator(Estimator):
 
 class PositionEstimator(Estimator):
     def __init__(self, *args, change_thresholds=None, velocity_window=10, **kwargs):
-        """ Uses the projector-to-camera calibration to give fish position in
+        """Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
         oscillations due to tracking)

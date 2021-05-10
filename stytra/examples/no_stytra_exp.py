@@ -10,7 +10,9 @@ class FlashProtocol(Protocol):
     name = "empty_protocol"  # every protocol must have a name.
 
     def get_stim_sequence(self):
-        return [Stimulus(duration=5.),]
+        return [
+            Stimulus(duration=5.0),
+        ]
 
 
 if __name__ == "__main__":
@@ -21,7 +23,6 @@ if __name__ == "__main__":
     app = QApplication([])
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     protocol = FlashProtocol()
-    exp = Experiment(protocol=protocol,
-                     app=app)
+    exp = Experiment(protocol=protocol, app=app)
     exp.start_experiment()
     app.exec_()

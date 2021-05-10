@@ -9,7 +9,6 @@ from lightparam.param_qt import ParametrizedQt, Param
 from stytra.hardware.motor.stageAPI import Motor
 
 
-
 class CalibrationException(Exception):
     """ """
 
@@ -24,7 +23,7 @@ class Calibrator(ParametrizedQt):
         self.enabled = False
 
         self.mm_px = Param(mm_px)
-        self.length_mm = Param(30., limits=(1, 800))
+        self.length_mm = Param(30.0, limits=(1, 800))
         self.length_px = Param(None)
         self.cam_to_proj = Param(None)
         self.proj_to_cam = Param(None)
@@ -53,7 +52,7 @@ class Calibrator(ParametrizedQt):
                 self.block_signal = False
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         self.block_signal = True
         self.length_px = w
         self.length_mm = self.length_px * self.mm_px
@@ -65,11 +64,11 @@ class Calibrator(ParametrizedQt):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
 
         Returns
         -------
@@ -91,7 +90,7 @@ class CrossCalibrator(Calibrator):
     ):
         super().__init__(*args, **kwargs)
 
-        self.length_px = self.length_mm/self.mm_px
+        self.length_px = self.length_mm / self.mm_px
         self.length_is_fixed = False
         self.transparent = transparent
 
@@ -103,8 +102,8 @@ class CrossCalibrator(Calibrator):
         else:
             self.outside = False
             self.length_to_measure = (
-                "a line of the cross"
-            )  # TODO: world this better, unclear
+                "a line of the cross"  # TODO: world this better, unclear
+            )
             if fixed_length is not None:
                 self.length_px = fixed_length
                 self.length_is_fixed = True
@@ -115,11 +114,11 @@ class CrossCalibrator(Calibrator):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
 
         Returns
         -------
@@ -137,7 +136,7 @@ class CrossCalibrator(Calibrator):
         p.drawLine(w // 2, h // 2 + l2, w // 2 + l2, h // 2 + l2)
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         if not self.length_is_fixed:
             if self.outside:
                 self.length_px = h
@@ -146,7 +145,7 @@ class CrossCalibrator(Calibrator):
 
 
 class CircleCalibrator(Calibrator):
-    """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle"""
+    """ " Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle"""
 
     def __init__(self, *args, dh=80, r=1, **kwargs):
         super().__init__(*args, **kwargs)
@@ -158,7 +157,7 @@ class CircleCalibrator(Calibrator):
         self.length_to_measure = "longest side of the triangle"
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         self.length_px = self.dh * 2
 
     def make_calibration_pattern(self, p, h, w, draw=True):
@@ -167,11 +166,11 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
         draw :
              (Default value = True)
 
@@ -203,7 +202,7 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         kps :
-            
+
 
         Returns
         -------
@@ -272,7 +271,7 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         arr :
-            
+
 
         Returns
         -------
@@ -286,17 +285,17 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         image :
-            
+
 
         Returns
         -------
 
         """
-        #Define your points for camera and projector
+        # Define your points for camera and projector
         self.points_cam = self._find_triangle(image)
         points_proj = self.points
 
-        #These  lines add a row of ones under the 3 points
+        # These  lines add a row of ones under the 3 points
         x_proj = np.vstack([points_proj.T, np.ones(3)])
         x_cam = np.vstack([self.points_cam.T, np.ones(3)])
 
@@ -304,12 +303,14 @@ class CircleCalibrator(Calibrator):
         self.cam_to_proj = self.arr_to_tuple(points_proj.T @ np.linalg.inv(x_cam))
 
 
-
 class MotorCalibrator(CircleCalibrator):
     """Displays a pattern for Motor Calibration"""
+
     def __init__(self, *args, dh=10, r=1, **kwargs):
-        super().__init__(*args,dh=50, **kwargs)
-        self.encoder_counts_per_unit = 20000 #motor unit to mm conversion gotten from motor
+        super().__init__(*args, dh=50, **kwargs)
+        self.encoder_counts_per_unit = (
+            20000  # motor unit to mm conversion gotten from motor
+        )
 
     def _find_triangle(self, image, blob_params=None):
         params = cv2.SimpleBlobDetector_Params()
@@ -343,7 +344,6 @@ class MotorCalibrator(CircleCalibrator):
         # and return the points sorted by the angles
         return kps[np.argsort(CircleCalibrator._find_angles(kps)), :]
 
-
     def find_transform_matrix(self, image):
         # Define your points for camera and projector
         self.points_cam = self._find_triangle(image)
@@ -368,4 +368,3 @@ class MotorCalibrator(CircleCalibrator):
         self.motor_to_cam = [self.conversion_x, self.conversion_y]
 
         return self.conversion_x, self.conversion_y
-

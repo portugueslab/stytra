@@ -5,10 +5,11 @@ from stytra.hardware.motor.motor_process import ReceiverProcess
 from stytra.calibration import MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
 from collections import namedtuple
-from multiprocessing import  Queue
+
 
 class MotorExperiment(TrackingExperiment):
-    """"""
+    """ """
+
     def __init__(self, *args, **kwargs):
         self.tracked_position_queue = NamedTupleQueue()
         self.calib_queue = NamedTupleQueue()
@@ -23,11 +24,11 @@ class MotorExperiment(TrackingExperiment):
         self.motor_process = ReceiverProcess(
             dot_position_queue=self.tracked_position_queue,
             finished_event=self.camera.kill_event,
-            calib_event= self.frame_dispatcher.calibration_event,
-            home_event= self.frame_dispatcher.home_event,
+            calib_event=self.frame_dispatcher.calibration_event,
+            home_event=self.frame_dispatcher.home_event,
             motor_position_queue=self.motor_pos_queue,
             tracking_event=self.frame_dispatcher.tracking_event,
-            motor_status_queue = self.motor_status_queue,
+            motor_status_queue=self.motor_status_queue,
         )
         self.motor_position_queue = self.motor_process.motor_position_queue
 
@@ -46,7 +47,7 @@ class MotorExperiment(TrackingExperiment):
     def stop_tracking(self):
         self.frame_dispatcher.tracking_event.clear()
 
-    def send_motor_status(self,time, output):
+    def send_motor_status(self, time, output):
         self.second_output = namedtuple("motor_status", ["tracking", "waiting"])
         self.motor_status_queue.put(time, self.second_output(*output))
 
@@ -61,8 +62,8 @@ class MotorExperiment(TrackingExperiment):
     def initialize_tracking_meth(self):
         self.frame_dispatcher = TrackingProcessMotor(
             second_output_queue=self.tracked_position_queue,
-            calib_queue =self.calib_queue,
-            scale= self.scale,
+            calib_queue=self.calib_queue,
+            scale=self.scale,
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
             pipeline=self.pipeline_cls,
@@ -80,7 +81,4 @@ class MotorExperiment(TrackingExperiment):
         super().save_data()
 
         if self.acc_motor is not None:
-            self.save_log(
-                self.acc_motor, "motor_log", "motor"
-            )
-
+            self.save_log(self.acc_motor, "motor_log", "motor")

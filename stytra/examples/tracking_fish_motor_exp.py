@@ -6,9 +6,15 @@ import datetime
 from collections import namedtuple
 from pathlib import Path
 from stytra.stimulation import Protocol
-from stytra.stimulation.stimuli.conditional import adaptiveRadialSineStimulus, RadialSineStimulus
-from stytra.stimulation.stimuli.conditional import CenteringWrapper,\
-    TwoRadiusCenteringWrapper, MottiCenteringWrapper
+from stytra.stimulation.stimuli.conditional import (
+    adaptiveRadialSineStimulus,
+    RadialSineStimulus,
+)
+from stytra.stimulation.stimuli.conditional import (
+    CenteringWrapper,
+    TwoRadiusCenteringWrapper,
+    MottiCenteringWrapper,
+)
 from stytra.stimulation.stimuli.visual import FullFieldVisualStimulus
 
 
@@ -24,28 +30,31 @@ class FullFieldVisualStimulus2(FullFieldVisualStimulus):
         super().update()
 
 
-
 class Motti(Protocol):
     name = "motti_protocol"
     stytra_config = dict(
-        camera=dict(type="spinnaker"), tracking=dict(method="fish_motor_bg",estimator="position"),
+        camera=dict(type="spinnaker"),
+        tracking=dict(method="fish_motor_bg", estimator="position"),
         recording=dict(extension="mp4", kbit_rate=3000),
-        motor=dict())
+        motor=dict(),
+    )
 
     def __init__(self):
         super().__init__()
 
-        self.period_sec = Param(10., limits=(0.2, None))
-        self.flash_duration = Param(1., limits=(0., None))
+        self.period_sec = Param(10.0, limits=(0.2, None))
+        self.flash_duration = Param(1.0, limits=(0.0, None))
 
     def get_stim_sequence(self):
 
         # This is the
         stimuli = [
-            MottiCenteringWrapper(stimulus=
-            FullFieldVisualStimulus2(
-                duration=self.flash_duration, color=(255, 255, 255)
-            ),centering_stimulus =RadialSineStimulus(period=1, velocity=5, duration=1)),
+            MottiCenteringWrapper(
+                stimulus=FullFieldVisualStimulus2(
+                    duration=self.flash_duration, color=(255, 255, 255)
+                ),
+                centering_stimulus=RadialSineStimulus(period=1, velocity=5, duration=1),
+            ),
         ]
 
         return stimuli

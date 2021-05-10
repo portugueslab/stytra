@@ -13,7 +13,7 @@ from stytra.stimulation.stimuli.backgrounds import existing_file_background
 
 
 class VisualStimulus(Stimulus):
-    """ Stimulus class to paint programmatically on a canvas.
+    """Stimulus class to paint programmatically on a canvas.
     For this subclass of Stimulus, their core function (paint()) is
     not called by the ProtocolRunner, but directly from the
     StimulusDisplayWindow. Since a StimulusDisplayWindow is directly linked to
@@ -35,7 +35,6 @@ class VisualStimulus(Stimulus):
         super().__init__(*args, **kwargs)
         self.clip_mask = clip_mask
 
-
     def paint(self, p, w, h):
         """Paint function. Called by the StimulusDisplayWindow update method.
 
@@ -53,7 +52,6 @@ class VisualStimulus(Stimulus):
 
         """
         pass
-
 
     def clip(self, p, w, h):
         """Clip image before painting
@@ -73,9 +71,13 @@ class VisualStimulus(Stimulus):
         """
         if self.clip_mask is not None:
             if isinstance(self.clip_mask, float):  # circle
-                a = QRegion(w/2-self.clip_mask*w, h/2-self.clip_mask*h,
-                            self.clip_mask*w*2, self.clip_mask*h*2,
-                            type=QRegion.Ellipse)
+                a = QRegion(
+                    w / 2 - self.clip_mask * w,
+                    h / 2 - self.clip_mask * h,
+                    self.clip_mask * w * 2,
+                    self.clip_mask * h * 2,
+                    type=QRegion.Ellipse,
+                )
                 p.setClipRegion(a)
             elif isinstance(self.clip_mask[0], tuple):
                 points = [QPoint(int(w * x), int(h * y)) for (x, y) in self.clip_mask]
@@ -142,7 +144,7 @@ class StimulusCombiner(VisualStimulus, DynamicStimulus):
 
 
 class FullFieldVisualStimulus(VisualStimulus):
-    """ Class for painting a full field flash of a specific color.
+    """Class for painting a full field flash of a specific color.
 
     Parameters
     ----------
@@ -166,7 +168,7 @@ class FullFieldVisualStimulus(VisualStimulus):
 class DynamicLuminanceStimulus(
     FullFieldVisualStimulus, InterpolatedStimulus, DynamicStimulus
 ):
-    """ A luminance stimulus that has dynamically specified luminance.
+    """A luminance stimulus that has dynamically specified luminance.
 
 
     Parameters
@@ -191,9 +193,7 @@ class DynamicLuminanceStimulus(
 
 
 class Pause(FullFieldVisualStimulus):
-    """ Class for painting full field black stimuli.
-
-    """
+    """Class for painting full field black stimuli."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, color=(0, 0, 0), **kwargs)
@@ -201,8 +201,7 @@ class Pause(FullFieldVisualStimulus):
 
 
 class VideoStimulus(VisualStimulus, DynamicStimulus):
-    """ Displays videos using PIMS, at a specified framerate.
-    """
+    """Displays videos using PIMS, at a specified framerate."""
 
     def __init__(self, *args, video_path, framerate=None, duration=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -266,8 +265,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
 
 class PositionStimulus(VisualStimulus, DynamicStimulus):
-    """Stimulus with a defined position and orientation to the fish.
-        """
+    """Stimulus with a defined position and orientation to the fish."""
 
     def __init__(self, *args, centre_relative=False, **kwargs):
         """ """
@@ -279,8 +277,7 @@ class PositionStimulus(VisualStimulus, DynamicStimulus):
 
 
 class BackgroundStimulus(PositionStimulus):
-    """Stimulus with a tiling background
-        """
+    """Stimulus with a tiling background"""
 
     def get_unit_dims(self, w, h):
         return w, h
@@ -337,19 +334,19 @@ class BackgroundStimulus(PositionStimulus):
         # self.clip(p,w,h)
 
     def draw_block(self, p, point, w, h):
-        """ Has to be defined in each child of the class, defines what
+        """Has to be defined in each child of the class, defines what
         is to be painted per tile of the repeating stimulus
 
         Parameters
         ----------
         p :
-            
+
         point :
-            
+
         w :
-            
+
         h :
-            
+
 
         Returns
         -------
@@ -359,7 +356,7 @@ class BackgroundStimulus(PositionStimulus):
 
 
 class SeamlessImageStimulus(BackgroundStimulus):
-    """ Displays an image which should tile seamlessly.
+    """Displays an image which should tile seamlessly.
 
     The top of the image should match with the bottom and the left
     with the right, so there are no discontinuities). An even checkerboard
@@ -401,7 +398,7 @@ class SeamlessImageStimulus(BackgroundStimulus):
 
 
 class GratingStimulus(BackgroundStimulus):
-    """ Displays a grating pattern with physical dimensions alternating two
+    """Displays a grating pattern with physical dimensions alternating two
     colors. Can be square or sinusoidal.
     For having moving grating stimulus, use subclass MovingGratingStimulus
 
@@ -472,8 +469,7 @@ class GratingStimulus(BackgroundStimulus):
 
 
 class PaintGratingStimulus(BackgroundStimulus):
-    """ Class for moving a grating pattern.
-    """
+    """Class for moving a grating pattern."""
 
     def __init__(
         self,
@@ -497,16 +493,14 @@ class PaintGratingStimulus(BackgroundStimulus):
         self.barheight = 100
 
     def get_unit_dims(self, w, h):
-        """
-        """
+        """ """
         return (
             int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
             self.barheight,
         )
 
     def draw_block(self, p, point, w, h):
-        """ Function for drawing the gratings programmatically.
-        """
+        """Function for drawing the gratings programmatically."""
         p.setPen(Qt.NoPen)
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.color)))
@@ -522,9 +516,7 @@ class PaintGratingStimulus(BackgroundStimulus):
 
 
 class HalfFieldStimulus(PositionStimulus):
-    """ For phototaxis
-
-    """
+    """For phototaxis"""
 
     def __init__(
         self, *args, left=False, color=(255, 255, 255), center_dist=0, **kwargs
@@ -585,9 +577,7 @@ class HalfFieldStimulus(PositionStimulus):
 
 
 class RadialSineStimulus(VisualStimulus):
-    """ Stimulus which makes the fish move to the center of the dish
-
-    """
+    """Stimulus which makes the fish move to the center of the dish"""
 
     def __init__(self, period=8, velocity=5, duration=1, **kwargs):
         super().__init__(**kwargs)
@@ -622,7 +612,7 @@ class RadialSineStimulus(VisualStimulus):
 
 
 class adaptiveRadialSineStimulus(RadialSineStimulus):
-    """ Centering Wrapper for Motti"""
+    """Centering Wrapper for Motti"""
 
     def __init__(self, period=8, velocity=5, duration=1, **kwargs):
         super().__init__(**kwargs)
@@ -633,13 +623,22 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
         try:
             t, last_position = self._experiment.acc_motor.data_queue.get()
 
-            x, y_placeholder = ((np.arange(d) - d/round(int(last_position.x_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (w, 0))
-            x_placeholder, y = ((np.arange(d) - d/round(int(last_position.y_) * self.motor_proj,2)) *self._experiment.calibrator.mm_px for d in (0, h))
-
+            x, y_placeholder = (
+                (np.arange(d) - d / round(int(last_position.x_) * self.motor_proj, 2))
+                * self._experiment.calibrator.mm_px
+                for d in (w, 0)
+            )
+            x_placeholder, y = (
+                (np.arange(d) - d / round(int(last_position.y_) * self.motor_proj, 2))
+                * self._experiment.calibrator.mm_px
+                for d in (0, h)
+            )
 
             self.image = np.round(
                 np.sin(
-                    np.sqrt((x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period))
+                    np.sqrt(
+                        (x[None, :] ** 2 + y[:, None] ** 2) * (2 * np.pi / self.period)
+                    )
                     + self.phase
                 )
                 * 127
@@ -650,10 +649,9 @@ class adaptiveRadialSineStimulus(RadialSineStimulus):
         except:
             pass
 
-class FishOverlayStimulus(PositionStimulus):
-    """ For testing freely-swimming closed loop
 
-    """
+class FishOverlayStimulus(PositionStimulus):
+    """For testing freely-swimming closed loop"""
 
     def __init__(self, color=(255, 50, 0), **kwargs):
         super().__init__(**kwargs)
@@ -683,7 +681,7 @@ class MovingGratingStimulus(PaintGratingStimulus, InterpolatedStimulus):
 
 
 def z_func_windmill(x, y, arms):
-    """ Function for sinusoidal windmill of arbitrary number of arms
+    """Function for sinusoidal windmill of arbitrary number of arms
     symmetrical with respect to perpendicular axes (for even n)
     """
     if np.mod(arms, 2) == 0:
@@ -828,7 +826,7 @@ class HighResMovingWindmillStimulus(HighResWindmillStimulus, InterpolatedStimulu
 
 
 class CircleStimulus(VisualStimulus, DynamicStimulus):
-    """ A filled circle stimulus, which in combination with interpolation
+    """A filled circle stimulus, which in combination with interpolation
     can be used to make looming stimuli
 
     Parameters

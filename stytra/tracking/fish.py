@@ -24,6 +24,7 @@ def _fish_column_names(i_fish, n_segments):
         "f{:d}_vtheta".format(i_fish),
     ] + ["f{:d}_theta_{:02d}".format(i_fish, i) for i in range(n_segments)]
 
+
 def _fish_eye_column_names(i_fish):
     return [
         "pos_x_e0{}".format(i_fish),
@@ -36,7 +37,7 @@ def _fish_eye_column_names(i_fish):
         "dim_x_e1{}".format(i_fish),
         "dim_y_e1{}".format(i_fish),
         "th_e1{}".format(i_fish),
-        ]
+    ]
 
 
 class FishTrackingMethod(ImageToDataNode):
@@ -73,7 +74,7 @@ class FishTrackingMethod(ImageToDataNode):
             + ["biggest_area"],
         )
 
-        #Todo add conditional for motor process
+        # Todo add conditional for motor process
 
         self._output_type_changed = True
 
@@ -255,7 +256,6 @@ class FishTrackingMethod(ImageToDataNode):
         )
 
 
-
 spec = [
     ("n_fish", int64),
     ("coords", float64[:, :]),
@@ -340,7 +340,7 @@ class Fishes(object):
         return False
 
     def is_close(self, new_fish, i_fish):
-        """ Check whether the new coordinates are
+        """Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
@@ -400,7 +400,7 @@ def _symmetry_points(x0, y0, x, y):
 
 @jit(nopython=True)
 def _circle_points(x0, y0, radius):
-    """ Bresenham's circle algorithm
+    """Bresenham's circle algorithm
 
     Parameters
     ----------

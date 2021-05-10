@@ -37,8 +37,8 @@ class FlashProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.period_sec = Param(5.)
-        self.flash_duration = Param(2.)
+        self.period_sec = Param(5.0)
+        self.flash_duration = Param(2.0)
 
     def get_stim_sequence(self):
         stimuli = [

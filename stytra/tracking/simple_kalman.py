@@ -4,8 +4,8 @@ import numpy as np
 
 @jit(nopython=True)
 def predict_inplace(x, P, F, Q):
-    x[0] = x[0]+x[1]
-    P[:,:] = np.dot(np.dot(F, P), F.T) + Q
+    x[0] = x[0] + x[1]
+    P[:, :] = np.dot(np.dot(F, P), F.T) + Q
 
 
 @jit(nopython=True)

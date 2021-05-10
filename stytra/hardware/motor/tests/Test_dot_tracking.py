@@ -99,7 +99,7 @@ class ReceiverProcess(Process):
                 pass
 
             if (datetime.datetime.now() - start).total_seconds() > duration:
-                print ("duration done")
+                print("duration done")
                 # print(len(times), len(dot_pos), len(motor_pos))
 
                 # df = pd.DataFrame(dict(time=times, dots=dot_pos, motorpos=motor_pos))

@@ -4,7 +4,12 @@ from PyQt5.QtWidgets import QLabel, QWidget, QHBoxLayout, QPushButton
 import numpy as np
 import pyqtgraph as pg
 
-from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException, MotorCalibrator
+from stytra.calibration import (
+    CircleCalibrator,
+    CrossCalibrator,
+    CalibrationException,
+    MotorCalibrator,
+)
 from PyQt5.QtWidgets import QVBoxLayout
 from lightparam.gui import ControlSpin
 from collections import namedtuple
@@ -13,6 +18,7 @@ import cv2
 from time import sleep
 
 from stytra.gui.buttons import ToggleIconButton
+
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows
@@ -100,11 +106,11 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         Parameters
         ----------
         calibrator :
-            
+
         camera_resolution :
              (Default value = (480)
         640) :
-            
+
         image :
              (Default value = None)
 
@@ -164,7 +170,7 @@ class ProjectorAndCalibrationWidget(QWidget):
     sig_calibrating = pyqtSignal()
 
     def __init__(self, experiment, **kwargs):
-        """ Instantiate the widget that controls the display on the projector
+        """Instantiate the widget that controls the display on the projector
 
         :param experiment: Experiment class with calibrator and display window
         """
@@ -251,7 +257,7 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         self.experiment.frame_dispatcher.calibration_event.set()
 
-        k = 0 #this loop is needed for the picture queue not to be jammed
+        k = 0  # this loop is needed for the picture queue not to be jammed
         while k < 100:
             self.experiment.app.processEvents()
             k += 1
@@ -261,9 +267,9 @@ class ProjectorAndCalibrationWidget(QWidget):
 
         conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
 
-        e =(conx,cony)
+        e = (conx, cony)
 
-        self.experiment.calib_queue.put(time,output_calib(*e))
+        self.experiment.calib_queue.put(time, output_calib(*e))
 
         self.widget_proj_viewer.display_calibration_pattern(
             self.calibrator, frame.shape, frame
@@ -275,4 +281,3 @@ class ProjectorAndCalibrationWidget(QWidget):
     # def toggle_motor_tracking(self):
     #     #todo handle differently needs toggeling
     #     self.experiment.frame_dispatcher.tracking_event.set()
-

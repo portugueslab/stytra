@@ -15,7 +15,7 @@ class ProtocolRunner(QObject):
 
     It is thought to be
     integrated with the stytra.gui.protocol_control.ProtocolControlWidget GUI.
-    
+
     In stytra Protocols are parameterized objects required just for generating
     a list of Stimulus objects. The engine that run this sequence of Stimuli
     is the ProtocolRunner class.
@@ -30,7 +30,7 @@ class ProtocolRunner(QObject):
     to the internal _set_new_protocol() method.
     Every time a Protocol is set or updated, the ProtocolRunner uses its
     get_stimulus_sequence() method to generate a new list of stimuli.
-    
+
     For running the Protocol (i.e., going through the list of Stimulus objects
     keeping track of time), ProtocolRunner has an internal QTimer whose timeout
     calls the timestep() method, which:
@@ -166,8 +166,7 @@ class ProtocolRunner(QObject):
             self.current_stimulus = None
 
     def start(self):
-        """Start the protocol by starting the timers.
-        """
+        """Start the protocol by starting the timers."""
         # Updating protocol before starting has been added to include changes
         #  to the calibrator that are considered only in initializing the
         # stimulus and not while it is running (e.g., gratings). Consider
@@ -188,7 +187,7 @@ class ProtocolRunner(QObject):
         """Update displayed stimulus. This function is the core of the
         ProtocolRunner class. It is called by every timer timeout.
         At every timestep, if protocol is running:
-        
+
             - check elapsed time from beginning of the last stimulus;
             - if required, update current stimulus state
             - if elapsed time has passed stimulus duration, change current
@@ -241,8 +240,7 @@ class ProtocolRunner(QObject):
                 self.framerate_acc.update_list(self.framerate_rec.current_framerate)
 
     def stop(self):
-        """Stop the stimulation sequence. Update log and stop timer.
-        """
+        """Stop the stimulation sequence. Update log and stop timer."""
         if not self.completed:  # if protocol was interrupted, update log anyway
             self.update_log()
             self.experiment.logger.info(
@@ -305,11 +303,10 @@ class ProtocolRunner(QObject):
             duration += stim.duration
         return duration
 
-
-    #def get_duration(self):
+    # def get_duration(self):
     #    """Get total duration of the protocol in sec, calculated from stimuli
     #    durations.
-#
+    #
     ##    Returns
     #    -------
     #    float :
@@ -322,8 +319,7 @@ class ProtocolRunner(QObject):
     #    return total_duration
 
     def print(self):
-        """Print protocol sequence.
-        """
+        """Print protocol sequence."""
         string = ""
         for stim in self.stimuli:
             string += "-" + stim.name
@@ -379,8 +375,8 @@ class Protocol(ParametrizedQt):
             raise ValueError("Protocol does not have a specified name")
         super().__init__(name="stimulus/protocol/" + self.__class__.name)
 
-        self.pre_pause = Param(0., limits=(0., 10000.))
-        self.post_pause = Param(0., limits=(0., 10000.))
+        self.pre_pause = Param(0.0, limits=(0.0, 10000.0))
+        self.post_pause = Param(0.0, limits=(0.0, 10000.0))
         self.n_repeats = Param(1, limits=(1, 10000))
 
     def _get_stimulus_list(self):

@@ -17,7 +17,7 @@ class EyeTrackingMethod(ImageToDataNode):
     name = "eyes"
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args,  name="eyes_tracking", **kwargs)
+        super().__init__(*args, name="eyes_tracking", **kwargs)
 
         headers = []
         for i in range(2):
@@ -69,10 +69,15 @@ class EyeTrackingMethod(ImageToDataNode):
         PAD = 0
 
         cropped = _pad(
-            (im[
-                wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
-                wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
-            ] < threshold).view(dtype=np.uint8).copy(),
+            (
+                im[
+                    wnd_pos[1] : wnd_pos[1] + wnd_dim[1],
+                    wnd_pos[0] : wnd_pos[0] + wnd_dim[0],
+                ]
+                < threshold
+            )
+            .view(dtype=np.uint8)
+            .copy(),
             padding=PAD,
             val=255,
         )
@@ -96,8 +101,10 @@ class EyeTrackingMethod(ImageToDataNode):
                 + (-e[1][2],)
             )
         return NodeOutput(
-            [message, ],
-            self._output_type(*e)
+            [
+                message,
+            ],
+            self._output_type(*e),
         )
 
 
@@ -191,5 +198,3 @@ def _fit_ellipse(thresholded_image):
     else:
         # Not at least two eyes + maybe dirt found...
         return False
-
-

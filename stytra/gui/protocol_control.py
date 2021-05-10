@@ -37,13 +37,12 @@ class ProtocolControlToolbar(QToolBar):
 
     sig_start_tracking = pyqtSignal()
     """ Emitted via the toggle button click, meant to
-                         start the protocol."""
+                         start tracking in case of MotorExperiment."""
     sig_stop_tracking = pyqtSignal()
     """ Emitted via the toggle button click, meant to
-                         abort the protocol."""
+                         abort tracking in case of MotorExperiment."""
 
-
-    def __init__(self, protocol_runner: ProtocolRunner,  main_window=None):
+    def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
         self.setIconSize(QSize(32, 32))
@@ -79,10 +78,8 @@ class ProtocolControlToolbar(QToolBar):
         self.protocol_runner.sig_protocol_updated.connect(self.update_progress)
         self.protocol_runner.sig_protocol_interrupted.connect(self.toggle_icon)
 
-
     def show_stim_params_gui(self):
-        """Create and show window to update protocol parameters.
-        """
+        """Create and show window to update protocol parameters."""
         self.prot_param_win = ParameterGui(self.protocol_runner.protocol)
         self.prot_param_win.show()
 
@@ -105,19 +102,19 @@ class ProtocolControlToolbar(QToolBar):
         else:
             self.sig_stop_protocol.emit()
 
-
     def toggle_icon(self):
         self.toggleStatus.flip_icon(self.protocol_runner.running)
         self.update_progress()
 
     def update_progress(self):
-        """ Update progress bar
-        """
+        """Update progress bar"""
 
-        #if self._update_duration_i == 0:
-         #   pass
-            #self.protocol_runner.duration = self.protocol_runner.get_duration()
-        self._update_duration_i = (self._update_duration_i + 1) % self.update_duration_each
+        # if self._update_duration_i == 0:
+        #   pass
+        # self.protocol_runner.duration = self.protocol_runner.get_duration()
+        self._update_duration_i = (
+            self._update_duration_i + 1
+        ) % self.update_duration_each
 
         self.progress_bar.setMaximum(int(self.protocol_runner.duration))
         self.progress_bar.setValue(int(self.protocol_runner.t))

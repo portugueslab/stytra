@@ -8,6 +8,7 @@ from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 from multiprocessing import Queue
 
+
 class TrackingProcess(FrameProcess):
     """A class which handles taking frames from the camera and processing them,
      as well as dispatching a subset for display
@@ -161,7 +162,7 @@ class TrackingProcess(FrameProcess):
         return
 
     def send_to_gui(self, frametime, frame):
-        """ Sends the current frame to the GUI queue at the appropriate framerate"""
+        """Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
             every_x = max(
                 int(self.framerate_rec.current_framerate / self.gui_framerate), 1
@@ -178,9 +179,9 @@ class TrackingProcess(FrameProcess):
 
 
 class TrackingProcessMotor(TrackingProcess):
-    def __init__(self, *args,
-                 second_output_queue=None,
-                 calib_queue= None, scale= None, **kwargs): # time_queue=None, time_queue2=None,
+    def __init__(
+        self, *args, second_output_queue=None, calib_queue=None, scale=None, **kwargs
+    ):  # time_queue=None, time_queue2=None,
 
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
@@ -192,7 +193,7 @@ class TrackingProcessMotor(TrackingProcess):
         self.scale_y = None
         self.threshold = 100
         self.scale = scale
-        self.center_y = 268 #Todo get center x, y from camera
+        self.center_y = 268  # Todo get center x, y from camera
         self.center_x = 360
 
     def send_to_queue(self, time, output):
@@ -240,19 +241,21 @@ class TrackingProcessMotor(TrackingProcess):
             # If a processing function is specified, apply it:
             new_messages, output = self.pipeline.run(frame)
 
-            #Calculate new position for the motor if calibration was set
+            # Calculate new position for the motor if calibration was set
             if self.scale_x is None:
                 self.scale_x = self.scale[0]
                 self.scale_y = self.scale[1]
 
             distance_y = -(output.f0_y - self.center_y) * self.scale_y
             distance_x = -(output.f0_x - self.center_x) * self.scale_x
-            #todo negative now
+            # todo negative now
 
-            if (distance_x) ** 2 + (distance_y) ** 2 >= 500 ** 2: #this is a jitter filter
-                sec_output= (distance_x, distance_y)
+            if (distance_x) ** 2 + (
+                distance_y
+            ) ** 2 >= 500 ** 2:  # this is a jitter filter
+                sec_output = (distance_x, distance_y)
             else:
-                sec_output=(0.0,0.0)
+                sec_output = (0.0, 0.0)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)
@@ -274,7 +277,7 @@ class TrackingProcessMotor(TrackingProcess):
 
 
 class DispatchProcess(FrameProcess):
-    """ A class which handles taking frames from the camera and dispatch them to both a separate
+    """A class which handles taking frames from the camera and dispatch them to both a separate
     process (e.g. for saving a movie) and to a gui for display
 
     Parameters
@@ -338,7 +341,7 @@ class DispatchProcess(FrameProcess):
         return
 
     def send_to_gui(self, frametime, frame):
-        """ Sends the current frame to the GUI queue at the appropriate framerate"""
+        """Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
             every_x = max(
                 int(self.framerate_rec.current_framerate / self.gui_framerate), 1

@@ -16,24 +16,24 @@ from stytra.stimulation.stimuli import (
 
 class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     """
-        Vigor-based closed loop stimulus.
+    Vigor-based closed loop stimulus.
 
-        The parameters can change in time if the df_param is supplied which
-        specifies their values in time.
+    The parameters can change in time if the df_param is supplied which
+    specifies their values in time.
 
-        Parameters
-        ----------
-        base_vel:
-            the velocity of the background when the stimulus is not moving
-        shunting: bool
-            if true, when the fish stops swimming its infulence on the
-            background motion stops, immediately independent of lag
-        swimming_threshold: float
-            the velocity at which the fish is considered to be performing
-            a bout
-        fixed_vel: float
-            if not None, fixed velocity for the stimulus when fish swims
-        """
+    Parameters
+    ----------
+    base_vel:
+        the velocity of the background when the stimulus is not moving
+    shunting: bool
+        if true, when the fish stops swimming its infulence on the
+        background motion stops, immediately independent of lag
+    swimming_threshold: float
+        the velocity at which the fish is considered to be performing
+        a bout
+    fixed_vel: float
+        if not None, fixed velocity for the stimulus when fish swims
+    """
 
     def __init__(
         self, *args, base_vel=10, swimming_threshold=-2, max_fish_vel=40, **kwargs
@@ -54,22 +54,20 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.bout_stop = np.nan
 
     def get_fish_vel(self):
-        """ Function that update estimated fish velocty. Change to add lag or
+        """Function that update estimated fish velocty. Change to add lag or
         shunting.
         """
         self.fish_vel = self._experiment.estimator.get_velocity()
 
     def bout_started(self):
-        """ Function called on bout start.
-        """
+        """Function called on bout start."""
         pass
 
     def bout_occurring(self):
         pass
 
     def bout_ended(self):
-        """ Function called on bout end.
-        """
+        """Function called on bout end."""
         pass
 
     def update(self):
@@ -131,8 +129,8 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.name = "calibrating_cl1D"
         self.dynamic_parameters.extend(["est_gain", "median_calib"])
         self.target_avg_fish_vel = (
-            target_avg_fish_vel
-        )  # target velocity for the calibration
+            target_avg_fish_vel  # target velocity for the calibration
+        )
 
         self.bout_counter = 0
         self.bout_peak_vel = 0
@@ -228,7 +226,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
         self.gain_drop_end = gain_drop_end
 
     def get_fish_vel(self):
-        """ Function that update estimated fish velocty. Change to add lag or
+        """Function that update estimated fish velocty. Change to add lag or
         shunting.
         """
         super(GainLagClosedLoop1D, self).get_fish_vel()
@@ -265,8 +263,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
         self.current_condition = None
 
     def bout_started(self):
-        """ Function called on bout start.
-        """
+        """Function called on bout start."""
         # reset to baseline values:
         if self.current_condition is not None:
             for k in self.current_condition["change_to"].keys():
@@ -287,9 +284,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus):
-    """ A stimulus which is always kept perpendicular to the fish
-
-    """
+    """A stimulus which is always kept perpendicular to the fish"""
 
     def update(self):
         y, x, theta = self._experiment.estimator.get_position()

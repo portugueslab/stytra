@@ -3,7 +3,7 @@ import datetime
 
 
 class Stimulus:
-    """ Abstract class for a Stimulus.
+    """Abstract class for a Stimulus.
 
     In stytra, a Stimulus is something that
     makes things happen at some point of an experiment.
@@ -102,17 +102,15 @@ class Stimulus:
         self.real_time_stop = datetime.datetime.now()
 
     def start(self):
-        """Function called by the ProtocolRunner when a new stimulus is set.
-        """
+        """Function called by the ProtocolRunner when a new stimulus is set."""
         self.real_time_start = datetime.datetime.now()
 
     def stop(self):
-        """Function called by the ProtocolRunner when a new stimulus is set.
-        """
+        """Function called by the ProtocolRunner when a new stimulus is set."""
         pass
 
     def initialise_external(self, experiment):
-        """ Make a reference to the Experiment class inside the Stimulus.
+        """Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
         estimators for virtual reality.
@@ -192,7 +190,7 @@ class InterpolatedStimulus(DynamicStimulus):
     """
 
     def __init__(self, *args, df_param, **kwargs):
-        """"""
+        """ """
         super().__init__(*args, **kwargs)
         self.dynamic_parameters.append("current_phase")
         self.df_param = df_param
@@ -237,7 +235,7 @@ class InterpolatedStimulus(DynamicStimulus):
 
 
 class TriggerStimulus(DynamicStimulus):
-    """ A class that uses the Experiment trigger to trigger a sequence
+    """A class that uses the Experiment trigger to trigger a sequence
     of stimuli.
 
     """

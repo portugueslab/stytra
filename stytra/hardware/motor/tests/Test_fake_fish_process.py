@@ -10,21 +10,22 @@ import math
 import numpy as np
 import pandas as pd
 import deepdish as dd
+
 # import flammkuchen as fl
 
+
 class SimpleReceiverProcess(Process):
-    def __init__(self, dot_position_queue,
-                 finished_event, motor_position_queue,
-                 arena_lim):
+    def __init__(
+        self, dot_position_queue, finished_event, motor_position_queue, arena_lim
+    ):
         super().__init__()
         self.position_queue = dot_position_queue
         self.motor_position_queue = motor_position_queue
         self.finished_event = finished_event
-        self. start_x = None
+        self.start_x = None
         self.start_y = None
 
         self.time_list = []
-
 
     def run(self):
         acc = int(204552)
@@ -36,7 +37,6 @@ class SimpleReceiverProcess(Process):
         self.motor_x.open()
         self.motor_y.setvelocity(acceleration=acc, velocity=velo)
         self.motor_x.setvelocity(acceleration=acc, velocity=velo)
-
 
         self.start_x = self.motor_x.get_position()
         self.start_y = self.motor_y.get_position()
@@ -70,21 +70,24 @@ class SimpleReceiverProcess(Process):
                     self.motor_x.move_rel(int(last_position.f0_x))
                     self.motor_y.move_rel(int(last_position.f0_y))
 
-
         self.motor_x.close()
         self.motor_y.close()
 
 
-
 class SimpleSendProcess(Process):
-    def __init__(self, target_position_queue,
-                 target_position_queue_copy,
-                 motor_position_queue,
-                 finished_event,
-                 disp):
+    def __init__(
+        self,
+        target_position_queue,
+        target_position_queue_copy,
+        motor_position_queue,
+        finished_event,
+        disp,
+    ):
         super().__init__()
 
-        df = pd.read_csv(r"C:\Users\portugueslab\Desktop\fake_fish_data.csv", index_col=0)
+        df = pd.read_csv(
+            r"C:\Users\portugueslab\Desktop\fake_fish_data.csv", index_col=0
+        )
 
         x = disp / math.sqrt(2)
         y = disp / math.sqrt(2)
@@ -97,7 +100,7 @@ class SimpleSendProcess(Process):
 
     def run(self) -> None:
         time.sleep(3)
-        print('starting...')
+        print("starting...")
         second_output = namedtuple("fish_scaled", ["f0_x", "f0_y"])
         i = 0
         while not self.finished_event.is_set():
@@ -108,13 +111,13 @@ class SimpleSendProcess(Process):
                 i = 0
             else:
                 i += 1
-            time.sleep(1/0.5)
+            time.sleep(1 / 0.5)
 
 
 class TemporalProcess(Process):
-    def __init__(self, desired_position_queue_copy,
-                 motti_position_queue,
-                 end_event, name_file):
+    def __init__(
+        self, desired_position_queue_copy, motti_position_queue, end_event, name_file
+    ):
         super().__init__()
         self.motti_position_queue = motti_position_queue
         self.desired_position_queue_copy = desired_position_queue_copy
@@ -143,7 +146,6 @@ class TemporalProcess(Process):
         pos_x.append(np.nan)
         pos_y.append(np.nan)
 
-
         while not self.end_event.is_set():
             now_time = datetime.datetime.now()
             try:
@@ -151,7 +153,9 @@ class TemporalProcess(Process):
             except Empty:
                 position = self.last_position
             try:
-                tracked_time, target = self.desired_position_queue_copy.get(timeout=0.001)
+                tracked_time, target = self.desired_position_queue_copy.get(
+                    timeout=0.001
+                )
                 flag = False
             except Empty:
                 flag = True
@@ -180,9 +184,17 @@ class TemporalProcess(Process):
             self.last_target = target
             prev_time = now_time
 
-        d = {'t': t, 'target_x': target_x, 'target_y': target_y, 'pos_x': pos_x, 'pos_y': pos_y, }
+        d = {
+            "t": t,
+            "target_x": target_x,
+            "target_y": target_y,
+            "pos_x": pos_x,
+            "pos_y": pos_y,
+        }
         time_bin_df = pd.DataFrame(data=d)
-        time_bin_df.to_hdf("310320_mottilag_settle_t192_jogging.h5", key='time_bin_df', mode='w')
+        time_bin_df.to_hdf(
+            "310320_mottilag_settle_t192_jogging.h5", key="time_bin_df", mode="w"
+        )
 
 
 if __name__ == "__main__":
@@ -190,27 +202,28 @@ if __name__ == "__main__":
     motor_position_queue = NamedTupleQueue()
     target_position_queue = NamedTupleQueue()
     target_position_queue_copy = NamedTupleQueue()
-    displ = 100000 #test max at 100000
+    displ = 100000  # test max at 100000
     arena_lim = 100
     name_file = "file.h5"
-    source = SimpleSendProcess(target_position_queue,
-                               target_position_queue_copy,
-                               motor_position_queue,
-                               finished_event,
-                               displ)
-    receiver = SimpleReceiverProcess(target_position_queue,
-                                     finished_event,
-                                     motor_position_queue,
-                                     arena_lim)
-    timing_process = TemporalProcess(target_position_queue_copy,
-                                     motor_position_queue,
-                                     finished_event, name_file)
+    source = SimpleSendProcess(
+        target_position_queue,
+        target_position_queue_copy,
+        motor_position_queue,
+        finished_event,
+        displ,
+    )
+    receiver = SimpleReceiverProcess(
+        target_position_queue, finished_event, motor_position_queue, arena_lim
+    )
+    timing_process = TemporalProcess(
+        target_position_queue_copy, motor_position_queue, finished_event, name_file
+    )
     timing_process.start()
     source.start()
     receiver.start()
 
     time.sleep(20)
-    print('time expired!')
+    print("time expired!")
     finished_event.set()
     source.join()
     receiver.join()

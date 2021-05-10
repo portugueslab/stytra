@@ -18,10 +18,13 @@ class PauseProtocol(Protocol):
 
     def __init__(self):
         super().__init__()
-        self.period_sec = Param(10., limits=(0.2, None))
+        self.period_sec = Param(10.0, limits=(0.2, None))
 
     def get_stim_sequence(self):
-        return [Pause(duration=self.period_sec), ]
+        return [
+            Pause(duration=self.period_sec),
+        ]
+
 
 if __name__ == "__main__":
     st = Stytra(protocol=PauseProtocol(), recording=True)

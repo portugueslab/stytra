@@ -12,7 +12,7 @@ class SpinnakerCamera(Camera):
 
     Uses Spinnaker API. Module documentation `here
     <https://www.flir.com/products/spinnaker-sdk/>`_.
-    
+
      Note roi is [x, y, width, height]
     """
 
@@ -150,7 +150,6 @@ class SpinnakerCamera(Camera):
         self.gain_node = self.cam.Gain
         self.gain_min = self.gain_node.GetMin()
         self.gain_max = self.gain_node.GetMax()
-
 
         # Starting acquisition
         self.cam.BeginAcquisition()

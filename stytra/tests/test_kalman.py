@@ -3,7 +3,7 @@ from stytra.tracking.fish import Fishes
 
 
 def test_fish():
-    """ Test fish Kalman updating with angle correction
+    """Test fish Kalman updating with angle correction
 
     Returns
     -------
@@ -16,6 +16,17 @@ def test_fish():
     assert np.allclose(
         fshs.coords,
         np.array(
-            [[0.66666667, 0.33333466, 0.66666667, 0.33333466, 3.17492599, -0.03333376, 0.0, 0.0]]
+            [
+                [
+                    0.66666667,
+                    0.33333466,
+                    0.66666667,
+                    0.33333466,
+                    3.17492599,
+                    -0.03333376,
+                    0.0,
+                    0.0,
+                ]
+            ]
         ),
     )
