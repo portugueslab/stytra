@@ -34,8 +34,15 @@ class ReceiverProcess(Process):
         self.motor_y = Motor(1, scale=1)
         self.motor_x = Motor(2, scale=1)
 
+        max_acc = 204552
+        max_velo = 107374182
+
         self.motor_y.open()
         self.motor_x.open()
+
+        self.motor_x.setvelocity(int(max_acc/10), int(max_velo/10))
+        self.motor_y.setvelocity(int(max_acc/10), int(max_velo/10))
+
         self.motor_x.polling(self.polling_time)
         self.motor_y.polling(self.polling_time)
 
@@ -116,6 +123,7 @@ class ReceiverProcess(Process):
                         )
 
                         if self.start_time is not None:
+                            #todo dont call if fish is tracked
                             idle_time = (
                                 datetime.datetime.now() - self.start_time
                             ).total_seconds()

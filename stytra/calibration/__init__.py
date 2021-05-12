@@ -307,7 +307,7 @@ class MotorCalibrator(CircleCalibrator):
     """Displays a pattern for Motor Calibration"""
 
     def __init__(self, *args, dh=10, r=1, **kwargs):
-        super().__init__(*args, dh=50, **kwargs)
+        super().__init__(*args, dh=20, **kwargs)
         self.encoder_counts_per_unit = (
             20000  # motor unit to mm conversion gotten from motor
         )
@@ -366,5 +366,6 @@ class MotorCalibrator(CircleCalibrator):
         self.conversion_x = int(self.encoder_counts_per_unit / abs(x_points))
         self.conversion_y = int(self.encoder_counts_per_unit / abs(y_points))
         self.motor_to_cam = [self.conversion_x, self.conversion_y]
+        print ("conx, cony", self.conversion_x, self.conversion_y)
 
         return self.conversion_x, self.conversion_y
