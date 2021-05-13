@@ -366,6 +366,6 @@ class MotorCalibrator(CircleCalibrator):
         self.conversion_x = int(self.encoder_counts_per_unit / abs(x_points))
         self.conversion_y = int(self.encoder_counts_per_unit / abs(y_points))
         self.motor_to_cam = [self.conversion_x, self.conversion_y]
-        print ("conx, cony", self.conversion_x, self.conversion_y)
+        print("conx, cony", self.conversion_x, self.conversion_y)
 
         return self.conversion_x, self.conversion_y

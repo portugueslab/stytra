@@ -356,7 +356,7 @@ class MottiCenteringWrapper(TwoRadiusCenteringWrapper):
         self._experiment.send_motor_status(t, waiting_status)
         super().update()
 
-    #todo get motor pos in- if motor pos not home dont display
+    # todo get motor pos in- if motor pos not home dont display
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
