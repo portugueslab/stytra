@@ -192,6 +192,7 @@ class TrackingProcessMotor(TrackingProcess):
         self.scale_x = None
         self.scale_y = None
         self.threshold = 100
+        self.jitter_filter = 600
         self.scale = scale
         self.center_y = 268  # Todo get center x, y from camera
         self.center_x = 360
@@ -252,7 +253,7 @@ class TrackingProcessMotor(TrackingProcess):
 
             if (distance_x) ** 2 + (
                 distance_y
-            ) ** 2 >= 500 ** 2:  # this is a jitter filter
+            ) ** 2 >= self.jitter_filter ** 2:  # this is a jitter filter
                 sec_output = (distance_x, distance_y)
             else:
                 sec_output = (0.0, 0.0)
