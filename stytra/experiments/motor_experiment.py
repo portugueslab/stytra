@@ -1,7 +1,7 @@
 from stytra.experiments.tracking_experiments import TrackingExperiment
 from stytra.tracking.tracking_process import TrackingProcessMotor
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
-from stytra.hardware.motor.motor_process import ReceiverProcess
+from stytra.hardware.motor.motor_process import MotorExecutionProcess
 from stytra.calibration import MotorCalibrator
 from stytra.collectors import QueueDataAccumulator
 from collections import namedtuple
@@ -21,7 +21,7 @@ class MotorExperiment(TrackingExperiment):
         self.motor_pos_queue = NamedTupleQueue()
         self.motor_status_queue = NamedTupleQueue()
 
-        self.motor_process = ReceiverProcess(
+        self.motor_process = MotorExecutionProcess(
             dot_position_queue=self.tracked_position_queue,
             finished_event=self.camera.kill_event,
             calib_event=self.frame_dispatcher.calibration_event,

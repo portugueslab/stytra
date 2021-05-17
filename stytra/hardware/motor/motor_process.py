@@ -9,7 +9,7 @@ import math
 import numpy as np
 
 
-class ReceiverProcess(Process):
+class MotorExecutionProcess(Process):
     def __init__(
         self,
         dot_position_queue,
@@ -156,7 +156,7 @@ class ReceiverProcess(Process):
 if __name__ == "__main__":
     event = Event()
     source = SendPositionsProcess()
-    receiver = ReceiverProcess(source.position_queue, finished_event=event)
+    receiver = MotorExecutionProcess(source.position_queue, finished_event=event)
     source.start()
     receiver.start()
 
