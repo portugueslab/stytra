@@ -59,8 +59,6 @@ class Motti(Protocol):
 
         return stimuli
 
-        # return [Pause(duration=10)]  # protocol does not do anything
-
 
 if __name__ == "__main__":
     s = Stytra(protocol=Motti())
