@@ -7,6 +7,8 @@ import datetime
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue
 from multiprocessing import Queue
+import math
+import numpy as np
 
 
 class TrackingProcess(FrameProcess):
@@ -181,7 +183,7 @@ class TrackingProcess(FrameProcess):
 class TrackingProcessMotor(TrackingProcess):
     def __init__(
         self, *args, second_output_queue=None, calib_queue=None, scale=None, **kwargs
-    ):  # time_queue=None, time_queue2=None,
+    ):
 
         super().__init__(*args, **kwargs)
         self.second_output_queue = second_output_queue
@@ -192,7 +194,7 @@ class TrackingProcessMotor(TrackingProcess):
         self.scale_x = None
         self.scale_y = None
         self.threshold = 100
-        self.jitter_filter = 600
+        self.jitter_filter = 700
         self.scale = scale
         self.center_y = 268  # Todo get center x, y from camera
         self.center_x = 360
@@ -251,12 +253,15 @@ class TrackingProcessMotor(TrackingProcess):
             distance_x = -(output.f0_x - self.center_x) * self.scale_x
             # todo negative now
 
-            if (distance_x) ** 2 + (
-                distance_y
-            ) ** 2 >= self.jitter_filter ** 2:  # this is a jitter filter
-                sec_output = (distance_x, distance_y)
+            if np.isnan(output.f0_x):
+                sec_output = (np.nan, np.nan)
             else:
-                sec_output = (0.0, 0.0)
+                if (distance_x) ** 2 + (
+                    distance_y
+                ) ** 2 >= self.jitter_filter ** 2:  # this is a jitter filter
+                    sec_output = (distance_x, distance_y)
+                else:
+                    sec_output = (0.0, 0.0)
 
             for msg in messages + new_messages:
                 self.message_queue.put(msg)
