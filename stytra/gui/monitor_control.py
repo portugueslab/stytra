@@ -12,6 +12,7 @@ from lightparam.gui import ControlSpin
 import cv2
 
 from Motti.motor.calibration import MotorCalibrator
+from collections import namedtuple
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -289,7 +290,7 @@ class ProjectorAndCalibrationWidget(QWidget):
         output_calib = namedtuple("scale", ["scale_x", "scale_y"])
 
         time, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        # try:
+
         kps_prev = self.calibrator.find_transform_matrix(frame)
 
         self.experiment.frame_dispatcher.calibration_event.set()
