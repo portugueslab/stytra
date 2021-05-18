@@ -11,6 +11,8 @@ from lightparam.gui import ControlSpin
 
 import cv2
 
+from Motti.motor.calibration import MotorCalibrator
+
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows
@@ -202,13 +204,14 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
             pass
 
 
+
 class ProjectorAndCalibrationWidget(QWidget):
     """ """
 
     sig_calibrating = pyqtSignal()
 
     def __init__(self, experiment, **kwargs):
-        """ Instantiate the widget that controls the display on the projector
+        """Instantiate the widget that controls the display on the projector
 
         :param experiment: Experiment class with calibrator and display window
         """
@@ -232,17 +235,22 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
+        if isinstance(experiment.calibrator, MotorCalibrator):
+            self.button_calibrate = QPushButton("Calibrate Motor")
+            self.button_calibrate.clicked.connect(self.calibrate_motor)
+            self.layout_calibrate.addWidget(self.button_calibrate)
+
+            self.button_home = QPushButton("Home Motor")
+            self.button_home.clicked.connect(self.home_motor)
+            self.layout_calibrate.addWidget(self.button_home)
+
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
-
-        if isinstance(experiment.calibrator, CircleCalibrator):
-            self.calibrator_px_len = ControlSpin(self.calibrator, "triangle_length")
-            self.layout_calibrate.addWidget(self.calibrator_px_len)
-
         self.layout_calibrate.addWidget(self.label_calibrate)
+
         self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
-        self.calibrator_len_spin.label.hide()
+
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
 
         self.layout_calibrate.setContentsMargins(12, 0, 12, 12)
@@ -271,11 +279,40 @@ class ProjectorAndCalibrationWidget(QWidget):
     def calibrate(self):
         """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        try:
-            self.calibrator.find_transform_matrix(frame)
-            self.widget_proj_viewer.display_calibration_pattern(
-                self.calibrator, frame.shape, frame
-            )
 
-        except CalibrationException:
-            pass
+        self.calibrator.find_transform_matrix(frame)
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame
+        )
+
+    def calibrate_motor(self):
+        output_calib = namedtuple("scale", ["scale_x", "scale_y"])
+
+        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        # try:
+        kps_prev = self.calibrator.find_transform_matrix(frame)
+
+        self.experiment.frame_dispatcher.calibration_event.set()
+
+        k = 0  # this loop is needed for the picture queue not to be jammed
+        while k < 100:
+            self.experiment.app.processEvents()
+            k += 1
+
+        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
+        kps_after = self.calibrator.find_transform_matrix(frame)
+
+        conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
+
+        e = (conx, cony)
+
+        self.experiment.calib_queue.put(time, output_calib(*e))
+
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame
+        )
+
+    def home_motor(self):
+        self.experiment.frame_dispatcher.home_event.set()
+
+
