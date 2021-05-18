@@ -75,6 +75,10 @@ class ExperimentWindow(QMainWindow):
         self.toolbar_control.sig_start_protocol.connect(experiment.start_protocol)
         self.toolbar_control.sig_stop_protocol.connect(experiment.end_protocol)
 
+        # Connect signals from the protocol_control for motor tracking
+        self.toolbar_control.sig_start_tracking.connect(experiment.set_tracking)
+        self.toolbar_control.sig_stop_tracking.connect(experiment.stop_tracking)
+
         self.btn_metadata = IconButton(
             icon_name="edit_fish", action_name="Edit metadata"
         )
@@ -98,6 +102,12 @@ class ExperimentWindow(QMainWindow):
 
         if experiment.trigger is not None:
             self.chk_scope = QCheckBox("Wait for trigger signal")
+
+        if experiment.motor_tracking is not None:
+            self.toggleMotor = ToggleIconButton(
+                icon_off="play", icon_on="stop", action_on="play", on=False
+            )
+            self.toggleMotor.clicked.connect(self.toggle_motor_tracking)
 
         self.logger = QPlainTextEditLogger()
         self.experiment.logger.addHandler(self.logger)
@@ -159,6 +169,10 @@ class ExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
+        if self.experiment.motor_tracking is not None:
+            self.toolbar_control.addWidget(self.toggleMotor)
+
+
         self.experiment.gui_timer.timeout.connect(self.plot_framerate.update)
 
         self.toolbar_control.setObjectName("toolbar_control")
@@ -176,6 +190,12 @@ class ExperimentWindow(QMainWindow):
             self.experiment.use_db = True
         else:
             self.experiment.use_db = False
+
+    def toggle_motor_tracking(self):
+        if self.toggleMotor.on == True:
+            self.toolbar_control.sig_start_tracking.emit()
+        else:
+            self.toolbar_control.sig_stop_tracking.emit()
 
     def closeEvent(self, *args, **kwargs):
         """

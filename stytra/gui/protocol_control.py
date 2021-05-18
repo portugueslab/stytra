@@ -35,6 +35,14 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
+    sig_start_tracking = pyqtSignal()
+    """ Emitted via the toggle button click, meant to
+                         start tracking in case of MotorExperiment."""
+    sig_stop_tracking = pyqtSignal()
+    """ Emitted via the toggle button click, meant to
+                         abort tracking in case of MotorExperiment."""
+
+
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
