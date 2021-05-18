@@ -233,7 +233,6 @@ class FishTrackingMethod(ImageToDataNode):
 
         if self._output_type is None:
             self.reset_state()
-
         return NodeOutput(
             messages, self._output_type(*self.fishes.coords.flatten(), max_area * 1.0)
         )

@@ -1,5 +1,5 @@
 from stytra.tracking.pipelines import Pipeline
-from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor, AdaptivePrefilter
+from stytra.tracking.preprocessing import Prefilter, BackgroundSubtractor
 from stytra.tracking.tail import CentroidTrackingMethod
 from stytra.tracking.fish import FishTrackingMethod
 from stytra.tracking.eyes import EyeTrackingMethod
@@ -10,6 +10,9 @@ from stytra.gui.camera_display import (
     EyeTrackingSelection,
     EyeTailTrackingSelection,
 )
+from Motti.motor.preprocessing import AdaptivePrefilter
+from Motti.motor.pipeline import FishTrackingMotorPipeline
+
 
 
 class TailTrackingPipeline(Pipeline):
@@ -47,14 +50,6 @@ class EyeTailTrackingPipeline(Pipeline):
         self.eyetrack = EyeTrackingMethod(parent=self.root)
         self.display_overlay = EyeTailTrackingSelection
 
-
-class FishTrackingMotorPipeline(Pipeline):
-    def __init__(self):
-        super().__init__()
-        self.filter = AdaptivePrefilter(parent=self.root)
-        self.fishtrack = FishTrackingMethod(parent=self.filter)
-        self.extra_widget = BoutPlot
-        self.display_overlay = CameraViewFish
 
 
 

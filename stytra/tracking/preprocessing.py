@@ -52,50 +52,6 @@ class Prefilter(ImageToImageNode):
 
 
 
-
-class AdaptivePrefilter(ImageToImageNode):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, name="adaptive_filtering", **kwargs)
-        self.diagnostic_image_options = ["filtered"]
-
-    def _process(
-            self,
-            im,
-            image_scale: Param(0.5, (0.05, 1.0)),
-            filter_size: Param(2, (0, 15)),
-            color_invert: Param(True),
-            clip: Param(96.9, (0.0, 100.0)),
-            # percentile: Param(96.9, (0.,100.)),
-            **extraparams
-    ):
-        """Optionally resizes, smooths and inverts the image
-
-        :param im:
-        :param state:
-        :param filter_size:
-        :param image_scale:
-        :param color_invert:
-        :return:
-        """
-        if image_scale != 1:
-            im = cv2.resize(
-                im, None, fx=image_scale, fy=image_scale, interpolation=cv2.INTER_AREA
-            )
-        if filter_size > 0:
-            im = cv2.boxFilter(im, -1, (filter_size, filter_size))
-        if color_invert:
-            im = 255 - im
-        if clip > 0:
-            clipp = np.percentile(im, clip)
-            im = np.maximum(im, clip) - clipp
-
-        if self.set_diagnostic == "filtered":
-            self.diagnostic_image = im
-
-        return NodeOutput([], im)
-
-
 @vectorize([uint8(float32, uint8)])
 def negdif(xf, y):
     """
