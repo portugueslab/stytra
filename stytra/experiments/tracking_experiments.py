@@ -227,7 +227,6 @@ class TrackingExperiment(CameraVisualExperiment):
             gui_framerate=20,
         )
 
-        #update the frame dispatcher method if the motor experiment is called
         if kwargs["motor"]:
             self.initialize_tracking_meth()
 
