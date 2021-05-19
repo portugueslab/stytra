@@ -119,9 +119,9 @@ class CameraVisualExperiment(VisualExperiment):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -142,11 +142,11 @@ class CameraVisualExperiment(VisualExperiment):
         Parameters
         ----------
         exctype :
-            
+
         value :
-            
+
         tb :
-            
+
 
         Returns
         -------
@@ -165,12 +165,12 @@ class TrackingExperiment(CameraVisualExperiment):
     eyes, tail, or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
-    
+
     The frame dispatcher take two input queues:
 
         - frame queue from the camera;
         - parameters queue from parameter window.
-    
+
     and it puts data in three queues:
 
         - subset of frames are dispatched to the GUI, for displaying;
@@ -226,6 +226,10 @@ class TrackingExperiment(CameraVisualExperiment):
             recording_signal=self.recording_event,
             gui_framerate=20,
         )
+
+        if kwargs["motor"]:
+            self.initialize_tracking_meth()
+
         if self.pipeline_cls is None:
             raise NameError("The selected tracking method does not exist!")
         self.pipeline = self.pipeline_cls()
@@ -369,9 +373,7 @@ class TrackingExperiment(CameraVisualExperiment):
             self.window_main.stream_plot.toggle_freeze()
 
     def save_data(self):
-        """Save tail position and dynamic parameters and terminate.
-
-        """
+        """Save tail position and dynamic parameters and terminate."""
 
         self.window_main.camera_display.save_image(
             name=self.filename_base() + "img.png"
@@ -393,7 +395,7 @@ class TrackingExperiment(CameraVisualExperiment):
         Parameters
         ----------
         protocol :
-            
+
 
         Returns
         -------
@@ -408,9 +410,9 @@ class TrackingExperiment(CameraVisualExperiment):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -428,7 +430,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.join()
 
     def excepthook(self, exctype, value, tb):
-        """ If an exception happens in the main loop, close all the
+        """If an exception happens in the main loop, close all the
         processes so nothing is left hanging.
 
         """
