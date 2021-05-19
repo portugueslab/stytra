@@ -50,3 +50,5 @@ class ContinuousWriteArduinoPin(InterpolatedStimulus):
     def stop(self):
         super().update()
         self._experiment.arduino_board.write(self.pin, 0)
+
+

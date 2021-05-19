@@ -68,7 +68,8 @@ class Camera:
         return None
 
     def release(self):
-        """Close the camera."""
+        """Close the camera.
+        """
         pass
 
 

@@ -27,7 +27,7 @@ from Motti.motor.motor_experiment import MotorExperiment
 
 
 class Stytra:
-    """Stytra application instance. Contains the QApplication and
+    """ Stytra application instance. Contains the QApplication and
     constructs the appropriate experiment object for the specified
     parameters
 

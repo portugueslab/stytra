@@ -101,11 +101,11 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
         Parameters
         ----------
         calibrator :
-
+            
         camera_resolution :
              (Default value = (480)
         640) :
-
+            
         image :
              (Default value = None)
 
@@ -203,6 +203,7 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
 
         except ValueError:
             pass
+
 
 
 class ProjectorAndCalibrationWidget(QWidget):
@@ -314,3 +315,5 @@ class ProjectorAndCalibrationWidget(QWidget):
 
     def home_motor(self):
         self.experiment.frame_dispatcher.home_event.set()
+
+
