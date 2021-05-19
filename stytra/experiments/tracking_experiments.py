@@ -227,6 +227,7 @@ class TrackingExperiment(CameraVisualExperiment):
             gui_framerate=20,
         )
 
+        # If motor experiment is called overwrite frame disptacher here to avoid problems with the gui
         if kwargs["motor"]:
             self.initialize_tracking_meth()
 
