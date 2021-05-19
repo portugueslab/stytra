@@ -50,7 +50,7 @@ class Calibrator(ParametrizedQt):
                 self.block_signal = False
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         self.block_signal = True
         self.length_px = w
         self.length_mm = self.length_px * self.mm_px
@@ -62,11 +62,11 @@ class Calibrator(ParametrizedQt):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
 
         Returns
         -------
@@ -109,11 +109,11 @@ class CrossCalibrator(Calibrator):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
 
         Returns
         -------
@@ -145,7 +145,7 @@ class CrossCalibrator(Calibrator):
         )
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         if not self.length_is_fixed:
             if self.outside:
                 self.length_px = h
@@ -154,7 +154,7 @@ class CrossCalibrator(Calibrator):
 
 
 class CircleCalibrator(Calibrator):
-    """" Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle """
+    """ " Class for a calibration pattern which displays 3 dots in a 30 60 90 triangle"""
 
     def __init__(self, *args, dh=80, r=1, **kwargs):
         super().__init__(*args, **kwargs)
@@ -166,7 +166,7 @@ class CircleCalibrator(Calibrator):
         self.length_to_measure = "longest side of the triangle"
 
     def set_pixel_scale(self, w, h):
-        """"Set pixel size, need to be called by the projector widget on resizes"""
+        """ "Set pixel size, need to be called by the projector widget on resizes"""
         self.length_px = self.triangle_length * 2
 
     def paint_calibration_pattern(self, p, h, w, draw=True):
@@ -175,11 +175,11 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         p :
-            
+
         h :
-            
+
         w :
-            
+
         draw :
              (Default value = True)
 
@@ -211,7 +211,7 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         kps :
-            
+
 
         Returns
         -------
@@ -275,7 +275,7 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         arr :
-            
+
 
         Returns
         -------
@@ -289,7 +289,7 @@ class CircleCalibrator(Calibrator):
         Parameters
         ----------
         image :
-            
+
 
         Returns
         -------

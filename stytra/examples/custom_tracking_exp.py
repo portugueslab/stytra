@@ -33,8 +33,7 @@ import pyqtgraph as pg
 
 
 class FlyTrackingMethod(ImageToDataNode):
-    """Fly tracking method using ellipse fit.
-    """
+    """Fly tracking method using ellipse fit."""
 
     def __init__(self, *args, **kwargs):
         # Initialise the "Node" object passing the name of our tracking method:

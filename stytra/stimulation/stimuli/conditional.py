@@ -87,7 +87,7 @@ class PauseOutsideStimulus(DynamicStimulus):
 
 
 class ConditionalWrapper(DynamicStimulus):
-    """ A wrapper for stimuli which switches between two stimuli depending on
+    """A wrapper for stimuli which switches between two stimuli depending on
     conditions: an on condition defined in the check_condition_on method
     and an off condition defined check_condition_on
 
@@ -236,25 +236,25 @@ class SingleConditionalWrapper(ConditionalWrapper):
 
 
 class CenteringWrapper(SingleConditionalWrapper):
-    """ A wrapper which shows the centering stimulus (radial gratings)
-        when the fish exits a given radius from the display center
+    """A wrapper which shows the centering stimulus (radial gratings)
+    when the fish exits a given radius from the display center
 
-        Parameters
-        ----------
-        stimulus: Stimlus
-            the stimulus to be displayed when not centering
+    Parameters
+    ----------
+    stimulus: Stimlus
+        the stimulus to be displayed when not centering
 
-        centering_stimulus: Stimulus, optional
-            by default radial gratings
+    centering_stimulus: Stimulus, optional
+        by default radial gratings
 
-        margin: float
-            the centering activating radius in mm
+    margin: float
+        the centering activating radius in mm
 
 
-        **kwargs
-            other arguments supplied to :class:`ConditionalStimulus`
+    **kwargs
+        other arguments supplied to :class:`ConditionalStimulus`
 
-        """
+    """
 
     def __init__(self, stimulus, *args, centering_stimulus=None, margin=45, **kwargs):
         super().__init__(
@@ -282,7 +282,7 @@ class CenteringWrapper(SingleConditionalWrapper):
 
 
 class TwoRadiusCenteringWrapper(ConditionalWrapper):
-    """ An extension of the :class:`CenteringWrapper` that takes two radii,
+    """An extension of the :class:`CenteringWrapper` that takes two radii,
     a smaller one, to stop the centering stimulus, and a bigger one to start
     it again
 

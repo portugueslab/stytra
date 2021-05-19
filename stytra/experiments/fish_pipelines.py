@@ -14,7 +14,6 @@ from Motti.motor.preprocessing import AdaptivePrefilter
 from Motti.motor.pipeline import FishTrackingMotorPipeline
 
 
-
 class TailTrackingPipeline(Pipeline):
     def __init__(self):
         super().__init__()
@@ -51,12 +50,10 @@ class EyeTailTrackingPipeline(Pipeline):
         self.display_overlay = EyeTailTrackingSelection
 
 
-
-
 pipeline_dict = dict(
     tail=TailTrackingPipeline,
     fish=FishTrackingPipeline,
     eyes=EyeTrackingPipeline,
     eyes_tail=EyeTailTrackingPipeline,
-    fish_motor=FishTrackingMotorPipeline
+    fish_motor=FishTrackingMotorPipeline,
 )

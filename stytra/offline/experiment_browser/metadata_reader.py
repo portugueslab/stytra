@@ -172,8 +172,7 @@ class JsonReader(QWidget):
         self.p.sigTreeStateChanged.connect(self.change)
 
     def append_img(self):
-        """Attach a .png image to the metadata file.
-        """
+        """Attach a .png image to the metadata file."""
         self.imagefile, _ = QFileDialog.getOpenFileName(filter="png images (*.png)")
 
         if not self.imagefile:
@@ -224,8 +223,7 @@ class JsonReader(QWidget):
             self.layout.addWidget(self.viewbtn, 3, 1)
 
     def image_viewer(self):
-        """Open metadata image in the Image Viewer from PyQtGraph.
-        """
+        """Open metadata image in the Image Viewer from PyQtGraph."""
         self.win = QtGui.QMainWindow()
         self.win.resize(800, 800)
 
@@ -239,8 +237,7 @@ class JsonReader(QWidget):
         self.win.show()
 
     def save_treevals(self):
-        """Save current values of the parameter tree into a dictionary.
-        """
+        """Save current values of the parameter tree into a dictionary."""
         # Recover data from tree and store it in a dict
         self.treevals_dict = self.p.getValues()
         self.metadata_dict_mod = self.get_mod_dict(self.treevals_dict)
@@ -262,8 +259,8 @@ class JsonReader(QWidget):
 
     def show_warning(self):
         """Upon saving, display a warning message
-         to choose whether to create a new metadata file or replace the existing one.
-         """
+        to choose whether to create a new metadata file or replace the existing one.
+        """
         if self.has_changed:
             self.msg = QMessageBox()
             self.msg.setIcon(QMessageBox.Warning)
@@ -304,14 +301,12 @@ class JsonReader(QWidget):
             json.dump(metadata_dict_mod, file)
 
     def reset(self):
-        """Reset parameter tree values to the original state after loading.
-        """
+        """Reset parameter tree values to the original state after loading."""
         self.p.restoreState(self.original_state, recursive=True)
         self.tree.setParameters(self.p, showTop=False)
 
     def fix_types(self, datadict):
-        """Modify metadata dict so only accepted types are found.
-        """
+        """Modify metadata dict so only accepted types are found."""
         param_dict = dict()
         for key, value in datadict.items():
             if isinstance(value, list):
@@ -323,8 +318,7 @@ class JsonReader(QWidget):
         return param_dict
 
     def create_parameters(self, datadict):
-        """Create list with parameters and Children to which the tree will be built from.
-        """
+        """Create list with parameters and Children to which the tree will be built from."""
         parameters = []
         for key, value in datadict.items():
             if key == "log":
@@ -349,8 +343,7 @@ class JsonReader(QWidget):
         return parameters
 
     def get_mod_dict(self, treevals_dict):
-        """Recursive function to convert into dict output of getValues function.
-        """
+        """Recursive function to convert into dict output of getValues function."""
         metadata_dict_mod = dict()
         for key, value in treevals_dict.items():
             if value[0] is None:

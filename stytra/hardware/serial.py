@@ -22,7 +22,7 @@ class SerialConnection:
         Parameters
         ----------
         what :
-            
+
 
         Returns
         -------
@@ -36,7 +36,7 @@ class SerialConnection:
         Parameters
         ----------
         i :
-            
+
 
         Returns
         -------

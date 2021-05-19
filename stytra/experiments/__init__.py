@@ -237,8 +237,11 @@ class Experiment(QObject):
 
         if self.arduino_config is not None:
             from stytra.hardware.external_pyfirmata import PyfirmataConnection
-            self.arduino_board = PyfirmataConnection(com_port=self.arduino_config["com_port"],
-                                                     layout=self.arduino_config["layout"])
+
+            self.arduino_board = PyfirmataConnection(
+                com_port=self.arduino_config["com_port"],
+                layout=self.arduino_config["layout"],
+            )
 
         self.make_window()
         self.protocol_runner.update_protocol()
@@ -256,8 +259,7 @@ class Experiment(QObject):
             )
 
     def make_window(self):
-        """Make experiment GUI, defined in children depending on experiments.
-        """
+        """Make experiment GUI, defined in children depending on experiments."""
         self.window_main = ExperimentWindow(self)
 
         self.window_main.construct_ui()
@@ -330,8 +332,7 @@ class Experiment(QObject):
         self.abort = True
 
     def save_data(self):
-        """Called at the end of the experiment to save all logs.
-        """
+        """Called at the end of the experiment to save all logs."""
         if self.base_dir is not None:
             if self.dc is not None:
                 self.dc.add_static_data(self.protocol_runner.log, name="stimulus/log")
@@ -577,8 +578,7 @@ class VisualExperiment(Experiment):
             )
 
     def make_window(self):
-        """Make experiment GUI, defined in children depending on experiments.
-        """
+        """Make experiment GUI, defined in children depending on experiments."""
         if self.stim_plot:
             self.window_main = DynamicStimExperimentWindow(self)
             self.window_main.stream_plot.add_stream(self.protocol_runner.dynamic_log)

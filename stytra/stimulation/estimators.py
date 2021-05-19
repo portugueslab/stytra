@@ -70,8 +70,9 @@ class VigorMotionEstimator(Estimator):
 
 
 class BoutsEstimator(VigorMotionEstimator):
-    def __init__(self, *args, bout_threshold = 0.05, vigor_window=0.05,
-                 min_interbout=0.1, **kwargs):
+    def __init__(
+        self, *args, bout_threshold=0.05, vigor_window=0.05, min_interbout=0.1, **kwargs
+    ):
         super().__init__(*args, base_gain=1, **kwargs)
         self.bout_threshold = bout_threshold
         self.vigor_window = vigor_window
@@ -79,18 +80,28 @@ class BoutsEstimator(VigorMotionEstimator):
         self.last_bout_t = None
 
     def bout_occured(self):
-        if self.get_velocity() > self.base_gain*self.bout_threshold:
-            if self.last_bout_t is None or (datetime.datetime.now() - self.last_bout_t).total_seconds() > \
-                        self.min_interbout:
+        if self.get_velocity() > self.base_gain * self.bout_threshold:
+            if (
+                self.last_bout_t is None
+                or (datetime.datetime.now() - self.last_bout_t).total_seconds()
+                > self.min_interbout
+            ):
                 self.last_bout_t = datetime.datetime.now()
                 return True
         return False
 
 
 class TailSumEstimator(Estimator):
-    def __init__(self, *args, vigor_window=0.050, theta_window=0.07,
-                 base_gain=-30, bout_threshold=0.05,
-                 min_interbout=0.1,**kwargs):
+    def __init__(
+        self,
+        *args,
+        vigor_window=0.050,
+        theta_window=0.07,
+        base_gain=-30,
+        bout_threshold=0.05,
+        min_interbout=0.1,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.vigor_window = vigor_window
         self.theta_window = theta_window
@@ -113,8 +124,11 @@ class TailSumEstimator(Estimator):
 
     def bout_occured(self):
         if self.bout_on:
-            if self.last_bout_t is None or (datetime.datetime.now() - self.last_bout_t).total_seconds() > \
-                        self.min_interbout:
+            if (
+                self.last_bout_t is None
+                or (datetime.datetime.now() - self.last_bout_t).total_seconds()
+                > self.min_interbout
+            ):
                 self.last_bout_t = datetime.datetime.now()
                 return True
         return False
@@ -160,7 +174,9 @@ class TailSumEstimator(Estimator):
             self.theta_provided = False
             self.bout_onset = 0
 
-        if not self.theta_provided:  # and (datetime.datetime.now() - self.bout_start_t).total_seconds() > 0.07:
+        if (
+            not self.theta_provided
+        ):  # and (datetime.datetime.now() - self.bout_start_t).total_seconds() > 0.07:
             # Tail theta:
             th_n_samples = max(int(round(self.theta_window / self.last_dt)), 2)
             n_samples_lag = max(int(round(lag / self.last_dt)), 0)
@@ -168,11 +184,13 @@ class TailSumEstimator(Estimator):
             past_tail_motion = self.acc_tracking.get_last_n(
                 th_n_samples + n_samples_lag
             )[0:th_n_samples]
-            self.tail_th = np.nanmean(np.array(past_tail_motion.tail_sum) - past_tail_motion.tail_sum.iloc[0])
+            self.tail_th = np.nanmean(
+                np.array(past_tail_motion.tail_sum) - past_tail_motion.tail_sum.iloc[0]
+            )
             self.theta_provided = True
         else:
-            self.tail_th = self.tail_th*(3/4)
-        rn = np.random.randint(0, 1)/100
+            self.tail_th = self.tail_th * (3 / 4)
+        rn = np.random.randint(0, 1) / 100
         on_ns = self.bout_onset + rn
         if len(self.log.times) == 0 or self.log.times[-1] < end_t:
             self.log.update_list(end_t, self._output_type(vigor, self.tail_th, on_ns))
@@ -182,17 +200,17 @@ class TailSumEstimator(Estimator):
 
         self.last_bout_on = self.bout_on
 
-        return vigor * self.base_gain, -self.tail_th*3, self.bout_on
+        return vigor * self.base_gain, -self.tail_th * 3, self.bout_on
 
 
 def rot_mat(theta):
-    """The rotation matrix for an angle theta """
+    """The rotation matrix for an angle theta"""
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
 class PositionEstimator(Estimator):
     def __init__(self, *args, change_thresholds=None, velocity_window=10, **kwargs):
-        """ Uses the projector-to-camera calibration to give fish position in
+        """Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
         oscillations due to tracking)
@@ -289,7 +307,7 @@ class PositionEstimator(Estimator):
 
 class SimulatedPositionEstimator(Estimator):
     def __init__(self, *args, motion, **kwargs):
-        """ Uses the projector-to-camera calibration to give fish position in
+        """Uses the projector-to-camera calibration to give fish position in
         scree coordinates. If change_thresholds are set, update only the fish
         position after there is a big enough change (which prevents small
         oscillations due to tracking)
@@ -312,5 +330,6 @@ class SimulatedPositionEstimator(Estimator):
         return kt
 
 
-estimator_dict = dict(position=PositionEstimator, vigor=VigorMotionEstimator,
-                      bouts=BoutsEstimator)
+estimator_dict = dict(
+    position=PositionEstimator, vigor=VigorMotionEstimator, bouts=BoutsEstimator
+)

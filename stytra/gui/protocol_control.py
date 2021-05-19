@@ -42,7 +42,6 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort tracking in case of MotorExperiment."""
 
-
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")
@@ -80,8 +79,7 @@ class ProtocolControlToolbar(QToolBar):
         self.protocol_runner.sig_protocol_interrupted.connect(self.toggle_icon)
 
     def show_stim_params_gui(self):
-        """Create and show window to update protocol parameters.
-        """
+        """Create and show window to update protocol parameters."""
         self.prot_param_win = ParameterGui(self.protocol_runner.protocol)
         self.prot_param_win.show()
 
@@ -109,8 +107,7 @@ class ProtocolControlToolbar(QToolBar):
         self.update_progress()
 
     def update_progress(self):
-        """ Update progress bar
-        """
+        """Update progress bar"""
 
         # if self._update_duration_i == 0:
         #   pass
