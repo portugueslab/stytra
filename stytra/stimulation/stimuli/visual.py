@@ -332,9 +332,12 @@ class BackgroundStimulus(PositionStimulus):
         # rotate the coordinate transform around the position of the fish
         tr = self.get_transform(w, h, dx, dy)
         p.setTransform(tr)
-
-        for idx, idy in product(*self.get_tile_ranges(imw, imh, w, h, tr)):
-            self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
+        try:
+            for idx, idy in product(*self.get_tile_ranges(imw, imh, w, h, tr)):
+                self.draw_block(p, QPointF(idx * imw, idy * imh), w, h)
+        except ValueError:
+            print(self.x, self.y, self.theta)
+            print(imw, imh, w, h, tr)
 
         p.resetTransform()
 
