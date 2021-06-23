@@ -236,15 +236,6 @@ class ProjectorAndCalibrationWidget(QWidget):
             self.button_calibrate.clicked.connect(self.calibrate)
             self.layout_calibrate.addWidget(self.button_calibrate)
 
-        if isinstance(experiment.calibrator, MotorCalibrator):
-            self.button_calibrate = QPushButton("Calibrate Motor")
-            self.button_calibrate.clicked.connect(self.calibrate_motor)
-            self.layout_calibrate.addWidget(self.button_calibrate)
-
-            self.button_home = QPushButton("Home Motor")
-            self.button_home.clicked.connect(self.home_motor)
-            self.layout_calibrate.addWidget(self.button_home)
-
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
@@ -285,35 +276,3 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.widget_proj_viewer.display_calibration_pattern(
             self.calibrator, frame.shape, frame
         )
-
-    def calibrate_motor(self):
-        output_calib = namedtuple("scale", ["scale_x", "scale_y"])
-
-        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
-
-        kps_prev = self.calibrator.find_transform_matrix(frame)
-
-        self.experiment.frame_dispatcher.calibration_event.set()
-
-        k = 0  # this loop is needed for the picture queue not to be jammed
-        while k < 100:
-            self.experiment.app.processEvents()
-            k += 1
-
-        time, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        kps_after = self.calibrator.find_transform_matrix(frame)
-
-        conx, cony = self.calibrator.find_motor_transform(kps_prev, kps_after)
-
-        e = (conx, cony)
-
-        self.experiment.calib_queue.put(time, output_calib(*e))
-
-        self.widget_proj_viewer.display_calibration_pattern(
-            self.calibrator, frame.shape, frame
-        )
-
-    def home_motor(self):
-        self.experiment.frame_dispatcher.home_event.set()
-
-

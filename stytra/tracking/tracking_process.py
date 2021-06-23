@@ -24,7 +24,7 @@ class TrackingProcess(FrameProcess):
         pipeline=None,
         processing_parameter_queue=None,
         output_queue=None,
-        second_output_queue = None, #todo make optional
+        second_output_queue=None, #todo make optional
         recording_signal=None,
         gui_framerate=30,
         max_mb_queue=100,
@@ -143,7 +143,8 @@ class TrackingProcess(FrameProcess):
             self.output_queue.put(time, output)
 
             #todo make optional
-            self.second_output_queue.put(time, output)
+            if self.second_output_queue is not None:
+                self.second_output_queue.put(time, output)
 
             # calculate the frame rate
             self.update_framerate()

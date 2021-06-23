@@ -10,8 +10,6 @@ from stytra.gui.camera_display import (
     EyeTrackingSelection,
     EyeTailTrackingSelection,
 )
-from Motti.motor.preprocessing import AdaptivePrefilter
-from Motti.motor.pipeline import FishTrackingMotorPipeline
 
 
 
@@ -57,6 +55,5 @@ pipeline_dict = dict(
     tail=TailTrackingPipeline,
     fish=FishTrackingPipeline,
     eyes=EyeTrackingPipeline,
-    eyes_tail=EyeTailTrackingPipeline,
-    fish_motor=FishTrackingMotorPipeline
+    eyes_tail=EyeTailTrackingPipeline
 )
