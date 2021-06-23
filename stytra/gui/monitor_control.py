@@ -11,8 +11,6 @@ from lightparam.gui import ControlSpin
 
 import cv2
 
-from Motti.motor.calibration import MotorCalibrator
-from collections import namedtuple
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):

@@ -23,8 +23,6 @@ import json
 
 from pathlib import Path
 
-from Motti.motor.motor_experiment import MotorExperiment
-
 
 class Stytra:
     """ Stytra application instance. Contains the QApplication and
@@ -189,8 +187,6 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
-                if "motor" in class_kwargs.keys():
-                    base = MotorExperiment
 
             if recording:
                 base = VideoRecordingExperiment
