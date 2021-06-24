@@ -24,7 +24,7 @@ class TrackingProcess(FrameProcess):
         pipeline=None,
         processing_parameter_queue=None,
         output_queue=None,
-        second_output_queue=None, #todo make optional
+        second_output_queue=None,
         recording_signal=None,
         gui_framerate=30,
         max_mb_queue=100,
@@ -72,7 +72,6 @@ class TrackingProcess(FrameProcess):
         #  displaying
         #  the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
-        # todo make optional
         self.second_output_queue = second_output_queue #user defined optional second output queue, attention needs emptying
         self.processing_parameter_queue = processing_parameter_queue
 
@@ -142,7 +141,6 @@ class TrackingProcess(FrameProcess):
 
             self.output_queue.put(time, output)
 
-            #todo make optional
             if self.second_output_queue is not None:
                 self.second_output_queue.put(time, output)
 
