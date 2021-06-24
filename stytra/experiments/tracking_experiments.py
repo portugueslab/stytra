@@ -223,13 +223,10 @@ class TrackingExperiment(CameraVisualExperiment):
             pipeline=self.pipeline_cls,
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
+            second_output_queue=None,
             recording_signal=self.recording_event,
             gui_framerate=20,
         )
-
-        ###If motor experiment is called overwrite frame disptacher here to avoid problems with the gui
-        if kwargs["motor"]:
-            self.initialize_tracking_meth()
 
         if self.pipeline_cls is None:
             raise NameError("The selected tracking method does not exist!")
