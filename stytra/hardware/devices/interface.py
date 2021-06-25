@@ -1,4 +1,4 @@
-class Board:
+class Device:
     """Abstract class for controlling I/O voltage boards.
 
     """
@@ -9,11 +9,8 @@ class Board:
         ----------
         """
 
-    def start_ao_task(self):
-        """Initialize device"""
+    def initialize(self):
+        """Initialize device setup"""
 
-    def write(self):
-        """Write value in pin"""
-
-    def read(self):
-        """Read value from pin"""
+    def generate_gui(self):
+        """Generate GUI for the initialized device."""

@@ -1,4 +1,7 @@
-import nidaqmx
+try:
+    import nidaqmx
+except ImportError:
+    print('nidaqmx is not installed')
 
 from stytra.hardware.devices.interface import Board
 
@@ -8,7 +11,7 @@ class NIBoard(Board):
     Uses the nidaqmx API to interact with NI-DAQmx driver.
     """
 
-    def __init__(self, device, channel, min_val, max_val,  **kwargs):
+    def __init__(self, dev, chan, min_val, max_val,  **kwargs):
 
         self.dev = dev
         self.chan = chan
@@ -17,6 +20,11 @@ class NIBoard(Board):
 
     super().__init__(**kwargs)
 
-    def start_ao_task(self):
-        with nidaqmx.Task() as task:
-            task.ao_channels.add_ao_current_chan()
+    def initialize(self):
+        self.task = nidaqmx.Task()
+        self.task.ao_channels.add_ao_voltage_chan("{}/{}".format(self.dev, self.chan),
+                                                  min_val=self.min_val, max_val=self.max_val)
+
+    def write(self, voltage):
+        self.voltage = voltage
+        self.task.write(self.voltage)
