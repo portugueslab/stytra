@@ -12,6 +12,7 @@ from lightparam.gui import ControlSpin
 import cv2
 
 
+
 class ProjectorViewer(pg.GraphicsLayoutWidget):
     """Widget that displays the whole projector screen and allows
      configuring the stimulus display window
@@ -202,13 +203,14 @@ class ProjectorViewer(pg.GraphicsLayoutWidget):
             pass
 
 
+
 class ProjectorAndCalibrationWidget(QWidget):
     """ """
 
     sig_calibrating = pyqtSignal()
 
     def __init__(self, experiment, **kwargs):
-        """ Instantiate the widget that controls the display on the projector
+        """Instantiate the widget that controls the display on the projector
 
         :param experiment: Experiment class with calibrator and display window
         """
@@ -235,14 +237,10 @@ class ProjectorAndCalibrationWidget(QWidget):
         self.label_calibrate = QLabel(self.calibrator.length_to_measure)
         self.label_calibrate.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         self.layout_calibrate.addWidget(self.button_show_calib)
-
-        if isinstance(experiment.calibrator, CircleCalibrator):
-            self.calibrator_px_len = ControlSpin(self.calibrator, "triangle_length")
-            self.layout_calibrate.addWidget(self.calibrator_px_len)
-
         self.layout_calibrate.addWidget(self.label_calibrate)
+
         self.calibrator_len_spin = ControlSpin(self.calibrator, "length_mm")
-        self.calibrator_len_spin.label.hide()
+
         self.layout_calibrate.addWidget(self.calibrator_len_spin)
 
         self.layout_calibrate.setContentsMargins(12, 0, 12, 12)
@@ -271,11 +269,8 @@ class ProjectorAndCalibrationWidget(QWidget):
     def calibrate(self):
         """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
-        try:
-            self.calibrator.find_transform_matrix(frame)
-            self.widget_proj_viewer.display_calibration_pattern(
-                self.calibrator, frame.shape, frame
-            )
 
-        except CalibrationException:
-            pass
+        self.calibrator.find_transform_matrix(frame)
+        self.widget_proj_viewer.display_calibration_pattern(
+            self.calibrator, frame.shape, frame
+        )

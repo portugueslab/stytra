@@ -51,6 +51,7 @@ class Prefilter(ImageToImageNode):
         return NodeOutput([], im)
 
 
+
 @vectorize([uint8(float32, uint8)])
 def negdif(xf, y):
     """

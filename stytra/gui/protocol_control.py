@@ -35,6 +35,7 @@ class ProtocolControlToolbar(QToolBar):
     """ Emitted via the toggle button click, meant to
                          abort the protocol."""
 
+
     def __init__(self, protocol_runner: ProtocolRunner, main_window=None):
         """ """
         super().__init__("Protocol running")

@@ -159,6 +159,7 @@ class ExperimentWindow(QMainWindow):
         if self.experiment.trigger is not None:
             self.toolbar_control.addWidget(self.chk_scope)
 
+
         self.experiment.gui_timer.timeout.connect(self.plot_framerate.update)
 
         self.toolbar_control.setObjectName("toolbar_control")

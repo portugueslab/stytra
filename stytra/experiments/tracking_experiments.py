@@ -119,9 +119,9 @@ class CameraVisualExperiment(VisualExperiment):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -142,11 +142,11 @@ class CameraVisualExperiment(VisualExperiment):
         Parameters
         ----------
         exctype :
-            
+
         value :
-            
+
         tb :
-            
+
 
         Returns
         -------
@@ -165,12 +165,12 @@ class TrackingExperiment(CameraVisualExperiment):
     eyes, tail, or anything else).
     The general purpose of the class is handle a frame dispatcher,
     the relative parameters queue and the output queue.
-    
+
     The frame dispatcher take two input queues:
 
         - frame queue from the camera;
         - parameters queue from parameter window.
-    
+
     and it puts data in three queues:
 
         - subset of frames are dispatched to the GUI, for displaying;
@@ -191,7 +191,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
     """
 
-    def __init__(self, *args, tracking, recording=None, **kwargs):
+    def __init__(self, *args, tracking, recording=None, second_output_queue=None, **kwargs):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -202,6 +202,7 @@ class TrackingExperiment(CameraVisualExperiment):
         """
 
         self.processing_params_queue = Queue()
+        self.second_output_queue =second_output_queue
         self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)
@@ -223,9 +224,11 @@ class TrackingExperiment(CameraVisualExperiment):
             pipeline=self.pipeline_cls,
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
+            second_output_queue=self.second_output_queue,
             recording_signal=self.recording_event,
             gui_framerate=20,
         )
+
         if self.pipeline_cls is None:
             raise NameError("The selected tracking method does not exist!")
         self.pipeline = self.pipeline_cls()
@@ -369,9 +372,7 @@ class TrackingExperiment(CameraVisualExperiment):
             self.window_main.stream_plot.toggle_freeze()
 
     def save_data(self):
-        """Save tail position and dynamic parameters and terminate.
-
-        """
+        """Save tail position and dynamic parameters and terminate."""
 
         self.window_main.camera_display.save_image(
             name=self.filename_base() + "img.png"
@@ -393,7 +394,7 @@ class TrackingExperiment(CameraVisualExperiment):
         Parameters
         ----------
         protocol :
-            
+
 
         Returns
         -------
@@ -408,9 +409,9 @@ class TrackingExperiment(CameraVisualExperiment):
         Parameters
         ----------
         *args :
-            
+
         **kwargs :
-            
+
 
         Returns
         -------
@@ -428,7 +429,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.frame_dispatcher.join()
 
     def excepthook(self, exctype, value, tb):
-        """ If an exception happens in the main loop, close all the
+        """If an exception happens in the main loop, close all the
         processes so nothing is left hanging.
 
         """
