@@ -6,11 +6,11 @@ import pyqtgraph as pg
 
 from stytra.calibration import CircleCalibrator, CrossCalibrator, CalibrationException
 from stytra.stimulation.stimulus_display import StimDisplayWidget
-from PyQt5.QtWidgets import QVBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout, QMessageBox
 from lightparam.gui import ControlSpin
 
 import cv2
-
+import logging
 
 
 class ProjectorViewer(pg.GraphicsLayoutWidget):
@@ -270,7 +270,25 @@ class ProjectorAndCalibrationWidget(QWidget):
         """ """
         _, frame = self.experiment.frame_dispatcher.gui_queue.get()
 
-        self.calibrator.find_transform_matrix(frame)
+        try:
+            self.calibrator.find_transform_matrix(frame)
+        except CalibrationException as calibration_exception:
+            exception_message = str(calibration_exception)
+
+            # Log the exception
+            logging.exception(exception_message)
+
+            # Display an error window to inform the user
+            error_box = QMessageBox()
+            error_box.setIcon(QMessageBox.Critical)
+            error_box.setText(exception_message)
+            error_box.setWindowTitle("CalibrationException")
+
+            # Block until user interacts
+            error_box.exec_()
+
+            return
+
         self.widget_proj_viewer.display_calibration_pattern(
             self.calibrator, frame.shape, frame
         )
