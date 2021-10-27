@@ -157,11 +157,16 @@ class TestExperimentClass(unittest.TestCase):
         functions are the correct ones to track the videos in the examples/assets
         folder, from which the correct results have been calculated.
         """
+        print('###############################################################################################################################')
+        # print(Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5")
+
         self.app = QApplication([])
 
-        video_file = str(
-            Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
-        )
+        # video_file = str(
+        #     Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
+        # )
+        video_file = r'C:\Users\Fede\Anaconda\stytra\stytra\examples\assets\fish_compressed.h5'
+
         for method in ["eyes", "tail"]:
             self.run_experiment(
                 protocol=TestProtocol(),
