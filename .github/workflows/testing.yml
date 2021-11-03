@@ -22,7 +22,6 @@ jobs:
       - name: Test
         shell: cmd
         run: |
-          chmod u+r+x testing.bat
           ./testing.bat
 
 
