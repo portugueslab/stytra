@@ -20,6 +20,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev]
       - name: Test
-        run: testing.bat
+        run: ./testing.bat
 
 
