@@ -20,7 +20,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev]
       - name: Test
-        shell: bash
+        shell: cmd
         run: |
           chmod u+r+x testing.bat
           ./testing.bat
