@@ -15,6 +15,7 @@ from pkgutil import iter_modules
 from importlib import import_module
 import pytest
 import psutil
+import threading
 
 
 # iterate through the modules in the current package
@@ -24,7 +25,7 @@ protocols = []
 
 for (_, module_name, _) in iter_modules([package_dir]):
 
-    if module_name in ['eye_tracking_exp','imaging_exp','gratings_exp']:
+    if module_name in ['imaging_exp']:
         
 #         # import the module and iterate through its attributes
             try:
@@ -42,6 +43,10 @@ for (_, module_name, _) in iter_modules([package_dir]):
 # gratings_exp -> pass
 # eye_tracking_exp
 # imaging_exp
+
+t=threading.Thread(target=test_simple) # create a thread running your function
+t.start()                           # let it run using start (not run!)
+t.join(20000)
 
 
 @pytest.mark.parametrize("protocol", protocols)
@@ -85,7 +90,7 @@ def test_simple(qtbot, protocol):
     except:
         print("Couldn't close Event")
     qtbot.wait(5000)
-    print("try kill stuff")
+
 
     # os.kill(me, 9)
     # stytra_obj = 0
@@ -94,5 +99,9 @@ def test_simple(qtbot, protocol):
     # exp = 0
     print("END -----------------------------------------------------------")
     sleep(10)
+    # print("try kill stuff")
+    # os.kill(me, 9)
+
+
 
 

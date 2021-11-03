@@ -8,6 +8,8 @@ from pathlib import Path
 
 # Definition of protocol class:
 class ImagingCLProtocol(Protocol):
+
+    print(str(Path(__name__).parent / "assets" / "fish_compressed.h5"))
     name = "imaging_closed_loop"
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),
@@ -20,7 +22,7 @@ class ImagingCLProtocol(Protocol):
         ),
         # Triggering: trigger from devices not supporting zmq messages
         # require changing this with other triggering options:
-        trigger="zmq",
+        # trigger="zmq",
     )
 
     def __init__(self):

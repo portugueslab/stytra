@@ -24,7 +24,7 @@ protocols = []
 
 for (_, module_name, _) in iter_modules([package_dir]):
 
-    if module_name in ['eye_tracking_exp','imaging_exp','gratings_exp']:
+    if module_name in ['flash_exp']:
         
 #         # import the module and iterate through its attributes
             try:
@@ -85,14 +85,15 @@ def test_simple(qtbot, protocol):
     except:
         print("Couldn't close Event")
     qtbot.wait(5000)
-    print("try kill stuff")
-
+    
+    print("END -----------------------------------------------------------")
+    # sleep(10)
+    # print("try kill stuff")
     # os.kill(me, 9)
     # stytra_obj = 0
     # app = 0 
     # exp_wnd = 0
     # exp = 0
-    print("END -----------------------------------------------------------")
-    sleep(10)
+    
 
 

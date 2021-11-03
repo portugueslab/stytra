@@ -67,23 +67,23 @@ class DummyTrigger(Trigger):
             return False
 
 
-# def test_base_exp(experiment_factory, temp_dir, qtbot):
-#     exp, exp_wnd = experiment_factory(VisualExperiment,
-#                              protocol=TestProtocol0(),
-#                              dir_save=temp_dir
-#                              )
-#     qtbot.addWidget(exp_wnd)
-#     qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
-#                      Qt.LeftButton,
-#                      delay=1)
-#     qtbot.wait((PROTOCOL_DURATION + 1)*1000)
-#     #qtbot.mousePress(exp_wnd)
-#     #for _ in range(N_REFRESH_EVTS):
-#      #   exp.protocol_runner.timestep()
-#      #   sleep(PROTOCOL_DURATION / N_REFRESH_EVTS)
-#     #if tracking is not None:
-#     #    exp.acc_tracking.update_list()
-#     exp.end_protocol(save=True)
+def test_base_exp(experiment_factory, temp_dir, qtbot):
+    exp, exp_wnd = experiment_factory(VisualExperiment,
+                             protocol=TestProtocol0(),
+                             dir_save=temp_dir
+                             )
+    qtbot.addWidget(exp_wnd)
+    qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
+                     Qt.LeftButton,
+                     delay=1)
+    qtbot.wait((PROTOCOL_DURATION + 1)*1000)
+    #qtbot.mousePress(exp_wnd)
+    #for _ in range(N_REFRESH_EVTS):
+     #   exp.protocol_runner.timestep()
+     #   sleep(PROTOCOL_DURATION / N_REFRESH_EVTS)
+    #if tracking is not None:
+    #    exp.acc_tracking.update_list()
+    exp.end_protocol(save=True)
 
 
 

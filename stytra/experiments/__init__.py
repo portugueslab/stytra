@@ -363,34 +363,32 @@ class Experiment(QObject):
                 git_hash = None
                 version = None
 
-                # try:
 
-                    #################################################################
-                    ## Catch testing case -> if run in testing mode sys.argv[0] gives path to pytest
-                    ## We instead want stytra path
-                    # if "pytest" in sys.argv[0]:
-
-                    #     for el in sys.argv:
-                    #         if os.path.exists(el):
-                    #             repo = git.Repo(el, search_parent_directories=True)
-
-                    # else:
-                    #     repo = git.Repo(sys.argv[0], search_parent_directories=True)
-                    #################################################################
                 try:
-                    repo = git.Repo(sys.argv[0], search_parent_directories=True)
-                    git_hash = repo.head.object.hexsha
-                except:
-                    git_hash = "Error - Couldn't get git folder"
-
                     
-                try:
-                    version = pkg_resources.get_distribution("stytra").version
-                except pkg_resources.DistributionNotFound:
-                    self.logger.info("Could not find stytra version")
+                    ####################### try get repo even during testing ###############################
+                    if "pytest" in sys.argv[0]:     #if first element points to pytest, check other addresses in args
 
-                # except git.InvalidGitRepositoryError:
-                #     self.logger.info("Invalid git repository")
+                        for el in sys.argv:
+                            if os.path.isdir(el):
+                                repo = git.Repo(el, search_parent_directories=True)
+
+                    else:
+                        
+                        repo = git.Repo(sys.argv[0], search_parent_directories=True)
+                        git_hash = repo.head.object.hexsha
+                    #########################################################################################
+
+                    try:
+                        version = pkg_resources.get_distribution("stytra").version
+                    except pkg_resources.DistributionNotFound:
+                        self.logger.info("Could not find stytra version")
+
+                # catch exeptions if couldn't find git repo
+                except git.InvalidGitRepositoryError:
+                    self.logger.info("Invalid git repository")
+                except git.exc.NoSuchPathError:
+                    self.logger.info("Path not a git repository")
 
                 self.dc.add_static_data(
                     dict(

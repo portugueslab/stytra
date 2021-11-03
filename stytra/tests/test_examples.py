@@ -15,7 +15,7 @@ from pkgutil import iter_modules
 from importlib import import_module
 import pytest
 
-import pytestqt.qtbot
+
 
 # iterate through the modules in the current package
 package_dir = Path(st.__file__).parent / "examples"
@@ -24,7 +24,7 @@ protocols = []
 for (_, module_name, _) in iter_modules([package_dir]):
     # Heuristic to exclude examples more complicated to run:
     if all([excl not in module_name
-                for excl in ["custom", "trigger", "serial", "camera"]]):
+                for excl in ["custom", "trigger", "serial", "camera",'portugues2011_exp','eye_tracking_exp','imaging_exp','gratings_exp', 'looming_exp', 'flash_exp','most_basic_exp','moving_bg_coordinates', 'no_stytra_exp', 'phototaxis']]):
         # import the module and iterate through its attributes
         try:
             module = import_module(f"stytra.examples.{module_name}")
@@ -34,7 +34,7 @@ for (_, module_name, _) in iter_modules([package_dir]):
 
         for attribute_name in dir(module):
             if "Protocol" in attribute_name and attribute_name != "Protocol":
-                protocols.append(getattr(module, attribute_name))
+                    protocols.append(getattr(module, attribute_name))
             # attribute = getattr(module, attribute_name)
         # except ModuleNotFoundError:
         #    print(f"Can't import {module}")
@@ -42,29 +42,37 @@ for (_, module_name, _) in iter_modules([package_dir]):
 
 @pytest.mark.parametrize("protocol", protocols)
 def test_base_exp(qtbot,protocol):
-    
-    app = QApplication([])
-    stytra_obj = st.Stytra(protocol=protocol(),
-                           app=app,
-                           exec=False)
-    exp = stytra_obj.exp
-    duration = exp.protocol_runner.duration
-    print(duration)
-    exp_wnd = exp.window_main
-    tic = time()
-    print(protocol)
-    print("here t = 0")
-    qtbot.wait(5000)
-    print("here t = {}".format(time()-tic))
-    qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
-                     Qt.LeftButton,
-                     delay=1)
-    print("here t = {}".format(time()-tic))
-    print("duration = ",(duration + 1)*5000)
-    qtbot.wait((duration + 1)*5000)
-    # qtbot.wait(10000)
-    print("last here t = {}".format(time()-tic))
-    # exp.end_protocol(save=False)
-    exp_wnd.closeEvent(None)
-    qtbot.wait(5000)
-    print("END -----------------------------------------------------------")
+        print(protocol)
+    # try:
+        app = QApplication([])
+        stytra_obj = st.Stytra(protocol=protocol(),
+                            app=app,
+                            exec=False)
+        exp = stytra_obj.exp
+        duration = exp.protocol_runner.duration
+        print(duration)
+        exp_wnd = exp.window_main
+        tic = time()
+        
+        print("here t = 0")
+        qtbot.wait(5000)
+        print("here t = {}".format(time()-tic))
+        qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
+                        Qt.LeftButton,
+                        delay=1)
+        print("here t = {}".format(time()-tic))
+        print("duration = ",(duration + 1)*5000)
+        qtbot.wait((duration + 1)*5000)
+        # qtbot.wait(10000)
+        print("last here t = {}".format(time()-tic))
+        # exp.end_protocol(save=False)
+        exp_wnd.closeEvent(None)
+        qtbot.wait(5000)
+        print("END -----------------------------------------------------------")
+    # except WindowsError as e:
+    #     print("/////////////////////////////////////////////////////////////////////////////////")
+    #     print("/////////////////////////////////////////////////////////////////////////////////")
+    #     print("///////////////////////          Windows Error           ////////////////////////")
+    #     print(e)
+    #     print("/////////////////////////////////////////////////////////////////////////////////")
+    #     print("/////////////////////////////////////////////////////////////////////////////////")
