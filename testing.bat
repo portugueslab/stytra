@@ -4,7 +4,7 @@
 
 ECHO "Start Tesing"
 
-cd C:\Users\Fede\Anaconda\stytra\stytra\tests
+cd .\stytra\tests
 
 pytest -s test_eye_tracking.py   
 
