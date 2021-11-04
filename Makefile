@@ -18,4 +18,4 @@ tests:
 	pip install psutil 
 	pip install pytest-qt
 	pip install -e .
-	pytest -s ./stytra/tests/test_eye_tracking.py 
+	pytest -s ./stytra/tests/test_init_gui.py 
