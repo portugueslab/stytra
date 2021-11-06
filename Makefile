@@ -19,6 +19,6 @@ tests:
 	pip install pytest-qt
 	pip install -e .
 	pytest -s ./stytra/tests/test_kalman.py 
-	pytest -s ./stytra/tests/test_gratings.py 
+	QT_QPA_PLATFORM: "offscreen" pytest -s ./stytra/tests/test_gratings.py 
 	pytest -s ./stytra/tests/test_z_experiments.py 
 	
