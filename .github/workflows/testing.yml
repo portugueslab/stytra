@@ -26,8 +26,9 @@ jobs:
         pip install -r req.txt
         pip install .[dev]
 
-
-
+        # Run Qt-based tests with offscreen backend
+        echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+        
     - name: Start display server
       run: |
         Xvfb :99 &
