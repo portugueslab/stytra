@@ -17,7 +17,6 @@ tests:
 	pip install qdarkstyle 
 	pip install psutil 
 	pip install pytest-qt
-	pip install PyQt5==5.9.2
 	pip install -e .
 	pytest -s ./stytra/tests/test_kalman.py 
 	pytest -s ./stytra/tests/test_gratings.py 
