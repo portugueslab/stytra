@@ -31,9 +31,8 @@ jobs:
     #     make tests
 
     - name: Test with tox
-        uses: GabrielBB/xvfb-action@v1
-        with:
-          run: tox
+      uses: GabrielBB/xvfb-action@v1
+      run: tox
 
 
 # name: tests
