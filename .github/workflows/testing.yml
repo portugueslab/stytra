@@ -32,7 +32,8 @@ jobs:
 
     - name: Test with tox
       uses: GabrielBB/xvfb-action@v1
-      run: tox
+      with:
+        run: tox
 
 
 # name: tests
