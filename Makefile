@@ -17,8 +17,10 @@ tests:
 	pip install qdarkstyle 
 	pip install psutil 
 	pip install pytest-qt
+	pip install PyQt5
 	pip install -e .
+	set QT_QPA_PLATFORM=offscreen 
 	pytest -s ./stytra/tests/test_kalman.py 
-	QT_QPA_PLATFORM: "offscreen" pytest -s ./stytra/tests/test_gratings.py 
+	pytest -s ./stytra/tests/test_gratings.py 
 	pytest -s ./stytra/tests/test_z_experiments.py 
 	
