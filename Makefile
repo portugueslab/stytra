@@ -21,7 +21,7 @@ tests:
 	pytest -s ./stytra/tests/test_kalman.py 
 	pytest -s ./stytra/tests/test_gratings.py 
 	pytest -s ./stytra/tests/test_z_experiments.py 
-	pytest -s ./stytra/tests/test_looming.py
+	# pytest -s ./stytra/tests/test_looming.py
 	pytest -s ./stytra/tests/test_examples.py
 
 
