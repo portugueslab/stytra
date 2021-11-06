@@ -35,7 +35,7 @@ on: push
 jobs:
 
   test:
-    name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.toxenv }} ${{ matrix.MIN_REQ && 'min_req' }}
+    name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.toxenv }} 
     runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -56,9 +56,7 @@ jobs:
             platform: ubuntu-18.04
             toxenv: async-py38-linux-pyqt
           # test without any Qt backends
-          - python: 3.8
-            platform: ubuntu-18.04
-            toxenv: headless-py38-linux
+
 
     steps:
       - uses: actions/checkout@v2
@@ -87,9 +85,8 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install setuptools tox tox-gh-actions
-          python tools/minreq.py  # no-op if MIN_REQ is not set
-        env:
-          MIN_REQ: ${{ matrix.MIN_REQ }}
+          pip install -r req.txt
+          pip install -r requirements_dev.txt
 
       # here we pass off control of environment creation and running of tests to tox
       # tox-gh-actions, installed above, helps to convert environment variables into
@@ -104,6 +101,5 @@ jobs:
         env:
           PLATFORM: ${{ matrix.platform }}
           TOXENV: ${{ matrix.toxenv }}
-          NUMPY_EXPERIMENTAL_ARRAY_FUNCTION: ${{ matrix.MIN_REQ || 1 }}
           PYVISTA_OFF_SCREEN: True
-          MIN_REQ: ${{ matrix.MIN_REQ }}
+
