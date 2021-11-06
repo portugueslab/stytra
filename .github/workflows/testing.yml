@@ -36,7 +36,7 @@ jobs:
         run: tox
 
 
-  testNOTox:
+  testNoTox:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -58,9 +58,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r req.txt
         pip install .[dev]
-    # - name: Test
-    #   run: |
-    #     make tests
+
+        # Run Qt-based tests with offscreen backend
+          echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+    - name: Start display server
+      run: |
+        Xvfb :99 &
+        echo "DISPLAY=:99" >> $GITHUB_ENV
+
+    - name: Test
+      run: |
+        make tests
 
 
 

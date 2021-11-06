@@ -1,7 +1,7 @@
 .PHONY: tests
 
 tests:
-	set QT_QPA_PLATFORM=offscreen 
+	pip install opencv-python 
 	pytest -s ./stytra/tests/test_kalman.py 
 	pytest -s ./stytra/tests/test_gratings.py 
 	pytest -s ./stytra/tests/test_z_experiments.py 
