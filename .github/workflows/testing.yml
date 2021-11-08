@@ -43,9 +43,9 @@ jobs:
         Xvfb :1 -screen 0 1024x768x16 &
         echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
-    - name: Test no action
-      run: |
-        make tests
+    # - name: Test no action
+    #   run: |
+    #     make tests
 
     - name: Test with action
       uses: GabrielBB/xvfb-action@v1
