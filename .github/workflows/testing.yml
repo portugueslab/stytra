@@ -52,6 +52,7 @@ jobs:
       with:
         run: |
           Xvfb :1 -screen 0 1024x768x16
+          X [:1.0] -ac
           make tests
 
 
