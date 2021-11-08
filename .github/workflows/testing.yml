@@ -51,8 +51,7 @@ jobs:
       uses: GabrielBB/xvfb-action@v1
       with:
         run: |
-          Xvfb :1 -screen 0 1024x768x16 &
-          X [:1.0]
+          Xvfb :1 -screen 0 1024x768x16
           make tests
 
 
