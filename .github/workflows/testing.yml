@@ -38,22 +38,17 @@ jobs:
         pip install .[dev]
         echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
         
-    - name: Start display server
-      run: |
-        Xvfb :1 -screen 0 1024x768x16 &
-        echo "DISPLAY=:1.0" >> $GITHUB_ENV
-
-    # - name: Test no action
+    # - name: Start display server
     #   run: |
-    #     make tests
+    #     Xvfb :1 -screen 0 1024x768x16 &
+    #     echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
-    - name: Test with action
-      uses: GabrielBB/xvfb-action@v1
-      with:
-        run: |
-          Xvfb :1 -screen 0 1024x768x16
-          X [:1.0] -ac
-          make tests
+    - name: Test no action
+      run: |
+        Xvfb :1 -screen 0 1024x768x16
+        export DISPLAY=:1.0
+        make tests
+
 
 
 
