@@ -39,8 +39,8 @@ jobs:
         
     - name: Start display server
       run: |
-        Xvfb :99 -nolisten tc &
-        echo "DISPLAY=:99" >> $GITHUB_ENV
+        Xvfb :1 -screen 0 1024x768x16 &
+        echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
     - name: Test
       run: |
