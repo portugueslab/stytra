@@ -20,6 +20,7 @@ jobs:
           libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
           libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
         sudo apt-get update -qq
+        sudo apt install libxcb-xinerama0 
         sudo apt-get install -qq --no-install-recommends \
           libxml2-dev libxslt1-dev gfortran libatlas-base-dev \
           libespeak1 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
