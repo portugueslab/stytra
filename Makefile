@@ -24,6 +24,7 @@ tests:
 	# pytest -s ./stytra/tests/test_eye_tracking.py
 	# pytest -s ./stytra/tests/test_looming.py
 	# pytest -s ./stytra/tests/test_examples.py
+	pytest -s ./stytra/tests/test_init_gui.py
 
 
 
