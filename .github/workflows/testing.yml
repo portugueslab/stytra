@@ -52,7 +52,7 @@ jobs:
       with:
         run: |
           Xvfb :1 -screen 0 1024x768x16 &
-          echo "DISPLAY=:1.0" >> $GITHUB_ENV
+          export DISPLAY=:1.0
           make tests
 
 
