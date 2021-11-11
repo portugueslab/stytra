@@ -29,3 +29,5 @@ anytree
 qdarkstyle 
 psutil 
 pytest-qt
+opencv-contrib-python
+opencv-contrib-python-headless 
