@@ -37,7 +37,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r req.txt
         pip install .[dev]
-        echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+    #   echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
         
     # - name: Start display server
     #   run: |
@@ -46,7 +46,7 @@ jobs:
 
     - name: Test no action
       run: |
-        make tests
+        xvfb-run make tests
 
 
 

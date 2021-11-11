@@ -15,3 +15,17 @@ scikit-image
 imageio
 imageio-ffmpeg
 lightparam>=0.3.7
+opencv-python 
+pyFirmata 
+av 
+flammkuchen 
+gitpython 
+PIMS 
+qimage2ndarray 
+pyqtgraph 
+colorspacious 
+arrayqueues 
+anytree 
+qdarkstyle 
+psutil 
+pytest-qt
