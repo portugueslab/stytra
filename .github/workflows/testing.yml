@@ -16,9 +16,9 @@ jobs:
           environment-file: environment.yml
           python-version: 3.7
           auto-activate-base: false
-        - run: conda info
-        - run: conda list
         - run: |
+            conda info
+            conda list
             python -m pip install --upgrade pip
             pip install -r req.txt
             pip install .[dev]
