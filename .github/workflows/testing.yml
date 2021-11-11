@@ -46,7 +46,7 @@ jobs:
 
     - name: Test no action
       run: |
-        xvfb-run make tests
+        make tests
 
 
 
