@@ -17,6 +17,7 @@ jobs:
           python-version: 3.7
           auto-activate-base: false
       - run: |
+            conda init
             conda activate stytra_env
             python -m pip install --upgrade pip
             pip install -r req.txt
