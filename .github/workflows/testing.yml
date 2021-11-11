@@ -13,7 +13,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: stytra_env
-          environment-file: stytra/environment.yml
+          environment-file: environment.yml
           python-version: 3.7
           auto-activate-base: false
       - run: |
