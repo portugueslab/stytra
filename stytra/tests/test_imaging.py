@@ -67,9 +67,9 @@ def test_simple(qtbot, protocol):
     print("here t = 0")
     qtbot.wait(5000)
     print("here t = {}".format(time()-tic))
-    qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
-                    Qt.LeftButton,
-                    delay=1)
+    # qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
+    #                 Qt.LeftButton,
+    #                 delay=1)
     print("here t = {}".format(time()-tic))
     print("duration = {} min ".format(round(((duration + 1)*5)/60, 3)))
 
@@ -77,7 +77,7 @@ def test_simple(qtbot, protocol):
     try:
         d = (duration + 1)*5000
         if d> 400000:
-            d = 400000
+            d = 40000
         qtbot.wait(d)
         sleep(5)
         print("1 try pass")
