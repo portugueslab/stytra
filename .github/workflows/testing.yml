@@ -22,9 +22,12 @@ jobs:
       - name: Conda list
         shell: pwsh
         run: conda list
+      - name: Init
+        shell: bash -l {0}
+        run: conda init
       - name: Test
         shell: bash -l {0}
-      - run: |
+        run: |
             conda activate stytra_env
             python -m pip install --upgrade pip
             pip install -r req.txt
