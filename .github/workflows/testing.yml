@@ -84,9 +84,7 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_examples.py
-	
-      
-	
+            
   # test:
   #   runs-on: ubuntu-latest
   #   steps:
