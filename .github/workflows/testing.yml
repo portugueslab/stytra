@@ -16,8 +16,15 @@ jobs:
           environment-file: environment.yml
           python-version: 3.7
           auto-activate-base: false
+      - name: Conda info
+        shell: bash -l {0}
+        run: conda info
+      - name: Conda list
+        shell: pwsh
+        run: conda list
+      - name: Test
+        shell: bash -l {0}
       - run: |
-            conda init
             conda activate stytra_env
             python -m pip install --upgrade pip
             pip install -r req.txt
