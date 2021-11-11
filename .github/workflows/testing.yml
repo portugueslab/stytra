@@ -69,6 +69,11 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_z_experiments.py
+      - name: Tests examples
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_imaging.py
       - name: Tests eye track
         shell: bash -l {0}
         run: |
@@ -84,7 +89,6 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_examples.py
-            
   # test:
   #   runs-on: ubuntu-latest
   #   steps:
