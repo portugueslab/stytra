@@ -24,7 +24,7 @@ protocols = []
 for (_, module_name, _) in iter_modules([package_dir]):
     # Heuristic to exclude examples more complicated to run:
     if all([excl not in module_name
-                for excl in ["custom", "trigger", "serial", "camera",'portugues2011_exp','eye_tracking_exp','imaging_exp','gratings_exp', 'looming_exp', 'flash_exp','most_basic_exp','moving_bg_coordinates', 'no_stytra_exp', 'phototaxis']]):
+                for excl in ["custom", "trigger", "serial", "camera",'portugues2011_exp','eye_tracking_exp','imaging_exp','gratings_exp', 'looming_exp', 'flash_exp','arduino_exp','most_basic_exp','moving_bg_coordinates', 'no_stytra_exp', 'phototaxis']]):
         # import the module and iterate through its attributes
         try:
             module = import_module(f"stytra.examples.{module_name}")
