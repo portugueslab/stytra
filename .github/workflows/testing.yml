@@ -69,7 +69,7 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_z_experiments.py
-      - name: Tests examples
+      - name: Tests imaging
         shell: bash -l {0}
         run: |
             conda activate stytra_env
