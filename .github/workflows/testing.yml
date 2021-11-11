@@ -69,19 +69,16 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_z_experiments.py
-
       - name: Tests eye track
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_eye_tracking.py
-	 
       - name: Tests looming
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_looming.py
-	
       - name: Tests examples
         shell: bash -l {0}
         run: |
