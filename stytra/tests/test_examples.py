@@ -62,7 +62,11 @@ def test_base_exp(qtbot,protocol):
                         delay=1)
         print("here t = {}".format(time()-tic))
         print("duration = ",(duration + 1)*5000)
-        qtbot.wait((duration + 1)*5000)
+        d = (duration + 1)*5000
+        if d> 400000:
+            d = 400000
+            print("new duration: {}".format(d))
+        qtbot.wait(d)
         # qtbot.wait(10000)
         print("last here t = {}".format(time()-tic))
         # exp.end_protocol(save=False)

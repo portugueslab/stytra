@@ -75,7 +75,10 @@ def test_simple(qtbot, protocol):
 
 
     try:
-        qtbot.wait((duration + 1)*5000)
+        d = (duration + 1)*5000
+        if d> 400000:
+            d = 400000
+        qtbot.wait(d)
         sleep(5)
         print("1 try pass")
     except:
