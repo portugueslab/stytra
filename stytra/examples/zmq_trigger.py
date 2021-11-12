@@ -6,7 +6,7 @@ This is an example of ZMQ trigger to start a Stytra protocol.
 """
 
 if __name__ == "__main__":
-    address = "tcp://141.39.153.113:5555" #.format(socket.gethostbyname(socket.gethostname()))
+    address = "tcp://141.39.153.113:5555"  # .format(socket.gethostbyname(socket.gethostname()))
 
     print("Sending trigger to {}...".format(address))
     zmq_context = zmq.Context()

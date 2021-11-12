@@ -72,7 +72,7 @@ class TrackingProcess(FrameProcess):
         #  displaying
         #  the image
         self.output_queue = output_queue  # queue for processing output (e.g., pos)
-        self.second_output_queue = second_output_queue #user defined optional second output queue, attention needs emptying
+        self.second_output_queue = second_output_queue  # user defined optional second output queue, attention needs emptying
         self.processing_parameter_queue = processing_parameter_queue
 
         self.finished_signal = finished_signal
@@ -158,7 +158,7 @@ class TrackingProcess(FrameProcess):
         return
 
     def send_to_gui(self, frametime, frame):
-        """ Sends the current frame to the GUI queue at the appropriate framerate"""
+        """Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
             every_x = max(
                 int(self.framerate_rec.current_framerate / self.gui_framerate), 1
@@ -175,7 +175,7 @@ class TrackingProcess(FrameProcess):
 
 
 class DispatchProcess(FrameProcess):
-    """ A class which handles taking frames from the camera and dispatch them to both a separate
+    """A class which handles taking frames from the camera and dispatch them to both a separate
     process (e.g. for saving a movie) and to a gui for display
 
     Parameters
@@ -239,7 +239,7 @@ class DispatchProcess(FrameProcess):
         return
 
     def send_to_gui(self, frametime, frame):
-        """ Sends the current frame to the GUI queue at the appropriate framerate"""
+        """Sends the current frame to the GUI queue at the appropriate framerate"""
         if self.framerate_rec.current_framerate:
             every_x = max(
                 int(self.framerate_rec.current_framerate / self.gui_framerate), 1

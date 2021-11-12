@@ -15,7 +15,7 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     Parameters
     ----------
     size :
-        
+
     kernel_std_x :
          (Default value = 1)
     kernel_std_y :
@@ -30,10 +30,10 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     width_kernel_x = size[0]
     width_kernel_y = size[1]
     kernel_gaussian_x = np.exp(
-        -(np.arange(width_kernel_x) - width_kernel_x / 2) ** 2 / kernel_std_x ** 2
+        -((np.arange(width_kernel_x) - width_kernel_x / 2) ** 2) / kernel_std_x ** 2
     )
     kernel_gaussian_y = np.exp(
-        -(np.arange(width_kernel_y) - width_kernel_y / 2) ** 2 / kernel_std_y ** 2
+        -((np.arange(width_kernel_y) - width_kernel_y / 2) ** 2) / kernel_std_y ** 2
     )
 
     kernel_2D = kernel_gaussian_x[None, :] * kernel_gaussian_y[:, None]
@@ -47,8 +47,7 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
 
 
 def existing_file_background(filepath):
-    """ Returns a numpy array from an image stored at filepath
-    """
+    """Returns a numpy array from an image stored at filepath"""
     filepath = Path(filepath)
     if filepath.suffix == ".h5":
         return fl.load(filepath)
@@ -163,7 +162,7 @@ class Grid:
     override Grid.distance to change
     distance metric used and get different forms
     of 'discs'
-    
+
     Adapted from code by Herman Tulleken (herman@luma.co.za)
 
     Parameters
@@ -216,7 +215,7 @@ class Grid:
         Parameters
         ----------
         point :
-            
+
 
         Returns
         -------
@@ -243,7 +242,7 @@ class Grid:
         Parameters
         ----------
         seed :
-            
+
         k :
              (Default value = 30)
 
@@ -281,9 +280,9 @@ class Grid:
         Parameters
         ----------
         k :
-            
+
         point :
-            
+
 
         Returns
         -------
@@ -309,9 +308,9 @@ class Grid:
         Parameters
         ----------
         point :
-            
+
         new_point :
-            
+
 
         Returns
         -------
@@ -340,11 +339,11 @@ class Grid:
         Parameters
         ----------
         point :
-            
+
         rad :
-            
+
         angs :
-            
+
 
         Returns
         -------
@@ -363,7 +362,7 @@ class Grid:
         Parameters
         ----------
         point :
-            
+
 
         Returns
         -------
@@ -377,9 +376,9 @@ class Grid:
         Parameters
         ----------
         tup1 :
-            
+
         tup2 :
-            
+
 
         Returns
         -------
@@ -397,9 +396,9 @@ class Grid:
         Parameters
         ----------
         tup1 :
-            
+
         tup2 :
-            
+
 
         Returns
         -------
@@ -420,7 +419,7 @@ class Grid:
         Parameters
         ----------
         cell :
-            
+
 
         Returns
         -------
@@ -438,9 +437,9 @@ class Grid:
         Parameters
         ----------
         point :
-            
+
         index :
-            
+
 
         Returns
         -------

@@ -3,7 +3,7 @@ import datetime
 
 
 class Stimulus:
-    """ Abstract class for a Stimulus.
+    """Abstract class for a Stimulus.
 
     In stytra, a Stimulus is something that
     makes things happen at some point of an experiment.
@@ -102,17 +102,15 @@ class Stimulus:
         self.real_time_stop = datetime.datetime.now()
 
     def start(self):
-        """Function called by the ProtocolRunner when a new stimulus is set.
-        """
+        """Function called by the ProtocolRunner when a new stimulus is set."""
         self.real_time_start = datetime.datetime.now()
 
     def stop(self):
-        """Function called by the ProtocolRunner when a new stimulus is set.
-        """
+        """Function called by the ProtocolRunner when a new stimulus is set."""
         pass
 
     def initialise_external(self, experiment):
-        """ Make a reference to the Experiment class inside the Stimulus.
+        """Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
         estimators for virtual reality.
@@ -210,8 +208,7 @@ class InterpolatedStimulus(DynamicStimulus):
         self._past_t = self._elapsed
 
         # the phase has to be found by searching, as there are situation where it does not always increase
-        self.current_phase = np.searchsorted(self.phase_times - 1e-9,
-                                             self._elapsed) - 1
+        self.current_phase = np.searchsorted(self.phase_times - 1e-9, self._elapsed) - 1
 
         for col in self.df_param.columns:
             if col != "t":
@@ -235,7 +232,7 @@ class InterpolatedStimulus(DynamicStimulus):
 
 
 class TriggerStimulus(DynamicStimulus):
-    """ A class that uses the Experiment trigger to trigger a sequence
+    """A class that uses the Experiment trigger to trigger a sequence
     of stimuli.
 
     """
@@ -314,8 +311,7 @@ class CombinerStimulus(DynamicStimulus):
         return state
 
     def get_state(self):
-        """
-        """
+        """ """
         state_dict = dict()
         for key, value in self.__dict__.items():
             if not callable(value) and key[0] != "_":

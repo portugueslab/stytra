@@ -26,9 +26,7 @@ from pathlib import Path
 
 
 class RadialSine(Protocol):
-    """ Demonstrates usage of luminance stimuli
-
-    """
+    """Demonstrates usage of luminance stimuli"""
 
     name = "radial_sine"
 
@@ -37,9 +35,7 @@ class RadialSine(Protocol):
 
 
 class FullFieldProtocol(Protocol):
-    """ Demonstrates usage of luminance stimuli
-
-    """
+    """Demonstrates usage of luminance stimuli"""
 
     name = "full_field"
 
@@ -52,9 +48,7 @@ class FullFieldProtocol(Protocol):
 
 
 class OKRProtocol(Protocol):
-    """ Demonstrates usage of OKR evoking windmill stimuli
-
-    """
+    """Demonstrates usage of OKR evoking windmill stimuli"""
 
     name = "okr"
 
@@ -121,6 +115,7 @@ class GenerateStimuliMovie:
 
     def tearDown(self):
         pass
+
     #    shutil.rmtree(self.test_dir)
 
     def waitend(self):

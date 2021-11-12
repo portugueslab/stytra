@@ -98,9 +98,7 @@ class OfflineToolbar(QToolBar):
 
 
 class StytraLoader(QDialog):
-    """ A quick-and-dirty monkey-patch of Stytra for easy offline tracking
-
-    """
+    """A quick-and-dirty monkey-patch of Stytra for easy offline tracking"""
 
     def __init__(self, app):
         super().__init__()

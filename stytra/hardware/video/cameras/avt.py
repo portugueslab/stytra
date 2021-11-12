@@ -54,7 +54,9 @@ class AvtCamera(Camera):
             try:
                 camera_index = camera_ids.index(self.camera_id)
             except KeyError:
-                raise KeyError(f"Camera id {self.camera_id} is not available (available cameras: {self.camera_ids})")
+                raise KeyError(
+                    f"Camera id {self.camera_id} is not available (available cameras: {self.camera_ids})"
+                )
         messages.append("I:Detected camera {}.".format(camera_ids[camera_index]))
         self.cam = self.vimba.camera(camera_index)
 

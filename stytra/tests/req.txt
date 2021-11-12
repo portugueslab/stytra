@@ -31,4 +31,9 @@ psutil
 pytest-qt
 pytest-forked
 pytest-xdist
+flake8
+tox
+Sphinx
+pytest
+pytest-cov
 black
