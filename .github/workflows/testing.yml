@@ -3,6 +3,7 @@ name: tests
 on: push
 
 jobs:
+# testing single files
   singl-tests:
     name: Test Examples
     runs-on: "ubuntu-latest"
@@ -10,6 +11,7 @@ jobs:
       fail-fast: false
     steps:
       - uses: actions/checkout@v2
+      #setup miniconda
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: stytra_env
@@ -17,6 +19,7 @@ jobs:
           python-version: 3.7
           auto-activate-base: false
 
+      # install linux libraries for fake displays erver
       - name: Install Linux libraries
         run: |
           sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
@@ -33,12 +36,18 @@ jobs:
             libopengl0 libegl1 \
             libpulse0 libpulse-mainloop-glib0 \
             gir1.2-gtk-3.0 libgirepository1.0-dev
+
+      #check the conda info
       - name: Conda info
         shell: bash -l {0}
         run: conda info
+
+      #Initialize conda env
       - name: Init
         shell: bash -l {0}
         run: conda init
+
+      #Install the dependencies in stytra env
       - name: Dependencies
         shell: bash -l {0}
         run: |
@@ -46,61 +55,107 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r ./stytra/tests/req.txt
             pip install .[dev]
+
+      #Create a fake display
       - name: Start display server
         run: |
           Xvfb :1 -screen 0 1024x768x16 &
           echo "DISPLAY=:1.0" >> $GITHUB_ENV
-      - name: Tests kalman
+
+      #Start testing files   ----------------------------------------------------------------------------------
+      #Kalman test
+      - name: Test kalman
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_kalman.py 
+
+      #Pipeline
+      - name: Test Pipeline
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_pipeline.py 
+
+      #test_namedtuplequeue
+      - name: Test namedtuplequeue
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_namedtuplequeue.py
+
+      #test_online_bout_detection
+      - name: Test online_bout_detection
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_online_bout_detection.py 
+
+      # Test gui initialization
       - name: Tests gui
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s --forked ./stytra/tests/test_init_gui.py 
-      - name: All tests
-        shell: bash -l {0}
-        run: |
-            conda activate stytra_env
-            pytest -s --forked
+
+      # Test most examples
       - name: Tests examples
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s --forked ./stytra/tests/test_examples.py 
+
+      #Test Gratings Protocol
       - name: Tests gratings
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_gratings.py 
+
+      #Test trigger Protocol
       - name: Tests z exp
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_z_experiments.py
+
+      #Test imaging gui
       - name: Tests imaging
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_imaging.py
+
+      #Test eye traking Protocol
       - name: Tests eye track
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_eye_tracking.py
+
+      #Test looming Protocol
       - name: Tests looming
         shell: bash -l {0}
         run: |
             conda activate stytra_env
             pytest -s ./stytra/tests/test_looming.py
-      
+
+      #Test flash Protocol
+      - name: Tests flash
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_flash.py
+
   # test:
   #   runs-on: ubuntu-latest
   #   steps:
   #   - uses: actions/checkout@v2
-
+# - name: All tests
+#         shell: bash -l {0}
+#         run: |
+#             conda activate stytra_env
+#             pytest -s --forked
   #   # Install dependencies
   #   - name: Set up Python
   #     uses: actions/setup-python@v1

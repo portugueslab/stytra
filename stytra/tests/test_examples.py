@@ -26,7 +26,6 @@ for (_, module_name, _) in iter_modules([package_dir]):
         # import the module and iterate through its attributes
         try:
             module = import_module(f"stytra.examples.{module_name}")
-            print(module_name)
         except ImportError as e:
                 print("Error in: {}\nSee full message here:\n{}".format(module_name,e))
             
