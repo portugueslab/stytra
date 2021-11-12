@@ -3,12 +3,14 @@ name: tests
 on: push
 
 jobs:
-# testing single files
-  singl-tests:
-    name: Test Examples
+  # testing single files
+  single-tests:
+    name: Test Examples (${{ matrix.python-version }})
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
       #setup miniconda
@@ -16,7 +18,7 @@ jobs:
         with:
           activate-environment: stytra_env
           environment-file: environment.yml
-          python-version: 3.7
+          python-version: ${{ matrix.python-version }}
           auto-activate-base: false
 
       # install linux libraries for fake displays erver
