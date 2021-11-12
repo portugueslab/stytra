@@ -3,14 +3,35 @@ name: tests
 on: push
 
 jobs:
+  #lint
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.7
+      - name: Install dependencies
+        run: |
+          echo "testing: ${{github.ref}}"
+          python -m pip install --upgrade pip
+          pip install .[dev]
+          pip install -r ./stytra/tests/req.txt
+      - name: Lint
+        run: |
+          black . --check
+          flake8
+
   # testing single files
   single-tests:
+    needs: lint
     name: Test Examples (${{ matrix.python-version }})
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.7"]
     steps:
       - uses: actions/checkout@v2
       #setup miniconda
@@ -151,12 +172,13 @@ jobs:
 
 # testing all files
   all-tests:
+    needs: lint
     name: Test All (${{ matrix.python-version }})
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9"]
+        python-version: ["3.7"]
     steps:
       - uses: actions/checkout@v2
       #setup miniconda
