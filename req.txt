@@ -29,5 +29,7 @@ anytree
 qdarkstyle 
 psutil 
 pytest-qt
+pytest-forked
+pytest-xdist
 opencv-contrib-python
 opencv-contrib-python-headless 
