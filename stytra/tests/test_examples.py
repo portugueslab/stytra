@@ -24,11 +24,11 @@ protocols = []
 for (_, module_name, _) in iter_modules([package_dir]):
     # Heuristic to exclude examples more complicated to run:
     if all([excl not in module_name
-                for excl in ['imaging_exp']]):
+                for excl in ["custom", "trigger", "serial", "arduino",'imaging_exp']]):
         # import the module and iterate through its attributes
         try:
             module = import_module(f"stytra.examples.{module_name}")
-            # print(module_name)
+            print(module_name)
         except ImportError as e:
                 print("Error in: {}\nSee full message here:\n{}".format(module_name,e))
             
@@ -45,34 +45,34 @@ for (_, module_name, _) in iter_modules([package_dir]):
 def test_base_exp(qtbot,protocol):
         print(protocol)
     # try:
-        # app = QApplication([])
-        # stytra_obj = st.Stytra(protocol=protocol(),
-        #                     app=app,
-        #                     exec=False)
-        # exp = stytra_obj.exp
-        # duration = exp.protocol_runner.duration
-        # print(duration)
-        # exp_wnd = exp.window_main
-        # tic = time()
+        app = QApplication([])
+        stytra_obj = st.Stytra(protocol=protocol(),
+                            app=app,
+                            exec=False)
+        exp = stytra_obj.exp
+        duration = exp.protocol_runner.duration
+        print(duration)
+        exp_wnd = exp.window_main
+        tic = time()
         
-        # print("here t = 0")
-        # qtbot.wait(5000)
-        # print("here t = {}".format(time()-tic))
-        # qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
-        #                 Qt.LeftButton,
-        #                 delay=1)
-        # print("here t = {}".format(time()-tic))
-        # print("duration = ",(duration + 1)*5000)
-        # d = (duration + 1)*5000
-        # if d> 400000:
-        #     d = 400000
-        #     print("new duration: {}".format(d))
-        # qtbot.wait(d)
-        # # qtbot.wait(10000)
-        # print("last here t = {}".format(time()-tic))
-        # # exp.end_protocol(save=False)
-        # exp_wnd.closeEvent(None)
-        # qtbot.wait(5000)
+        print("here t = 0")
+        qtbot.wait(5000)
+        print("here t = {}".format(time()-tic))
+        qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
+                        Qt.LeftButton,
+                        delay=1)
+        print("here t = {}".format(time()-tic))
+        print("duration = ",(duration + 1)*5000)
+        d = (duration + 1)*5000
+        if d> 400000:
+            d = 400000
+            print("new duration: {}".format(d))
+        qtbot.wait(d)
+        # qtbot.wait(10000)
+        print("last here t = {}".format(time()-tic))
+        # exp.end_protocol(save=False)
+        exp_wnd.closeEvent(None)
+        qtbot.wait(5000)
         print("END -----------------------------------------------------------")
     # except WindowsError as e:a
     #     print("/////////////////////////////////////////////////////////////////////////////////")

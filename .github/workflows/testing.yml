@@ -64,6 +64,11 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s --forked ./stytra/tests/test_init_gui.py 
+      - name: Tests examples
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s --forked ./stytra/tests/test_examples.py 
       - name: Tests gratings
         shell: bash -l {0}
         run: |
