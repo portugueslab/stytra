@@ -40,71 +40,54 @@ for (_, module_name, _) in iter_modules([package_dir]):
         # except ModuleNotFoundError:
         #    print(f"Can't import {module}")
 
-# gratings_exp -> pass
-# eye_tracking_exp
-# imaging_exp
 
-# t=threading.Thread(target=test_simple) # create a thread running your function
-# t.start()                           # let it run using start (not run!)
-# t.join(20000)
-
-
+# ! Never ending process, stucks the command line -> only testing gui initialization
 @pytest.mark.parametrize("protocol", protocols)
 def test_simple(qtbot, protocol):
-    me = os.getpid()
-    print(protocol, me)
 
+    print("Testing gui Protocol: ",protocol)
+    tic = time()
+    print("Start: t = 0")
+
+    # Initialize app
     app = QApplication([])
     stytra_obj = st.Stytra(protocol=protocol(),
                         app=app,
                         exec=False)
     exp = stytra_obj.exp
     duration = exp.protocol_runner.duration
-    print(duration)
     exp_wnd = exp.window_main
-    tic = time()
-    
-    print("here t = 0")
+
+
     qtbot.wait(5000)
-    print("here t = {}".format(time()-tic))
+    print("Checkpoint 1: t = {}".format(time()-tic))
     # qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus,
     #                 Qt.LeftButton,
     #                 delay=1)
-    print("here t = {}".format(time()-tic))
-    print("duration = {} min ".format(round(((duration + 1)*5)/60, 3)))
-
 
     try:
         d = (duration + 1)*5000
         if d> 400000:
             d = 40000
+        print("Duration = {} min".format(int(d/60)))
         qtbot.wait(d)
         sleep(5)
-        print("1 try pass")
     except:
         print("Couldn't wait - error with qbot?")
     
 
-    # qtbot.wait(10000)
-    print("last here t = {}".format(time()-tic))
-    # exp.end_protocol(save=False)
+
+    print("Finished: t = {}".format(time()-tic))
+
+    # Close app
     try:
-        print("2 try pass")
         exp_wnd.closeEvent(None)
     except:
         print("Couldn't close Event")
     qtbot.wait(5000)
 
 
-    # os.kill(me, 9)
-    # stytra_obj = 0
-    # app = 0 
-    # exp_wnd = 0
-    # exp = 0
-    print("END -----------------------------------------------------------")
-    sleep(10)
-    # print("try kill stuff")
-    # os.kill(me, 9)
+    print("END: t = {}".format(time()-tic))
 
 
 

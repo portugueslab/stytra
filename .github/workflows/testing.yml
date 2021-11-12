@@ -4,7 +4,7 @@ on: push
 
 jobs:
   conda-test:
-    name: Conda testing
+    name: Test Examples
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
@@ -36,9 +36,6 @@ jobs:
       - name: Conda info
         shell: bash -l {0}
         run: conda info
-      - name: Conda list
-        shell: pwsh
-        run: conda list
       - name: Init
         shell: bash -l {0}
         run: conda init
@@ -47,9 +44,8 @@ jobs:
         run: |
             conda activate stytra_env
             python -m pip install --upgrade pip
-            pip install -r req.txt
+            pip install -r ./tests/req.txt
             pip install .[dev]
-
       - name: Start display server
         run: |
           Xvfb :1 -screen 0 1024x768x16 &
@@ -64,6 +60,11 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s --forked ./stytra/tests/test_init_gui.py 
+      - name: All tests
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s --forked
       - name: Tests examples
         shell: bash -l {0}
         run: |
