@@ -3,7 +3,7 @@ name: tests
 on: push
 
 jobs:
-  conda-test:
+  singl-tests:
     name: Test Examples
     runs-on: "ubuntu-latest"
     strategy:
@@ -44,7 +44,7 @@ jobs:
         run: |
             conda activate stytra_env
             python -m pip install --upgrade pip
-            pip install -r ./tests/req.txt
+            pip install -r ./stytra/tests/req.txt
             pip install .[dev]
       - name: Start display server
         run: |
