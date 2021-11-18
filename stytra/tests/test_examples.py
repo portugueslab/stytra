@@ -62,8 +62,10 @@ def test_base_exp(qtbot,protocol):
                         delay=1)
 
         # Wait a safe amount for the end of the protocol
-        print("Duration = {} min".format(int(((duration + 1)*5000)/60)))
-        d = (duration + 1)*5000
+        d = (duration + 1) * 5000
+        if d > 400000:
+                d = 40000
+        print("Duration = {} min".format(int(d / 60)))
         qtbot.wait(d)
 
         print("Finished: t = {}".format(time()-tic))
