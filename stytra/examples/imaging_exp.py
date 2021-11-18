@@ -22,7 +22,7 @@ class ImagingCLProtocol(Protocol):
         ),
         # Triggering: trigger from devices not supporting zmq messages
         # require changing this with other triggering options:
-        # trigger="zmq",
+        trigger="zmq",
     )
 
     def __init__(self):
