@@ -372,6 +372,7 @@ class Experiment(QObject):
                         for el in sys.argv:
                             if os.path.isdir(el):
                                 repo = git.Repo(el, search_parent_directories=True)
+                                break;
 
                     else:
                         
@@ -384,7 +385,7 @@ class Experiment(QObject):
                     except pkg_resources.DistributionNotFound:
                         self.logger.info("Could not find stytra version")
 
-                # catch exeptions if couldn't find git repo
+
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
                 except git.exc.NoSuchPathError:
