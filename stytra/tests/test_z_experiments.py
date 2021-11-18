@@ -90,8 +90,7 @@ class TestExperimentClass(unittest.TestCase):
         return next(Path(self.test_dir).glob("*/*/*.json"))
 
     def run_experiment(self, **kwargs):
-        """ Run a simulation of a real experiment.
-        """
+        """Run a simulation of a real experiment."""
         # Weirdly, getattr(kwargs, "tracking", None) always returns None
         try:
             tracking = kwargs["tracking"]
