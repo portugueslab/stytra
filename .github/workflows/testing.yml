@@ -3,34 +3,160 @@ name: tests
 on: push
 
 jobs:
-  #lint
-  lint:
-    runs-on: ubuntu-latest
+  # testing single files
+  single-tests:
+    name: Test Examples (${{ matrix.python-version }})
+    runs-on: "ubuntu-latest"
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      #setup miniconda
+      - uses: conda-incubator/setup-miniconda@v2
         with:
-          python-version: 3.7
-      - name: Install dependencies
+          activate-environment: stytra_env
+          environment-file: environment.yml
+          python-version: ${{ matrix.python-version }}
+          auto-activate-base: false
+
+      # install linux libraries for fake displays erver
+      - name: Install Linux libraries
         run: |
-          echo "testing: ${{github.ref}}"
-          python -m pip install --upgrade pip
-          pip install .[dev]
-          pip install -r ./stytra/tests/req.txt
-      - name: Lint
+          sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+            libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+            libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+          sudo apt-get update -qq
+          sudo apt install libxcb-xinerama0 
+          sudo apt-get install -qq --no-install-recommends \
+            libxml2-dev libxslt1-dev gfortran libatlas-base-dev \
+            libespeak1 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+            libxkbcommon-x11-0 libxcb-icccm4 libxcb1 openssl \
+            libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev \
+            libxcb-shape0-dev libxcb-xkb-dev xvfb \
+            libopengl0 libegl1 \
+            libpulse0 libpulse-mainloop-glib0 \
+            gir1.2-gtk-3.0 libgirepository1.0-dev
+
+      #check the conda info
+      - name: Conda info
+        shell: bash -l {0}
+        run: conda info
+
+      #Initialize conda env
+      - name: Init
+        shell: bash -l {0}
+        run: conda init
+
+      #Install the dependencies in stytra env
+      - name: Dependencies
+        shell: bash -l {0}
         run: |
-          black . --check
-        # flake8
-          # testing all files
+            conda activate stytra_env
+            python -m pip install --upgrade pip
+            pip install -r ./stytra/tests/req.txt
+            pip install .[dev]
+
+      #Create a fake display
+      - name: Start display server
+        run: |
+          Xvfb :1 -screen 0 1024x768x16 &
+          echo "DISPLAY=:1.0" >> $GITHUB_ENV
+
+      #Start testing files   ----------------------------------------------------------------------------------
+      #Kalman test
+      - name: Test kalman
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_kalman.py 
+
+      #Pipeline
+      - name: Test Pipeline
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_pipeline.py 
+
+      #test_namedtuplequeue
+      - name: Test namedtuplequeue
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_namedtuplequeue.py
+
+      #test_online_bout_detection
+      - name: Test online_bout_detection
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_online_bout_detection.py 
+
+      # Test gui initialization
+      - name: Tests gui
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s --forked ./stytra/tests/test_init_gui.py 
+
+      # Test most examples
+      - name: Tests examples
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s --forked ./stytra/tests/test_examples.py 
+
+      #Test Gratings Protocol
+      - name: Tests gratings
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_gratings.py 
+
+      #Test trigger Protocol
+      - name: Tests z exp
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_z_experiments.py
+
+      #Test imaging gui
+      - name: Tests imaging
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_imaging.py
+
+      #Test eye traking Protocol
+      - name: Tests eye track
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_eye_tracking.py
+
+      #Test looming Protocol
+      - name: Tests looming
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_looming.py
+
+      #Test flash Protocol
+      - name: Tests flash
+        shell: bash -l {0}
+        run: |
+            conda activate stytra_env
+            pytest -s ./stytra/tests/test_flash.py
+
+# testing all files
   all-tests:
-    needs: lint
     name: Test All (${{ matrix.python-version }})
     runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
     steps:
       - uses: actions/checkout@v2
       #setup miniconda
@@ -90,151 +216,163 @@ jobs:
         run: |
             conda activate stytra_env
             pytest -s --forked
-
-  # # testing single files
-  # single-tests:
-  #   needs: lint
-  #   name: Test Singularly (${{ matrix.python-version }})
-  #   runs-on: "ubuntu-latest"
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       python-version: ["3.7"]
+  # test:
+  #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v2
-  #     #setup miniconda
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         activate-environment: stytra_env
-  #         environment-file: environment.yml
-  #         python-version: ${{ matrix.python-version }}
-  #         auto-activate-base: false
+  #   - uses: actions/checkout@v2
+# - name: All tests
+#         shell: bash -l {0}
+#         run: |
+#             conda activate stytra_env
+#             pytest -s --forked
+  #   # Install dependencies
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v1
+  #     with:
+  #       python-version: "3.8"
+    
+  #   - name: Install Linux libraries
+  #     run: |
+  #       sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+  #         libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+  #         libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+  #       sudo apt-get update -qq
+  #       sudo apt install libxcb-xinerama0 
+  #       sudo apt-get install -qq --no-install-recommends \
+  #         libxml2-dev libxslt1-dev gfortran libatlas-base-dev \
+  #         libespeak1 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+  #         libxkbcommon-x11-0 libxcb-icccm4 libxcb1 openssl \
+  #         libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev \
+  #         libxcb-shape0-dev libxcb-xkb-dev xvfb \
+  #         libopengl0 libegl1 \
+  #         libpulse0 libpulse-mainloop-glib0 \
+  #         gir1.2-gtk-3.0 libgirepository1.0-dev
 
-  #     # install linux libraries for fake displays erver
-  #     - name: Install Linux libraries
-  #       run: |
-  #         sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
-  #           libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
-  #           libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
-  #         sudo apt-get update -qq
-  #         sudo apt install libxcb-xinerama0 
-  #         sudo apt-get install -qq --no-install-recommends \
-  #           libxml2-dev libxslt1-dev gfortran libatlas-base-dev \
-  #           libespeak1 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
-  #           libxkbcommon-x11-0 libxcb-icccm4 libxcb1 openssl \
-  #           libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev \
-  #           libxcb-shape0-dev libxcb-xkb-dev xvfb \
-  #           libopengl0 libegl1 \
-  #           libpulse0 libpulse-mainloop-glib0 \
-  #           gir1.2-gtk-3.0 libgirepository1.0-dev
+    
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install -r req.txt
+  #       pip install .[dev]
+  #   #   echo "QT_QPA_PLATFORM=offscreen" >> $GITHUB_ENV
+        
+  #   # - name: Start display server
+  #   #   run: |
+  #   #     Xvfb :1 -screen 0 1024x768x16 &
+  #   #     echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
-  #     #check the conda info
-  #     - name: Conda info
-  #       shell: bash -l {0}
-  #       run: conda info
+  #   - name: Test no action
+  #     run: |
+  #       make tests
 
-  #     #Initialize conda env
-  #     - name: Init
-  #       shell: bash -l {0}
-  #       run: conda init
 
-  #     #Install the dependencies in stytra env
-  #     - name: Dependencies
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           python -m pip install --upgrade pip
-  #           pip install -r ./stytra/tests/req.txt
-  #           pip install .[dev]
 
-  #     #Create a fake display
-  #     - name: Start display server
-  #       run: |
-  #         Xvfb :1 -screen 0 1024x768x16 &
-  #         echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
-  #     #Start testing files   ----------------------------------------------------------------------------------
-  #     #Kalman test
-  #     - name: Test kalman
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_kalman.py 
 
-  #     #Pipeline
-  #     - name: Test Pipeline
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_pipeline.py 
+# name: tests
 
-  #     #test_namedtuplequeue
-  #     - name: Test namedtuplequeue
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_namedtuplequeue.py
+# on: push
 
-  #     #test_online_bout_detection
-  #     - name: Test online_bout_detection
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_online_bout_detection.py 
+# jobs:
 
-  #     # Test gui initialization
-  #     - name: Tests gui
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s --forked ./stytra/tests/test_init_gui.py 
+#   test:
+#     name: ${{ matrix.platform }} py${{ matrix.python }} ${{ matrix.toxenv }} 
+#     runs-on: ${{ matrix.platform }}
+#     strategy:
+#       fail-fast: false
+#       matrix:
+#         platform: [ubuntu-latest, windows-latest, macos-latest]
+#         python: [3.7, 3.8]
+#         include:
+#           # test big sur on 3.9.0
+#           - python: 3.8
+#             platform: macos-11.0
+#             toxenv: py39-macos-pyqt
+#           # test with minimum specified requirements
+#           - python: 3.7
+#             platform: ubuntu-18.04
+#             MIN_REQ: 1
+#           # test with --async_only
+#           - python: 3.8
+#             platform: ubuntu-18.04
+#             toxenv: async-py38-linux-pyqt
+#           # test without any Qt backends
 
-  #     # Test most examples
-  #     - name: Tests examples
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s --forked ./stytra/tests/test_examples.py 
 
-  #     #Test Gratings Protocol
-  #     - name: Tests gratings
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_gratings.py 
+#     steps:
+#       - uses: actions/checkout@v2
 
-  #     #Test trigger Protocol
-  #     - name: Tests z exp
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_z_experiments.py
+#       - name: Set up Python ${{ matrix.python }}
+#         uses: actions/setup-python@v2
+#         with:
+#           python-version: ${{ matrix.python }}
 
-  #     #Test imaging gui
-  #     - name: Tests imaging
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_imaging.py
+#       # these libraries, along with pytest-xvfb (added in the `deps` in tox.ini),
+#       # enable testing on Qt on linux
+#       - name: Install Linux libraries
+#         if: runner.os == 'Linux'
+#         run: |
+#           sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+#             libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+#             libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+#       # strategy borrowed from vispy for installing opengl libs on windows
+#       - name: Install Windows OpenGL
+#         if: runner.os == 'Windows'
+#         run: |
+#           git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
+#           powershell gl-ci-helpers/appveyor/install_opengl.ps1
+#           if (Test-Path -Path "C:\Windows\system32\opengl32.dll" -PathType Leaf) {Exit 0} else {Exit 1}
+#       - name: Install dependencies
+#         run: |
+#           pip install --upgrade pip
+#           pip install setuptools tox tox-gh-actions
+#           pip install -r req.txt
+#           pip install -r requirements_dev.txt
 
-  #     #Test eye traking Protocol
-  #     - name: Tests eye track
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_eye_tracking.py
+#       # here we pass off control of environment creation and running of tests to tox
+#       # tox-gh-actions, installed above, helps to convert environment variables into
+#       # tox "factors" ... limiting the scope of what gets tested on each platform
+#       # The one exception is if the "toxenv" environment variable has been set,
+#       # in which case we are declaring one specific tox environment to run.
+#       # see tox.ini for more
+#       - name: Test with tox
+#         uses: GabrielBB/xvfb-action@v1
+#         with:
+#           run: tox
+#         env:
+#           PLATFORM: ${{ matrix.platform }}
+#           TOXENV: ${{ matrix.toxenv }}
+#           PYVISTA_OFF_SCREEN: True
 
-  #     #Test looming Protocol
-  #     - name: Tests looming
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_looming.py
 
-  #     #Test flash Protocol
-  #     - name: Tests flash
-  #       shell: bash -l {0}
-  #       run: |
-  #           conda activate stytra_env
-  #           pytest -s ./stytra/tests/test_flash.py
+  # testTox:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v2
 
+  #   # Install dependencies
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v1
+  #     with:
+  #       python-version: "3.8"
+    
+  #   - name: Install Linux libraries
+  #     run: |
+  #       sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
+  #         libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+  #         libxcb-xinerama0 libxcb-xinput0 libxcb-xfixes0
+
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install setuptools tox tox-gh-actions
+  #       pip install -r req.txt
+  #       pip install .[dev]
+  #   # - name: Test
+  #   #   run: |
+  #   #     make tests
+
+  #   - name: Test with tox
+  #     uses: GabrielBB/xvfb-action@v1
+  #     with:
+  #       run: tox

@@ -12,6 +12,7 @@ from stytra.gui.camera_display import (
 )
 
 
+
 class TailTrackingPipeline(Pipeline):
     def __init__(self):
         super().__init__()
@@ -48,9 +49,11 @@ class EyeTailTrackingPipeline(Pipeline):
         self.display_overlay = EyeTailTrackingSelection
 
 
+
+
 pipeline_dict = dict(
     tail=TailTrackingPipeline,
     fish=FishTrackingPipeline,
     eyes=EyeTrackingPipeline,
-    eyes_tail=EyeTailTrackingPipeline,
+    eyes_tail=EyeTailTrackingPipeline
 )

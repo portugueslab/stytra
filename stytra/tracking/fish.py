@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from numba import jit, int64, float64
-
 try:
     from numba.experimental import jitclass
 except ModuleNotFoundError:
@@ -321,7 +320,7 @@ class Fishes(object):
         return False
 
     def is_close(self, new_fish, i_fish):
-        """Check whether the new coordinates are
+        """ Check whether the new coordinates are
         within a certain number of pixels of the old estimate
         and within a certain angle
         """
@@ -381,7 +380,7 @@ def _symmetry_points(x0, y0, x, y):
 
 @jit(nopython=True)
 def _circle_points(x0, y0, radius):
-    """Bresenham's circle algorithm
+    """ Bresenham's circle algorithm
 
     Parameters
     ----------

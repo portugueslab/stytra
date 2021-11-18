@@ -31,9 +31,5 @@ psutil
 pytest-qt
 pytest-forked
 pytest-xdist
-flake8
-tox
-Sphinx
-pytest
-pytest-cov
-black
+opencv-contrib-python
+opencv-contrib-python-headless 

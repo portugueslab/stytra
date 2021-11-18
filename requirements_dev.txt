@@ -5,4 +5,4 @@ Sphinx
 
 pytest
 pytest-cov
-black
+
