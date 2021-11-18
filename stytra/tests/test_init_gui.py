@@ -1,4 +1,4 @@
-from time import sleep, time
+from time import sleep,time
 
 from lightparam import Param
 import stytra
@@ -21,18 +21,18 @@ package_dir = Path(st.__file__).parent / "examples"
 protocols = []
 for (_, module_name, _) in iter_modules([package_dir]):
     # Heuristic to exclude examples more complicated to run:
-    if all(
-        [excl not in module_name for excl in ["custom", "trigger", "serial", "arduino"]]
-    ):
+    if all([excl not in module_name
+                for excl in ["custom", "trigger", "serial", "arduino"]]):
         # import the module and iterate through its attributes
         try:
             module = import_module(f"stytra.examples.{module_name}")
         except ImportError as e:
-            print("Error in: {}\nSee full message here:\n{}".format(module_name, e))
+                print("Error in: {}\nSee full message here:\n{}".format(module_name,e))
+            
 
         for attribute_name in dir(module):
             if "Protocol" in attribute_name and attribute_name != "Protocol":
-                protocols.append(getattr(module, attribute_name))
+                    protocols.append(getattr(module, attribute_name))
             # attribute = getattr(module, attribute_name)
         # except ModuleNotFoundError:
         #    print(f"Can't import {module}")
@@ -40,23 +40,25 @@ for (_, module_name, _) in iter_modules([package_dir]):
 
 # only tests initialization
 @pytest.mark.parametrize("protocol", protocols)
-def test_base_exp(qtbot, protocol):
+def test_base_exp(qtbot,protocol):
 
-    print("Testing gui Protocol: ", protocol)
-    tic = time()
-    print("Start: t = 0")
+        print("Testing gui Protocol: ",protocol)
+        tic = time()
+        print("Start: t = 0")
 
-    # Initialize app
-    app = QApplication([])
-    stytra_obj = st.Stytra(protocol=protocol(), app=app, exec=False)
-    exp = stytra_obj.exp
-    duration = exp.protocol_runner.duration
-    exp_wnd = exp.window_main
+        # Initialize app
+        app = QApplication([])
+        stytra_obj = st.Stytra(protocol=protocol(),
+                            app=app,
+                            exec=False)
+        exp = stytra_obj.exp
+        duration = exp.protocol_runner.duration
+        exp_wnd = exp.window_main
+        
+        #Close app
+        qtbot.wait(5000)
+        print("Finished: t = {}".format(time()-tic))
 
-    # Close app
-    qtbot.wait(5000)
-    print("Finished: t = {}".format(time() - tic))
-
-    exp_wnd.closeEvent(None)
-    qtbot.wait(5000)
-    print("END: t = {}".format(time() - tic))
+        exp_wnd.closeEvent(None)
+        qtbot.wait(5000)
+        print("END: t = {}".format(time()-tic))
