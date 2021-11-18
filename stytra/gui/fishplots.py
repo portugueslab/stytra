@@ -62,9 +62,7 @@ class StreamingPositionPlot(pg.GraphicsWindow):
 
 
 class TailStreamPlot(QWidget):
-    """ Displays the curvature of the tail in time using a heatmap
-
-    """
+    """Displays the curvature of the tail in time using a heatmap"""
 
     def __init__(self, acc, n_points=300):
         super().__init__()
@@ -110,7 +108,7 @@ class TailStreamPlot(QWidget):
 
 
 def rot_mat(theta):
-    """The rotation matrix for an angle theta """
+    """The rotation matrix for an angle theta"""
     return np.array([[np.cos(theta), -np.sin(theta)], [np.sin(theta), np.cos(theta)]])
 
 
@@ -120,7 +118,7 @@ def angle_mean(angles, axis=1):
 
 
 def normalise_bout(coord):
-    """ Reset a bout to be facing upward and start from 0,0
+    """Reset a bout to be facing upward and start from 0,0
 
     Parameters
     ----------
@@ -138,7 +136,7 @@ def normalise_bout(coord):
 
 
 class BoutPlot(QWidget):
-    """ Plots the last few bouts in normalized coordinates, with fish facing
+    """Plots the last few bouts in normalized coordinates, with fish facing
     to the right.
 
     """

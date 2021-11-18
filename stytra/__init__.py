@@ -8,4 +8,4 @@ from stytra.metadata import AnimalMetadata, GeneralMetadata
 import multiprocessing
 
 # Required for multiprocessing to behave properly on macOS:
-multiprocessing.set_start_method('spawn', force=True)
+multiprocessing.set_start_method("spawn", force=True)

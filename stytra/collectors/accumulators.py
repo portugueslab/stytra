@@ -77,7 +77,7 @@ class DataFrameAccumulator(Accumulator):
         return np.array(self.times)
 
     def values_at_abs_time(self, time):
-        """ Finds the values in the accumulator closest to the datetime time
+        """Finds the values in the accumulator closest to the datetime time
 
         Parameters
         ----------
@@ -102,8 +102,7 @@ class DataFrameAccumulator(Accumulator):
 
     @property
     def header_dict(self):
-        """  for each header name gives the column
-        """
+        """for each header name gives the column"""
         if self._header_dict is None:
             self._header_dict = {hn: i for i, hn in enumerate(self.columns)}
         return self._header_dict
@@ -201,12 +200,11 @@ class DataFrameAccumulator(Accumulator):
             return self.get_last_n(1)
 
     def get_dataframe(self):
-        """Returns pandas DataFrame with data and headers.
-        """
+        """Returns pandas DataFrame with data and headers."""
         return self.get_last_n(len(self.stored_data))
 
     def save(self, path, format="csv"):
-        """ Saves the content of the accumulator in a tabular format.
+        """Saves the content of the accumulator in a tabular format.
         Choose CSV for widest compatibility, HDF if using Python only,
         or feather for efficient storage compatible with Python and Julia
         data frames
@@ -261,8 +259,7 @@ class QueueDataAccumulator(DataFrameAccumulator):
         self.data_queue = data_queue
 
     def update_list(self):
-        """Upon calling put all available data into a list.
-        """
+        """Upon calling put all available data into a list."""
         while True:
             try:
                 # Get data from queue:

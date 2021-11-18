@@ -30,7 +30,7 @@ class Database:
         Parameters
         ----------
         exp_data : the data collector dictionary
-            
+
 
         Returns
         -------
@@ -155,7 +155,7 @@ def get_default_args(func):
     Parameters
     ----------
     func :
-        
+
 
     Returns
     -------
@@ -175,7 +175,7 @@ def strip_values(it):
     Parameters
     ----------
     it :
-        
+
 
     Returns
     -------
@@ -232,7 +232,7 @@ def get_classes_from_module(input_module, parent_class):
 
 
 def recursive_update(d, u):
-    """ Simple recursive update of dictionaries, from StackOverflow
+    """Simple recursive update of dictionaries, from StackOverflow
 
     :param d: dict to update
     :param u: new values
@@ -253,7 +253,7 @@ def reduce_to_pi(angle):
 
 
 def save_df(df, path, fileformat):
-    """ Saves the dataframe in one of the supported formats
+    """Saves the dataframe in one of the supported formats
 
     Parameters
     ----------

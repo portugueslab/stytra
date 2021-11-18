@@ -191,7 +191,9 @@ class TrackingExperiment(CameraVisualExperiment):
 
     """
 
-    def __init__(self, *args, tracking, recording=None, second_output_queue=None, **kwargs):
+    def __init__(
+        self, *args, tracking, recording=None, second_output_queue=None, **kwargs
+    ):
         """
         :param tracking_method: class with the parameters for tracking (instance
                                 of TrackingMethod class, defined in the child);
@@ -202,7 +204,7 @@ class TrackingExperiment(CameraVisualExperiment):
         """
 
         self.processing_params_queue = Queue()
-        self.second_output_queue =second_output_queue
+        self.second_output_queue = second_output_queue
         self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
         super().__init__(*args, **kwargs)

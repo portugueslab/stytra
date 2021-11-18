@@ -13,14 +13,14 @@ from stytra.stimulation.stimuli.closed_loop import FishTrackingStimulus
 
 
 class RelativeBackgroundStimulus(BackgroundStimulus):
-    """ This background shoudl be fully controllable on where it is placed.
+    """This background shoudl be fully controllable on where it is placed.
     It shoudl transform AND translate with the fish.
     It should have a:
      1) TRUE center = its own stimulus center (0,0)
      2) RELATIVE center which can be set arbituary (e.g. to the fish) (fish x,y).
      This relative center needs a kind of translation from fish coords
      and maybe is also related to true center
-     3) Theta  which can be set """
+     3) Theta  which can be set"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

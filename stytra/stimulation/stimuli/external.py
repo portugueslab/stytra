@@ -48,7 +48,7 @@ class PybPulseStimulus(Stimulus):
         Parameters
         ----------
         experiment :
-            
+
 
         Returns
         -------

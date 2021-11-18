@@ -90,8 +90,7 @@ class TestExperimentClass(unittest.TestCase):
         return next(Path(self.test_dir).glob("*/*/*.json"))
 
     def run_experiment(self, **kwargs):
-        """ Run a simulation of a real experiment.
-        """
+        """Run a simulation of a real experiment."""
         # Weirdly, getattr(kwargs, "tracking", None) always returns None
         try:
             tracking = kwargs["tracking"]
@@ -153,7 +152,7 @@ class TestExperimentClass(unittest.TestCase):
         self.clear_dir()
 
     def test_tracking_experiments(self):
-        """ Note: this test assumes that the default parameters for the tracking
+        """Note: this test assumes that the default parameters for the tracking
         functions are the correct ones to track the videos in the examples/assets
         folder, from which the correct results have been calculated.
         """
