@@ -108,8 +108,7 @@ class DotDisplay(VisualStimulus, InterpolatedStimulus):
 
 
 class RandomDotKinematogram(DotDisplay):
-    """ Moving dots where the motion coherence and persistence can be controlled
-    """
+    """Moving dots where the motion coherence and persistence can be controlled"""
 
     def update(self):
         super().update()
@@ -179,7 +178,7 @@ class RandomDotKinematogram(DotDisplay):
 
 class ContinuousRandomDotKinematogram(DotDisplay):
     def __init__(self, *args, theta_relative=0, **kwargs):
-        """ A version of the random dot kinematogram, as above, but with two
+        """A version of the random dot kinematogram, as above, but with two
         improvements:
 
         1) dots which are chose to move coherently keep moving in

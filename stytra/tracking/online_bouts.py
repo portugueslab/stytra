@@ -61,7 +61,7 @@ def find_bouts_online(
     min_bout_len=1,
     pad_before=5,
 ):
-    """ Online bout detection
+    """Online bout detection
 
     Parameters
     ----------

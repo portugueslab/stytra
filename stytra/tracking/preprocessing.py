@@ -25,7 +25,7 @@ class Prefilter(ImageToImageNode):
         clip: Param(140, (0, 255)),
         **extraparams
     ):
-        """ Optionally resizes, smooths and inverts the image
+        """Optionally resizes, smooths and inverts the image
 
         :param im:
         :param state:
@@ -49,7 +49,6 @@ class Prefilter(ImageToImageNode):
             self.diagnostic_image = im
 
         return NodeOutput([], im)
-
 
 
 @vectorize([uint8(float32, uint8)])

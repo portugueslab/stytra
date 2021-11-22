@@ -3,7 +3,7 @@ from stytra.tracking.fish import Fishes
 
 
 def test_fish():
-    """ Test fish Kalman updating with angle correction
+    """Test fish Kalman updating with angle correction
 
     Returns
     -------

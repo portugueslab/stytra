@@ -355,17 +355,17 @@ def _tail_trace_core_ls(img, start_x, start_y, disp_x, disp_y, num_points, tail_
     Parameters
     ----------
     img :
-        
+
     start_x :
-        
+
     start_y :
-        
+
     disp_x :
-        
+
     disp_y :
-        
+
     num_points :
-        
+
     tail_length :
 
 

@@ -18,8 +18,8 @@ A modular package to control stimulation and track behavior in zebrafish experim
 .. image:: https://img.shields.io/badge/docs-0.8-yellow.svg
     :target: http://www.portugueslab.com/stytra/
     
-.. image:: https://travis-ci.com/portugueslab/stytra.svg?branch=master
-    :target: https://travis-ci.com/portugueslab/stytra
+.. image:: https://github.com/portugueslab/stytra/actions/workflows/main.yml/badge.svg?branch=linting
+    :target: http://www.portugueslab.com/stytra/.github/workflows/
 
 
 If you are using Stytra for your own research, please `cite us <https://doi.org/10.1371/journal.pcbi.1006699>`_!

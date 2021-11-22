@@ -17,27 +17,27 @@ from stytra.stimulation.stimuli import (
 
 class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     """
-        Vigor-based closed loop stimulus.
+    Vigor-based closed loop stimulus.
 
-        The parameters can change in time if the df_param is supplied which
-        specifies their values in time.
+    The parameters can change in time if the df_param is supplied which
+    specifies their values in time.
 
-        Parameters
-        ----------
-        base_vel:
-            the velocity of the background when the stimulus is not moving
-        shunting: bool
-            if true, when the fish stops swimming its infulence on the
-            background motion stops, immediately independent of lag
-        swimming_threshold: float
-            the velocity at which the fish is considered to be performing
-            a bout
-        fixed_vel: float
-            if not None, fixed velocity for the stimulus when fish swims
-        max_interbout_time: float
-            if not None, maximum time allowed without any bout detected, after
-            which the experiment is aborted
-        """
+    Parameters
+    ----------
+    base_vel:
+        the velocity of the background when the stimulus is not moving
+    shunting: bool
+        if true, when the fish stops swimming its infulence on the
+        background motion stops, immediately independent of lag
+    swimming_threshold: float
+        the velocity at which the fish is considered to be performing
+        a bout
+    fixed_vel: float
+        if not None, fixed velocity for the stimulus when fish swims
+    max_interbout_time: float
+        if not None, maximum time allowed without any bout detected, after
+        which the experiment is aborted
+    """
 
     def __init__(
         self,
@@ -66,22 +66,20 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.prev_bout_t = 0
 
     def get_fish_vel(self):
-        """ Function that update estimated fish velocty. Change to add lag or
+        """Function that update estimated fish velocty. Change to add lag or
         shunting.
         """
         self.fish_vel = self._experiment.estimator.get_velocity()
 
     def bout_started(self):
-        """ Function called on bout start.
-        """
+        """Function called on bout start."""
         self.prev_bout_t = self._elapsed
 
     def bout_occurring(self):
         pass
 
     def bout_ended(self):
-        """ Function called on bout end.
-        """
+        """Function called on bout end."""
         pass
 
     def update(self):
@@ -159,8 +157,8 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         self.name = "calibrating_cl1D"
         self.dynamic_parameters.extend(["est_gain", "median_calib"])
         self.target_avg_fish_vel = (
-            target_avg_fish_vel
-        )  # target velocity for the calibration
+            target_avg_fish_vel  # target velocity for the calibration
+        )
 
         self.bout_counter = 0
         self.bout_peak_vel = 0
@@ -273,7 +271,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
         self.gain_drop_end = gain_drop_end
 
     def get_fish_vel(self):
-        """ Function that update estimated fish velocty. Change to add lag or
+        """Function that update estimated fish velocty. Change to add lag or
         shunting.
         """
         super(GainLagClosedLoop1D, self).get_fish_vel()
@@ -310,8 +308,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
         self.current_condition = None
 
     def bout_started(self):
-        """ Function called on bout start.
-        """
+        """Function called on bout start."""
         super().bout_started()
         # reset to baseline values:
         if self.current_condition is not None:
@@ -333,9 +330,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus):
-    """ A stimulus which is always kept perpendicular to the fish
-
-    """
+    """A stimulus which is always kept perpendicular to the fish"""
 
     def update(self):
         y, x, theta = self._experiment.estimator.get_position()

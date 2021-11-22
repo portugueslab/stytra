@@ -12,7 +12,7 @@ class SpinnakerCamera(Camera):
 
     Uses Spinnaker API. Module documentation `here
     <https://www.flir.com/products/spinnaker-sdk/>`_.
-    
+
      Note roi is [x, y, width, height]
     """
 
