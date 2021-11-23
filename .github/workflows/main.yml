@@ -87,6 +87,6 @@ jobs:
         shell: bash -l {0}
         run: |
             conda activate stytra_env
-            pytest -s --forked
+            pytest --forked -s
 
   
