@@ -435,8 +435,7 @@ class MultiStreamPlot(QWidget):
 
 
 class StreamPlotConfig(QWidget):
-    """ Widget for configuring streaming plots
-    """
+    """Widget for configuring streaming plots"""
 
     def __init__(self, sp: MultiStreamPlot):
         super().__init__()
@@ -500,7 +499,7 @@ class FrameratePlot(MultiStreamPlot):
             return rounded
 
     def _update_round_bounds(self, old_bounds, new_bounds, tolerance=0.1):
-        """ If bounds are exceeed by tolerance
+        """If bounds are exceeed by tolerance
 
         Parameters
         ----------

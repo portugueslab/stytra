@@ -12,7 +12,7 @@ import numpy as np
 
 
 class BackgroundProtocol(Protocol):
-    """ Demo of a more complex protocol, where a background moves below the
+    """Demo of a more complex protocol, where a background moves below the
     fish and also relative to itself
 
     """

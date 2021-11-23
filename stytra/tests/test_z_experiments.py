@@ -90,8 +90,7 @@ class TestExperimentClass(unittest.TestCase):
         return next(Path(self.test_dir).glob("*/*/*.json"))
 
     def run_experiment(self, **kwargs):
-        """ Run a simulation of a real experiment.
-        """
+        """Run a simulation of a real experiment."""
         # Weirdly, getattr(kwargs, "tracking", None) always returns None
         try:
             tracking = kwargs["tracking"]
@@ -152,40 +151,40 @@ class TestExperimentClass(unittest.TestCase):
         assert "test_protocol" in data["stimulus"]["protocol"].keys()
         self.clear_dir()
 
-    # def test_tracking_experiments(self):
-    #     """ Note: this test assumes that the default parameters for the tracking
-    #     functions are the correct ones to track the videos in the examples/assets
-    #     folder, from which the correct results have been calculated.
-    #     """
-    #     self.app = QApplication([])
+    def test_tracking_experiments(self):
+        """Note: this test assumes that the default parameters for the tracking
+        functions are the correct ones to track the videos in the examples/assets
+        folder, from which the correct results have been calculated.
+        """
+        self.app = QApplication([])
 
-    #     video_file = str(
-    #         Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
-    #     )
-    #     for method in ["eyes", "tail"]:
-    #         self.run_experiment(
-    #             protocol=TestProtocol(),
-    #             camera=dict(video_file=video_file),
-    #             tracking=dict(method=method),
-    #             log_format="hdf5",
-    #         )
-    #         with open(self.metadata_path, "r") as f:
-    #             data = json.load(f)
+        video_file = str(
+            Path(__file__).parent.parent / "examples" / "assets" / "fish_compressed.h5"
+        )
+        for method in ["eyes", "tail"]:
+            self.run_experiment(
+                protocol=TestProtocol(),
+                camera=dict(video_file=video_file),
+                tracking=dict(method=method),
+                log_format="hdf5",
+            )
+            with open(self.metadata_path, "r") as f:
+                data = json.load(f)
 
-    #         behavior_log = fl.load(
-    #             self.metadata_path.parent / data["tracking"]["behavior_log"], "/data"
-    #         )
+            behavior_log = fl.load(
+                self.metadata_path.parent / data["tracking"]["behavior_log"], "/data"
+            )
 
-    #         assert (
-    #             method
-    #             == data["general"]["program_version"]["arguments"]["tracking"]["method"]
-    #         )
+            assert (
+                method
+                == data["general"]["program_version"]["arguments"]["tracking"]["method"]
+            )
 
-    #         if method == "tail":
-    #             for k in ["theta_00", "theta_08"]:
-    #                 self.check_result(behavior_log[k].values, k)
-    #         elif method == "eyes":
-    #             for k in ["th_e0", "th_e1"]:
-    #                 self.check_result(behavior_log[k].values, k)
+            if method == "tail":
+                for k in ["theta_00", "theta_08"]:
+                    self.check_result(behavior_log[k].values, k)
+            elif method == "eyes":
+                for k in ["th_e0", "th_e1"]:
+                    self.check_result(behavior_log[k].values, k)
 
-    #         self.clear_dir()
+            self.clear_dir()
