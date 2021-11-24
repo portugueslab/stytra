@@ -13,6 +13,7 @@ import stytra as st
 from pathlib import Path
 from pkgutil import iter_modules
 from importlib import import_module
+import pytest
 
 # iterate through the modules in the current package
 package_dir = Path(st.__file__).parent / "examples"
