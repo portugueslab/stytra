@@ -55,8 +55,8 @@ def test_base_exp(qtbot, protocol):
 
     # Close app
     qtbot.wait(5000)
-    print("Finished: t = {}".format(time() - tic))
+    print("Finished: t = {:.1f}".format(time() - tic))
 
     exp_wnd.closeEvent(None)
     qtbot.wait(5000)
-    print("END: t = {}".format(time() - tic))
+    print("END: t = {:.1f}".format(time() - tic))

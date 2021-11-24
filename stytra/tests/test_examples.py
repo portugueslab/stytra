@@ -45,6 +45,7 @@ for (_, module_name, _) in iter_modules([package_dir]):
 @pytest.mark.parametrize("protocol", protocols)
 def test_base_exp(qtbot, protocol):
 
+    print()
     print("Testing Protocol: ", protocol)
     tic = time()
     print("Start: t = 0")
@@ -58,19 +59,19 @@ def test_base_exp(qtbot, protocol):
 
     # Start Protocol
     qtbot.wait(5000)
-    print("Checkpoint 1: t = {}".format(time() - tic))
+    print("Checkpoint 1: t = {:.1f}".format(time() - tic))
     qtbot.mouseClick(exp_wnd.toolbar_control.toggleStatus, Qt.LeftButton, delay=1)
 
     # Wait a safe amount for the end of the protocol
     d = (duration + 1) * 5000
     if d > 400000:
         d = 40000
-    print("Duration = {} min".format(int(d / 60)))
+    print("Duration = {:.1f} min".format((d / 60000)))
     qtbot.wait(d)
 
-    print("Finished: t = {}".format(time() - tic))
+    print("Finished: t = {:.1f}".format(time() - tic))
 
     # Close app
     exp_wnd.closeEvent(None)
     qtbot.wait(5000)
-    print("END: t = {}".format(time() - tic))
+    print("END: t = {:.1f}".format(time() - tic))
