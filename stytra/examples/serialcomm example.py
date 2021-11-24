@@ -5,6 +5,7 @@ from stytra.hardware.serial import SerialConnection
 
 REQUIRES_EXTERNAL_HARDWARE = True
 
+
 class ArduinoCommStimulus(Stimulus):
     def __init__(self, com_port="COM3", baudrate=115200, **kwargs):
         super().__init__(**kwargs)
