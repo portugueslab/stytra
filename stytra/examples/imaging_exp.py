@@ -6,6 +6,8 @@ from stytra.stimulation.stimuli import GainLagClosedLoop1D, GratingStimulus
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = True
+
 # Definition of protocol class:
 class ImagingCLProtocol(Protocol):
 

@@ -82,18 +82,12 @@ jobs:
           Xvfb :1 -screen 0 1024x768x16 &
           echo "DISPLAY=:1.0" >> $GITHUB_ENV
 
-      - name: Test one
+      #Start testing (forked makes sure each tests is run in a separate process)
+      - name: Test all
         shell: bash -l {0}
         run: |
             conda activate stytra_env
-            pytest --forked ./stytra/tests/test_examples.py 
-
-      #Start testing (forked makes sure each tests is run in a separate process)
-      # - name: Test all
-      #   shell: bash -l {0}
-      #   run: |
-      #       conda activate stytra_env
-      #       pytest --forked
+            pytest --forked
 
       
 

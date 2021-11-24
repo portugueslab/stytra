@@ -2,6 +2,8 @@ from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.arduino import WriteArduinoPin
 from lightparam import Param
 
+REQUIRES_EXTERNAL_HARDWARE = True
+
 
 # Example showcasing a protocol that uses an arduino and sets a pin value on it. For more sophisticate
 # applications you want to subclass the WriteArduinoPin class.
