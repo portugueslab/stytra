@@ -28,15 +28,15 @@ for (_, module_name, _) in iter_modules([package_dir]):
         print("Error in: {}\nSee full message here:\n{}".format(module_name, e))
 
     # check if external harware is required to run the example
-    # if (
-    #     "REQUIRES_EXTERNAL_HARDWARE" in dir(module)
-    #     and getattr(module, "REQUIRES_EXTERNAL_HARDWARE") == True
-    # ):
-    #     pass
-    # else:
-    for attribute_name in dir(module):
-        if "Protocol" in attribute_name and attribute_name != "Protocol":
-            protocols.append(getattr(module, attribute_name))
+    if (
+        "REQUIRES_EXTERNAL_HARDWARE" in dir(module)
+        and getattr(module, "REQUIRES_EXTERNAL_HARDWARE") == True
+    ):
+        pass
+    else:
+        for attribute_name in dir(module):
+            if "Protocol" in attribute_name and attribute_name != "Protocol":
+                protocols.append(getattr(module, attribute_name))
             # attribute = getattr(module, attribute_name)
         # except ModuleNotFoundError:
         #    print(f"Can't import {module}")
