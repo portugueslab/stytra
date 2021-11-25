@@ -2,6 +2,8 @@ from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from stytra.triggering import ZmqTrigger
 
+REQUIRES_EXTERNAL_HARDWARE = True
+
 
 class FlashProtocol(Protocol):
     name = "flash protocol"

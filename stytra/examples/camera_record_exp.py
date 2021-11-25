@@ -12,6 +12,8 @@ from stytra.experiments.tracking_experiments import CameraVisualExperiment
 from stytra.tracking.tracking_process import DispatchProcess
 from stytra import Stytra
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 # Here ve define an empty protocol:
 class PauseProtocol(Protocol):
     name = "camera_recording_protocol"  # every protocol must have a name.

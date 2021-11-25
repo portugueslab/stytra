@@ -7,6 +7,8 @@ from stytra.stimulation.stimuli.visual import (
 import pandas as pd
 import numpy as np
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class CombinedProtocol(Protocol):
     name = "combined_protocol"  # every protocol must have a name.

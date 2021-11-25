@@ -5,6 +5,8 @@ from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import MovingWindmillStimulus
 from lightparam import Param
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class WindmillProtocol(Protocol):
     name = "windmill_protocol"

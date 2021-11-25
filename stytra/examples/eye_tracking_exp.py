@@ -2,6 +2,8 @@ from pathlib import Path
 from stytra import Stytra
 from stytra.examples.windmill_exp import WindmillProtocol
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class TrackingWindmillProtocol(WindmillProtocol):
     name = "windmill"

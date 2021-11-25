@@ -4,6 +4,8 @@ from PyQt5.QtCore import QRect
 from PyQt5.QtGui import QBrush, QColor
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class NewStimulus(VisualStimulus):
     def __init__(self, *args, **kwargs):

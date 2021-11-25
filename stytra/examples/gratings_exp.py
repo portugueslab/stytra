@@ -7,6 +7,8 @@ from stytra.stimulation.stimuli import MovingGratingStimulus
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class GratingsProtocol(Protocol):
     name = "gratings_protocol"

@@ -1,6 +1,8 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 # 1. Define a protocol subclass
 class FlashProtocol(Protocol):
     name = "flash_protocol"  # every protocol must have a name.

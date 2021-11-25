@@ -10,6 +10,8 @@ from stytra.stimulation.stimuli import (
 )
 from lightparam import Param
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class WindmillProtocol(Protocol):
     name = "visual_acuity_protocol"

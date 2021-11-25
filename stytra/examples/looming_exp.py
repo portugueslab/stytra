@@ -6,6 +6,7 @@ from stytra.stimulation import Protocol
 from stytra.stimulation.stimuli import InterpolatedStimulus, CalibratedCircleStimulus
 from lightparam import Param
 
+REQUIRES_EXTERNAL_HARDWARE = False
 
 # A looming stimulus is an expanding circle. Stimuli which contain
 # some kind of parameter change inherit from InterpolatedStimulus

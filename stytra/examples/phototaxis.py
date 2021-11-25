@@ -11,6 +11,8 @@ from stytra.stimulation import Protocol
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class PhototaxisProtocol(Protocol):
     name = "phototaxis"

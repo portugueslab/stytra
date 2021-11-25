@@ -4,6 +4,7 @@ import qdarkstyle
 from PyQt5.QtWidgets import QApplication
 from stytra.stimulation.stimuli import Pause, Stimulus
 
+REQUIRES_EXTERNAL_HARDWARE = False
 
 # Here ve define an empty protocol:
 class FlashProtocol(Protocol):

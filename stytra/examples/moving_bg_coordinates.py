@@ -10,6 +10,8 @@ from pathlib import Path
 from lightparam import Param
 import numpy as np
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class BackgroundProtocol(Protocol):
     """Demo of a more complex protocol, where a background moves below the
