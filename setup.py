@@ -27,6 +27,7 @@ setup(
         "imageio",
         "imageio-ffmpeg",
         "lightparam>=0.3.7",
+        "pyFirmata",
     ],
     classifiers=[
         "Development Status :: 4 - Beta",
