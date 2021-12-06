@@ -25,7 +25,15 @@ for (_, module_name, _) in iter_modules([package_dir]):
     try:
         module = import_module(f"stytra.examples.{module_name}")
     except ImportError as e:
-        print("Error in: {}\nSee full message here:\n{}".format(module_name, e))
+        print(
+            "Error during import of: {}\nSee full message here:\n{}".format(
+                module_name, e
+            )
+        )
+    except ModuleNotFoundError as e:
+        print(
+            "module '{}' not found.\nSee full message here:\n{}".format(module_name, e)
+        )
 
     # check if external harware is required to run the example
     if (
@@ -37,9 +45,6 @@ for (_, module_name, _) in iter_modules([package_dir]):
         for attribute_name in dir(module):
             if "Protocol" in attribute_name and attribute_name != "Protocol":
                 protocols.append(getattr(module, attribute_name))
-                # attribute = getattr(module, attribute_name)
-        # except ModuleNotFoundError:
-        #    print(f"Can't import {module}")
 
 
 @pytest.mark.parametrize("protocol", protocols)
