@@ -61,7 +61,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           auto-activate-base: false
 
-      # install linux libraries for displays server
+      # install linux libraries for display server
       - name: Install Linux libraries
         run: |
           sudo apt-get install -y libdbus-1-3 libxkbcommon-x11-0 libxcb-icccm4 \
