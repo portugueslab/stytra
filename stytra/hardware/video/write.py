@@ -80,7 +80,7 @@ class VideoWriter(FrameProcess):
 
     def complete(self):
         save_df(
-            pd.DataFrame(self.times, columns="t"),
+            pd.DataFrame(self.times, columns=["t"]),
             self.filename_base + "video_times",
             self.log_format,
         )
