@@ -6,6 +6,8 @@ from stytra.stimulation.stimuli import GainLagClosedLoop1D, GratingStimulus
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 # Here we present the code used for the replication of the Portugues et al
 # 2011 paper, as presented in [cit. stytra].
 # The protocol defined presents the fish with white and black gratings

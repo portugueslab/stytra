@@ -2,6 +2,8 @@ from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli import Pause, FullFieldVisualStimulus, TriggerStimulus
 from stytra.triggering import ZmqTrigger
 
+REQUIRES_EXTERNAL_HARDWARE = True
+
 # In this example, we use the TriggerStimulus to trigger the protocol at
 # arbitrary points. After starting the experiment and starting the protocol,
 # you will need to run the zmq_trigger script one time to start the first part

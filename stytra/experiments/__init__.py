@@ -365,8 +365,23 @@ class Experiment(QObject):
                 version = None
 
                 try:
-                    repo = git.Repo(sys.argv[0], search_parent_directories=True)
-                    git_hash = repo.head.object.hexsha
+
+                    ####################### try get repo even during testing ###############################
+                    if (
+                        "pytest" in sys.argv[0]
+                    ):  # if first element points to pytest, check other addresses in args
+
+                        for el in sys.argv:
+                            if os.path.isdir(el):
+                                repo = git.Repo(el, search_parent_directories=True)
+                                break
+
+                    else:
+
+                        repo = git.Repo(sys.argv[0], search_parent_directories=True)
+                        git_hash = repo.head.object.hexsha
+                    #########################################################################################
+
                     try:
                         version = pkg_resources.get_distribution("stytra").version
                     except pkg_resources.DistributionNotFound:
@@ -374,6 +389,8 @@ class Experiment(QObject):
 
                 except git.InvalidGitRepositoryError:
                     self.logger.info("Invalid git repository")
+                except git.exc.NoSuchPathError:
+                    self.logger.info("Path not a git repository")
 
                 self.dc.add_static_data(
                     dict(

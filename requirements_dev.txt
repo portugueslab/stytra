@@ -6,3 +6,7 @@ Sphinx
 pytest
 pytest-cov
 black
+
+pytest-qt
+pytest-forked
+pytest-xdist

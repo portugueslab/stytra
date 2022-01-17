@@ -3,6 +3,8 @@ from stytra.stimulation.stimuli import Pause
 from pathlib import Path
 from stytra.stimulation import Protocol
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class Nostim(Protocol):
     name = "empty_protocol"

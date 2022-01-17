@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QFileDialog
 # class and re-implement the check_trigger method with the desired condition. In
 # our case, we'll ask to check for the number of files in a folder. The
 # experiment will start only when a file is added or removed.
+REQUIRES_EXTERNAL_HARDWARE = False
 
 
 class NewFileTrigger(Trigger):

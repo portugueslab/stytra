@@ -13,6 +13,7 @@ import numpy as np
 import cv2
 import pyqtgraph as pg
 
+REQUIRES_EXTERNAL_HARDWARE = False
 
 # Here we showcase the steps required to add your custom tracking function in
 #  stytra. It might look a bit complicated at the beginning, but

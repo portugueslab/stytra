@@ -6,8 +6,12 @@ from stytra.stimulation.stimuli import GainLagClosedLoop1D, GratingStimulus
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = True
+
 # Definition of protocol class:
 class ImagingCLProtocol(Protocol):
+
+    # print(str(Path(__name__).parent / "assets" / "fish_compressed.h5"))
     name = "imaging_closed_loop"
     stytra_config = dict(
         tracking=dict(method="tail", estimator="vigor"),

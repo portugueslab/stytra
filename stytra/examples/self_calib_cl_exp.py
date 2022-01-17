@@ -6,6 +6,8 @@ from stytra.stimulation.stimuli import CalibratingClosedLoop1D, GratingStimulus
 from lightparam import Param
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class ClosedLoop1DProt(Protocol):
     name = "self_calib_cl1D_gratings"

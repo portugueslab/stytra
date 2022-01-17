@@ -3,6 +3,8 @@ from stytra.stimulation.stimuli.visual import Pause, FullFieldVisualStimulus
 from stytra.metadata import AnimalMetadata
 from lightparam import Param
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 # Little example to showcase metadata customization and parameters
 # Here, define new class of metadata required for your model animal of choice
 class KrakenMetadata(AnimalMetadata):

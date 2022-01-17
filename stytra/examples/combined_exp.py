@@ -1,11 +1,13 @@
 from stytra import Stytra, Protocol
 from stytra.stimulation.stimuli.visual import (
-    StimulusCombiner,
+    CombinerStimulus,
     MovingGratingStimulus,
     HighResMovingWindmillStimulus,
 )
 import pandas as pd
 import numpy as np
+
+REQUIRES_EXTERNAL_HARDWARE = False
 
 
 class CombinedProtocol(Protocol):
@@ -40,7 +42,7 @@ class CombinedProtocol(Protocol):
 
         s_c = HighResMovingWindmillStimulus(df_param=df, clip_mask=0.3)
 
-        stimuli = [StimulusCombiner([s_a, s_b, s_c])]
+        stimuli = [CombinerStimulus([s_a, s_b, s_c])]
         return stimuli
 
 

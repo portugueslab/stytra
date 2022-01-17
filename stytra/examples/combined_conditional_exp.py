@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
+REQUIRES_EXTERNAL_HARDWARE = False
+
 
 class ConditionalCombiner(VisualCombinerStimulus):
     def __init__(self, *args, **kwargs):
