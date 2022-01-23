@@ -180,7 +180,7 @@ class FlyTrackingSelection(CameraSelection):
             # To match tracked points and frame displayed looks for matching
             # timestamps of the displayed frame and of tracked queue:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
-                self.current_frame_time
+                self.current_frame_time, self.experiment.t0
             )
 
             # Check for valid data to be displayed:

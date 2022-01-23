@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PyQt5.QtCore import QObject, pyqtSignal
 import datetime
 import numpy as np
@@ -7,6 +9,7 @@ from collections import namedtuple
 from bisect import bisect_right
 from os.path import basename
 
+from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.utilities import save_df
 
 
@@ -14,7 +17,7 @@ class Accumulator(QObject):
     def __init__(self, experiment, name="", max_history_if_not_running=1000):
         super().__init__()
         self.name = name
-        self.exp = experiment
+        #self.exp = experiment
         self.stored_data = []
         self.times = []
         self.max_history_if_not_running = max_history_if_not_running
@@ -76,7 +79,7 @@ class DataFrameAccumulator(Accumulator):
     def t(self):
         return np.array(self.times)
 
-    def values_at_abs_time(self, time):
+    def values_at_abs_time(self, time, t0):
         """Finds the values in the accumulator closest to the datetime time
 
         Parameters
@@ -84,12 +87,15 @@ class DataFrameAccumulator(Accumulator):
         time : datetime
             time to search for
 
+        t0:
+            reference time 0
+
         Returns
         -------
         namedtuple of values
 
         """
-        find_time = (time - self.exp.t0).total_seconds()
+        find_time = (time - t0).total_seconds()
         i = bisect_right(self.times, find_time)
         return self.stored_data[i - 1]
 
@@ -239,17 +245,21 @@ class QueueDataAccumulator(DataFrameAccumulator):
 
     Parameters
     ----------
-    data_queue : (multiprocessing.Queue object)
+    data_queue : NamedTupleQueue
         queue from witch to retrieve data.
+    output_queue:Optional[NamedTupleQueue]
+        an optinal queue to forward the data to
     header_list : list of str
         headers for the data to stored.
 
-    Returns
-    -------
-
     """
 
-    def __init__(self, data_queue, **kwargs):
+    def __init__(
+        self,
+        data_queue: NamedTupleQueue,
+        output_queue: Optional[NamedTupleQueue] = None,
+        **kwargs
+    ):
         """ """
         super().__init__(**kwargs)
 
@@ -257,6 +267,7 @@ class QueueDataAccumulator(DataFrameAccumulator):
         # only time differences in milliseconds in the list (faster)
         self.starting_time = None
         self.data_queue = data_queue
+        self.output_queue = output_queue
 
     def update_list(self):
         """Upon calling put all available data into a list."""
@@ -264,6 +275,10 @@ class QueueDataAccumulator(DataFrameAccumulator):
             try:
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
+
+                if self.output_queue is not None:
+                    self.output_queue.put(t, data)
+
                 newtype = False
                 if len(self.stored_data) == 0 or type(data) != type(
                     self.stored_data[-1]
@@ -313,7 +328,7 @@ class FramerateQueueAccumulator(FramerateAccumulator):
         super().__init__(*args, **kwargs)
         self.queue = queue
 
-    def update_list(self):
+    def update_list(self, fps):
         while True:
             try:
                 # Get data from queue:

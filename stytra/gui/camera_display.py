@@ -340,7 +340,7 @@ class TailTrackingSelection(CameraSelection):
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
-                self.current_frame_time
+                self.current_frame_time, self.experiment.t0
             )
             # Check for data to be displayed:
             # Retrieve tail angles from tail
@@ -442,7 +442,7 @@ class EyeTrackingSelection(CameraSelection):
             # To match tracked points and frame displayed looks for matching
             # timestamps from the two different queues:
             retrieved_data = self.experiment.acc_tracking.values_at_abs_time(
-                self.current_frame_time
+                self.current_frame_time, self.experiment.t0
             )
             # Check for data to be displayed:
 
@@ -622,7 +622,7 @@ class CameraViewFish(CameraViewCalib):
             return
 
         current_data = self.experiment.acc_tracking.values_at_abs_time(
-            self.current_frame_time
+            self.current_frame_time, self.experiment.t0
         )
 
         n_fish = self.tracking_params.n_fish_max

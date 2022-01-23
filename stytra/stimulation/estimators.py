@@ -16,10 +16,10 @@ class Estimator:
     stream of the tracking pipelines (position in pixels, tail angles, etc.).
     """
 
-    def __init__(self, acc_tracking: QueueDataAccumulator, experiment):
-        self.exp = experiment
+    def __init__(self, acc_tracking: QueueDataAccumulator, output_queue: NamedTupleQueue, cam_to_proj=None):
         self.acc_tracking = acc_tracking
-        self.output_queue = NamedTupleQueue()
+        self.output_queue = output_queue
+        self.cam_to_proj = cam_to_proj
         self._output_type = None
 
     def update(self):
@@ -184,8 +184,8 @@ class PositionEstimator(Estimator):
         past_coords = self.acc_tracking.stored_data[-1]
         t = self.acc_tracking.times[-1]
 
-        if not self.calibrator.cam_to_proj is None:
-            projmat = np.array(self.calibrator.cam_to_proj)
+        if not self.cam_to_proj is None:
+            projmat = np.array(self.cam_to_proj)
             if projmat.shape != (2, 3):
                 projmat = np.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
