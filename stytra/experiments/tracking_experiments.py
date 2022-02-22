@@ -21,7 +21,7 @@ from stytra.collectors import (
     EstimatorLog,
     FramerateQueueAccumulator,
 )
-from stytra.tracking.tracking_process import TrackingProcess
+from stytra.tracking.tracking_process import TrackingProcess, DispatchProcess
 from stytra.tracking.pipelines import Pipeline
 from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.experiments.fish_pipelines import pipeline_dict
@@ -136,6 +136,60 @@ class CameraVisualExperiment(VisualExperiment):
 
         self.camera.join()
 
+    def _setup_recording(self, recording_event=None, process=None, goal_framerate=None, kbit_framerate=1000, extension='mp4'):
+        self.recording_event = Event() if (recording_event is None) else recording_event
+        self.finished_event = Event()
+
+        if process is None:
+            process = DispatchProcess(
+                self.camera.frame_queue,
+                self.camera.kill_event,
+                self.recording_event)
+        self.frame_dispatcher = process
+
+        self.frame_dispatcher.start()
+
+        # Create and connect framerate accumulator.
+        self.acc_tracking_framerate = FramerateQueueAccumulator(
+            self,
+            queue=self.frame_dispatcher.framerate_queue,
+            name="tracking",
+            goal_framerate=goal_framerate,
+        )
+        self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
+
+        if extension == "h5":
+            self.frame_recorder = H5VideoWriter(
+                self.filename_base(),
+                self.frame_dispatcher.frame_copy_queue,
+                self.finished_event,
+                self.recording_event,
+                kbit_rate=kbit_framerate,
+                log_format=self.log_format
+            )
+        else:
+            self.frame_recorder = StreamingVideoWriter(
+                self.frame_dispatcher.frame_copy_queue,
+                self.finished_event,
+                self.recording_event,
+                kbit_rate=kbit_framerate,
+                log_format=self.log_format,
+            )
+
+        self.frame_recorder.start()
+
+    def _start_recording(self, filename):
+        self.frame_recorder.filename_queue.put(filename)
+        self.recording_event.set()
+        self.frame_recorder.reset_signal.set()
+
+    def _stop_recording(self):
+        self.recording_event.clear()
+
+    def _finish_recording(self):
+        self.frame_recorder.finished_event.set()
+        self.frame_recorder.join()
+
     def excepthook(self, exctype, value, tb):
         """
 
@@ -210,15 +264,13 @@ class TrackingExperiment(CameraVisualExperiment):
         super().__init__(*args, **kwargs)
         self.arguments.update(locals())
 
-        self.recording_event = (
-            Event() if (recording is not None) else None
-        )
-
         self.pipeline_cls = (
             pipeline_dict.get(tracking["method"], None)
             if isinstance(tracking["method"], str)
             else tracking["method"]
         )
+
+        self.recording_event = Event() if (recording is not None) else None
 
         self.frame_dispatcher = TrackingProcess(
             in_frame_queue=self.camera.frame_queue,
@@ -251,8 +303,17 @@ class TrackingExperiment(CameraVisualExperiment):
         # Tracking is reset at experiment start:
         self.protocol_runner.sig_protocol_started.connect(self.acc_tracking.reset)
 
-        # start frame dispatcher process:
-        self.frame_dispatcher.start()
+        if recording is not None:
+            super()._setup_recording(
+                recording_event=self.recording_event,
+                process=self.frame_dispatcher,
+                goal_framerate=kwargs["camera"].get("min_framerate", None),
+                kbit_framerate=recording.get("kbit_rate", 1000),
+                extension=recording["extension"]
+            )
+        else:
+            # start frame dispatcher process:
+            self.frame_dispatcher.start()
 
         est_type = tracking.get("estimator", None)
         if est_type is None:
@@ -272,34 +333,6 @@ class TrackingExperiment(CameraVisualExperiment):
             self.estimator_log.sig_acc_init.connect(self.refresh_plots)
         else:
             self.estimator = None
-
-        self.acc_tracking_framerate = FramerateQueueAccumulator(
-            self,
-            queue=self.frame_dispatcher.framerate_queue,
-            name="tracking",
-            goal_framerate=kwargs["camera"].get("min_framerate", None),
-        )
-
-        if recording is not None:
-            if recording["extension"] == "h5":
-                self.frame_recorder = H5VideoWriter(
-                    self.filename_base(),
-                    self.frame_dispatcher.frame_copy_queue,
-                    self.finished_sig,
-                    self.recording_event,
-                    log_format=self.log_format,
-                )
-            else:
-                self.frame_recorder = StreamingVideoWriter(
-                    self.frame_dispatcher.frame_copy_queue,
-                    self.finished_sig,
-                    self.recording_event,
-                    kbit_rate=recording.get("kbit_rate", 1000),
-                    log_format=self.log_format,
-                )
-            self.frame_recorder.start()
-
-        self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
     def reset(self):
         super().reset()
@@ -359,15 +392,14 @@ class TrackingExperiment(CameraVisualExperiment):
 
         if self.recording_event is not None:
             fb = self.filename_base()
-            self.frame_recorder.filename_queue.put(fb)
             self.dc.add_static_data(fb, "recording/filename")
-            self.recording_event.set()
+            super()._start_recording(fb)
 
         self.gui_timer.start(1000 // 60)
 
     def end_protocol(self, save=True):
         if self.recording_event is not None:
-            self.recording_event.clear()
+            super()._stop_recording()
 
         super().end_protocol(save)
         if self.window_main.stream_plot.frozen:
@@ -421,8 +453,7 @@ class TrackingExperiment(CameraVisualExperiment):
         """
 
         if self.recording_event is not None:
-            self.frame_recorder.finished_signal.set()
-            self.frame_recorder.join()
+            super()._finish_recording()
 
         super().wrap_up(*args, **kwargs)
 
@@ -437,6 +468,6 @@ class TrackingExperiment(CameraVisualExperiment):
         """
         traceback.print_tb(tb)
         print("{0}: {1}".format(exctype, value))
-        self.finished_sig.set()
+        super()._finish_recording()
         self.camera.join()
         self.frame_dispatcher.join()
