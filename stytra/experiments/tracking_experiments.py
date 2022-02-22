@@ -136,7 +136,7 @@ class CameraVisualExperiment(VisualExperiment):
 
         self.camera.join()
 
-    def _setup_recording(self, recording_event=None, process=None, goal_framerate=None, kbit_framerate=1000, extension='mp4'):
+    def _setup_recording(self, recording_event=None, process=None, kbit_framerate=1000, extension='mp4'):
         self.recording_event = Event() if (recording_event is None) else recording_event
         self.finished_event = Event()
 
@@ -148,15 +148,6 @@ class CameraVisualExperiment(VisualExperiment):
         self.frame_dispatcher = process
 
         self.frame_dispatcher.start()
-
-        # Create and connect framerate accumulator.
-        self.acc_tracking_framerate = FramerateQueueAccumulator(
-            self,
-            queue=self.frame_dispatcher.framerate_queue,
-            name="tracking",
-            goal_framerate=goal_framerate,
-        )
-        self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
 
         if extension == "h5":
             self.frame_recorder = H5VideoWriter(
@@ -297,6 +288,16 @@ class TrackingExperiment(CameraVisualExperiment):
         )
         self.acc_tracking.sig_acc_init.connect(self.refresh_plots)
 
+        # Create and connect framerate accumulator.
+        self.acc_tracking_framerate = FramerateQueueAccumulator(
+            self,
+            queue=self.frame_dispatcher.framerate_queue,
+            name="tracking",
+            goal_framerate=kwargs["camera"].get("min_framerate", None),
+        )
+
+        self.gui_timer.timeout.connect(self.acc_tracking_framerate.update_list)
+
         # Data accumulator is updated with GUI timer:
         self.gui_timer.timeout.connect(self.acc_tracking.update_list)
 
@@ -307,7 +308,6 @@ class TrackingExperiment(CameraVisualExperiment):
             super()._setup_recording(
                 recording_event=self.recording_event,
                 process=self.frame_dispatcher,
-                goal_framerate=kwargs["camera"].get("min_framerate", None),
                 kbit_framerate=recording.get("kbit_rate", 1000),
                 extension=recording["extension"]
             )
