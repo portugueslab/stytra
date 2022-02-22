@@ -211,7 +211,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self.arguments.update(locals())
 
         self.recording_event = (
-            Event() if (recording is not None or recording is False) else None
+            Event() if (recording is not None) else None
         )
 
         self.pipeline_cls = (
