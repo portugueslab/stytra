@@ -31,6 +31,7 @@ from stytra.stimulation.estimators import estimator_dict
 from stytra.hardware.video.write import H5VideoWriter, StreamingVideoWriter
 
 import sys
+import os
 
 
 class CameraVisualExperiment(VisualExperiment):
@@ -391,7 +392,9 @@ class TrackingExperiment(CameraVisualExperiment):
         super().start_protocol()
 
         if self.recording_event is not None:
-            fb = self.filename_base()
+            # Slight work around, the problem is in when set_id() is updated.
+            # See issue #71.
+            fb = os.path.join(self.folder_name, self.current_timestamp.strftime("%H%M%S") + '_')
             self.dc.add_static_data(fb, "recording/filename")
             super()._start_recording(fb)
 
