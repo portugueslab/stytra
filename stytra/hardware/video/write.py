@@ -4,6 +4,7 @@ import flammkuchen as fl
 from stytra.utilities import FrameProcess
 from multiprocessing import Queue
 from queue import Empty
+from pathlib import Path
 from stytra.utilities import save_df
 import pandas as pd
 
@@ -110,7 +111,7 @@ class VideoWriter(FrameProcess):
     def _complete(self, filename):
         save_df(
             pd.DataFrame(self._times, columns=["t"]),
-            filename + "video_times",
+            Path(str(filename) + "video_times"),
             self._log_format,
         )
 
@@ -167,7 +168,7 @@ class StreamingVideoWriter(VideoWriter):
         self.__container_filename = self.CONST_FALLBACK_FILENAME
 
     def __generate_filename(self, filename):
-        return filename + "video." + self._extension
+        return str(filename) + "video." + self._extension
 
     def _configure(self, shape):
         super()._configure(shape)
