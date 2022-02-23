@@ -139,7 +139,8 @@ class CameraVisualExperiment(VisualExperiment):
 
     def _setup_recording(self, recording_event=None, process=None, kbit_framerate=1000, extension='mp4'):
         self.recording_event = Event() if (recording_event is None) else recording_event
-        self.finished_event = Event()
+        self.reset_event = Event()
+        self.finish_event = Event()
 
         if process is None:
             process = DispatchProcess(
@@ -152,18 +153,18 @@ class CameraVisualExperiment(VisualExperiment):
 
         if extension == "h5":
             self.frame_recorder = H5VideoWriter(
-                self.filename_base(),
-                self.frame_dispatcher.frame_copy_queue,
-                self.finished_event,
-                self.recording_event,
-                kbit_rate=kbit_framerate,
-                log_format=self.log_format
+                input_queue=self.frame_dispatcher.frame_copy_queue,
+                recording_event=recording_event,
+                reset_event=self.reset_event,
+                finish_event=self.finish_event,
+                log_format=self.log_format,
             )
         else:
             self.frame_recorder = StreamingVideoWriter(
-                self.frame_dispatcher.frame_copy_queue,
-                self.finished_event,
-                self.recording_event,
+                input_queue=self.frame_dispatcher.frame_copy_queue,
+                recording_event=self.recording_event,
+                reset_event=self.reset_event,
+                finish_event=self.finish_event,
                 kbit_rate=kbit_framerate,
                 log_format=self.log_format,
             )
@@ -173,7 +174,6 @@ class CameraVisualExperiment(VisualExperiment):
     def _start_recording(self, filename):
         self.frame_recorder.filename_queue.put(filename)
         self.recording_event.set()
-        self.frame_recorder.reset_signal.set()
 
     def _stop_recording(self):
         self.recording_event.clear()
