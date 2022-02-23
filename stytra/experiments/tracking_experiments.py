@@ -178,7 +178,7 @@ class CameraVisualExperiment(VisualExperiment):
         self.recording_event.clear()
 
     def _finish_recording(self):
-        self.frame_recorder.finished_event.set()
+        self.frame_recorder.finish_event.set()
         self.frame_recorder.join()
 
     def excepthook(self, exctype, value, tb):
