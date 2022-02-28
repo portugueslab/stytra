@@ -23,23 +23,24 @@ class VideoWriter(FrameProcess):
     The video file is written into the same directory as the behavioral data.
     """
 
-    CONST_FALLBACK_FILENAME = 'protocol'
+    CONST_FALLBACK_FILENAME = "protocol"
 
-    def __init__(self,
-                 input_queue: Queue,
-                 recording_event: Event,
-                 reset_event: Event,
-                 finish_event: Event,
-                 log_format: str = "hdf5"
-                 ) -> None:
+    def __init__(
+        self,
+        input_queue: Queue,
+        recording_event: Event,
+        reset_event: Event,
+        finish_event: Event,
+        log_format: str = "hdf5",
+    ) -> None:
         """
         Parameters
         ----------
         input_queue
             queue of incoming frames
         recording_event
-            signal to start the recording or save the recording once finished (by clearing the event, which first triggers
-            the _complete() and then the _reset() functions)
+            signal to start the recording or save the recording once finished (by clearing the event, which first
+            triggers the _complete() and then the _reset() functions)
         reset_event
             signal to reset the recording, triggers the _reset() function
         finish_event
@@ -59,7 +60,7 @@ class VideoWriter(FrameProcess):
         self._log_format = log_format
 
     def run(self) -> None:
-        """"
+        """ "
         Runs the recording process and listens for events.
         Possible events and their effects are listed in the class description.
         """
@@ -114,7 +115,7 @@ class VideoWriter(FrameProcess):
             self.framerate_rec.update_framerate()
 
     def _configure(self, size: np.ndarray.shape) -> None:
-        """"
+        """ "
         Runs the necessary configuration before the recording starts.
         Sets the filename of the video file.
         Can be extended by subclasses for additional configuration.
@@ -136,7 +137,7 @@ class VideoWriter(FrameProcess):
 
     @abc.abstractmethod
     def _ingest_frame(self, frame: np.ndarray) -> None:
-        """"
+        """ "
         Abstract method that should contain logic to process (and potentially save) the frame.
 
         Parameters
@@ -147,7 +148,7 @@ class VideoWriter(FrameProcess):
         raise NotImplementedError("Should be implemented by subclass.")
 
     def _complete(self, filename: str) -> None:
-        """"
+        """ "
         Saves a dataframe containing the timestamps of all the frames.
         Can be extended by subclasses for other logic that should be executed upon finishing the recording.
 
@@ -164,7 +165,7 @@ class VideoWriter(FrameProcess):
         )
 
     def _reset(self) -> None:
-        """"
+        """ "
         Resets the recording process by resetting all the recording specific variables.
         No data is saved, but data that is already written to disk (i.e. frames that immediately get written upon
         recording) are not explicitly removed.
@@ -177,7 +178,7 @@ class VideoWriter(FrameProcess):
         self.reset_event.clear()
 
     def _get_filename_base(self) -> str:
-        """"
+        """ "
         Getter for the filename_base variable.
         This allows the filename to be accessible to subclasses, but prevent them from changing it
         (as long as the conventions are followed).
@@ -194,6 +195,7 @@ class H5VideoWriter(VideoWriter):
     """
     Writes the recorded frames to a HDF5 file.
     """
+
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._frames = []
@@ -213,23 +215,22 @@ class H5VideoWriter(VideoWriter):
         Writes the frames to a hdf5 file.
         """
         super()._complete(filename)
-        fl.save(
-            filename + "video.hdf5", np.array(self._frames, dtype=np.uint8)
-        )
+        fl.save(filename + "video.hdf5", np.array(self._frames, dtype=np.uint8))
 
 
 class StreamingVideoWriter(VideoWriter):
     """
     Writes the recorded frames to video file (mp4 by default).
     """
+
     def __init__(
-            self,
-            *args,
-            extension: str = "mp4",
-            output_framerate: int = 24,
-            format: str = "mpeg4",
-            kbit_rate: int = 1000,
-            **kwargs
+        self,
+        *args,
+        extension: str = "mp4",
+        output_framerate: int = 24,
+        format: str = "mpeg4",
+        kbit_rate: int = 1000,
+        **kwargs
     ) -> None:
         """
         Parameters
@@ -276,10 +277,14 @@ class StreamingVideoWriter(VideoWriter):
         super()._configure(shape)
 
         if self._get_filename_base() is not None:
-            self.__container_filename = self.__generate_filename(self._get_filename_base())
+            self.__container_filename = self.__generate_filename(
+                self._get_filename_base()
+            )
 
         self._container = av.open(self.__container_filename, mode="w")
-        self._stream = self._container.add_stream(self._format, rate=self._output_framerate)
+        self._stream = self._container.add_stream(
+            self._format, rate=self._output_framerate
+        )
         self._stream.height, self._stream.width = shape
         self._stream.codec_context.thread_type = "AUTO"
         self._stream.codec_context.bit_rate = self._kbit_rate * 1000

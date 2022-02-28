@@ -41,7 +41,14 @@ class CameraVisualExperiment(VisualExperiment):
     For debugging it can be used with a video read from file with the VideoFileSource class.
     """
 
-    def __init__(self, *args, camera: dict, camera_queue_mb: int = 100, recording: dict = None, **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        camera: dict,
+        camera_queue_mb: int = 100,
+        recording: dict = None,
+        **kwargs
+    ) -> None:
         """
         Parameters
         ----------
@@ -88,7 +95,7 @@ class CameraVisualExperiment(VisualExperiment):
         if recording is not None:
             self._setup_recording(
                 kbit_framerate=recording.get("kbit_rate", 1000),
-                extension=recording["extension"]
+                extension=recording["extension"],
             )
 
     def reset(self) -> None:
@@ -115,7 +122,9 @@ class CameraVisualExperiment(VisualExperiment):
             # Slight work around, the problem is in when set_id() is updated.
             # See issue #71.
             p = Path()
-            fb = p.joinpath(self.folder_name, self.current_timestamp.strftime("%H%M%S") + '_')
+            fb = p.joinpath(
+                self.folder_name, self.current_timestamp.strftime("%H%M%S") + "_"
+            )
             self.dc.add_static_data(fb, "recording/filename")
             self._start_recording(fb)
 
@@ -164,11 +173,12 @@ class CameraVisualExperiment(VisualExperiment):
             The event used for recording (if relevant).
         """
         return DispatchProcess(
-            self.camera.frame_queue,
-            self.camera.kill_event,
-            recording_event)
+            self.camera.frame_queue, self.camera.kill_event, recording_event
+        )
 
-    def _setup_recording(self, kbit_framerate: int = 1000, extension: str = 'mp4') -> None:
+    def _setup_recording(
+        self, kbit_framerate: int = 1000, extension: str = "mp4"
+    ) -> None:
         """
         Does the necessary setup before performing the recording, such as creating events, setting up the dispatcher
         (via _setup_dispatcher) and initialising the VideoWriter.
@@ -265,12 +275,14 @@ class TrackingExperiment(CameraVisualExperiment):
           accumulator for saving or other purposes (e.g. VR control).
     """
 
-    def __init__(self,
-                 *args,
-                 tracking: dict,
-                 recording: dict = None,
-                 second_output_queue: Queue = None,
-                 **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        tracking: dict,
+        recording: dict = None,
+        second_output_queue: Queue = None,
+        **kwargs
+    ) -> None:
         """
         tracking
             containing fields:  tracking_method
