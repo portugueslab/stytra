@@ -84,6 +84,7 @@ class CameraVisualExperiment(VisualExperiment):
         self.gui_timer.timeout.connect(self.send_gui_parameters)
         self.gui_timer.timeout.connect(self.acc_camera_framerate.update_list)
 
+        self.recording = recording
         if recording is not None:
             self._setup_recording(
                 kbit_framerate=recording.get("kbit_rate", 1000),
@@ -107,7 +108,7 @@ class CameraVisualExperiment(VisualExperiment):
         super().start_experiment()
 
     def start_protocol(self):
-        if self.recording_event is not None:
+        if self.recording is not None:
             # Slight work around, the problem is in when set_id() is updated.
             # See issue #71.
             p = Path()
@@ -118,7 +119,7 @@ class CameraVisualExperiment(VisualExperiment):
         super().start_protocol()
 
     def end_protocol(self, save=True):
-        if self.recording_event is not None:
+        if self.recording is not None:
             self._stop_recording()
 
         super().end_protocol(save=save)
@@ -159,7 +160,7 @@ class CameraVisualExperiment(VisualExperiment):
 
         self.camera.join()
 
-    def _setup_dispatcher(self, recording_event):
+    def _setup_dispatcher(self, recording_event=None):
         return DispatchProcess(
             self.camera.frame_queue,
             self.camera.kill_event,
@@ -220,6 +221,9 @@ class CameraVisualExperiment(VisualExperiment):
         -------
 
         """
+        if self.recording is not None:
+            self._finish_recording()
+
         traceback.print_tb(tb)
         print("{0}: {1}".format(exctype, value))
         self.camera.kill_event.set()
@@ -293,8 +297,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
         if recording is None:
             # start frame dispatcher process:
-            self.recording_event = Event()
-            self.frame_dispatcher = self._setup_dispatcher(self.recording_event)
+            self.frame_dispatcher = self._setup_dispatcher()
             self.frame_dispatcher.start()
 
         self.acc_tracking = QueueDataAccumulator(
@@ -340,7 +343,7 @@ class TrackingExperiment(CameraVisualExperiment):
         else:
             self.estimator = None
 
-    def _setup_dispatcher(self, recording_event):
+    def _setup_dispatcher(self, recording_event=None):
         return TrackingProcess(
             in_frame_queue=self.camera.frame_queue,
             finished_signal=self.camera.kill_event,
@@ -348,7 +351,7 @@ class TrackingExperiment(CameraVisualExperiment):
             processing_parameter_queue=self.processing_params_queue,
             output_queue=self.tracking_output_queue,
             second_output_queue=self.second_output_queue,
-            recording_signal=self.recording_event,
+            recording_signal=recording_event,
             gui_framerate=20,
         )
 
@@ -461,9 +464,6 @@ class TrackingExperiment(CameraVisualExperiment):
         -------
 
         """
-
-        if self.recording_event is not None:
-            super()._finish_recording()
 
         super().wrap_up(*args, **kwargs)
 
