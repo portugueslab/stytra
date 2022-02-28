@@ -48,7 +48,7 @@ class CameraVisualExperiment(VisualExperiment):
 
     """
 
-    def __init__(self, *args, camera, camera_queue_mb=100, **kwargs):
+    def __init__(self, *args, camera, camera_queue_mb=100, recording=None, **kwargs):
         """
         :param video_file: if not using a camera, the video file
         file for the test input
@@ -84,6 +84,12 @@ class CameraVisualExperiment(VisualExperiment):
         self.gui_timer.timeout.connect(self.send_gui_parameters)
         self.gui_timer.timeout.connect(self.acc_camera_framerate.update_list)
 
+        if recording is not None:
+            self._setup_recording(
+                kbit_framerate=recording.get("kbit_rate", 1000),
+                extension=recording["extension"]
+            )
+
     def reset(self):
         super().reset()
         self.acc_camera_framerate.reset()
@@ -99,6 +105,23 @@ class CameraVisualExperiment(VisualExperiment):
         """ """
         self.go_live()
         super().start_experiment()
+
+    def start_protocol(self):
+        if self.recording_event is not None:
+            # Slight work around, the problem is in when set_id() is updated.
+            # See issue #71.
+            p = Path()
+            fb = p.joinpath(self.folder_name, self.current_timestamp.strftime("%H%M%S") + '_')
+            self.dc.add_static_data(fb, "recording/filename")
+            self._start_recording(fb)
+
+        super().start_protocol()
+
+    def end_protocol(self, save=True):
+        if self.recording_event is not None:
+            self._stop_recording()
+
+        super().end_protocol(save=save)
 
     def make_window(self):
         """ """
@@ -136,24 +159,24 @@ class CameraVisualExperiment(VisualExperiment):
 
         self.camera.join()
 
-    def _setup_recording(self, recording_event=None, process=None, kbit_framerate=1000, extension='mp4'):
-        self.recording_event = Event() if (recording_event is None) else recording_event
+    def _setup_dispatcher(self, recording_event):
+        return DispatchProcess(
+            self.camera.frame_queue,
+            self.camera.kill_event,
+            recording_event)
+
+    def _setup_recording(self, kbit_framerate=1000, extension='mp4'):
+        self.recording_event = Event()
         self.reset_event = Event()
         self.finish_event = Event()
 
-        if process is None:
-            process = DispatchProcess(
-                self.camera.frame_queue,
-                self.camera.kill_event,
-                self.recording_event)
-        self.frame_dispatcher = process
-
+        self.frame_dispatcher = self._setup_dispatcher(self.recording_event)
         self.frame_dispatcher.start()
 
         if extension == "h5":
             self.frame_recorder = H5VideoWriter(
                 input_queue=self.frame_dispatcher.frame_copy_queue,
-                recording_event=recording_event,
+                recording_event=self.recording_event,
                 reset_event=self.reset_event,
                 finish_event=self.finish_event,
                 log_format=self.log_format,
@@ -252,8 +275,6 @@ class TrackingExperiment(CameraVisualExperiment):
         self.second_output_queue = second_output_queue
         self.tracking_output_queue = NamedTupleQueue()
         self.finished_sig = Event()
-        super().__init__(*args, **kwargs)
-        self.arguments.update(locals())
 
         self.pipeline_cls = (
             pipeline_dict.get(tracking["method"], None)
@@ -261,24 +282,20 @@ class TrackingExperiment(CameraVisualExperiment):
             else tracking["method"]
         )
 
-        self.recording_event = Event() if (recording is not None) else None
-
-        self.frame_dispatcher = TrackingProcess(
-            in_frame_queue=self.camera.frame_queue,
-            finished_signal=self.camera.kill_event,
-            pipeline=self.pipeline_cls,
-            processing_parameter_queue=self.processing_params_queue,
-            output_queue=self.tracking_output_queue,
-            second_output_queue=self.second_output_queue,
-            recording_signal=self.recording_event,
-            gui_framerate=20,
-        )
+        super().__init__(recording=recording, *args, **kwargs)
+        self.arguments.update(locals())
 
         if self.pipeline_cls is None:
             raise NameError("The selected tracking method does not exist!")
         self.pipeline = self.pipeline_cls()
         assert isinstance(self.pipeline, Pipeline)
         self.pipeline.setup(tree=self.dc)
+
+        if recording is None:
+            # start frame dispatcher process:
+            self.recording_event = Event()
+            self.frame_dispatcher = self._setup_dispatcher(self.recording_event)
+            self.frame_dispatcher.start()
 
         self.acc_tracking = QueueDataAccumulator(
             name="tracking",
@@ -304,17 +321,6 @@ class TrackingExperiment(CameraVisualExperiment):
         # Tracking is reset at experiment start:
         self.protocol_runner.sig_protocol_started.connect(self.acc_tracking.reset)
 
-        if recording is not None:
-            super()._setup_recording(
-                recording_event=self.recording_event,
-                process=self.frame_dispatcher,
-                kbit_framerate=recording.get("kbit_rate", 1000),
-                extension=recording["extension"]
-            )
-        else:
-            # start frame dispatcher process:
-            self.frame_dispatcher.start()
-
         est_type = tracking.get("estimator", None)
         if est_type is None:
             est = None
@@ -333,6 +339,18 @@ class TrackingExperiment(CameraVisualExperiment):
             self.estimator_log.sig_acc_init.connect(self.refresh_plots)
         else:
             self.estimator = None
+
+    def _setup_dispatcher(self, recording_event):
+        return TrackingProcess(
+            in_frame_queue=self.camera.frame_queue,
+            finished_signal=self.camera.kill_event,
+            pipeline=self.pipeline_cls,
+            processing_parameter_queue=self.processing_params_queue,
+            output_queue=self.tracking_output_queue,
+            second_output_queue=self.second_output_queue,
+            recording_signal=self.recording_event,
+            gui_framerate=20,
+        )
 
     def reset(self):
         super().reset()
@@ -390,20 +408,9 @@ class TrackingExperiment(CameraVisualExperiment):
 
         super().start_protocol()
 
-        if self.recording_event is not None:
-            # Slight work around, the problem is in when set_id() is updated.
-            # See issue #71.
-            p = Path()
-            fb = p.joinpath(self.folder_name , self.current_timestamp.strftime("%H%M%S") + '_')
-            self.dc.add_static_data(fb, "recording/filename")
-            super()._start_recording(fb)
-
         self.gui_timer.start(1000 // 60)
 
     def end_protocol(self, save=True):
-        if self.recording_event is not None:
-            super()._stop_recording()
-
         super().end_protocol(save)
         if self.window_main.stream_plot.frozen:
             self.window_main.stream_plot.toggle_freeze()
