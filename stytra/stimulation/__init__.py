@@ -1,5 +1,6 @@
 import datetime
 from copy import deepcopy
+import warnings
 
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
 from stytra.stimulation.stimuli import Pause, DynamicStimulus
@@ -112,7 +113,12 @@ class ProtocolRunner(QObject):
 
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:
-            stimulus.initialise_external(self.experiment, self.experiment.calibrator)
+            try:
+                stimulus.initialise_external(self.experiment, self.experiment.calibrator)
+            except TypeError:
+                stimulus.initialise_external(self.experiment)
+                warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", FutureWarning)
+                warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", DeprecationWarning)
 
         if self.dynamic_log is None:
             self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)

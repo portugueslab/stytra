@@ -1,5 +1,6 @@
 import numpy as np
 import datetime
+import warnings
 
 
 class Stimulus:
@@ -112,7 +113,7 @@ class Stimulus:
         """
         pass
 
-    def initialise_external(self, experiment, calibrator = None):
+    def initialise_external(self, experiment, calibrator = -999):
         """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
@@ -131,8 +132,18 @@ class Stimulus:
             None
 
         """
+        
+        if calibrator == -999:
+            self._calibrator = self._experiment.calibrator
+            warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", FutureWarning)
+            warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", DeprecationWarning)
+        else:
+            self._calibrator = calibrator
+            
+            
         self._experiment = experiment #! TOFIX: Remove
-        self._calibrator = calibrator
+        
+    
 
 
 class DynamicStimulus(Stimulus):
