@@ -206,7 +206,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path) #! TOFIX: Remove
+        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
         try:

@@ -66,7 +66,7 @@ class Stimulus:
         self._started = None
         self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = "undefined"
-        self._experiment = None  #! TOFIX: Remove
+        self._experiment = None
         self._calibrator = None
         self.real_time_start = None
         self.real_time_stop = None
@@ -141,7 +141,7 @@ class Stimulus:
             self._calibrator = calibrator
             
             
-        self._experiment = experiment #! TOFIX: Remove
+        self._experiment = experiment
         
     
 
@@ -264,7 +264,7 @@ class TriggerStimulus(DynamicStimulus):
 
     def update(self):
         # If trigger is set, make it end:
-        if self._experiment.trigger.start_event.is_set(): #! TOFIX: Remove ?
+        if self._experiment.trigger.start_event.is_set():
             self.duration = self._elapsed
 
 
