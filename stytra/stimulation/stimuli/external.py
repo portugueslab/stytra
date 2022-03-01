@@ -42,7 +42,7 @@ class PybPulseStimulus(Stimulus):
         pulse_dur_str = str(pulse_dur_ms).zfill(3)
         self.mex = str("shock" + amp_dac + pulse_dur_str)
 
-    def initialise_external(self, experiment):
+    def initialise_external(self, experiment, calibrator):
         """
 
         Parameters

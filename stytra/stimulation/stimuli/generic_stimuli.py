@@ -65,7 +65,8 @@ class Stimulus:
         self._started = None
         self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = "undefined"
-        self._experiment = None
+        self._experiment = None  #! TOFIX: Remove
+        self._calibrator = None
         self.real_time_start = None
         self.real_time_stop = None
 
@@ -111,7 +112,7 @@ class Stimulus:
         """
         pass
 
-    def initialise_external(self, experiment):
+    def initialise_external(self, experiment, calibrator = None):
         """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
@@ -130,7 +131,8 @@ class Stimulus:
             None
 
         """
-        self._experiment = experiment
+        self._experiment = experiment #! TOFIX: Remove
+        self._calibrator = calibrator
 
 
 class DynamicStimulus(Stimulus):
@@ -251,7 +253,7 @@ class TriggerStimulus(DynamicStimulus):
 
     def update(self):
         # If trigger is set, make it end:
-        if self._experiment.trigger.start_event.is_set():
+        if self._experiment.trigger.start_event.is_set(): #! TOFIX: Remove ?
             self.duration = self._elapsed
 
 
@@ -289,10 +291,10 @@ class CombinerStimulus(DynamicStimulus):
             s.update()
             s._elapsed = self._elapsed
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
         for s in self._stim_list:
-            s.initialise_external(experiment)
+            s.initialise_external(experiment, calibrator)
 
     @property
     def dynamic_parameter_names(self):

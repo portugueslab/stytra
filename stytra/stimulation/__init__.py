@@ -112,7 +112,7 @@ class ProtocolRunner(QObject):
 
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:
-            stimulus.initialise_external(self.experiment)
+            stimulus.initialise_external(self.experiment, self.experiment.calibrator)
 
         if self.dynamic_log is None:
             self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)

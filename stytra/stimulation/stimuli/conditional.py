@@ -36,9 +36,9 @@ class PauseOutsideStimulus(DynamicStimulus):
             state.update(self.active.get_dynamic_state())
         return state
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
-        self.active.initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
+        self.active.initialise_external(experiment, calibrator)
 
     def get_state(self):
         state = super().get_state()
@@ -50,7 +50,7 @@ class PauseOutsideStimulus(DynamicStimulus):
         self.active.start()
 
     def check_condition(self):
-        y, x, theta = self._experiment.estimator.get_position()
+        y, x, theta = self._experiment.estimator.get_position()#! TOFIX: Remove
         return not np.isnan(y)
 
     def update(self):
@@ -157,10 +157,10 @@ class ConditionalWrapper(DynamicStimulus):
             state.update(self._stim_on.get_dynamic_state())
         return state
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
-        self._stim_on.initialise_external(experiment)
-        self._stim_off.initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
+        self._stim_on.initialise_external(experiment, calibrator)
+        self._stim_off.initialise_external(experiment, calibrator)
 
     def get_state(self):
         state = super().get_state()
@@ -270,8 +270,8 @@ class CenteringWrapper(SingleConditionalWrapper):
         self.yc = 240
 
     def check_condition_on(self):
-        y, x, theta = self._experiment.estimator.get_position()
-        scale = self._experiment.calibrator.mm_px ** 2
+        y, x, theta = self._experiment.estimator.get_position()#! TOFIX: Remove
+        scale = self._calibrator.mm_px ** 2 
         return (
             x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin / scale
         )
@@ -323,15 +323,15 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
         self.yc = 240
 
     def check_condition_on(self):
-        y, x, theta = self._experiment.estimator.get_position()
-        scale = self._experiment.calibrator.mm_px ** 2
+        y, x, theta = self._experiment.estimator.get_position() #! TOFIX: Remove
+        scale = self._calibrator.mm_px ** 2
         return (not np.isnan(x)) and (
             (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in / scale
         )
 
     def check_condition_off(self):
-        y, x, theta = self._experiment.estimator.get_position()
-        scale = self._experiment.calibrator.mm_px ** 2
+        y, x, theta = self._experiment.estimator.get_position() #! TOFIX: Remove
+        scale = self._calibrator.mm_px ** 2
         return np.isnan(x) or (
             (x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out / scale
         )

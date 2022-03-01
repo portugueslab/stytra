@@ -206,7 +206,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path)
+        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path) #! TOFIX: Remove
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
         try:
@@ -313,8 +313,8 @@ class BackgroundStimulus(PositionStimulus):
         return range(x_start, x_end + 1), range(y_start, y_end + 1)
 
     def paint(self, p, w, h):
-        if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.mm_px
+        if self._calibrator is not None: 
+            mm_px = self._calibrator.mm_px
         else:
             mm_px = 1
 
@@ -396,8 +396,8 @@ class BaseSeamlessImageStimulus():
                 self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
 
         # Get background image from folder:
         if isinstance(self._background, str):
@@ -468,7 +468,7 @@ class GratingStimulus(BackgroundStimulus):
     def create_pattern(self):
         l = max(
             2,
-            int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
+            int(self.grating_period / (max(self._calibrator.mm_px, 0.0001))),
         )
         if self.wave_shape == "square":
             self._pattern = np.ones((l, 3), np.uint8) * self.color_1
@@ -483,8 +483,8 @@ class GratingStimulus(BackgroundStimulus):
                 + (1 - w[:, None]) * np.array(self.color_2)[None, :]
             ).astype(np.uint8)
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
         self.create_pattern()
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(self._pattern[None, :, :])
@@ -532,7 +532,7 @@ class PaintGratingStimulus(BackgroundStimulus):
         #TODO what does this thing define?
         """
         return (
-            int(self.grating_period / (max(self._experiment.calibrator.mm_px, 0.0001))),
+            int(self.grating_period / (max(self._calibrator.mm_px, 0.0001))),
             self.barheight,
         )
 
@@ -547,7 +547,7 @@ class PaintGratingStimulus(BackgroundStimulus):
             point.y(),
             int(
                 self.grating_period
-                / (2 * max(self._experiment.calibrator.mm_px, 0.0001))
+                / (2 * max(self._calibrator.mm_px, 0.0001))
             ),
             self.barheight,
         )
@@ -654,7 +654,7 @@ class RadialSineStimulus(VisualStimulus):
 
     def paint(self, p, w, h):
         x, y = (
-            (np.arange(d) - d / 2) * self._experiment.calibrator.mm_px for d in (w, h)
+            (np.arange(d) - d / 2) * self._calibrator.mm_px for d in (w, h)
         )
         self.image = np.round(
             np.sin(
@@ -751,8 +751,8 @@ class WindmillStimulus(CenteredBackgroundStimulus):
         self._pattern = W * self.color_1 + (1 - W) * self.color_2
         self._qbackground = qimage2ndarray.array2qimage(self._pattern)
 
-    def initialise_external(self, experiment):
-        super().initialise_external(experiment)
+    def initialise_external(self, experiment, calibrator):
+        super().initialise_external(experiment, calibrator)
         self.create_pattern()
 
     def draw_block(self, p, point, w, h):
@@ -933,8 +933,8 @@ class CalibratedCircleStimulus(VisualStimulus, DynamicStimulus):
     def paint(self, p, w, h):
         super().paint(p, w, h)
 
-        if self._experiment.calibrator is not None:
-            mm_px = self._experiment.calibrator.mm_px
+        if self._calibrator is not None:
+            mm_px = self._calibrator.mm_px
         else:
             mm_px = 1
 
