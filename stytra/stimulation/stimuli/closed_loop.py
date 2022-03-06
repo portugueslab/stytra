@@ -66,7 +66,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.prev_bout_t = 0
 
     def get_fish_vel(self):
-        """Function that update estimated fish velocty. Change to add lag or
+        """Function that update estimated fish velocity. Change to add lag or
         shunting.
         """
         self.fish_vel = self._experiment.estimator.get_velocity()

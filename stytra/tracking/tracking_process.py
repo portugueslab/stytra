@@ -1,5 +1,5 @@
 from queue import Empty, Full
-from multiprocessing import Event, Value
+from multiprocessing import Event
 
 from stytra.utilities import FrameProcess
 from arrayqueues.shared_arrays import TimestampedArrayQueue

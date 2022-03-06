@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PyQt5.QtCore import QObject, pyqtSignal
 import datetime
 import numpy as np
@@ -7,23 +9,40 @@ from collections import namedtuple
 from bisect import bisect_right
 from os.path import basename
 
+from stytra.collectors.namedtuplequeue import NamedTupleQueue
 from stytra.utilities import save_df
 
 
 class Accumulator(QObject):
-    def __init__(self, experiment, name="", max_history_if_not_running=1000):
+    def __init__(self, name="", max_trimmed_len=1000, trim = False):
         super().__init__()
         self.name = name
-        self.exp = experiment
         self.stored_data = []
         self.times = []
-        self.max_history_if_not_running = max_history_if_not_running
+        self.max_trimmed_len = max_trimmed_len
+        self._trim = trim  #
+
+    @property
+    def trim(self) -> bool:
+        return self._trim
+
+    def trim_data(self):
+        if self.trim and len(self.times) > self.max_trimmed_len * 1.5:
+            self.times[: -self.max_trimmed_len] = []
+            self.stored_data[: -self.max_trimmed_len] = []
+
+    @property
+    def t0(self) -> float:
+        raise NotImplementedError
+
+    def is_empty(self) -> bool:
+        return len(self.stored_data) == 0
 
 
 class DataFrameAccumulator(Accumulator):
     """Abstract class for accumulating streams of data.
 
-    It is use to save or plot in real time data from stimulus logs or
+    It is used to save or plot in real time data from stimulus logs or
     behavior tracking. Data is stored in a list in the stored_data
     attribute.
 
@@ -76,7 +95,7 @@ class DataFrameAccumulator(Accumulator):
     def t(self):
         return np.array(self.times)
 
-    def values_at_abs_time(self, time):
+    def values_at_abs_time(self, time, t0):
         """Finds the values in the accumulator closest to the datetime time
 
         Parameters
@@ -84,12 +103,15 @@ class DataFrameAccumulator(Accumulator):
         time : datetime
             time to search for
 
+        t0:
+            reference time 0
+
         Returns
         -------
         namedtuple of values
 
         """
-        find_time = (time - self.exp.t0).total_seconds()
+        find_time = (time - t0).total_seconds()
         i = bisect_right(self.times, find_time)
         return self.stored_data[i - 1]
 
@@ -127,14 +149,6 @@ class DataFrameAccumulator(Accumulator):
         self.times = []
 
         self._header_dict = None
-
-    def trim_data(self):
-        if (
-            not self.exp.protocol_runner.running
-            and len(self.times) > self.max_history_if_not_running * 1.5
-        ):
-            self.times[: -self.max_history_if_not_running] = []
-            self.stored_data[: -self.max_history_if_not_running] = []
 
     def get_fps(self):
         """ """
@@ -223,9 +237,6 @@ class DataFrameAccumulator(Accumulator):
         saved_filename = save_df(df, path, format)
         return basename(saved_filename)
 
-    def is_empty(self):
-        return len(self.stored_data) == 0
-
 
 class QueueDataAccumulator(DataFrameAccumulator):
     """General class for retrieving data from a Queue.
@@ -239,17 +250,21 @@ class QueueDataAccumulator(DataFrameAccumulator):
 
     Parameters
     ----------
-    data_queue : (multiprocessing.Queue object)
+    data_queue : NamedTupleQueue
         queue from witch to retrieve data.
+    output_queue:Optional[NamedTupleQueue]
+        an optional queue to forward the data to
     header_list : list of str
-        headers for the data to stored.
-
-    Returns
-    -------
+        headers for the data to be stored.
 
     """
 
-    def __init__(self, data_queue, **kwargs):
+    def __init__(
+        self,
+        data_queue: NamedTupleQueue,
+        output_queue: Optional[NamedTupleQueue] = None,
+        **kwargs
+    ):
         """ """
         super().__init__(**kwargs)
 
@@ -257,6 +272,7 @@ class QueueDataAccumulator(DataFrameAccumulator):
         # only time differences in milliseconds in the list (faster)
         self.starting_time = None
         self.data_queue = data_queue
+        self.output_queue = output_queue
 
     def update_list(self):
         """Upon calling put all available data into a list."""
@@ -264,6 +280,10 @@ class QueueDataAccumulator(DataFrameAccumulator):
             try:
                 # Get data from queue:
                 t, data = self.data_queue.get(timeout=0.001)
+
+                if self.output_queue is not None:
+                    self.output_queue.put(t, data)
+
                 newtype = False
                 if len(self.stored_data) == 0 or type(data) != type(
                     self.stored_data[-1]
@@ -292,11 +312,6 @@ class FramerateAccumulator(Accumulator):
         super().__init__(*args, **kwargs)
         self.goal_framerate = goal_framerate
 
-    def trim_data(self):
-        if len(self.times) > self.max_history_if_not_running * 1.5:
-            self.times[: -self.max_history_if_not_running] = []
-            self.stored_data[: -self.max_history_if_not_running] = []
-
     def reset(self):
         self.times = []
         self.stored_data = []
@@ -313,7 +328,7 @@ class FramerateQueueAccumulator(FramerateAccumulator):
         super().__init__(*args, **kwargs)
         self.queue = queue
 
-    def update_list(self):
+    def update_list(self, fps):
         while True:
             try:
                 # Get data from queue:
