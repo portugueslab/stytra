@@ -246,9 +246,15 @@ class TrackingExperiment(CameraVisualExperiment):
         if est is not None:
             self.estimator_process = EstimatorProcess(est_type, self.tracking_output_queue, self.finished_sig)
             self.estimator_log = EstimatorLog(experiment=self)
-            self.estimator = est(self.acc_tracking, experiment=self, **tracking.get("estimator_params", {}))
+            self.estimator = est(self.acc_tracking, experiment=self)
+            first_est_params = tracking.get("estimator_params", None)
+            if first_est_params is not None:
+                self.estimator_process.estimator_parameter_queue.put(first_est_params)
+
             self.estimator_log.sig_acc_init.connect(self.refresh_plots)
             tracking_output_queue = self.estimator_process.tracking_output_queue
+            self.protocol_runner.attach_estimator_queue(self.est)
+            self.estimator_process.start()
         else:
             self.estimator = None
             tracking_output_queue = self.tracking_output_queue

@@ -14,19 +14,35 @@ from stytra.utilities import save_df
 
 
 class Accumulator(QObject):
-    def __init__(self, experiment, name="", max_history_if_not_running=1000):
+    def __init__(self, name="", max_trimmed_len=1000, trim = False):
         super().__init__()
         self.name = name
-        #self.exp = experiment
         self.stored_data = []
         self.times = []
-        self.max_history_if_not_running = max_history_if_not_running
+        self.max_trimmed_len = max_trimmed_len
+        self._trim = trim  #
+
+    @property
+    def trim(self) -> bool:
+        return self._trim
+
+    def trim_data(self):
+        if self.trim and len(self.times) > self.max_trimmed_len * 1.5:
+            self.times[: -self.max_trimmed_len] = []
+            self.stored_data[: -self.max_trimmed_len] = []
+
+    @property
+    def t0(self) -> float:
+        raise NotImplementedError
+
+    def is_empty(self) -> bool:
+        return len(self.stored_data) == 0
 
 
 class DataFrameAccumulator(Accumulator):
     """Abstract class for accumulating streams of data.
 
-    It is use to save or plot in real time data from stimulus logs or
+    It is used to save or plot in real time data from stimulus logs or
     behavior tracking. Data is stored in a list in the stored_data
     attribute.
 
@@ -134,14 +150,6 @@ class DataFrameAccumulator(Accumulator):
 
         self._header_dict = None
 
-    def trim_data(self):
-        if (
-            not self.exp.protocol_runner.running
-            and len(self.times) > self.max_history_if_not_running * 1.5
-        ):
-            self.times[: -self.max_history_if_not_running] = []
-            self.stored_data[: -self.max_history_if_not_running] = []
-
     def get_fps(self):
         """ """
         try:
@@ -229,9 +237,6 @@ class DataFrameAccumulator(Accumulator):
         saved_filename = save_df(df, path, format)
         return basename(saved_filename)
 
-    def is_empty(self):
-        return len(self.stored_data) == 0
-
 
 class QueueDataAccumulator(DataFrameAccumulator):
     """General class for retrieving data from a Queue.
@@ -248,9 +253,9 @@ class QueueDataAccumulator(DataFrameAccumulator):
     data_queue : NamedTupleQueue
         queue from witch to retrieve data.
     output_queue:Optional[NamedTupleQueue]
-        an optinal queue to forward the data to
+        an optional queue to forward the data to
     header_list : list of str
-        headers for the data to stored.
+        headers for the data to be stored.
 
     """
 
@@ -306,11 +311,6 @@ class FramerateAccumulator(Accumulator):
     def __init__(self, *args, goal_framerate=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.goal_framerate = goal_framerate
-
-    def trim_data(self):
-        if len(self.times) > self.max_history_if_not_running * 1.5:
-            self.times[: -self.max_history_if_not_running] = []
-            self.stored_data[: -self.max_history_if_not_running] = []
 
     def reset(self):
         self.times = []

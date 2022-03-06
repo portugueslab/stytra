@@ -22,6 +22,10 @@ class Estimator:
         self.cam_to_proj = cam_to_proj
         self._output_type = None
 
+    def update_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+
     def update(self):
         raise NotImplementedError
 
