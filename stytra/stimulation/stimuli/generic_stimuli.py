@@ -1,6 +1,7 @@
 import numpy as np
 import datetime
 import warnings
+from stytra.stimulation import EnvironmentState
 
 
 class Stimulus:
@@ -113,7 +114,7 @@ class Stimulus:
         """
         pass
 
-    def initialise_external(self, experiment, calibrator = -999):
+    def initialise_external(self, experiment, environment_state: EnvironmentState = None):
         """ Make a reference to the Experiment class inside the Stimulus.
         This is required to access from inside the Stimulus class to the
         Calibrator, the Pyboard, the asset directories with movies or the motor
@@ -133,12 +134,12 @@ class Stimulus:
 
         """
         
-        if calibrator == -999:
-            self._calibrator = self._experiment.calibrator
-            warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", FutureWarning)
-            warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", DeprecationWarning)
+        if isinstance(environment_state, EnvironmentState):
+            self._calibrator = environment_state._calibrator
         else:
-            self._calibrator = calibrator
+            self._calibrator = self._experiment.calibrator
+            warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
+            warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
             
             
         self._experiment = experiment

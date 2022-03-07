@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import datetime
 from copy import deepcopy
 import warnings
@@ -10,6 +11,12 @@ from lightparam.param_qt import ParametrizedQt, Param
 
 import logging
 
+@dataclass
+class EnvironmentState:
+    _calibrator = None
+    height = 0
+    width = 0
+        
 
 class ProtocolRunner(QObject):
     """Class for managing and running stimulation Protocols.
@@ -100,6 +107,9 @@ class ProtocolRunner(QObject):
         self.log = []
         self.log_print = log_print
         self.running = False
+        
+        self.environment_state = EnvironmentState(_calibrator = self.experiment.calibrator,
+                                                  )
 
         self.framerate_rec = FramerateRecorder()
         self.framerate_acc = FramerateAccumulator(experiment=self.experiment)
@@ -114,11 +124,11 @@ class ProtocolRunner(QObject):
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:
             try:
-                stimulus.initialise_external(self.experiment, self.experiment.calibrator)
+                stimulus.initialise_external(self.experiment, self.environment_state,)
             except TypeError:
                 stimulus.initialise_external(self.experiment)
-                warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", FutureWarning)
-                warnings.warn("Warning: 'initialise_external' will require a calibrator input from the new update!", DeprecationWarning)
+                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
+                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
 
         if self.dynamic_log is None:
             self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
