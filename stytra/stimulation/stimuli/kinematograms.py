@@ -75,8 +75,8 @@ class DotDisplay(VisualStimulus, InterpolatedStimulus):
         -------
         number of dots to display and the displacement amount in pixel coordinates
         """
-        if self._calibrator is not None:
-            mm_px = self._calibrator.mm_px  
+        if self._environment_state.calibrator is not None:
+            mm_px = self._environment_state.calibrator.mm_px  
         else:
             mm_px = 1
 

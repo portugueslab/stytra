@@ -313,8 +313,8 @@ class BackgroundStimulus(PositionStimulus):
         return range(x_start, x_end + 1), range(y_start, y_end + 1)
 
     def paint(self, p, w, h):
-        if self._calibrator is not None: 
-            mm_px = self._calibrator.mm_px
+        if self._environment_state.calibrator is not None: 
+            mm_px = self._environment_state.calibrator.mm_px
         else:
             mm_px = 1
 
@@ -468,7 +468,7 @@ class GratingStimulus(BackgroundStimulus):
     def create_pattern(self):
         l = max(
             2,
-            int(self.grating_period / (max(self._calibrator.mm_px, 0.0001))),
+            int(self.grating_period / (max(self._environment_state.calibrator.mm_px, 0.0001))),
         )
         if self.wave_shape == "square":
             self._pattern = np.ones((l, 3), np.uint8) * self.color_1
@@ -532,7 +532,7 @@ class PaintGratingStimulus(BackgroundStimulus):
         #TODO what does this thing define?
         """
         return (
-            int(self.grating_period / (max(self._calibrator.mm_px, 0.0001))),
+            int(self.grating_period / (max(self._environment_state.calibrator.mm_px, 0.0001))),
             self.barheight,
         )
 
@@ -547,7 +547,7 @@ class PaintGratingStimulus(BackgroundStimulus):
             point.y(),
             int(
                 self.grating_period
-                / (2 * max(self._calibrator.mm_px, 0.0001))
+                / (2 * max(self._environment_state.calibrator.mm_px, 0.0001))
             ),
             self.barheight,
         )
@@ -654,7 +654,7 @@ class RadialSineStimulus(VisualStimulus):
 
     def paint(self, p, w, h):
         x, y = (
-            (np.arange(d) - d / 2) * self._calibrator.mm_px for d in (w, h)
+            (np.arange(d) - d / 2) * self._environment_state.calibrator.mm_px for d in (w, h)
         )
         self.image = np.round(
             np.sin(
@@ -933,8 +933,8 @@ class CalibratedCircleStimulus(VisualStimulus, DynamicStimulus):
     def paint(self, p, w, h):
         super().paint(p, w, h)
 
-        if self._calibrator is not None:
-            mm_px = self._calibrator.mm_px
+        if self._environment_state.calibrator is not None:
+            mm_px = self._environment_state.calibrator.mm_px
         else:
             mm_px = 1
 

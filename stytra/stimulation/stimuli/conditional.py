@@ -271,7 +271,7 @@ class CenteringWrapper(SingleConditionalWrapper):
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
-        scale = self._calibrator.mm_px ** 2 
+        scale = self._environment_state.calibrator.mm_px ** 2 
         return (
             x > 0 and ((x - self.xc) ** 2 + (y - self.yc) ** 2) <= self.margin / scale
         )
@@ -324,14 +324,14 @@ class TwoRadiusCenteringWrapper(ConditionalWrapper):
 
     def check_condition_on(self):
         y, x, theta = self._experiment.estimator.get_position()
-        scale = self._calibrator.mm_px ** 2
+        scale = self._environment_state.calibrator.mm_px ** 2
         return (not np.isnan(x)) and (
             (x - self.xc) ** 2 + (y - self.yc) ** 2 <= self.margin_in / scale
         )
 
     def check_condition_off(self):
         y, x, theta = self._experiment.estimator.get_position()
-        scale = self._calibrator.mm_px ** 2
+        scale = self._environment_state.calibrator.mm_px ** 2
         return np.isnan(x) or (
             (x - self.xc) ** 2 + (y - self.yc) ** 2 > self.margin_out / scale
         )
