@@ -1,8 +1,13 @@
 import numpy as np
 import datetime
 import warnings
-from stytra.stimulation import EnvironmentState
+from dataclasses import dataclass
 
+@dataclass
+class EnvironmentState:
+    _calibrator = None
+    height:int = 0
+    width:int = 0
 
 class Stimulus:
     """ Abstract class for a Stimulus.

@@ -4,18 +4,12 @@ from copy import deepcopy
 import warnings
 
 from PyQt5.QtCore import pyqtSignal, QTimer, QObject
-from stytra.stimulation.stimuli import Pause, DynamicStimulus
+from stytra.stimulation.stimuli import Pause, DynamicStimulus, EnvironmentState
 from stytra.collectors.accumulators import DynamicLog, FramerateAccumulator
 from stytra.utilities import FramerateRecorder
 from lightparam.param_qt import ParametrizedQt, Param
 
 import logging
-
-@dataclass
-class EnvironmentState:
-    _calibrator = None
-    height = 0
-    width = 0
         
 
 class ProtocolRunner(QObject):
@@ -99,6 +93,8 @@ class ProtocolRunner(QObject):
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
+        self.environment_state = EnvironmentState(self.experiment.calibrator,
+                                                  )
 
         self.update_protocol()
         self.protocol.sig_param_changed.connect(self.update_protocol)
@@ -107,9 +103,6 @@ class ProtocolRunner(QObject):
         self.log = []
         self.log_print = log_print
         self.running = False
-        
-        self.environment_state = EnvironmentState(_calibrator = self.experiment.calibrator,
-                                                  )
 
         self.framerate_rec = FramerateRecorder()
         self.framerate_acc = FramerateAccumulator(experiment=self.experiment)
@@ -125,7 +118,8 @@ class ProtocolRunner(QObject):
         for stimulus in self.stimuli:
             try:
                 stimulus.initialise_external(self.experiment, self.environment_state,)
-            except TypeError:
+            except TypeError as e:
+                print("Error: {}".format(e))
                 stimulus.initialise_external(self.experiment)
                 warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
                 warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
