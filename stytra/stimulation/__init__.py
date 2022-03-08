@@ -93,7 +93,8 @@ class ProtocolRunner(QObject):
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
-        self.environment_state = EnvironmentState(self.experiment.calibrator,
+        self.environment_state = EnvironmentState(calibrator = self.experiment.calibrator,
+                                                  estimator = self.experiment.estimator,
                                                   )
 
         self.update_protocol()
@@ -121,8 +122,8 @@ class ProtocolRunner(QObject):
             except TypeError as e:
                 print("Error: {}".format(e))
                 stimulus.initialise_external(self.experiment)
-                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
-                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
+                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator and the estimator object!", FutureWarning)
+                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator and the estimator object!", DeprecationWarning)
 
         if self.dynamic_log is None:
             self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)

@@ -36,9 +36,9 @@ class PauseOutsideStimulus(DynamicStimulus):
             state.update(self.active.get_dynamic_state())
         return state
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
-        self.active.initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
+        self.active.initialise_external(experiment, environment_state)
 
     def get_state(self):
         state = super().get_state()
@@ -157,10 +157,10 @@ class ConditionalWrapper(DynamicStimulus):
             state.update(self._stim_on.get_dynamic_state())
         return state
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
-        self._stim_on.initialise_external(experiment, calibrator)
-        self._stim_off.initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
+        self._stim_on.initialise_external(experiment, environment_state)
+        self._stim_off.initialise_external(experiment, environment_state)
 
     def get_state(self):
         state = super().get_state()

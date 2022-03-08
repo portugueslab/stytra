@@ -396,8 +396,8 @@ class BaseSeamlessImageStimulus():
                 self.background_name = "array {}x{}".format(*self._background.shape)
         self._qbackground = None
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
 
         # Get background image from folder:
         if isinstance(self._background, str):
@@ -483,8 +483,8 @@ class GratingStimulus(BackgroundStimulus):
                 + (1 - w[:, None]) * np.array(self.color_2)[None, :]
             ).astype(np.uint8)
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
         self.create_pattern()
         # Get background image from folder:
         self._qbackground = qimage2ndarray.array2qimage(self._pattern[None, :, :])
@@ -751,8 +751,8 @@ class WindmillStimulus(CenteredBackgroundStimulus):
         self._pattern = W * self.color_1 + (1 - W) * self.color_2
         self._qbackground = qimage2ndarray.array2qimage(self._pattern)
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
         self.create_pattern()
 
     def draw_block(self, p, point, w, h):

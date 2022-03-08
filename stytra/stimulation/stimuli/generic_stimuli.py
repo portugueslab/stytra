@@ -5,9 +5,14 @@ from dataclasses import dataclass
 
 @dataclass
 class EnvironmentState:
-    _calibrator = None
-    height:int = 0
-    width:int = 0
+    def __init__(self, calibrator = None, estimator = None, height:int = 600, width:int = 800):
+        """
+        Holds Environment variables to pass from the protocol runner to the stimulus
+        """
+        self.calibrator = calibrator
+        self.estimator = estimator
+        self.height = height
+        self.width = width
 
 class Stimulus:
     """ Abstract class for a Stimulus.
@@ -73,7 +78,7 @@ class Stimulus:
         self._elapsed = 0.0  # time from the beginning of the stimulus
         self.name = "undefined"
         self._experiment = None
-        self._calibrator = None
+        self._environment_state = None
         self.real_time_start = None
         self.real_time_stop = None
 
@@ -140,9 +145,9 @@ class Stimulus:
         """
         
         if isinstance(environment_state, EnvironmentState):
-            self._calibrator = environment_state._calibrator
+            self._environment_state = environment_state
         else:
-            self._calibrator = self._experiment.calibrator
+            self._environment_state = experiment
             warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
             warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
             
@@ -308,10 +313,10 @@ class CombinerStimulus(DynamicStimulus):
             s.update()
             s._elapsed = self._elapsed
 
-    def initialise_external(self, experiment, calibrator):
-        super().initialise_external(experiment, calibrator)
+    def initialise_external(self, experiment, environment_state):
+        super().initialise_external(experiment, environment_state)
         for s in self._stim_list:
-            s.initialise_external(experiment, calibrator)
+            s.initialise_external(experiment, environment_state)
 
     @property
     def dynamic_parameter_names(self):
