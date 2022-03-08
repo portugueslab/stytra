@@ -93,10 +93,9 @@ class ProtocolRunner(QObject):
         self.current_stimulus = None  # current stimulus object
         self.past_stimuli_elapsed = None  # time elapsed in previous stimuli
         self.dynamic_log = None  # dynamic log for stimuli
-        self.environment_state = EnvironmentState(calibrator = self.experiment.calibrator,
-                                                  estimator = self.experiment.estimator,
-                                                  )
-
+        
+        self.environment_state = EnvironmentState(calibrator = self.experiment.calibrator,)
+            
         self.update_protocol()
         self.protocol.sig_param_changed.connect(self.update_protocol)
 
@@ -114,6 +113,9 @@ class ProtocolRunner(QObject):
         self.stimuli = self.protocol._get_stimulus_list()
 
         self.current_stimulus = self.stimuli[0]
+        
+        if hasattr(self.experiment, 'estimator'):
+            self.environment_state.estimator = self.experiment.estimator
 
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:

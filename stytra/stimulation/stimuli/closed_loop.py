@@ -69,7 +69,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         """ Function that update estimated fish velocty. Change to add lag or
         shunting.
         """
-        self.fish_vel = self._experiment.estimator.get_velocity()
+        self.fish_vel = self._environment_state.estimator.get_velocity()
 
     def bout_started(self):
         """ Function called on bout start.
@@ -90,7 +90,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
                 self._experiment.logger.info(
                     "Experiment aborted! {} seconds without bouts".format(
                         self._elapsed - self.prev_bout_t
-                    )
+                    ) #! TOFIX: Remove
                 )
                 self.abort_experiment()
 
@@ -130,7 +130,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.vel = self.base_vel - self.fish_vel * int(self.fish_swimming)
 
     def abort_experiment(self):
-        self._experiment.protocol_runner.stop()
+        self._experiment.protocol_runner.stop() #! TOFIX: Remove?
 
 
 class CalibratingClosedLoop1D(Basic_CL_1D):
@@ -177,7 +177,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
 
     def bout_started(self):
         super().bout_started()
-        self.est_gain = self._experiment.estimator.base_gain
+        self.est_gain = self._environment_state.estimator.base_gain
 
     def bout_occurring(self):
         self.bout_vig.append(self.fish_vel / self.est_gain)
@@ -196,7 +196,7 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
                 self.median_calib = self.median_vig * self.est_gain
                 self.est_gain = self.target_avg_fish_vel / self.median_vig
 
-                self._experiment.estimator.base_gain = self.est_gain
+                self._environment_state.estimator.base_gain = self.est_gain
 
         self.bout_vel = []
 
@@ -212,14 +212,14 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
                 "Experiment aborted! N bouts: {}; gain: {}".format(
                     len(self.bouts_vig_list), self.est_gain
                 )
-            )
+            ) #! TOFIX: Remove
 
         if len(self.bouts_vig_list) > self.calibrate_after:
             self._experiment.logger.info(
                 "Calibrated! Calculated gain  {} with {} bouts".format(
                     self.est_gain, len(self.bouts_vig_list)
                 )
-            )
+            ) #! TOFIX: Remove
 
 
 class GainChangerStimulus(Stimulus):
@@ -246,7 +246,7 @@ class GainChangerStimulus(Stimulus):
         self.newgain = newgain
 
     def start(self):
-        self._experiment.estimator.base_gain = self.newgain
+        self._environment_state.estimator.base_gain = self.newgain
 
 
 class GainLagClosedLoop1D(Basic_CL_1D):
@@ -277,8 +277,7 @@ class GainLagClosedLoop1D(Basic_CL_1D):
         shunting.
         """
         super(GainLagClosedLoop1D, self).get_fish_vel()
-        self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
-
+        self.lag_vel = self._environment_state.estimator.get_velocity(self.lag)
     def calculate_final_vel(self):
         subtract_to_base = self.gain * self.lag_vel
 
@@ -329,7 +328,7 @@ class AcuteClosedLoop1D(GainLagClosedLoop1D):
             # print("set: {} gain and {} lag".format(self.gain, self.lag))
 
         # refresh lag if it was changed:
-        self.lag_vel = self._experiment.estimator.get_velocity(self.lag)
+        self.lag_vel = self._environment_state.estimator.get_velocity(self.lag)
 
 
 class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus):
@@ -338,7 +337,7 @@ class PerpendicularMotion(BackgroundStimulus, InterpolatedStimulus):
     """
 
     def update(self):
-        y, x, theta = self._experiment.estimator.get_position()
+        y, x, theta = self._environment_state.estimator.get_position()
         if np.isfinite(theta):
             self.theta = theta
         super().update()
@@ -352,7 +351,7 @@ class FishTrackingStimulus(PositionStimulus):
 
     def update(self):
         if self.is_tracking:
-            y, x, theta = self._experiment.estimator.get_position()
+            y, x, theta = self._environment_state.estimator.get_position()
             if np.isfinite(theta):
                 self.x = x
                 self.y = y
@@ -362,7 +361,7 @@ class FishTrackingStimulus(PositionStimulus):
 
 class FishRelativeStimulus(BackgroundStimulus):
     def get_transform(self, w, h, x, y):
-        y_fish, x_fish, theta_fish = self._experiment.estimator.get_position()
+        y_fish, x_fish, theta_fish = self._environment_state.estimator.get_position()
         if np.isnan(y_fish):
             return super().get_transform(w, h, x, y)
         rot_fish = (theta_fish - np.pi / 2) * 180 / np.pi
