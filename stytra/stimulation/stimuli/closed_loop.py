@@ -90,7 +90,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
                 self._experiment.logger.info(
                     "Experiment aborted! {} seconds without bouts".format(
                         self._elapsed - self.prev_bout_t
-                    ) #! TOFIX: Remove
+                    )
                 )
                 self.abort_experiment()
 
@@ -130,7 +130,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
         self.vel = self.base_vel - self.fish_vel * int(self.fish_swimming)
 
     def abort_experiment(self):
-        self._experiment.protocol_runner.stop() #! TOFIX: Remove?
+        self._experiment.protocol_runner.stop()
 
 
 class CalibratingClosedLoop1D(Basic_CL_1D):
@@ -212,14 +212,14 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
                 "Experiment aborted! N bouts: {}; gain: {}".format(
                     len(self.bouts_vig_list), self.est_gain
                 )
-            ) #! TOFIX: Remove
+            )
 
         if len(self.bouts_vig_list) > self.calibrate_after:
             self._experiment.logger.info(
                 "Calibrated! Calculated gain  {} with {} bouts".format(
                     self.est_gain, len(self.bouts_vig_list)
                 )
-            ) #! TOFIX: Remove
+            )
 
 
 class GainChangerStimulus(Stimulus):
