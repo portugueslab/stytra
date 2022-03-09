@@ -163,7 +163,7 @@ class CameraVisualExperiment(VisualExperiment):
 
         self.camera.join()
 
-    def _setup_dispatcher(self, recording_event: Event = None) -> DispatchProcess:
+    def _setup_frame_dispatcher(self, recording_event: Event = None) -> DispatchProcess:
         """
         Creates a dispatcher that handles the frames of the camera. It will trigger the recording (i.e. stop it) using
         the given 'recording_event' event.
@@ -182,7 +182,7 @@ class CameraVisualExperiment(VisualExperiment):
     ) -> None:
         """
         Does the necessary setup before performing the recording, such as creating events, setting up the dispatcher
-        (via _setup_dispatcher) and initialising the VideoWriter.
+        (via _setup_frame_dispatcher) and initialising the VideoWriter.
 
         Parameters
         ----------
@@ -195,7 +195,7 @@ class CameraVisualExperiment(VisualExperiment):
         self.reset_event = Event()
         self.finish_event = Event()
 
-        self.frame_dispatcher = self._setup_dispatcher(self.recording_event)
+        self.frame_dispatcher = self._setup_frame_dispatcher(self.recording_event)
         self.frame_dispatcher.start()
 
         if extension == "h5":
@@ -318,7 +318,7 @@ class TrackingExperiment(CameraVisualExperiment):
 
         if recording is None:
             # start frame dispatcher process:
-            self.frame_dispatcher = self._setup_dispatcher()
+            self.frame_dispatcher = self._setup_frame_dispatcher()
             self.frame_dispatcher.start()
 
         self.acc_tracking = QueueDataAccumulator(
@@ -364,7 +364,7 @@ class TrackingExperiment(CameraVisualExperiment):
         else:
             self.estimator = None
 
-    def _setup_dispatcher(self, recording_event: Event = None) -> TrackingProcess:
+    def _setup_frame_dispatcher(self, recording_event: Event = None) -> TrackingProcess:
         """
         Initialises and returns a dispatcher.
         Can be extended by subclasses to initialise their own dispatcher.
