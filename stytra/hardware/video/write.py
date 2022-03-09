@@ -295,7 +295,6 @@ class StreamingVideoWriter(VideoWriter):
         """
         Formats and encodes the frame after which it is added to the PyAv container.
         """
-        print(type(frame))
         av_frame = av.VideoFrame.from_ndarray(frame, format="gray8")
         for packet in self._stream.encode(av_frame):
             self._container.mux(packet)
