@@ -124,9 +124,11 @@ class ProtocolRunner(QObject):
             except TypeError as e:
                 print("Error: {}".format(e))
                 stimulus.initialise_external(self.experiment)
-                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator and the estimator object!", FutureWarning)
-                warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator and the estimator object!", DeprecationWarning)
-
+                msg = "Warning: self._experiment is deprecated use self._environment_state instead, self._experiment will be unavailable from version 1.0!"
+                warnings.warn(msg, FutureWarning)
+                warnings.warn(msg, DeprecationWarning)
+                
+                
         if self.dynamic_log is None:
             self.dynamic_log = DynamicLog(self.stimuli, experiment=self.experiment)
         else:

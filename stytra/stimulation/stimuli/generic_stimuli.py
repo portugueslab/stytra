@@ -148,8 +148,9 @@ class Stimulus:
             self._environment_state = environment_state
         else:
             self._environment_state = experiment
-            warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", FutureWarning)
-            warnings.warn("Warning: 'initialise_external' will use the environment_state variable which holds the calibrator object!", DeprecationWarning)
+            msg = "Warning: self._experiment is deprecated use self._environment_state instead, self._experiment will be unavailable from version 1.0!"
+            warnings.warn(msg, FutureWarning)
+            warnings.warn(msg, DeprecationWarning)
             
             
         self._experiment = experiment
