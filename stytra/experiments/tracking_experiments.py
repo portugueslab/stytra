@@ -32,6 +32,7 @@ from stytra.stimulation.estimators import estimator_dict
 from stytra.hardware.video.write import H5VideoWriter, StreamingVideoWriter
 
 import sys
+from typing import *
 
 
 class CameraVisualExperiment(VisualExperiment):
@@ -46,7 +47,7 @@ class CameraVisualExperiment(VisualExperiment):
         *args,
         camera: dict,
         camera_queue_mb: int = 100,
-        recording: dict = None,
+        recording: Optional[Dict[str, Any]] = None,
         **kwargs
     ) -> None:
         """
@@ -279,7 +280,7 @@ class TrackingExperiment(CameraVisualExperiment):
         self,
         *args,
         tracking: dict,
-        recording: dict = None,
+        recording: Optional[Dict[str, Any]] = None,
         second_output_queue: Queue = None,
         **kwargs
     ) -> None:
