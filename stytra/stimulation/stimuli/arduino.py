@@ -22,7 +22,7 @@ class WriteArduinoPin(Stimulus):
 
     def start(self):
         super().start()
-        self._experiment.arduino_board.write_multiple(self.pin_values)
+        self._environment_state.arduino_board.write_multiple(self.pin_values)
 
 
 class ContinuousWriteArduinoPin(InterpolatedStimulus):
@@ -45,10 +45,10 @@ class ContinuousWriteArduinoPin(InterpolatedStimulus):
 
     def update(self):
         super().update()
-        self._experiment.arduino_board.write(self.pin, self.pin_value)
+        self._environment_state.arduino_board.write(self.pin, self.pin_value)
 
     def stop(self):
         super().update()
-        self._experiment.arduino_board.write(self.pin, 0)
+        self._environment_state.arduino_board.write(self.pin, 0)
 
 

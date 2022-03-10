@@ -206,7 +206,7 @@ class VideoStimulus(VisualStimulus, DynamicStimulus):
 
     def initialise_external(self, *args, **kwargs):
         super().initialise_external(*args, **kwargs)
-        self._video_seq = pims.Video(self._experiment.asset_dir + "/" + self.video_path)
+        self._video_seq = pims.Video(self._environment_state.asset_dir + "/" + self.video_path)
 
         self._current_frame = self._video_seq.get_frame(self.i_frame)
         try:
@@ -403,7 +403,7 @@ class BaseSeamlessImageStimulus():
         if isinstance(self._background, str):
             self._qbackground = qimage2ndarray.array2qimage(
                 existing_file_background(
-                    self._experiment.asset_dir + "/" + self._background
+                    self._environment_state.asset_dir + "/" + self._background
                 )
             )
         elif isinstance(self._background, Path):

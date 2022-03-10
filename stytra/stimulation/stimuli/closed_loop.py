@@ -87,7 +87,7 @@ class Basic_CL_1D(BackgroundStimulus, InterpolatedStimulus, DynamicStimulus):
     def update(self):
         if self.max_interbout_time is not None:
             if self._elapsed - self.prev_bout_t > self.max_interbout_time:
-                self._experiment.logger.info(
+                self._environment_state.logger.info(
                     "Experiment aborted! {} seconds without bouts".format(
                         self._elapsed - self.prev_bout_t
                     )
@@ -208,14 +208,14 @@ class CalibratingClosedLoop1D(Basic_CL_1D):
         ):
             self.abort_experiment()
 
-            self._experiment.logger.info(
+            self._environment_state.logger.info(
                 "Experiment aborted! N bouts: {}; gain: {}".format(
                     len(self.bouts_vig_list), self.est_gain
                 )
             )
 
         if len(self.bouts_vig_list) > self.calibrate_after:
-            self._experiment.logger.info(
+            self._environment_state.logger.info(
                 "Calibrated! Calculated gain  {} with {} bouts".format(
                     self.est_gain, len(self.bouts_vig_list)
                 )
