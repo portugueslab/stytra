@@ -5,12 +5,21 @@ from dataclasses import dataclass
 
 @dataclass
 class EnvironmentState:
-    def __init__(self, calibrator = None, estimator = None, height:int = 600, width:int = 800):
+    def __init__(self, calibrator = None, 
+                 estimator = None, 
+                 arduino_board = None, 
+                 asset_dir = None,
+                 logger = None,
+                 height:int = 600, 
+                 width:int = 800):
         """
         Holds Environment variables to pass from the protocol runner to the stimulus
         """
         self.calibrator = calibrator
         self.estimator = estimator
+        self.arduino_board = arduino_board
+        self.asset_dir = asset_dir
+        self.logger = logger
         self.height = height
         self.width = width
 

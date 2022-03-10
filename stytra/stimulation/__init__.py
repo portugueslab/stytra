@@ -114,9 +114,16 @@ class ProtocolRunner(QObject):
 
         self.current_stimulus = self.stimuli[0]
         
+        #populate environment_state class
         if hasattr(self.experiment, 'estimator'):
             self.environment_state.estimator = self.experiment.estimator
-
+        if hasattr(self.experiment, 'arduino_board'):
+            self.environment_state.arduino_board = self.experiment.arduino_board
+        if hasattr(self.experiment, 'asset_dir'):
+            self.environment_state.asset_dir = self.experiment.asset_dir
+        if hasattr(self.experiment, 'logger'):
+            self.environment_state.logger = self.experiment.logger
+            
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:
             try:
