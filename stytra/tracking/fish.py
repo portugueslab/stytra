@@ -269,7 +269,7 @@ class Fishes(object):
         self.F = np.array([[1.0, 1.0], [0.0, 1.0]])
         dt = 0.02
         self.Q = (
-            np.array([[0.25 * dt ** 4, 0.5 * dt ** 3], [0.5 * dt ** 3, dt ** 2]])
+            np.array([[0.25 * dt**4, 0.5 * dt**3], [0.5 * dt**3, dt**2]])
             * pred_coef
         )
         self.persist_fish_for = persist_fish_for
@@ -332,7 +332,7 @@ class Fishes(object):
             np.mod(new_fish[2] - self.coords[i_fish, 4] + np.pi, np.pi * 2) - np.pi
         )
 
-        return np.sum(dists ** 2) < n_px ** 2 and dtheta < d_theta
+        return np.sum(dists**2) < n_px**2 and dtheta < d_theta
 
 
 @jit(nopython=True)

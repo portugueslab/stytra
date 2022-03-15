@@ -351,7 +351,7 @@ class TailTrackingSelection(CameraSelection):
             ]
             # Get tail position and length from the parameters:
             (start_y, start_x), (tail_len_y, tail_len_x) = self.tail_dims()
-            tail_length = np.sqrt(tail_len_x ** 2 + tail_len_y ** 2)
+            tail_length = np.sqrt(tail_len_x**2 + tail_len_y**2)
 
             # Get segment length:
             tail_segment_length = tail_length / (len(angles))
@@ -481,7 +481,7 @@ class EyeTrackingSelection(CameraSelection):
 
                             # Angle and rad of center point from left lower corner:
                             c_th = np.arctan(c_x / c_y)
-                            c_r = np.sqrt(c_x ** 2 + c_y ** 2)
+                            c_r = np.sqrt(c_x**2 + c_y**2)
 
                             # Coords of the center after rotation around left lower
                             # corner, to be corrected when setting position:

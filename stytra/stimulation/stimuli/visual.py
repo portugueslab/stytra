@@ -815,7 +815,7 @@ class HighResWindmillStimulus(CenteredBackgroundStimulus):
         # angular width of the white arms, by default equal to dark ones
         size = np.pi / self.n_arms
         # radius of triangles (much larger than frame)
-        rad = (w ** 2 + h ** 2) ** (1 / 2)
+        rad = (w**2 + h**2) ** (1 / 2)
         # loop over angles and draw consecutive triangles
         for deg in np.array(angles):
             polyg_points = [
