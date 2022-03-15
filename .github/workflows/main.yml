@@ -24,6 +24,7 @@ on:
 
 jobs:
   lint:
+    name: 🕵️ Linting Check 
     runs-on: ubuntu-latest
     # don't run workflow if pr draft
     if: github.event.pull_request.draft == false
@@ -45,7 +46,7 @@ jobs:
 
   tests:
     needs: lint
-    name: Tests (${{ matrix.python-version }})
+    name: 🤖 Tests (${{ matrix.python-version }}) 
     runs-on: "ubuntu-latest"
     # don't run workflow if pr draft
     if: github.event.pull_request.draft == false
