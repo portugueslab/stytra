@@ -123,6 +123,8 @@ class ProtocolRunner(QObject):
             self.environment_state.asset_dir = self.experiment.asset_dir
         if hasattr(self.experiment, 'logger'):
             self.environment_state.logger = self.experiment.logger
+        if hasattr(self.experiment, 'trigger'):
+            self.environment_state.trigger = self.experiment.trigger
             
         # pass experiment to stimuli for calibrator and asset folders:
         for stimulus in self.stimuli:

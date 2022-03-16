@@ -10,6 +10,7 @@ class EnvironmentState:
                  arduino_board = None, 
                  asset_dir = None,
                  logger = None,
+                 trigger = None,
                  height:int = 600, 
                  width:int = 800):
         """
@@ -18,6 +19,7 @@ class EnvironmentState:
         self.calibrator = calibrator
         self.estimator = estimator
         self.arduino_board = arduino_board
+        self.trigger = trigger
         self.asset_dir = asset_dir
         self.logger = logger
         self.height = height
@@ -285,7 +287,7 @@ class TriggerStimulus(DynamicStimulus):
 
     def update(self):
         # If trigger is set, make it end:
-        if self._experiment.trigger.start_event.is_set():
+        if self._environment_state.trigger.start_event.is_set():
             self.duration = self._elapsed
 
 
