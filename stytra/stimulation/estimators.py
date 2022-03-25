@@ -246,13 +246,13 @@ class PositionEstimator(Estimator):
             self.acc_tracking.get_last_n(self.velocity_window)[["f0_x", "f0_y"]].values,
             0,
         )
-        return np.sqrt(np.sum(vel ** 2))
+        return np.sqrt(np.sum(vel**2))
 
     def get_istantaneous_velocity(self):
         vel_xy = self.acc_tracking.get_last_n(self.velocity_window)[
             ["f0_vx", "f0_vy"]
         ].values
-        return np.sqrt(np.sum(vel_xy ** 2))
+        return np.sqrt(np.sum(vel_xy**2))
 
     def reset(self):
         super().reset()

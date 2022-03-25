@@ -89,7 +89,7 @@ class CentroidTrackingMethod(TailTrackingMethod):
         scale = im.shape[0]
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale
+        length_tail = np.sqrt(tail_length_x**2 + tail_length_y**2) * scale
 
         # Segment length from tail length and n of segments:
         seg_length = length_tail / n_segments
@@ -255,7 +255,7 @@ class AnglesTrackingMethod(TailTrackingMethod):
         scale = im.shape[0]
 
         # Calculate tail length:
-        length_tail = np.sqrt(tail_length_x ** 2 + tail_length_y ** 2) * scale
+        length_tail = np.sqrt(tail_length_x**2 + tail_length_y**2) * scale
 
         # Initial displacements in x and y:
         disp_x = tail_length_x * scale / n_segments
@@ -302,7 +302,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     """
 
     # Generate square window for center of mass
-    halfwin2 = halfwin ** 2
+    halfwin2 = halfwin**2
     y_max, x_max = fc.shape
     xs = min(max(int(round(xm + dx - halfwin)), 0), x_max)
     xe = min(max(int(round(xm + dx + halfwin)), 0), x_max)
@@ -334,7 +334,7 @@ def _next_segment(fc, xm, ym, dx, dy, halfwin, next_point_dist):
     mn_x = acc_x / acc - xm
 
     # normalise to segment length
-    a = np.sqrt(mn_y ** 2 + mn_x ** 2) / next_point_dist
+    a = np.sqrt(mn_y**2 + mn_x**2) / next_point_dist
 
     # check center of mass validity
     if a == 0:

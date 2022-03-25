@@ -30,10 +30,10 @@ def noise_background(size, kernel_std_x=1, kernel_std_y=None):
     width_kernel_x = size[0]
     width_kernel_y = size[1]
     kernel_gaussian_x = np.exp(
-        -((np.arange(width_kernel_x) - width_kernel_x / 2) ** 2) / kernel_std_x ** 2
+        -((np.arange(width_kernel_x) - width_kernel_x / 2) ** 2) / kernel_std_x**2
     )
     kernel_gaussian_y = np.exp(
-        -((np.arange(width_kernel_y) - width_kernel_y / 2) ** 2) / kernel_std_y ** 2
+        -((np.arange(width_kernel_y) - width_kernel_y / 2) ** 2) / kernel_std_y**2
     )
 
     kernel_2D = kernel_gaussian_x[None, :] * kernel_gaussian_y[:, None]
@@ -321,11 +321,11 @@ class Grid:
                 return False
 
         for item in self.neighbors(self.cellify(point)):
-            if self.distance(self.samples[item], new_point) < self.r ** 2:
+            if self.distance(self.samples[item], new_point) < self.r**2:
                 return False
 
         for item in self.neighbors(self.cellify(new_point)):
-            if self.distance(self.samples[item], new_point) < self.r ** 2:
+            if self.distance(self.samples[item], new_point) < self.r**2:
                 return False
 
         return True
