@@ -45,7 +45,9 @@ class Prefilter(ImageToImageNode):
         if clip > 0:
             # Maxval only exists because it is required,
             # since we use cv2.THRES_TOZERO, we do not set things to maxval.
-            im = cv2.threshold(src=im, thresh=clip, maxval=255, type=cv2.THRESH_TOZERO)[1]
+            im = cv2.threshold(src=im, thresh=clip, maxval=255, type=cv2.THRESH_TOZERO)[
+                1
+            ]
 
         if self.set_diagnostic == "filtered":
             self.diagnostic_image = im
