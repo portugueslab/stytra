@@ -359,7 +359,7 @@ class VideoFileSource(VideoSource):
                     for m in messages:
                         self.message_queue.put(m)
 
-                container.seek(0, whence="frame")
+                container.seek(0)
 
             return
 

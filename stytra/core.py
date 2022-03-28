@@ -5,7 +5,6 @@ from stytra.experiments.tracking_experiments import (
     CameraVisualExperiment,
     TrackingExperiment,
 )
-from stytra.experiments.camera_recording_experiment import VideoRecordingExperiment
 from stytra.calibration import CircleCalibrator
 from stytra.utilities import recursive_update
 
@@ -88,7 +87,7 @@ class Stytra:
                 for closed-loop experiments: either "vigor" for embedded experiments
                     or "position" for freely-swimming ones. A custom estimator can be supplied.
 
-        recording : bool (False) or dict
+        recording : dict
             for video-recording experiments
                 extension: mp4 (default) or h5
                     take care, if saving as h5 all frames are first stored in memory,
@@ -141,7 +140,7 @@ class Stytra:
 
     """
 
-    def __init__(self, recording=None, exec=True, app=None, **kwargs):
+    def __init__(self, exec=True, app=None, **kwargs):
         # Check if exist a default config file in the home (user) directory:
         mp.set_start_method("spawn", force=True)
         inum = kwargs.get("instance_number", -1)
@@ -187,9 +186,6 @@ class Stytra:
                 base = TrackingExperiment
                 if not class_kwargs["tracking"].get("embedded", True):
                     class_kwargs["calibrator"] = CircleCalibrator()
-
-            if recording:
-                base = VideoRecordingExperiment
 
         # Stytra logo
         app_icon = QIcon()
