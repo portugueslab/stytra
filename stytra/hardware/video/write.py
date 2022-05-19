@@ -252,7 +252,9 @@ class StreamingVideoWriter(VideoWriter):
         self._container = None
         self._stream = None
 
-        self.__container_filename = self.__generate_filename(self.CONST_FALLBACK_FILENAME)
+        self.__container_filename = self.__generate_filename(
+            self.CONST_FALLBACK_FILENAME
+        )
 
     def __generate_filename(self, filename: str) -> str:
         """
@@ -303,7 +305,9 @@ class StreamingVideoWriter(VideoWriter):
         super()._reset()
         self._container = None
         self._stream = None
-        self.__container_filename = self.__generate_filename(self.CONST_FALLBACK_FILENAME)
+        self.__container_filename = self.__generate_filename(
+            self.CONST_FALLBACK_FILENAME
+        )
 
     def _complete(self, filename: str) -> None:
         """
