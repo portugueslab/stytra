@@ -62,7 +62,7 @@ jobs:
           activate-environment: stytra_env
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          auto-activate-base: false
+          auto-activate-base: true
 
       # install linux libraries for display server
       - name: Install Linux libraries
