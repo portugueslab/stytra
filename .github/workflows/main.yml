@@ -112,7 +112,7 @@ jobs:
         shell: bash -l {0}
         run: |
             conda activate stytra_env
-            pytest -n3 --forked
+            pytest -n2 --forked
 
       
 
