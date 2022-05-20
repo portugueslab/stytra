@@ -3,7 +3,7 @@ flake8
 tox
 Sphinx
 
-pytest
+pytest==7.0.1
 pytest-cov
 black==22.3.0
 
