@@ -43,7 +43,11 @@ class Prefilter(ImageToImageNode):
         if color_invert:
             im = 255 - im
         if clip > 0:
-            im = np.maximum(im, clip) - clip
+            # Maxval only exists because it is required,
+            # since we use cv2.THRES_TOZERO, we do not set things to maxval.
+            im = cv2.threshold(src=im, thresh=clip, maxval=255, type=cv2.THRESH_TOZERO)[
+                1
+            ]
 
         if self.set_diagnostic == "filtered":
             self.diagnostic_image = im
