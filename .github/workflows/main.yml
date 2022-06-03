@@ -47,7 +47,7 @@ jobs:
   tests:
     needs: lint
     name: 🤖 Tests (${{ matrix.python-version }}) 
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu:20.04"
     # don't run workflow if pr draft
     if: github.event.pull_request.draft == false
     strategy:
