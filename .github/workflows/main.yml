@@ -112,7 +112,8 @@ jobs:
         shell: bash -l {0}
         run: |
             conda activate stytra_env
-            pytest
+            echo "DISPLAY=:1.0" >> $GITHUB_ENV
+            pytest --forked
 
       
 
