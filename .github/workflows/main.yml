@@ -47,7 +47,7 @@ jobs:
   tests:
     needs: lint
     name: 🤖 Tests (${{ matrix.python-version }}) 
-    runs-on: "ubuntu-latest"
+    runs-on: "ubuntu:20.04"
     # don't run workflow if pr draft
     if: github.event.pull_request.draft == false
     strategy:
@@ -62,7 +62,7 @@ jobs:
           activate-environment: stytra_env
           environment-file: environment.yml
           python-version: ${{ matrix.python-version }}
-          auto-activate-base: false
+          auto-activate-base: true
 
       # install linux libraries for display server
       - name: Install Linux libraries
@@ -112,7 +112,8 @@ jobs:
         shell: bash -l {0}
         run: |
             conda activate stytra_env
-            pytest -n3 --forked
+            echo "DISPLAY=:1.0" >> $GITHUB_ENV
+            pytest --forked
 
       
 
