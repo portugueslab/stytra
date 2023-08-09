@@ -71,7 +71,7 @@ class OfflineToolbar(QToolBar):
 
         output_name = str(self.output_path) + "." + fileformat
         self.diag_track.show()
-        l = reader.get_length()
+        l = reader.count_frames()
         if not (0 < l < 100000):
             l = 1
         self.diag_track.prog_track.setMaximum(l)
