@@ -65,13 +65,13 @@ class OfflineToolbar(QToolBar):
         fileformat = self.cmb_fmt.currentText()
 
         self.exp.camera.kill_event.set()
-        reader = imageio.get_reader(str(self.input_path), 'ffmpeg')
+        reader = imageio.get_reader(str(self.input_path), "ffmpeg")
         data = []
         self.exp.window_main.stream_plot.toggle_freeze()
 
         output_name = str(self.output_path) + "." + fileformat
         self.diag_track.show()
-        if (hasattr(reader, 'count_frames')):
+        if hasattr(reader, "count_frames"):
             l = reader.count_frames()
         else:
             l = reader.get_length()
