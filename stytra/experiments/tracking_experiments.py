@@ -161,7 +161,8 @@ class CameraVisualExperiment(VisualExperiment):
         for q in [self.camera.frame_queue]:
             q.clear()
 
-        self.camera.join()
+        if self.camera.is_alive():
+            self.camera.join()
 
     def _setup_frame_dispatcher(self, recording_event: Event = None) -> DispatchProcess:
         """

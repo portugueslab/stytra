@@ -331,8 +331,11 @@ class VideoFileSource(VideoSource):
             container.streams.video[0].thread_count = 1
 
             prt = None
-            while self.loop:
+            while not self.kill_event.is_set():
                 for framedata in container.decode(video=0):
+                    if self.kill_event.is_set():
+                        break
+
                     messages = []
                     if self.paused:
                         frame = self.old_frame
