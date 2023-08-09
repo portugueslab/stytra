@@ -75,8 +75,6 @@ class OfflineToolbar(QToolBar):
             l = reader.count_frames()
         else:
             l = reader.get_length()
-        if not (0 < l < 100000):
-            l = 1
         self.diag_track.prog_track.setMaximum(l)
         self.diag_track.lbl_status.setText("Tracking to " + output_name)
 
