@@ -95,6 +95,12 @@ class XimeaCamera(Camera):
 
             if param == "framerate":
                 self.cam.set_framerate(val)
+
+            if param == "downsampling":
+                self.cam.set_downsampling(xiapi.XI_D)
+
+            if param == "downsampling_type":
+                self.cam.set_downsampling_type()
         except xiapi.Xi_error:
             return ["E:Invalid {} value {:0.2f}".format(param, val)]
 

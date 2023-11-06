@@ -481,3 +481,5 @@ class TrackingExperiment(CameraVisualExperiment):
         super()._finish_recording()
         self.camera.join()
         self.frame_dispatcher.join()
+
+
