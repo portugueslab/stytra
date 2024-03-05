@@ -13,7 +13,7 @@ from lightparam.gui import ParameterGui
 from scipy.ndimage.filters import gaussian_filter1d
 
 
-class StreamingPositionPlot(pg.GraphicsWindow):
+class StreamingPositionPlot(pg.GraphicsView):
     """Plot that displays the virtual position of the fish"""
 
     def __init__(self, *args, data_accumulator, n_points=500, **kwargs):
