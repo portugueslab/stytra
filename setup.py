@@ -21,7 +21,7 @@ setup(
         "pims",
         "GitPython",
         "colorspacious",
-        "arrayqueues>=1.2.0b0",
+        "arrayqueues>=1.4.1",
         "pillow",
         "scikit-image",
         "imageio",
