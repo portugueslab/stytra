@@ -26,7 +26,7 @@ class AvtCamera(Camera):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
         self.camera_id = camera_id
-        self.interlacing = interlacing # some cameras look like they have a double image, these should be interlaced.
+        self.interlacing = interlacing  # some cameras look like they have a double image, these should be interlaced.
 
         super().__init__(**kwargs)
 
