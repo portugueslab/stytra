@@ -22,10 +22,11 @@ class AvtCamera(Camera):
 
     """
 
-    def __init__(self, camera_id=None, **kwargs):
+    def __init__(self, camera_id=None, interlacing=False, **kwargs):
         # Set timeout for frame acquisition. Give this as input?
         self.timeout_ms = 1000
         self.camera_id = camera_id
+        self.interlacing = interlacing  # some cameras look like they have a double image, these should be interlaced.
 
         super().__init__(**kwargs)
 
@@ -110,6 +111,12 @@ class AvtCamera(Camera):
                 dtype=np.uint8,
                 shape=(self.frame.data.height, self.frame.data.width),
             )
+
+            if self.interlacing:
+                new_frame = np.empty(frame.shape, dtype=np.uint8)
+                new_frame[1::2] = frame[:246]
+                new_frame[::2] = frame[246:]
+                frame = new_frame
 
         except VimbaException:
             frame = None
