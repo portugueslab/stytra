@@ -32,15 +32,19 @@ class XimeaCamera(Camera):
                 "The xiapi package must be installed to use a Ximea camera!"
             )
 
-    def open_camera(self):
+    def open_camera(self, sn=None):
         """ """
-        self.cam.open_device()
+        if sn is not None:
+            self.cam.open_device_by_SN(sn)
+        else:
+            self.cam.open_device()
 
         self.im = xiapi.Image()
 
         # If camera supports hardware downsampling (MQ013xG-ON does,
         # MQ003MG-CM does not):
         if self.cam.get_device_name() in [b"MQ013MG-ON", b"MQ013RG-ON", b"MQ013CG-ON"]:
+            print(self.cam.get_device_name())
             self.cam.set_sensor_feature_selector("XI_SENSOR_FEATURE_ZEROROT_ENABLE")
             self.cam.set_sensor_feature_value(1)
 
