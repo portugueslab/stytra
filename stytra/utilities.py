@@ -132,7 +132,7 @@ def prepare_json(it, **kwargs):
     if isinstance(it, list):
         return [prepare_json(el, **kwargs) for el in it]
     if isinstance(it, np.generic):
-        return np.asscalar(it)
+        return it.item()
     if isinstance(it, datetime):
         if kwargs.get("convert_datetime", False):
             return it.isoformat()
