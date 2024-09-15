@@ -539,8 +539,8 @@ class PaintGratingStimulus(BackgroundStimulus):
         p.setRenderHint(QPainter.Antialiasing)
         p.setBrush(QBrush(QColor(*self.color)))
         p.drawRect(
-            point.x(),
-            point.y(),
+            int(point.x()),
+            int(point.y()),
             int(
                 self.grating_period
                 / (2 * max(self._experiment.calibrator.mm_px, 0.0001))
