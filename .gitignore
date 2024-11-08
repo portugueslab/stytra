@@ -98,3 +98,7 @@ docs/source/_static/*.mp4
 
 # MacOS stuff:
 .DS_Store
+*.mp4
+*.jpg
+*.jpeg
+*.png

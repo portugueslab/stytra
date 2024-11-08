@@ -16,10 +16,10 @@ class SpinnakerCamera(Camera):
      Note roi is [x, y, width, height]
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, index, **kwargs):
         super().__init__(**kwargs)
         self.system = PySpin.System.GetInstance()
-        self.cam = self.system.GetCameras()[0]
+        self.cam = self.system.GetCameras()[index]
         assert isinstance(self.cam, PySpin.CameraPtr)
 
     def open_camera(self):
